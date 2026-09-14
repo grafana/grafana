@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Basis-Logs aktivieren"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Batch-API",
+      "description-batch-api": "Fragt in einer einzigen Anfrage mehrere Ressourcen ab, wobei die Leistung bei großen Dashboards verbessert wird. Erfordert die Rolle <2>Monitoring Reader</2> im Abonnementbereich auf <6>metrics.monitor.azure.com</6>. Über die kostenlose Stufe hinaus können zusätzliche <9>Kosten anfallen</9>.",
+      "label-enable-batch-api": "Batch-API aktivieren"
     },
     "config-editor": {
       "description-additional-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die Sie für mehr Kontrolle über Ihre Datenquelle konfiguriert können. Dazu gehören Secure Socks Proxy, Request Timeout und weitergeleitete Cookies.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Abonnements laden"
     },
     "dimension-fields": {
-      "aria-label-remove": "Entfernen",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Abmessungen",
       "placeholder-field": "Feld",
       "placeholder-operation": "Operation",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Metrik-Namensraum"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Sie können Elemente des gleichen Ressourcentyps über Abonnements und Regionen hinweg auswählen. Ressourcen in verschiedenen Abonnements oder Regionen werden in separaten Anfragen abgefragt und können unabhängig voneinander fehlschlagen. Um Ressourcen eines anderen Ressourcentyps auszuwählen, deaktivieren Sie bitte zuerst Ihre aktuelle Auswahl.",
+      "selection-notice-standard": "Sie können Elemente des gleichen Ressourcentyps und Orts auswählen. Um Ressourcen eines anderen Ressourcentyps oder Orts auszuwählen, deaktivieren Sie bitte zuerst Ihre aktuelle Auswahl."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Eigenschaften"
     },
     "nested-row": {
       "text-loading": "Wird geladen ..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Sortieren Sie die Ergebnisse auf der Grundlage einer oder mehrerer Spalten in aufsteigender oder absteigender Reihenfolge."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Das Laden wurde nach {{maxPages}} Seiten beendet; manche Ergebnisse wurden möglicherweise weggelassen.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Bei der Anfrage von Metadaten von Azure Monitor ist ein Fehler aufgetreten"

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type StoryFn, type Meta } from '@storybook/react-webpack5';
-import tinycolor from 'tinycolor2';
 
 import { InlineList } from './InlineList';
 import { List } from './List';
@@ -46,7 +45,7 @@ const getItem = (inline = false) => {
         css({
           color: 'white',
           fontWeight: 'bold',
-          background: tinycolor.fromRatio({ h: index / 26, s: 1, v: 1 }).toHexString(),
+          background: `hsl(${(index / 26) * 360}, 100%, 50%)`,
           padding: '10px',
         }),
         inline

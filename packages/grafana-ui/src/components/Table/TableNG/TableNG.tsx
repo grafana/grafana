@@ -1,17 +1,30 @@
 import { css } from '@emotion/css';
 import { Suspense, useMemo } from 'react';
 
-import { type Field, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, type DataFrame, FieldType } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 
 import { TableFlat } from './TableFlat';
 import { TableNested } from './TableNested';
-import { RESIZE_WIDTH_DEBOUNCE_MS, useDebouncedNumber } from './hooks';
 import { IS_SAFARI_26 } from './styles';
 import { type TableNGProps } from './types';
-import { getVisibleFields, shouldDebounceWidth } from './utils';
+
+// Display names are cached (or not) across the whole frame at once, so a sample of the first
+// fields is enough to tell whether a consumer already called `cacheFieldDisplayNames` — no need
+// to scan every field on wide frames.
+const DISPLAY_NAME_SNIFF_LIMIT = 10;
+
+function hasCachedDisplayNames(data: DataFrame): boolean {
+  const limit = Math.min(data.fields.length, DISPLAY_NAME_SNIFF_LIMIT);
+  for (let i = 0; i < limit; i++) {
+    if (!data.fields[i].state?.displayName) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // Safari 26 shipped with a bug that prevents the table from rendering correctly
 // unless it is wrapped in a container with `contain: strict`.
@@ -20,47 +33,27 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
   return <div className={className}>{props.children}</div>;
 }
 
-// The debounce costs a frame of staleness on every resize, so we only feed the debounced width to
-// layouts which are expensive to re-apply; everything else gets the live width. This wrapper is
-// always mounted (regardless of `enabled`) so toggling debounce — e.g. when wrap text or a cell type
-// changes field width-sensitivity — doesn't change the fiber tree and remount the table, which would
-// reset local state like filters, pagination, expanded rows, and column resize.
-function DebouncedWidth({
-  width,
-  enabled,
-  children,
-}: {
-  width: number;
-  enabled: boolean;
-  children: (width: number) => React.ReactNode;
-}) {
-  const debounced = useDebouncedNumber(width, RESIZE_WIDTH_DEBOUNCE_MS);
-  return <>{children(enabled ? debounced : width)}</>;
-}
-
 export function TableNG(props: TableNGProps) {
   const { data, width } = props;
+
+  // runs during render (before TableFlat/TableNested read field.state), not after commit —
+  // otherwise their own memoized row/column builders capture the pre-cache values and never see
+  // the update, since cacheFieldDisplayNames mutates field.state in place without triggering a
+  // re-render on its own.
+  useMemo(() => {
+    if (hasCachedDisplayNames(data)) {
+      return;
+    }
+    cacheFieldDisplayNames([data]);
+  }, [data]);
 
   const nestedDataField = useMemo(() => data.fields.find((f) => f.type === FieldType.nestedFrames), [data.fields]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
 
-  const needsDebounce = useMemo(() => {
-    // nested grids size their auto columns off the same panel width, so either level can require it.
-    const nestedFields: Field[] = nestedDataField?.values[0]?.[0]?.fields ?? [];
-    return shouldDebounceWidth(getVisibleFields(data.fields)) || shouldDebounceWidth(getVisibleFields(nestedFields));
-  }, [data.fields, nestedDataField]);
-
-  const renderTable = (tableWidth: number) =>
-    nestedDataField ? (
-      <TableNested {...props} width={tableWidth} nestedFramesField={nestedDataField} />
-    ) : (
-      <TableFlat {...props} width={tableWidth} />
-    );
-
-  const inner = (
-    <DebouncedWidth width={width} enabled={needsDebounce}>
-      {renderTable}
-    </DebouncedWidth>
+  const inner = nestedDataField ? (
+    <TableNested {...props} width={width} nestedFramesField={nestedDataField} />
+  ) : (
+    <TableFlat {...props} width={width} />
   );
   const rendered = IS_SAFARI_26 ? <Safari26Wrapper>{inner}</Safari26Wrapper> : inner;
 

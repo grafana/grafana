@@ -110,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: '6px',
     ':hover': {
       borderColor: theme.colors.action.hover,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z2,
     },
   }),
   selected: css({

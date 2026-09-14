@@ -566,8 +566,9 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 
 	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, resolveServiceName(config))
 
-	// Add a default scheme to handle K8s API error responses
+	// Register meta types so error responses (Status) decode with their details.
 	scheme := runtime.NewScheme()
+	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Group: "", Version: "v1"})
 
 	// Create the rate limiter explicitly so we can wrap it with instrumentation
 	rateLimiter := &instrumentedRateLimiter{

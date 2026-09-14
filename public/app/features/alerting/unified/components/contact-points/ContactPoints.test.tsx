@@ -380,7 +380,7 @@ describe('contact points', () => {
     it('should be able to search', async () => {
       const { user } = renderWithProvider(<ContactPointsPageContents />);
 
-      const searchInput = await screen.findByRole('textbox', { name: 'search contact points' });
+      const searchInput = await screen.findByRole('textbox', { name: 'Search by name or type' });
       await user.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
@@ -390,7 +390,7 @@ describe('contact points', () => {
       });
 
       // ⚠️ for some reason, the query params are preserved for all tests so don't forget to clear the input
-      const clearButton = screen.getByRole('button', { name: 'clear' });
+      const clearButton = screen.getByRole('button', { name: /clear/i });
       await user.click(clearButton);
       expect(searchInput).toHaveValue('');
     });

@@ -44,6 +44,7 @@ Alert lists allow you to display a list of important alerts that you want to tra
 ![An alert list visualization](/media/docs/grafana/panels-visualizations/screenshot-alert-list-v11.3.png)
 
 On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
+It shows only alerts that are currently active, and doesn't support historical alerts or dashboard time range filtering.
 
 {{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
@@ -105,9 +106,16 @@ These options allow you to limit alerts shown to only those that match the query
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | Alert name | Filter alerts by name. |
 | Alert instance label | Filter alert instances using [label](ref:alert-label) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
-| Datasource | Filter alerts from the selected data source. |
-| Folder | Filter Grafana-managed alert rules by alert rule folder. This option is available only when **Datasource** is empty or set to **Grafana**. It doesn't filter by dashboard folder. |
+| Datasource | Filter alerts from the selected data source. Selecting a specific data source excludes Grafana-managed alert rules, even if they match your other filters. To include Grafana-managed alerts, select the **-- Grafana --** data source or leave this field empty. |
+| Folder | Filter Grafana-managed alert rules by alert rule folder. This option is available only when **Datasource** is empty or set to **-- Grafana --**. It doesn't filter by dashboard folder. |
 | Show alerts with 0 instances | Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. Because these rules have no instances, they remain hidden if the **Alert instance label** filter is configured. |
+
+<!-- prettier-ignore-end -->
+
+{{< admonition type="note" >}}
+Grafana distinguishes between Grafana-managed alert rules and data source-managed alert rules.
+The **Datasource** filter only matches data source-managed alerts unless you select **-- Grafana --**, so leave **Datasource** empty if you want to see alerts from both kinds of rules.
+{{< /admonition >}}
 
 ### Alert state filter options
 

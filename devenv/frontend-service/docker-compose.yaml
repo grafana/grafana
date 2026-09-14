@@ -84,6 +84,8 @@ services:
         target: /config/config.yaml
       - source: goff_flags
         target: /flags/flags.yaml
+      - source: goff_flags_bundler
+        target: /flags/bundler.yaml
 
   postgres:
     image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
@@ -97,7 +99,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:v1.11.3@sha256:8c7256f412feb9f5f48f9f6f9394dc97ca887f63dea9304f347970ecc1787669
+    image: grafana/alloy:v1.19.2@sha256:b8ec653c44235fbe910879145dac3597d66b0aaecf60bcbbe82580767771a839
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
@@ -172,8 +174,14 @@ configs:
       retrievers:
         - kind: "file"
           path: "/flags/flags.yaml"
+        - kind: "file"
+          path: "/flags/bundler.yaml"
   goff_flags:
     file: ./goff-flags.yaml
+  # Which bundler the frontend-service reads assets from. Tilt points this at
+  # goff-flags.rspack.yaml when RSPACK=1 is set.
+  goff_flags_bundler:
+    file: ./goff-flags.webpack.yaml
 
 volumes:
   backend-data:

@@ -349,11 +349,43 @@ func TestObjectStorageLock_HeartbeatLossDetectedBeforeTTL(t *testing.T) {
 	require.Less(t, elapsed, ttl-hbi/2, "loss should be detected with safety margin before TTL (got %s, ttl=%s)", elapsed, ttl)
 }
 
+// The two ask opposite things: keep waiting, or stop work under a lock that is gone.
+// Returning one where the other is meant spins forever or drops a live lock.
+func TestLockBackendSeparatesHeldFromNotOwned(t *testing.T) {
+	require.NotErrorIs(t, errLockHeld, errLockNotOwned)
+	require.NotErrorIs(t, errLockNotOwned, errLockHeld)
+
+	for name, newBackend := range map[string]func(t *testing.T) lockBackend{
+		"local": func(*testing.T) lockBackend { return newLocalLockBackend() },
+		"cdk":   func(t *testing.T) lockBackend { return testBackend(t) },
+	} {
+		t.Run(name, func(t *testing.T) {
+			ctx := t.Context()
+			backend := newBackend(t)
+			key := testKey(t)
+			require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+			// Nothing below releases it: the key is derived from the test name, so against
+			// a real bucket a rerun inside the TTL would fail the Create above.
+			t.Cleanup(func() { _ = backend.Delete(context.Background(), key, "owner-1") })
+
+			// Someone else got there first.
+			require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-2", time.Minute)), errLockHeld)
+
+			// Ours to begin with, no longer.
+			require.ErrorIs(t, backend.Update(ctx, key, newLockInfo("owner-2", time.Minute)), errLockNotOwned)
+			require.ErrorIs(t, backend.Delete(ctx, key, "owner-2"), errLockNotOwned)
+
+			// Still owner-1's after those refusals, so it can release it.
+			require.NoError(t, backend.Delete(ctx, key, "owner-1"))
+		})
+	}
+}
+
 func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	backend := &failingUpdateBackend{
 		lockBackend:   newFakeBackend(newConditionalBucket()),
 		failAfterN:    0,
-		updateErrFunc: func() error { return errLockHeld },
+		updateErrFunc: func() error { return errLockNotOwned },
 	}
 
 	lock := newTestLock(t, backend, "test-lock", "instance-1", 5*time.Second, 50*time.Millisecond)
@@ -364,7 +396,7 @@ func TestObjectStorageLock_ImmediateLossOnOwnershipError(t *testing.T) {
 	select {
 	case <-lock.Lost():
 	case <-time.After(500 * time.Millisecond):
-		t.Fatal("expected immediate lock loss on errLockHeld, but it was not detected")
+		t.Fatal("expected immediate lock loss on errLockNotOwned, but it was not detected")
 	}
 }
 

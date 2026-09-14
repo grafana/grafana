@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"errors"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -131,6 +132,8 @@ type JobResourceResult struct {
 	reason       string // explicit reason, takes precedence over classifyWarning
 	err          error
 	warning      error
+	startedAt    time.Time // stamped when the builder is created; used to derive the operation duration at record time
+	bytes        int       // size in bytes of the resource content written; 0 when unknown or not a content write
 }
 
 // jobResourceResultBuilder is a builder for creating JobResourceResult instances using a fluent API.
@@ -138,10 +141,13 @@ type jobResourceResultBuilder struct {
 	result JobResourceResult
 }
 
-// NewResourceResult creates a new builder for JobResourceResult.
+// NewResourceResult creates a new builder for JobResourceResult. The creation
+// time is stamped now so the recorder can derive how long the operation took:
+// callers build the result immediately before performing the resource operation,
+// then record it once the operation completes.
 func NewResourceResult() *jobResourceResultBuilder {
 	return &jobResourceResultBuilder{
-		result: JobResourceResult{},
+		result: JobResourceResult{startedAt: time.Now()},
 	}
 }
 
@@ -225,6 +231,25 @@ func (b *jobResourceResultBuilder) WithAction(action repository.FileAction) *job
 	return b
 }
 
+// WithStartTime overrides the operation start stamped at construction. Use it
+// on callback paths where the result can only be built after the operation has
+// run (e.g. per-folder callbacks): pass the time captured before the operation
+// so the recorded duration still reflects the work rather than just the
+// construction-to-record gap.
+func (b *jobResourceResultBuilder) WithStartTime(t time.Time) *jobResourceResultBuilder {
+	b.result.startedAt = t
+	return b
+}
+
+// WithBytes records the size in bytes of the resource content involved in the
+// operation (e.g. the file read on a sync write, or the content written on
+// export). It is observed in the resource-size histogram at record time. Leave
+// it unset for operations without meaningful content (deletes, folders).
+func (b *jobResourceResultBuilder) WithBytes(n int) *jobResourceResultBuilder {
+	b.result.bytes = n
+	return b
+}
+
 // WithReason sets an explicit reason on the result. This takes precedence over
 // the reason derived from classifyWarning and can be used on success results
 // to explain why an operation happened (e.g., UID migration).
@@ -300,6 +325,23 @@ func (r JobResourceResult) PreviousPath() string {
 // Action returns the action performed on the resource.
 func (r JobResourceResult) Action() repository.FileAction {
 	return r.action
+}
+
+// Bytes returns the size in bytes of the resource content involved in the
+// operation, or 0 when unknown or not a content write.
+func (r JobResourceResult) Bytes() int {
+	return r.bytes
+}
+
+// elapsed returns how long the operation took, measured from when the result's
+// builder was created (see NewResourceResult) until now. It returns zero if the
+// start time was never stamped, so results built outside the builder are simply
+// treated as untimed.
+func (r JobResourceResult) elapsed() time.Duration {
+	if r.startedAt.IsZero() {
+		return 0
+	}
+	return time.Since(r.startedAt)
 }
 
 // Error returns the error associated with the resource operation.

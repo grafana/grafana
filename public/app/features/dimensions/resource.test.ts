@@ -4,9 +4,9 @@ import { ResourceDimensionMode } from '@grafana/schema';
 import { getPublicOrAbsoluteUrl, getResourceDimension } from './resource';
 
 describe('getResourceDimension', () => {
-  const publicPath = 'https://grafana.fake/public/';
+  const buildPath = 'https://grafana.fake/public/build/';
   beforeAll(() => {
-    window.__grafana_public_path__ = publicPath;
+    window.__grafana_build_path__ = buildPath;
   });
 
   it('fixed relative path', () => {
@@ -14,7 +14,7 @@ describe('getResourceDimension', () => {
     const fixedValue = 'img/icons/unicons/question-circle.svg';
     const config = { mode: ResourceDimensionMode.Fixed, fixed: fixedValue };
 
-    expect(getResourceDimension(frame, config).value()).toEqual(`${publicPath}build/${fixedValue}`);
+    expect(getResourceDimension(frame, config).value()).toEqual(`${buildPath}${fixedValue}`);
   });
 
   it('fixed full URL path', () => {
@@ -104,7 +104,6 @@ describe('getResourceDimension', () => {
   });
 
   it('should handle numeric field values with icon from value mapping', () => {
-    const publicPath = 'https://grafana.fake/public/';
     const frame = createDataFrame({
       fields: [
         {
@@ -125,11 +124,11 @@ describe('getResourceDimension', () => {
     });
     const config = { mode: ResourceDimensionMode.Field, field: 'status_field', fixed: '' };
 
-    expect(getResourceDimension(frame, config).get(0)).toEqual(`${publicPath}build/img/icons/unicons/check-circle.svg`);
+    expect(getResourceDimension(frame, config).get(0)).toEqual(`${buildPath}img/icons/unicons/check-circle.svg`);
     expect(getResourceDimension(frame, config).get(1)).toEqual(
-      `${publicPath}build/img/icons/unicons/exclamation-triangle.svg`
+      `${buildPath}img/icons/unicons/exclamation-triangle.svg`
     );
-    expect(getResourceDimension(frame, config).get(2)).toEqual(`${publicPath}build/img/icons/unicons/times-circle.svg`);
+    expect(getResourceDimension(frame, config).get(2)).toEqual(`${buildPath}img/icons/unicons/times-circle.svg`);
   });
 
   it('should return empty string for unmapped numeric values without icon', () => {
@@ -153,7 +152,6 @@ describe('getResourceDimension', () => {
   });
 
   it('should handle mixed numeric values with partial mappings', () => {
-    const publicPath = 'https://grafana.fake/public/';
     const frame = createDataFrame({
       fields: [
         {
@@ -174,10 +172,10 @@ describe('getResourceDimension', () => {
     });
     const config = { mode: ResourceDimensionMode.Field, field: 'status_field', fixed: '' };
 
-    expect(getResourceDimension(frame, config).get(0)).toEqual(`${publicPath}build/img/icons/unicons/check-circle.svg`);
+    expect(getResourceDimension(frame, config).get(0)).toEqual(`${buildPath}img/icons/unicons/check-circle.svg`);
     expect(getResourceDimension(frame, config).get(1)).toEqual('');
     expect(getResourceDimension(frame, config).get(2)).toEqual(
-      `${publicPath}build/img/icons/unicons/exclamation-triangle.svg`
+      `${buildPath}img/icons/unicons/exclamation-triangle.svg`
     );
   });
 
@@ -185,13 +183,13 @@ describe('getResourceDimension', () => {
 });
 
 describe('getPublicOrAbsoluteUrl', () => {
-  const publicPath = 'https://grafana.fake/public/';
+  const buildPath = 'https://grafana.fake/public/build/';
   beforeAll(() => {
-    window.__grafana_public_path__ = publicPath;
+    window.__grafana_build_path__ = buildPath;
   });
 
   it('should handle string paths correctly', () => {
-    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual(`${publicPath}build/icon.png`);
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual(`${buildPath}icon.png`);
     expect(getPublicOrAbsoluteUrl('https://example.com/icon.png')).toEqual('https://example.com/icon.png');
   });
 
@@ -204,24 +202,24 @@ describe('getPublicOrAbsoluteUrl', () => {
     expect(getPublicOrAbsoluteUrl(['icon.png'])).toEqual('');
   });
 
-  it('should handle undefined publicPath gracefully', () => {
-    const originalPath = window.__grafana_public_path__;
+  it('should handle an undefined build path gracefully', () => {
+    const originalPath = window.__grafana_build_path__;
 
     // @ts-ignore - Intentionally testing runtime edge case
-    window.__grafana_public_path__ = undefined;
+    window.__grafana_build_path__ = undefined;
 
-    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('public/build/icon.png');
 
-    window.__grafana_public_path__ = originalPath;
+    window.__grafana_build_path__ = originalPath;
   });
 
-  it('should handle empty string publicPath gracefully', () => {
-    const originalPath = window.__grafana_public_path__;
+  it('should handle an empty string build path gracefully', () => {
+    const originalPath = window.__grafana_build_path__;
 
-    window.__grafana_public_path__ = '';
+    window.__grafana_build_path__ = '';
 
-    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('/build/icon.png');
+    expect(getPublicOrAbsoluteUrl('icon.png')).toEqual('public/build/icon.png');
 
-    window.__grafana_public_path__ = originalPath;
+    window.__grafana_build_path__ = originalPath;
   });
 });

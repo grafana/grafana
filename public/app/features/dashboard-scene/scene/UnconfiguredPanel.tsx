@@ -36,7 +36,8 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
+import { findVizPanelByKey } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -233,7 +234,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
           <div
             className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
+            inert={!isButtonsVisible}
           >
             {buttons.map((button, i) => (
               <div

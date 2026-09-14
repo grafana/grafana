@@ -1,19 +1,19 @@
 import { type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../sidebar/shared';
+import { edit } from '../actions/utils/edit';
 
 import { createPresetApplyHandler } from './getPanelFrameOptions';
 
-jest.mock('../sidebar/shared', () => ({
-  dashboardEditActions: { edit: jest.fn() },
+jest.mock('../actions/utils/edit', () => ({
+  edit: jest.fn(),
 }));
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
 }));
 
-const mockDashboardEditActions = jest.mocked(dashboardEditActions);
+const mockEdit = jest.mocked(edit);
 
 function buildPanel(fieldConfig: FieldConfigSource = { defaults: { custom: {} }, overrides: [] }) {
   return {
@@ -43,20 +43,18 @@ describe('createPresetApplyHandler', () => {
     expect(typeof createPresetApplyHandler(buildPanel())).toBe('function');
   });
 
-  it('calls dashboardEditActions.edit with a description', () => {
+  it('calls edit with a description', () => {
     const panel = buildPanel();
     createPresetApplyHandler(panel)(buildPreset(), panel.state.fieldConfig);
 
-    expect(mockDashboardEditActions.edit).toHaveBeenCalledWith(
-      expect.objectContaining({ description: expect.any(String) })
-    );
+    expect(mockEdit).toHaveBeenCalledWith(expect.objectContaining({ description: expect.any(String) }));
   });
 
   describe('perform - merges preset on top of current panel config', () => {
     it('applies preset custom fields over panel custom fields', () => {
       const panel = buildPanel({ defaults: { custom: { lineWidth: 3 } }, overrides: [] });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -71,7 +69,7 @@ describe('createPresetApplyHandler', () => {
     it('preserves panel custom fields not defined in the preset', () => {
       const panel = buildPanel({ defaults: { custom: { lineWidth: 3, axisPlacement: 'right' } }, overrides: [] });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -91,7 +89,7 @@ describe('createPresetApplyHandler', () => {
       const preset = buildPreset({
         fieldConfig: { defaults: { custom: { lineWidth: 1, stacking: { mode: 'none', group: 'A' } } }, overrides: [] },
       });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -111,7 +109,7 @@ describe('createPresetApplyHandler', () => {
         overrides: [],
       });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -127,7 +125,7 @@ describe('createPresetApplyHandler', () => {
       const override = { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'decimals', value: 2 }] };
       const panel = buildPanel({ defaults: { custom: {} }, overrides: [override] });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -140,7 +138,7 @@ describe('createPresetApplyHandler', () => {
       const preset = buildPreset({
         fieldConfig: { defaults: { custom: { lineWidth: 1 }, color: presetColor }, overrides: [] },
       });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -156,7 +154,7 @@ describe('createPresetApplyHandler', () => {
       const panelColor = { mode: 'fixed' as const, fixedColor: 'red' };
       const panel = buildPanel({ defaults: { custom: {}, color: panelColor }, overrides: [] });
       const preset = buildPreset({ fieldConfig: { defaults: { custom: { lineWidth: 1 } }, overrides: [] } });
-      mockDashboardEditActions.edit.mockImplementation(({ perform }) => perform());
+      mockEdit.mockImplementation(({ perform }) => perform());
 
       createPresetApplyHandler(panel)(preset, panel.state.fieldConfig);
 
@@ -173,7 +171,7 @@ describe('createPresetApplyHandler', () => {
     it('restores the previous fieldConfig', () => {
       const prevFieldConfig: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
       const panel = buildPanel(prevFieldConfig);
-      mockDashboardEditActions.edit.mockImplementation(({ undo }) => undo());
+      mockEdit.mockImplementation(({ undo }) => undo());
 
       createPresetApplyHandler(panel)(buildPreset(), prevFieldConfig);
 

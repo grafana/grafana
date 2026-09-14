@@ -500,7 +500,7 @@ func (s *Storage) enforceMaxAllowedVersion(version string) error {
 		return nil
 	}
 	return apierrors.NewBadRequest(fmt.Sprintf(
-		"%s: version %s exceeds the configured maximum version %s for group %s",
+		"%s: version %q exceeds the configured maximum version %s for group %s",
 		s.gr.String(), version, maxAllowed, s.gr.Group))
 }
 

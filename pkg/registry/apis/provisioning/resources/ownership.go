@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"maps"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -28,9 +29,7 @@ type TakeoverAllowlist struct {
 // The map is defensively copied so the caller is free to mutate ids afterwards.
 func NewTakeoverAllowlist(ids map[ResourceIdentifier]struct{}) *TakeoverAllowlist {
 	cp := make(map[ResourceIdentifier]struct{}, len(ids))
-	for k, v := range ids {
-		cp[k] = v
-	}
+	maps.Copy(cp, ids)
 	return &TakeoverAllowlist{ids: cp}
 }
 

@@ -25,9 +25,11 @@ import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNotifyDisplayedRowIndices,
   useNestedColWidths,
   useNestedRows,
   usePaginatedRows,
@@ -35,8 +37,14 @@ import {
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
+  useTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -49,15 +57,13 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  createTypographyContext,
-  extractPixelValue,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
   getDisplayName,
   getStableRowKey,
   getVisibleFields,
+  markEdgeColumns,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -74,21 +80,26 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enableVirtualization,
     getActions = () => [],
     height,
+    pageSize,
     maxRowHeight: _maxRowHeight,
     nestedFramesField,
     noHeader,
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onDisplayedRowIndicesChange,
     onSortByChange,
     showTypeIcons,
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -136,6 +147,16 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  // Row-height and column-width measurement must both see the same rendered value column-building
+  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
+  // `prepareFieldsForDisplay`), so measuring against the raw visible fields would stringify its raw
+  // object value to "[object Object]" — a single short line that never grows the row past one line,
+  // and that content-aware width sizes no wider than a plain short string column.
+  const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
+  const nestedPreparedFields = useMemo(
+    () => prepareFieldsForDisplay(nestedVisibleFields, theme),
+    [nestedVisibleFields, theme]
+  );
   const nestedHasFooter = useMemo(
     () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
     [nestedVisibleFields]
@@ -154,6 +175,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   } = useSortedRows(filteredRows, data.fields, nestedFields, { hasNestedFrames: true, initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+  useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
 
@@ -194,26 +216,18 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
-  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
-  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
-  const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
+  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
+  // The expander column only exists when there's a nested frame to expand into (see the columns
+  // memo below), so with no rows its width isn't taken out of what the real columns get to use.
+  const availableWidth = useMemo(
+    () => width - (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) - scrollbarWidth,
+    [width, scrollbarWidth, firstRowNestedData]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const typographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
-      ),
-    [theme]
-  );
+  const typographyCtx = useTypographyCtx(theme);
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -229,13 +243,21 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
-  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey);
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+    tableRefreshEnabled,
+    filter,
+  });
+
+  const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -246,9 +268,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
-    nestedVisibleFields,
+    nestedVisibleFields: nestedPreparedFields,
     availableWidth,
     structureRev,
+    contentAware: contentAwareWidths,
   });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
@@ -256,7 +279,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -272,7 +294,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const rowHeight = useRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: preparedFields,
     hasNestedFrames: true,
     defaultHeight: defaultRowHeight,
     defaultNestedHeight: defaultNestedRowHeight,
@@ -280,7 +302,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     maxHeight: maxRowHeight,
     nestedColWidths: nestedFieldWidths,
-    nestedFields: nestedVisibleFields,
+    nestedFields: nestedPreparedFields,
     nestedRows,
     nestedFooterHeight,
   });
@@ -302,10 +324,12 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     hasNestedFrames: true,
+    pageSize,
+    noPanelPadding,
   });
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent);
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -378,7 +402,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -396,9 +419,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     }),
     [
-      applyToRowBgFn,
       disableKeyboardEvents,
       disableSanitizeHtml,
       filter,
@@ -413,6 +436,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       showTypeIcons,
       theme,
       timeRange,
+      tableRefreshEnabled,
     ]
   );
 
@@ -541,6 +565,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
           nestedRows[row.__index].raw,
           nestedRows[row.__index].final
         );
+        // Each nested table is its own grid with its own header row, so it needs its own edge
+        // markers — the outer table's markers sit on the outer columns, the first of which is the
+        // expander that this nested grid is rendered inside.
+        markEdgeColumns(result[row.__index]);
       }
     }
     return result;
@@ -550,6 +578,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     if (!firstRowNestedData) {
+      markEdgeColumns(result);
       return result;
     }
 
@@ -571,6 +600,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       )
     );
 
+    // after the expander column is in place, so it (not the first field) is tagged as the edge.
+    markEdgeColumns(result);
     return result;
   }, [
     buildNestedTableExpanderColumn,
@@ -628,6 +659,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}

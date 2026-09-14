@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 	"time"
@@ -223,9 +224,7 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 			labels = data.Labels{}
 		}
 		delete(labels, "__name__")
-		for k, v := range extraLabels {
-			labels[k] = v
-		}
+		maps.Copy(labels, extraLabels)
 
 		points = append(points, Point{
 			Name:   name,

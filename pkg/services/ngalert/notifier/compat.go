@@ -75,7 +75,7 @@ func PostableAPIConfigToNotificationsConfiguration(
 	return alertingNotify.NotificationsConfiguration{
 		RoutingTree:   RouteToAPI(cfg.AlertmanagerConfig.Route),
 		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
-		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals),
+		TimeIntervals: ModelToTimeIntervals(cfg.SortedTimeIntervals()),
 		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates()), // templates are already merged.
 		Receivers:     receivers,
 		Limits:        limits,
@@ -113,7 +113,7 @@ func ModelToTimeIntervals(in []v1.TimeInterval) []alertingNotify.TimeInterval {
 	out := make([]alertingNotify.TimeInterval, 0, len(in))
 	for _, t := range in {
 		out = append(out, config.TimeInterval{
-			Name:          t.Name,
+			Name:          t.Title,
 			TimeIntervals: t.TimeIntervals,
 		})
 	}

@@ -12,7 +12,7 @@ labels:
 menuTitle: Configure
 title: Configure the PostgreSQL data source
 weight: 10
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # Configure the PostgreSQL data source
@@ -23,11 +23,11 @@ This document explains how to configure the PostgreSQL data source and lists all
 
 - You need the `Organization administrator` role to configure the data source. You can also [configure it via YAML](#provision-the-data-source) using Grafana provisioning or [using Terraform](#configure-with-terraform).
 
-- Grafana includes a built-in PostgreSQL data source; no plugin installation is required.
+- Grafana ships with the PostgreSQL data source preinstalled in OSS and Enterprise. You don't need to install a plugin. For update options, refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/#plugin-updates).
 
 - Have your PostgreSQL security details ready (certificates and client keys, if using TLS/SSL).
 
-- Note your PostgreSQL version; you’ll be prompted for it during configuration.
+- Note your PostgreSQL version; you'll be prompted for it during configuration.
 
 {{< admonition type="note" >}}
 When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant schemas and tables. Grafana does not validate the safety of queries, so users could run potentially harmful SQL (for example, `DROP TABLE`). Create a dedicated PostgreSQL user with restricted permissions to limit risk.
@@ -53,7 +53,7 @@ Complete the following steps to set up a new PostgreSQL data source:
 1. Select the **PostgreSQL data source**.
 1. Click **Add new data source** in the upper right.
 
-You are taken to the **Settings** tab where you will configure the data source.
+You are taken to the **Settings** tab where you configure the data source.
 
 ## PostgreSQL configuration options
 
@@ -69,7 +69,7 @@ Following is a list of PostgreSQL configuration options:
 {{< admonition type="note" >}}
 **Grafana Cloud users:** Grafana Cloud can't reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`) directly. If your PostgreSQL instance isn't publicly accessible, you must set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish a secure tunnel between Grafana Cloud and your private network. If you experience intermittent connection drops with the Docker-based PDC agent, try switching to the binary-based agent instead.
 
-If your database is publicly accessible but protected by a firewall, you must allowlist the Grafana Cloud outbound IP addresses. Grafana Cloud doesn't provide per-stack static IP addresses—only service-level IP ranges. For the current list of outbound IP addresses, refer to [Allow Grafana Cloud IP addresses in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
+If your database is publicly accessible but protected by a firewall, you must allowlist the Grafana Cloud outbound IP addresses. Grafana Cloud doesn't provide per-stack static IP addresses. It provides only service-level IP ranges. For the current list of outbound IP addresses, refer to [Allow Grafana Cloud IP addresses in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
 {{< /admonition >}}
 
 | Setting       | Description                                                                                                                                                                                                                                                            |
@@ -153,7 +153,7 @@ These settings control how Grafana manages connections to your PostgreSQL server
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Private data source connect | _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/). |
 
-Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
+Click **Manage private data source connect** to be taken to your PDC connection page, where you'll find your PDC configuration details.
 
 **Secure SOCKS proxy:**
 
@@ -184,6 +184,8 @@ This value must be formatted as a number followed by a valid time identifier:
 
 You can define and configure the data source in YAML files with [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources). For more information about provisioning and available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources).
 
+The plugin ID is `grafana-postgresql-datasource`. Provisioning examples in this document use `type: postgres`, which remains a supported alias.
+
 ### Basic provisioning example
 
 The following example provisions a PostgreSQL data source with password authentication and SSL disabled:
@@ -205,7 +207,7 @@ datasources:
       maxIdleConns: 100
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
-      postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      postgresVersion: 903 # 900=9.0 ... 906=9.6, 1000=10, 1100=11, 1200=12, 1300=13, 1400=14, 1500=15
       timescaledb: false
 ```
 
@@ -301,24 +303,25 @@ datasources:
 
 The following table lists all `jsonData` and `secureJsonData` fields supported when provisioning the PostgreSQL data source:
 
-| Field                    | Location         | Description                                                                            |
-| ------------------------ | ---------------- | -------------------------------------------------------------------------------------- |
-| `database`               | `jsonData`       | The database name.                                                                     |
-| `sslmode`                | `jsonData`       | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`.                     |
-| `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                              |
-| `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                              |
-| `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                               |
-| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                  |
-| `postgresVersion`        | `jsonData`       | Server version code: `903` (9.3), `904` (9.4), `905` (9.5), `906` (9.6), `1000` (10+). |
-| `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                          |
-| `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                        |
-| `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                           |
-| `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                            |
-| `sslKeyFile`             | `jsonData`       | Path to client key (when using `file-path` method).                                    |
-| `password`               | `secureJsonData` | Database password.                                                                     |
-| `tlsCACert`              | `secureJsonData` | Root CA certificate content (when using `file-content` method).                        |
-| `tlsClientCert`          | `secureJsonData` | Client certificate content (when using `file-content` method).                         |
-| `tlsClientKey`           | `secureJsonData` | Client key content (when using `file-content` method).                                 |
+| Field                    | Location         | Description                                                                                                                                                                                                   |
+| ------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `database`               | `jsonData`       | The database name.                                                                                                                                                                                            |
+| `sslmode`                | `jsonData`       | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`.                                                                                                                                            |
+| `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                                                                                                                                                     |
+| `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                                                                                                                                                     |
+| `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                                                                                                                                                      |
+| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                                                                                                                                         |
+| `postgresVersion`        | `jsonData`       | Server version code for the query builder. Examples: `900` (9.0), `903` (9.3), `1000` (10), `1100` (11), `1200` (12), `1300` (13), `1400` (14), `1500` (15). Grafana auto-detects this on save when possible. |
+| `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                                                                                                                                                 |
+| `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`).                                                                                                 |
+| `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                                                                                                                                               |
+| `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                                                                                                                                                  |
+| `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                                                                                                                                                   |
+| `sslKeyFile`             | `jsonData`       | Path to client key (when using `file-path` method).                                                                                                                                                           |
+| `password`               | `secureJsonData` | Database password.                                                                                                                                                                                            |
+| `tlsCACert`              | `secureJsonData` | Root CA certificate content (when using `file-content` method).                                                                                                                                               |
+| `tlsClientCert`          | `secureJsonData` | Client certificate content (when using `file-content` method).                                                                                                                                                |
+| `tlsClientKey`           | `secureJsonData` | Client key content (when using `file-content` method).                                                                                                                                                        |
 
 #### Troubleshoot provisioning issues
 

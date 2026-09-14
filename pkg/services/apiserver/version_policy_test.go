@@ -30,7 +30,7 @@ func TestCapRanksMajorFirst(t *testing.T) {
 	}
 
 	t.Run("the whole v2 line outranks a v1 cap and is rejected", func(t *testing.T) {
-		reg := capRegistry(naturalOrderSnapshot(scheme, groupVersions))
+		reg := capRegistry(NaturalOrderSnapshot(scheme, groupVersions))
 		for _, v := range []string{"v2", "v2beta1", "v2alpha1"} {
 			allowed, maxAllowed := reg.IsVersionAllowed(group, v)
 			require.False(t, allowed, "%s must be rejected by max=v1", v)
@@ -39,7 +39,7 @@ func TestCapRanksMajorFirst(t *testing.T) {
 	})
 
 	t.Run("lower majors stay below the cap and are allowed", func(t *testing.T) {
-		reg := capRegistry(naturalOrderSnapshot(scheme, groupVersions))
+		reg := capRegistry(NaturalOrderSnapshot(scheme, groupVersions))
 		for _, v := range []string{"v1", "v1beta1", "v0alpha1"} {
 			allowed, _ := reg.IsVersionAllowed(group, v)
 			require.True(t, allowed, "%s must be allowed under max=v1", v)
@@ -48,7 +48,7 @@ func TestCapRanksMajorFirst(t *testing.T) {
 
 	t.Run("reordering the scheme does not move the ceiling", func(t *testing.T) {
 		require.NoError(t, scheme.SetVersionPriority(gv("v1"), gv("v2"), gv("v0alpha1"), gv("v2beta1"), gv("v2alpha1"), gv("v1beta1")))
-		allowed, _ := capRegistry(naturalOrderSnapshot(scheme, groupVersions)).IsVersionAllowed(group, "v2beta1")
+		allowed, _ := capRegistry(NaturalOrderSnapshot(scheme, groupVersions)).IsVersionAllowed(group, "v2beta1")
 		require.False(t, allowed, "v2beta1 still rejected: ranking is major-first, not registration order")
 	})
 }

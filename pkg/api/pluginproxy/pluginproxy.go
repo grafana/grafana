@@ -150,7 +150,10 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 		return hasAccess
 	}
 	if route.ReqRole.IsValid() {
-		return proxy.signedInUser.GetOrgRole().Includes(route.ReqRole)
+		if hasUserRole := proxy.signedInUser.GetOrgRole().Includes(route.ReqRole); !hasUserRole {
+			logger.FromContext(proxy.req.Context()).Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.req.URL.Path, "role", route.ReqRole)
+			return false
+		}
 	}
 	return true
 }

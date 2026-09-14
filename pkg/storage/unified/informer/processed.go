@@ -1,11 +1,11 @@
 package informer
 
 import (
-	"errors"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // ProcessTrigger records how the work-queue key a consumer is now processing was
@@ -46,33 +46,37 @@ const (
 // every delivery has no such gate, so its source="relist" measures
 // resync-driven work volume rather than missed events.
 type ProcessedMetrics struct {
-	resource        string
 	natsBacked      bool
 	processed       *prometheus.CounterVec
 	deliveryLatency *prometheus.HistogramVec
 }
 
 // NewProcessedMetrics builds the metrics on reg for the given resource label
-// value and delivery backend, reusing collectors already registered on reg so
-// several consumers share one set of series. A nil reg leaves the collectors
-// unregistered (the recorder still classifies and its record calls are harmless
-// no-ops).
+// value and delivery backend. A nil reg leaves the collectors unregistered (the
+// recorder still classifies and its record calls are harmless no-ops).
+//
+// resource is a const label, so each consumer gets its own collector while the
+// scrape still shows one metric family with a resource dimension. Two consumers
+// built for the same resource on one registry is a wiring mistake, and registers
+// as a duplicate rather than passing unnoticed.
 func NewProcessedMetrics(reg prometheus.Registerer, resource string, natsBacked bool) *ProcessedMetrics {
+	constLabels := prometheus.Labels{"resource": resource}
 	return &ProcessedMetrics{
-		resource:   resource,
 		natsBacked: natsBacked,
-		processed: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_events_processed_total",
-			Help: "Processing started for a work-queue key, by resource and source (live = a live event; relist = the periodic re-list; initial = the informer's initial list).",
-		}, []string{"resource", "source"})),
-		deliveryLatency: registerOrReuse(reg, prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		processed: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name:        "grafana_provisioning_events_processed_total",
+			Help:        "Processing started for a work-queue key, by resource and source (live = a live event; relist = the periodic re-list; initial = the informer's initial list).",
+			ConstLabels: constLabels,
+		}, []string{"source"}),
+		deliveryLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_provisioning_event_delivery_latency_seconds",
 			Help:                            "Time from an event being issued (its resource version, in the DB/NATS) to it entering the work queue, by resource and source, sampled only for events that lead to genuine processing. Excludes the time the key then waits in the queue to be picked up.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource", "source"})),
+			ConstLabels:                     constLabels,
+		}, []string{"source"}),
 	}
 }
 
@@ -113,7 +117,7 @@ func (m *ProcessedMetrics) RecordProcessed(trigger ProcessTrigger) {
 	}
 	switch trigger {
 	case TriggerLive, TriggerRelist, TriggerInitial:
-		m.processed.WithLabelValues(m.resource, string(trigger)).Inc()
+		m.processed.WithLabelValues(string(trigger)).Inc()
 	}
 }
 
@@ -127,24 +131,6 @@ func (m *ProcessedMetrics) ObserveDeliveryLatency(trigger ProcessTrigger, second
 	}
 	switch trigger {
 	case TriggerLive, TriggerRelist, TriggerInitial:
-		m.deliveryLatency.WithLabelValues(m.resource, string(trigger)).Observe(seconds)
+		m.deliveryLatency.WithLabelValues(string(trigger)).Observe(seconds)
 	}
-}
-
-// registerOrReuse registers c on reg, returning the collector already registered
-// under the same descriptor when there is one — several consumers built against
-// the same registry share one set of collectors. A nil reg returns c
-// unregistered.
-func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
-	if reg == nil {
-		return c
-	}
-	if err := reg.Register(c); err != nil {
-		are := prometheus.AlreadyRegisteredError{}
-		if errors.As(err, &are) {
-			return are.ExistingCollector.(C)
-		}
-		panic(err)
-	}
-	return c
 }

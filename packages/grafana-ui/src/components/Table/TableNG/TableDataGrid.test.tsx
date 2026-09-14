@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
+import { createTheme } from '@grafana/data';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
@@ -53,6 +54,26 @@ describe('TableDataGrid', () => {
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
+  });
+
+  describe('table.refresh', () => {
+    it('rounds the grid itself so a row scrolled under the header cannot show through its corners', () => {
+      // The header cells round their own top corners, which leaves the area outside the radius
+      // transparent. The grid is the scroll container, so rounding it is what clips the rows it
+      // scrolls out of that corner.
+      const radius = createTheme().shape.radius.default;
+      const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const refreshed = window.getComputedStyle(screen.getByRole('grid'));
+      expect(refreshed.getPropertyValue('border-start-start-radius')).toBe(radius);
+      expect(refreshed.getPropertyValue('border-start-end-radius')).toBe(radius);
+
+      unmount();
+
+      // the classic header shares the rows' background, so the table stays square
+      render(<TableDataGrid {...makeProps()} />);
+      const classic = window.getComputedStyle(screen.getByRole('grid'));
+      expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+    });
   });
 
   describe('DataGrid prop pass-through', () => {

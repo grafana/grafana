@@ -279,12 +279,14 @@ describe('browseDashboardsAPI', () => {
                   dashboards: 3,
                   library_elements: 4,
                   alertrules: 5,
+                  recordingrules: 6,
                 }
               : {
                   folders: 1,
                   dashboards: 2,
                   library_elements: 3,
                   alertrules: 4,
+                  recordingrules: 1,
                 }
           )
         )
@@ -302,6 +304,7 @@ describe('browseDashboardsAPI', () => {
         dashboards: 6,
         librarypanels: 7,
         alertrules: 9,
+        recordingrules: 7,
       });
     });
 
@@ -331,6 +334,32 @@ describe('browseDashboardsAPI', () => {
         dashboards: 3,
         librarypanels: 4,
         alertrules: 5,
+        recordingrules: 0,
+      });
+    });
+
+    it('includes recording rule counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({ folders: 1, dashboards: 2, library_elements: 3, alertrules: 4, recordingrules: 5 })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 2,
+        dashboards: 2,
+        librarypanels: 3,
+        alertrules: 4,
+        recordingrules: 5,
       });
     });
 
@@ -351,6 +380,7 @@ describe('browseDashboardsAPI', () => {
         dashboards: 5,
         librarypanels: 0,
         alertrules: 0,
+        recordingrules: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
     });

@@ -37,6 +37,25 @@ func TestResolveCollection_CatalogRows(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestEnsureCollection_IsExternalMismatchIsRejected(t *testing.T) {
+	// A resolve hit whose stored IsExternal disagrees with the caller's
+	// isExternal must be rejected before any further DB work (no insert,
+	// no partition DDL) — otherwise a fat-fingered allowlist entry could
+	// hand external writers the internal collection.
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"}).
+			AddRow("dashboard.grafana.app", "dashboards", "dashboards", false))
+
+	_, err := b.EnsureCollection(ctx, "dashboard.grafana.app", "dashboards", true)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "is internal, not writable through the external API")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestResolveCollection_DBErrorSurfaces(t *testing.T) {
 	// Non-builtin lookups propagate catalog errors instead of silently
 	// narrowing the catalog to the built-in entries.

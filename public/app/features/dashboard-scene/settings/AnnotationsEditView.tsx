@@ -6,8 +6,9 @@ import {
   PageLayoutType,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -67,10 +68,10 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public getDataSourceRefForAnnotation = () => {
+  public getDataSourceRefForAnnotation = async () => {
     // get current default datasource ref from instance settings
     // null is passed to get the default datasource
-    const defaultInstanceDS = getDataSourceSrv().getInstanceSettings(null);
+    const defaultInstanceDS = await getDataSourceInstanceSettings(null);
     // check for an annotation flag in the plugin json to see if it supports annotations
     if (!defaultInstanceDS || !defaultInstanceDS.meta.annotations) {
       console.error('Default datasource does not support annotations');
@@ -83,7 +84,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const newAnnotationQuery: AnnotationQuery = {
       name: NEW_ANNOTATION_NAME,
       enable: true,
-      datasource: this.getDataSourceRefForAnnotation(),
+      datasource: await this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
     };
 

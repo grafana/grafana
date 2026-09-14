@@ -7,9 +7,9 @@ import {
   type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
-import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
+import { partitionVariablesByDisplay } from './partitionVariables';
 import { isVariableEditable } from './utils';
 
 export class VariableSetEditableElement implements EditableDashboardElement {
@@ -21,7 +21,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
-      icon: 'x',
+      icon: 'gf-variable',
       instanceName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
     };
   }

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -1091,6 +1092,41 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		assert.Empty(t, recorder.resultReasons)
 		recorder.mu.RUnlock()
 	})
+}
+
+func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
+	ctx := context.Background()
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
+
+		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Equal(t, "migrate functionality is disabled by configuration", finalStatus.Message)
+	})
+
+	t.Run("plain error still completes in error state", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, errors.New("boom"))
+
+		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Equal(t, "boom", finalStatus.Message)
+	})
+}
+
+func TestAsWarning(t *testing.T) {
+	assert.Nil(t, AsWarning(nil))
+	assert.False(t, IsWarning(nil))
+	assert.False(t, IsWarning(errors.New("plain")))
+
+	err := AsWarning(errors.New("disabled by configuration"))
+	assert.True(t, IsWarning(err))
+	assert.Equal(t, "disabled by configuration", err.Error())
+	// Preserves the wrapped error for errors.Is/As chains.
+	assert.True(t, IsWarning(fmt.Errorf("wrapped: %w", err)))
 }
 
 func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
