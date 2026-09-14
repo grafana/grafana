@@ -140,6 +140,27 @@ describe('TracePageHeader test', () => {
     config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
   });
 
+  it('shows the span count next to the other header metadata', () => {
+    const singleSpanTraceId = 'single-span-trace-id';
+    const singleSpanTrace = {
+      ...trace,
+      traceID: singleSpanTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: singleSpanTraceId,
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, singleSpanTrace);
+
+    expect(screen.getByText('Spans').nextElementSibling).toHaveTextContent('1');
+    expect(
+      screen.getByText('Services').compareDocumentPosition(screen.getByText('Spans')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it('should render the new trace header', () => {
     setup();
 
@@ -588,6 +609,8 @@ describe('TracePageHeader test', () => {
       expect(screen.getByText('Start time')).toBeInTheDocument();
       expect(screen.getByText('Duration')).toBeInTheDocument();
       expect(screen.getByText('Services')).toBeInTheDocument();
+      expect(screen.getByText('Spans')).toBeInTheDocument();
+      expect(screen.getByText('Spans').nextElementSibling).toHaveTextContent('3');
       expect(screen.getByText('URL')).toBeInTheDocument();
 
       expect(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton)).toBeInTheDocument();

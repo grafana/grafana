@@ -3405,7 +3405,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Menedżery alertów",
+        "alert-managers": "",
         "import": "Importuj"
       }
     },
@@ -6399,6 +6399,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Adnotacje",
         "description": "Opis",
@@ -6502,17 +6515,6 @@
           "empty": "(puste)",
           "no-title": "<bez tytułu>"
         }
-      },
-      "predefined-variables": {
-        "all": "Wszystkie",
-        "description": "",
-        "folder": "Folder",
-        "global": "Globalne",
-        "label": "Wstępnie zdefiniowane zmienne",
-        "none": "Brak",
-        "pane-header": "Wstępnie zdefiniowane zmienne",
-        "title": "Wstępnie zdefiniowane zmienne",
-        "tooltip": "Wybierz, które zmienne globalne i zmienne folderu otrzymuje ten pulpit"
       },
       "redo": "Ponów",
       "row": {
@@ -7133,6 +7135,10 @@
       "recommendation": "Po ponownym włączeniu tej funkcji pulpity będą wyświetlane normalnie w formacie pulpitu dynamicznego. Dlatego zdecydowanie zalecamy, aby nie wprowadzać zmian w tych pulpitach, dopóki funkcja nie zostanie ponownie włączona, ponieważ zmiany w trybie klasycznym mogą prowadzić do nieoczekiwanych rezultatów. Możesz też zapisać kopię pulpitu, korzystając z opcji „Zapisz jako kopię” w menu zapisywania pulpitu.",
       "save-warning": "Każdy pulpit utworzony jako dynamiczny lub przekonwertowany na pulpit dynamiczny zostanie otwarty jako pulpit klasyczny. Zapisanie pulpitu może spowodować utratę skonfigurowanych już funkcji pulpitu dynamicznego."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opcje niestandardowe",
       "json-values-tooltip": "Podaj kod JSON reprezentujący tablicę obiektów, w której każdy obiekt może mieć dowolną liczbę właściwości.<br/>Więcej szczegółów znajdziesz w <4>naszej dokumentacji</4>.",
@@ -7605,13 +7611,6 @@
         }
       },
       "title-close": "Zamknij"
-    },
-    "predefined-variables": {
-      "label-all": "Wszystkie",
-      "label-custom": "Niestandardowy",
-      "label-folder": "Folder",
-      "label-global": "Globalne",
-      "label-none": "Brak"
     },
     "provisioned-controls-section": {
       "label": "Udostępnione przez źródło danych",
@@ -9231,6 +9230,7 @@
       "critical-path": "Ścieżka krytyczna",
       "critical-path-tooltip": "Wybiera zakresy na ścieżce krytycznej – najdłuższej sekwencji zależnych zadań określających minimalny czas trwania śledzenia.",
       "duration": "Czas trwania",
+      "error-indicator": "",
       "errors": "Błędy",
       "errors-tooltip": "Wybiera zakresy, w przypadku których status jest równy błędowi.",
       "export-started": "Rozpoczęto eksportowanie",
@@ -9249,10 +9249,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Godzina rozpoczęcia",
+      "success-indicator": "",
       "target": "Cel",
       "tooltip-url": "{{route}} lub {{url}} lub {{target}} lub {{path}}",
       "trace-id": "Identyfikator śledzenia",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16864,11 +16866,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

@@ -352,7 +352,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="clock-nine" size="xs" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              </span>
               <span
                 className={cx(
                   styles.metadataValue,
@@ -367,13 +370,21 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="stopwatch" type="default" size="sm" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              </span>
               <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
             </div>
 
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
               <span className={styles.metadataValue}>{serviceCount}</span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.spans', 'Spans')}</span>
+              <span className={styles.metadataValue}>{trace.spans.length}</span>
             </div>
 
             {url && url.length > 0 && (
@@ -580,7 +591,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
+      rowGap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
     }),
@@ -589,11 +602,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataField: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataIcon: css({
+      color: theme.colors.text.secondary,
+      display: 'block',
+      flexShrink: 0,
+      lineHeight: 0,
+      transform: 'translateY(-1px)',
     }),
 
     metadataLabel: css({
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
+      lineHeight: 1,
     }),
 
     metadataValue: css({
@@ -601,6 +631,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+      lineHeight: 1,
     }),
 
     traceIdButton: css({
@@ -608,12 +639,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       color: theme.colors.text.primary,
       cursor: 'pointer',
-      textDecoration: 'underline',
+      textDecoration: 'none',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       padding: 0,
       font: 'inherit',
+      lineHeight: theme.typography.bodySmall.lineHeight,
 
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.primary, 0.15),
@@ -635,11 +667,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     url: css({
-      maxWidth: '700px',
+      maxWidth: '240px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      display: 'inline-block',
+      display: 'block',
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.primary,
     }),
     overviewLabel: css({

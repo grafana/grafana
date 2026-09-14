@@ -3405,7 +3405,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Обработчики оповещений",
+        "alert-managers": "",
         "import": "Импорт"
       }
     },
@@ -6399,6 +6399,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Аннотации",
         "description": "Описание",
@@ -6502,17 +6515,6 @@
           "empty": "(пусто)",
           "no-title": "<нет заголовка>"
         }
-      },
-      "predefined-variables": {
-        "all": "Все",
-        "description": "",
-        "folder": "Папка",
-        "global": "Глобальные",
-        "label": "Предустановленные переменные",
-        "none": "Нет",
-        "pane-header": "Предустановленные переменные",
-        "title": "Предустановленные переменные",
-        "tooltip": "Выберите, какие глобальные переменные и переменные папки получает этот дашборд"
       },
       "redo": "Повторить",
       "row": {
@@ -7133,6 +7135,10 @@
       "recommendation": "После включения функции дашборды будут отображаться в динамическом формате. Настоятельно рекомендуем не корректировать дашборды до тех пор, пока функция не станет активной, поскольку правки, внесенные в классическом режиме, могут привести к неожиданным результатам. Вы также можете сохранить копию дашборда с помощью соответствующей опции в меню сохранения.",
       "save-warning": "Дашборд, созданный как динамический или преобразованный в него, будет открываться как классический. При сохранении дашборда настройки для динамического режима могут не сохраниться."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Пользовательские параметры",
       "json-values-tooltip": "Укажите JSON-массив, где каждый объект может иметь любое количество свойств.<br/>Подробнее — в <4>документации</4>.",
@@ -7605,13 +7611,6 @@
         }
       },
       "title-close": "Закрыть"
-    },
-    "predefined-variables": {
-      "label-all": "Все",
-      "label-custom": "Задано пользователем",
-      "label-folder": "Папка",
-      "label-global": "Глобальные",
-      "label-none": "Нет"
     },
     "provisioned-controls-section": {
       "label": "Подготовлено источником данных",
@@ -9231,6 +9230,7 @@
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
+      "error-indicator": "",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
@@ -9249,10 +9249,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Время начала",
+      "success-indicator": "",
       "target": "Цель",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
       "trace-id": "Идентификатор трассировки",
-      "url": "URL-адрес"
+      "url": "URL-адрес",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16864,11 +16866,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

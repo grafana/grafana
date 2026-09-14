@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gestores de alerta",
+        "alert-managers": "",
         "import": "Importar"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anotações",
         "description": "Descrição",
@@ -6416,17 +6429,6 @@
           "empty": "(vazio)",
           "no-title": "<sem título>"
         }
-      },
-      "predefined-variables": {
-        "all": "Tudo",
-        "description": "",
-        "folder": "Pasta",
-        "global": "Global",
-        "label": "Variáveis predefinidas",
-        "none": "Nenhum",
-        "pane-header": "Variáveis predefinidas",
-        "title": "Variáveis predefinidas",
-        "tooltip": "Escolha as variáveis globais e da pasta que este painel de controlo recebe"
       },
       "redo": "Refazer",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "Assim que a funcionalidade for ativada novamente, os seus painéis de controlo serão apresentados normalmente no seu formato de Painel de controlo dinâmico. Por isso, recomendamos vivamente que não faça alterações a estes painéis até que a funcionalidade seja ativada novamente, uma vez que as edições feitas no modo clássico podem levar a resultados inesperados. Em alternativa, pode guardar uma cópia do painel de controlo utilizando a opção \"Guardar como cópia\", no menu guardar painel de controlo.",
       "save-warning": "Qualquer painel de controlo criado como ou convertido num Painel de controlo dinâmico será aberto como um painel de controlo clássico. Guardar o painel de controlo pode levar à perda de funcionalidades do Painel de controlo dinâmico já configuradas."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opções personalizadas",
       "json-values-tooltip": "Forneça um JSON que represente uma matriz de objetos, onde cada objeto pode ter qualquer número de propriedades.<br/>Consulte os <4>nossos documentos</4> para obter mais informações.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Fechar"
-    },
-    "predefined-variables": {
-      "label-all": "Tudo",
-      "label-custom": "Personalizar",
-      "label-folder": "Pasta",
-      "label-global": "Global",
-      "label-none": "Nenhum"
     },
     "provisioned-controls-section": {
       "label": "Provisionado por origem de dados",
@@ -9125,6 +9124,7 @@
       "critical-path": "Caminho crítico",
       "critical-path-tooltip": "Seleciona intervalos no caminho crítico – a sequência mais longa de tarefas dependentes que determinam a duração mínima do rastreio.",
       "duration": "Duração",
+      "error-indicator": "",
       "errors": "Erros",
       "errors-tooltip": "Seleciona intervalos onde o estado é igual a erro.",
       "export-started": "Exportação iniciada",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Hora de início",
+      "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
       "trace-id": "ID de rastreio",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

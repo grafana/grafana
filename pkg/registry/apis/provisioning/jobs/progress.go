@@ -134,8 +134,7 @@ func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResu
 
 		// Automatically track failed operations based on error type and action
 		// Check if this is a PathCreationError (folder creation failure)
-		var pathErr *resources.PathCreationError
-		if errors.As(result.Error(), &pathErr) {
+		if pathErr, ok := errors.AsType[*resources.PathCreationError](result.Error()); ok {
 			r.failedCreations = append(r.failedCreations, pathErr.Path)
 		}
 
@@ -169,8 +168,7 @@ func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResu
 			}
 
 			// Folder creation failures may be surfaced as warnings.
-			var pathErr *resources.PathCreationError
-			if errors.As(result.Warning(), &pathErr) {
+			if pathErr, ok := errors.AsType[*resources.PathCreationError](result.Warning()); ok {
 				r.failedCreations = append(r.failedCreations, pathErr.Path)
 			}
 		}

@@ -357,7 +357,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -457,7 +457,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.

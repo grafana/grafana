@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "アラートマネージャー",
+        "alert-managers": "",
         "import": "インポート"
       }
     },
@@ -6270,6 +6270,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "注釈",
         "description": "説明文",
@@ -6373,17 +6386,6 @@
           "empty": "（空白）",
           "no-title": "<タイトルなし>"
         }
-      },
-      "predefined-variables": {
-        "all": "すべて",
-        "description": "",
-        "folder": "フォルダ",
-        "global": "グローバル",
-        "label": "定義済み変数",
-        "none": "なし",
-        "pane-header": "定義済み変数",
-        "title": "定義済み変数",
-        "tooltip": "このダッシュボードで使用するグローバル変数とフォルダ変数を選択"
       },
       "redo": "やり直し",
       "row": {
@@ -6998,6 +7000,10 @@
       "recommendation": "この機能が再び有効になると、ダッシュボードはダイナミックダッシュボード形式で正常にレンダリングされます。このため、クラシックモードで行った編集は予期しない結果につながる可能性があるため、機能が再び有効になるまで、これらのダッシュボードに変更を加えないことを強くお勧めします。または、ダッシュボードの保存メニューの「コピーとして保存」オプションを使用して、ダッシュボードのコピーを保存することもできます。",
       "save-warning": "ダイナミックダッシュボードとして作成またはダイナミックダッシュボードに変換されたダッシュボードは、クラシックダッシュボードとして開きます。ダッシュボードを保存すると、設定済みのダイナミックダッシュボード機能が失われる可能性があります。"
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "カスタムオプション",
       "json-values-tooltip": "オブジェクトの配列を表すJSONを入力してください。各オブジェクトには任意の数のプロパティを含めることができます。<br/>詳細については、<4>ドキュメント</4>をご覧ください。",
@@ -7467,13 +7473,6 @@
         }
       },
       "title-close": "閉じる"
-    },
-    "predefined-variables": {
-      "label-all": "すべて",
-      "label-custom": "カスタム",
-      "label-folder": "フォルダ",
-      "label-global": "グローバル",
-      "label-none": "なし"
     },
     "provisioned-controls-section": {
       "label": "データソースによってプロビジョニングされました",
@@ -9072,6 +9071,7 @@
       "critical-path": "クリティカルパス",
       "critical-path-tooltip": "クリティカルパスのスパンを選択します。これは、トレースの最短期間を決定する依存タスクの最長シーケンスです。",
       "duration": "期間",
+      "error-indicator": "",
       "errors": "エラー",
       "errors-tooltip": "ステータスがエラーになっているスパンを選択します。",
       "export-started": "エクスポートが開始されました",
@@ -9090,10 +9090,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "開始時間",
+      "success-indicator": "",
       "target": "ターゲット",
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
       "trace-id": "トレースID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16495,11 +16497,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

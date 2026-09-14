@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Riasztáskezelők",
+        "alert-managers": "",
         "import": "Importálás"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Jegyzetek",
         "description": "Leírás",
@@ -6416,17 +6429,6 @@
           "empty": "(üres)",
           "no-title": "<nincs cím>"
         }
-      },
-      "predefined-variables": {
-        "all": "Összes",
-        "description": "",
-        "folder": "Mappa",
-        "global": "Globális",
-        "label": "Előre definiált változók",
-        "none": "Nincs",
-        "pane-header": "Előre definiált változók",
-        "title": "Előre definiált változók",
-        "tooltip": "Válassza ki, hogy mely globális és mappaváltozókat kapja meg ez az irányítópult"
       },
       "redo": "Újra",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "A funkció újbóli engedélyezése után az irányítópultok normálisan, dinamikus irányítópult formátumban jelennek meg. Ezért azt javasoljuk, hogy ne módosítsa ezeket az irányítópultokat, amíg a funkció újra be nem lesz kapcsolva, mivel a klasszikus módban végzett szerkesztések váratlan eredményekhez vezethetnek. Alternatív megoldásként mentheti az irányítópult másolatát a „Mentés másolatként” opcióval az irányítópult mentése menüben.",
       "save-warning": "Minden Dinamikus irányítópultként létrehozott vagy Dinamikus irányítópulttá konvertált irányítópult klasszikus irányítópultként nyílik meg. Az irányítópult mentése a már beállított Dinamikus irányítópult-funkciók elvesztéséhez vezethet."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Egyéni opciók",
       "json-values-tooltip": "Adjon meg egy objektumtömböt jelölő JSON-t, ahol minden objektum tetszőleges számú tulajdonsággal rendelkezhet.<br/>További információért tekintse meg a <4>dokumentációnkat</4>.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Bezárás"
-    },
-    "predefined-variables": {
-      "label-all": "Összes",
-      "label-custom": "Egyéni",
-      "label-folder": "Mappa",
-      "label-global": "Globális",
-      "label-none": "Nincs"
     },
     "provisioned-controls-section": {
       "label": "Adatforrás által kiépített",
@@ -9125,6 +9124,7 @@
       "critical-path": "Kritikus útvonal",
       "critical-path-tooltip": "Kiválasztja a kritikus útvonalon lévő tartományokat – a függő feladatok leghosszabb sorozatát, amely meghatározza a nyomkövetés minimális időtartamát.",
       "duration": "Időtartam",
+      "error-indicator": "",
       "errors": "Hibák",
       "errors-tooltip": "Kiválasztja azokat a tartományokat, ahol az állapot hibával egyenlő.",
       "export-started": "Exportálás elindítva",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Kezdési idő",
+      "success-indicator": "",
       "target": "Cél",
       "tooltip-url": "{{route}} vagy {{url}} vagy {{target}} vagy {{path}}",
       "trace-id": "Nyomkövetési azonosító",
-      "url": "URL-cím"
+      "url": "URL-cím",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

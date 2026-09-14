@@ -767,7 +767,10 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	return branchRef.Hash.String(), nil
 }
 
-func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
+func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (changes []repository.VersionedFileChange, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Compare(start, err) }()
+
 	if base == "" && ref == "" {
 		return nil, fmt.Errorf("base and ref cannot be empty")
 	}
@@ -781,7 +784,6 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	// Resolve base ref to hash
 	var baseHash hash.Hash
 	if base != "" {
-		var err error
 		baseHash, err = r.resolveRefToHash(ctx, base)
 		if err != nil {
 			return nil, fmt.Errorf("resolve base ref: %w", err)
@@ -799,7 +801,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]repository.VersionedFileChange, 0)
+	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
 		switch f.Status {
 		case protocol.FileStatusAdded:

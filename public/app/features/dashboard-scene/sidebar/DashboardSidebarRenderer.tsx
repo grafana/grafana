@@ -125,11 +125,8 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               <Sidebar.Button
                 icon="gf-variable"
                 onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
-                title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
-                tooltip={t(
-                  'dashboard.sidebar.predefined-variables.tooltip',
-                  'Choose which global and folder variables this dashboard receives'
-                )}
+                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
+                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
                 active={openPane?.getId() === 'predefined-variables'}
               />
             )}

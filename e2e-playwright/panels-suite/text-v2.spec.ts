@@ -9,7 +9,7 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-// Render mode needs query data, which text-options.json has none of.
+// Rendering per row needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';

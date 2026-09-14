@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "警示管理員",
+        "alert-managers": "",
         "import": "匯入"
       }
     },
@@ -6270,6 +6270,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "註解",
         "description": "描述",
@@ -6373,17 +6386,6 @@
           "empty": "（空）",
           "no-title": "<無標題>"
         }
-      },
-      "predefined-variables": {
-        "all": "全部",
-        "description": "",
-        "folder": "資料夾",
-        "global": "全球",
-        "label": "預先定義的變數",
-        "none": "無",
-        "pane-header": "預先定義的變數",
-        "title": "預先定義的變數",
-        "tooltip": "選擇此儀表板接收的全域變數和資料夾變數"
       },
       "redo": "重做",
       "row": {
@@ -6998,6 +7000,10 @@
       "recommendation": "再次啟用該功能後，您的儀表板將以動態儀表板格式正常呈現。因此，我們強烈建議在重新啟用該功能之前，不要對這些儀表板進行任何變更，因為在傳統模式下進行的編輯可能會導致意外結果。或者，您可以使用儲存儀表板功能表中的「另存為副本」選項儲存儀表板的副本。",
       "save-warning": "任何建立或轉換為動態儀表板的儀表板，都將以傳統儀表板的形式開啟。儲存儀表板可能會導致已設定的動態儀表板功能遺失。"
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "自訂選項",
       "json-values-tooltip": "提供 JSON 表示物件陣列，其中每個物件可以有任意數量的屬性。<br/>請參閱<4>我們的文件</4>以了解更多資訊。",
@@ -7467,13 +7473,6 @@
         }
       },
       "title-close": "關閉"
-    },
-    "predefined-variables": {
-      "label-all": "全部",
-      "label-custom": "自訂",
-      "label-folder": "資料夾",
-      "label-global": "全球",
-      "label-none": "無"
     },
     "provisioned-controls-section": {
       "label": "由資料來源佈建",
@@ -9072,6 +9071,7 @@
       "critical-path": "關鍵路徑",
       "critical-path-tooltip": "選取關鍵路徑中的跨度，即決定追蹤最短持續時間的最長相依任務序列。",
       "duration": "持續時間",
+      "error-indicator": "",
       "errors": "錯誤",
       "errors-tooltip": "選取狀態等於錯誤的跨度。",
       "export-started": "匯出已開始",
@@ -9090,10 +9090,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "開始時間",
+      "success-indicator": "",
       "target": "目標",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "追蹤 ID",
-      "url": "網址"
+      "url": "網址",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16495,11 +16497,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

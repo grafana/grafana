@@ -3349,7 +3349,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Varningshanterare",
+        "alert-managers": "",
         "import": "Importera"
       }
     },
@@ -6313,6 +6313,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Kommentarer",
         "description": "Beskrivning",
@@ -6416,17 +6429,6 @@
           "empty": "(tomt)",
           "no-title": "<no title>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alla",
-        "description": "",
-        "folder": "Mapp",
-        "global": "Globalt",
-        "label": "Fördefinierade variabler",
-        "none": "Ingen",
-        "pane-header": "Fördefinierade variabler",
-        "title": "Fördefinierade variabler",
-        "tooltip": "Välj vilka globala variabler och mappvariabler som denna instrumentpanel ska ta emot"
       },
       "redo": "Gör om",
       "row": {
@@ -7043,6 +7045,10 @@
       "recommendation": "När funktionen är aktiverad igen kommer dina instrumentpaneler att återges normalt i deras dynamiska instrumentpanelsformat. Därför rekommenderar vi starkt att du inte gör några ändringar i dessa instrumentpaneler förrän funktionen har aktiverats igen eftersom redigeringar i klassiskt läge kan leda till oväntade resultat. Alternativt kan du spara en kopia av instrumentpanelen med alternativet ”Spara som kopia” i menyn för att spara instrumentpanelen.",
       "save-warning": "Alla instrumentpaneler som skapats som eller konverterats till en dynamisk instrumentpanel öppnas som en klassisk instrumentpanel. Om du sparar instrumentpanelen kan du förlora redan konfigurerade dynamiska instrumentpanelfunktioner."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Anpassade alternativ",
       "json-values-tooltip": "Tillhandahåll en JSON som representerar en matris av objekt, där varje objekt kan ha valfritt antal egenskaper.<br/>Se <4>vår dokumentation</4> för mer information.",
@@ -7513,13 +7519,6 @@
         }
       },
       "title-close": "Stäng"
-    },
-    "predefined-variables": {
-      "label-all": "Alla",
-      "label-custom": "Anpassad",
-      "label-folder": "Mapp",
-      "label-global": "Globalt",
-      "label-none": "Ingen"
     },
     "provisioned-controls-section": {
       "label": "Tillhandahållen av datakälla",
@@ -9125,6 +9124,7 @@
       "critical-path": "Kritisk väg",
       "critical-path-tooltip": "Väljer tidsspann i den kritiska vägen – den längsta sekvensen av beroende uppgifter som bestämmer spårningens minsta varaktighet.",
       "duration": "Varaktighet",
+      "error-indicator": "",
       "errors": "Fel",
       "errors-tooltip": "Väljer spännvidd där status är lika med fel.",
       "export-started": "Exporten startad",
@@ -9143,10 +9143,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Starttid",
+      "success-indicator": "",
       "target": "Mål",
       "tooltip-url": "{{route}} eller {{url}} eller {{target}} eller {{path}}",
       "trace-id": "Spårnings-ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16618,11 +16620,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

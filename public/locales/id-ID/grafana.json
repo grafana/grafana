@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Pengelola peringatan",
+        "alert-managers": "",
         "import": "Impor"
       }
     },
@@ -6270,6 +6270,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anotasi",
         "description": "Deskripsi",
@@ -6373,17 +6386,6 @@
           "empty": "(kosong)",
           "no-title": "<tanpa judul>"
         }
-      },
-      "predefined-variables": {
-        "all": "Semua",
-        "description": "",
-        "folder": "Folder",
-        "global": "Global",
-        "label": "Variabel yang telah ditentukan",
-        "none": "Tidak ada",
-        "pane-header": "Variabel yang telah ditentukan",
-        "title": "Variabel yang telah ditentukan",
-        "tooltip": "Pilih variabel global dan folder mana yang diterima dasbor ini"
       },
       "redo": "Ulangi",
       "row": {
@@ -6998,6 +7000,10 @@
       "recommendation": "Setelah fitur diaktifkan lagi, dasbor Anda akan berfungsi normal dalam format Dasbor Dinamis. Karena itu, kami sangat menyarankan untuk tidak membuat perubahan pada dasbor ini sampai fitur diaktifkan kembali, karena pengeditan yang dilakukan dalam mode klasik dapat menyebabkan hasil yang tidak terduga. Atau, Anda dapat menyimpan salinan dasbor menggunakan opsi \"Simpan sebagai salinan\", di menu simpan dasbor.",
       "save-warning": "Dasbor apa pun yang dibuat sebagai atau dikonversi ke Dasbor Dinamis akan terbuka sebagai dasbor klasik. Menyimpan dasbor dapat menyebabkan hilangnya fitur Dasbor Dinamis yang sudah diatur."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
       "json-values-tooltip": "Berikan JSON dalam bentuk array objek, dengan setiap objek dapat memiliki sejumlah properti.<br/>Lihat < 4>dokumen kami</4> untuk informasi selengkapnya.",
@@ -7467,13 +7473,6 @@
         }
       },
       "title-close": "Tutup"
-    },
-    "predefined-variables": {
-      "label-all": "Semua",
-      "label-custom": "Kustom",
-      "label-folder": "Folder",
-      "label-global": "Global",
-      "label-none": "Tidak ada"
     },
     "provisioned-controls-section": {
       "label": "Disediakan oleh sumber data",
@@ -9072,6 +9071,7 @@
       "critical-path": "Jalur kritis",
       "critical-path-tooltip": "Memilih rentang dalam jalur kritis—urutan terpanjang dari tugas-tugas dependen yang menentukan durasi minimum jejak.",
       "duration": "Durasi",
+      "error-indicator": "",
       "errors": "Kesalahan",
       "errors-tooltip": "Memilih rentang di mana status sama dengan kesalahan.",
       "export-started": "Ekspor dimulai",
@@ -9090,10 +9090,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Waktu mulai",
+      "success-indicator": "",
       "target": "Target",
       "tooltip-url": "{{route}} atau {{url}} atau {{target}} atau {{path}}",
       "trace-id": "ID Pelacakan",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16495,11 +16497,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

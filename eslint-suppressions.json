@@ -2366,11 +2366,6 @@
       "count": 2
     }
   },
-  "public/app/features/transformers/extractFields/fieldExtractors.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/fieldToConfigMapping/FieldToConfigMappingEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2

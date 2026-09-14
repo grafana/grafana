@@ -356,8 +356,8 @@ describe('TextNGPanel', () => {
     // Reports the row context it was handed, so these assert the wiring rather
     // than re-testing macro resolution (covered in renderContent.test.ts).
     const reportRowContext: InterpolateFunction = (target, scopedVars) => {
-      const context = scopedVars?.__dataContext?.value;
-      return context ? `row-${context.rowIndex}` : target;
+      const rowIndex = scopedVars?.__dataContext?.value.rowIndex;
+      return rowIndex === undefined ? target : `row-${rowIndex}`;
     };
 
     function setupWithData(renderMode?: RenderMode) {

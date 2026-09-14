@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "警报管理器",
+        "alert-managers": "",
         "import": "导入"
       }
     },
@@ -6270,6 +6270,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "注释",
         "description": "描述",
@@ -6373,17 +6386,6 @@
           "empty": "（空）",
           "no-title": "< 无标题 >"
         }
-      },
-      "predefined-variables": {
-        "all": "全部",
-        "description": "",
-        "folder": "文件夹",
-        "global": "全局",
-        "label": "预定义的变量",
-        "none": "无",
-        "pane-header": "预定义的变量",
-        "title": "预定义的变量",
-        "tooltip": "选择此数据面板接收的全局变量和文件夹变量"
       },
       "redo": "重做",
       "row": {
@@ -6998,6 +7000,10 @@
       "recommendation": "再次启用该功能后，您的数据面板将以动态数据面板格式正常呈现。因此，我们强烈建议在重新启用该功能之前不要对这些数据面板进行更改，因为在经典模式下进行的编辑可能会导致意外结果。或者，您可以使用“保存数据面板”菜单中的“另存为副本”选项，保存一份数据面板的副本。",
       "save-warning": "任何创建为或转换为动态数据面板的数据面板都将作为经典数据面板打开。保存数据面板可能会导致丢失已设置的动态数据面板功能。"
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "自定义选项",
       "json-values-tooltip": "提供一个表示对象数组的 JSON，其中每个对象都可以包含任意数量的属性。<br/>请查看<4>我们的文档</4>以获取更多信息。",
@@ -7467,13 +7473,6 @@
         }
       },
       "title-close": "关闭"
-    },
-    "predefined-variables": {
-      "label-all": "全部",
-      "label-custom": "自定义",
-      "label-folder": "文件夹",
-      "label-global": "全局",
-      "label-none": "无"
     },
     "provisioned-controls-section": {
       "label": "由数据源预置",
@@ -9072,6 +9071,7 @@
       "critical-path": "关键路径",
       "critical-path-tooltip": "选择关键路径中的跨度——即决定该追踪最短持续时间的、最长的一组相互依赖任务。",
       "duration": "时长",
+      "error-indicator": "",
       "errors": "错误",
       "errors-tooltip": "选择状态等于错误的跨度。",
       "export-started": "导出已开始",
@@ -9090,10 +9090,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "开始时间",
+      "success-indicator": "",
       "target": "目标",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "跟踪 ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16495,11 +16497,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

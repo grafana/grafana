@@ -24,7 +24,6 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyIgnorePredefinedVariables,
 } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
@@ -70,15 +69,15 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
-import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
-import { DashboardInteractions } from '../utils/interactions';
 import {
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
-  parseIgnorePredefinedVariables,
+  parseUseCrossDashboardVariables,
   resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableDenyList';
+} from '../utils/crossDashboardVariablesSelection';
+import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { DashboardInteractions } from '../utils/interactions';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -1050,14 +1049,16 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
-    // k8s annotations can include non-string values; resolution only needs the denylist string.
-    const denylistAnnotation = rsp.metadata.annotations?.[AnnoKeyIgnorePredefinedVariables];
-    const resolutionInput = {
-      annotations:
-        typeof denylistAnnotation === 'string' ? { [AnnoKeyIgnorePredefinedVariables]: denylistAnnotation } : undefined,
-    };
+    // k8s annotations can include non-string values; resolution only needs string entries.
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(rsp.metadata.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
 
-    const mode = getGlobalVariablesMode(parseIgnorePredefinedVariables(resolutionInput.annotations));
+    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       DashboardInteractions.globalVariablesLoaded({

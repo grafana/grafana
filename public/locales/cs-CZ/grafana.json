@@ -3405,7 +3405,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Správci výstrah",
+        "alert-managers": "",
         "import": "Importovat"
       }
     },
@@ -6399,6 +6399,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Vysvětlivky",
         "description": "Popis",
@@ -6502,17 +6515,6 @@
           "empty": "(prázdné)",
           "no-title": "<bez názvu>"
         }
-      },
-      "predefined-variables": {
-        "all": "Vše",
-        "description": "",
-        "folder": "Složka",
-        "global": "Globální",
-        "label": "Předdefinované proměnné",
-        "none": "Žádné",
-        "pane-header": "Předdefinované proměnné",
-        "title": "Předdefinované proměnné",
-        "tooltip": "Vyberte, které globální proměnné a proměnné složek tato nástěnka obdrží"
       },
       "redo": "Opakovat",
       "row": {
@@ -7133,6 +7135,10 @@
       "recommendation": "Jakmile bude funkce znovu povolena, vaše nástěnky se budou normálně zobrazovat ve formátu dynamické nástěnky. Z tohoto důvodu důrazně doporučujeme neprovádět změny těchto nástěnek, dokud nebude funkce znovu zapnuta, protože úpravy provedené v klasickém režimu mohou vést k neočekávaným výsledkům. Případně můžete uložit kopii nástěnky pomocí možnosti „Uložit jako kopii“ v nabídce Uložit nástěnku.",
       "save-warning": "Jakákoli nástěnka vytvořená jako dynamická nástěnka nebo převedená na dynamickou nástěnku se otevře jako klasická nástěnka. Uložení nástěnky může vést ke ztrátě již nastavených funkcí dynamické nástěnky."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Vlastní možnosti",
       "json-values-tooltip": "Zadejte JSON reprezentující pole objektů, kde každý objekt může mít libovolný počet vlastností.<br/>Další informace najdete v <4>naší dokumentaci</4>.",
@@ -7605,13 +7611,6 @@
         }
       },
       "title-close": "Zavřít"
-    },
-    "predefined-variables": {
-      "label-all": "Vše",
-      "label-custom": "Vlastní",
-      "label-folder": "Složka",
-      "label-global": "Globální",
-      "label-none": "Žádné"
     },
     "provisioned-controls-section": {
       "label": "Zajištěno zdrojem dat",
@@ -9231,6 +9230,7 @@
       "critical-path": "Kritická cesta",
       "critical-path-tooltip": "Vybírá rozsahy v kritické cestě – nejdelší sekvenci závislých úkolů určujících minimální dobu trvání trasování.",
       "duration": "Doba trvání",
+      "error-indicator": "",
       "errors": "Chyby",
       "errors-tooltip": "Vybere rozsahy, kde se stav rovná chybě.",
       "export-started": "Export zahájen",
@@ -9249,10 +9249,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "Čas zahájení",
+      "success-indicator": "",
       "target": "Cíl",
       "tooltip-url": "{{route}} nebo {{url}} nebo {{target}} nebo {{path}}",
       "trace-id": "ID trasování",
-      "url": "Adresa URL"
+      "url": "Adresa URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16864,11 +16866,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

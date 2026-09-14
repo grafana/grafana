@@ -3321,7 +3321,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "경고 관리자",
+        "alert-managers": "",
         "import": "가져오기"
       }
     },
@@ -6270,6 +6270,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "주석",
         "description": "설명",
@@ -6373,17 +6386,6 @@
           "empty": "(비어 있음)",
           "no-title": "<제목 없음>"
         }
-      },
-      "predefined-variables": {
-        "all": "전체",
-        "description": "",
-        "folder": "폴더",
-        "global": "전체",
-        "label": "사전 정의된 변수",
-        "none": "없음",
-        "pane-header": "사전 정의된 변수",
-        "title": "사전 정의된 변수",
-        "tooltip": "이 대시보드에서 사용할 전역 및 폴더 변수 선택"
       },
       "redo": "다시 실행",
       "row": {
@@ -6998,6 +7000,10 @@
       "recommendation": "기능이 다시 활성화되면, 대시보드가 동적 대시보드 형식으로 정상 표시됩니다. 따라서 해당 기능이 다시 활성화될 때까지 해당 대시보드에 변경 사항을 적용하지 않을 것을 강력히 권장합니다. 클래식 모드에서 수행된 편집은 예상치 못한 결과를 초래할 수 있습니다. 또는 대시보드 저장 메뉴에서 '사본으로 저장' 옵션을 사용하여 대시보드의 사본을 저장할 수 있습니다.",
       "save-warning": "동적 대시보드로 생성되거나 변환된 모든 대시보드는 클래식 대시보드로 열립니다. 대시보드를 저장하면 이미 설정된 동적 대시보드 기능이 손실될 수 있습니다."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "사용자 지정 옵션",
       "json-values-tooltip": "객체 배열을 나타내는 JSON을 입력하세요. 각 객체에는 임의의 속성을 포함할 수 있습니다.<br/>자세한 내용은 <4>문서</4>를 참고하세요.",
@@ -7467,13 +7473,6 @@
         }
       },
       "title-close": "닫기"
-    },
-    "predefined-variables": {
-      "label-all": "전체",
-      "label-custom": "사용자 지정",
-      "label-folder": "폴더",
-      "label-global": "전체",
-      "label-none": "없음"
     },
     "provisioned-controls-section": {
       "label": "데이터 소스에서 프로비저닝",
@@ -9072,6 +9071,7 @@
       "critical-path": "임계 경로",
       "critical-path-tooltip": "임계 경로(최소 추적 기간을 결정하는 가장 긴 종속 작업 시퀀스) 내 구간을 선택합니다.",
       "duration": "지속 시간",
+      "error-indicator": "",
       "errors": "오류",
       "errors-tooltip": "상태가 오류인 구간을 선택합니다.",
       "export-started": "내보내기가 시작되었습니다",
@@ -9090,10 +9090,12 @@
       "share-group": "",
       "share-tooltip": "",
       "start-time": "시작 시간",
+      "success-indicator": "",
       "target": "대상",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
       "trace-id": "트레이스 ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -16495,11 +16497,12 @@
       "label": ""
     },
     "options": {
+      "max-rows": "",
+      "max-rows-description": "",
       "render-mode": ""
     },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",

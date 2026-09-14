@@ -291,6 +291,68 @@ describe('interpolateTemplate', () => {
     });
   });
 
+  describe('field, value and series macros', () => {
+    const cpu = toDataFrame({
+      name: 'cpu',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [84, 12], labels: { cluster: 'us' } },
+      ],
+    });
+
+    describe('rendering once', () => {
+      it.each([
+        ['${__field.name}', 'value'],
+        ['${__field.labels.cluster}', 'us'],
+        ['${__series.name}', 'cpu'],
+      ])('resolves %s against the value field', (content, expected) => {
+        expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it.each([
+        ['${__value.text}', '12'],
+        ['${__value.numeric}', '12'],
+      ])('resolves %s from the reduced value, since there is no row', (content, expected) => {
+        expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it('formats the reduced value with the display processor that field overrides attach', () => {
+        const formatted = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [0.4213] }] });
+        formatted.fields[0].display = (value) => ({ text: `${Number(value).toFixed(1)}%`, numeric: Number(value) });
+
+        expect(interpolate('${__value.text}', [formatted], RenderMode.Once)).toBe('0.4%');
+      });
+
+      it('reduces an all-null field to an empty value rather than NaN', () => {
+        const missing = toDataFrame({
+          fields: [{ name: 'value', type: FieldType.number, values: [null, null] }],
+        });
+
+        expect(interpolate('[${__value.text}]', [missing], RenderMode.Once)).toBe('[]');
+      });
+
+      it('leaves the reference alone when the frame has no field to read', () => {
+        expect(interpolate('${__field.name}', [{ fields: [], length: 0 }], RenderMode.Once)).toBe('${__field.name}');
+      });
+
+      it('reads the frame handlebars binds to, so the two syntaxes agree', () => {
+        const empty = toDataFrame({ name: 'empty', fields: [{ name: 'value', type: FieldType.number, values: [] }] });
+
+        expect(interpolate('{{data.length}} ${__series.name}', [empty, cpu], RenderMode.Once)).toBe('2 cpu');
+      });
+    });
+
+    describe('rendering every row', () => {
+      it('resolves the value field rather than the time field it precedes', () => {
+        expect(interpolate('${__field.name}=${__value.text}', [cpu], RenderMode.PerRow)).toBe('value=84\n\nvalue=12');
+      });
+
+      it('resolves labels on every row', () => {
+        expect(interpolate('${__field.labels.cluster}', [cpu], RenderMode.PerRow)).toBe('us\n\nus');
+      });
+    });
+  });
+
   describe('handlebars', () => {
     it('leaves expressions alone when the text.newFeatures flag is off', () => {
       setTestFlags({ [FlagKeys.TextNewFeatures]: false });
