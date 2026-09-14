@@ -2753,6 +2753,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 		{"nothing when not due", notDue, nil, false, nil, ""},
 		{"nothing when rotation succeeds", overdue, nil, false, nil, ""},
 		{"nothing during hook-failure cooldown", overdue, nil, true, nil, ""},
+		{"nothing when remote webhook missing", overdue, nil, false, repository.ErrFileNotFound, ""},
 	}
 
 	metric := "grafana_provisioning_webhook_secret_rotation_overdue_total"
@@ -2800,6 +2801,78 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 			assert.Equal(t, 1.0, counterVecSum(t, reg, metric), "exactly one overdue observation should be recorded")
 		})
 	}
+}
+
+// TestProcessHooks_SkipsRedundantRotationAfterHookUpdate verifies that when a
+// generation change makes runHooks update the webhook (which rotates the secret
+// itself), an overdue standalone rotation is not performed a second time and no
+// overdue observation is recorded.
+func TestProcessHooks_SkipsRedundantRotationAfterHookUpdate(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	obj := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1, // generation change => runHooks runs the update
+			Webhook:            &provisioning.WebhookStatus{ID: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()},
+		},
+	}
+	stub := &hookRepoStub{cfg: obj, hookErrSet: true} // nil hookErr => webhook client succeeds
+
+	rc := &RepositoryController{
+		healthChecker:                 NewRepositoryHealthChecker(&capturePatcher{}, repository.NewTester(), nil),
+		webhookMetrics:                registerWebhookSecretMetrics(reg),
+		webhookSecretRotationInterval: 30 * 24 * time.Hour,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		tracer:                        tracing.InitializeTracerForTest(),
+	}
+
+	shouldRotate := rc.shouldRotateWebhookSecret(obj)
+	_, _, _, err := rc.processHooks(context.Background(), stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.onUpdateCalls.Load(), "the webhook must be edited exactly once (by runHooks), not rotated again")
+	assert.Equal(t, 0.0, counterVecSum(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total"),
+		"a successful hook update already rotates the secret; no overdue observation should be recorded")
+}
+
+// TestProcessHooks_RecordsOverdueOnHookFailure verifies that when a hook
+// create/update fails and blocks an overdue rotation, the overdue observation is
+// still classified and recorded (here system) rather than being silently dropped
+// on the error return path.
+func TestProcessHooks_RecordsOverdueOnHookFailure(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	obj := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1, // generation change => runHooks runs and fails
+			Webhook:            &provisioning.WebhookStatus{ID: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()},
+		},
+	}
+	stub := &hookRepoStub{cfg: obj} // hookErrSet false => hookResult returns assert.AnError
+
+	rc := &RepositoryController{
+		healthChecker:                 NewRepositoryHealthChecker(&capturePatcher{}, repository.NewTester(), nil),
+		webhookMetrics:                registerWebhookSecretMetrics(reg),
+		webhookSecretRotationInterval: 30 * 24 * time.Hour,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		tracer:                        tracing.InitializeTracerForTest(),
+	}
+
+	shouldRotate := rc.shouldRotateWebhookSecret(obj)
+	_, _, _, err := rc.processHooks(context.Background(), stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
+	require.Error(t, err)
+
+	assert.Equal(t, 1.0,
+		counterValueWithLabel(t, reg, "grafana_provisioning_webhook_secret_rotation_overdue_total", "cause", reconcileCauseSystem),
+		"a hook failure blocking an overdue rotation must be recorded, not dropped")
 }
 
 // hookRepoStub implements repository.WebhookRepository so we can observe whether
@@ -3069,7 +3142,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 // an overdue rotation is actually attempted (repository accessible, no cooldown)
 // and fails, it is counted on the overdue metric with cause=system. Without this,
 // a genuine rotation malfunction is indistinguishable from a repository that is
-// merely overdue because rotation can't run (cause=blocked, e.g. auth broken).
+// merely overdue because rotation can't run (cause=user, e.g. auth broken).
 func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"

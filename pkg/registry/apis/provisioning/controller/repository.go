@@ -1375,6 +1375,14 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	if hasHookChanges && !suppressWebhooks {
 		hookOps, err = rc.runHooks(ctx, repo, obj)
 		if err != nil {
+			// The failing create/update/delete is why an overdue secret can't be
+			// rotated this reconcile, so classify it onto the overdue metric here too
+			// -- otherwise a secret stuck behind a persistent hook failure (which
+			// keeps hasHookChanges true and returns before the rotation block below)
+			// would never record a cause.
+			if shouldRotateSecret {
+				rc.webhookMetrics.recordRotationOverdue(rc.rotationErrorCause(err))
+			}
 			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
 			hookOps = append(hookOps, map[string]interface{}{
 				"op":    "replace",
@@ -1389,14 +1397,18 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	// the cause it stayed overdue for so alerts can page on a genuine rotation
 	// malfunction (cause=system) and ignore user-caused failures (cause=user).
 	//
-	// When the repository is inaccessible the rotation call would be as doomed as
-	// any other write, so it is skipped -- but we still know why from the health
-	// check, so the overdue observation is classified from the test result (bad
-	// credentials/permissions -> user, server unavailable -> system). During the
-	// hook-failure cooldown the health check is skipped (repoAccessible reads
-	// stale), so nothing is recorded; the reconcile after the cooldown expires
-	// classifies it. A rotation that succeeds records nothing.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret {
+	// Skipped when runHooks already created or updated the webhook this reconcile
+	// (len(hookOps) > 0): that path rotates the secret itself, so a second rotation
+	// would be redundant and, if it failed, would falsely page. When the repository
+	// is inaccessible the rotation call would be as doomed as any other write, so it
+	// is skipped too -- but we still know why from the health check, so the overdue
+	// observation is classified from the test result (bad credentials/permissions
+	// -> user, server unavailable -> system). During the hook-failure cooldown the
+	// health check is skipped (repoAccessible reads stale), so nothing is recorded;
+	// the reconcile after the cooldown expires classifies it. A rotation that
+	// succeeds, or a webhook missing on the remote (self-healed by recreation next
+	// reconcile), records nothing.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && len(hookOps) == 0 {
 		switch {
 		case !repoAccessible:
 			rc.webhookMetrics.recordRotationOverdue(classifyOverdueCause(classifyTestResultReason(testResults)))
@@ -1406,11 +1418,16 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 			rotateSpan.End()
-			if rotateErr != nil {
-				cause := reconcileCauseSystem
-				if rc.isUserCaused(rotateErr) {
-					cause = reconcileCauseUser
-				}
+			switch {
+			case rotateErr == nil:
+				// Rotated; the overdue condition is resolved, nothing to record.
+			case errors.Is(rotateErr, repository.ErrFileNotFound):
+				// The remote webhook was deleted; rotateWebhookSecret clears the status
+				// so the next reconcile recreates it. Self-healing, not a rotation
+				// malfunction -- don't page.
+				logging.FromContext(ctx).Info("webhook missing on remote during rotation; will recreate", "error", rotateErr)
+			default:
+				cause := rc.rotationErrorCause(rotateErr)
 				rc.webhookMetrics.recordRotationOverdue(cause)
 				logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
 			}
@@ -1467,6 +1484,18 @@ func classifyBuildFailureReason(err error) string {
 		return provisioning.ReasonServiceUnavailable
 	}
 	return classifyHookFailureReason(err)
+}
+
+// rotationErrorCause classifies an error that prevented a webhook secret rotation
+// (a rotation attempt or the hook operation blocking it) into an overdue cause.
+// User-caused errors (revoked credentials, permissions, app uninstalled) are
+// "user"; everything else, including unrecognized errors, defaults to "system" so
+// a genuine malfunction pages rather than being silently swallowed.
+func (rc *RepositoryController) rotationErrorCause(err error) string {
+	if rc.isUserCaused(err) {
+		return reconcileCauseUser
+	}
+	return reconcileCauseSystem
 }
 
 // classifyOverdueCause maps a Ready condition reason to a webhook-secret rotation
