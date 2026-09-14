@@ -214,7 +214,7 @@ require (
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.23.0 // @grafana/alerting-backend
 	golang.org/x/text v0.41.0 // @grafana/grafana-backend-group
-	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
+	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
