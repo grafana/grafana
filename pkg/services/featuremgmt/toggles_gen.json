@@ -121,6 +121,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.folderHasRulesLabel",
+        "resourceVersion": "1786558190831",
+        "creationTimestamp": "2026-08-12T18:09:50Z"
+      },
+      "spec": {
+        "description": "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1785243477586",
         "creationTimestamp": "2026-07-28T12:57:57Z"
@@ -159,6 +173,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alerting.ruleStatusSync",
+        "resourceVersion": "1788893745114",
+        "creationTimestamp": "2026-09-08T18:55:45Z"
+      },
+      "spec": {
+        "description": "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
         "expression": "false"
       }
     },
@@ -802,6 +829,20 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingRuleStatusSync",
+        "resourceVersion": "1785534653123",
+        "creationTimestamp": "2026-07-31T21:50:53Z",
+        "deletionTimestamp": "2026-09-08T18:55:45Z"
+      },
+      "spec": {
+        "description": "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
       }
     },
     {

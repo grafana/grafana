@@ -20,6 +20,7 @@ require (
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/getkin/kin-openapi v0.146.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
+	github.com/go-openapi/testify/v2 v2.7.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect

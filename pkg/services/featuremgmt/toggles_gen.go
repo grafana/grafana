@@ -79,6 +79,10 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
+	// FlagAlertingRuleStatusSync
+	// Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+	FlagAlertingRuleStatusSync = "alerting.ruleStatusSync"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -1041,4 +1045,8 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
+
+	// FlagAlertingFolderHasRulesLabel
+	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
+	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
 )

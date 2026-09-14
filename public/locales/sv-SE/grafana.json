@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visa en historik över alla larmhändelser som genererats av dina Grafana-hanterade larmregler. Alla larmhändelser visas oavsett om tysta perioder eller tysta tidsintervall är inställda.",
         "notifications": "Visa en historik över alla aviseringar som skickats från dina Grafana-hanterade larmregler."
@@ -7760,6 +7763,9 @@
         "title": "Ändringar som inte sparats"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Är det inte det du letar efter? Visa <2>andra föreslagna instrumentpaneler</2> eller <6>skapa en från grunden</6>.",
       "title": "Du visar {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Spara ändringarna",
       "save-button-disabled-tooltip": "Åtgärda valideringsfel innan du sparar",
       "save-button-disabled-tooltip-yaml": "Dokumentet innehåller valideringsfel. Byt till JSON för att se detaljerad felinformation i texten.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Fet",
       "tooltip-bullet-list": "Punktlista",
       "tooltip-checklist": "Checklista",
+      "tooltip-diagram": "",
       "tooltip-heading": "Rubrik",
       "tooltip-insert-variable": "Infoga variabel",
       "tooltip-italic": "Kursiv",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Stapeldiagram – staplat",
       "bar-stacked-percent": "Stapeldiagram – staplat efter procent",
       "line": "Linjediagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Lägg till tidszon",

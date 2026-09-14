@@ -24,6 +24,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
 2026-07-14,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
+2026-09-08,alerting.ruleStatusSync,experimental,@grafana/alerting-squad,false,false,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-05-22,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -392,3 +393,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-09,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-03,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-09,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
+2026-08-12,alerting.folderHasRulesLabel,experimental,@grafana/alerting-squad,false,false,false
