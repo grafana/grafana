@@ -6,6 +6,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 
 import { getSelectStyles } from './getSelectStyles';
 import type { CustomComponentProps } from './types';
+import { getQueryBuilderSelectRole } from './utils';
 
 type ValueContainerProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> = BaseValueContainerProps<
   Option,
@@ -46,8 +47,10 @@ export const ValueContainer = <Option, IsMulti extends boolean, Group extends Gr
   const renderContainer = (containerChildren?: ReactNode) => {
     const noWrap = selectProps?.noMultiValueWrap && !selectProps?.menuIsOpen;
     const dataTestid = selectProps['data-testid'];
+    const constrainOverflow = isMulti && !noWrap && getQueryBuilderSelectRole(dataTestid) === 'value';
     const className = cx(styles.valueContainer, {
       [styles.valueContainerMulti]: isMulti && !noWrap,
+      [styles.valueContainerMultiConstrained]: constrainOverflow,
       [styles.valueContainerMultiNoWrap]: isMulti && noWrap,
     });
 

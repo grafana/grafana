@@ -3,6 +3,8 @@ import { type StylesConfig } from 'react-select';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
+import { getQueryBuilderSelectRole } from './utils';
+
 export default function resetSelectStyles(theme: GrafanaTheme2): Partial<StylesConfig> {
   return {
     clearIndicator: () => ({}),
@@ -75,16 +77,16 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
         // editable in this repo). Those rows squeeze their children, truncating the
         // key/operator text and starving the value column of space. Size the three
         // columns explicitly: the key/operator selects keep their content width and never
-        // shrink, the (multi-)value select absorbs the leftover row space and wraps tags.
+        // shrink, the value select absorbs the leftover row space (and wraps multi-value tags).
         // `selectProps` is typed as react-select's own `Props`, which omits the
         // `data-testid` we forward through `SelectCommonProps`. The `in` check narrows
         // it to a `Record<"data-testid", unknown>` without a type assertion (which the
         // repo's eslint config forbids).
         const testid =
           state?.selectProps && 'data-testid' in state.selectProps ? state.selectProps['data-testid'] : undefined;
-        const isQueryBuilderSelect = /^(?:data-testid )?Select (label|match operator|value)$/.test(
-          String(testid ?? '')
-        );
+        // Key off the select role (label / match operator / value), not isMulti: exact-match
+        // value selects are single-value but must still absorb leftover row space.
+        const queryBuilderRole = getQueryBuilderSelectRole(testid);
         return {
           ...base,
           width: width ? theme.spacing(width) : '100%',
@@ -98,8 +100,11 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
           // stretching the other select columns vertically as the value column grows.
           alignSelf: 'flex-start',
           height: 'fit-content',
-          ...(isQueryBuilderSelect &&
-            (state.isMulti ? { flex: '1 1 0%', minWidth: '200px' } : { flex: '0 0 auto', minWidth: 'max-content' })),
+          ...(queryBuilderRole === 'value'
+            ? { flex: '1 1 0%', minWidth: '200px' }
+            : queryBuilderRole
+              ? { flex: '0 0 auto', minWidth: 'max-content' }
+              : undefined),
         };
       },
       option: (provided, state) => ({

@@ -419,7 +419,7 @@ describe('SelectBase', () => {
   });
 
   describe('multi-value tag overflow', () => {
-    it('wraps tag rows inside the container and caps their height instead of widening', () => {
+    it('wraps tag rows inside the container without a hard height cap on general multi-selects', () => {
       render(
         <SelectBase
           onChange={onChangeHandler}
@@ -438,13 +438,14 @@ describe('SelectBase', () => {
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
-        overflowX: 'hidden',
-        maxHeight: '120px',
-        overflowY: 'auto',
       });
+      // Height/scroll caps are Explore label-filter only — dashboard variables and other
+      // wide multi-selects must not truncate into a 120px scroll box.
+      expect(container).not.toHaveStyle({ maxHeight: '120px' });
+      expect(container).not.toHaveStyle({ overflowY: 'auto' });
     });
 
-    it('caps individual tag chip width and ellipsizes the label instead of widening the row', () => {
+    it('does not cap chip width on general multi-selects', () => {
       render(
         <SelectBase
           onChange={onChangeHandler}
@@ -461,16 +462,53 @@ describe('SelectBase', () => {
         />
       );
 
-      const chip = screen
-        .getByTestId(selectors.components.Select.container)
-        .querySelector('[class*="grafana-select-multi-value-container"]');
+      const select = screen.getByTestId(selectors.components.Select.container);
+      const chip = select.querySelector('[class*="grafana-select-multi-value-container"]');
       expect(chip).not.toBeNull();
-      expect(chip).toHaveStyle({
-        maxWidth: '200px',
+      expect(chip).not.toHaveStyle({ maxWidth: '200px' });
+    });
+
+    it('caps Explore label-filter value chips and scrolls the value area instead of widening the row', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          isMulti
+          value={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          options={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          data-testid="data-testid Select value"
+          aria-label="My select"
+        />
+      );
+
+      const select = screen.getByTestId('data-testid Select value');
+      const chip = select.querySelector('[class*="grafana-select-multi-value-container"]');
+      const label = select.querySelector('[class*="grafana-select-multi-value-label"]');
+      const remove = select.querySelector('[class*="grafana-select-multi-value-remove"]');
+      expect(chip).not.toBeNull();
+      expect(label).not.toBeNull();
+      expect(remove).not.toBeNull();
+      expect(select).toHaveStyle({
+        maxHeight: '120px',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      });
+      // Cap width on the chip wrapper; ellipsis must live on the label (a flex
+      // container cannot text-overflow, and overflow there clips the remove control).
+      expect(chip).toHaveStyle({ maxWidth: '200px' });
+      expect(chip).not.toHaveStyle({ overflow: 'hidden' });
+      expect(label).toHaveStyle({
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        minWidth: '0',
       });
+      expect(remove).toHaveStyle({ flexShrink: '0' });
     });
 
     it('keeps the select column content-height and top-aligned so packed rows do not stretch it', () => {
@@ -556,31 +594,37 @@ describe('SelectBase', () => {
       });
     });
 
-    it('makes the query builder value select absorb the leftover row space with a 200px floor', () => {
-      render(
-        <SelectBase
-          onChange={onChangeHandler}
-          isMulti
-          value={options}
-          options={options}
-          width="auto"
-          data-testid="data-testid Select value"
-          aria-label="My select"
-        />
-      );
+    it.each([
+      { name: 'multi-value', isMulti: true as const, value: options },
+      { name: 'single-value (exact match)', isMulti: false as const, value: options[0] },
+    ])(
+      'makes the query builder $name select absorb the leftover row space with a 200px floor',
+      ({ isMulti, value }) => {
+        render(
+          <SelectBase
+            onChange={onChangeHandler}
+            isMulti={isMulti}
+            value={value}
+            options={options}
+            width="auto"
+            data-testid="data-testid Select value"
+            aria-label="My select"
+          />
+        );
 
-      const valueContainer = screen.getByTestId('data-testid Select value');
-      let column: HTMLElement | null = valueContainer;
-      while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
-        column = column.parentElement;
+        const valueContainer = screen.getByTestId('data-testid Select value');
+        let column: HTMLElement | null = valueContainer;
+        while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
+          column = column.parentElement;
+        }
+        expect(column).toBeInTheDocument();
+        expect(column).toHaveStyle({
+          flexGrow: '1',
+          flexShrink: '1',
+          minWidth: '200px',
+        });
       }
-      expect(column).toBeInTheDocument();
-      expect(column).toHaveStyle({
-        flexGrow: '1',
-        flexShrink: '1',
-        minWidth: '200px',
-      });
-    });
+    );
 
     it('leaves other selects (no query builder data-testid) free to shrink, not locked to content width', () => {
       render(

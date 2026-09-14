@@ -16,7 +16,9 @@ export function getSlateStyles(theme: GrafanaTheme2) {
     // Generated query selector previews (visual query builders, RawQuery) must stay inside their
     // row. Preserve whitespace, break concatenated regex/selector strings onto new lines, and
     // scroll horizontally only as a last resort instead of expanding past the panel container.
-    '.prism-syntax-highlight': {
+    // Exclude `.field` — log lines reuse `.prism-syntax-highlight` for custom-grammar token
+    // colors and must still honor wrap-disabled (`white-space: pre`) layout.
+    '.prism-syntax-highlight:not(.field)': {
       whiteSpace: 'pre-wrap',
       wordBreak: 'break-all',
       overflowX: 'auto',
