@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useMemo, useState, type Ref } from 'react';
+import { isEqual } from 'lodash';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
@@ -26,6 +27,7 @@ import {
 import config from 'app/core/config';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { textPanelSaveTracker } from '../analytics/saveTracker';
 import {
   type CodeOptions,
   defaultCodeLanguage,
@@ -40,8 +42,14 @@ import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { usePagination } from './pagination';
-import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
-import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
+import {
+  catchTemplateError,
+  hasRenderableData,
+  renderContent,
+  type RenderedContent,
+  type RowWindow,
+} from './renderContent';
+import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, newFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -49,8 +57,19 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
-    props;
+  const {
+    options,
+    onOptionsChange,
+    replaceVariables,
+    data,
+    renderCounter,
+    fitContent,
+    transparent,
+    height,
+    width,
+    id,
+    fieldConfig,
+  } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
@@ -92,6 +111,9 @@ export function TextNGPanel(props: Props) {
       : renderPanelContent(options, series, replaceVariables, rowWindow)
   );
 
+  const viewChanged = useRef(false);
+  const editStart = useRef({ content, options, fieldConfig });
+
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
   // when the page moves, which should land as directly as a scroll would, and on a
   // template change, which auto-fit measures.
@@ -105,6 +127,10 @@ export function TextNGPanel(props: Props) {
     prevWindow?.count !== rowWindow?.count ||
     prevTemplate !== template
   ) {
+    if (isEditing && !wasEditing) {
+      viewChanged.current = false;
+      editStart.current = { content, options, fieldConfig };
+    }
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
     setPrevTemplate(template);
@@ -112,6 +138,32 @@ export function TextNGPanel(props: Props) {
       setProcessed(renderPanelContent(options, series, replaceVariables, rowWindow));
     }
   }
+
+  const changeView = (next: ViewMode) => {
+    viewChanged.current = true;
+    setView(next);
+  };
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    if (isEqual(editStart.current, { content, options, fieldConfig })) {
+      textPanelSaveTracker.forget(id);
+      return;
+    }
+
+    textPanelSaveTracker.record(id, {
+      options,
+      fieldConfig,
+      newFeaturesEnabled: newFeaturesEnabled(),
+      hasData: hasRenderableData(frames),
+      editorViewAtSave: view,
+      editorViewChanged: viewChanged.current,
+      contentChanged: content !== editStart.current.content,
+    });
+  }, [isEditing, id, options, fieldConfig, frames, view, content]);
 
   // Batches bursts of change (data/variable refresh) so the interpolate and
   // markdown/sanitize pass runs once per burst. renderCounter covers a
@@ -185,7 +237,7 @@ export function TextNGPanel(props: Props) {
         suggestions={suggestions}
         onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         view={view}
-        onViewChange={setView}
+        onViewChange={changeView}
         transparent={transparent}
       />
     </Suspense>

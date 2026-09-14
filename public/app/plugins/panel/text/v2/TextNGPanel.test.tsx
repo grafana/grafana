@@ -7,6 +7,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
+import { textPanelSaveTracker } from '../analytics/saveTracker';
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
@@ -70,6 +71,16 @@ const defaultProps = createProps(replaceVariablesMock);
 const setup = (props: Props = defaultProps, app?: CoreApp) => {
   renderPanel(props, app);
 };
+
+// The panel inside a panel context, for the tests that rerender it with new props.
+const panelIn = (app: CoreApp) => (props: Props) => (
+  <PanelContextProvider value={{ app } as PanelContext}>
+    <TextNGPanel {...props} />
+  </PanelContextProvider>
+);
+
+const editing = panelIn(CoreApp.PanelEditor);
+const viewing = panelIn(CoreApp.Dashboard);
 
 describe('TextNGPanel', () => {
   beforeEach(() => {
@@ -340,22 +351,14 @@ describe('TextNGPanel', () => {
         options: { content: '# Hello', mode: TextMode.Markdown },
       });
 
-      const { rerender } = render(
-        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
-          <TextNGPanel {...props} />
-        </PanelContextProvider>
-      );
+      const { rerender } = render(editing(props));
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
       // The debounce that applies while the editor owns rendering must not delay this.
       const edited = Object.assign({}, props, {
         options: { content: '# Edited', mode: TextMode.Markdown },
       });
-      rerender(
-        <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
-          <TextNGPanel {...edited} />
-        </PanelContextProvider>
-      );
+      rerender(viewing(edited));
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
     });
@@ -568,12 +571,6 @@ describe('TextNGPanel', () => {
           toDataFrame({ name: `Frame ${i}`, fields: [{ name: 'host', values: [`web-${i}`] }] })
         );
 
-      const editing = (props: Props) => (
-        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
-          <TextNGPanel {...props} />
-        </PanelContextProvider>
-      );
-
       it.each([
         ['a query is added', 1, 2],
         ['a query is removed', 2, 1],
@@ -663,12 +660,6 @@ describe('TextNGPanel', () => {
       jest.useRealTimers();
     });
 
-    const viewing = (props: Props) => (
-      <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
-        <TextNGPanel {...props} />
-      </PanelContextProvider>
-    );
-
     const settle = () => act(() => jest.advanceTimersByTime(200));
 
     const html = () => screen.getByTestId('TextNGPanel-converted-content').innerHTML;
@@ -750,5 +741,107 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  describe('save reporting', () => {
+    let record: jest.SpyInstance;
+    let forget: jest.SpyInstance;
+
+    beforeEach(() => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      record = jest.spyOn(textPanelSaveTracker, 'record').mockImplementation(() => {});
+      forget = jest.spyOn(textPanelSaveTracker, 'forget').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      record.mockRestore();
+      forget.mockRestore();
+    });
+
+    const editProps = (overrides: Partial<Props['options']> = {}, props: Partial<Props> = {}) =>
+      createProps(replaceVariablesMock, {
+        ...props,
+        options: { content: '# Hello', mode: TextMode.Markdown, ...overrides },
+      });
+
+    /** A real edit is what makes a panel reportable. */
+    async function openAndEdit(props: Props, edit: Partial<Props['options']> = { content: '# Edited' }) {
+      const { rerender } = render(editing(props));
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      const edited = Object.assign({}, props, { options: { ...props.options, ...edit } });
+      rerender(editing(edited));
+
+      return { rerender, edited };
+    }
+
+    it('records nothing while the panel is only being viewed', () => {
+      setup(editProps(), CoreApp.Dashboard);
+
+      expect(record).not.toHaveBeenCalled();
+    });
+
+    it('records nothing for a panel the author opened but did not change', async () => {
+      setup(editProps(), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      expect(record).not.toHaveBeenCalled();
+      expect(forget).toHaveBeenCalledWith(1);
+    });
+
+    it('records the panel config once the author changes it', async () => {
+      await openAndEdit(editProps({ renderMode: RenderMode.PerRow }));
+
+      expect(record).toHaveBeenLastCalledWith(
+        1,
+        expect.objectContaining({
+          options: expect.objectContaining({ content: '# Edited', renderMode: RenderMode.PerRow }),
+          newFeaturesEnabled: true,
+          contentChanged: true,
+          editorViewChanged: false,
+        })
+      );
+    });
+
+    it('forgets the panel again once the author reverts the edit', async () => {
+      const props = editProps();
+      const { rerender } = await openAndEdit(props);
+      expect(record).toHaveBeenCalled();
+
+      forget.mockClear();
+      rerender(editing(props));
+
+      expect(forget).toHaveBeenLastCalledWith(1);
+    });
+
+    it('records the view the author ended on, and that they chose it', async () => {
+      await openAndEdit(editProps());
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      expect(record).toHaveBeenLastCalledWith(
+        1,
+        expect.objectContaining({ editorViewAtSave: 'split', editorViewChanged: true })
+      );
+    });
+
+    it.each([
+      {
+        name: 'a query returned fields and rows',
+        frames: [toDataFrame({ fields: [{ name: 'host', values: ['web-1'] }] })],
+        expected: true,
+      },
+      {
+        name: 'a query returned a frame with no rows',
+        frames: [toDataFrame({ fields: [{ name: 'host', values: [] }] })],
+        expected: false,
+      },
+      { name: 'there is no query at all', frames: [], expected: false },
+    ])('records hasData=$expected when $name', async ({ frames, expected }) => {
+      await openAndEdit(editProps({}, { data: createData(frames) }));
+
+      expect(record).toHaveBeenLastCalledWith(1, expect.objectContaining({ hasData: expected }));
+    });
   });
 });
