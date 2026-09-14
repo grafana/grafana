@@ -130,6 +130,7 @@ const setup = (
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
     mockUsePluginComponents,
+    setFocusedSpanIdForSearch: defaultProps.setFocusedSpanIdForSearch,
   };
 };
 
@@ -359,7 +360,47 @@ describe('TracePageHeader test', () => {
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
     expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: 'Go to span' })).toBeInTheDocument();
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
+  });
+
+  it('focuses the highlighted span when Go to span is clicked', async () => {
+    const errorTraceId = 'go-to-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { setFocusedSpanIdForSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+    expect(setFocusedSpanIdForSearch).toHaveBeenCalledWith('payment-error');
   });
 
   it('should render the trace-level logs link when provided', () => {
