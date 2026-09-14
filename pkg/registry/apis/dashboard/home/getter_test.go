@@ -329,9 +329,7 @@ func TestHomeDashboardWatch_StopsWhenWatcherIsClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		// Mirror home.watch() shape: drain both channels until both are closed.
 		eventsOpen, errorsOpen := true, true
 		for eventsOpen || errorsOpen {
@@ -346,7 +344,7 @@ func TestHomeDashboardWatch_StopsWhenWatcherIsClosed(t *testing.T) {
 				}
 			}
 		}
-	}()
+	})
 
 	require.NoError(t, w.Close())
 	done := make(chan struct{})

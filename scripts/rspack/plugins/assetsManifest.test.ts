@@ -5,7 +5,12 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { describe, expect, it } from 'vitest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
+import {
+  createAssetsManifestOptions,
+  generateAssetsManifest,
+  type ManifestAssets,
+  type ManifestEntrypoints,
+} from './assetsManifest.ts';
 import { compile, readAssets } from './testUtils.ts';
 
 const OUTPUT_PATH = '/dist';
@@ -56,7 +61,7 @@ function sriPlugin(): RspackPluginInstance {
 }
 
 function manifestPlugin(): RspackPluginInstance {
-  return new RspackManifestPlugin(assetsManifestOptions);
+  return new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH));
 }
 
 function expectedIntegrity(content: Buffer | string): string {
@@ -80,7 +85,9 @@ describe('assets manifest', () => {
   it('emits the entrypoints shape the backend decodes', async () => {
     const { entrypoints } = await build([sriPlugin(), manifestPlugin()]);
 
-    expect(Object.keys(entrypoints).sort()).toEqual(['app', 'boot', 'dark', 'light']);
+    // esModule is a flag, not an entrypoint. It sits in here because webassets.go decodes
+    // entrypoints into a struct that has the flag alongside app/dark/light.
+    expect(Object.keys(entrypoints).sort()).toEqual(['app', 'boot', 'dark', 'esModule', 'light']);
     // Load order matters: the runtime chunk has to come before the entry chunk.
     expect(entrypoints.app.assets.js[0]).toMatch(/^public\/build\/runtime\./);
     expect(entrypoints.app.assets.js).toHaveLength(2);
@@ -117,7 +124,11 @@ describe('assets manifest', () => {
     const { entrypoints, entries } = await build([sriPlugin(), manifestPlugin()]);
 
     const integrityMap = new Map(Object.values(entries).map((entry) => [entry.src, entry.integrity]));
-    const entrypointFilePaths = Object.values(entrypoints).flatMap((v) => Object.values(v.assets).flat());
+    const entrypointFilePaths = Object.entries(entrypoints)
+      // Rspack injects an esModule flag into the entrypoints object as a temporary workaround for
+      // the backend to detect builds that emit es modules. Filtered here as it's not an actual entrypoint and has no assets.
+      .filter(([name]) => name !== 'esModule')
+      .flatMap(([, entrypoint]) => Object.values(entrypoint.assets).flat());
 
     for (const entrypoint of entrypointFilePaths) {
       expect(integrityMap.get(entrypoint), `${entrypoint} must have an integrity hash`).toBeDefined();
@@ -172,6 +183,38 @@ describe('assets manifest', () => {
     expect(Object.keys(assets).some((name) => name.startsWith('lazy.'))).toBe(true);
     expect(Object.keys(entries).some((key) => key.includes('image'))).toBe(false);
     expect(Object.keys(entries).some((key) => key.startsWith('lazy'))).toBe(false);
+  });
+
+  // A hot update only exists partway through a watch session, which a single compilation
+  // cannot produce, so the generator is driven directly here. Without the filter the backend
+  // renders the patch into index.html as application code.
+  it('excludes hot module replacement patches from the entrypoint file lists', () => {
+    const entries = {
+      app: [
+        'runtime.js',
+        'app.js',
+        'app.1a2b3c4d.hot-update.js',
+        '1a2b3c4d.hot-update.json',
+        'grafana.app.css',
+        'app.hot-update.mjs',
+      ],
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const compilation = { outputOptions: { publicPath: PUBLIC_PATH } } as Parameters<
+      typeof generateAssetsManifest
+    >[4]['compilation'];
+
+    const { entrypoints } = generateAssetsManifest(undefined, [], entries, PUBLIC_PATH, { compilation });
+
+    expect(entrypoints).toEqual({
+      app: {
+        assets: {
+          js: ['public/build/runtime.js', 'public/build/app.js'],
+          css: ['public/build/grafana.app.css'],
+        },
+      },
+      esModule: false,
+    });
   });
 
   it('excludes sourcemaps from the entrypoint file lists', async () => {

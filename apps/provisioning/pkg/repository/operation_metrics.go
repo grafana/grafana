@@ -13,12 +13,13 @@ import (
 // a byte payload and are observed on the size histogram too; the rest only
 // record duration and outcome.
 const (
-	OperationRead   = "read"
-	OperationWrite  = "write"
-	OperationList   = "list"
-	OperationDelete = "delete"
-	OperationMove   = "move"
-	OperationPush   = "push"
+	OperationRead    = "read"
+	OperationWrite   = "write"
+	OperationList    = "list"
+	OperationDelete  = "delete"
+	OperationMove    = "move"
+	OperationPush    = "push"
+	OperationCompare = "compare"
 )
 
 // OperationMetrics tracks the work repositories do on behalf of their callers:
@@ -134,6 +135,12 @@ func (r *OperationRecorder) Delete(start time.Time, err error) {
 // Move records a move that started at start.
 func (r *OperationRecorder) Move(start time.Time, err error) {
 	r.recordOutcome(OperationMove, start, err)
+}
+
+// Compare records a diff between two refs that started at start, which is the
+// network round trip incremental sync makes to work out what changed.
+func (r *OperationRecorder) Compare(start time.Time, err error) {
+	r.recordOutcome(OperationCompare, start, err)
 }
 
 // Push records a staged batch being committed and pushed to the remote, which

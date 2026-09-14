@@ -196,8 +196,7 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 // IsNonRetryableError reports whether an error is persistent and not worth retrying within an
 // evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
 func IsNonRetryableError(err error) bool {
-	var nonRetryableError *invalidEvalResultFormatError
-	if errors.As(err, &nonRetryableError) {
+	if _, ok := errors.AsType[*invalidEvalResultFormatError](err); ok {
 		return true
 	}
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {

@@ -2199,6 +2199,33 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable?.spec.refresh).toBe('onDashboardLoad');
     });
 
+    it.each([
+      {
+        desc: 'preserves the exported refresh setting when remapping the datasource',
+        refresh: 'onTimeRangeChanged' as const,
+        expectedRefresh: 'onTimeRangeChanged',
+      },
+      {
+        desc: 'upgrades a "never" refresh setting so the cleared options repopulate',
+        refresh: 'never' as const,
+        expectedRefresh: 'onDashboardLoad',
+      },
+    ])('$desc', ({ refresh, expectedRefresh }) => {
+      const base = createQueryVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...base, spec: { ...base.spec, refresh } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const variable = getQueryVariable(result);
+
+      // confirms the datasource was actually remapped, which is the branch that rewrites refresh
+      expect(variable?.spec.query?.datasource?.name).toBe('new-prom-uid');
+      expect(variable?.spec.refresh).toBe(expectedRefresh);
+    });
+
     it('preserves variable reference and keeps options intact', () => {
       // @ts-ignore - using minimal test schema
       const dashboard: DashboardV2Spec = {

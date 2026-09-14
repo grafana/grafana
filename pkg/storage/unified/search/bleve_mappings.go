@@ -33,15 +33,23 @@ type kindSearchFields struct {
 	// variants drives the index-time copy of per-kind values into the variant
 	// fields this kind's mapping declares.
 	variants []fieldVariant
+
+	// resultFields maps request field names to their declared response shape.
+	resultFields map[string]resource.SearchFieldDefinition
+	// allResultFields is the curated default response field list.
+	allResultFields []resource.SearchFieldDefinition
 }
 
 func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
+	resultFields, allResultFields := fieldValueDefinitions(provider, group, kindResource)
 	return kindSearchFields{
 		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
 		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
 		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		resultFields:       resultFields,
+		allResultFields:    allResultFields,
 	}
 }
 

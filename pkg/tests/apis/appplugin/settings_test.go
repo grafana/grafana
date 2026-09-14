@@ -28,6 +28,7 @@ import (
 
 const instanceName = "instance" // the name is always "instance"
 const testAppID = "test-app-with-backend"
+const testAppGroup = testAppID + ".ext.grafana.app"
 
 var gvrSettings = schema.GroupVersionResource{
 	Group:    testAppID,
@@ -345,6 +346,11 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string
 	return setupHelperFull(t, mode, false, extraFeatures...)
 }
 
+// setupHelperWithManifest installs and enables the test app manifest.
+func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
+	return setupHelperFull(t, mode, true, extraFeatures...)
+}
+
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
 
@@ -353,13 +359,20 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
 	}
 
+	// The settings resource moves to the manifest group along with the rest of
+	// the plugin's API, and the storage config is keyed by <resource>.<group>.
+	storageGroup := testAppID
+	if withManifest {
+		storageGroup = testAppGroup
+	}
+
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("app.%s", testAppID): {
+			fmt.Sprintf("app.%s", storageGroup): {
 				DualWriterMode: mode,
 			},
 		},
