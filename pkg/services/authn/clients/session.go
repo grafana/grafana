@@ -88,13 +88,12 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			SyncPermissions: true,
 		},
 	}
-	if oauthInfo != nil {
+	// Only reuse credentials together with their linked provider metadata.
+	if oauthInfo != nil && oauthInfo.HasAuthInfo {
 		ident.OAuthToken = oauthInfo.OAuthToken
-		if oauthInfo.HasAuthInfo {
-			ident.AuthID = oauthInfo.AuthID
-			ident.AuthenticatedBy = oauthInfo.AuthModule
-			return ident, nil
-		}
+		ident.AuthID = oauthInfo.AuthID
+		ident.AuthenticatedBy = oauthInfo.AuthModule
+		return ident, nil
 	}
 
 	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})

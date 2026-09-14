@@ -232,10 +232,15 @@ func TestSession_AuthenticateIncludesOAuthTokens(t *testing.T) {
 		name               string
 		includeOAuthTokens bool
 		hasAuthInfo        bool
+		fallbackAuthModule string
+		fallbackError      error
 	}{
 		{name: "including OAuth tokens reuses linked auth info", includeOAuthTokens: true, hasAuthInfo: true},
-		{name: "external session without auth info uses fallback", includeOAuthTokens: true},
-		{name: "ordinary session uses token-only lookup"},
+		{name: "external session without auth info uses fallback", includeOAuthTokens: true, fallbackAuthModule: login.AzureADAuthModule},
+		{name: "missing linked auth info with another OAuth provider discards prefetched credentials", includeOAuthTokens: true, fallbackAuthModule: login.GenericOAuthModule},
+		{name: "missing linked auth info with a non-OAuth provider discards prefetched credentials", includeOAuthTokens: true, fallbackAuthModule: login.LDAPAuthModule},
+		{name: "missing linked auth info with no fallback discards prefetched credentials", includeOAuthTokens: true, fallbackError: user.ErrUserNotFound},
+		{name: "ordinary session uses token-only lookup", fallbackAuthModule: login.AzureADAuthModule},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			lookupCalls, oauthLookupCalls := 0, 0
@@ -254,9 +259,10 @@ func TestSession_AuthenticateIncludesOAuthTokens(t *testing.T) {
 					}, nil
 				},
 			}
-			authInfo := &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{
-				AuthId: "fallback-subject", AuthModule: login.AzureADAuthModule,
-			}}
+			authInfo := &authinfotest.FakeService{
+				ExpectedUserAuth: &login.UserAuth{AuthId: "fallback-subject", AuthModule: tt.fallbackAuthModule},
+				ExpectedError:    tt.fallbackError,
+			}
 			client := ProvideSession(cfgProvider, sessionService, authInfo, tracing.InitializeTracerForTest())
 
 			httpReq := &http.Request{Header: make(http.Header)}
@@ -267,22 +273,28 @@ func TestSession_AuthenticateIncludesOAuthTokens(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, ident)
 			assert.Same(t, sessionToken, ident.SessionToken)
-			assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
 			if tt.includeOAuthTokens {
 				assert.Zero(t, lookupCalls)
 				assert.Equal(t, 1, oauthLookupCalls)
-				assert.Same(t, oauthToken, ident.OAuthToken)
 			} else {
 				assert.Equal(t, 1, lookupCalls)
 				assert.Zero(t, oauthLookupCalls)
-				assert.Nil(t, ident.OAuthToken)
 			}
 			if tt.hasAuthInfo {
+				assert.Same(t, oauthToken, ident.OAuthToken)
+				assert.Equal(t, login.AzureADAuthModule, ident.AuthenticatedBy)
 				assert.Zero(t, authInfo.LatestUserID, "a present auth-info row may have an empty auth ID")
 				assert.Empty(t, ident.AuthID)
 			} else {
+				assert.Nil(t, ident.OAuthToken, "prefetched credentials require their linked auth-info row")
 				assert.Equal(t, sessionToken.UserId, authInfo.LatestUserID)
-				assert.Equal(t, "fallback-subject", ident.AuthID)
+				if tt.fallbackError != nil {
+					assert.Empty(t, ident.AuthID)
+					assert.Empty(t, ident.AuthenticatedBy)
+				} else {
+					assert.Equal(t, "fallback-subject", ident.AuthID)
+					assert.Equal(t, tt.fallbackAuthModule, ident.AuthenticatedBy)
+				}
 			}
 		})
 	}
