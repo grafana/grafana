@@ -1,3 +1,5 @@
+import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+
 import { type DataFrame } from './dataFrame';
 
 /**
@@ -5,7 +7,7 @@ import { type DataFrame } from './dataFrame';
  *
  * @beta
  */
-export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
+export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any, TContextOptions = unknown> {
   /**
    * Path of the option property to control.
    *
@@ -49,7 +51,21 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   defaultValue?: TValue;
 
   /**
-   * Function that enables configuration of when option editor should be shown based on current panel option properties.
+   * Function that enables configuration of when option editor should be shown.
+   *
+   * `currentOptions` is the object the editor is registered against: the panel options for a panel
+   * option, `fieldConfig.defaults.custom` for a custom field config property, and
+   * `fieldConfig.defaults` for a standard one.
+   *
+   * `context` is the same editor context the editor component receives. `context.fieldConfig` is
+   * the whole field config, which lets a condition span both sides of the pane. `context.options`
+   * mirrors `currentOptions` rather than adding `addNestedOptions`.
+   * The context is undefined when options are built outside an options pane
    */
-  showIf?: (currentOptions: TOptions, data?: DataFrame[], annotations?: DataFrame[]) => boolean | undefined;
+  showIf?(
+    currentOptions: TOptions,
+    data?: DataFrame[],
+    annotations?: DataFrame[],
+    context?: StandardEditorContext<TContextOptions>
+  ): boolean | undefined;
 }
