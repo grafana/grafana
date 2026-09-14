@@ -38,6 +38,34 @@ func TestOpenAPIGroupVersionDoesNotCachePrivateResponses(t *testing.T) {
 	}
 }
 
+func TestOpenAPIGroupVersionRechecksAuthorization(t *testing.T) {
+	backend := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, private")
+		if req.Header.Get("Authorization") != "Bearer allowed" {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("ETag", `"backend-revision"`)
+		_, _ = w.Write([]byte(`{"openapi":"3.0.0"}`))
+	})
+	router := buildRouterWithBackend("example.grafana.app", "revision", backend)
+	req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/example.grafana.app/v1", nil)
+	req.Header.Set("Authorization", "Bearer allowed")
+	res := httptest.NewRecorder()
+	router.HandleFunc(res, req, http.NotFoundHandler())
+	require.Equal(t, http.StatusOK, res.Code)
+	require.NotEmpty(t, res.Header().Get("ETag"))
+
+	req.Header.Set("Authorization", "Bearer denied")
+	for _, etag := range []string{"", res.Header().Get("ETag")} {
+		req.Header.Set("If-None-Match", etag)
+		denied := httptest.NewRecorder()
+		router.HandleFunc(denied, req, http.NotFoundHandler())
+		require.Equal(t, http.StatusForbidden, denied.Code)
+	}
+}
+
 func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
 	for _, first := range []string{"application/json", "application/com.github.proto-openapi.spec.v3@v1.0+protobuf"} {
 		t.Run(first, func(t *testing.T) {

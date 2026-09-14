@@ -274,7 +274,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	}
 
 	maps.Copy(w.Header(), rec.header)
-	// Plugin schemas pass through authorization on every request. Honor their
+	// Private schemas pass through authorization on every request. Honor their
 	// private/no-cache responses instead of bypassing that check on a cache hit.
 	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
 		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
