@@ -913,7 +913,7 @@ func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
 	})
 }
 
-func TestIntegrationLookupTokenForAuthn(t *testing.T) {
+func TestIntegrationLookupTokenForOAuth(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	testCtx := createTestContext(t)
@@ -951,7 +951,7 @@ func TestIntegrationLookupTokenForAuthn(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	actual, err := testCtx.tokenService.LookupTokenForAuthn(context.Background(), created.UnhashedToken)
+	actual, err := testCtx.tokenService.LookupTokenForOAuth(context.Background(), created.UnhashedToken)
 	require.NoError(t, err)
 	require.NotNil(t, actual)
 	require.NotNil(t, actual.Token)
@@ -971,7 +971,7 @@ func TestIntegrationLookupTokenForAuthn(t *testing.T) {
 			_, err := sess.Table("user_auth").ID(authInfo.Id).Delete(&login.UserAuth{})
 			return err
 		}))
-		actual, err := testCtx.tokenService.LookupTokenForAuthn(context.Background(), created.UnhashedToken)
+		actual, err := testCtx.tokenService.LookupTokenForOAuth(context.Background(), created.UnhashedToken)
 		require.NoError(t, err)
 		assert.False(t, actual.HasAuthInfo)
 		assert.Empty(t, actual.AuthID)

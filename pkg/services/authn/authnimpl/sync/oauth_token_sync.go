@@ -79,7 +79,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 
 	cacheKey := fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
 
-	// LookupTokenForAuthn loads the OAuth token from this session's linked external
+	// LookupTokenForOAuth loads the OAuth token from this session's linked external
 	// session. A current token needs neither another query nor the refresh
 	// lock; cache it using the same expiry-bounded TTL as a refresh result.
 	if oauthtoken.IsOAuthTokenCurrent(ctx, id.OAuthToken) {

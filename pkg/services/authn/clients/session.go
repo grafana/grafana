@@ -59,15 +59,15 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	var authnInfo *auth.SessionTokenAuthnInfo
+	var oauthInfo *auth.SessionTokenOAuthInfo
 	var token *auth.UserToken
 	// Only load the linked provider and decrypted credentials when requested.
-	if r.IncludeOauthPassthroughHeaders {
-		authnInfo, err = s.sessionService.LookupTokenForAuthn(ctx, rawSessionToken)
+	if r.IncludeOAuthTokens {
+		oauthInfo, err = s.sessionService.LookupTokenForOAuth(ctx, rawSessionToken)
 		if err != nil {
 			return nil, err
 		}
-		token = authnInfo.Token
+		token = oauthInfo.Token
 	} else {
 		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)
 		if err != nil {
@@ -88,11 +88,11 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			SyncPermissions: true,
 		},
 	}
-	if authnInfo != nil {
-		ident.OAuthToken = authnInfo.OAuthToken
-		if authnInfo.HasAuthInfo {
-			ident.AuthID = authnInfo.AuthID
-			ident.AuthenticatedBy = authnInfo.AuthModule
+	if oauthInfo != nil {
+		ident.OAuthToken = oauthInfo.OAuthToken
+		if oauthInfo.HasAuthInfo {
+			ident.AuthID = oauthInfo.AuthID
+			ident.AuthenticatedBy = oauthInfo.AuthModule
 			return ident, nil
 		}
 	}

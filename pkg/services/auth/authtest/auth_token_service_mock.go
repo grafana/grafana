@@ -285,24 +285,24 @@ func (_m *MockUserAuthTokenService) LookupToken(ctx context.Context, unhashedTok
 	return r0, r1
 }
 
-// LookupTokenForAuthn provides a mock function with given fields: ctx, unhashedToken
-func (_m *MockUserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error) {
+// LookupTokenForOAuth provides a mock function with given fields: ctx, unhashedToken
+func (_m *MockUserAuthTokenService) LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*auth.SessionTokenOAuthInfo, error) {
 	ret := _m.Called(ctx, unhashedToken)
 
 	if len(ret) == 0 {
-		panic("no return value specified for LookupTokenForAuthn")
+		panic("no return value specified for LookupTokenForOAuth")
 	}
 
-	var r0 *auth.SessionTokenAuthnInfo
+	var r0 *auth.SessionTokenOAuthInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*auth.SessionTokenAuthnInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*auth.SessionTokenOAuthInfo, error)); ok {
 		return rf(ctx, unhashedToken)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *auth.SessionTokenAuthnInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *auth.SessionTokenOAuthInfo); ok {
 		r0 = rf(ctx, unhashedToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*auth.SessionTokenAuthnInfo)
+			r0 = ret.Get(0).(*auth.SessionTokenOAuthInfo)
 		}
 	}
 

@@ -76,10 +76,9 @@ type CreateTokenCommand struct {
 	ExternalSession *ExternalSession
 }
 
-// SessionTokenAuthnInfo contains the session data needed by the authentication
-// path. Implementations can resolve it in one database query instead of loading
-// the token, auth info, and external OAuth session independently.
-type SessionTokenAuthnInfo struct {
+// SessionTokenOAuthInfo contains a session token, its linked OAuth credentials,
+// and provider metadata, loaded together to avoid separate lookups.
+type SessionTokenOAuthInfo struct {
 	Token      *UserToken
 	AuthID     string
 	AuthModule string
@@ -94,7 +93,7 @@ type SessionTokenAuthnInfo struct {
 type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
-	LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*SessionTokenAuthnInfo, error)
+	LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*SessionTokenOAuthInfo, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
 	GetExternalSession(ctx context.Context, externalSessionID int64) (*ExternalSession, error)
 	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)

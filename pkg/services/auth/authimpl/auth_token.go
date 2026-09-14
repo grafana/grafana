@@ -200,13 +200,13 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return s.validateToken(ctx, cfg, dbHelper, &model, hashedToken, unhashedToken)
 }
 
-// LookupTokenForAuthn resolves the session token together with the auth provider
-// and OAuth credentials needed for OAuth passthrough. It is separate from
+// LookupTokenForOAuth resolves the session token together with its linked
+// provider metadata and OAuth credentials. It is separate from
 // LookupToken so callers that only need session-token state, including token
 // rotation and normal session authentication, avoid unnecessary joins and
 // secret decryption.
-func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error) {
-	ctx, span := s.tracer.Start(ctx, "authtoken.LookupTokenForAuthn")
+func (s *UserAuthTokenService) LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*auth.SessionTokenOAuthInfo, error) {
+	ctx, span := s.tracer.Start(ctx, "authtoken.LookupTokenForOAuth")
 	defer span.End()
 
 	cfg, err := s.cfgProvider.Get(ctx)
@@ -220,7 +220,7 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 	}
 
 	hashedToken := hashToken(cfg.SecretKey, unhashedToken)
-	var row sessionTokenAuthnRow
+	var row sessionTokenOAuthRow
 	var exists bool
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err = dbSession.Table(dbHelper.Table("user_auth_token")).Alias("uat").
@@ -266,7 +266,7 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 		return nil, err
 	}
 
-	result := &auth.SessionTokenAuthnInfo{
+	result := &auth.SessionTokenOAuthInfo{
 		Token:       token,
 		AuthID:      row.AuthID.String,
 		AuthModule:  row.AuthModule.String,
@@ -406,7 +406,7 @@ func (s *UserAuthTokenService) validateToken(ctx context.Context, cfg *setting.C
 	return &userToken, err
 }
 
-type sessionTokenAuthnRow struct {
+type sessionTokenOAuthRow struct {
 	TokenID                int64          `xorm:"token_id"`
 	TokenUserID            int64          `xorm:"token_user_id"`
 	TokenAuthToken         string         `xorm:"token_auth_token"`
@@ -430,7 +430,7 @@ type sessionTokenAuthnRow struct {
 	ExpiresAt              core.NullTime  `xorm:"expires_at"`
 }
 
-func (r *sessionTokenAuthnRow) userAuthToken() *userAuthToken {
+func (r *sessionTokenOAuthRow) userAuthToken() *userAuthToken {
 	return &userAuthToken{
 		Id:                r.TokenID,
 		UserId:            r.TokenUserID,

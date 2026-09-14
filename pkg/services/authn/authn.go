@@ -224,9 +224,9 @@ type Request struct {
 	OrgID int64
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
-	// IncludeOauthPassthroughHeaders asks session authentication to populate
-	// Identity.OAuthToken for passthrough headers.
-	IncludeOauthPassthroughHeaders bool
+	// IncludeOAuthTokens asks session authentication to populate
+	// Identity.OAuthToken with the linked OAuth credentials.
+	IncludeOAuthTokens bool
 	// metadata is additional information about the auth request
 	metadata map[string]string
 }

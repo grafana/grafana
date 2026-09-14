@@ -24,7 +24,7 @@ type FakeUserAuthTokenService struct {
 	UpdateExternalSessionProvider       func(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error
 	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
-	LookupTokenForAuthnProvider         func(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error)
+	LookupTokenForOAuthProvider         func(ctx context.Context, unhashedToken string) (*auth.SessionTokenOAuthInfo, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider         func(ctx context.Context, userID int64) error
 	ActiveTokenCountProvider            func(ctx context.Context, userID *int64) (int64, error)
@@ -109,8 +109,8 @@ func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToke
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
 }
 
-func (s *FakeUserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*auth.SessionTokenAuthnInfo, error) {
-	return s.LookupTokenForAuthnProvider(ctx, unhashedToken)
+func (s *FakeUserAuthTokenService) LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*auth.SessionTokenOAuthInfo, error) {
+	return s.LookupTokenForOAuthProvider(ctx, unhashedToken)
 }
 
 func (s *FakeUserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {
