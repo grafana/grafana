@@ -4044,11 +4044,13 @@ func TestGitRepository_EmptyRefHandling(t *testing.T) {
 
 func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupMock func(*mocks.FakeClient)
-		base      string
-		ref       string
-		wantError string
+		name            string
+		setupMock       func(*mocks.FakeClient)
+		base            string
+		ref             string
+		wantError       string
+		wantMissing     bool
+		wantMissingBase bool
 	}{
 		{
 			name: "resolve base ref error",
@@ -4073,6 +4075,32 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 			base:      "main",
 			ref:       "feature",
 			wantError: "resolve ref",
+		},
+		{
+			name: "base ref not found identifies base operand",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			base:            "main",
+			ref:             "feature",
+			wantError:       "resolve base ref: ref not found",
+			wantMissing:     true,
+			wantMissingBase: true,
+		},
+		{
+			name: "target ref not found identifies target operand",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
+				}, nil)
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			base:            "main",
+			ref:             "feature",
+			wantError:       "resolve ref: ref not found",
+			wantMissing:     true,
+			wantMissingBase: false,
 		},
 	}
 
@@ -4099,6 +4127,12 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, changes)
 			require.Contains(t, err.Error(), tt.wantError)
+			if tt.wantMissing {
+				var missingRef *repository.CompareRefNotFoundError
+				require.ErrorAs(t, err, &missingRef)
+				require.Equal(t, tt.wantMissingBase, missingRef.Base)
+				require.ErrorIs(t, err, repository.ErrRefNotFound)
+			}
 		})
 	}
 }
