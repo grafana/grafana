@@ -2728,6 +2728,13 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 	})
 }
 
+// callProcessHooks runs processHooks returning the hook ops and error, keeping
+// call sites to two blank identifiers (dogsled's max) instead of four returns.
+func callProcessHooks(rc *RepositoryController, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, accessible, shouldRotate bool) ([]map[string]interface{}, error) {
+	hookOps, _, _, err := rc.processHooks(context.Background(), repo, obj, testResults, accessible, shouldRotate)
+	return hookOps, err
+}
+
 // TestProcessHooks_RotationOverdueCause verifies that an overdue rotation is
 // counted with the cause it stayed overdue for. When the repository is
 // inaccessible the cause is classified from the health result (auth -> user,
@@ -2790,7 +2797,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 
 			shouldRotate := rc.shouldRotateWebhookSecret(obj)
 			accessible := isRepositoryAccessible(tt.testResults)
-			_, _, _, err := rc.processHooks(context.Background(), stub, obj, tt.testResults, accessible, shouldRotate)
+			_, err := callProcessHooks(rc, stub, obj, tt.testResults, accessible, shouldRotate)
 			require.NoError(t, err)
 
 			if tt.wantCause == "" {
@@ -2831,7 +2838,7 @@ func TestProcessHooks_SkipsRedundantRotationAfterHookUpdate(t *testing.T) {
 	}
 
 	shouldRotate := rc.shouldRotateWebhookSecret(obj)
-	_, _, _, err := rc.processHooks(context.Background(), stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
+	_, err := callProcessHooks(rc, stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.onUpdateCalls.Load(), "the webhook must be edited exactly once (by runHooks), not rotated again")
@@ -2867,7 +2874,7 @@ func TestProcessHooks_RecordsOverdueOnHookFailure(t *testing.T) {
 	}
 
 	shouldRotate := rc.shouldRotateWebhookSecret(obj)
-	_, _, _, err := rc.processHooks(context.Background(), stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
+	_, err := callProcessHooks(rc, stub, obj, &provisioning.TestResults{Success: true}, true, shouldRotate)
 	require.Error(t, err)
 
 	assert.Equal(t, 1.0,
