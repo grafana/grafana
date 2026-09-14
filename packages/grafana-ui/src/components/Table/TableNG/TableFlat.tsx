@@ -373,6 +373,7 @@ export function TableFlat(props: TableNGProps) {
     enableColumnReorder: tableRefreshNewFeaturesEnabled,
     canManageColumns: tableRefreshNewFeaturesEnabled,
     noPanelPadding,
+    tableRefreshNewFeaturesEnabled,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -390,6 +391,7 @@ export function TableFlat(props: TableNGProps) {
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
     noPanelPadding,
+    tableRefreshNewFeaturesEnabled,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -468,6 +470,7 @@ export function TableFlat(props: TableNGProps) {
       timeRange,
       tableRefreshEnabled,
       enableColumnReorder: tableRefreshNewFeaturesEnabled,
+      tableRefreshNewFeaturesEnabled,
       settlingColumnKeys,
       onHideColumn: tableRefreshNewFeaturesEnabled ? handleHideColumn : undefined,
       // Pinning is not part of this stage: it is half a reorder and half a panel option, so it

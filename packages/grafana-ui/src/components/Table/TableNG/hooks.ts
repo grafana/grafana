@@ -66,6 +66,7 @@ import {
   isSortableField,
   createTypographyContext,
   extractPixelValue,
+  isFieldFilterable,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
@@ -407,6 +408,7 @@ interface UseHeaderHeightOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
+  tableRefreshNewFeaturesEnabled?: boolean;
 }
 
 export function useHeaderHeight({
@@ -416,6 +418,7 @@ export function useHeaderHeight({
   typographyCtx,
   showTypeIcons = false,
   noPanelPadding = false,
+  tableRefreshNewFeaturesEnabled = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
@@ -433,7 +436,7 @@ export function useHeaderHeight({
         const field = fields[idx];
 
         // filtering icon
-        if (field.config?.custom?.filterable) {
+        if (isFieldFilterable(field, tableRefreshNewFeaturesEnabled)) {
           width -= HEADER_ICON_SPACE;
         }
         // sorting icon. reserved on every sortable column, not just the currently-sorted one, so a
@@ -448,7 +451,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding]
+    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshNewFeaturesEnabled]
   );
 
   const headerHeight = useMemo(() => {
@@ -829,6 +832,7 @@ interface UseContentAwareWidthsOptions {
   enableColumnReorder?: boolean;
   canManageColumns?: boolean;
   noPanelPadding?: boolean;
+  tableRefreshNewFeaturesEnabled?: boolean;
 }
 
 /**
@@ -846,6 +850,7 @@ export function useContentAwareWidths({
   enableColumnReorder = false,
   canManageColumns = false,
   noPanelPadding = false,
+  tableRefreshNewFeaturesEnabled = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -871,6 +876,7 @@ export function useContentAwareWidths({
             enableColumnReorder,
             canManageColumns,
             noPanelPadding,
+            tableRefreshNewFeaturesEnabled,
           }
         : undefined,
     [
@@ -884,6 +890,7 @@ export function useContentAwareWidths({
       enableColumnReorder,
       canManageColumns,
       noPanelPadding,
+      tableRefreshNewFeaturesEnabled,
     ]
   );
 }

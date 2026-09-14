@@ -7,6 +7,11 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
   options?: {
     hideFields?: boolean;
     filters?: boolean;
+    /**
+     * Gate for the column-filter switch, evaluated per render. The table panel hides it under
+     * `table.refreshNewFeatures`, where every column is filterable and there is nothing to opt into.
+     */
+    filtersShowIf?: () => boolean;
     wrapHeaderText?: boolean;
   }
 ) {
@@ -71,6 +76,7 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
       category,
       description: t('table.description-column-filter', 'Enables/disables field filters in table'),
       defaultValue: defaultTableFieldOptions.filterable,
+      showIf: options.filtersShowIf,
     });
   }
 

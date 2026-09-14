@@ -75,7 +75,6 @@ type CommonTableOptions = Pick<
   | 'cellHeight'
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
-  | 'showColumnsSidebar'
 >;
 
 /**
@@ -87,9 +86,6 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
   const tableRefreshEnabled = useFlagTableRefresh();
-  // The new column interactions live in the refreshed header — its drag handle and its column menu —
-  // so the toggle for them only means anything on top of the refreshed table.
-  const tableRefreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures() && tableRefreshEnabled;
 
   return useMemo(
     () => ({
@@ -105,11 +101,9 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       cellHeight: options.cellHeight,
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
-      showColumnsSidebar: tableRefreshNewFeaturesEnabled ? options.showColumnsSidebar : undefined,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
-      tableRefreshNewFeaturesEnabled,
     }),
     [
       options.showHeader,
@@ -121,14 +115,30 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.cellHeight,
       options.maxRowHeight,
       options.disableKeyboardEvents,
-      options.showColumnsSidebar,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
       tableRefreshEnabled,
-      tableRefreshNewFeaturesEnabled,
     ]
   );
+}
+
+/**
+ * Whether the table panel's refreshed column features are on: reorder, hide/show, the column
+ * sidebar, and filtering on every column.
+ *
+ * Read here rather than in `useCommonTableProps` because that hook is shared with the logs table,
+ * and every TableNG caller other than the table panel keeps opting in per field.
+ */
+export function useTableRefreshNewFeatures(): boolean {
+  // Both read unconditionally: `&&` between the two calls would skip the second one whenever the
+  // first is false, which changes the hook order between renders.
+  const newFeaturesEnabled = useFlagTableRefreshNewFeatures();
+  const refreshEnabled = useFlagTableRefresh();
+
+  // The interactions live in the refreshed header — its drag handle and its column menu — so the
+  // toggle for them only means anything on top of the refreshed table.
+  return newFeaturesEnabled && refreshEnabled;
 }
 
 /**

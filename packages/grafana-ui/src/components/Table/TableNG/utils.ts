@@ -1345,6 +1345,8 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
+  /** `table.refreshNewFeatures`: every column is filterable, so every header reserves the affordance. */
+  tableRefreshNewFeaturesEnabled?: boolean;
   /** `table.refresh`: a reorderable column reserves space for its drag handle. */
   enableColumnReorder?: boolean;
   /**
@@ -1455,6 +1457,19 @@ function measureInlineRunWidth(
  * others directly — so it shows as soon as any one of them is available. Shared by the menu's own
  * render gate and the header width estimate, so the two can't drift out of sync.
  */
+/**
+ * @internal
+ * Whether a column can be filtered.
+ *
+ * Under `table.refreshNewFeatures` every column can be: filtering is no longer a per-field opt-in.
+ * The flag wins over the saved config rather than defaulting behind it, because the field option is
+ * gone in that mode — honouring a `filterable: false` saved earlier would leave a column
+ * unfilterable with nothing in the UI to change it.
+ */
+export function isFieldFilterable(field: Field, tableRefreshNewFeaturesEnabled = false): boolean {
+  return tableRefreshNewFeaturesEnabled || (field.config.custom?.filterable ?? false);
+}
+
 export function isColumnMenuVisible(
   filterable: boolean,
   canManageColumns: boolean,
@@ -1483,9 +1498,10 @@ function measureHeaderWidth(
   tableRefreshEnabled: boolean,
   isFiltered: boolean,
   enableColumnReorder: boolean,
-  canManageColumns: boolean
+  canManageColumns: boolean,
+  tableRefreshNewFeaturesEnabled: boolean
 ): number {
-  const isFilterable = field.config.custom?.filterable ?? false;
+  const isFilterable = isFieldFilterable(field, tableRefreshNewFeaturesEnabled);
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
@@ -1704,6 +1720,7 @@ export function computeContentAwareColWidths(
     enableColumnReorder = false,
     canManageColumns = false,
     noPanelPadding = false,
+    tableRefreshNewFeaturesEnabled = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1749,7 +1766,8 @@ export function computeContentAwareColWidths(
       tableRefreshEnabled,
       filteredKeys.has(getDisplayName(field)),
       enableColumnReorder,
-      canManageColumns
+      canManageColumns,
+      tableRefreshNewFeaturesEnabled
     );
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds

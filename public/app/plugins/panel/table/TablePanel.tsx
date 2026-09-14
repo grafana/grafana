@@ -9,6 +9,7 @@ import {
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
+  useTableRefreshNewFeatures,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
@@ -42,6 +43,9 @@ export function TablePanel(props: Props) {
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
+  // The table panel's own refreshed feature set, kept out of `useCommonTableProps` because that hook
+  // is shared with the logs table.
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -54,7 +58,7 @@ export function TablePanel(props: Props) {
   // Column order and visibility come from the panel's ad-hoc transformation stage when the host has
   // one, so the view survives a refresh and stays out of the saved dashboard. Undefined leaves the
   // table keeping it locally, which is what happens outside a dashboard.
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, !!commonTableProps.tableRefreshNewFeaturesEnabled);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, tableRefreshNewFeaturesEnabled);
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -79,6 +83,8 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
+      tableRefreshNewFeaturesEnabled={tableRefreshNewFeaturesEnabled}
+      showColumnsSidebar={tableRefreshNewFeaturesEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}

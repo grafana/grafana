@@ -1225,6 +1225,47 @@ describe('TableNG', () => {
     });
   });
 
+  describe('table.refreshNewFeatures filtering', () => {
+    // Filtering stopped being a per-field opt-in for the table panel, and the field option went with
+    // it — so a saved `filterable: false` is ignored rather than left unreachable.
+    const unfilterableFrame = () => {
+      const frame = createThreeColumnDataFrame();
+      return {
+        ...frame,
+        fields: frame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { ...field.config.custom, filterable: false } },
+        })),
+      };
+    };
+
+    it('offers filtering on every column, whatever the field config says', async () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={unfilterableFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          tableRefreshNewFeaturesEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+
+      expect(await screen.findByText('Filter values')).toBeInTheDocument();
+    });
+
+    it('leaves filtering to the field config when the flag is off', async () => {
+      render(
+        <TableNG enableVirtualization={false} data={unfilterableFrame()} width={800} height={600} tableRefreshEnabled />
+      );
+
+      // Nothing to put in a column menu for an unfilterable column, so there is no menu at all
+      expect(screen.queryByLabelText('Column options for Column B')).not.toBeInTheDocument();
+    });
+  });
+
   describe('table.refreshNewFeatures controlled column state', () => {
     const headerText = (container: HTMLElement) =>
       Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);

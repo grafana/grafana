@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
@@ -15,7 +15,13 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
-import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableRefreshNewFeatures,
+  useTableSharedCrosshair,
+} from './hooks';
 import { getCellActions } from './utils';
 
 jest.mock('@grafana/data', () => {
@@ -170,6 +176,45 @@ describe('useTableSharedCrosshair', () => {
   });
 });
 
+// The table panel's refreshed feature set is deliberately not part of `useCommonTableProps`: that
+// hook is shared with the logs table, which keeps opting in per field.
+describe('useTableRefreshNewFeatures', () => {
+  // setTestFlags publishes an OpenFeature change event, and the hook under test is still mounted
+  // when this runs — so the reset is a React state update like any other.
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('is off with neither flag', () => {
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off with only its own flag, since the interactions live in the refreshed header', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off with only table.refresh', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is on with both', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(true);
+  });
+});
+
 describe('useCommonTableProps', () => {
   const fieldConfig: FieldConfigSource = { defaults: { noValue: 'n/a' }, overrides: [] };
   const options = {
@@ -201,8 +246,6 @@ describe('useCommonTableProps', () => {
       disableSanitizeHtml: false,
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
-      tableRefreshNewFeaturesEnabled: false,
-      showColumnsSidebar: undefined,
     });
   });
 
@@ -211,31 +254,6 @@ describe('useCommonTableProps', () => {
     const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
     expect(result.current.tableRefreshEnabled).toBe(true);
-  });
-
-  // The new column interactions live in the refreshed header, so the toggle for them is ANDed with
-  // table.refresh rather than standing on its own.
-  it('does not report the new column features without the refreshed table', () => {
-    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
-    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
-
-    expect(result.current.tableRefreshNewFeaturesEnabled).toBe(false);
-  });
-
-  it('reports the new column features once both flags are on', () => {
-    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
-    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
-
-    expect(result.current.tableRefreshNewFeaturesEnabled).toBe(true);
-  });
-
-  it('withholds the sidebar option until the new column features are on', () => {
-    setTestFlags({ [FlagKeys.TableRefresh]: true });
-    const { result } = renderHook(() => useCommonTableProps({ ...options, showColumnsSidebar: true }, fieldConfig), {
-      wrapper: FeatureFlagsProvider,
-    });
-
-    expect(result.current.showColumnsSidebar).toBeUndefined();
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

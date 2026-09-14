@@ -165,8 +165,14 @@ interface BaseTableProps {
   contentAwareWidthsEnabled?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
-  // temporary feature toggle to manage rollout of the refreshed table's column interactions
-  // (table.refreshNewFeatures)
+  /**
+   * Temporary feature toggle for the refreshed table's column interactions (table.refreshNewFeatures):
+   * reorder, hide/show, the column sidebar, and filtering on every column.
+   *
+   * Set by the table panel only. Every other TableNG caller — the inspector's preview, the logs
+   * table, the flame graph — keeps opting in per field, so this is the one switch that says "this is
+   * the refreshed table panel" rather than a prop per feature.
+   */
   tableRefreshNewFeaturesEnabled?: boolean;
   /**
    * `table.refreshNewFeatures`: whether the column management sidebar is open. Read as the sidebar's

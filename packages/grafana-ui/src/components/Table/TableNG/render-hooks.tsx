@@ -187,6 +187,8 @@ export interface ColumnBuildConfig {
   showTypeIcons?: boolean;
   /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
   tableRefreshEnabled?: boolean;
+  /** `table.refreshNewFeatures`: column interactions, and filtering on every column. */
+  tableRefreshNewFeaturesEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -278,6 +280,7 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     disableSanitizeHtml,
     enableColumnReorder,
+    tableRefreshNewFeaturesEnabled,
     settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
@@ -599,6 +602,7 @@ function buildColumnsFromFields(
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
           enableColumnReorder={enableColumnReorder}
+          tableRefreshNewFeaturesEnabled={tableRefreshNewFeaturesEnabled}
           onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
           canHideColumn={fields.length > 1}
           isPinned={pinnedColumns?.has(displayName)}

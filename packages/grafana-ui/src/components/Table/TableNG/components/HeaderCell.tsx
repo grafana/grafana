@@ -19,7 +19,7 @@ import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isColumnMenuVisible, isSortableField } from '../utils';
+import { getDisplayName, isColumnMenuVisible, isFieldFilterable, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -40,6 +40,8 @@ interface HeaderCellProps {
   tableRefreshEnabled?: boolean;
   /** `table.refresh`: whether this column can be reordered by dragging its header cell. */
   enableColumnReorder?: boolean;
+  /** `table.refreshNewFeatures`: every column is filterable, whatever `custom.filterable` says. */
+  tableRefreshNewFeaturesEnabled?: boolean;
   /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
   onHideColumn?: () => void;
   /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
@@ -74,6 +76,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterTailRows,
   tableRefreshEnabled,
   enableColumnReorder,
+  tableRefreshNewFeaturesEnabled,
   onHideColumn,
   canHideColumn,
   isPinned,
@@ -85,7 +88,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
   const displayName = getDisplayName(field);
-  const filterable = field.config.custom?.filterable ?? false;
+  const filterable = isFieldFilterable(field, tableRefreshNewFeaturesEnabled);
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
