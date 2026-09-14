@@ -2757,6 +2757,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 		{"user when inaccessible auth failure", overdue, &provisioning.TestResults{Code: http.StatusUnauthorized}, false, nil, reconcileCauseUser},
 		{"system when inaccessible server down", overdue, &provisioning.TestResults{Code: http.StatusServiceUnavailable}, false, nil, reconcileCauseSystem},
 		{"system when rotation attempt fails", overdue, nil, false, assert.AnError, reconcileCauseSystem},
+		{"user when rotation attempt fails with auth error", overdue, nil, false, repository.ErrUnauthorized, reconcileCauseUser},
 		{"nothing when not due", notDue, nil, false, nil, ""},
 		{"nothing when rotation succeeds", overdue, nil, false, nil, ""},
 		{"nothing during hook-failure cooldown", overdue, nil, true, nil, ""},
