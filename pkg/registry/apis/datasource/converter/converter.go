@@ -185,6 +185,9 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	if err != nil {
 		return nil, err
 	}
+	if ds.Labels == nil {
+		ds.Labels = map[string]string{}
+	}
 
 	version, _ := strconv.Atoi(ds.ResourceVersion)
 	cmd := &datasources.UpdateDataSourceCommand{
@@ -200,7 +203,7 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
+		IsDefault:       ds.Spec.IsDefault() || ds.Labels["default"] == "true",
 		ReadOnly:        ds.Spec.ReadOnly(),
 
 		// The only field different than add
@@ -255,7 +258,7 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
+		IsDefault:       ds.Spec.IsDefault() || ds.Labels["default"] == "true",
 		ReadOnly:        ds.Spec.ReadOnly(),
 		SecureJsonData:  make(map[string][]byte),
 	}
