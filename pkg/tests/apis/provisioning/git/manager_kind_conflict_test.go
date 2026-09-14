@@ -91,6 +91,11 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 				require.NoError(c, err)
 				assert.Equal(c, currentRef, common.MustNestedString(repo.Object, "status", "sync", "lastRef"))
 				assert.Equal(c, "warning", common.MustNestedString(repo.Object, "status", "sync", "state"))
+				messages := common.MustNestedStringSlice(repo.Object, "status", "sync", "message")
+				require.Len(c, messages, 1)
+				assert.Contains(c, messages[0], conflict.Error())
+				assert.Contains(c, messages[0], "file: "+tt.conflictPath)
+				assert.Contains(c, messages[0], "name: conflicting")
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	}
