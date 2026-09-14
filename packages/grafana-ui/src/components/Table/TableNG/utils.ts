@@ -1345,15 +1345,11 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
-  /** `table.refreshNewFeatures`: every column is filterable, so every header reserves the affordance. */
-  tableRefreshNewFeaturesEnabled?: boolean;
-  /** `table.refresh`: a reorderable column reserves space for its drag handle. */
-  enableColumnReorder?: boolean;
   /**
-   * `table.refresh`: hide/pin are available for every column, not just filterable ones, so the
-   * column menu they live in reserves space even when the column isn't filterable.
+   * `table.refresh`: the column sidebar's "Manage columns" entry is in the menu of every column, so
+   * the menu reserves space even on a column that is neither filterable nor hideable.
    */
-  canManageColumns?: boolean;
+  hasColumnSidebar?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
@@ -1459,23 +1455,35 @@ function measureInlineRunWidth(
  */
 /**
  * @internal
- * Whether a column can be filtered.
- *
- * Under `table.refreshNewFeatures` every column can be: filtering is no longer a per-field opt-in.
- * The flag wins over the saved config rather than defaulting behind it, because the field option is
- * gone in that mode — honouring a `filterable: false` saved earlier would leave a column
- * unfilterable with nothing in the UI to change it.
+ * What a column lets the user do from the table itself. Each is off unless the consumer opts in, so
+ * a caller decides per column what its table offers — the table panel turns all three on for every
+ * column, while the inspector's preview and the logs table leave them as configured.
  */
-export function isFieldFilterable(field: Field, tableRefreshNewFeaturesEnabled = false): boolean {
-  return tableRefreshNewFeaturesEnabled || (field.config.custom?.filterable ?? false);
+export function isFieldFilterable(field: Field): boolean {
+  return field.config.custom?.filterable ?? false;
 }
 
-export function isColumnMenuVisible(
-  filterable: boolean,
-  canManageColumns: boolean,
-  enableColumnReorder: boolean
-): boolean {
-  return filterable || canManageColumns || enableColumnReorder;
+/** @internal */
+export function isFieldReorderable(field: Field): boolean {
+  return field.config.custom?.reorderable ?? false;
+}
+
+/** @internal */
+export function isFieldHideable(field: Field): boolean {
+  return field.config.custom?.hideable ?? false;
+}
+
+/**
+ * @internal
+ * Whether the column-management sidebar has anything to offer: at least one column has to be
+ * reorderable or hideable, or it would open onto a list that cannot do anything.
+ */
+export function canManageColumns(fields: Field[]): boolean {
+  return fields.some((field) => isFieldReorderable(field) || isFieldHideable(field));
+}
+
+export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
+  return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;
 }
 
 /**
@@ -1497,11 +1505,9 @@ function measureHeaderWidth(
   isSortable: boolean,
   tableRefreshEnabled: boolean,
   isFiltered: boolean,
-  enableColumnReorder: boolean,
-  canManageColumns: boolean,
-  tableRefreshNewFeaturesEnabled: boolean
+  hasColumnSidebar: boolean
 ): number {
-  const isFilterable = isFieldFilterable(field, tableRefreshNewFeaturesEnabled);
+  const isFilterable = isFieldFilterable(field);
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
@@ -1509,12 +1515,12 @@ function measureHeaderWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
-  // the drag handle is always in flow once reorder is enabled, unlike the sort arrow/filter icons
+  // the drag handle is always in flow on a reorderable column, unlike the sort arrow/filter icons
   // which only reserve space while that state is active.
-  headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
+  headerWidth += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     // stays in flow (opacity-faded, not unmounted) whenever the menu itself would render.
-    headerWidth += isColumnMenuVisible(isFilterable, canManageColumns, enableColumnReorder) ? HEADER_MENU_SPACE : 0;
+    headerWidth += isColumnMenuVisible(field, hasColumnSidebar) ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
     // the arrow, it only exists while that state holds, so its space is reserved only then (the
     // widths recompute when the filter changes).
@@ -1717,10 +1723,8 @@ export function computeContentAwareColWidths(
     tableRefreshEnabled = false,
     filter,
     sampleSize,
-    enableColumnReorder = false,
-    canManageColumns = false,
+    hasColumnSidebar = false,
     noPanelPadding = false,
-    tableRefreshNewFeaturesEnabled = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1765,9 +1769,7 @@ export function computeContentAwareColWidths(
       isSortableField(field),
       tableRefreshEnabled,
       filteredKeys.has(getDisplayName(field)),
-      enableColumnReorder,
-      canManageColumns,
-      tableRefreshNewFeaturesEnabled
+      hasColumnSidebar
     );
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds

@@ -14,7 +14,10 @@ function createDataTransfer() {
   };
 }
 
-const columns = ['Column A', 'Column B'];
+const columns = [
+  { name: 'Column A', reorderable: true, hideable: true },
+  { name: 'Column B', reorderable: true, hideable: true },
+];
 
 // Mirrors how TableFlat owns this state: the panel itself holds none of it.
 function Harness({

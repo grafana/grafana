@@ -166,22 +166,14 @@ interface BaseTableProps {
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
   /**
-   * Temporary feature toggle for the refreshed table's column interactions (table.refreshNewFeatures):
-   * reorder, hide/show, the column sidebar, and filtering on every column.
-   *
-   * Set by the table panel only. Every other TableNG caller — the inspector's preview, the logs
-   * table, the flame graph — keeps opting in per field, so this is the one switch that says "this is
-   * the refreshed table panel" rather than a prop per feature.
-   */
-  tableRefreshNewFeaturesEnabled?: boolean;
-  /**
-   * `table.refreshNewFeatures`: whether the column management sidebar is open. Read as the sidebar's
-   * starting state and followed whenever it changes, so the panel option that drives it stays in
-   * charge while the panel is being edited. The table still opens and closes it locally in between.
+   * Whether the column management sidebar is open. Read as the sidebar's starting state and followed
+   * whenever it changes, so the panel option that drives it stays in charge while the panel is being
+   * edited. The table still opens and closes it locally in between. Only has an effect when some
+   * column is reorderable or hideable, since otherwise there is no sidebar to open.
    */
   showColumnsSidebar?: boolean;
   /**
-   * `table.refreshNewFeatures`: controlled column order, by display name.
+   * Controlled column order, by display name.
    *
    * Pass this together with `onColumnOrderChange` and `onHiddenColumnsChange` to own the column view
    * (a panel backing it with ad-hoc transformations does). Leave all three out and the table keeps
@@ -189,11 +181,11 @@ interface BaseTableProps {
    */
   columnOrder?: string[];
   onColumnOrderChange?: (columnOrder: string[]) => void;
-  /** `table.refreshNewFeatures`: controlled hidden columns, by display name. */
+  /** Controlled hidden columns, by display name. */
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
   /**
-   * `table.refreshNewFeatures`: every column the controlling owner could show, in its order,
+   * Every column the controlling owner could show, in its order,
    * including ones already removed from `data` — hiding a column is destructive, so without this the
    * table can hide one but never offer it back. Falls back to the visible fields when absent.
    */

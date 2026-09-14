@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { type DataFrame, getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -12,6 +14,7 @@ import {
   useTableRefreshNewFeatures,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
+import { withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -53,7 +56,13 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const rawMain = frames[currentIndex];
+  // Under the toggle every column is filterable, reorderable and hideable. Derived per render rather
+  // than written into field config, so none of it reaches the saved dashboard.
+  const main = useMemo(
+    () => (tableRefreshNewFeaturesEnabled ? withRefreshedTableCapabilities(rawMain) : rawMain),
+    [rawMain, tableRefreshNewFeaturesEnabled]
+  );
 
   // Column order and visibility come from the panel's ad-hoc transformation stage when the host has
   // one, so the view survives a refresh and stays out of the saved dashboard. Undefined leaves the
@@ -83,7 +92,6 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
-      tableRefreshNewFeaturesEnabled={tableRefreshNewFeaturesEnabled}
       showColumnsSidebar={tableRefreshNewFeaturesEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}

@@ -131,6 +131,21 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
     })
   );
 
+/**
+ * What the table panel applies under `table.refreshNewFeatures`: TableNG reads what a column lets
+ * the user do from that column's own config, so a test has to opt its columns in the same way.
+ */
+const withColumnCapabilities = (frame: DataFrame, capabilities = {}): DataFrame => ({
+  ...frame,
+  fields: frame.fields.map((field) => ({
+    ...field,
+    config: {
+      ...field.config,
+      custom: { ...field.config.custom, filterable: true, reorderable: true, hideable: true, ...capabilities },
+    },
+  })),
+});
+
 const createSingleColumnDataFrame = (): DataFrame =>
   withFieldOverrides(
     toDataFrame({
@@ -1126,11 +1141,10 @@ describe('TableNG', () => {
       const { container } = render(
         <TableNG
           enableVirtualization={false}
-          data={createBasicDataFrame()}
+          data={withColumnCapabilities(createBasicDataFrame())}
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
         />
       );
 
@@ -1177,11 +1191,10 @@ describe('TableNG', () => {
       const { container } = render(
         <TableNG
           enableVirtualization={false}
-          data={createThreeColumnDataFrame()}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
         />
       );
       expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
@@ -1204,12 +1217,11 @@ describe('TableNG', () => {
       const { container } = render(
         <TableNG
           enableVirtualization={false}
-          data={createThreeColumnDataFrame()}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
           width={800}
           height={600}
           frozenColumns={1}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
         />
       );
 
@@ -1225,47 +1237,6 @@ describe('TableNG', () => {
     });
   });
 
-  describe('table.refreshNewFeatures filtering', () => {
-    // Filtering stopped being a per-field opt-in for the table panel, and the field option went with
-    // it — so a saved `filterable: false` is ignored rather than left unreachable.
-    const unfilterableFrame = () => {
-      const frame = createThreeColumnDataFrame();
-      return {
-        ...frame,
-        fields: frame.fields.map((field) => ({
-          ...field,
-          config: { ...field.config, custom: { ...field.config.custom, filterable: false } },
-        })),
-      };
-    };
-
-    it('offers filtering on every column, whatever the field config says', async () => {
-      render(
-        <TableNG
-          enableVirtualization={false}
-          data={unfilterableFrame()}
-          width={800}
-          height={600}
-          tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
-        />
-      );
-
-      await userEvent.click(screen.getByLabelText('Column options for Column B'));
-
-      expect(await screen.findByText('Filter values')).toBeInTheDocument();
-    });
-
-    it('leaves filtering to the field config when the flag is off', async () => {
-      render(
-        <TableNG enableVirtualization={false} data={unfilterableFrame()} width={800} height={600} tableRefreshEnabled />
-      );
-
-      // Nothing to put in a column menu for an unfilterable column, so there is no menu at all
-      expect(screen.queryByLabelText('Column options for Column B')).not.toBeInTheDocument();
-    });
-  });
-
   describe('table.refreshNewFeatures controlled column state', () => {
     const headerText = (container: HTMLElement) =>
       Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
@@ -1277,11 +1248,10 @@ describe('TableNG', () => {
       const view = render(
         <TableNG
           enableVirtualization={false}
-          data={createThreeColumnDataFrame()}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           columnCatalog={['Column A', 'Column B', 'Column C']}
           hiddenColumns={new Set()}
           onColumnOrderChange={onColumnOrderChange}
@@ -1336,7 +1306,7 @@ describe('TableNG', () => {
       // What the owner's stage produces once "Column C" is hidden: the field is gone from the frame,
       // and only the catalog still knows about it.
       const { onHiddenColumnsChange } = renderControlled({
-        data: createBasicDataFrame(),
+        data: withColumnCapabilities(createBasicDataFrame()),
         hiddenColumns: new Set(['Column C']),
         showColumnsSidebar: true,
       });
@@ -1352,7 +1322,7 @@ describe('TableNG', () => {
 
     it('will not report hiding the last column that is left', async () => {
       const { onHiddenColumnsChange } = renderControlled({
-        data: createSingleColumnDataFrame(),
+        data: withColumnCapabilities(createSingleColumnDataFrame()),
         columnCatalog: ['Column A'],
       });
 
@@ -1373,11 +1343,10 @@ describe('TableNG', () => {
       rerender(
         <TableNG
           enableVirtualization={false}
-          data={createThreeColumnDataFrame()}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           columnCatalog={['Column A', 'Column B', 'Column C']}
           columnOrder={['Column C', 'Column A', 'Column B']}
           hiddenColumns={new Set()}
@@ -1391,7 +1360,7 @@ describe('TableNG', () => {
     });
 
     it('still drops a locally held view across a structure change', () => {
-      const data = createThreeColumnDataFrame();
+      const data = withColumnCapabilities(createThreeColumnDataFrame());
       const { container, rerender } = render(
         <TableNG
           enableVirtualization={false}
@@ -1399,7 +1368,6 @@ describe('TableNG', () => {
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           structureRev={1}
         />
       );
@@ -1427,7 +1395,6 @@ describe('TableNG', () => {
           width={800}
           height={600}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           structureRev={2}
         />
       );
@@ -3340,8 +3307,7 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
-          data={createBasicDataFrame()}
+          data={withColumnCapabilities(createBasicDataFrame())}
           width={800}
           height={600}
         />
@@ -3353,9 +3319,8 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
-          data={createBasicDataFrame()}
+          data={withColumnCapabilities(createBasicDataFrame())}
           width={800}
           height={600}
         />
@@ -3364,16 +3329,9 @@ describe('TableNG', () => {
     });
 
     it('follows the option when it changes, so editing the panel option opens and closes it', () => {
-      const data = createBasicDataFrame();
+      const data = withColumnCapabilities(createBasicDataFrame());
       const { rerender } = render(
-        <TableNG
-          enableVirtualization={false}
-          tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
-          data={data}
-          width={800}
-          height={600}
-        />
+        <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
       );
       expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
 
@@ -3381,7 +3339,6 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}
@@ -3394,7 +3351,6 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           showColumnsSidebar={false}
           data={data}
           width={800}
@@ -3405,12 +3361,11 @@ describe('TableNG', () => {
     });
 
     it('lets the table close the sidebar locally without the unchanged option reopening it', async () => {
-      const data = createBasicDataFrame();
+      const data = withColumnCapabilities(createBasicDataFrame());
       const { rerender } = render(
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}
@@ -3426,7 +3381,6 @@ describe('TableNG', () => {
         <TableNG
           enableVirtualization={false}
           tableRefreshEnabled
-          tableRefreshNewFeaturesEnabled
           showColumnsSidebar
           data={data}
           width={800}

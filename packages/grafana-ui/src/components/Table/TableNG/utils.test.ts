@@ -1798,21 +1798,28 @@ describe('TableNG utils', () => {
   });
 
   describe('isColumnMenuVisible', () => {
-    it('is visible when the column is filterable, even with no hide/pin/reorder', () => {
-      expect(isColumnMenuVisible(true, false, false)).toBe(true);
+    const fieldWith = (custom: Record<string, boolean>): Field => ({
+      name: 'A',
+      type: FieldType.string,
+      values: [],
+      config: { custom },
     });
 
-    it('is visible when hide/pin are available, even on a non-filterable column', () => {
-      expect(isColumnMenuVisible(false, true, false)).toBe(true);
+    it('is visible when the column is filterable, with nothing else', () => {
+      expect(isColumnMenuVisible(fieldWith({ filterable: true }), false)).toBe(true);
     });
 
-    it('is visible when reorder is available, even with nothing else', () => {
-      // The "Manage columns" item opens the sidebar for reorder, so reorder alone justifies the menu.
-      expect(isColumnMenuVisible(false, false, true)).toBe(true);
+    it('is visible when the column is hideable, even if it cannot be filtered', () => {
+      expect(isColumnMenuVisible(fieldWith({ hideable: true }), false)).toBe(true);
     });
 
-    it('is hidden when none of filter/hide/pin/reorder apply', () => {
-      expect(isColumnMenuVisible(false, false, false)).toBe(false);
+    it('is visible when the table has a sidebar, even on a column that can do nothing itself', () => {
+      // "Manage columns" manages the whole table, so it is offered in every column's menu.
+      expect(isColumnMenuVisible(fieldWith({}), true)).toBe(true);
+    });
+
+    it('is hidden for a column that can do nothing, on a table with no sidebar', () => {
+      expect(isColumnMenuVisible(fieldWith({ reorderable: true }), false)).toBe(false);
     });
   });
 
@@ -2239,17 +2246,19 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
-    it('reserves header space for the drag handle when column reorder is enabled', () => {
-      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+    it('reserves header space for the drag handle on a reorderable column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
+      ];
       // header "Name" (4) => 4*8 = 32, + sort arrow 22 + drag-handle space 20 + chrome 13 = 87.
       const widths = computeContentAwareColWidths(fields, 80, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
-        enableColumnReorder: true,
       });
       expect(widths).toEqual([87]);
-      // the same column with reorder disabled needs only 67 (no handle reserved).
-      expect(compute(fields, 60)).toEqual([67]);
+      // the same column without the capability needs only 67 (no handle reserved).
+      const notReorderable: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(compute(notReorderable, 60)).toEqual([67]);
     });
 
     it('reserves the first column’s extra padding when the panel has none of its own', () => {
@@ -2346,21 +2355,22 @@ describe('TableNG utils', () => {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
-          canManageColumns: true,
+          hasColumnSidebar: true,
         })
       ).toEqual([89]);
     });
 
-    it('reserves column menu space for a non-filterable, unmanaged column when reorder is available', () => {
-      // Reorder alone justifies the menu too, since its "Manage columns" item opens the sidebar.
-      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+    it('reserves both the drag handle and the menu on a reorderable column with a sidebar', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
+      ];
       // header "Name" (4) => 32, + sort arrow 22 + drag handle 20 + menu 22 + chrome 13 = 109.
       expect(
         computeContentAwareColWidths(fields, 100, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
-          enableColumnReorder: true,
+          hasColumnSidebar: true,
         })
       ).toEqual([109]);
     });

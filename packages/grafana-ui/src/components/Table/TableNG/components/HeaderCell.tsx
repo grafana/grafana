@@ -19,7 +19,14 @@ import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isColumnMenuVisible, isFieldFilterable, isSortableField } from '../utils';
+import {
+  getDisplayName,
+  isColumnMenuVisible,
+  isFieldFilterable,
+  isFieldHideable,
+  isFieldReorderable,
+  isSortableField,
+} from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -38,10 +45,8 @@ interface HeaderCellProps {
   crossFilterTailRows: TableRow[];
   /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
   tableRefreshEnabled?: boolean;
-  /** `table.refresh`: whether this column can be reordered by dragging its header cell. */
-  enableColumnReorder?: boolean;
-  /** `table.refreshNewFeatures`: every column is filterable, whatever `custom.filterable` says. */
-  tableRefreshNewFeaturesEnabled?: boolean;
+  /** `table.refresh`: whether the column-management sidebar is available for this table. */
+  hasColumnSidebar?: boolean;
   /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
   onHideColumn?: () => void;
   /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
@@ -75,8 +80,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
-  enableColumnReorder,
-  tableRefreshNewFeaturesEnabled,
+  hasColumnSidebar,
   onHideColumn,
   canHideColumn,
   isPinned,
@@ -88,16 +92,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
   const displayName = getDisplayName(field);
-  const filterable = isFieldFilterable(field, tableRefreshNewFeaturesEnabled);
+  const filterable = isFieldFilterable(field);
+  const hideable = isFieldHideable(field);
+  const reorderable = isFieldReorderable(field);
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
-  // Whether hide/pin apply to this column at all — the "Manage columns" item opens the sidebar for
-  // reorder too, so it needs its own broader check rather than reusing this alone.
-  const canManageColumns = Boolean(onHideColumn) || Boolean(onTogglePin);
-  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && (canManageColumns || Boolean(enableColumnReorder));
+  // The sidebar's entry is offered in every column's menu, not only in the menus of columns that can
+  // themselves be hidden or reordered — it manages the whole table.
+  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && Boolean(hasColumnSidebar);
 
   // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
   // item and the filter icon that marks an already-filtered column — so it lives here rather than in
@@ -244,7 +249,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
       // unique per column, regardless of how deep it sits in a nested table.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
-        {enableColumnReorder && (
+        {reorderable && (
           // Chrome only recognizes a mousedown as the start of a native drag when it lands on an
           // interactive element (a <button> works, a bare <svg>/<div> doesn't, even though
           // `column.draggable` sits on the whole header cell and both have real painted content).
@@ -257,14 +262,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         )}
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {isColumnMenuVisible(filterable, canManageColumns, Boolean(enableColumnReorder)) && (
+        {isColumnMenuVisible(field, Boolean(hasColumnSidebar)) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
-              onHideColumn={onHideColumn}
+              onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
               isPinned={isPinned}
               onTogglePin={onTogglePin}

@@ -3,6 +3,7 @@ import memoize from 'micro-memoize';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -10,14 +11,23 @@ import { Checkbox } from '../../../Forms/Checkbox';
 import { Icon } from '../../../Icon/Icon';
 import { IconButton } from '../../../IconButton/IconButton';
 
+const sidebarSelectors = selectors.components.Panels.Visualization.TableNG.columnsSidebar;
+
 const NO_PINNED_COLUMNS: ReadonlySet<string> = new Set();
+
+/** A column as the panel lists it, with what that column actually lets the user do. */
+export interface SidebarColumn {
+  name: string;
+  reorderable: boolean;
+  hideable: boolean;
+}
 
 interface ColumnVisibilitySidePanelProps {
   /**
-   * Every column that can be listed, in display order, by display name. Includes hidden ones: the
-   * panel exists to bring those back, and hiding a column removes its field from the frame.
+   * Every column that can be listed, in display order. Includes hidden ones: the panel exists to
+   * bring those back, and hiding a column removes its field from the frame.
    */
-  columns: string[];
+  columns: SidebarColumn[];
   hiddenColumns: ReadonlySet<string>;
   pinnedColumns?: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
@@ -61,6 +71,7 @@ export function ColumnVisibilitySidePanel({
     <aside
       className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
       aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
+      data-testid={sidebarSelectors.container}
     >
       <div className={styles.header}>
         <span className={styles.heading}>
@@ -71,10 +82,11 @@ export function ColumnVisibilitySidePanel({
           size="sm"
           aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
           onClick={onClose}
+          data-testid={sidebarSelectors.closeButton}
         />
       </div>
       <div className={styles.columnList}>
-        {columns.map((displayName) => {
+        {columns.map(({ name: displayName, reorderable, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
           const isPinned = pinnedColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;
@@ -85,8 +97,9 @@ export function ColumnVisibilitySidePanel({
             <div
               key={displayName}
               className={css(styles.row, dragOverColumn === displayName && !isOverBoundary && styles.rowDragOver)}
+              data-testid={sidebarSelectors.row(displayName)}
               onDragOver={(ev) => {
-                if (draggedColumn == null || draggedColumn === displayName || isOverBoundary) {
+                if (!reorderable || draggedColumn == null || draggedColumn === displayName || isOverBoundary) {
                   return;
                 }
                 ev.preventDefault();
@@ -96,48 +109,59 @@ export function ColumnVisibilitySidePanel({
               onDrop={(ev) => {
                 ev.preventDefault();
                 setDragOverColumn(null);
-                if (draggedColumn != null && draggedColumn !== displayName && !isOverBoundary) {
+                if (reorderable && draggedColumn != null && draggedColumn !== displayName && !isOverBoundary) {
                   onColumnsReorder(draggedColumn, displayName);
                 }
               }}
             >
-              <button
-                type="button"
-                className={styles.dragHandle}
-                draggable
-                aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
-                  columnName: displayName,
-                })}
-                onDragStart={(ev) => {
-                  ev.dataTransfer.effectAllowed = 'move';
-                  // No `setData` call — the reorder is entirely internal (`draggedColumn` state
-                  // above), so there's no payload for an external drop target to read. Setting one
-                  // anyway (e.g. `text/plain`) would let the column name be dropped as plain text
-                  // into other apps, which isn't what this handle is for.
-                  //
-                  // No `setDragImage` either: the browser's own snapshot of the dragged element is
-                  // this handle's grip icon, which is the right feedback. Pointing it at an
-                  // offscreen placeholder instead left Chrome with nothing it could snapshot, and
-                  // it fell back to the generic link/document icon.
-                  setDraggedColumn(displayName);
-                }}
-                onDragEnd={() => {
-                  setDraggedColumn(null);
-                  setDragOverColumn(null);
-                }}
-              >
-                <Icon name="draggabledots" aria-hidden="true" />
-              </button>
-              <Checkbox
-                value={isVisible}
-                disabled={isLastVisible}
-                aria-label={
-                  isVisible
-                    ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
-                    : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
-                }
-                onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
-              />
+              {reorderable ? (
+                <button
+                  type="button"
+                  className={styles.dragHandle}
+                  draggable
+                  aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
+                    columnName: displayName,
+                  })}
+                  data-testid={sidebarSelectors.dragHandle(displayName)}
+                  onDragStart={(ev) => {
+                    ev.dataTransfer.effectAllowed = 'move';
+                    // No `setData` call — the reorder is entirely internal (`draggedColumn` state
+                    // above), so there's no payload for an external drop target to read. Setting one
+                    // anyway (e.g. `text/plain`) would let the column name be dropped as plain text
+                    // into other apps, which isn't what this handle is for.
+                    //
+                    // No `setDragImage` either: the browser's own snapshot of the dragged element is
+                    // this handle's grip icon, which is the right feedback. Pointing it at an
+                    // offscreen placeholder instead left Chrome with nothing it could snapshot, and
+                    // it fell back to the generic link/document icon.
+                    setDraggedColumn(displayName);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedColumn(null);
+                    setDragOverColumn(null);
+                  }}
+                >
+                  <Icon name="draggabledots" aria-hidden="true" />
+                </button>
+              ) : (
+                // Keeps the checkbox and label of a non-reorderable row lined up with the rest.
+                <span className={styles.dragHandlePlaceholder} aria-hidden="true" />
+              )}
+              {hideable ? (
+                <Checkbox
+                  value={isVisible}
+                  disabled={isLastVisible}
+                  aria-label={
+                    isVisible
+                      ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
+                      : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
+                  }
+                  onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
+                  data-testid={sidebarSelectors.visibilityToggle(displayName)}
+                />
+              ) : (
+                <span className={styles.visibilityTogglePlaceholder} aria-hidden="true" />
+              )}
               <span className={styles.columnName}>{displayName}</span>
               {onTogglePin && (
                 <button
@@ -234,6 +258,16 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     '&:active': {
       cursor: 'grabbing',
     },
+  }),
+  // Both placeholders hold the width their control would occupy, so a row that cannot be reordered
+  // or hidden still lines its name up with the rows that can.
+  dragHandlePlaceholder: css({
+    display: 'flex',
+    width: theme.spacing(2),
+  }),
+  visibilityTogglePlaceholder: css({
+    display: 'flex',
+    width: theme.spacing(2),
   }),
   columnName: css({
     flex: 1,

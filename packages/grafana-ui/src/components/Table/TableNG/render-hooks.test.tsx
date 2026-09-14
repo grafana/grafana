@@ -438,17 +438,20 @@ describe('useColumnBuilderFromFields', () => {
   });
 
   describe('table.refresh column reorder', () => {
-    it('is draggable only when enableColumnReorder is set', () => {
-      const withReorder = renderColumnBuilderHook({
-        filterResult: makeFilterResult(),
-        config: makeConfig({ enableColumnReorder: true }),
-      });
-      const reorderable = callFromFields(withReorder, frame.fields, [100, 100], frame, rows, rows);
-      expect(reorderable.columns.map((c) => c.draggable)).toEqual([true, true]);
+    it('is draggable per column, from that column’s own config', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
 
-      const withoutReorder = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
-      const notReorderable = callFromFields(withoutReorder, frame.fields, [100, 100], frame, rows, rows);
-      expect(notReorderable.columns.map((c) => c.draggable)).toEqual([undefined, undefined]);
+      // Only the first column opts in, so only the first is draggable
+      const mixedFields = frame.fields.map((field, index) => ({
+        ...field,
+        config: { ...field.config, custom: { ...field.config.custom, reorderable: index === 0 } },
+      }));
+
+      const mixed = callFromFields(hook, mixedFields, [100, 100], frame, rows, rows);
+      expect(mixed.columns.map((c) => c.draggable)).toEqual([true, false]);
+
+      const unset = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(unset.columns.map((c) => c.draggable)).toEqual([false, false]);
     });
 
     it('adds the settle class to headerCellClass only for settling columns', () => {

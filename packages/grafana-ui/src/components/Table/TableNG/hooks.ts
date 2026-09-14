@@ -408,7 +408,6 @@ interface UseHeaderHeightOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
-  tableRefreshNewFeaturesEnabled?: boolean;
 }
 
 export function useHeaderHeight({
@@ -418,7 +417,6 @@ export function useHeaderHeight({
   typographyCtx,
   showTypeIcons = false,
   noPanelPadding = false,
-  tableRefreshNewFeaturesEnabled = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
@@ -436,7 +434,7 @@ export function useHeaderHeight({
         const field = fields[idx];
 
         // filtering icon
-        if (isFieldFilterable(field, tableRefreshNewFeaturesEnabled)) {
+        if (isFieldFilterable(field)) {
           width -= HEADER_ICON_SPACE;
         }
         // sorting icon. reserved on every sortable column, not just the currently-sorted one, so a
@@ -451,7 +449,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshNewFeaturesEnabled]
+    [fields, columnWidths, showTypeIcons, noPanelPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -798,8 +796,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
-  enableColumnReorder?: boolean;
-  canManageColumns?: boolean;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
 }
 
@@ -829,10 +826,8 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
-  enableColumnReorder?: boolean;
-  canManageColumns?: boolean;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
-  tableRefreshNewFeaturesEnabled?: boolean;
 }
 
 /**
@@ -847,10 +842,8 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
-  enableColumnReorder = false,
-  canManageColumns = false,
+  hasColumnSidebar = false,
   noPanelPadding = false,
-  tableRefreshNewFeaturesEnabled = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -873,10 +866,8 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
-            enableColumnReorder,
-            canManageColumns,
+            hasColumnSidebar,
             noPanelPadding,
-            tableRefreshNewFeaturesEnabled,
           }
         : undefined,
     [
@@ -887,10 +878,8 @@ export function useContentAwareWidths({
       getActions,
       filter,
       tableRefreshEnabled,
-      enableColumnReorder,
-      canManageColumns,
+      hasColumnSidebar,
       noPanelPadding,
-      tableRefreshNewFeaturesEnabled,
     ]
   );
 }

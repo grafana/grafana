@@ -85,6 +85,7 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
+  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -152,7 +153,8 @@ export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
   /** `table.refresh`: lets columns be reordered by dragging their header cell. */
-  enableColumnReorder?: boolean;
+  /** `table.refresh`: whether the column-management sidebar is available for this table. */
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -187,8 +189,6 @@ export interface ColumnBuildConfig {
   showTypeIcons?: boolean;
   /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
   tableRefreshEnabled?: boolean;
-  /** `table.refreshNewFeatures`: column interactions, and filtering on every column. */
-  tableRefreshNewFeaturesEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -279,8 +279,7 @@ function buildColumnsFromFields(
     maxRowHeight,
     disableKeyboardEvents,
     disableSanitizeHtml,
-    enableColumnReorder,
-    tableRefreshNewFeaturesEnabled,
+    hasColumnSidebar,
     settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
@@ -585,7 +584,7 @@ function buildColumnsFromFields(
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       sortable: isSortableField(field),
-      draggable: enableColumnReorder,
+      draggable: isFieldReorderable(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
@@ -601,8 +600,7 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
-          enableColumnReorder={enableColumnReorder}
-          tableRefreshNewFeaturesEnabled={tableRefreshNewFeaturesEnabled}
+          hasColumnSidebar={hasColumnSidebar}
           onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
           canHideColumn={fields.length > 1}
           isPinned={pinnedColumns?.has(displayName)}

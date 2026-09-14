@@ -152,6 +152,10 @@ TableFieldOptions: {
 	filterable?:  bool
 	// Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
 	sortable?: bool
+	// Controls whether the column can be reordered from the table itself. Off unless set, so a consumer opts in per column.
+	reorderable?: bool
+	// Controls whether the column can be hidden from the table itself. Off unless set, so a consumer opts in per column.
+	hideable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 	// if true, wrap the text content of the cell
