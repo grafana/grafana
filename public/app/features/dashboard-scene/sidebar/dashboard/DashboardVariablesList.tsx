@@ -1,4 +1,3 @@
-import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
@@ -6,15 +5,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import {
-  getDefaultTopPlacementLabel,
-  isEditableVariableType,
-  isVariableEditable,
-} from '../../settings/variables/utils';
+import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
+import { getDefaultTopPlacementLabel, isVariableEditable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
@@ -47,6 +44,7 @@ export function DashboardVariablesList({
   hideControlsMenuList = false,
   includeAdHoc = false,
 }: DashboardVariablesListProps) {
+  const { DragDropContext } = useDragAndDrop();
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
@@ -130,26 +128,4 @@ export function partitionVariablesByEditability(variables: SceneVariable[]) {
     isVariableEditable(v) ? 'editable' : 'nonEditable'
   );
   return { editable, nonEditable };
-}
-
-export function partitionVariablesByDisplay(variables: SceneVariable[]) {
-  const {
-    visible = [],
-    controlsMenu = [],
-    hidden = [],
-  } = partitionSceneObjects(variables, (v) => {
-    if (!isEditableVariableType(v.state.type)) {
-      return null;
-    }
-
-    switch (v.state.hide) {
-      case VariableHide.hideVariable:
-        return 'hidden';
-      case VariableHide.inControlsMenu:
-        return 'controlsMenu';
-      default:
-        return 'visible';
-    }
-  });
-  return { visible, controlsMenu, hidden };
 }
