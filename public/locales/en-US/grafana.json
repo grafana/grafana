@@ -5742,15 +5742,15 @@
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
-      "panel-background": "Change panel background",
-      "panel-description": "Change panel description",
+      "panel-background": "panel background change",
+      "panel-description": "panel description change",
       "panel-edit": "Panel changes",
       "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
-      "panel-title": "Change panel title",
+      "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
@@ -6755,6 +6755,12 @@
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "description-as-subtitle": "as subtitle"
+      }
     }
   },
   "dashboard-import": {
@@ -11416,8 +11422,6 @@
         "description": "Aggregate and search logs from your applications and infrastructure.",
         "setup-hint": "connect a logs source",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Logs",
         "volume": "Ingest volume · last 24h"
       },
