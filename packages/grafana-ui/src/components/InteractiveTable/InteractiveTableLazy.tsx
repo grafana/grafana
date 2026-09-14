@@ -7,6 +7,7 @@ import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 import { type InteractiveTable as InteractiveTableImpl } from './InteractiveTable';
 
 // React.lazy erases the relationship between the generic row type and the column/callback props.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const LazyInteractiveTable = lazy(() =>
   import('./InteractiveTable').then((module) => ({ default: module.InteractiveTable }))
 ) as typeof InteractiveTableImpl;
