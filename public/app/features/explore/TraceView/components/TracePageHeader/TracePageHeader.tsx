@@ -61,7 +61,7 @@ import {
   type ViewRange,
 } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
-import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
+import { type Trace, type TraceSpan, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
@@ -82,6 +82,7 @@ export type TracePageHeaderProps = {
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  revealSpan: (span: TraceSpan) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -105,6 +106,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    revealSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -126,6 +128,13 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
   const goToBannerSpan = useCallback(
     (spanId: string) => {
+      const span = trace?.spans.find((candidate) => candidate.spanID === spanId);
+      if (span) {
+        revealSpan(span);
+      }
+      if (spanFilterMatches && !spanFilterMatches.has(spanId) && (search.matchesOnly || search.criticalPathOnly)) {
+        setSearch({ ...search, matchesOnly: false, criticalPathOnly: false });
+      }
       // VirtualizedTraceView only scrolls when focusedSpanIdForSearch changes.
       // Clear first so a second click after the user scrolls away still re-scrolls.
       flushSync(() => {
@@ -133,7 +142,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       });
       setFocusedSpanIdForSearch(spanId);
     },
-    [setFocusedSpanIdForSearch]
+    [revealSpan, search, setFocusedSpanIdForSearch, setSearch, spanFilterMatches, trace]
   );
 
   // Create controller for adhoc filters
