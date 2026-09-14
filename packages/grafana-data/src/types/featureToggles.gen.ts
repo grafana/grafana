@@ -114,6 +114,11 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
+  * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+  * @default false
+  */
+  ['alerting.ruleStatusSync']?: boolean;
+  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -1303,7 +1308,7 @@ export interface FeatureToggles {
   inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
+  * @default true
   */
   logsTablePanelNG?: boolean;
   /**

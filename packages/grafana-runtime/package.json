@@ -84,7 +84,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "rimraf": "6.0.1",
