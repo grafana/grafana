@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -35,6 +35,20 @@ describe('ContactPointHeader', () => {
     policies: [],
     grafana_managed_receiver_configs: [],
   };
+
+  it('disables export when the contact point contains a v0 integration', async () => {
+    const user = userEvent.setup();
+    const contactPointWithV0Integration = {
+      ...mockContactPoint,
+      provenance: KnownProvenance.None,
+      grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v0mimir1' }],
+    } as ContactPointWithMetadata;
+
+    renderWithProvider(<ContactPointHeader contactPoint={contactPointWithV0Integration} onDelete={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'More actions for contact point "Test Contact Point"' }));
+    expect(await screen.findByRole('menuitem', { name: 'Export' })).toBeDisabled();
+  });
 
   it('shows Provisioned badge when contact point has file provenance via K8s annotations', () => {
     const contactPointWithFile = {

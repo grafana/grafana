@@ -37,6 +37,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
   const isProvisioned = isProvisionedResource(provenance);
+  const hasV0Integration = integrations.some(({ version }) => version?.startsWith('v0'));
 
   // Entity-scoped ability checks
   const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
@@ -103,7 +104,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           icon="download-alt"
           label={t('alerting.contact-point-header.export-label-export', 'Export')}
           ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
-          disabled={!exportAbility.granted}
+          disabled={!exportAbility.granted || hasV0Integration}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
         />
