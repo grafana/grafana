@@ -157,7 +157,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
 		var missingRef *repository.CompareRefNotFoundError
-		if errors.As(err, &missingRef) && !missingRef.Base {
+		if errors.As(err, &missingRef) && missingRef.Ref == opts.Ref {
 			outcome = string(provisioning.JobStateWarning)
 			logger.Info("pull request ref no longer exists, skipping preview", "ref", opts.Ref)
 			return jobs.AsWarning(fmt.Errorf("pull request ref %q no longer exists; preview skipped", opts.Ref))

@@ -391,7 +391,7 @@ func TestPullRequestWorker_Process_StopsWhenHeadRefIsMissing(t *testing.T) {
 	repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("", repository.ErrFileNotFound)
 	repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(
 		nil,
-		&repository.CompareRefNotFoundError{Err: repository.ErrRefNotFound},
+		&repository.CompareRefNotFoundError{Ref: "test-ref", Err: repository.ErrRefNotFound},
 	)
 
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
@@ -451,7 +451,7 @@ func TestPullRequestWorker_Process_MissingBaseRefRemainsError(t *testing.T) {
 	repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("", repository.ErrFileNotFound)
 	repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(
 		nil,
-		&repository.CompareRefNotFoundError{Base: true, Err: repository.ErrRefNotFound},
+		&repository.CompareRefNotFoundError{Ref: "main", Err: repository.ErrRefNotFound},
 	)
 
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
@@ -466,7 +466,7 @@ func TestPullRequestWorker_Process_MissingBaseRefRemainsError(t *testing.T) {
 	}
 
 	err := worker.Process(logging.Context(t.Context(), logging.DefaultLogger), repo, job, progress)
-	require.ErrorContains(t, err, "failed to list pull request files: resolve base ref: ref not found")
+	require.ErrorContains(t, err, "failed to list pull request files: ref not found")
 	require.False(t, jobs.IsWarning(err), "a missing base ref should remain an error")
 
 	evaluator.AssertExpectations(t)

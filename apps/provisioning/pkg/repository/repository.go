@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,15 +39,12 @@ var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 
 // CompareRefNotFoundError identifies which CompareFiles operand could not be resolved.
 type CompareRefNotFoundError struct {
-	Base bool
-	Err  error
+	Ref string
+	Err error
 }
 
 func (e *CompareRefNotFoundError) Error() string {
-	if e.Base {
-		return fmt.Sprintf("resolve base ref: %v", e.Err)
-	}
-	return fmt.Sprintf("resolve ref: %v", e.Err)
+	return e.Err.Error()
 }
 
 func (e *CompareRefNotFoundError) Unwrap() error {

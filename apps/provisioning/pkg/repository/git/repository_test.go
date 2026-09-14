@@ -4044,13 +4044,12 @@ func TestGitRepository_EmptyRefHandling(t *testing.T) {
 
 func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 	tests := []struct {
-		name            string
-		setupMock       func(*mocks.FakeClient)
-		base            string
-		ref             string
-		wantError       string
-		wantMissing     bool
-		wantMissingBase bool
+		name           string
+		setupMock      func(*mocks.FakeClient)
+		base           string
+		ref            string
+		wantError      string
+		wantMissingRef string
 	}{
 		{
 			name: "resolve base ref error",
@@ -4081,11 +4080,10 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 			},
-			base:            "main",
-			ref:             "feature",
-			wantError:       "resolve base ref: ref not found",
-			wantMissing:     true,
-			wantMissingBase: true,
+			base:           "main",
+			ref:            "feature",
+			wantError:      "resolve base ref: ref not found",
+			wantMissingRef: "main",
 		},
 		{
 			name: "target ref not found identifies target operand",
@@ -4096,11 +4094,10 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{}, nanogit.ErrObjectNotFound)
 			},
-			base:            "main",
-			ref:             "feature",
-			wantError:       "resolve ref: ref not found",
-			wantMissing:     true,
-			wantMissingBase: false,
+			base:           "main",
+			ref:            "feature",
+			wantError:      "resolve ref: ref not found",
+			wantMissingRef: "feature",
 		},
 	}
 
@@ -4127,10 +4124,10 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, changes)
 			require.Contains(t, err.Error(), tt.wantError)
-			if tt.wantMissing {
+			if tt.wantMissingRef != "" {
 				var missingRef *repository.CompareRefNotFoundError
 				require.ErrorAs(t, err, &missingRef)
-				require.Equal(t, tt.wantMissingBase, missingRef.Base)
+				require.Equal(t, tt.wantMissingRef, missingRef.Ref)
 				require.ErrorIs(t, err, repository.ErrRefNotFound)
 			}
 		})
