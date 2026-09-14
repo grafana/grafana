@@ -227,6 +227,30 @@ function tryDecodeUriComponent(value: string): string {
 }
 
 /**
+ * Takes an identifier straight out of a URL and hands it back only if it belongs to a data source
+ * managed rule. Grafana-managed rules (a bare UID) and anything that won't parse give undefined.
+ *
+ * Everything that needs to know "is this rule data source managed, and what are its parts?" goes
+ * through here, so the answer can't differ between the route matcher and the code that acts on it.
+ */
+function parseDataSourceManagedIdentifier(
+  identifier: string | undefined
+): CloudRuleIdentifier | PrometheusRuleIdentifier | undefined {
+  if (!identifier) {
+    return undefined;
+  }
+
+  // Decoded out here rather than inside `parse`, so a stray '%' falls back to the raw value instead
+  // of being read as "this doesn't parse". Rule names are allowed to contain one.
+  const parsed = tryParse(tryDecodeUriComponent(identifier));
+  if (!parsed || !(isCloudRuleIdentifier(parsed) || isPrometheusRuleIdentifier(parsed))) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+/**
  * Grafana-managed rules are identified by a bare UID. Data source managed ones carry a prefix and
  * `$`-separated parts, so the identifier alone says who owns the rule without any lookup.
  *
@@ -236,17 +260,7 @@ function tryDecodeUriComponent(value: string): string {
  * ordinary Grafana route instead of making it wait on work that was always going to fail.
  */
 export function isDataSourceManagedIdentifier(identifier: string | undefined): boolean {
-  if (!identifier) {
-    return false;
-  }
-
-  // Already decoded here, so `parse` is told not to decode again.
-  const parsed = tryParse(tryDecodeUriComponent(identifier));
-  if (!parsed) {
-    return false;
-  }
-
-  return isCloudRuleIdentifier(parsed) || isPrometheusRuleIdentifier(parsed);
+  return parseDataSourceManagedIdentifier(identifier) !== undefined;
 }
 
 export function stringifyIdentifier(identifier: RuleIdentifier): string {
@@ -289,8 +303,8 @@ export function stringifyDataSourceIdentifier(
  * can't resolve to a data source — in both cases we leave the page on Grafana's side.
  */
 export async function toPluginRuleIdentifier(rawIdentifier: string | undefined): Promise<string | undefined> {
-  const identifier = tryParse(rawIdentifier, true);
-  if (!identifier || !(isCloudRuleIdentifier(identifier) || isPrometheusRuleIdentifier(identifier))) {
+  const identifier = parseDataSourceManagedIdentifier(rawIdentifier);
+  if (!identifier) {
     return undefined;
   }
 

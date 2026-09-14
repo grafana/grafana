@@ -84,6 +84,14 @@ describe('rule pages', () => {
         `${PLUGIN_BASE}/rules/${pluginRuleId()}?tab=instances`
       );
     });
+
+    it('redirects a rule whose name has an unencoded percent sign in it', async () => {
+      // A lone '%' makes decodeURIComponent throw, so this used to be read as an identifier that
+      // doesn't parse and the rule stayed on Grafana.
+      expect(await resolve(path, `/alerting/${MIMIR_NAME}/cri$${MIMIR_NAME}$namespace$group$100%cpu$abc123/view`)).toBe(
+        `${PLUGIN_BASE}/rules/${encodeURIComponent(`cri$${MIMIR_UID}$namespace$group$100%cpu$abc123`)}`
+      );
+    });
   });
 
   describe('/alerting/:id/edit -> /rules/:identifier/edit', () => {
