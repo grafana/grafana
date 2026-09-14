@@ -8,9 +8,9 @@ import failOnConsole from 'jest-fail-on-console';
 import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 
-import { setPluginComponentsHook } from '@grafana/runtime';
 import { matchers } from '@grafana/test-utils';
 
+import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
