@@ -36,9 +36,6 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
     return undefined;
   }, [name, autoColors, theme]);
 
-  // Disabled tags keep their background but mute the text/icon, so this only overrides color, not backgroundColor.
-  const isDisabledRefresh = disabled && visualRefreshEnabled;
-
   return (
     <li
       className={cx(styles.itemStyle, !tagColors && styles.defaultTagColor)}
@@ -46,7 +43,7 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
         visualRefreshEnabled
           ? {
               backgroundColor: tagColors?.background,
-              color: isDisabledRefresh ? theme.colors.text.disabled : tagColors?.text,
+              color: disabled ? theme.colors.text.disabled : tagColors?.text,
             }
           : tagColors
             ? { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
