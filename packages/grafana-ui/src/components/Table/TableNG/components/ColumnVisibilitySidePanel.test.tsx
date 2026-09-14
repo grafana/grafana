@@ -131,7 +131,7 @@ describe('ColumnVisibilitySidePanel', () => {
     };
 
     const { rerender } = render(<ColumnVisibilitySidePanel {...props} />);
-    const panel = screen.getByRole('complementary', { name: 'Column visibility' });
+    const panel = screen.getByRole('group', { name: 'Column visibility' });
     const contents = panel.firstElementChild!;
     expect(window.getComputedStyle(contents).opacity).toBe('');
 

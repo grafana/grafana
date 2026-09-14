@@ -1,6 +1,6 @@
 import {
   DataTransformerID,
-  FieldMatcherID,
+  FrameMatcherID,
   type DataFrame,
   type DataTransformerConfig,
   type MatcherConfig,
@@ -148,5 +148,9 @@ export function encodeHiddenColumns(
 export function frameFilterFor(frames: DataFrame[], frameIndex: number): MatcherConfig | undefined {
   const refId = frames.length > 1 ? frames[frameIndex]?.refId : undefined;
 
-  return refId ? { id: FieldMatcherID.byFrameRefID, options: refId } : undefined;
+  // A transformation's `filter` is resolved against the *frame* matcher registry, so this has to be
+  // a FrameMatcherID. `FieldMatcherID.byFrameRefID` shares the idea and reads the part, but it
+  // selects fields rather than frames and is not registered as a frame matcher at all — an
+  // unresolvable filter is dropped, and the transformation then applies to every frame.
+  return refId ? { id: FrameMatcherID.byRefId, options: refId } : undefined;
 }

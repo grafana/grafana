@@ -1237,6 +1237,169 @@ describe('TableNG', () => {
     });
   });
 
+  // What a column lets the user do comes from that column's own config, so a table can be a mix.
+  // The table panel happens to opt every column in at once, but a downstream consumer of TableNG
+  // sets these per column — so the mixed states are the ones worth pinning down.
+  describe('mixed column capabilities', () => {
+    type Capabilities = { filterable?: boolean; reorderable?: boolean; hideable?: boolean };
+
+    const withCapabilitiesPerColumn = (perColumn: Record<string, Capabilities>): DataFrame => {
+      const frame = createThreeColumnDataFrame();
+      return {
+        ...frame,
+        fields: frame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { ...field.config.custom, ...(perColumn[field.name] ?? {}) } },
+        })),
+      };
+    };
+
+    const renderMixed = (perColumn: Record<string, Capabilities>, props = {}) =>
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={withCapabilitiesPerColumn(perColumn)}
+          width={900}
+          height={600}
+          tableRefreshEnabled
+          {...props}
+        />
+      );
+
+    const menuLabel = (column: string) => `Column options for ${column}`;
+
+    describe('reorderable', () => {
+      it('makes only the reorderable columns draggable', () => {
+        const { container } = renderMixed({ 'Column A': { reorderable: true } });
+
+        const draggable = Array.from(container.querySelectorAll('[role="columnheader"]')).map((header) =>
+          header.getAttribute('draggable')
+        );
+
+        // react-data-grid leaves the attribute off entirely rather than writing "false"
+        expect(draggable).toEqual(['true', null, null]);
+      });
+
+      it('gives only the reorderable rows a drag handle in the sidebar', () => {
+        // Reorderable alone is enough for the sidebar to exist, so it can be opened here.
+        renderMixed(
+          { 'Column A': { reorderable: true }, 'Column C': { reorderable: true } },
+          {
+            showColumnsSidebar: true,
+          }
+        );
+
+        expect(screen.getByLabelText('Reorder Column A')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Reorder Column B')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Reorder Column C')).toBeInTheDocument();
+      });
+
+      it('puts nothing of its own in a reorderable column’s menu', async () => {
+        // Reordering is a drag on the header, not a menu item. The menu exists all the same, because
+        // a reorderable column is enough for the table to have a sidebar to manage.
+        renderMixed({ 'Column A': { reorderable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+
+        expect(await screen.findByText('Manage columns')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('filterable', () => {
+      it('offers the filter item only in the filterable columns’ menus', async () => {
+        renderMixed({ 'Column B': { filterable: true } });
+
+        expect(screen.queryByLabelText(menuLabel('Column A'))).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(menuLabel('Column C'))).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column B')));
+
+        expect(await screen.findByText('Filter values')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+      });
+
+      it('does not put a filterable column in the sidebar’s reach', () => {
+        // Filtering is per column and has nothing to manage across the table, so it alone does not
+        // bring the sidebar into existence.
+        renderMixed({ 'Column B': { filterable: true } }, { showColumnsSidebar: true });
+
+        expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('hideable', () => {
+      it('offers the hide item only in the hideable columns’ menus', async () => {
+        renderMixed({ 'Column A': { hideable: true }, 'Column B': { filterable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+        expect(await screen.findByText('Hide column')).toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+        await userEvent.keyboard('{Escape}');
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column B')));
+        expect(await screen.findByText('Filter values')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+      });
+
+      it('gives only the hideable rows a visibility checkbox in the sidebar', () => {
+        renderMixed(
+          { 'Column A': { hideable: true }, 'Column C': { hideable: true } },
+          {
+            showColumnsSidebar: true,
+          }
+        );
+
+        expect(screen.getByLabelText('Hide Column A')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Hide Column B')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Hide Column C')).toBeInTheDocument();
+      });
+
+      it('hides only the column that asked to be hideable', async () => {
+        const { container } = renderMixed({ 'Column A': { hideable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+        await userEvent.click(await screen.findByText('Hide column'));
+
+        expect(
+          Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent)
+        ).toEqual(['Column B', 'Column C']);
+      });
+    });
+
+    describe('the column sidebar', () => {
+      it('exists when any column is reorderable or hideable, and lists every column either way', () => {
+        renderMixed({ 'Column C': { hideable: true } }, { showColumnsSidebar: true });
+
+        const sidebar = screen.getByRole('group', { name: 'Column visibility' });
+
+        // Every column is listed — the list is what the table shows, not what each row can do.
+        for (const column of ['Column A', 'Column B', 'Column C']) {
+          expect(sidebar).toHaveTextContent(column);
+        }
+      });
+
+      it('does not exist when no column is reorderable or hideable', () => {
+        renderMixed({ 'Column A': { filterable: true } }, { showColumnsSidebar: true });
+
+        expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+      });
+
+      it('is reachable from the menu of a column that can do nothing itself', async () => {
+        // "Manage columns" manages the whole table, so once the sidebar exists it belongs in every
+        // column's menu — including the menu of a column with no capabilities of its own.
+        renderMixed({ 'Column C': { hideable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+
+        expect(await screen.findByText('Manage columns')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+      });
+    });
+  });
+
   describe('table.refreshNewFeatures controlled column state', () => {
     const headerText = (container: HTMLElement) =>
       Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
@@ -1311,7 +1474,7 @@ describe('TableNG', () => {
         showColumnsSidebar: true,
       });
 
-      const sidebar = screen.getByRole('complementary', { name: 'Column visibility' });
+      const sidebar = screen.getByRole('group', { name: 'Column visibility' });
 
       expect(sidebar).toHaveTextContent('Column C');
 
@@ -3312,7 +3475,7 @@ describe('TableNG', () => {
           height={600}
         />
       );
-      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
       unmount();
 
       render(
@@ -3325,7 +3488,7 @@ describe('TableNG', () => {
           height={600}
         />
       );
-      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: sidebarLabel })).toBeInTheDocument();
     });
 
     it('follows the option when it changes, so editing the panel option opens and closes it', () => {
@@ -3333,7 +3496,7 @@ describe('TableNG', () => {
       const { rerender } = render(
         <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
       );
-      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
 
       rerender(
         <TableNG
@@ -3345,7 +3508,7 @@ describe('TableNG', () => {
           height={600}
         />
       );
-      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: sidebarLabel })).toBeInTheDocument();
 
       rerender(
         <TableNG
@@ -3357,7 +3520,7 @@ describe('TableNG', () => {
           height={600}
         />
       );
-      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
     });
 
     it('lets the table close the sidebar locally without the unchanged option reopening it', async () => {
@@ -3374,7 +3537,7 @@ describe('TableNG', () => {
       );
 
       await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
-      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
 
       // a re-render that doesn't change the option must not reassert it
       rerender(
@@ -3387,7 +3550,7 @@ describe('TableNG', () => {
           height={601}
         />
       );
-      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
     });
   });
 });

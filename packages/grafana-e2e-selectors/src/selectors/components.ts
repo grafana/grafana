@@ -706,6 +706,23 @@ export const versionedComponents = {
             '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
           },
         },
+        columnsSidebar: {
+          container: {
+            '13.3.0': 'data-testid tableng columns-sidebar',
+          },
+          closeButton: {
+            '13.3.0': 'data-testid tableng columns-sidebar close-button',
+          },
+          row: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar row ${columnName}`,
+          },
+          visibilityToggle: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar visibility-toggle ${columnName}`,
+          },
+          dragHandle: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar drag-handle ${columnName}`,
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',

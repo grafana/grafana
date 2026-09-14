@@ -1,4 +1,4 @@
-import { FieldType, toDataFrame, type DataTransformerConfig } from '@grafana/data';
+import { FieldType, getFrameMatchers, toDataFrame, type DataTransformerConfig } from '@grafana/data';
 
 import {
   decodeAdHocColumns,
@@ -144,7 +144,18 @@ describe('frameFilterFor', () => {
   });
 
   it('scopes to the selected frame when there are several', () => {
-    expect(frameFilterFor([frame('A'), frame('B')], 1)).toEqual({ id: 'byFrameRefID', options: 'B' });
+    expect(frameFilterFor([frame('A'), frame('B')], 1)).toEqual({ id: 'byRefId', options: 'B' });
+  });
+
+  // The id has to be one the *frame* matcher registry knows: an unresolvable filter is dropped, and
+  // the transformation then applies to every frame rather than the one on screen. Asserting the
+  // literal id alone does not catch that, since a field-matcher id reads just as plausibly.
+  it('produces a filter the frame matcher registry can resolve', () => {
+    const frames = [frame('A'), frame('B')];
+    const matches = getFrameMatchers(frameFilterFor(frames, 1)!);
+
+    expect(matches(frames[1])).toBe(true);
+    expect(matches(frames[0])).toBe(false);
   });
 
   it('does not scope when the frames have no refId to scope by', () => {
@@ -152,8 +163,8 @@ describe('frameFilterFor', () => {
   });
 
   it('lands on the entry it writes', () => {
-    const stage = encodeHiddenColumns([], new Set(['B']), { id: 'byFrameRefID', options: 'B' });
+    const stage = encodeHiddenColumns([], new Set(['B']), { id: 'byRefId', options: 'B' });
 
-    expect(stage[0].filter).toEqual({ id: 'byFrameRefID', options: 'B' });
+    expect(stage[0].filter).toEqual({ id: 'byRefId', options: 'B' });
   });
 });

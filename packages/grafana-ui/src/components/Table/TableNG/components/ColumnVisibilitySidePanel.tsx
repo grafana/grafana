@@ -68,7 +68,11 @@ export function ColumnVisibilitySidePanel({
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   return (
-    <aside
+    // `role="group"` rather than an `aside`: this sits inside the panel, which is already inside the
+    // page's main landmark, and a complementary landmark nested in another landmark is an axe
+    // violation. A group still carries the accessible name without claiming to be a landmark.
+    <div
+      role="group"
       className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
       aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
       data-testid={sidebarSelectors.container}
@@ -182,7 +186,7 @@ export function ColumnVisibilitySidePanel({
           );
         })}
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -205,7 +209,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
       },
     },
   }),
-  // Dims the contents rather than the `aside` itself, so the divider against the grid stays put
+  // Dims the contents rather than the container itself, so the divider against the grid stays put
   // while the panel signals that releasing here will close it.
   containerWillClose: css({
     '> *': {
