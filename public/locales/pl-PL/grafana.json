@@ -8796,7 +8796,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Otwórz wartość w:"
+      "open-value-in": "Otwórz wartość w:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9288,6 +9289,10 @@
       "aria-label-copy": "Kopiuj do schowka",
       "attribute-plugin-promo": {
         "learn-more": "Dowiedz się więcej"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Obserwowalność bazy danych ujawnia wizualne plany wyjaśnień, zdarzenia oczekiwania i próbki zapytań, pomagając w diagnozowaniu problemów wykraczających poza zakresy śledzenia.",
