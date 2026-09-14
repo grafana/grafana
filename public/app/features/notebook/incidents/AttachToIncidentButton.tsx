@@ -61,8 +61,6 @@ export function AttachToIncidentButton({ uid, title }: Props) {
       >
         {t('notebooks.incidents.attach-title', 'Attach to incident')}
       </Button>
-      {/* Chrome is ours because their attach form is bare. Their declare component is not — it
-          brings its own Modal, so DeclareIncidentModal renders it unwrapped. */}
       {isAttaching && (
         <Modal
           isOpen
