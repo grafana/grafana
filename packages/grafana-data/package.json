@@ -93,7 +93,7 @@
     "tinycolor2": "^1.6.0",
     "uplot": "^1.6.32",
     "xss": "^1.0.14",
-    "zod": "^4.3.0"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@rollup/plugin-json": "6.1.0",
