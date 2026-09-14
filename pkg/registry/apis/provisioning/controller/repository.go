@@ -500,12 +500,9 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
-	if syncInterval < rc.minSyncInterval {
-		// In case the sync interval is lower than the minimum sync interval set by the system
-		// we should default to the latter
-		syncInterval = rc.minSyncInterval
-	}
+	// In case the sync interval is lower than the minimum sync interval set by the system
+	// we should default to the latter
+	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
@@ -1238,7 +1235,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	phase = reconcilePhaseHook
-	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, accessible, shouldRotateWebhookSecret)
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, testResults, accessible, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
 	}
@@ -1343,7 +1340,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1375,6 +1372,14 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	if hasHookChanges && !suppressWebhooks {
 		hookOps, err = rc.runHooks(ctx, repo, obj)
 		if err != nil {
+			// The failing create/update/delete is why an overdue secret can't be
+			// rotated this reconcile, so classify it onto the overdue metric here too
+			// -- otherwise a secret stuck behind a persistent hook failure (which
+			// keeps hasHookChanges true and returns before the rotation block below)
+			// would never record a cause.
+			if shouldRotateSecret {
+				rc.webhookMetrics.recordRotationOverdue(rc.rotationErrorCause(err))
+			}
 			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
 			hookOps = append(hookOps, map[string]interface{}{
 				"op":    "replace",
@@ -1385,19 +1390,38 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		}
 	}
 
-	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
-	// would be an equally doomed call against an inaccessible repository, and
-	// skipped during the hook-failure cooldown too: repoAccessible alone doesn't
-	// catch this window, since a skipped health check reads as accessible.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoAccessible && !rc.healthChecker.inHookFailureCooldown(obj) {
-		rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
-		rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
-		rotateSpan.End()
-		if rotateErr != nil {
-			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr)
-		}
-		if len(rotateOps) > 0 {
-			hookOps = append(hookOps, rotateOps...)
+	// Rotate the webhook secret if due, and count it on the overdue metric with
+	// the cause it stayed overdue for so alerts can page on a genuine rotation
+	// malfunction (cause=system) and ignore user-caused failures (cause=user).
+	//
+	// Skipped when runHooks already created or updated the webhook this reconcile
+	// (len(hookOps) > 0): that path rotates the secret itself, so a second rotation
+	// would be redundant and, if it failed, would falsely page. When the repository
+	// is inaccessible the rotation call would be as doomed as any other write, so it
+	// is skipped too -- but we still know why from the health check, so the overdue
+	// observation is classified from the test result (bad credentials/permissions
+	// -> user, server unavailable -> system). During the hook-failure cooldown the
+	// health check is skipped (repoAccessible reads stale), so nothing is recorded;
+	// the reconcile after the cooldown expires classifies it. A rotation that
+	// succeeds records nothing.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && len(hookOps) == 0 {
+		switch {
+		case !repoAccessible:
+			rc.webhookMetrics.recordRotationOverdue(classifyOverdueCause(classifyTestResultReason(testResults)))
+		case isInHookFailureCooldown:
+			// Transient backoff window; the post-cooldown reconcile classifies.
+		default:
+			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
+			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
+			rotateSpan.End()
+			if rotateErr != nil {
+				cause := rc.rotationErrorCause(rotateErr)
+				rc.webhookMetrics.recordRotationOverdue(cause)
+				logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
+			}
+			if len(rotateOps) > 0 {
+				hookOps = append(hookOps, rotateOps...)
+			}
 		}
 	}
 
@@ -1429,15 +1453,12 @@ func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 	rc.reconcileMetrics.RecordReconcileError(phase, cause)
 }
 
-// Returns errors that are due to user errors
+// Returns errors that are due to user errors. Token-generation failures surface
+// connection-level sentinels (app uninstalled, permissions revoked, installation
+// gone), so classification is shared with the token metric to keep the
+// reconcile-error and token-generation-error metrics consistent.
 func (rc *RepositoryController) isUserCaused(err error) bool {
-	// List of errors that are user-caused errors and are left recorded on the repository
-	if errors.Is(err, repository.ErrUnauthorized) ||
-		errors.Is(err, repository.ErrPermissionDenied) {
-		return true
-	}
-
-	return false
+	return classifyTokenErrorCause(err) == reconcileCauseUser
 }
 
 // classifyBuildFailureReason maps a repository Build failure to a Ready condition
@@ -1451,6 +1472,38 @@ func classifyBuildFailureReason(err error) string {
 		return provisioning.ReasonServiceUnavailable
 	}
 	return classifyHookFailureReason(err)
+}
+
+// rotationErrorCause classifies an error that prevented a webhook secret rotation
+// (a rotation attempt or the hook operation blocking it) into an overdue cause.
+// User-caused errors (revoked credentials, permissions, app uninstalled) are
+// "user"; everything else, including unrecognized errors, defaults to "system" so
+// a genuine malfunction pages rather than being silently swallowed.
+//
+// A 404 (ErrFileNotFound) is treated as "user" to match how the rest of the
+// webhook code reads GitHub 404s (createWebhook/updateWebhook): the webhook was
+// deleted on the remote, or the token lost access to a private repo (GitHub
+// returns 404, not 403, for private repos). Either way it is the customer's to
+// resolve, not a system malfunction that should page. rotateWebhookSecret surfaces
+// this sentinel raw rather than converting it, so it is matched explicitly here.
+func (rc *RepositoryController) rotationErrorCause(err error) string {
+	if errors.Is(err, repository.ErrFileNotFound) || rc.isUserCaused(err) {
+		return reconcileCauseUser
+	}
+	return reconcileCauseSystem
+}
+
+// classifyOverdueCause maps a Ready condition reason to a webhook-secret rotation
+// overdue cause. A transient/infrastructure reason (server unavailable, rate
+// limited) is "system" and should page; everything else is the customer's to fix
+// (bad credentials, permissions, invalid spec) and is "user".
+func classifyOverdueCause(reason string) string {
+	switch reason {
+	case provisioning.ReasonServiceUnavailable, provisioning.ReasonRateLimited:
+		return reconcileCauseSystem
+	default:
+		return reconcileCauseUser
+	}
 }
 
 // classifyHookFailureReason maps a hook failure to a Ready condition reason,
@@ -1515,15 +1568,10 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	// A never-rotated secret (legacy webhooks predating rotation tracking; new
 	// webhooks stamp LastRotated on create) is due for its first rotation.
 	if obj.Status.Webhook.LastRotated == 0 {
-		rc.webhookMetrics.recordRotationOverdue()
 		return true
 	}
 	age := time.Since(time.UnixMilli(obj.Status.Webhook.LastRotated))
-	if age >= rc.webhookSecretRotationInterval {
-		rc.webhookMetrics.recordRotationOverdue()
-		return true
-	}
-	return false
+	return age >= rc.webhookSecretRotationInterval
 }
 
 // HACK: we need a proper way of doing this check by adding Conditions
@@ -1591,7 +1639,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	defer func() {
 		elapsed := time.Since(start).Seconds()
 		if err != nil {
-			rc.tokenMetrics.recordGenerationError()
+			rc.tokenMetrics.recordGenerationError(classifyTokenErrorCause(err))
 		} else {
 			rc.tokenMetrics.recordGeneration(elapsed)
 		}

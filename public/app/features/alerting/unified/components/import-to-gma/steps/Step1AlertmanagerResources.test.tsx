@@ -121,12 +121,15 @@ describe('Step1AlertmanagerResources', () => {
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
@@ -185,7 +188,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
     });
 
-    it('should render the notification templates uploader for the YAML source', () => {
+    it('should render the notification templates uploader for the YAML source', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -193,7 +196,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should NOT render the templates uploader for the datasource source', () => {
@@ -215,7 +218,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       // The dropzone's file input inherits the Field id, so its label resolves to it
-      const input = screen.getByLabelText(/notification templates/i);
+      const input = await screen.findByLabelText(/notification templates/i);
 
       await user.upload(input, [
         new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),

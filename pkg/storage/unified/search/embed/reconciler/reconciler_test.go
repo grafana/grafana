@@ -1830,3 +1830,195 @@ func TestReconciler_ExhaustedRecord_SurvivesLookbackRelist(t *testing.T) {
 	s.forgetExhaustedBelow(past)
 	assert.Empty(t, s.exhausted, "dropped once a sweep no longer lists it")
 }
+
+func setupEmbeddingRetry(t *testing.T, cursor int64) (*Reconciler, *fakeStorage, *fakeVector, *fakeText) {
+	t.Helper()
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), minimalDashboard("dash", "Dash")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = cursor
+	s, text := newReconciler(t, st, vec)
+	return s, st, vec, text
+}
+
+func TestReconciler_EmbeddingBackoff(t *testing.T) {
+	for _, hint := range []time.Duration{0, time.Second, 10 * time.Minute} {
+		t.Run(hint.String(), func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			for attempt := range maxEventAttempts - 1 {
+				s.embedRetryAt = time.Time{}
+				text.failNext = &embedder.RetryableError{Err: errBoom, RetryAfter: hint}
+				before := time.Now()
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls)
+				require.Equal(t, snowflakeRV(50), vec.latestRV)
+				require.Equal(t, 1, s.pendingLen())
+				require.Empty(t, s.exhausted)
+				require.Equal(t, attempt+1, s.embedBackoff.NumRetries())
+				assert.False(t, s.embedRetryAt.Before(before.Add(min(5*time.Minute, max(hint, time.Minute)))))
+				assert.True(t, s.embedRetryAt.Before(time.Now().Add(5*time.Minute)), "provider hints cannot exceed the hard cap")
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls, "cooldown suppresses calls")
+				require.Empty(t, st.lastCalledWith, "cooldown suppresses scans")
+			}
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+			assert.Zero(t, s.pendingLen())
+			assert.Nil(t, s.embedBackoff, "recovery resets backoff")
+			assert.Len(t, vec.upserts, 1)
+		})
+	}
+}
+
+func TestReconciler_EmbeddingSweepRecovery(t *testing.T) {
+	for _, tt := range []struct {
+		name               string
+		batchSize          int
+		upsertErr          error
+		failFirst, restart bool
+		pending            []string
+	}{
+		{"unprocessed remainder", 1000, nil, false, false, []string{"b", "c"}},
+		{"earlier batch failure", 1, errBoom, false, false, []string{"a", "b"}},
+		{"same batch failure", 1000, errBoom, false, false, []string{"a", "b", "c"}},
+		{"failed lookback write", 1000, nil, true, false, []string{"a", "b", "c"}},
+		{"restart after partial sweep", 1, nil, false, true, []string{"b"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			oldBatchSize := startupBatchSize
+			startupBatchSize = tt.batchSize
+			t.Cleanup(func() { startupBatchSize = oldBatchSize })
+			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(100))
+			st.changes = nil
+			for i, name := range []string{"a", "b", "c"} {
+				rv := []int64{95, 110, 120}[i]
+				st.changes = append(st.changes, dashChange(resourcepb.WatchEvent_ADDED, "ns", name, snowflakeRV(rv), minimalDashboard(name, name)))
+			}
+			st.lookback, st.latestRvOverride = 10, snowflakeRV(120)
+			yielded := 0
+			st.onYield = func() { yielded++ }
+			throttled := &embedder.RetryableError{Err: errBoom}
+			vec.upsertErrFn = func([]vector.Vector) error { text.failNext = throttled; return tt.upsertErr }
+			if tt.failFirst {
+				text.failNext = throttled
+			}
+			s.reconcileCycle(t.Context())
+			require.Equal(t, snowflakeRV(100), vec.latestRV, "interrupted sweep retains cursor")
+			require.Equal(t, len(tt.pending), s.pendingLen())
+			for _, name := range tt.pending {
+				assert.Contains(t, s.pending, pendingKey(dashGroup, dashRes, "ns", name))
+			}
+			indexed := len(vec.upserts)
+			if indexed > 0 {
+				assert.NotContains(t, s.pending, pendingKey(dashGroup, dashRes, "ns", "a"), "known success is not queued")
+			}
+			vec.upsertErrFn, st.onYield = nil, nil
+			if tt.restart {
+				s, text = newReconciler(t, st, vec)
+			} else {
+				// Only unlisted rows remain: queued lookback writes must survive independently.
+				st.changes = st.changes[yielded:]
+			}
+			callsBefore := text.calls
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, 3-indexed, text.calls-callsBefore, "successful content is not re-embedded")
+			assert.Len(t, vec.upserts, 3)
+			assert.Zero(t, s.pendingLen())
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}
+
+func TestReconciler_EmbeddingLiveRecovery(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		cursor  int64
+		restart bool
+	}{
+		{"initial seed survives restart", 0, true},
+		{"newer delete supersedes retry", snowflakeRV(50), false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, tt.cursor)
+			text.failNext = &embedder.RetryableError{Err: errBoom}
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			s.reconcileCycle(t.Context())
+			require.Equal(t, 1, s.pendingLen())
+			if tt.restart {
+				require.Equal(t, snowflakeRV(100)-1, vec.latestRV)
+				s, _ = newReconciler(t, st, vec)
+				s.reconcileCycle(t.Context())
+				assert.Equal(t, snowflakeRV(100), vec.latestRV)
+				assert.Len(t, vec.upserts, 1)
+			} else {
+				st.changes = nil
+				s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash", snowflakeRV(200), nil))
+				s.reconcileCycle(t.Context())
+				assert.Empty(t, vec.deletes, "new events do not bypass cooldown")
+				s.embedRetryAt = time.Time{}
+				s.reconcileCycle(t.Context())
+				assert.Equal(t, 1, text.calls)
+				assert.Empty(t, vec.upserts)
+				assert.Len(t, vec.deletes, 1)
+			}
+			assert.Zero(t, s.pendingLen())
+		})
+	}
+}
+
+func TestReconciler_EmbeddingRetryCap(t *testing.T) {
+	for _, source := range []string{"watch", "sweep", "lookback"} {
+		t.Run(source, func(t *testing.T) {
+			cursor := snowflakeRV(50)
+			if source == "lookback" {
+				cursor = snowflakeRV(105)
+			}
+			s, st, vec, text := setupEmbeddingRetry(t, cursor)
+			if source == "watch" {
+				s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			}
+			st.lookback, st.latestRvOverride = 10, snowflakeRV(110)
+			s.metrics = resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+			for attempt := range maxEventAttempts {
+				s.embedRetryAt = time.Time{}
+				text.failNext = &embedder.RetryableError{Err: errBoom}
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls)
+				require.Equal(t, cursor, vec.latestRV, "a provider failure still aborts the sweep")
+				if attempt+1 < maxEventAttempts {
+					require.Equal(t, 1, s.pendingLen())
+					require.Equal(t, attempt+1, s.pending[pendingKey(dashGroup, dashRes, "ns", "dash")].attempts)
+				}
+			}
+			require.Zero(t, s.pendingLen(), "the exhausted event must not be requeued as unfinished")
+			require.True(t, s.isExhausted(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), nil)))
+			assert.Equal(t, 1.0, testutil.ToFloat64(s.metrics.ReconcilerEventsDroppedTotal.WithLabelValues(dashGroup, dashRes, "retries_exhausted")))
+			s.reconcileCycle(t.Context())
+			require.Equal(t, maxEventAttempts, text.calls, "cooldown still applies after the final failure")
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, maxEventAttempts, text.calls, "re-listing must not reset the exhausted allowance")
+			assert.Equal(t, snowflakeRV(110), vec.latestRV, "cursor can pass the broken dashboard")
+		})
+	}
+}
+
+func TestReconciler_EmbeddingRetryCap_PreservesUnfinishedEvents(t *testing.T) {
+	s, _, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
+	broken := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "broken", snowflakeRV(100), minimalDashboard("broken", "Broken"))
+	broken.attempts = maxEventAttempts - 1
+	next := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "next", snowflakeRV(110), minimalDashboard("next", "Next"))
+	text.failNext = &embedder.RetryableError{Err: errBoom}
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{broken, next})
+	require.True(t, abort)
+	require.Empty(t, successes)
+	require.Equal(t, []*pendingEvent{next}, failed)
+	require.Zero(t, next.attempts, "unattempted events do not consume their allowance")
+	s.processBatch(t.Context(), failed)
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, "next", vec.upserts[0][0].UID)
+}

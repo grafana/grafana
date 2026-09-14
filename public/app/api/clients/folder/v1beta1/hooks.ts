@@ -38,6 +38,7 @@ import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
   AnnoKeyGrantPermissions,
+  AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -623,6 +624,7 @@ const appPlatformFolderToLegacyFolder = (
     updated: annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     managedBy: annotations?.[AnnoKeyManagerKind] as ManagerKind,
+    managerId: annotations?.[AnnoKeyManagerIdentity],
     parentUid: annotations?.[AnnoKeyFolder],
     version: generation || 1,
     hasAcl: false,
