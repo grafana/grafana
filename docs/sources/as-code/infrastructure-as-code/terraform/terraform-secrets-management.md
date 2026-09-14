@@ -480,16 +480,16 @@ The `metadata` block contains the following fields:
 
 The `spec` block contains the following fields:
 
-| Field         | Required | Description                                                                            |
-| ------------- | -------- | -------------------------------------------------------------------------------------- |
-| `description` | Yes      | Short description for the keeper, 1 to 253 characters.                                 |
+| Field         | Required | Description                                                                                                                                            |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `description` | Yes      | Short description for the keeper, 1 to 253 characters.                                                                                                 |
 | `aws`         | Yes      | AWS Secrets Manager configuration. Grafana currently supports only AWS, so this block is required. For the fields, refer to the following `aws` table. |
 
 The `aws` block contains the following fields:
 
-| Field         | Required | Description                                                                                                               |
-| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `region`      | Yes      | AWS region that hosts your secrets, for example `us-east-1`.                                                              |
+| Field         | Required | Description                                                                                                                       |
+| ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `region`      | Yes      | AWS region that hosts your secrets, for example `us-east-1`.                                                                      |
 | `assume_role` | Yes      | Role that Grafana assumes to access AWS Secrets Manager. Required for AWS. `assume_role_arn` and `external_id` are both required. |
 
 The `assume_role` block contains the following fields:
