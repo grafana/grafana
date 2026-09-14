@@ -397,8 +397,14 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
 
     await waitFor(() => {
       const grid = document.querySelector<HTMLElement>('.rdg')!;
-      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
-      const handedWidth = parseFloat(grid.parentElement!.style.width);
+      // The wrapper the TableNG branch sizes, i.e. the width the table was handed. The table puts
+      // its own positioning wrapper between that div and the grid, so walk up to the sized one
+      // rather than assuming it is the grid's parent.
+      let sizedWrapper = grid.parentElement;
+      while (sizedWrapper && !sizedWrapper.style.width) {
+        sizedWrapper = sizedWrapper.parentElement;
+      }
+      const handedWidth = parseFloat(sizedWrapper!.style.width);
       const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
 
       expect(columnWidths).toHaveLength(4);
