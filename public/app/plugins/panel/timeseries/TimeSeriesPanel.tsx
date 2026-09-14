@@ -78,9 +78,8 @@ export const TimeSeriesPanel = ({
     }
 
     const compareDiffMs: number[] = [0];
-    const originalFrames = graphable;
 
-    const frames = originalFrames.map((frame: DataFrame) => {
+    const frames = graphable.map((frame: DataFrame) => {
       const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
       frame.fields.forEach((field) => {
@@ -92,7 +91,7 @@ export const TimeSeriesPanel = ({
       if (diffMs !== 0) {
         // Only shift a compare frame that still sits in its historical window, so repeated
         // preparation of already aligned frames doesn't shift them again
-        const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
+        const needsAlignment = shouldAlignTimeCompare(frame, timeRange);
 
         if (needsAlignment) {
           return alignTimeRangeCompareData(frame, diffMs, theme);

@@ -123,15 +123,10 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
  * current period returned no data, or no frame at all - is still shifted onto the visible range
  * instead of being left in its historical window.
  * @param compareFrame - The frame with time comparison data
- * @param allFrames - Unused; retained so existing callers keep working
  * @param timeRange - The current panel time range
  * @returns true if alignment is needed
  */
-export function shouldAlignTimeCompare(
-  compareFrame: DataFrame,
-  allFrames: DataFrame[] | undefined,
-  timeRange: TimeRange
-): boolean {
+export function shouldAlignTimeCompare(compareFrame: DataFrame, timeRange: TimeRange): boolean {
   const compareRefId = compareFrame.refId;
   if (!compareRefId || !compareRefId.endsWith('-compare')) {
     return false;
