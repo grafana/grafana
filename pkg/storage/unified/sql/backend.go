@@ -1183,6 +1183,10 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 	ctx, span := tracer.Start(ctx, "sql.backend.ListIterator")
 	defer span.End()
 
+	if req.KeysOnly {
+		return 0, apierrors.NewBadRequest("keys-only lists are not supported by the SQL backend")
+	}
+
 	req.ResourceVersion = toMicrosecondRV(req.ResourceVersion)
 
 	if err := resource.MigrateListRequestVersionMatch(req, b.log); err != nil {

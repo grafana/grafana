@@ -1870,12 +1870,12 @@ func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(
 		{
 			name:             "cluster-wide token reused for its cursor namespace",
 			requestNamespace: "ns-two",
-			token:            ContinueToken{Namespace: "ns-two", ClusterWide: true, Name: "bbb", ResourceVersion: 1},
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, ClusterWide: true, Name: "bbb", ResourceVersion: 1},
 		},
 		{
 			name:             "namespaced token reused cluster-wide",
 			requestNamespace: "",
-			token:            ContinueToken{Namespace: "ns-two", Name: "bbb", ResourceVersion: 1},
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
 		},
 	}
 
@@ -1889,6 +1889,41 @@ func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(
 				NextPageToken: tt.token.String(),
 			}, func(ListIterator) error { return nil })
 			require.ErrorContains(t, err, "namespace does not match request")
+		})
+	}
+}
+
+func TestKvStorageBackend_ListIterator_RejectsContinueTokenListTypeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	tests := []struct {
+		name        string
+		requestType bool
+		token       ContinueToken
+	}{
+		{
+			name:        "regular token used for keys-only list",
+			requestType: true,
+			token:       ContinueToken{Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:        "keys-only token used for regular list",
+			requestType: false,
+			token:       ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: "ns-two",
+				}},
+				KeysOnly:      tt.requestType,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list type does not match request")
 		})
 	}
 }

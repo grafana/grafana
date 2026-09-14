@@ -10,6 +10,8 @@ import (
 type ContinueToken struct {
 	// Namespace identifies the namespace scope or cross-namespace cursor position.
 	Namespace string `json:"ns,omitempty"`
+	// KeysOnly distinguishes keys-only tokens from regular list tokens.
+	KeysOnly bool `json:"ko,omitempty"`
 	// ClusterWide distinguishes a cross-namespace cursor from a namespaced scope.
 	ClusterWide bool `json:"cw,omitempty"`
 	// Name is the name to continue from. Required for list resources, empty for list history.

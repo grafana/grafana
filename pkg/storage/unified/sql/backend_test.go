@@ -105,6 +105,16 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	}, ctx
 }
 
+func TestBackendListIteratorRejectsKeysOnly(t *testing.T) {
+	b, ctx := setupBackendTest(t)
+
+	_, err := b.ListIterator(ctx, &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: "apps", Resource: "resources"}},
+		KeysOnly: true,
+	}, func(resource.ListIterator) error { return nil })
+	require.ErrorContains(t, err, "keys-only lists are not supported by the SQL backend")
+}
+
 func TestNewBackend(t *testing.T) {
 	t.Parallel()
 

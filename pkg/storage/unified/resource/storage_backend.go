@@ -1487,7 +1487,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		if req.KeysOnly && !continueTokenMatchesListScope(token, req.Options.Key.Namespace) {
+		if token.KeysOnly != req.KeysOnly {
+			return 0, apierrors.NewBadRequest("invalid continue token: list type does not match request")
+		}
+		if token.KeysOnly && !continueTokenMatchesListScope(token, req.Options.Key.Namespace) {
 			return 0, apierrors.NewBadRequest("invalid continue token: namespace does not match request")
 		}
 		// Only use token namespace for cross-namespace queries (when request namespace is empty).
@@ -1657,6 +1660,7 @@ func (i *kvListIterator) ContinueToken() string {
 		token.Namespace = i.nextDataObj.Key.Namespace
 	}
 	if i.keysOnly {
+		token.KeysOnly = true
 		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
