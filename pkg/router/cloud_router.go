@@ -105,9 +105,6 @@ type cloudLoader struct {
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
 
-	// Remote plugins
-	plugins remotePluginLoader
-
 	// clients builds the informers that feed Watcher() -- started in
 	// starting/running so this loader satisfies LifecycleRoutesLoader and
 	// gets run by the router module alongside GrafanaRouter, instead of a
