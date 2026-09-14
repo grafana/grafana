@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Abrir valor em"
+      "open-value-in": "Abrir valor em",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Copiar para a área de transferência",
       "attribute-plugin-promo": {
         "learn-more": "Saiba mais"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "A observabilidade da base de dados revela planos de explicação visual, eventos de espera e amostras de consultas, ajudando a diagnosticar problemas para além dos intervalos de rastreio.",
