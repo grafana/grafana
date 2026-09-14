@@ -1,4 +1,4 @@
-import { map, Observable, ReplaySubject, type Subject, type Subscriber, type Subscription } from 'rxjs';
+import { map, Observable, Subject, type Subscriber, type Subscription } from 'rxjs';
 
 import {
   type DataFrameJSON,
@@ -129,7 +129,13 @@ const filterMessages = <T extends InternalStreamMessageType>(
 export class LiveDataStream<T = unknown> {
   private frameBuffer: StreamingDataFrame;
   private liveEventsSubscription: Subscription;
-  private stream: Subject<InternalStreamMessage> = new ReplaySubject(1);
+  private stream = new Subject<InternalStreamMessage>();
+  // The most recent non-error message, replayed to new subscribers so they see
+  // the current frame state immediately. Error messages are deliberately not
+  // replayed: a transient channel error (e.g. a stale `expired` Centrifuge
+  // subscription error) must not surface to subscribers that join the cached
+  // stream later as though it were a fresh error.
+  private lastNonErrorMessage: InternalStreamMessage | undefined;
   private shutdownTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private deps: DataStreamHandlerDeps<T>) {
@@ -155,7 +161,7 @@ export class LiveDataStream<T = unknown> {
 
   private onError = (err: unknown) => {
     console.log('LiveQuery [error]', { err }, this.deps.channelId);
-    this.stream.next({
+    this.emit({
       type: InternalStreamMessageType.Error,
       error: toDataQueryError(err),
     });
@@ -176,7 +182,7 @@ export class LiveDataStream<T = unknown> {
     const liveChannelStatusEvent = isLiveChannelStatusEvent(evt);
     if (liveChannelStatusEvent && evt.error) {
       const err = toDataQueryError(evt.error);
-      this.stream.next({
+      this.emit({
         type: InternalStreamMessageType.Error,
         error: {
           ...err,
@@ -194,15 +200,22 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
+  private emit = (message: InternalStreamMessage) => {
+    if (message.type !== InternalStreamMessageType.Error) {
+      this.lastNonErrorMessage = message;
+    }
+    this.stream.next(message);
+  };
+
   private process = (msg: DataFrameJSON) => {
     const packetInfo = this.frameBuffer.push(msg);
 
     if (packetInfo.schemaChanged) {
-      this.stream.next({
+      this.emit({
         type: InternalStreamMessageType.ChangedSchema,
       });
     } else {
-      this.stream.next({
+      this.emit({
         type: InternalStreamMessageType.NewValuesSameSchema,
         values: this.frameBuffer.getValuesFromLastPacket(),
       });
@@ -333,8 +346,18 @@ export class LiveDataStream<T = unknown> {
       };
     };
 
+    // Replay the most recent non-error message to this subscriber only, so a
+    // late subscriber immediately sees the current frame state without
+    // inheriting a transient channel error that was emitted earlier.
+    const internalStreamForSubscriber = new Observable<InternalStreamMessage>((subscriber) => {
+      if (this.lastNonErrorMessage !== undefined) {
+        subscriber.next(this.lastNonErrorMessage);
+      }
+      return this.stream.subscribe(subscriber);
+    });
+
     let shouldSendFullFrame = true;
-    const transformedInternalStream = this.stream.pipe(
+    const transformedInternalStream = internalStreamForSubscriber.pipe(
       bufferIfNot(this.deps.subscriberReadiness),
       map((messages, i) => {
         const errors = filterMessages(messages, InternalStreamMessageType.Error);

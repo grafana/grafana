@@ -1045,4 +1045,42 @@ describe('LiveDataStream', () => {
       expect(deps.onShutdown).not.toHaveBeenCalled();
     });
   });
+
+  describe('stale channel errors', () => {
+    it('should not replay a stale channel error to a subscriber that joins the cached stream later', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+
+      const firstSubscriber = new ValuesCollection<DataQueryResponse>();
+      firstSubscriber.subscribeTo(liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey));
+
+      // Populate the stream with a frame and then simulate a transient channel
+      // error (e.g. a stale "expired" Centrifuge subscription error) as the
+      // most recent event. This mirrors a panel leaving a channel path after an
+      // error and re-subscribing to the same (cached) stream after a time-range
+      // change.
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
+      deps.liveEventsObservable.next(
+        liveChannelStatusEvent(LiveChannelConnectionState.Connected, new Error('expired'))
+      );
+
+      // The subscriber active at the time still observes the error.
+      expect(firstSubscriber.lastValue().state).toEqual(LoadingState.Error);
+      expect(firstSubscriber.lastValue().error?.message).toContain('Streaming channel error: expired');
+
+      firstSubscriber.unsubscribe();
+
+      const lateSubscriber = new ValuesCollection<DataQueryResponse>();
+      lateSubscriber.subscribeTo(liveDataStream.get(liveDataStreamOptions.withTimeAFilter, subscriptionKey));
+
+      // The stale error must not be replayed as a fresh error to the late
+      // subscriber: it should get the last known frame without any error.
+      expect(lateSubscriber.values.length).toBeGreaterThan(0);
+      for (const response of lateSubscriber.values) {
+        expect(response.state).not.toEqual(LoadingState.Error);
+        expect(response.error).toBeUndefined();
+      }
+      expectStreamingResponse(lateSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
+    });
+  });
 });
