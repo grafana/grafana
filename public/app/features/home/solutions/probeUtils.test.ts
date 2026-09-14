@@ -31,7 +31,6 @@ function listItem(ds: { uid?: string; name: string; isDefault?: boolean }): Data
     name: ds.name,
     type: 'loki',
     meta: { id: 'loki' } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: ds.isDefault ?? false,
   };
 }

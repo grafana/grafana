@@ -6,7 +6,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useStoredString } from 'app/core/hooks/useStored';
@@ -21,6 +21,7 @@ import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HeaderActions } from './HeaderActions';
+import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
@@ -174,7 +175,7 @@ export default function HomePage() {
 
                   <HomepageSolutionSections />
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                  <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
                     <AlertIncidentTabs
@@ -184,7 +185,7 @@ export default function HomePage() {
                       setTeam={setTeam}
                       switchRef={alertIncidentRef}
                     />
-                  </Grid>
+                  </HomeGrid>
                 </>
               ) : (
                 <>
@@ -199,14 +200,14 @@ export default function HomePage() {
                     <DashboardTabs extensionComponents={tabComponents} />
                   </HomeSection>
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                  <HomeGrid columns={2} gap={2}>
                     {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
                     {incidentsData.enabled ? (
                       <IncidentsCard data={incidentsData} />
                     ) : (
                       config.newsFeedEnabled && <NewsCard />
                     )}
-                  </Grid>
+                  </HomeGrid>
                 </>
               )}
               {extraContent}

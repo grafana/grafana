@@ -2049,6 +2049,8 @@ export type QuotaStatus = {
   maxRepositories?: number;
   /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
   maxResourcesPerRepository?: number;
+  /** UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet. */
+  updatedAt?: number;
 };
 export type ResourceCount = {
   count: number;

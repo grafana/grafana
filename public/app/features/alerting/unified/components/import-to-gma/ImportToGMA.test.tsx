@@ -10,6 +10,7 @@ import { grantUserPermissions } from '../../mocks';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
   setupAutoSyncConfigWriteError,
   setupStatefulAutoSyncConfig,
 } from '../../mocks/server/handlers/k8s/config.k8s';
@@ -403,6 +404,29 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
   it('tracks an error and does not fall through to the staging import path when saveAutoSync fails', async () => {
     setupStatefulAutoSyncConfig(server);
     setupAutoSyncConfigWriteError(server, { code: 500, message: 'failed to save the configuration' });
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_import_to_gma_error',
+        expect.objectContaining({ notificationsSource: 'datasource' })
+      )
+    );
+    expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
+    expect(within(dialog).getByText(/failed to enable auto-sync/i)).toBeInTheDocument();
+  });
+
+  it('reports an error and does not fall through to the staging import path when the Config singleton has not been seeded yet', async () => {
+    // Humans can't create the Config singleton — this is the pre-seed state, not a write failure.
+    setupAutoSyncConfigAbsent(server);
 
     const { user } = render(<ImportWizardGate />);
     await advanceToRules(user);

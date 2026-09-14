@@ -95,8 +95,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
 		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
@@ -403,8 +402,7 @@ func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled(ctx context.Context) bo
 }
 
 func getLoginExternalError(err error) string {
-	var createTokenErr *auth.CreateTokenErr
-	if errors.As(err, &createTokenErr) {
+	if createTokenErr, ok := errors.AsType[*auth.CreateTokenErr](err); ok {
 		return createTokenErr.ExternalErr
 	}
 
@@ -430,6 +428,22 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+}
+
+// newExternallySyncedResolver returns an isExternallySynced function that caches
+// the result per auth module. Each OAuth lookup reads SSO settings twice (client
+// enabled and client config), so caching avoids those reads per user on list
+// endpoints. Not safe for concurrent use.
+func (hs *HTTPServer) newExternallySyncedResolver(ctx context.Context, cfg *setting.Cfg) func(authModule string) bool {
+	cache := make(map[string]bool)
+	return func(authModule string) bool {
+		if synced, ok := cache[authModule]; ok {
+			return synced
+		}
+		synced := hs.isExternallySynced(ctx, cfg, authModule)
+		cache[authModule] = synced
+		return synced
+	}
 }
 
 // isExternalySynced is used to tell if the user roles are externally synced

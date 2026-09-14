@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -350,6 +351,32 @@ func TestStripBOMFromInterface(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := StripBOMFromInterface(tt.input)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestTruncateUTF8(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		n        int
+		expected string
+	}{
+		{name: "shorter than n is untouched", s: "hello", n: 10, expected: "hello"},
+		{name: "exactly n is untouched", s: "hello", n: 5, expected: "hello"},
+		{name: "ascii is truncated to n bytes", s: "hello world", n: 5, expected: "hello"},
+		{name: "does not split a multi-byte rune", s: "héllo", n: 2, expected: "h"}, // 'é' is 2 bytes, byte 2 is mid-rune
+		{name: "n=0 returns empty string", s: "hello", n: 0, expected: ""},
+		{name: "negative n returns empty string instead of panicking", s: "hello", n: -1, expected: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := TruncateUTF8(tc.s, tc.n)
+			assert.Equal(t, tc.expected, result)
+			if tc.n >= 0 {
+				assert.LessOrEqual(t, len(result), tc.n)
+			}
+			assert.True(t, utf8.ValidString(result))
 		})
 	}
 }
