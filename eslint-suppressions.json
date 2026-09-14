@@ -3675,6 +3675,11 @@
       "count": 1
     }
   },
+  "public/app/plugins/datasource/mixed/MixedDataSource.ts": {
+    "@grafana/no-get-data-source-srv": {
+      "count": 1
+    }
+  },
   "public/app/plugins/panel/alertlist/UnifiedAlertList.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
