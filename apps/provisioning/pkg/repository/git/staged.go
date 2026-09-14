@@ -267,7 +267,9 @@ func (r *stagedGitRepository) Push(ctx context.Context) (err error) {
 		if errors.Is(err, nanogit.ErrNothingToCommit) {
 			return repository.ErrNothingToCommit
 		}
-		return err
+		// A push whose git-receive-pack reply exceeds max_push_response_size is
+		// aborted by nanogit; map it to a 413 like the other capped operations.
+		return mapNanogitError(err)
 	}
 	return nil
 }

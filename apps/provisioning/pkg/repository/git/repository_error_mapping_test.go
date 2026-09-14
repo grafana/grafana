@@ -96,9 +96,11 @@ func TestCheckHTTPError_ResponseTooLarge(t *testing.T) {
 	require.Len(t, result.Errors, 1)
 }
 
-// TestLimits_toOptions verifies that non-positive limits are clamped to 0
-// (unlimited) so nanogit never receives a negative field, and that "set" only
-// reports true when at least one positive cap is configured.
+// TestLimits_toOptions verifies that each provisioning limit maps to the right
+// nanogit option, that non-positive limits are clamped to 0 (unlimited) so
+// nanogit never receives a negative field, that "set" only reports true when at
+// least one positive cap is configured, and that the single-object cap carries
+// wire-overhead headroom over the decoded max_file_size content limit.
 func TestLimits_toOptions(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -124,6 +126,23 @@ func TestLimits_toOptions(t *testing.T) {
 			wantSet: false,
 		},
 		{
+			name: "each field maps to its nanogit option",
+			limits: Limits{
+				MaxFileSize:         5 * 1024 * 1024,
+				MaxBulkFetchSize:    1024 * 1024 * 1024,
+				MaxRefsSize:         10 * 1024 * 1024,
+				MaxPushResponseSize: 10 * 1024 * 1024,
+			},
+			want: options.Limits{
+				// max_file_size + wire-overhead headroom (see singleObjectWireCap).
+				SingleObjectFetchMaxBytes:   singleObjectWireCap(5 * 1024 * 1024),
+				MultiObjectFetchMaxBytes:    1024 * 1024 * 1024,
+				RefsMetadataMaxBytes:        10 * 1024 * 1024,
+				ReceivePackResponseMaxBytes: 10 * 1024 * 1024,
+			},
+			wantSet: true,
+		},
+		{
 			name: "mixed positive and non-positive",
 			limits: Limits{
 				MaxFileSize:         1024,
@@ -132,7 +151,7 @@ func TestLimits_toOptions(t *testing.T) {
 				MaxPushResponseSize: 2048,
 			},
 			want: options.Limits{
-				SingleObjectFetchMaxBytes:   1024,
+				SingleObjectFetchMaxBytes:   singleObjectWireCap(1024),
 				ReceivePackResponseMaxBytes: 2048,
 			},
 			wantSet: true,
@@ -146,6 +165,19 @@ func TestLimits_toOptions(t *testing.T) {
 			require.Equal(t, tt.wantSet, set)
 		})
 	}
+}
+
+// TestSingleObjectWireCap verifies the wire-overhead headroom: the cap must
+// exceed max_file_size (so an incompressible file at the content limit is not
+// aborted on the wire), and unlimited must stay unlimited.
+func TestSingleObjectWireCap(t *testing.T) {
+	require.Equal(t, int64(0), singleObjectWireCap(0), "unlimited stays unlimited")
+	require.Equal(t, int64(0), singleObjectWireCap(-1), "non-positive stays unlimited")
+
+	const maxFile = 5 * 1024 * 1024
+	got := singleObjectWireCap(maxFile)
+	require.Greater(t, got, int64(maxFile), "wire cap must leave room above the content limit")
+	require.Equal(t, int64(maxFile+maxFile/gitWireOverheadDivisor+gitWireOverheadFloor), got)
 }
 
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes

@@ -81,7 +81,7 @@ func (l Limits) toOptions() (options.Limits, bool) {
 		return v
 	}
 	opts := options.Limits{
-		SingleObjectFetchMaxBytes:   clamp(l.MaxFileSize),
+		SingleObjectFetchMaxBytes:   singleObjectWireCap(clamp(l.MaxFileSize)),
 		MultiObjectFetchMaxBytes:    clamp(l.MaxBulkFetchSize),
 		RefsMetadataMaxBytes:        clamp(l.MaxRefsSize),
 		ReceivePackResponseMaxBytes: clamp(l.MaxPushResponseSize),
@@ -89,6 +89,33 @@ func (l Limits) toOptions() (options.Limits, bool) {
 	set := opts.SingleObjectFetchMaxBytes > 0 || opts.MultiObjectFetchMaxBytes > 0 ||
 		opts.RefsMetadataMaxBytes > 0 || opts.ReceivePackResponseMaxBytes > 0
 	return opts, set
+}
+
+// gitWireOverheadDivisor and gitWireOverheadFloor size the headroom added to
+// the decoded content cap when it is reused as a wire-response cap. See
+// singleObjectWireCap.
+const (
+	gitWireOverheadDivisor = 16   // ~6.25% of the payload
+	gitWireOverheadFloor   = 4096 // 4 KiB fixed component
+)
+
+// singleObjectWireCap derives nanogit's SingleObjectFetchMaxBytes from the
+// max_file_size content cap. max_file_size bounds decoded file *content* (that
+// exact limit is still enforced post-read via maxBytes), but
+// SingleObjectFetchMaxBytes caps the git-upload-pack *wire* response, which
+// also carries packfile framing (header/trailer, per-object headers, zlib
+// wrapping) and pkt-line sideband framing. For an incompressible blob at the
+// content limit the wire response is slightly larger than the file, so reusing
+// max_file_size verbatim would make nanogit abort a file the setting promises
+// to allow. The real framing overhead is well under 1% of the payload plus a
+// small constant; the allowance below stays far above that while still
+// bounding per-fetch memory to roughly the file size. Unlimited (0) stays
+// unlimited.
+func singleObjectWireCap(maxFileSize int64) int64 {
+	if maxFileSize <= 0 {
+		return 0
+	}
+	return maxFileSize + maxFileSize/gitWireOverheadDivisor + gitWireOverheadFloor
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -186,7 +213,7 @@ func (r *gitRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 	// Get all refs to find the default branch
 	refs, err := r.client.ListRefs(ctx)
 	if err != nil {
-		return "", fmt.Errorf("list refs: %w", err)
+		return "", fmt.Errorf("list refs: %w", mapNanogitError(err))
 	}
 
 	var hasMain, hasMaster bool
