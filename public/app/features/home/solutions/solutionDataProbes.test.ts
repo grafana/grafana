@@ -1,11 +1,12 @@
 import { of, throwError } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, config, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrv, config, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { PROBE_TIMEOUT_MS, resetProbeHealth } from './probeUtils';
+import { resetProbeHealth } from './probeUtils';
 import { lokiHasRecentLabels, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
+import { backendInstance } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -45,22 +46,6 @@ beforeEach(() => {
   mockProxyGet.mockImplementation(async (url: string) => (url.endsWith('/health') ? { status: 'OK' } : undefined));
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet, fetch: mockProxyFetch } as unknown as BackendSrv);
 });
-
-function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
-  const instance: DataSourceWithBackend = Object.create(DataSourceWithBackend.prototype);
-  instance.getResource = getResource;
-  return instance;
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((r) => {
-    resolve = r;
-  });
-  return { promise, resolve };
-}
-
-const flush = () => jest.advanceTimersByTimeAsync(0);
 
 afterEach(() => {
   jest.useRealTimers();
@@ -185,20 +170,6 @@ describe('lokiHasRecentLabels', () => {
     expect(getResource).toHaveBeenCalledTimes(2);
     expect(getResource.mock.calls[1][2].abortSignal.aborted).toBe(false);
   });
-
-  it('never issues the request when the lookup outlives the deadline', async () => {
-    const lookup = deferred<DataSourceWithBackend>();
-    mockInstance.mockReturnValue(lookup.promise);
-    const getResource = jest.fn();
-
-    const assertion = expect(lokiHasRecentLabels(datasource('loki'))).rejects.toThrow(/timed out/);
-    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
-    await assertion;
-
-    lookup.resolve(backendInstance(getResource));
-    await flush();
-    expect(getResource).not.toHaveBeenCalled();
-  });
 });
 
 describe('prometheusHasRecentMetrics', () => {
@@ -251,31 +222,6 @@ describe('prometheusHasRecentMetrics', () => {
     mockInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
-  });
-
-  it('cancels the request when the probe deadline passes', async () => {
-    const getResource = jest.fn().mockReturnValue(new Promise(() => {}));
-    mockInstance.mockResolvedValue(backendInstance(getResource));
-
-    const assertion = expect(prometheusHasRecentMetrics(datasource('prometheus'))).rejects.toThrow(/timed out/);
-    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
-
-    await assertion;
-    expect(getResource.mock.calls[0][2].abortSignal.aborted).toBe(true);
-  });
-
-  it('never issues the request when the lookup outlives the deadline', async () => {
-    const lookup = deferred<DataSourceWithBackend>();
-    mockInstance.mockReturnValue(lookup.promise);
-    const getResource = jest.fn();
-
-    const assertion = expect(prometheusHasRecentMetrics(datasource('prometheus'))).rejects.toThrow(/timed out/);
-    await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
-    await assertion;
-
-    lookup.resolve(backendInstance(getResource));
-    await flush();
-    expect(getResource).not.toHaveBeenCalled();
   });
 });
 

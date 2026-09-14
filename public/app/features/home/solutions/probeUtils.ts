@@ -92,6 +92,27 @@ export async function probeProxyGet<T>(
 }
 
 /**
+ * GET on the datasource's resource router, deadline-bounded, never toasts. Null when the datasource
+ * has no backend. The instance lookup is an ordinary promise, so a deadline or abort during it must
+ * not issue the request afterwards.
+ */
+export async function probeResourceGet<T>(
+  uid: string,
+  path: string,
+  params: Record<string, unknown>,
+  timeoutMs = PROBE_TIMEOUT_MS,
+  signal?: AbortSignal
+): Promise<T | null> {
+  return withDeadline(timeoutMs, signal, async (s) => {
+    const instance = await resolveBackendInstance(uid);
+    if (!instance || s.aborted) {
+      return null;
+    }
+    return instance.getResource<T>(path, params, { showErrorAlert: false, abortSignal: s });
+  });
+}
+
+/**
  * Runs `work` with a signal that aborts when `parent` aborts or after `ms`, whichever comes first,
  * so a deadline cancels the request rather than only releasing the caller. The deadline always
  * rejects with the timeout error, even when `work` ignores its signal or settles in reaction to

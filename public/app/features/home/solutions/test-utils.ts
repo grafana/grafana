@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { type Solution, type SolutionId } from './types';
 
@@ -36,4 +37,11 @@ export function deferred<T>() {
     resolve = res;
   });
   return { promise, resolve };
+}
+
+/** Passes the backend-instance check and serves resource calls from `getResource`. */
+export function backendInstance(getResource: jest.Mock): DataSourceWithBackend {
+  const instance: DataSourceWithBackend = Object.create(DataSourceWithBackend.prototype);
+  instance.getResource = getResource;
+  return instance;
 }

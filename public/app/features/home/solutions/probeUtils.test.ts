@@ -1,8 +1,8 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import {
   abortNotifier,
@@ -13,10 +13,12 @@ import {
   MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
   probeProxyGet,
+  probeResourceGet,
   resetProbeHealth,
   withDeadline,
 } from './probeUtils';
 import { detectSignal, SIGNAL_BUDGET_MS } from './solutionState';
+import { backendInstance, deferred } from './test-utils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -25,6 +27,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
 }));
 
@@ -187,6 +190,55 @@ describe('probeProxyGet', () => {
 
       await assertion;
       expect(teardown).toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('probeResourceGet', () => {
+  const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
+
+  beforeEach(() => {
+    getDataSourceInstanceMock.mockReset();
+  });
+
+  it('resolves null when the datasource cannot make resource calls', async () => {
+    getDataSourceInstanceMock.mockResolvedValue({} as never);
+
+    await expect(probeResourceGet('loki', 'labels', {})).resolves.toBeNull();
+  });
+
+  it('cancels the request when the deadline passes', async () => {
+    jest.useFakeTimers();
+    try {
+      const getResource = jest.fn().mockReturnValue(new Promise(() => {}));
+      getDataSourceInstanceMock.mockResolvedValue(backendInstance(getResource));
+
+      const assertion = expect(probeResourceGet('loki', 'labels', {})).rejects.toThrow(/timed out/);
+      await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+
+      await assertion;
+      expect(getResource.mock.calls[0][2].abortSignal.aborted).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('never issues the request when the lookup outlives the deadline', async () => {
+    jest.useFakeTimers();
+    try {
+      const lookup = deferred<DataSourceWithBackend>();
+      getDataSourceInstanceMock.mockReturnValue(lookup.promise);
+      const getResource = jest.fn();
+
+      const assertion = expect(probeResourceGet('loki', 'labels', {})).rejects.toThrow(/timed out/);
+      await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
+      await assertion;
+
+      lookup.resolve(backendInstance(getResource));
+      await jest.advanceTimersByTimeAsync(0);
+      expect(getResource).not.toHaveBeenCalled();
     } finally {
       jest.useRealTimers();
     }

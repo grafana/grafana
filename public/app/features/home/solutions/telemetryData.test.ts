@@ -7,8 +7,8 @@ import {
   type DataSourceInstanceSettings,
   FieldType,
 } from '@grafana/data';
-import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
@@ -23,6 +23,7 @@ import {
   LOGS_STATS_LOOKBACK_DAYS,
   METRICS_STATS_LOOKBACK_DAYS,
 } from './telemetryData';
+import { backendInstance } from './test-utils';
 
 jest.mock('./probeUtils', () => ({
   ...jest.requireActual('./probeUtils'),
@@ -43,6 +44,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));
 
@@ -55,6 +57,7 @@ const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunInstantQueries = jest.mocked(runInstantQueries);
 const mockRunRangeQuery = jest.mocked(runRangeQuery);
 const mockProxyFetch = jest.fn();
+const mockGetDataSourceInstance = jest.mocked(getDataSourceInstance);
 const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 const mockGetAPINamespace = jest.mocked(getAPINamespace);
 
@@ -63,10 +66,6 @@ const NS_IN_MS = 1e6;
 
 const loki: Pick<DataSourceInstanceListItem, 'uid'> = { uid: 'loki-uid' };
 const tempo = { uid: 'tempo-uid' };
-
-function instanceWith(getResource: jest.Mock): DataSourceWithBackend {
-  return { getResource } as unknown as DataSourceWithBackend;
-}
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -78,6 +77,7 @@ beforeEach(() => {
   mockRunRangeQuery.mockReset();
   mockRunRangeQuery.mockResolvedValue([]);
   jest.mocked(getBackendSrv).mockReturnValue({ fetch: mockProxyFetch } as unknown as BackendSrv);
+  mockGetDataSourceInstance.mockReset();
   mockGetDataSourceInstanceSettings.mockReset();
   mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
   mockGetAPINamespace.mockReset();
@@ -129,7 +129,7 @@ describe('fetchLogsActivity', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchLogsActivity(loki);
 
@@ -175,7 +175,7 @@ describe('fetchLogsActivity', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledWith(
@@ -195,7 +195,7 @@ describe('fetchLogsActivity', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
   });
@@ -225,7 +225,7 @@ describe('fetchLogsActivity', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchLogsActivity(loki);
 
@@ -235,7 +235,7 @@ describe('fetchLogsActivity', () => {
 
   it('reports nulls when no usable label exists', async () => {
     const getResource = jest.fn(async () => ({ data: ['__stream_shard__'] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
@@ -243,7 +243,7 @@ describe('fetchLogsActivity', () => {
 
   it('reports nulls when the labels lookup itself fails', async () => {
     const getResource = jest.fn().mockRejectedValue(new Error('labels 403'));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, series: null });
     expect(getResource).toHaveBeenCalledTimes(1);
@@ -259,7 +259,7 @@ describe('fetchLogsActivity', () => {
       }
       return { data: { result: [] } };
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchLogsActivity(loki);
 
@@ -270,7 +270,9 @@ describe('fetchLogsActivity', () => {
     const getResource = jest.fn(async (path: string) =>
       path === 'labels' ? { data: ['job'] } : { data: { result: [] } }
     );
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
+    // The probe resolves its instance itself; the same datasource must not leak the aborted signal.
+    mockGetDataSourceInstance.mockResolvedValue(backendInstance(getResource));
 
     const controller = new AbortController();
     controller.abort();
@@ -443,7 +445,7 @@ describe('metrics telemetry', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunRangeQuery.mockResolvedValue([
       createDataFrame({
         refId: 'series',
@@ -520,7 +522,7 @@ describe('metrics telemetry', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchMetricsActivity(prom);
 
@@ -542,7 +544,7 @@ describe('metrics telemetry', () => {
       }
       return { data: ['up'] };
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockImplementation(async (queries, ds) =>
       ds.uid === 'grafanacloud-usage'
         ? [scalarFrame('activeSeries', 9_900_000), scalarFrame('dataPointsPerMinute', 5_160_000)]
@@ -593,7 +595,7 @@ describe('metrics telemetry', () => {
       ref === 'grafanacloud-usage' ? usageSettings : undefined
     );
     const getResource = jest.fn(async () => ({ data: ['up'] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunRangeQuery.mockImplementation(async (_refId, query) =>
       query === 'sum(prometheus_tsdb_head_series)'
         ? [
@@ -633,7 +635,7 @@ describe('metrics telemetry', () => {
         : ({ jsonData: { prometheusType: 'Mimir' } } as unknown as DataSourceInstanceSettings)
     );
     const getResource = jest.fn(async () => ({ data: ['up'] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchMetricsActivity(prom);
 
@@ -652,7 +654,7 @@ describe('metrics telemetry', () => {
       jsonData: { prometheusType: 'Mimir' },
     } as unknown as DataSourceInstanceSettings);
     const getResource = jest.fn(async () => ({ data: ['up'] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
 
     const activity = await fetchMetricsActivity(prom);
@@ -667,7 +669,7 @@ describe('metrics telemetry', () => {
 
   it('reads the ingest rate from Prometheus self-monitoring on vanilla datasources', async () => {
     const getResource = jest.fn(async () => ({ data: ['up'] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12), scalarFrame('dpm', 250_000)]);
 
     const activity = await fetchMetricsActivity(prom);
@@ -688,7 +690,7 @@ describe('metrics telemetry', () => {
       }
       return { data: ['up'] };
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     const activity = await fetchMetricsActivity(prom);
 
@@ -718,7 +720,7 @@ describe('metrics telemetry', () => {
       }
       return { data: ['up'] };
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockImplementation(async (queries, ds) => {
       if (ds.uid === 'grafanacloud-usage') {
         throw new Error('usage unavailable');
@@ -745,7 +747,7 @@ describe('metrics telemetry', () => {
       }
       throw new Error(`unexpected path ${path}`);
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
     await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ count: { kind: 'series', value: 987 } });
     expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
@@ -758,7 +760,7 @@ describe('metrics telemetry', () => {
       }
       throw new Error('unsupported');
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     const end = Math.floor(Date.now() / 1000);
 
     const promise = fetchMetricsActivity(prom);
@@ -779,7 +781,7 @@ describe('metrics telemetry', () => {
       }
       throw new Error('unsupported');
     });
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunRangeQuery.mockReturnValue(new Promise(() => {}));
     let settled = false;
 
