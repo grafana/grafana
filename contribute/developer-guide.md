@@ -130,8 +130,10 @@ reloads the page.
 
 Some consequences of this setup:
 
-- Nothing is written to `public/build/rspack`. Serving the build from a static file server, as
-  `make frontend-service` does, needs `yarn start:rspack:noHmr` instead.
+- Almost nothing is written to `public/build/rspack`. The one exception is `boot.js`, which
+  every rspack start command builds to disk first, because the backend reads it from there at
+  startup. Serving the rest of the build from a static file server, as `make frontend-service`
+  does, needs `yarn start:rspack:noHmr` instead.
 - If the dev server is not running, Grafana falls back to whatever the last build left on disk.
   A stale page usually means the dev server stopped.
 - Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy

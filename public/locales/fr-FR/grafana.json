@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Lien",
-      "open-value-in": "Ouvrir la valeur dans"
+      "open-value-in": "Ouvrir la valeur dans",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Copier dans le presse-papiers",
       "attribute-plugin-promo": {
         "learn-more": "En savoir plus"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability met en avant des plans d’explication visuels, des événements d’attente et des exemples de requêtes pour vous aider à diagnostiquer les problèmes au-delà des spans de trace.",

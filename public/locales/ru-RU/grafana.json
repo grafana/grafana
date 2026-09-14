@@ -5860,7 +5860,7 @@
       "custom-grid": "Пользовательская сетка",
       "custom-grid-description": "Задайте расположение и размер каждой отдельной панели",
       "description": "Добавьте панель для визуализации данных",
-      "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <2>grafana.com</2>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "layout-default-hint": "Выбранный макет также будет использоваться по умолчанию для всех новых вкладок и строк. Вы можете изменить этот выбор позже в разделе «Настройки дашборда > Общие».",
@@ -8796,7 +8796,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Ссылка",
-      "open-value-in": "Открыть значение в"
+      "open-value-in": "Открыть значение в",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9288,6 +9289,10 @@
       "aria-label-copy": "Копировать в буфер обмена",
       "attribute-plugin-promo": {
         "learn-more": "Подробнее"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability отображает визуальные планы выполнения, события ожидания и примеры запросов, помогая вам диагностировать проблемы за пределами трассировочных спанов.",
@@ -16074,7 +16079,7 @@
       "confirmText-delete": "Удалить",
       "confirmText-disable-service-account": "Отключить служебную учетную запись",
       "placeholder-search-service-account-by-name": "Поиск служебной учетной записи по имени",
-      "sub-title": "Служебные учетные записи и их токены можно использовать для аутентификации в API Grafana Подробнее см. в нашей <2>документации</2></2>",
+      "sub-title": "Служебные учетные записи и их токены можно использовать для аутентификации в API Grafana Подробнее см. в нашей <2>документации</2>",
       "title-delete-service-account": "Удалить служебную учетную запись",
       "title-disable-service-account": "Отключение служебной учетной записи",
       "body-delete_one": "Действительно удалить {{serviceAccountName}} и {{count}} сопутствующий токен?",
