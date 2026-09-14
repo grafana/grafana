@@ -43,6 +43,11 @@ function setIrmAvailable(available: boolean) {
   mockUseNotebookIncidents.mockReturnValue(notebookIncidents(stubs));
 }
 
+/** A stack exposing only the attach component, which is a button rather than a menu item. */
+function setAttachOnly() {
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents({ AttachToIncidentForm: stubAttachForm().Stub }));
+}
+
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
   const trigger = jest.fn().mockReturnValue({ unwrap });
@@ -327,6 +332,17 @@ describe('NotebookToolbar', () => {
       await user.click(screen.getByRole('button', { name: 'More actions' }));
 
       expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
+    });
+
+    // The menu holds declare and delete. With neither, the trigger would open an empty box.
+    it('opens no overflow menu when only attach is exposed and the user cannot delete', () => {
+      setAttachOnly();
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      setup();
+
+      expect(screen.getByRole('button', { name: /Attach to incident/ })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
     });
 
     // Delete used to decide on its own whether there was a menu, which left declare unreachable.

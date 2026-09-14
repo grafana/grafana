@@ -40,8 +40,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
   // Declare comes and goes with IRM, so delete alone no longer decides whether there is a menu.
-  const { available: hasIncidents } = useNotebookIncidents();
-  const hasMoreActions = hasIncidents || canDeleteNotebooks();
+  // Gated on declare specifically, not on `available`: that also counts the attach component, which
+  // is a toolbar button rather than a menu item, and would open an empty menu on a stack exposing
+  // only attach to a user who cannot delete.
+  const { DeclareIncidentForm } = useNotebookIncidents();
+  const hasMoreActions = Boolean(DeclareIncidentForm) || canDeleteNotebooks();
   // Owned here, not by the menu item: that item is inside the Dropdown overlay, which unmounts as
   // the menu closes. Same as the delete confirmation below.
   const [isDeclaring, setIsDeclaring] = useState(false);

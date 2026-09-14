@@ -38,7 +38,11 @@ export function AttachToIncidentButton({ uid, title }: Props) {
     dispatch(
       notifyApp(
         createSuccessNotification(
-          t('notebooks.incidents.attached', 'Notebook attached to "{{incident}}"', { incident: incident.title ?? '' }),
+          t('notebooks.incidents.attached', 'Notebook attached to "{{incident}}"', {
+            incident: incident.title ?? '',
+            // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
+            interpolation: { escapeValue: false },
+          }),
           '',
           undefined,
           <TextLink href={createBridgeURL(pluginId, `/incidents/${incident.incidentID}`)}>
@@ -69,7 +73,12 @@ export function AttachToIncidentButton({ uid, title }: Props) {
         >
           <AttachToIncidentForm
             attachURL={notebookShareUrl(uid)}
-            defaultCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', { title })}
+            defaultCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', {
+              title,
+              // This is data, not display: IRM stores it as the attachment's label. Escaped, a
+              // notebook called `errors/sec` would be filed as `errors&#x2F;sec`.
+              interpolation: { escapeValue: false },
+            })}
             onAttach={onAttach}
             onDismiss={() => setIsAttaching(false)}
           />

@@ -14,14 +14,21 @@ jest.mock('./useNotebookIncidents', () => ({
 
 const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
 
-function setup({ installed = true } = {}) {
-  const { Stub, props } = stubAttachForm();
+interface SetupOptions {
+  installed?: boolean;
+  title?: string;
+  /** The title IRM reports back on attach, for the toast. */
+  incidentTitle?: string;
+}
+
+function setup({ installed = true, title = 'PromQL query (4)', incidentTitle }: SetupOptions = {}) {
+  const { Stub, props } = stubAttachForm(incidentTitle);
   mockUseNotebookIncidents.mockReturnValue(notebookIncidents(installed ? { AttachToIncidentForm: Stub } : {}));
 
   const rendered = render(
     <>
       <AppNotificationList />
-      <AttachToIncidentButton uid="nb1" title="PromQL query (4)" />
+      <AttachToIncidentButton uid="nb1" title={title} />
     </>
   );
 
@@ -52,6 +59,26 @@ describe('AttachToIncidentButton', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Attach to incident' })).toBeInTheDocument();
     expect(screen.getByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
+  });
+
+  // The caption is data IRM persists as the attachment's label, and t() escapes interpolated values
+  // by default — so without escapeValue:false this reads `Checkout&#39;s errors&#x2F;sec`.
+  it('leaves punctuation in the caption alone', async () => {
+    const { user, props } = setup({ title: "Checkout's errors/sec" });
+
+    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
+
+    expect(props.at(-1)?.defaultCaption).toBe("Notebook: Checkout's errors/sec");
+  });
+
+  // Same defect on the display side: the toast title is rendered as plain text, not through Trans.
+  it('leaves punctuation in the toast alone', async () => {
+    const { user } = setup({ incidentTitle: "Checkout's 5xx/spike" });
+
+    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
+    await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
+
+    expect(await screen.findByText(`Notebook attached to "Checkout's 5xx/spike"`)).toBeInTheDocument();
   });
 
   // The caption is what labels the attachment; without one IRM unfurls the URL and gets "Grafana".

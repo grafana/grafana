@@ -16,10 +16,10 @@ export const STUB_DECLARE_TESTID = 'stub-declare-form';
  * Stands in for IRM's exposed components, which are not installed under test. Records the props it
  * was handed and fires the callback the real form would.
  */
-export function stubAttachForm() {
+export function stubAttachForm(incidentTitle = 'Checkout 5xx spike') {
   const props: AttachToIncidentFormProps[] = [];
   const attached: AttachToIncidentFormData = {
-    selectedIncident: { incident: { incidentID: '101', title: 'Checkout 5xx spike' } },
+    selectedIncident: { incident: { incidentID: '101', title: incidentTitle } },
   };
 
   const Stub: ComponentType<AttachToIncidentFormProps> = (received) => {

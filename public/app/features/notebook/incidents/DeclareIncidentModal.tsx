@@ -21,7 +21,11 @@ export function DeclareIncidentModal({ uid, title, onDismiss }: Props) {
     <DeclareIncidentForm
       defaultTitle={title}
       attachURL={notebookShareUrl(uid)}
-      attachCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', { title })}
+      attachCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', {
+        title,
+        // Stored by IRM as the attachment's label, so it must not be HTML-escaped.
+        interpolation: { escapeValue: false },
+      })}
       onDismiss={onDismiss}
     />
   );
