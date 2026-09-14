@@ -5,14 +5,14 @@ go 1.26.6
 // Direct requirements -- every entry needs an owner
 require (
 	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
-	cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
+	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
-	cloud.google.com/go/storage v1.63.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/storage v1.66.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
-	filippo.io/age v1.3.1 // @grafana/identity-access-team
+	filippo.io/age v1.3.2 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 // @grafana/identity-access-team
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 // @grafana/grafana-backend-group
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1 // @grafana/identity-access-team
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1 // @grafana/grafana-backend-group
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.10.0 // @grafana/grafana-backend-group
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.8.0 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest v0.11.30 // @grafana/grafana-backend-group
@@ -53,7 +53,7 @@ require (
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
-	github.com/centrifugal/centrifuge v0.38.0 // @grafana/grafana-app-platform-squad
+	github.com/centrifugal/centrifuge v0.39.0 // @grafana/grafana-app-platform-squad
 	github.com/cespare/xxhash/v2 v2.3.0 // @grafana/identity-access-team
 	github.com/charmbracelet/bubbles v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/charmbracelet/bubbletea v1.3.10 // @grafana/grafana-app-platform-squad
@@ -73,7 +73,7 @@ require (
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
 	github.com/go-logr/logr v1.4.4 // @grafana/grafana-app-platform-squad
-	github.com/go-openapi/loads v0.25.1 // @grafana/alerting-backend
+	github.com/go-openapi/loads v0.25.2 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.33.0 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.27.0 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
@@ -148,7 +148,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/nats-io/nats-server/v2 v2.14.4 // @grafana/grafana-search-and-storage
-	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
+	github.com/nats-io/nats.go v1.53.1 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-services-squad
@@ -158,7 +158,7 @@ require (
 	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
 	github.com/openfga/openfga v1.18.3 // @grafana/identity-access-team
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
-	github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
+	github.com/pgvector/pgvector-go v0.4.1 // @grafana/grafana-search-and-storage
 	github.com/pressly/goose/v3 v3.27.3 // @grafana/identity-access-team
 	github.com/prometheus/alertmanager v0.33.0 // @grafana/alerting-backend
 	github.com/prometheus/client_golang v1.24.1 // @grafana/alerting-backend
@@ -214,7 +214,7 @@ require (
 	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.23.0 // @grafana/alerting-backend
 	golang.org/x/text v0.41.0 // @grafana/grafana-backend-group
-	golang.org/x/time v0.15.0 // @grafana/grafana-backend-group
+	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
@@ -320,7 +320,7 @@ require (
 	cloud.google.com/go/iam v1.11.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/monitoring v1.29.0 // indirect
-	cuelang.org/go v0.11.1 // indirect
+	cuelang.org/go v0.17.1 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
@@ -335,7 +335,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Azure/go-ntlmssp v0.1.1 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 // indirect
 	github.com/FZambia/eagle v0.2.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.33.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.57.0 // indirect
@@ -398,7 +398,7 @@ require (
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
-	github.com/centrifugal/protocol v0.17.0 // indirect
+	github.com/centrifugal/protocol v0.22.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
@@ -426,7 +426,6 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
-	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect; @grafana/observability-traces-and-profiling
 	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
@@ -439,30 +438,29 @@ require (
 	github.com/facette/natsort v0.0.0-20181210072756-2cd4dd1e2dcb // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.2 // indirect
-	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-openapi/analysis v0.26.0 // indirect
+	github.com/go-openapi/analysis v0.26.2 // indirect
 	github.com/go-openapi/errors v0.22.8 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
-	github.com/go-openapi/jsonreference v1.0.0 // indirect
+	github.com/go-openapi/jsonreference v1.0.1 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
-	github.com/go-openapi/spec v0.22.9 // indirect
+	github.com/go-openapi/spec v0.22.11 // indirect
 	github.com/go-openapi/swag v0.28.0 // indirect
 	github.com/go-openapi/swag/cmdutils v0.28.0 // indirect
-	github.com/go-openapi/swag/conv v0.28.0 // indirect
+	github.com/go-openapi/swag/conv v0.29.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.28.0 // indirect
-	github.com/go-openapi/swag/jsonutils v0.28.0 // indirect
-	github.com/go-openapi/swag/loading v0.28.0 // indirect
-	github.com/go-openapi/swag/mangling v0.28.0 // indirect
+	github.com/go-openapi/swag/jsonutils v0.29.1 // indirect
+	github.com/go-openapi/swag/loading v0.29.1 // indirect
+	github.com/go-openapi/swag/mangling v0.29.1 // indirect
 	github.com/go-openapi/swag/netutils v0.28.0 // indirect
-	github.com/go-openapi/swag/pools v0.28.0 // indirect
-	github.com/go-openapi/swag/stringutils v0.28.0 // indirect
-	github.com/go-openapi/swag/typeutils v0.28.0 // indirect
-	github.com/go-openapi/swag/yamlutils v0.28.0 // indirect
+	github.com/go-openapi/swag/pools v0.29.1 // indirect
+	github.com/go-openapi/swag/stringutils v0.29.1 // indirect
+	github.com/go-openapi/swag/typeutils v0.29.1 // indirect
+	github.com/go-openapi/swag/yamlutils v0.29.1 // indirect
 	github.com/go-openapi/validate v0.26.3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
@@ -536,7 +534,6 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.27 // indirect
-	github.com/maypok86/otter v1.2.4 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
 	github.com/mdlayher/vsock v1.3.0 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
@@ -582,7 +579,6 @@ require (
 	github.com/olekukonko/errors v1.3.0 // indirect
 	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/onsi/gomega v1.39.1 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.150.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.150.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0 // indirect
@@ -606,11 +602,11 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.17.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/prometheus/procfs v0.21.1 // indirect
+	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
-	github.com/quagmt/udecimal v1.9.0 // indirect
+	github.com/quagmt/udecimal v1.10.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.22.0 // indirect
-	github.com/redis/rueidis v1.0.72 // indirect
+	github.com/redis/rueidis v1.0.77 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -619,7 +615,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/segmentio/encoding v0.5.3 // indirect
+	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.1 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sethvargo/go-retry v0.4.0 // indirect
@@ -708,11 +704,17 @@ require (
 	modernc.org/libc v1.74.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.56.0 // indirect
+	modernc.org/sqlite v1.57.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
+)
+
+require (
+	github.com/emicklei/proto v1.14.3 // indirect
+	github.com/maypok86/otter/v2 v2.3.0 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
 )
 
 replace (
