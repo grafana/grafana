@@ -217,26 +217,36 @@ export function tryParse(value: string | undefined, decodeFromUri = false): Rule
   }
 }
 
+/** `decodeURIComponent`, but a stray '%' gives the raw value back instead of throwing. */
+function tryDecodeUriComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 /**
  * Grafana-managed rules are identified by a bare UID. Data source managed ones carry a prefix and
  * `$`-separated parts, so the identifier alone says who owns the rule without any lookup.
+ *
+ * This asks `parse` rather than just checking the prefix, so it only says yes to identifiers that
+ * can actually be taken apart again. Anything that merely looks the part — `cri$` with the wrong
+ * number of fields, say — is treated as not data source managed, which sends the page down the
+ * ordinary Grafana route instead of making it wait on work that was always going to fail.
  */
 export function isDataSourceManagedIdentifier(identifier: string | undefined): boolean {
   if (!identifier) {
     return false;
   }
 
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(identifier);
-  } catch {
-    // A stray '%' makes decoding throw. Fall back to the raw value rather than blowing up the page.
-    decoded = identifier;
+  // Already decoded here, so `parse` is told not to decode again.
+  const parsed = tryParse(tryDecodeUriComponent(identifier));
+  if (!parsed) {
+    return false;
   }
 
-  return [CLOUD_RULE_IDENTIFIER_PREFIX, PROMETHEUS_RULE_IDENTIFIER_PREFIX].some((prefix) =>
-    decoded.startsWith(`${prefix}$`)
-  );
+  return isCloudRuleIdentifier(parsed) || isPrometheusRuleIdentifier(parsed);
 }
 
 export function stringifyIdentifier(identifier: RuleIdentifier): string {
