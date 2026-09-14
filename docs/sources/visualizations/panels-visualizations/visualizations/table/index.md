@@ -490,6 +490,7 @@ It has the following options:
 | Alt text           | Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded. |
 | Title text         | Set the text that's displayed when the image is hovered over with a cursor. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### Actions
@@ -506,6 +507,7 @@ Actions add a button to a cell that triggers a basic, unauthenticated API call w
 | Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
 | Payload            | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
 
 #### Tooltip from field
