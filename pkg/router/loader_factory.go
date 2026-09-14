@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -9,18 +10,18 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader wires the cloud-router RoutesLoader ahead of the dummy
-// one: when [cloud_router].apiserver_url is configured, that loader wins;
-// otherwise this falls back to two dummy API groups for exercising the OSS
-// router target end to end. Plugin manifests will replace the dummy backends
-// in a later iteration.
+// ProvideRoutesLoader prefers configured cloud routes, then local plugins.
+// Dummy groups let the router run when neither source is available.
 func ProvideRoutesLoader(
 	pluginClient plugins.Client,
 	contextProvider appplugin.PluginContextWrapper,
@@ -35,6 +36,10 @@ func ProvideRoutesLoader(
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+	dualWrite dualwrite.Service,
+	secureValues secret.InlineSecureValueSupport,
+	reg prometheus.Registerer,
+	builderMetrics *builder.BuilderMetrics,
 ) (RoutesLoader, error) {
 	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg); err != nil {
 		return nil, err
@@ -45,7 +50,7 @@ func ProvideRoutesLoader(
 	// Plugin sources
 	if pluginSources != nil {
 		return newPluginLoader(pluginClient, contextProvider, clientV3Loader, pluginSources, pluginSettings,
-			acService, accessControl, unified, accessClient, decrypter, tracer, features, cfg)
+			acService, accessControl, unified, accessClient, decrypter, tracer, features, cfg, dualWrite, secureValues, reg, builderMetrics)
 	}
 
 	return dummyRoutesLoader{groups: []string{
@@ -57,8 +62,10 @@ func ProvideRoutesLoader(
 // RoutesLoaderClients groups clients that are constructed by the router module
 // before the remaining routes loader dependencies are initialized.
 type RoutesLoaderClients struct {
-	Resource resource.ResourceClient
-	Access   types.AccessClient
+	Resource     resource.ResourceClient
+	Access       types.AccessClient
+	DualWrite    dualwrite.Service
+	SecureValues secret.InlineSecureValueSupport
 }
 
 func ProvideRoutesLoaderWithClients(
@@ -73,6 +80,8 @@ func ProvideRoutesLoaderWithClients(
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+	reg prometheus.Registerer,
+	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
 ) (RoutesLoader, error) {
 	return ProvideRoutesLoader(
@@ -89,5 +98,9 @@ func ProvideRoutesLoaderWithClients(
 		tracer,
 		features,
 		cfg,
+		clients.DualWrite,
+		clients.SecureValues,
+		reg,
+		builderMetrics,
 	)
 }

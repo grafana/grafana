@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,10 +19,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
+	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -28,12 +36,18 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	PluginSettings pluginsettings.Service
-	Unified        resource.ResourceClient
-	Decrypter      decrypt.DecryptService
-	Tracer         tracing.Tracer             // needed for proxy (legacy)
-	Features       featuremgmt.FeatureToggles // needed for proxy (legacy)
-	Cfg            *setting.Cfg
+	ContextProvider appplugin.PluginContextWrapper
+	AccessControl   accesscontrol.AccessControl
+	DualWrite       dualwrite.Service
+	SecureValues    secret.InlineSecureValueSupport
+	MetricsRegister prometheus.Registerer
+	BuilderMetrics  *builder.BuilderMetrics
+	PluginSettings  pluginsettings.Service
+	Unified         resource.ResourceClient
+	Decrypter       decrypt.DecryptService
+	Tracer          tracing.Tracer             // needed for proxy (legacy)
+	Features        featuremgmt.FeatureToggles // needed for proxy (legacy)
+	Cfg             *setting.Cfg
 }
 
 func newPluginLoader(
@@ -50,6 +64,10 @@ func newPluginLoader(
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+	dualWrite dualwrite.Service,
+	secureValues secret.InlineSecureValueSupport,
+	reg prometheus.Registerer,
+	builderMetrics *builder.BuilderMetrics,
 ) (RoutesLoader, error) {
 	return &PluginLoader{
 		pluginClient:    pluginClient,
@@ -60,12 +78,18 @@ func newPluginLoader(
 		accessControl:   accessControl,
 		accessClient:    accessClient,
 		deps: PluginDependencies{
-			PluginSettings: pluginSettings,
-			Unified:        unified,
-			Decrypter:      decrypter,
-			Tracer:         tracer,
-			Features:       features,
-			Cfg:            cfg,
+			ContextProvider: contextProvider,
+			AccessControl:   accessControl,
+			DualWrite:       dualWrite,
+			SecureValues:    secureValues,
+			MetricsRegister: reg,
+			BuilderMetrics:  builderMetrics,
+			PluginSettings:  pluginSettings,
+			Unified:         unified,
+			Decrypter:       decrypter,
+			Tracer:          tracer,
+			Features:        features,
+			Cfg:             cfg,
 		},
 	}, nil
 }
@@ -132,22 +156,9 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 //-----------------------
 
 func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (*PluginBackend, error) {
-	manifest := plugin.Manifest
-
-	if manifest == nil {
-		return nil, fmt.Errorf("only manifests are supported right now")
-	}
-
-	group := metav1.APIGroup{
-		Name: manifest.Group,
-		PreferredVersion: metav1.GroupVersionForDiscovery{
-			Version: manifest.PreferredVersion,
-		},
-		Versions: make([]metav1.GroupVersionForDiscovery, len(manifest.Versions)),
-	}
-	for i, v := range manifest.Versions {
-		group.Versions[i].GroupVersion = manifest.Group + "/" + v.Name
-		group.Versions[i].Version = v.Name
+	group, err := pluginroute.APIGroup(plugin)
+	if err != nil {
+		return nil, err
 	}
 
 	return &PluginBackend{
@@ -176,17 +187,46 @@ func (b *PluginBackend) Key() string {
 	return b.key
 }
 
-// Stub for now -- this will create a handler for a given plugin
 func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	clientV2, clientV3, err := b.client(ctx, b.plugin.JSONData.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		_, _ = w.Write(fmt.Appendf(nil, "TODO: PLUGIN %q\n\n%+v\n\n%T, %T",
-			b.group.Name, b.plugin.Manifest,
-			clientV2, clientV3,
-		))
-	}), nil
+	cfg := b.deps.Cfg
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
+	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	opts := pluginroute.Options{
+		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues),
+		PluginClient:    clientV2,
+		ClientV3:        clientV3,
+		ContextProvider: b.deps.ContextProvider,
+		Decrypter:       b.deps.Decrypter,
+		Search:          b.deps.Unified,
+		Runner: appplugin.AppPluginRunnerOptions{
+			RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
+			AccessControl:            b.deps.AccessControl,
+			DataProxyLogging:         cfg.DataProxyLogging,
+			SendUserHeader:           cfg.SendUserHeader,
+			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
+			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
+			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
+		},
+		Tracer:          b.deps.Tracer,
+		Features:        b.deps.Features,
+		BuildVersion:    cfg.BuildVersion,
+		MetricsRegister: b.deps.MetricsRegister,
+		DualWrite:       b.deps.DualWrite,
+		StorageOpts:     &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
+		BuilderMetrics:  b.deps.BuilderMetrics,
+	}
+	if b.deps.AccessControl != nil {
+		opts.AccessChecker = appplugin.NewPluginAccessChecker(b.deps.AccessControl)
+	}
+	if b.deps.PluginSettings != nil {
+		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.plugin.JSONData.ID, b.deps.PluginSettings)
+	}
+	return pluginroute.NewHandler(b.plugin, opts)
 }
