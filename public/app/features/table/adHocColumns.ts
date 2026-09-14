@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import {
   DataTransformerID,
   FrameMatcherID,
@@ -36,9 +38,21 @@ interface ColumnsEntry {
   options: OrganizeFieldsTransformerOptions;
 }
 
-/** The table's own entry in the stage, if it has one. */
-export function findColumnsEntry(stage: readonly DataTransformerConfig[]): ColumnsEntry | undefined {
-  const index = stage.findIndex((config) => config.id === COLUMNS_TRANSFORMER_ID);
+/**
+ * The table's own entry in the stage for the given frame scope, if it has one.
+ *
+ * Scoped rather than "the one organize entry": a panel showing several frames keeps one entry per
+ * frame, so hiding a column in the frame on screen leaves the others alone. The read has to be
+ * scoped the same way the write is — the column state drives a table-level prop, so an entry
+ * belonging to another frame would hide a column whose data is still there.
+ */
+export function findColumnsEntry(
+  stage: readonly DataTransformerConfig[],
+  frameFilter?: MatcherConfig
+): ColumnsEntry | undefined {
+  const index = stage.findIndex(
+    (config) => config.id === COLUMNS_TRANSFORMER_ID && isEqual(config.filter, frameFilter)
+  );
 
   return index === -1 ? undefined : { index, options: stage[index].options ?? {} };
 }
@@ -49,8 +63,12 @@ export function findColumnsEntry(stage: readonly DataTransformerConfig[]): Colum
  * `catalog` is every column the table could show, in the order the fields arrive; it comes from the
  * frames as they entered the stage, so it still contains the columns `excludeByName` has removed.
  */
-export function decodeAdHocColumns(stage: readonly DataTransformerConfig[], catalog: string[]): AdHocColumnState {
-  const entry = findColumnsEntry(stage);
+export function decodeAdHocColumns(
+  stage: readonly DataTransformerConfig[],
+  catalog: string[],
+  frameFilter?: MatcherConfig
+): AdHocColumnState {
+  const entry = findColumnsEntry(stage, frameFilter);
 
   if (!entry) {
     return NO_COLUMN_STATE;
@@ -74,7 +92,7 @@ function writeColumnsEntry(
   next: OrganizeFieldsTransformerOptions,
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
-  const entry = findColumnsEntry(stage);
+  const entry = findColumnsEntry(stage, frameFilter);
   const isEmpty =
     Object.keys(next.indexByName ?? {}).length === 0 &&
     Object.values(next.excludeByName ?? {}).every((hidden) => !hidden) &&
@@ -117,7 +135,11 @@ export function encodeColumnOrder(
   }, {});
 
   // Spread the existing options so whatever is already there — hidden columns above all — survives.
-  return writeColumnsEntry(stage, { ...EMPTY_OPTIONS, ...findColumnsEntry(stage)?.options, indexByName }, frameFilter);
+  return writeColumnsEntry(
+    stage,
+    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, indexByName },
+    frameFilter
+  );
 }
 
 /** The table's entry with `excludeByName` set from `hidden`. */
@@ -133,7 +155,7 @@ export function encodeHiddenColumns(
 
   return writeColumnsEntry(
     stage,
-    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage)?.options, excludeByName },
+    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, excludeByName },
     frameFilter
   );
 }

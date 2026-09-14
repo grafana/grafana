@@ -124,6 +124,53 @@ describe('encodeHiddenColumns', () => {
   });
 });
 
+// A panel showing several frames keeps one entry per frame. Both halves have to be scoped: the
+// transformation's `filter` decides which frame's data changes, and the decode decides what the
+// table renders — and the table's hidden-columns prop is not frame-aware on its own.
+describe('frame scoping', () => {
+  const frameA = { id: 'byRefId', options: 'A' };
+  const frameB = { id: 'byRefId', options: 'B' };
+
+  it('keeps a separate entry per frame', () => {
+    const withA = encodeHiddenColumns([], new Set(['B']), frameA);
+    const withBoth = encodeHiddenColumns(withA, new Set(['C']), frameB);
+
+    expect(withBoth).toHaveLength(2);
+    expect(withBoth.map((config) => config.filter)).toEqual([frameA, frameB]);
+  });
+
+  it('reads back only the entry for the frame asked about', () => {
+    const stage = encodeHiddenColumns(encodeHiddenColumns([], new Set(['B']), frameA), new Set(['C']), frameB);
+
+    expect(decodeAdHocColumns(stage, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(decodeAdHocColumns(stage, CATALOG, frameB).hiddenColumns).toEqual(new Set(['C']));
+  });
+
+  it('does not read a frame-scoped entry as the unscoped one', () => {
+    // Otherwise a single-frame panel would inherit whatever a multi-frame view had set.
+    const stage = encodeHiddenColumns([], new Set(['B']), frameA);
+
+    expect(decodeAdHocColumns(stage, CATALOG).hiddenColumns).toEqual(new Set());
+  });
+
+  it('updates the entry for its own frame rather than another frame’s', () => {
+    const stage = encodeHiddenColumns(encodeHiddenColumns([], new Set(['B']), frameA), new Set(['C']), frameB);
+    const updated = encodeHiddenColumns(stage, new Set(['B', 'C']), frameB);
+
+    expect(updated).toHaveLength(2);
+    expect(decodeAdHocColumns(updated, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(decodeAdHocColumns(updated, CATALOG, frameB).hiddenColumns).toEqual(new Set(['B', 'C']));
+  });
+
+  it('removes only its own frame’s entry when it is emptied', () => {
+    const stage = encodeHiddenColumns(encodeHiddenColumns([], new Set(['B']), frameA), new Set(['C']), frameB);
+    const cleared = encodeHiddenColumns(stage, new Set(), frameB);
+
+    expect(cleared).toHaveLength(1);
+    expect(cleared[0].filter).toEqual(frameA);
+  });
+});
+
 describe('round trip', () => {
   it('decodes what it encoded', () => {
     const stage = encodeHiddenColumns(encodeColumnOrder([], ['B', 'C', 'A']), new Set(['C']));

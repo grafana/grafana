@@ -193,7 +193,7 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
       return undefined;
     }
 
-    const { columnOrder, hiddenColumns } = decodeAdHocColumns(stage, catalog);
+    const { columnOrder, hiddenColumns } = decodeAdHocColumns(stage, catalog, frameFilter);
 
     return {
       columnOrder,
@@ -202,5 +202,5 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
       onColumnOrderChange,
       onHiddenColumnsChange,
     };
-  }, [catalog, stage, onColumnOrderChange, onHiddenColumnsChange]);
+  }, [catalog, stage, frameFilter, onColumnOrderChange, onHiddenColumnsChange]);
 }

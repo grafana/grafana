@@ -194,10 +194,9 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
   });
 
   test('a11y', { tag: ['@a11y'] }, async ({ gotoDashboardPage, scanForA11yViolations, selectors }) => {
+    const panelTitle = 'Ad-hoc columns with the sidebar open';
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
-    const panel = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Panel.title('Ad-hoc columns with the sidebar open')
-    );
+    const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle));
 
     await waitForTableLoad(panel);
     await expect(
@@ -205,9 +204,11 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
     ).toBeVisible();
 
     // Scoped to the panel: the dashboard page itself carries pre-existing violations (no level-one
-    // heading, content outside landmarks) that have nothing to do with this table.
+    // heading, content outside landmarks) that have nothing to do with this table. A CSS selector
+    // rather than the locator above — the scan context is serialized into the page, and a Playwright
+    // locator cannot cross that boundary.
     const report = await scanForA11yViolations({
-      include: panel,
+      include: `[data-testid="${selectors.components.Panels.Panel.title(panelTitle)}"]`,
       options: {
         runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'],
       },
