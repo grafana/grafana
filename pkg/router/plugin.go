@@ -21,7 +21,6 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pluginroute"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -29,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -206,19 +206,15 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 		return nil, err
 	}
 
-	b, err := json.Marshal(plugin.Manifest)
+	b, err := json.Marshal(plugin)
 	if err != nil {
 		return nil, err
 	}
 
-	hasher := sha256.New()
-	hasher.Write([]byte(plugin.JSONData.ID))
-	hasher.Write([]byte(plugin.JSONData.Info.Version))
-	hasher.Write(b)
-	sum := hasher.Sum(nil)
+	sum := sha256.Sum256(b)
 
 	return &PluginBackend{
-		key:    hex.EncodeToString(sum),
+		key:    hex.EncodeToString(sum[:]),
 		group:  group,
 		plugin: plugin,
 		client: client,

@@ -1,8 +1,13 @@
 # Plugin Route handler
 
 `NewHandler(plugin, Options)` builds one plugin's API server as an `http.Handler`.
-It lives beside `appplugin` because it assembles that package's resources,
-authorization, admission, and custom routes. It has no dependency on `pkg/router`.
+It lives in `pkg/services/pluginsintegration` because it connects plugin definitions
+to Grafana's API server, storage, and access control. These dependencies belong in
+the main Grafana module, outside the standalone `pkg/plugins` module and `pkg/router`.
+
+This is the first step toward replacing `pkg/registry/apis/appplugin`. The handler
+temporarily reuses that package's resources, authorization, admission, and custom
+routes; `appplugin.RegisterAPIService` remains available during the transition.
 
 The handler serves group and resource discovery, manifest kinds, settings and their
 subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin)` describes the
@@ -16,8 +21,11 @@ dual-write service preserves the embedded server's settings migration policy.
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and
 manifest kind policies. Resource and folder permissions remain enforced by
-unified storage; manifest role provisioning remains with the existing registration
-path while `appplugin.RegisterAPIService` is retained.
+unified storage. During the transition, `appplugin.RegisterAPIService` still
+declares manifest roles and resolves wildcard settings storage configuration at
+startup, including for plugins whose API is served by the router. Callers outside
+that registration path must provision roles and configure their dual-write service
+for the plugin's settings resource before constructing a handler.
 
 No listener or background server hooks are started. After stopping and draining
 requests, callers can release storage with `Handler.Destroy()`. The router's

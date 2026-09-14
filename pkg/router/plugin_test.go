@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -20,6 +21,43 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestPluginBackendKey(t *testing.T) {
+	plugin := definition.PluginDefinition{
+		JSONData: plugins.JSONData{ID: "test-app", Info: plugins.Info{Version: "1.0.0"}},
+		Manifest: &app.ManifestData{
+			AppName: "test", Group: "test.ext.grafana.app",
+			Versions: []app.ManifestVersion{{Name: "v1alpha1", Served: true}},
+		},
+	}
+	key := func(plugin definition.PluginDefinition) string {
+		t.Helper()
+		backend, err := NewPluginBackend(plugin, nil, PluginDependencies{})
+		require.NoError(t, err)
+		return backend.Key()
+	}
+	original := key(plugin)
+	require.Equal(t, original, key(plugin), "unchanged definitions must not reload")
+
+	t.Run("plugin routes", func(t *testing.T) {
+		changed := plugin
+		changed.JSONData.Routes = []*plugins.Route{{Path: "api", URL: "https://example.com"}}
+		require.NotEqual(t, original, key(changed))
+	})
+	t.Run("settings schema", func(t *testing.T) {
+		changed := plugin
+		changed.Schemas = map[string]*pluginschema.PluginSchema{"v0alpha1": {
+			SettingsSchema: &pluginschema.Settings{SecureValues: []pluginschema.SecureValueInfo{{Key: "token"}}},
+		}}
+		require.NotEqual(t, original, key(changed))
+	})
+	t.Run("plugin ID and version boundaries", func(t *testing.T) {
+		changed := plugin
+		changed.JSONData.ID += "1"
+		changed.JSONData.Info.Version = ".0.0"
+		require.NotEqual(t, original, key(changed))
+	})
+}
 
 func TestPluginBackendLoad(t *testing.T) {
 	plugin := definition.PluginDefinition{
