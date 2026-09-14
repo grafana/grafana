@@ -5742,15 +5742,15 @@
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
-      "panel-background": "Change panel background",
-      "panel-description": "Change panel description",
+      "panel-background": "panel background change",
+      "panel-description": "panel description change",
       "panel-edit": "Panel changes",
       "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
-      "panel-title": "Change panel title",
+      "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
@@ -6755,6 +6755,12 @@
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "description-as-subtitle": "as subtitle"
+      }
     }
   },
   "dashboard-import": {
@@ -7763,6 +7769,9 @@
         "title": "Unsaved changes"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": "Static dimensions CSV"
+    },
     "suggested-dashboard-banner": {
       "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
       "title": "You are viewing {{title}}"
@@ -8017,6 +8026,7 @@
       "title-label": "Title"
     },
     "json-editor": {
+      "aria-label": "Dashboard JSON model",
       "save-button": "Save changes",
       "save-button-disabled-tooltip": "Fix validation errors before saving",
       "save-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
@@ -8694,7 +8704,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Open value in"
+      "open-value-in": "Open value in",
+      "return-to-previous-title": "Trace"
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9178,6 +9189,10 @@
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
+      },
+      "cloud-provider-promo": {
+        "body": "Cloud Provider Observability maps AWS, Azure, and GCP trace attributes to cloud services, regions, and resources — so you can go from a span to infrastructure health in one place.",
+        "title": "Investigate your cloud services"
       },
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
@@ -11407,8 +11422,6 @@
         "description": "Aggregate and search logs from your applications and infrastructure.",
         "setup-hint": "connect a logs source",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Logs",
         "volume": "Ingest volume · last 24h"
       },
@@ -16647,7 +16660,13 @@
       "render-error": "Diagram error: {{message}}"
     },
     "options": {
+      "page-size": "Page size",
+      "page-size-description": "Number of rows per page. When empty, the page size is based on the panel height.",
+      "page-size-placeholder": "auto",
       "render-mode": "Render mode"
+    },
+    "pagination": {
+      "summary": "{{rangeStart}} - {{rangeEnd}} of {{rowCount}} rows"
     },
     "render": {
       "handlebars-error": "Handlebars error: {{message}}"
@@ -16868,6 +16887,10 @@
       "bar-stacked": "Bar chart - stacked",
       "bar-stacked-percent": "Bar chart - stacked by percentage",
       "line": "Line chart"
+    },
+    "time-series-panel": {
+      "null-time-value": "A query returned a time field with null values; filter out rows with empty timestamps",
+      "null-time-value-query": "Query {{refId}} returned a time field with null values; filter out rows with empty timestamps"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

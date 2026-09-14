@@ -33,6 +33,10 @@ assets from disk, so the build has to write files instead of holding them in a d
 different routes: grafana-api reads it from static config, the frontend-service reads
 it from GOFF (`goff-flags.rspack.yaml`).
 
+Tilt also runs an `rspack boot` resource in this mode. When a file in `public/boot` changes,
+that resource rebuilds `public/build/rspack/boot.js`. The main rspack watch no longer includes
+that entry point.
+
 Switching between the two requires a full restart, not just a Tilt reload.
 
 ### Grafana config
