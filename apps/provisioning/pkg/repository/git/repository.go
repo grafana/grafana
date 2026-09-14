@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -115,7 +116,13 @@ func singleObjectWireCap(maxFileSize int64) int64 {
 	if maxFileSize <= 0 {
 		return 0
 	}
-	return maxFileSize + maxFileSize/gitWireOverheadDivisor + gitWireOverheadFloor
+	headroom := maxFileSize/gitWireOverheadDivisor + gitWireOverheadFloor
+	// Saturate rather than overflow into a negative (rejected) limit when the
+	// configured cap is already near the int64 ceiling.
+	if maxFileSize > math.MaxInt64-headroom {
+		return math.MaxInt64
+	}
+	return maxFileSize + headroom
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.

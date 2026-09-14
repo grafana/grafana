@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"testing"
 
@@ -178,6 +179,11 @@ func TestSingleObjectWireCap(t *testing.T) {
 	got := singleObjectWireCap(maxFile)
 	require.Greater(t, got, int64(maxFile), "wire cap must leave room above the content limit")
 	require.Equal(t, int64(maxFile+maxFile/gitWireOverheadDivisor+gitWireOverheadFloor), got)
+
+	// A cap near the int64 ceiling must saturate, not overflow into a negative
+	// (which nanogit rejects at construction).
+	require.Equal(t, int64(math.MaxInt64), singleObjectWireCap(math.MaxInt64), "must saturate at MaxInt64")
+	require.Positive(t, singleObjectWireCap(math.MaxInt64-1), "must not overflow to a negative limit")
 }
 
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes
