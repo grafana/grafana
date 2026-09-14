@@ -170,6 +170,14 @@ describe('rule pages', () => {
       );
     });
 
+    it('does not double-encode namespace and group names', async () => {
+      // matchPath hands path params back still encoded, so encoding them again turned a space
+      // into '%2520' and the plugin looked for a group with a literal '%20' in its name.
+      expect(await resolve(path, `/alerting/${MIMIR_UID}/namespaces/my%20ns/groups/my%20group/${action}`)).toBe(
+        `${PLUGIN_BASE}/groups/${MIMIR_UID}/my%20ns/my%20group${suffix}`
+      );
+    });
+
     it('leaves Grafana groups alone', async () => {
       expect(await resolve(path, `/alerting/grafana/namespaces/folder-uid/groups/my-group/${action}`)).toBeUndefined();
     });
@@ -217,6 +225,23 @@ describe('alertmanager pages', () => {
     expect(
       await resolve('/alerting/notifications/receivers/:name/edit', `/alerting/notifications/receivers/slack/edit${am}`)
     ).toBe(`${PLUGIN_BASE}/receivers/slack?${uidParam}`);
+  });
+
+  it.each([
+    // matchPath turns '%2F' into a real '/', which would otherwise land in the path as a separator
+    // and send the plugin to a receiver page that doesn't exist.
+    ['a slash', 'team/a', 'team%2Fa'],
+    // Everything else arrives still encoded, so it must not be encoded a second time.
+    ['a hash', '#alerts', '%23alerts'],
+    ['a space', 'my cp', 'my%20cp'],
+    ['a percent sign', '100%cpu', '100%25cpu'],
+  ])('keeps a contact point name with %s intact', async (_, name, expected) => {
+    expect(
+      await resolve(
+        '/alerting/notifications/receivers/:name/edit',
+        `/alerting/notifications/receivers/${encodeURIComponent(name)}/edit${am}`
+      )
+    ).toBe(`${PLUGIN_BASE}/receivers/${expected}?${uidParam}`);
   });
 
   it('moves the time interval name from a query param into the path', async () => {

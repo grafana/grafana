@@ -53,6 +53,18 @@ function decode(value: string): string {
   }
 }
 
+/**
+ * Re-encodes a path param so it can be dropped into the plugin's path.
+ *
+ * `matchPath` hands params back still percent-encoded, with one exception: it turns `%2F` into a
+ * literal `/`. So neither passing the value straight through nor encoding it outright is right —
+ * the first breaks names containing a slash, the second double-encodes everything else. Decoding
+ * and then encoding gets both cases to the same place.
+ */
+function reencodePathParam(value: string | undefined): string {
+  return encodeURIComponent(decode(value ?? ''));
+}
+
 /** A rules source or Alertmanager is data source managed unless it is the built-in Grafana one. */
 function isDataSourceManaged(name: string | undefined): boolean {
   if (!name) {
@@ -191,8 +203,8 @@ const groupPageProxies: RouteProxy[] = (['view', 'edit'] as const).map((action) 
   matches: ({ params }: ProxyContext) =>
     isDataSourceManaged(params.dataSourceUid) && Boolean(params.namespaceId) && Boolean(params.groupName),
   handler: async ({ params, searchParams }: ProxyContext) => {
-    const namespaceId = encodeURIComponent(params.namespaceId ?? '');
-    const groupName = encodeURIComponent(params.groupName ?? '');
+    const namespaceId = reencodePathParam(params.namespaceId);
+    const groupName = reencodePathParam(params.groupName);
     const path = `groups/${params.dataSourceUid}/${namespaceId}/${groupName}`;
     return pluginUrl(action === 'edit' ? `${path}/edit` : path, searchParams);
   },
@@ -228,7 +240,7 @@ const alertmanagerPageProxies: RouteProxy[] = [
   {
     path: '/alerting/notifications/receivers/:name/edit',
     matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
-    handler: alertmanagerPage((_params, { params }) => `${PLUGIN_ROUTES.receivers}/${params.name}`),
+    handler: alertmanagerPage((_params, { params }) => `${PLUGIN_ROUTES.receivers}/${reencodePathParam(params.name)}`),
   },
   {
     // Grafana's template sub-routes: `new`, `<name>/edit`, `<name>/duplicate`. The plugin does all
