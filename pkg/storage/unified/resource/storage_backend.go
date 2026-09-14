@@ -1487,7 +1487,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		if req.KeysOnly && token.Namespace != "" && req.Options.Key.Namespace != "" && token.Namespace != req.Options.Key.Namespace {
+		if req.KeysOnly && !continueTokenMatchesListScope(token, req.Options.Key.Namespace) {
 			return 0, apierrors.NewBadRequest("invalid continue token: namespace does not match request")
 		}
 		// Only use token namespace for cross-namespace queries (when request namespace is empty).
@@ -1513,7 +1513,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly)
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace)
 	defer it.stop()
 
 	if err := cb(it); err != nil {
@@ -1523,8 +1523,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
+func continueTokenMatchesListScope(token *ContinueToken, namespace string) bool {
+	return token.ListNamespace != nil && *token.ListNamespace == namespace
+}
+
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly bool) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly bool, listNamespace string) *kvListIterator {
 	objs := batchGetResourceKeys(ctx, ds, keys)
 	if keysOnly {
 		// The data key already carries namespace/name/rv/folder, so the value
@@ -1536,6 +1540,7 @@ func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKe
 		listRV:                listRV,
 		includeTokenNamespace: includeTokenNamespace,
 		keysOnly:              keysOnly,
+		listNamespace:         listNamespace,
 		next:                  next,
 		stopFn:                stopFn,
 	}
@@ -1588,6 +1593,7 @@ type kvListIterator struct {
 	listRV                int64
 	includeTokenNamespace bool
 	keysOnly              bool
+	listNamespace         string
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1646,6 +1652,9 @@ func (i *kvListIterator) ContinueToken() string {
 	}
 	if i.includeTokenNamespace {
 		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	if i.keysOnly {
+		token.ListNamespace = &i.listNamespace
 	}
 	return token.String()
 }

@@ -3097,6 +3097,8 @@ func TestServerListKeysOnly(t *testing.T) {
 		firstToken, err := GetContinueToken(first.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, ns, firstToken.Namespace)
+		require.NotNil(t, firstToken.ListNamespace)
+		require.Equal(t, ns, *firstToken.ListNamespace)
 
 		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             newKey("ccc"),
@@ -3469,13 +3471,14 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
 	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
 
+	wrongTokenScope := "ns-two"
 	wrongScope, err := srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Group: group, Resource: resource, Namespace: "ns-one",
 		}},
 		KeysOnly: true,
 		NextPageToken: ContinueToken{
-			Namespace: "ns-two", Name: "aaa", ResourceVersion: rsp.ResourceVersion,
+			Namespace: "ns-two", ListNamespace: &wrongTokenScope, Name: "aaa", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
 	require.NoError(t, err)
@@ -3493,9 +3496,9 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 		}.String(),
 	})
 	require.NoError(t, err)
-	require.Nil(t, legacyToken.Error)
-	require.Len(t, legacyToken.Items, 1)
-	require.Equal(t, "bbb", legacyToken.Items[0].Name)
+	require.NotNil(t, legacyToken.Error)
+	require.Equal(t, int32(http.StatusBadRequest), legacyToken.Error.Code)
+	require.Contains(t, legacyToken.Error.Message, "namespace does not match")
 
 	for _, namespace := range []string{"ns-empty", "ns-two"} {
 		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {

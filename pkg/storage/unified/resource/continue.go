@@ -8,8 +8,11 @@ import (
 
 // ContinueToken represents a pagination token for list operations.
 type ContinueToken struct {
-	// Namespace scopes the continuation and identifies the position for cross-namespace queries.
+	// Namespace identifies the cursor position for cross-namespace queries.
 	Namespace string `json:"ns,omitempty"`
+	// ListNamespace records the requested list scope separately from the cursor namespace.
+	// A pointer distinguishes a cluster-wide scope (empty string) from older tokens without scope.
+	ListNamespace *string `json:"lns,omitempty"`
 	// Name is the name to continue from. Required for list resources, empty for list history.
 	Name string `json:"n,omitempty"`
 	// ResourceVersion is the resource version for pagination.

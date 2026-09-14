@@ -1859,6 +1859,48 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid continue token")
 }
 
+func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	clusterScope := ""
+	namespacedScope := "ns-two"
+
+	tests := []struct {
+		name             string
+		requestNamespace string
+		token            ContinueToken
+	}{
+		{
+			name:             "cluster-wide token reused for its cursor namespace",
+			requestNamespace: "ns-two",
+			token:            ContinueToken{Namespace: "ns-two", ListNamespace: &clusterScope, Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:             "namespaced token reused cluster-wide",
+			requestNamespace: "",
+			token:            ContinueToken{Namespace: "ns-two", ListNamespace: &namespacedScope, Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:             "legacy token without list scope",
+			requestNamespace: "ns-two",
+			token:            ContinueToken{Namespace: "ns-two", Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: tt.requestNamespace,
+				}},
+				KeysOnly:      true,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "namespace does not match request")
+		})
+	}
+}
+
 func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
