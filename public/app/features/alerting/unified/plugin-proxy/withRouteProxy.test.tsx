@@ -119,12 +119,16 @@ describe('withRouteProxy', () => {
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}?tab=instances`)).toBeInTheDocument();
   });
 
-  it('shows a loading state while it works out where the page belongs', async () => {
+  it('says it is redirecting while it works out where the page belongs', async () => {
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
 
     renderProxiedRoute(DATA_SOURCE_URL);
 
-    expect(screen.getByText('Loading…')).toBeInTheDocument();
+    expect(screen.getByText('Redirecting…')).toBeInTheDocument();
+    // The page we may redirect away from must not mount while we're still deciding, otherwise it
+    // fires off all of its requests for nothing.
+    expect(screen.queryByText('core alerting page')).not.toBeInTheDocument();
+
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
   });
 

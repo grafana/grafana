@@ -11,6 +11,7 @@ import {
 } from 'app/core/navigation/types';
 
 import { logError } from '../Analytics';
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { withTimeout } from '../utils/promise';
@@ -81,8 +82,21 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
       return <Page {...props} />;
     }
 
+    // Shown with the usual page furniture around it, so a slow check looks like a page that hasn't
+    // finished loading rather than a spinner on an empty screen. The page we might redirect away
+    // from is deliberately not rendered here — mounting it would fire off all of its requests for
+    // nothing.
+    //
+    // We say we're redirecting before we're certain of it: by this point the URL is data source
+    // managed, so a redirect is what happens unless the plugin turns out to be missing or we can't
+    // work out where in it this URL lives. Both of those land on the Grafana page below, which is
+    // the page people expected in the first place, so there's nothing to walk back.
     if (checkingPlugin || buildingTarget) {
-      return <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-loading', 'Loading…')} />;
+      return (
+        <AlertingPageWrapper navId="alerting">
+          <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
+        </AlertingPageWrapper>
+      );
     }
 
     // Either the plugin isn't available, or we couldn't work out where in it this URL belongs.

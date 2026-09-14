@@ -2652,7 +2652,7 @@
       }
     },
     "proxied-alerting-route": {
-      "text-loading": "Loading…"
+      "text-redirecting": "Redirecting…"
     },
     "query-and-expressions-step": {
       "add-query": "Add query",
