@@ -1524,7 +1524,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 }
 
 func continueTokenMatchesListScope(token *ContinueToken, namespace string) bool {
-	return token.ListNamespace != nil && *token.ListNamespace == namespace
+	return token.ListNamespace == namespace
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
@@ -1654,7 +1654,7 @@ func (i *kvListIterator) ContinueToken() string {
 		token.Namespace = i.nextDataObj.Key.Namespace
 	}
 	if i.keysOnly {
-		token.ListNamespace = &i.listNamespace
+		token.ListNamespace = i.listNamespace
 	}
 	return token.String()
 }

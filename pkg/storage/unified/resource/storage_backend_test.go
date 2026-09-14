@@ -1862,9 +1862,6 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := t.Context()
-	clusterScope := ""
-	namespacedScope := "ns-two"
-
 	tests := []struct {
 		name             string
 		requestNamespace string
@@ -1873,17 +1870,12 @@ func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(
 		{
 			name:             "cluster-wide token reused for its cursor namespace",
 			requestNamespace: "ns-two",
-			token:            ContinueToken{Namespace: "ns-two", ListNamespace: &clusterScope, Name: "bbb", ResourceVersion: 1},
+			token:            ContinueToken{Namespace: "ns-two", Name: "bbb", ResourceVersion: 1},
 		},
 		{
 			name:             "namespaced token reused cluster-wide",
 			requestNamespace: "",
-			token:            ContinueToken{Namespace: "ns-two", ListNamespace: &namespacedScope, Name: "bbb", ResourceVersion: 1},
-		},
-		{
-			name:             "legacy token without list scope",
-			requestNamespace: "ns-two",
-			token:            ContinueToken{Namespace: "ns-two", Name: "bbb", ResourceVersion: 1},
+			token:            ContinueToken{Namespace: "ns-two", ListNamespace: "ns-two", Name: "bbb", ResourceVersion: 1},
 		},
 	}
 
