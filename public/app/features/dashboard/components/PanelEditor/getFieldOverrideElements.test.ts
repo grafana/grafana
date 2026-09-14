@@ -114,7 +114,7 @@ describe('getFieldOverrideCategories', () => {
     };
 
     it('hands the panel options to an override property editor', () => {
-      const options = { variant: 'sankey' };
+      const options = { layout: 'bars' };
 
       expect(getContextOptions(options)).toBe(options);
     });
@@ -220,14 +220,14 @@ describe('getFieldOverrideCategories', () => {
     it('excludes an item from the add override property picker when its predicate returns false', () => {
       const registry = makeRegistry([
         // context.options is typed here, not unknown - this stops compiling if that regresses
-        makeItem<{ variant?: string }>('custom.lineWidth', {
-          showIfOverride: (context) => context.options?.variant !== 'sankey',
+        makeItem<{ layout?: string }>('custom.lineWidth', {
+          showIfOverride: (context) => context.options?.layout !== 'bars',
         }),
         makeItem('custom.fillOpacity'),
       ]);
 
       const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
-        variant: 'sankey',
+        layout: 'bars',
       });
 
       expect(getPickerOptionValues(categories)).toEqual(['custom.fillOpacity']);
@@ -235,14 +235,14 @@ describe('getFieldOverrideCategories', () => {
 
     it('offers the item when the same predicate returns true for the current panel options', () => {
       const registry = makeRegistry([
-        makeItem<{ variant?: string }>('custom.lineWidth', {
-          showIfOverride: (context) => context.options?.variant !== 'sankey',
+        makeItem<{ layout?: string }>('custom.lineWidth', {
+          showIfOverride: (context) => context.options?.layout !== 'bars',
         }),
         makeItem('custom.fillOpacity'),
       ]);
 
       const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
-        variant: 'line',
+        layout: 'lines',
       });
 
       expect(getPickerOptionValues(categories)).toEqual(['custom.lineWidth', 'custom.fillOpacity']);
@@ -256,9 +256,11 @@ describe('getFieldOverrideCategories', () => {
       expect(getPickerOptionValues(categories)).toEqual(['custom.a', 'custom.b']);
     });
 
-    it('offers the item when its predicate returns undefined', () => {
-      // only an explicit false hides an option, so a predicate that falls off the end is not a gate
-      const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride: () => undefined })]);
+    it('offers the item when an untyped predicate returns undefined', () => {
+      // the return type forbids undefined, but an untyped plugin can still produce it and only an
+      // explicit false hides
+      const showIfOverride = (() => undefined) as unknown as FieldConfigPropertyItem['showIfOverride'];
+      const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride })]);
 
       const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn());
 
@@ -269,7 +271,7 @@ describe('getFieldOverrideCategories', () => {
       const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride: () => false })]);
       const fieldConfig = fieldConfigWith([{ id: 'custom.lineWidth', value: 5 }]);
 
-      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), { variant: 'sankey' });
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), { layout: 'bars' });
 
       // hiding it from the picker must not strand an existing override the user cannot see or remove
       expect(getPickerOptionValues(categories)).toEqual([]);
