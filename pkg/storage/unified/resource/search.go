@@ -458,6 +458,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	// Recording sites should not have to check for nil.
+	if indexMetrics == nil {
+		indexMetrics = ProvideIndexMetrics(nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -1516,10 +1521,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 		return
 	}
 	s.bgTaskWg.Go(func() {
-		interval := s.rateLimitWindow / 2
-		if interval < time.Minute {
-			interval = time.Minute
-		}
+		interval := max(s.rateLimitWindow/2, time.Minute)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -1604,9 +1606,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}
 	return completeChs
@@ -1637,9 +1637,7 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 			return
 		}
 
-		if s.indexMetrics != nil {
-			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-		}
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 
 		s.rebuildIndex(ctx, req)
 	}
@@ -1717,9 +1715,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 			// shouldRebuildIndex against the just-built BuildTime and either run
 			// another rebuild or close the deferred completion channels as a no-op.
 			s.rebuildQueue.Add(*deferred)
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}()
 
@@ -1935,9 +1931,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	}
 	elapsed := time.Since(start)
 	stats.AddIndexUpdateTime(elapsed)
-	if s.indexMetrics != nil {
-		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
-	}
+	s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
@@ -2316,9 +2310,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	if err != nil {
 		logger.Warn("error getting doc count", "error", err)
 	}
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
-	}
+	s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
 
 	return index, err
 }

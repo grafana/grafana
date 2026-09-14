@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Zeigen Sie einen Verlauf aller Warnereignisse an, die von Ihren von Grafana verwalteten Warnregeln generiert wurden. Es werden alle Warnereignisse angezeigt, unabhängig davon, ob Stummschaltungen oder Stummschaltungszeiträume festgelegt sind.",
         "notifications": "Zeigen Sie einen Verlauf aller Benachrichtigungen an, die von Ihren von Grafana verwalteten Warnregeln gesendet wurden."
@@ -7760,6 +7763,9 @@
         "title": "Nicht gespeicherte Änderungen"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Nicht das, wonach Sie suchen? Sehen Sie sich <2>andere vorgeschlagene Dashboards</2> an oder <6>erstellen Sie ein neues Dashboard von Grund auf</6>.",
       "title": "Sie sehen gerade {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Änderungen speichern",
       "save-button-disabled-tooltip": "Validierungsfehler vor dem Speichern beheben",
       "save-button-disabled-tooltip-yaml": "Das Dokument weist Validierungsfehler auf. Wechseln Sie zu JSON, um die Inline-Fehlerdetails anzuzeigen.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Fett",
       "tooltip-bullet-list": "Aufzählungsliste",
       "tooltip-checklist": "Checkliste",
+      "tooltip-diagram": "",
       "tooltip-heading": "Überschrift",
       "tooltip-insert-variable": "Variable einfügen",
       "tooltip-italic": "Kursiv",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Balkendiagramm – gestapelt",
       "bar-stacked-percent": "Balkendiagramm – gestapelt nach Prozentsatz",
       "line": "Liniendiagramm"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zeitzone hinzufügen",

@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Lihat riwayat semua peristiwa peringatan yang dihasilkan oleh aturan peringatan Anda yang dikelola Grafana. Semua peristiwa peringatan ditampilkan, terlepas dari apakah mode senyap atau waktu bisu sudah ditetapkan.",
         "notifications": "Lihat riwayat semua notifikasi yang dikirim dari aturan peringatan yang dikelola Grafana."
@@ -7713,6 +7716,9 @@
         "title": "Perubahan belum tersimpan"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Bukan yang Anda cari? Lihat <2>dasbor lain yang disarankan</2> atau <6>buat dasbor dari awal</6>.",
       "title": "Anda sedang melihat {{title}}"
@@ -7966,6 +7972,7 @@
       "title-label": "Judul"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Simpan perubahan",
       "save-button-disabled-tooltip": "Perbaiki kesalahan validasi sebelum menyimpan",
       "save-button-disabled-tooltip-yaml": "Dokumen memiliki kesalahan validasi. Beralihlah ke JSON untuk melihat detail kesalahan langsung di dalamnya.",
@@ -16502,6 +16509,7 @@
       "tooltip-bold": "Tebal",
       "tooltip-bullet-list": "Daftar berpoin",
       "tooltip-checklist": "Daftar periksa",
+      "tooltip-diagram": "",
       "tooltip-heading": "Judul",
       "tooltip-insert-variable": "Sisipkan variabel",
       "tooltip-italic": "Italic",
@@ -16515,8 +16523,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16755,10 @@
       "bar-stacked": "Diagram batang - bertumpuk",
       "bar-stacked-percent": "Diagram batang - bertumpuk berdasarkan persentase",
       "line": "Diagram garis"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tambahkan zona waktu",

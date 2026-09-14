@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Bekijk een geschiedenis van alle waarschuwingsgebeurtenissen die zijn gegenereerd door je door Grafana beheerde waarschuwingsregels. Alle waarschuwingsgebeurtenissen worden weergegeven, ongeacht of er stilstanden of demptimings zijn ingesteld.",
         "notifications": "Bekijk een geschiedenis van alle meldingen die zijn verzonden op basis van je door Grafana beheerde waarschuwingsregels."
@@ -7760,6 +7763,9 @@
         "title": "Onopgeslagen wijzigingen"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Niet wat je zoekt? Bekijk <2>andere voorgestelde dashboards</2> of <6>maak er zelf een</6>.",
       "title": "Je bekijkt momenteel {{title}} "
@@ -8014,6 +8020,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Wijzigingen opslaan",
       "save-button-disabled-tooltip": "Los validatiefouten op voordat je opslaat",
       "save-button-disabled-tooltip-yaml": "Het document bevat validatiefouten. Schakel over naar JSON om de inline-foutdetails te bekijken.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Vet",
       "tooltip-bullet-list": "Opsommingstekens",
       "tooltip-checklist": "Checklist",
+      "tooltip-diagram": "",
       "tooltip-heading": "Titel",
       "tooltip-insert-variable": "Variabele invoegen",
       "tooltip-italic": "Cursief",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Staafdiagram - gestapeld",
       "bar-stacked-percent": "Staafdiagram - gestapeld op percentage",
       "line": "Lijndiagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tijdzone toevoegen",
