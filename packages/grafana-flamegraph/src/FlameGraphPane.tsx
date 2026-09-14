@@ -8,6 +8,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
+import { type SuppliedSandwich } from './FlameGraph/suppliedSandwich';
 import { type FunctionTable } from './TopTable/FunctionTable';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
@@ -40,6 +41,10 @@ type FlameGraphPaneProps = {
   contentAwareWidthsEnabled?: boolean;
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
   fillHeight?: boolean;
+  /** Reported only when this pane keeps its own sandwich item; otherwise the container reports. */
+  onSandwichChange?: (label: string | undefined) => void;
+  /** Callers and callees supplied by the host, in place of the ones computed from this tree. */
+  sandwich?: SuppliedSandwich;
 };
 
 const FlameGraphPane = ({
@@ -67,6 +72,8 @@ const FlameGraphPane = ({
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
   fillHeight,
+  onSandwichChange,
+  sandwich,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -86,6 +93,19 @@ const FlameGraphPane = ({
     },
     [isUsingSharedSandwich, setSharedSandwichItem]
   );
+  const onSandwichChangeRef = useRef(onSandwichChange);
+  useEffect(() => {
+    onSandwichChangeRef.current = onSandwichChange;
+  });
+  const reportedSandwichRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (isUsingSharedSandwich || reportedSandwichRef.current === localSandwichItem) {
+      return;
+    }
+    reportedSandwichRef.current = localSandwichItem;
+    onSandwichChangeRef.current?.(localSandwichItem);
+  }, [isUsingSharedSandwich, localSandwichItem]);
+
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
@@ -283,6 +303,7 @@ const FlameGraphPane = ({
             onTextAlignSelected?.(align);
           }}
           sandwichItem={sandwichItem}
+          sandwich={sandwich}
           onSandwich={(label: string) => {
             resetFocus();
             setSandwichItem(label);

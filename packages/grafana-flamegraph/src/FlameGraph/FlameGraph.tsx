@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
@@ -38,6 +38,7 @@ import FlameGraphCanvas from './FlameGraphCanvas';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
+import { prepareSuppliedSandwich, type SuppliedSandwich } from './suppliedSandwich';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -50,6 +51,8 @@ type Props = {
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
   sandwichItem?: string;
+  /** Host supplied halves, used instead of computing them from this tree. */
+  sandwich?: SuppliedSandwich;
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
@@ -80,6 +83,7 @@ const FlameGraph = ({
   textAlign,
   onSandwich,
   sandwichItem,
+  sandwich,
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
@@ -103,6 +107,11 @@ const FlameGraph = ({
   const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
   const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
 
+  const supplied = useMemo(
+    () => prepareSuppliedSandwich(sandwich, sandwichItem, data?.valueField, data?.theme),
+    [sandwich, sandwichItem, data]
+  );
+
   useEffect(() => {
     if (data) {
       let levels = data.getLevels();
@@ -112,11 +121,19 @@ const FlameGraph = ({
       let levelsCallers = undefined;
 
       if (sandwichItem) {
-        const [callers, callees] = data.getSandwichLevels(sandwichItem);
-        levels = callees;
-        levelsCallers = callers;
-        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-        totalViewTicks = callees[0]?.[0]?.value ?? 0;
+        if (supplied) {
+          // Exact halves from the host. Each carries its own data container, because the renderer
+          // resolves labels and values through one, and these nodes are not in the displayed tree.
+          levels = supplied.callees?.levels ?? [];
+          levelsCallers = supplied.callers?.levels;
+          totalViewTicks = levels[0]?.[0]?.value ?? 0;
+        } else {
+          const [callers, callees] = data.getSandwichLevels(sandwichItem);
+          levels = callees;
+          levelsCallers = callers;
+          // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+          totalViewTicks = callees[0]?.[0]?.value ?? 0;
+        }
       }
       setLevels(levels);
       setLevelsCallers(levelsCallers);
@@ -124,7 +141,7 @@ const FlameGraph = ({
       setTotalProfileTicksRight(totalProfileTicksRight);
       setTotalViewTicks(totalViewTicks);
     }
-  }, [data, sandwichItem]);
+  }, [data, sandwichItem, supplied]);
 
   if (!levels) {
     return null;
@@ -166,6 +183,7 @@ const FlameGraph = ({
           </div>
           <FlameGraphCanvas
             {...commonCanvasProps}
+            data={supplied?.callers?.data ?? data}
             root={levelsCallers[levelsCallers.length - 1][0]}
             depth={levelsCallers.length}
             direction={'parents'}
@@ -181,6 +199,7 @@ const FlameGraph = ({
           </div>
           <FlameGraphCanvas
             {...commonCanvasProps}
+            data={supplied?.callees?.data ?? data}
             root={levels[0][0]}
             depth={levels.length}
             direction={'children'}
@@ -202,6 +221,7 @@ const FlameGraph = ({
           data={data}
           focusedItem={focusedItemData}
           sandwichedLabel={sandwichItem}
+          sandwichTruncated={supplied?.truncated}
           totalTicks={totalViewTicks}
           onFocusPillClick={onFocusPillClick}
           onSandwichPillClick={onSandwichPillClick}

@@ -9,6 +9,7 @@ import { ThemeContext } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { type SuppliedSandwich } from './FlameGraph/suppliedSandwich';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { type FunctionTable } from './TopTable/FunctionTable';
@@ -83,6 +84,18 @@ export type Props = {
   keepFocusOnDataChange?: boolean;
 
   /**
+   * Called when the sandwich function changes, or is cleared. Lets a host fetch an exact sandwich for
+   * it, which a truncated flame graph cannot produce.
+   */
+  onSandwichChange?: (label: string | undefined) => void;
+
+  /**
+   * Callers and callees aggregated outside this flame graph, used in place of the ones computed from
+   * the displayed tree. Ignored unless its label matches the sandwiched function.
+   */
+  sandwich?: SuppliedSandwich;
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -133,6 +146,8 @@ const FlameGraphContainer = ({
   showFlameGraphOnly,
   disableCollapsing,
   keepFocusOnDataChange,
+  onSandwichChange,
+  sandwich,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   fillHeight,
@@ -158,12 +173,25 @@ const FlameGraphContainer = ({
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
+  const onSandwichChangeRef = useRef(onSandwichChange);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
+    onSandwichChangeRef.current = onSandwichChange;
   });
+
+  // The container owns the sandwich item while the panes are synced, so it reports the changes.
+  // A pane that keeps its own reports for itself.
+  const reportedSandwichRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (reportedSandwichRef.current === sharedSandwichItem) {
+      return;
+    }
+    reportedSandwichRef.current = sharedSandwichItem;
+    onSandwichChangeRef.current?.(sharedSandwichItem);
+  }, [sharedSandwichItem]);
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
     onTableSymbolClickRef.current?.(symbol);
@@ -238,6 +266,7 @@ const FlameGraphContainer = ({
         paneViewForContextMenu={PaneView.FlameGraph}
         sharedSandwichItem={sharedSandwichItem}
         setSharedSandwichItem={setSharedSandwichItem}
+        sandwich={sandwich}
       />
     );
   } else if (effectiveViewMode === ViewMode.Single) {
@@ -249,6 +278,7 @@ const FlameGraphContainer = ({
         paneViewForContextMenu={singleView}
         sharedSandwichItem={sharedSandwichItem}
         setSharedSandwichItem={setSharedSandwichItem}
+        sandwich={sandwich}
       />
     );
   } else {
@@ -263,6 +293,8 @@ const FlameGraphContainer = ({
         paneViewForContextMenu={leftPaneView}
         sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
         setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
+        onSandwichChange={onSandwichChange}
+        sandwich={sandwich}
       />
     );
 
@@ -275,6 +307,8 @@ const FlameGraphContainer = ({
         paneViewForContextMenu={rightPaneView}
         sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
         setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
+        onSandwichChange={onSandwichChange}
+        sandwich={sandwich}
       />
     );
 

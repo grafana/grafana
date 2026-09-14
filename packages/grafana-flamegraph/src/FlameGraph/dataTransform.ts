@@ -276,6 +276,8 @@ export class FlameGraphDataContainer {
 
   labelDisplayProcessor: DisplayProcessor;
   valueDisplayProcessor: DisplayProcessor;
+  /** Kept so a container built for a supplied dataset can format its values the same way. */
+  theme: GrafanaTheme2;
   uniqueLabels: string[];
 
   private levels: LevelItem[][] | undefined;
@@ -285,6 +287,7 @@ export class FlameGraphDataContainer {
   constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
     this.options = options;
+    this.theme = theme;
 
     const wrongFields = checkFields(data);
     if (wrongFields) {

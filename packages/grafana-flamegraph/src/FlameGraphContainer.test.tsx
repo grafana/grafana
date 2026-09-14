@@ -9,6 +9,7 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { type FunctionTable } from './TopTable/FunctionTable';
+import { type SuppliedSandwich } from './FlameGraph/suppliedSandwich';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
 
 jest.mock('@grafana/assistant', () => ({
@@ -139,7 +140,15 @@ describe('FlameGraphContainer', () => {
     })),
   });
 
-  const FlameGraphContainerWithProps = ({ functionTable }: { functionTable?: FunctionTable } = {}) => {
+  const FlameGraphContainerWithProps = ({
+    functionTable,
+    onSandwichChange,
+    sandwich,
+  }: {
+    functionTable?: FunctionTable;
+    onSandwichChange?: (label: string | undefined) => void;
+    sandwich?: SuppliedSandwich;
+  } = {}) => {
     const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
       custom: {
@@ -148,7 +157,15 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} functionTable={functionTable} getTheme={getTheme} />;
+    return (
+      <FlameGraphContainer
+        data={flameGraphData}
+        functionTable={functionTable}
+        getTheme={getTheme}
+        onSandwichChange={onSandwichChange}
+        sandwich={sandwich}
+      />
+    );
   };
 
   it('renders and searches functions absent from the displayed tree', async () => {
@@ -262,6 +279,48 @@ describe('FlameGraphContainer', () => {
     // Check we didn't lose the one that should match
     expect(screen.queryAllByText(matchingText1).length).toBe(1);
     expect(screen.queryAllByText(matchingText2).length).toBe(1);
+  });
+
+  it('reports the sandwiched function to the host', async () => {
+    const onSandwichChange = jest.fn();
+    render(<FlameGraphContainerWithProps onSandwichChange={onSandwichChange} />);
+    expect(await screen.findByTestId('flameGraph')).toBeInTheDocument();
+    // Not called for the initial empty state, only for changes.
+    expect(onSandwichChange).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getAllByLabelText('Show in sandwich view')[0]);
+    await waitFor(() => expect(onSandwichChange).toHaveBeenCalledTimes(1));
+    const label = onSandwichChange.mock.calls[0][0];
+    expect(typeof label).toBe('string');
+
+    onSandwichChange.mockClear();
+    await userEvent.click(screen.getByLabelText('Remove sandwich view'));
+    await waitFor(() => expect(onSandwichChange).toHaveBeenCalledWith(undefined));
+  });
+
+  it('marks a supplied sandwich as partial when it was cut', async () => {
+    const sandwich: SuppliedSandwich = {
+      label: 'net/http.HandlerFunc.ServeHTTP',
+      total: 100,
+      self: 0,
+      callers: { name: 'net/http.HandlerFunc.ServeHTTP', total: 100, self: 0, children: [] },
+      callees: {
+        name: 'net/http.HandlerFunc.ServeHTTP',
+        total: 100,
+        self: 0,
+        children: [
+          { name: 'kept.callee', total: 90, self: 90 },
+          { name: 'other', total: 10, self: 10, truncated: true },
+        ],
+      },
+    };
+    render(<FlameGraphContainerWithProps sandwich={sandwich} />);
+    expect(await screen.findByTestId('flameGraph')).toBeInTheDocument();
+    expect(screen.queryByTestId('sandwichTruncationNotice')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByLabelText('Show in sandwich view')[0]);
+    // The first row of the test profile is the sandwich label above, so the supplied halves apply.
+    expect(await screen.findByTestId('sandwichTruncationNotice')).toBeInTheDocument();
   });
 });
 
