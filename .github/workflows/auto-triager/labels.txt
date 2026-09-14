@@ -52,7 +52,6 @@ area/panel/candlestick
 area/panel/canvas
 area/panel/dashboard-list
 area/panel/edit
-area/panel/edit
 area/panel/field-override
 area/panel/flame-graph
 area/panel/gauge
@@ -60,7 +59,6 @@ area/panel/geomap
 area/panel/heatmap
 area/panel/histogram
 area/panel/logs
-area/panel/node-graph
 area/panel/node-graph
 area/panel/piechart
 area/panel/repeat
