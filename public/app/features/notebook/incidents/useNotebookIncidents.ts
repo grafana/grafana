@@ -34,7 +34,8 @@ export interface DeclareIncidentFormProps {
 
 /**
  * Whether IRM's incident components are here to render. usePluginComponent hands back null when the
- * plugin is absent or disabled, so no separate probe is needed.
+ * plugin is absent, disabled, or still resolving, so no separate probe is needed — which also means
+ * the controls appear a beat after first paint rather than being there from the start.
  *
  * Null is also the answer on a stack still using the legacy grafana-incident-app, which never
  * exposed these ids.

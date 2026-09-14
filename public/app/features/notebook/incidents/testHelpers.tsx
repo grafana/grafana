@@ -45,13 +45,13 @@ type Incidents = ReturnType<typeof useNotebookIncidents>;
 
 /** The hook's answer, defaulting to "IRM is not installed". */
 export function notebookIncidents(overrides: Partial<Incidents> = {}): Incidents {
-  const value: Incidents = {
+  return {
     pluginId: SupportedPlugin.Irm,
     AttachToIncidentForm: null,
     DeclareIncidentForm: null,
-    available: false,
+    // Derived to match the hook, but still overridable — a caller asking for the two to disagree is
+    // testing that state deliberately.
+    available: Boolean(overrides.AttachToIncidentForm || overrides.DeclareIncidentForm),
     ...overrides,
   };
-
-  return { ...value, available: Boolean(value.AttachToIncidentForm || value.DeclareIncidentForm) };
 }

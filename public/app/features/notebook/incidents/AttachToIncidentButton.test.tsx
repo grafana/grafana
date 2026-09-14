@@ -93,6 +93,25 @@ describe('AttachToIncidentButton', () => {
     });
   });
 
+  it('closes the modal once attached', async () => {
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
+    await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  // Quoting an empty title would read `Notebook attached to ""`.
+  it('says so plainly when the incident has no title', async () => {
+    const { user } = setup({ incidentTitle: '  ' });
+
+    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
+    await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
+
+    expect(await screen.findByText('Notebook attached to the incident')).toBeInTheDocument();
+  });
+
   // IRM's own toast carries no link. This is the one that can be followed.
   it('raises a toast linking to the incident once attached', async () => {
     const { user } = setup();

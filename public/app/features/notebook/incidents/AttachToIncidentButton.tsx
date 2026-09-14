@@ -30,19 +30,27 @@ export function AttachToIncidentButton({ uid, title }: Props) {
 
   // Their form raises its own toast, which has no link and cannot be suppressed from here.
   const onAttach = (data: AttachToIncidentFormData) => {
+    // Belt and braces: their form calls onDismiss straight after this, but the props here are
+    // transcribed by hand, so nothing checks that it still does.
+    setIsAttaching(false);
+
     const incident = data.selectedIncident?.incident;
     if (!incident) {
       return;
     }
 
+    const incidentTitle = incident.title?.trim();
+
     dispatch(
       notifyApp(
         createSuccessNotification(
-          t('notebooks.incidents.attached', 'Notebook attached to "{{incident}}"', {
-            incident: incident.title ?? '',
-            // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
-            interpolation: { escapeValue: false },
-          }),
+          incidentTitle
+            ? t('notebooks.incidents.attached', 'Notebook attached to "{{incident}}"', {
+                incident: incidentTitle,
+                // Rendered as plain text, so an escaped apostrophe would show as `&#39;`.
+                interpolation: { escapeValue: false },
+              })
+            : t('notebooks.incidents.attached-untitled', 'Notebook attached to the incident'),
           '',
           undefined,
           <TextLink href={createBridgeURL(pluginId, `/incidents/${incident.incidentID}`)}>

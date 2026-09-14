@@ -13160,6 +13160,7 @@
       "attach-title": "Attach to incident",
       "attach-tooltip": "Attach this notebook to an incident as context",
       "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
       "caption": "Notebook: {{title}}",
       "declare": "Declare incident",
       "view-incident": "View incident"
