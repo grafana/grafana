@@ -269,7 +269,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts fetch-existing-reviews > existing_reviews.txt
+          EXISTING_REVIEWS_FILE: existing_reviews.txt
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts fetch-existing-reviews
 
       - name: Load team-specific review rules
         id: team-skills
