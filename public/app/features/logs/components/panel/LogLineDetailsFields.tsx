@@ -614,7 +614,7 @@ export function filterFields(fields: FieldDef[], search: string) {
   return results;
 }
 
-function filterLabels(labels: LabelWithLinks[], search: string) {
+export function filterLabels(labels: LabelWithLinks[], search: string) {
   const keys = labels.map((field) => field.key);
   const keysIdx = fuzzySearch(keys, search);
   const values = labels.map((field) => field.value);
