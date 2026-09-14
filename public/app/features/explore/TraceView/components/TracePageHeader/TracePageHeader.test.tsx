@@ -413,12 +413,7 @@ describe('TracePageHeader test', () => {
     await userEvent.click(goToSpan);
 
     expect(revealSpan).toHaveBeenCalledWith(errorTrace.spans[1]);
-    expect(setFocusedSpanIdForSearch.mock.calls).toEqual([
-      [''],
-      ['payment-error'],
-      [''],
-      ['payment-error'],
-    ]);
+    expect(setFocusedSpanIdForSearch.mock.calls).toEqual([[''], ['payment-error'], [''], ['payment-error']]);
   });
 
   it('turns off matches-only when Go to span targets a hidden filtered span', async () => {
