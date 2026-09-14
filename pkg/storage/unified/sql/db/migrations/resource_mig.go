@@ -297,6 +297,17 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+resource_stats_aggregates_table.Name, migrator.NewAddTableMigration(resource_stats_aggregates_table))
 	mg.AddMigration("Change key_path collation of resource_stats_aggregates in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_stats_aggregates ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	// Table backing the apiserver/versionpolicy KV section: operator-set global API version policy per group.
+	resource_version_policy_table := migrator.Table{
+		Name: "resource_version_policy",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_Text, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_version_policy_table.Name, migrator.NewAddTableMigration(resource_version_policy_table))
+	mg.AddMigration("Change key_path collation of resource_version_policy in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_version_policy ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

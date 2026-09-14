@@ -38,6 +38,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
+				configv1beta1,
 				inhibitionRulev1beta1,
 				receiverv1beta1,
 				routeTreev1beta1,

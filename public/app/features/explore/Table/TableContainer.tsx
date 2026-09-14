@@ -13,7 +13,7 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
+import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
 const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
@@ -41,15 +41,17 @@ interface TableContainerProps {
   ariaLabel?: string;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
+export function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const { tableResult, range } = item;
-  const loadingInState = selectIsWaitingForData(exploreId);
-  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
+  const loading = selectIsWaitingForData(exploreId)(state);
   const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
   return {
-    loading,
+    // PanelChrome renders a loading bar for Loading and a streaming indicator for Streaming. Mirror the
+    // query state only while a query is in flight, so neither indicator can outlive the query. Reading
+    // the state directly keeps a leftover Tempo streaming-progress frame from picking the indicator.
+    panelLoadingState: loading ? item.queryResponse.state : undefined,
     tableResult,
     range,
     queryStreaming: item.queryResponse.state === LoadingState.Streaming || Boolean(hasTempoStreamingProgressTable),
@@ -60,7 +62,7 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export const TableContainer = memo(function TableContainer({
-  loading,
+  panelLoadingState,
   onCellFilterAdded,
   tableResult,
   width,
@@ -144,7 +146,7 @@ export const TableContainer = memo(function TableContainer({
     dataFrames = applyFieldOverrides({
       data: dataFrames,
       timeZone,
-      theme: config.theme2,
+      theme,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
       fieldConfig: {
         defaults: {},
@@ -161,7 +163,12 @@ export const TableContainer = memo(function TableContainer({
   return (
     <>
       {frames && frames.length === 0 && (
-        <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+        <PanelChrome
+          title={t('explore.table.title', 'Table')}
+          width={width}
+          height={200}
+          loadingState={panelLoadingState}
+        >
           {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
         </PanelChrome>
       )}
@@ -191,7 +198,7 @@ export const TableContainer = memo(function TableContainer({
               ]}
               width={width}
               height={getTableHeight(data.length, hasSubFrames(data), queryStreaming)}
-              loadingState={loading ? LoadingState.Loading : undefined}
+              loadingState={panelLoadingState}
             >
               {(innerWidth, innerHeight) => (
                 <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
@@ -205,7 +212,7 @@ export const TableContainer = memo(function TableContainer({
                     <PanelRenderer
                       data={{
                         series: [data],
-                        state: loading ? LoadingState.Loading : LoadingState.Done,
+                        state: panelLoadingState ?? LoadingState.Done,
                         timeRange: range,
                       }}
                       pluginId={'table'}

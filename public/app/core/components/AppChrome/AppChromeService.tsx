@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { AppEvents, type NavModel, type NavModelItem, PageLayoutType, store, type UrlQueryValue } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, HistoryWrapper, locationService, reportInteraction } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
@@ -41,6 +41,7 @@ export class AppChromeService {
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
       store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
+  private fullscreenWorkspaceUnlisten?: () => void;
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
@@ -171,15 +172,51 @@ export class AppChromeService {
     });
   };
 
-  public setFullscreenWorkspace = (fullscreenWorkspace: boolean) => {
+  public setFullscreenWorkspace = ({
+    fullscreenWorkspace,
+    pushHistoryEntry = true,
+  }: {
+    fullscreenWorkspace: boolean;
+    pushHistoryEntry?: boolean;
+  }) => {
+    if (Boolean(this.state.getValue().fullscreenWorkspace) === fullscreenWorkspace) {
+      return;
+    }
     this.update({ fullscreenWorkspace });
+    this.syncFullscreenWorkspaceHistory(fullscreenWorkspace, pushHistoryEntry);
     reportInteraction('grafana_fullscreen_workspace', {
       action: fullscreenWorkspace ? 'enter' : 'exit',
     });
   };
 
+  // The fullscreen workspace occupies a single browser-history entry
+  private syncFullscreenWorkspaceHistory(active: boolean, pushHistoryEntry: boolean) {
+    if (!(locationService instanceof HistoryWrapper)) {
+      return;
+    }
+    this.fullscreenWorkspaceUnlisten?.();
+    this.fullscreenWorkspaceUnlisten = undefined;
+
+    if (!active) {
+      locationService.setSingleHistoryEntryMode(false);
+      return;
+    }
+    if (pushHistoryEntry) {
+      // Push before enabling the mode, or the entry Back needs to pop would itself be
+      // collapsed into the current one.
+      locationService.push(locationService.getLocation());
+    }
+    locationService.setSingleHistoryEntryMode(true);
+    // Only listen while active, so navigation costs nothing extra the rest of the session.
+    this.fullscreenWorkspaceUnlisten = locationService.listen((_location, action) => {
+      if (action === 'POP') {
+        this.setFullscreenWorkspace({ fullscreenWorkspace: false });
+      }
+    });
+  }
+
   public toggleFullscreenWorkspace = () => {
-    this.setFullscreenWorkspace(!this.state.getValue().fullscreenWorkspace);
+    this.setFullscreenWorkspace({ fullscreenWorkspace: !this.state.getValue().fullscreenWorkspace });
   };
 
   public exitKioskMode() {

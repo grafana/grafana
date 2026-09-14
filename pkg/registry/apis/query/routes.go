@@ -1,10 +1,12 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -108,12 +110,6 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		},
 	}
 
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		return routes
-	}
-
 	searchResults := defs[queryV1.OpenAPIPrefix+"DataSourceConnectionList"].Schema
 	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
 		Path: "connections",
@@ -174,9 +170,23 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 			},
 		},
 		Handler: func(w http.ResponseWriter, r *http.Request) {
+			namespace := mux.Vars(r)["namespace"]
+
+			if namespace == "" {
+				http.Error(w, "missing namespace", http.StatusNotFound)
+				return
+			}
+
+			ctx := r.Context()
+
+			if !isConnectionsEnabled(ctx, namespace) {
+				http.Error(w, "connections disabled", http.StatusNotImplemented)
+				return
+			}
+
 			query := r.URL.Query()
-			list, err := b.connections.ListConnections(r.Context(), queryV1.DataSourceConnectionQuery{
-				Namespace: mux.Vars(r)["namespace"],
+			list, err := b.connections.ListConnections(ctx, queryV1.DataSourceConnectionQuery{
+				Namespace: namespace,
 				Name:      query.Get("name"),
 				Plugin:    query.Get("plugin"),
 			})
@@ -194,4 +204,16 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		},
 	})
 	return routes
+}
+
+func isConnectionsEnabled(ctx context.Context, namespace string) bool {
+	namespaceAwareEvalCtx := openfeature.NewEvaluationContext(namespace, map[string]any{
+		"namespace": namespace,
+	})
+
+	ctx = openfeature.MergeTransactionContext(ctx, namespaceAwareEvalCtx)
+
+	openfeatureClient := openfeature.NewDefaultClient()
+
+	return openfeatureClient.Boolean(ctx, featuremgmt.FlagQueryServiceWithConnections, false, openfeature.TransactionContext(ctx))
 }

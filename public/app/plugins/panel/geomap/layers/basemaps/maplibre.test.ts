@@ -9,7 +9,9 @@ jest.mock('ol-mapbox-style', () => ({
   apply: (...args: unknown[]) => applyMock(...args),
 }));
 
-import { maplibreLayers } from './maplibre';
+import { ensureInstanceOf } from '../test-utils';
+
+import { type MaplibreConfig, maplibreLayers } from './maplibre';
 
 const [maplibreLayer] = maplibreLayers;
 
@@ -19,24 +21,21 @@ const map = {} as OpenLayersMap;
 const eventBus = {} as EventBus;
 const theme = { isDark: false } as GrafanaTheme2;
 
-async function initLayer(options: Partial<MapLayerOptions>): Promise<LayerGroup> {
-  const handler = await maplibreLayer.create(
-    map,
-    { name: 'maplibre', type: 'maplibre', config: {}, ...options } as MapLayerOptions,
-    eventBus,
-    theme
-  );
-  return handler.init() as LayerGroup;
+async function initLayer(overrides: Partial<MapLayerOptions<Partial<MaplibreConfig>>>): Promise<LayerGroup> {
+  const options: MapLayerOptions<Partial<MaplibreConfig>> = {
+    name: 'maplibre',
+    type: 'maplibre',
+    config: {},
+    ...overrides,
+  };
+  const handler = await maplibreLayer.create(map, options, eventBus, theme);
+  return ensureInstanceOf(handler.init(), LayerGroup);
 }
 
 describe('maplibre basemap', () => {
   beforeEach(() => {
     applyMock.mockClear();
-    jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: jest.fn().mockResolvedValue({ layers: [] }),
-    } as unknown as Response);
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ layers: [] }), { status: 200 }));
   });
 
   afterEach(() => {

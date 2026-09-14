@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
@@ -130,9 +130,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -233,9 +233,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {

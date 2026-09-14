@@ -110,7 +110,7 @@ export const LogTableControls = ({
 
       <LogListControlsOption
         expanded={controlsExpanded}
-        name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
+        name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-down' : 'sort-amount-up'}
         className={styles.controlButton}
         onClick={onSortOrderClick}
         label={

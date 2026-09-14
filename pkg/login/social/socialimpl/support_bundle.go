@@ -22,14 +22,18 @@ func (ss *SocialService) registerSupportBundleCollectors(bundleRegistry supportb
 			IncludedByDefault: false,
 			Default:           false,
 			EnabledFn:         func() bool { return connector.GetOAuthInfo().Enabled },
-			Fn:                ss.supportBundleCollectorFn(name, connector),
+			Fn:                ss.supportBundleCollectorFn(name),
 		})
 	}
 }
 
-func (ss *SocialService) supportBundleCollectorFn(name string, sc social.SocialConnector) func(context.Context) (*supportbundles.SupportItem, error) {
+func (ss *SocialService) supportBundleCollectorFn(name string) func(context.Context) (*supportbundles.SupportItem, error) {
 	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
 		bWriter := bytes.NewBuffer(nil)
+		sc, err := ss.GetConnector(ctx, name)
+		if err != nil {
+			return nil, err
+		}
 
 		if _, err := fmt.Fprintf(bWriter, "# OAuth %s information\n\n", name); err != nil {
 			return nil, err
@@ -64,7 +68,7 @@ func (ss *SocialService) supportBundleCollectorFn(name string, sc social.SocialC
 
 func (ss *SocialService) healthCheckSocialConnector(ctx context.Context, name string, oinfo *social.OAuthInfo, bWriter *bytes.Buffer) {
 	bWriter.WriteString("## Health checks\n\n")
-	client, err := ss.GetOAuthHttpClient(name)
+	client, err := ss.GetOAuthHttpClient(ctx, name)
 	if err != nil {
 		fmt.Fprintf(bWriter, "Unable to create HTTP client  \n Err: %s\n", err)
 		return

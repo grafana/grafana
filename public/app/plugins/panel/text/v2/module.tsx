@@ -1,57 +1,91 @@
-import { PanelPlugin } from '@grafana/data';
+import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
+import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
+function newFeaturesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
+}
+
+const showForData = (_options: Options, data?: DataFrame[]) => newFeaturesEnabled() && hasRenderableData(data);
+
+export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
+  const category = [t('textng.category-text', 'Text')];
+  const dataCategory = [t('textng.category-data', 'Data')];
+
+  // Everything is edited in the panel itself, so options are registered here
+  // only so their defaults are applied.
+  const addHiddenOption = <T,>(path: string, defaultValue: T) =>
+    builder.addCustomEditor({
+      id: path,
+      path,
+      name: '',
+      category,
+      editor: () => null,
+      defaultValue,
+      showIf: () => false,
+    });
+
+  addHiddenOption('mode', defaultOptions.mode);
+  addHiddenOption('content', defaultOptions.content);
+  addHiddenOption('code.language', defaultCodeOptions.language);
+  addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
+
+  builder.addRadio({
+    path: 'renderMode',
+    name: t('textng.options.render-mode', 'Render mode'),
+    category: dataCategory,
+    defaultValue: defaultOptions.renderMode,
+    settings: {
+      options: [
+        {
+          value: RenderMode.Once,
+          label: t('textng.render-mode.once', 'Once'),
+        },
+        {
+          value: RenderMode.PerRow,
+          label: t('textng.render-mode.per-row', 'Per row'),
+        },
+      ],
+    },
+    showIf: showForData,
+  });
+
+  builder.addNumberInput({
+    path: 'pageSize',
+    name: t('textng.options.page-size', 'Page size'),
+    description: t(
+      'textng.options.page-size-description',
+      'Number of rows per page. When empty, the page size is based on the panel height.'
+    ),
+    category: dataCategory,
+    settings: {
+      placeholder: t('textng.options.page-size-placeholder', 'auto'),
+      min: 1,
+      max: MAX_RENDERED_ROWS,
+      integer: true,
+    },
+    showIf: (options, data) => showForData(options, data) && options.renderMode === RenderMode.PerRow,
+  });
+};
+
+const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
+  FieldConfigProperty.Mappings,
+  FieldConfigProperty.Thresholds,
+]);
+
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
-  .setPanelOptions((builder) => {
-    const category = [t('textng.category-text', 'Text')];
-    builder
-      .addRadio({
-        path: 'mode',
-        name: t('textng.name-mode', 'Mode'),
-        category,
-        settings: {
-          options: [
-            { value: TextMode.Markdown, label: t('textng.mode-options.label-markdown', 'Markdown') },
-            { value: TextMode.HTML, label: t('textng.mode-options.label-html', 'HTML') },
-            { value: TextMode.Code, label: t('textng.mode-options.label-code', 'Code') },
-          ],
-        },
-        defaultValue: defaultOptions.mode,
-      })
-      .addSelect({
-        path: 'code.language',
-        name: t('textng.name-language', 'Language'),
-        category,
-        settings: {
-          options: Object.values(CodeLanguage).map((v) => ({
-            value: v,
-            label: v,
-          })),
-        },
-        defaultValue: defaultCodeOptions.language,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addBooleanSwitch({
-        path: 'code.showLineNumbers',
-        name: t('textng.name-show-line-numbers', 'Show line numbers'),
-        category,
-        defaultValue: defaultCodeOptions.showLineNumbers,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addCustomEditor({
-        id: 'content',
-        path: 'content',
-        name: '',
-        category,
-        editor: () => null,
-        defaultValue: defaultOptions.content,
-        showIf: () => false,
-      });
-  })
+  .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);
+
+if (newFeaturesEnabled()) {
+  plugin.useFieldConfig({
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => !SUPPORTED_FIELD_CONFIGS.has(id)),
+  });
+}

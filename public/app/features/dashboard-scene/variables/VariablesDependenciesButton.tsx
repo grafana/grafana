@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) => {
+  const styles = getStyles(useTheme2());
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
 
@@ -33,7 +35,7 @@ export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) =
       {({ showModal }) => {
         return isInSidebar ? (
           <Button
-            className={css({ width: '100%', justifyContent: 'center' })}
+            className={styles.dependenciesButton}
             icon="channel-add"
             size="sm"
             variant="secondary"
@@ -61,3 +63,7 @@ export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) =
     </NetworkGraphModal>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  dependenciesButton: css({ width: '100%', justifyContent: 'center', margin: `${theme.spacing(1)} 0` }),
+});

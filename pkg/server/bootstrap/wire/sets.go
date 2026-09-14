@@ -46,6 +46,7 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -61,6 +62,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	querycachingmigrator "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -126,6 +128,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/ofrep"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
@@ -190,8 +194,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
 )
 
 var withOTelSet = wire.NewSet(
@@ -240,7 +242,6 @@ var Basic = wire.NewSet(
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
-	mysql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -284,6 +285,8 @@ var Basic = wire.NewSet(
 	libraryelements.ProvideFolderConsumer,
 	ngalert.ProvideAlertRuleFolderConsumer,
 	folderreconcile.ProvideReconciler,
+	libraryelements.ProvideFolderUIDRepair,
+	iamsso.ProvideSSOSettingsBackfill,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
@@ -301,7 +304,6 @@ var Basic = wire.NewSet(
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	socialimpl.ProvideService,
-	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	graphite.ProvideService,
 	datasourceservice.ProvideCacheService,
@@ -309,6 +311,7 @@ var Basic = wire.NewSet(
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
+	ofrep.ProvideService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -377,6 +380,8 @@ var Basic = wire.NewSet(
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
 	orgimpl.ProvideDeletionService,
+	orgimpl.ProvideDeleteRegistrar,
+	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
@@ -468,6 +473,8 @@ var Basic = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	router.ProvideService,
+	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,
 	appregistry.WireSet,
 	// Dashboard Kubernetes helpers

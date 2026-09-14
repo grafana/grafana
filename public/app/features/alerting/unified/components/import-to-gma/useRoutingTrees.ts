@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { useListRoutingTreeQuery } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { useListRoutingTreeQuery } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 
 interface RoutingTreeOption {

@@ -20,7 +20,7 @@ describe('ConfirmModal', () => {
     jest.useRealTimers();
   });
 
-  it('should render correct title, body, dismiss-, alternative- and confirm-text', () => {
+  it('should render correct title, body, dismiss-, alternative- and confirm-text', async () => {
     render(
       <ConfirmModal
         title="Some Title"
@@ -168,7 +168,10 @@ describe('ConfirmModal', () => {
       expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
     });
 
-    jest.runAllTimers();
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
     await waitFor(() => {
       return expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeEnabled();
     });

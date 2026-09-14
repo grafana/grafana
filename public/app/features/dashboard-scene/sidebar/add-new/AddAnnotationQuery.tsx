@@ -10,8 +10,8 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { AddButton } from './AddButton';
 
 export const useBuildAddAnnotation = (dataLayers: DashboardDataLayerSet) =>
-  useCallback(() => {
-    const newAnnotation = dataLayers.createDefaultAnnotationLayer();
+  useCallback(async () => {
+    const newAnnotation = await dataLayers.createDefaultAnnotationLayer();
     annotationEditActions.addAnnotation({
       source: dataLayers,
       addedObject: newAnnotation,

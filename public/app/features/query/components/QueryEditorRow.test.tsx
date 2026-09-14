@@ -578,7 +578,7 @@ describe('QueryEditorRow', () => {
       });
     });
 
-    it('routes both cancelling and saving to the single exit callback, with analytics only on cancel', async () => {
+    it('routes both cancelling and saving to the single exit callback', async () => {
       render(
         <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
@@ -592,18 +592,16 @@ describe('QueryEditorRow', () => {
 
       onUpdateSuccess();
       expect(mockOnExitEdit).toHaveBeenCalledTimes(1);
-      // Saving is not a cancellation, so it must not emit the cancelled event.
+
+      onCancelEdit();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(2);
+
+      // The cancelled event now comes from the editing header, which dispatches it through the Query
+      // Library context so it picks up the app/is_v2 stamping this raw call was missing.
       expect(mockReportInteraction).not.toHaveBeenCalledWith(
         'query_library-update_query_from_explore_cancelled',
         expect.anything()
       );
-
-      onCancelEdit();
-      expect(mockOnExitEdit).toHaveBeenCalledTimes(2);
-      expect(mockReportInteraction).toHaveBeenCalledWith('query_library-update_query_from_explore_cancelled', {
-        // The fixture query carries no datasource ref, so the reported type is undefined.
-        datasourceType: undefined,
-      });
     });
 
     it('should render the add-mode header when addingSavedQuery is set without an editSavedQueryRef', async () => {

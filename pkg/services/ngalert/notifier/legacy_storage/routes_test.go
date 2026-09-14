@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -435,9 +434,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definition.Receiver{
-						Name: name,
-					},
+					Name: name,
 				},
 			},
 		},

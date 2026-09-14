@@ -45,6 +45,47 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	require.ErrorContains(t, err, "numDrivers")
 }
 
+// gaugeValueByName reads the single-sample gauge `name` from the gatherer.
+func gaugeValueByName(t *testing.T, g prometheus.Gatherer, name string) float64 {
+	t.Helper()
+	mfs, err := g.Gather()
+	require.NoError(t, err)
+	for _, mf := range mfs {
+		if mf.GetName() == name {
+			require.Len(t, mf.GetMetric(), 1)
+			return mf.GetMetric()[0].GetGauge().GetValue()
+		}
+	}
+	t.Fatalf("metric %q not found", name)
+	return 0
+}
+
+// TestConcurrentJobDriver_WorkerQueueSizeGauge verifies the worker-queue-size gauge
+// reports the live depth of the replica's local work queue at scrape time.
+func TestConcurrentJobDriver_WorkerQueueSizeGauge(t *testing.T) {
+	const metricName = "grafana_provisioning_jobs_worker_queue_size"
+
+	reg := prometheus.NewRegistry()
+	driver, err := NewConcurrentJobDriver(
+		1,
+		time.Minute, 30*time.Second, 30*time.Second,
+		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
+		reg, nil, false,
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, 0.0, gaugeValueByName(t, reg, metricName))
+
+	driver.queue.Add("ns/job-a")
+	driver.queue.Add("ns/job-b")
+	require.Equal(t, 2.0, gaugeValueByName(t, reg, metricName))
+
+	// Get removes the key from the queue (Len drops); Done clears it from processing.
+	key, _ := driver.queue.Get()
+	driver.queue.Done(key)
+	require.Equal(t, 1.0, gaugeValueByName(t, reg, metricName))
+}
+
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.

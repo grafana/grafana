@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { reportInteraction } from '@grafana/runtime';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
@@ -22,6 +25,11 @@ import SpanTreeOffset from './SpanTreeOffset';
 import VirtualizedTraceView, { type VirtualizedTraceViewProps } from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 2 }))!;
 
@@ -94,5 +102,36 @@ describe('<VirtualizedTraceViewImpl>', () => {
         name: /Scroll to top/i,
       })
     ).toBeInTheDocument();
+  });
+
+  it('reports the summary span count when scrolling to top', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    const summaryTrace = {
+      ...trace,
+      spans: trace.spans.map((span) => ({
+        ...span,
+        aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 2 },
+      })),
+    };
+    render(<VirtualizedTraceView {...{ ...props, trace: summaryTrace }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Scroll to top/i }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_trace_view_scroll_to_top_clicked',
+      expect.objectContaining({ numSpans: summaryTrace.spans.length, numSummarySpans: summaryTrace.spans.length })
+    );
+  });
+
+  it('does not throw or report when scrolling to top with no trace', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    render(<VirtualizedTraceView {...{ ...props, trace: null as unknown as Trace }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Scroll to top/i }));
+
+    expect(reportInteraction).not.toHaveBeenCalledWith(
+      'grafana_traces_trace_view_scroll_to_top_clicked',
+      expect.anything()
+    );
   });
 });

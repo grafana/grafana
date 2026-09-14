@@ -109,7 +109,7 @@ const ui = {
   rulesTable: byTestId('rules-table'),
   ruleRow: byTestId('row'),
   expandedContent: byTestId(selectors.components.AlertRules.expandedContent),
-  rulesFilterInput: byTestId('search-query-input'),
+  rulesFilterInput: byTestId(selectors.pages.Alerting.searchInput),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
   newRuleButton: byRole('link', { name: 'New alert rule' }),

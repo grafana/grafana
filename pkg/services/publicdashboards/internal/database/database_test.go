@@ -59,7 +59,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	var publicdashboardStore *PublicDashboardStoreImpl
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 
 		bDash = createTestDashboard("b", orgId, "", false)
@@ -119,7 +119,7 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 	}
@@ -186,7 +186,7 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 	}
@@ -267,7 +267,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 	}
@@ -330,7 +330,7 @@ func TestIntegrationFindByOrgAndUid(t *testing.T) {
 	var savedPubdash *models.PublicDashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		savedPubdash = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, models.PublicShareType)
@@ -360,7 +360,7 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 	}
@@ -424,7 +424,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 	var savedDashboard2 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		savedDashboard2 = createTestDashboard("testDashie2", 1, "", true)
@@ -497,7 +497,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	var anotherSavedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		anotherSavedDashboard = createTestDashboard("test another Dashie", 1, "", true)
@@ -644,7 +644,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 	}
@@ -711,7 +711,7 @@ func TestIntegrationDelete(t *testing.T) {
 	var savedPublicDashboard *models.PublicDashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
@@ -760,7 +760,7 @@ func TestIntegrationDeleteByDashboardUIDs(t *testing.T) {
 	var savedDashboard *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", true)
 		_ = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, models.PublicShareType)
@@ -810,7 +810,7 @@ func TestIntegrationGetMetrics(t *testing.T) {
 	var savedDashboard4 *dashboards.Dashboard
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+		sqlStore, cfg = db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = createTestDashboard("testDashie", 1, "", false)
 		savedDashboard2 = createTestDashboard("testDashie2", 1, "", false)

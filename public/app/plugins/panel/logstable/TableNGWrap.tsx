@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2, LogSortOrderChangeEvent, LogsSortOrder, type PanelProps, store } from '@grafana/data';
+import {
+  type DataFrame,
+  type GrafanaTheme2,
+  LogSortOrderChangeEvent,
+  LogsSortOrder,
+  type PanelProps,
+  store,
+} from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
@@ -20,6 +27,7 @@ import {
 } from 'app/features/table/hooks';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
@@ -28,6 +36,7 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
   onWrapTextClick: () => void;
+  rawDataFrame: DataFrame | null;
 }
 
 export function TableNGWrap({
@@ -44,9 +53,11 @@ export function TableNGWrap({
   logOptionsStorageKey,
   containerElement,
   onWrapTextClick,
+  rawDataFrame,
 }: Props) {
   useCacheFieldDisplayNames(data.series);
 
+  const { setDisplayedRowIndices } = useLogDetailsContext();
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
@@ -76,11 +87,14 @@ export function TableNGWrap({
 
   const downloadLogs = useCallback(
     (format: DownloadFormat) => {
+      if (!rawDataFrame) {
+        return;
+      }
       // converting to logsModel is a lot of unnecessary compute, but since this is only called on user action it should work as a short-term solution
-      const { meta, rows } = dataFrameToLogsModel(data.series);
+      const { meta, rows } = dataFrameToLogsModel([rawDataFrame]);
       download(format, rows, meta, options.displayedFields);
     },
-    [data.series, options.displayedFields]
+    [options.displayedFields, rawDataFrame]
   );
 
   return (
@@ -103,12 +117,17 @@ export function TableNGWrap({
 
       <TableNG
         {...commonTableProps}
+        // `useCommonTableProps` reports the `table.refresh` flag, but the refreshed header hasn't
+        // been designed against the Logs Table's own header controls yet, so this panel opts out
+        // until that work happens.
+        tableRefreshEnabled={false}
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}
         timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
+        onDisplayedRowIndicesChange={setDisplayedRowIndices}
         onSortByChange={(sortBy) => onSortByChange(sortBy, { onOptionsChange, options })}
         onColumnResize={(displayName, resizedWidth, fieldScope) =>
           onColumnResize(displayName, resizedWidth, fieldScope, { fieldConfig, onFieldConfigChange })

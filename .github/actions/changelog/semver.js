@@ -14,17 +14,37 @@ export function semverParse(tag) {
   return [+major, +minor, +patch, prerelease, build, tag];
 };
 
-// semverCompare takes two parsed semver tags and comparest them more or less
+// semverCompare takes two parsed semver tags and compares them more or less
 // according to the semver specs
-function semverCompare(a, b) {
+export function semverCompare(a, b) {
   for (let i = 0; i < 3; i++) {
     if (a[i] !== b[i]) {
       return a[i] < b[i] ? 1 : -1;
     }
   }
+
+  // Prerelease versions have a lower precedence than the associated version
   if (a[3] !== b[3]) {
+    if (!a[3]) {
+      return -1;
+    }
+    if (!b[3]) {
+      return 1;
+    }
     return a[3] < b[3] ? 1 : -1;
   }
+
+  // Security tags have a higher precedence than the associated version
+  if (a[4] !== b[4]) {
+    if (!a[4]) {
+      return 1;
+    }
+    if (!b[4]) {
+      return -1;
+    }
+    return a[4] < b[4] ? 1 : -1;
+  }
+
   return 0;
 };
 

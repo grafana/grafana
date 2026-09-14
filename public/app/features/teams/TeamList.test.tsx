@@ -37,7 +37,7 @@ describe('TeamList', () => {
     const mockTeam = MOCK_TEAMS[0];
     jest.spyOn(appEvents, 'publish');
     render(<TeamList />);
-    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
+    await userEvent.click(await screen.findByRole('button', { name: `Delete team ${mockTeam.spec.title}` }));
 
     expect(appEvents.publish).toHaveBeenCalledWith(
       new ShowModalReactEvent(
@@ -130,7 +130,7 @@ describe('TeamList', () => {
     );
 
     // Click the delete button to open the modal
-    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
+    await userEvent.click(await screen.findByRole('button', { name: `Delete team ${mockTeam.spec.title}` }));
 
     // The modal should be visible with a Delete heading
     const modalTitle = await screen.findByRole('heading', { name: /delete/i });

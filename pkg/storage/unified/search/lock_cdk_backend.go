@@ -92,14 +92,22 @@ func (b *cdkLockBackend) Create(ctx context.Context, key string, info lockInfo) 
 	// The local expiry check is a best-effort optimization: attrs and existing
 	// may be from different generations if the object was replaced between the
 	// two reads. Correctness is enforced by IfMatch=attrs.ETag on the conditional
-	// write below — a generation mismatch will be rejected as errLockHeld.
+	// write below — a generation mismatch means another instance got there first.
 	b.log.Info("taking over expired lock", "key", key, "previous_owner", existing.Owner)
 	err = b.conditionalWrite(ctx, key, data, attrs)
 	if errors.Is(err, errLockNotFound) {
 		return createIfNotExists()
 	}
+	if errors.Is(err, errLockChanged) {
+		return errLockHeld
+	}
 	return err
 }
+
+// errLockChanged means the object moved between read and write. Whether that means
+// losing a race or losing our own lock depends on the caller, so callers translate
+// it rather than returning it.
+var errLockChanged = errors.New("lock changed during write")
 
 // conditionalWrite writes with If-Match semantics via the provider's ops.
 func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data []byte, attrs *blob.Attributes) error {
@@ -110,8 +118,7 @@ func (b *cdkLockBackend) conditionalWrite(ctx context.Context, key string, data 
 	err := b.bucket.WriteAll(ctx, key, data, opts)
 	if err != nil {
 		if isObjectExistsErr(err) {
-			// Another instance modified the lock between our read and write.
-			return errLockHeld
+			return errLockChanged
 		}
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			// Lock object was deleted between Attributes/ReadAll and this write.
@@ -128,7 +135,7 @@ func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) 
 		return err
 	}
 	if existing.Owner != info.Owner {
-		return errLockHeld
+		return errLockNotOwned
 	}
 
 	// No clockSkewAllowance: holder should detect expiry before a takeover node does.
@@ -141,7 +148,11 @@ func (b *cdkLockBackend) Update(ctx context.Context, key string, info lockInfo) 
 		return err
 	}
 
-	return b.conditionalWrite(ctx, key, data, attrs)
+	err = b.conditionalWrite(ctx, key, data, attrs)
+	if errors.Is(err, errLockChanged) {
+		return errLockNotOwned
+	}
+	return err
 }
 
 // Delete atomically deletes a lock, verifying ownership.
@@ -151,12 +162,12 @@ func (b *cdkLockBackend) Delete(ctx context.Context, key string, owner string) e
 		return err
 	}
 	if existing.Owner != owner {
-		return errLockHeld
+		return errLockNotOwned
 	}
 
 	if err := b.ops.Delete(ctx, key, attrs); err != nil {
 		if errors.Is(err, errPreconditionFailed) || gcerrors.Code(err) == gcerrors.FailedPrecondition {
-			return fmt.Errorf("lock was modified during delete: %w", errLockHeld)
+			return fmt.Errorf("lock was modified during delete: %w", errLockNotOwned)
 		}
 		return err
 	}

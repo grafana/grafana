@@ -25,7 +25,7 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 	t.Helper()
 
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		starStore := fn(ss)
 
 		t.Run("Given saved star by dashboard UID", func(t *testing.T) {
@@ -109,7 +109,7 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 func TestIntegration_StarMigrations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	d := dashboards.Dashboard{
 		UID:     "test",

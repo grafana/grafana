@@ -10,6 +10,8 @@ import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import ErrorEditor from './components/ErrorEditor';
 import ErrorWithSourceQueryEditor from './components/ErrorWithSourceEditor';
+import { ExemplarLabelsEditor } from './components/ExemplarLabelsEditor';
+import ExemplarsEditor from './components/ExemplarsEditor';
 import FlakyQueryEditor from './components/FlakyQueryEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
@@ -19,8 +21,15 @@ import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { StreamingClientEditor } from './components/StreamingClientEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
-import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
-import { type CSVWave, type NodesQuery, type TestDataDataQuery, TestDataQueryType, type USAQuery } from './dataquery';
+import { defaultCSVWaveQuery, defaultExemplarLabels, defaultPulseQuery, defaultQuery } from './constants';
+import {
+  type CSVWave,
+  type ExemplarLabel,
+  type NodesQuery,
+  type TestDataDataQuery,
+  TestDataQueryType,
+  type USAQuery,
+} from './dataquery';
 import { type TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
@@ -31,6 +40,8 @@ const endpoints = [
 ];
 
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
+
+const scenarioCollator = new Intl.Collator();
 
 export interface EditorProps {
   onChange: (value: any) => void;
@@ -130,6 +141,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.ErrorWithSource:
         update.errorSource = 'plugin';
         break;
+      case TestDataQueryType.Exemplars:
+        update.exemplarCount = 100;
+        update.exemplarLabels = defaultExemplarLabels;
+        break;
       case TestDataQueryType.FlakyQuery:
         update.errorProbability = 50;
         update.errorStatusCode = 400;
@@ -182,11 +197,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, csvWave });
   };
 
+  const onExemplarLabelsChange = (exemplarLabels?: ExemplarLabel[]) => {
+    onUpdate({ ...query, exemplarLabels });
+  };
+
   const options = useMemo(
     () =>
       (scenarioList || [])
         .map((item) => ({ label: item.name, value: item.id }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => scenarioCollator.compare(a.label, b.label)),
     [scenarioList]
   );
 
@@ -404,6 +423,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
       {scenarioId === TestDataQueryType.FlakyQuery && (
         <FlakyQueryEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.Exemplars && (
+        <>
+          <ExemplarsEditor onChange={onUpdate} query={query} ds={datasource} />
+          <ExemplarLabelsEditor onChange={onExemplarLabelsChange} labels={query.exemplarLabels} />
+        </>
       )}
 
       {description && <p>{description}</p>}

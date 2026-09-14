@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,20 +32,40 @@ import (
 )
 
 func TestSearch(t *testing.T) {
+	doSearch := func(t *testing.T, handler *SearchHandler, path string) *MockClient {
+		t.Helper()
+		client := handler.client.(*MockClient)
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", path, nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoSearch(rr, req)
+		return client
+	}
+
 	t.Run("should hit unified storage search handler", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		doSearch(t, searchHandler, "/search")
 
-		searchHandler.DoSearch(rr, req)
+		require.NotNil(t, mockClient.LastSearchRequest)
+	})
 
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
+	t.Run("requests field-value results when enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+	})
+
+	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search?explain=true")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
 	})
 }
 
@@ -184,10 +205,12 @@ func TestHybridSearch(t *testing.T) {
 			HybridSearchResponse: &resourcepb.HybridSearchResponse{
 				Results: []*resourcepb.HybridSearchResult{
 					{
-						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
-						Title:  "CPU usage",
-						Folder: "f1",
-						Score:  0.032,
+						Key:           &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
+						Title:         "CPU usage",
+						Folder:        "f1",
+						Score:         0.032,
+						ManagedByKind: "repo",
+						ManagedById:   "m1",
 						Chunks: []*resourcepb.HybridSearchChunk{
 							{Subresource: "panel/3", Content: "CPU usage by host"},
 							{Subresource: "panel/7", Content: "CPU saturation"},
@@ -235,6 +258,8 @@ func TestHybridSearch(t *testing.T) {
 		assert.Equal(t, "f1", p.Hits[0].Folder)
 		assert.Equal(t, "dashboards", p.Hits[0].Resource)
 		assert.Equal(t, 0.032, p.Hits[0].Score)
+		assert.Equal(t, v0alpha1.ManagedBy{Kind: utils.ManagerKind("repo"), ID: "m1"}, p.Hits[0].ManagedBy)
+		assert.True(t, p.Hits[1].ManagedBy.IsZero(), "unmanaged hit must not fabricate a manager")
 
 		require.NotNil(t, p.Hits[0].Field)
 		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
@@ -1106,7 +1131,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Page:      1,
 				Explain:   false,
 				Fields:    defaultFields,
-				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: false}},
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: false}},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1120,7 +1145,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Page:      1,
 				Explain:   false,
 				Fields:    defaultFields,
-				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: true}},
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: true}},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1178,6 +1203,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Options: &resourcepb.ListOptions{
 					Key:    dashboardKey,
 					Fields: []*resourcepb.Requirement{{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"panel type filter": {
+			queryString: "panelType=timeseries",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "panel_types", Operator: "=", Values: []string{"timeseries"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"data source type filter": {
+			queryString: "dataSourceType=prometheus",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "ds_types", Operator: "=", Values: []string{"prometheus"}}},
 				},
 				Query:     "",
 				Limit:     50,
@@ -1380,6 +1437,40 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	t.Run("names the logical title field once", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		// The stored forms of the title and their weights are the server's business.
+		assert.Equal(t, []string{"title"}, names)
+	})
+
+	t.Run("panel title search asks for the panel_title field", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotEmpty(t, result.QueryFields)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		assert.Contains(t, names, "panel_title")
+	})
 
 	t.Run("rejects unsupported facet fields", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("facet=folder")

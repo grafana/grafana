@@ -16,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/setting/settingtest"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -1078,6 +1080,55 @@ func TestService_List(t *testing.T) {
 	}
 }
 
+func TestService_ListStored(t *testing.T) {
+	t.Parallel()
+
+	env := setupTestEnv(t, false, false, false)
+	env.store.ExpectedSSOSettings = []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+			},
+			Source: models.DB,
+		},
+	}
+	env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+	env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+	actual, err := env.service.ListStored(context.Background())
+
+	require.NoError(t, err)
+	// Only the stored providers, decrypted, with no system defaults merged in.
+	require.ElementsMatch(t, []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": "decrypted-client-secret",
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": "decrypted-other-secret",
+			},
+			Source: models.DB,
+		},
+	}, actual)
+}
+
 func TestService_ListWithRedactedSecrets(t *testing.T) {
 	t.Parallel()
 
@@ -1691,9 +1742,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "encrypted-client-secret"
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1737,9 +1786,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "current-client-secret"
 		expected.Settings["private_key"] = "current-private-key"
 
@@ -2610,7 +2657,8 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 
 	svc := ProvideService(
 		cfg,
-		&dbtest.FakeDB{},
+		mustConfigProvider(t, cfg),
+		legacysql.NewDatabaseProvider(&dbtest.FakeDB{}),
 		accessControl,
 		routing.NewRouteRegister(),
 		featureManager,
@@ -2640,6 +2688,13 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 		secrets:          secrets,
 		reloadables:      reloadables,
 	}
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
 }
 
 type testEnv struct {

@@ -26,7 +26,7 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 
 			const count = 3
 			wantTitles := map[string]bool{}
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)
@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 			client := rk.client(t, helper)
 
 			const count = 3
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				_, err := client.Resource.Create(t.Context(), rk.newResource(t, name, title), metav1.CreateOptions{})
 				require.NoError(t, err, "should create %s", name)

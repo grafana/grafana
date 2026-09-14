@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 
@@ -30,9 +31,7 @@ func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFuncti
 		// Get all path parameters from the restful.Request
 		// The restful.Request has PathParameters() method that returns a map
 		pathParams := req.PathParameters()
-		for key, value := range pathParams {
-			vars[key] = value
-		}
+		maps.Copy(vars, pathParams)
 
 		// Set the vars in the request context using mux.SetURLVars
 		// This makes mux.Vars(r) work correctly

@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"slices"
 
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 )
@@ -96,10 +97,18 @@ func (rw *responseWriter) Write(b []byte) (size int, err error) {
 		// The status will be StatusOK if WriteHeader has not been called yet
 		rw.WriteHeader(http.StatusOK)
 	}
-	if rw.method != "HEAD" {
-		size, err = rw.ResponseWriter.Write(b)
-		rw.size += size
+	if rw.method == "HEAD" {
+		// A HEAD response carries no body, so the body is dropped here. It is
+		// still reported as fully written, the way net/http does it: a writer
+		// that reports a short write without an error breaks everything wrapped
+		// around it, from io.Copy (io.ErrShortWrite) to the gzip middleware,
+		// which leaked a goroutine per HEAD request over it (#130649).
+		// Size() keeps reporting what actually went out on the wire.
+		return len(b), nil
 	}
+
+	size, err = rw.ResponseWriter.Write(b)
+	rw.size += size
 	return size, err
 }
 
@@ -136,8 +145,8 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (rw *responseWriter) callBefore() {
-	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
-		rw.beforeFuncs[i](rw)
+	for _, v := range slices.Backward(rw.beforeFuncs) {
+		v(rw)
 	}
 }
 

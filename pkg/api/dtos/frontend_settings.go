@@ -212,11 +212,13 @@ type FrontendSettingsDTO struct {
 	PostHogToken string `json:"postHogToken"`
 	PostHogHost  string `json:"postHogHost"`
 
-	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
+	AnalyticsConsoleReporting     bool     `json:"analyticsConsoleReporting"`
+	PluginImportTelemetryPackages []string `json:"pluginImportTelemetryPackages"`
 
-	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
-	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
-	DashboardDefaultPreload     bool     `json:"dashboardDefaultPreload"`
+	DashboardPerformanceMetrics  []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit             int      `json:"panelSeriesLimit"`
+	DashboardDefaultPreload      bool     `json:"dashboardDefaultPreload"`
+	ReportRenderQueryGracePeriod int      `json:"reportRenderQueryGracePeriodMs"`
 
 	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`
@@ -319,6 +321,8 @@ type FrontendSettingsDTO struct {
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
+
+	ProvisioningEnabled bool `json:"provisioningEnabled"`
 	// Experimental Scope settings
 	ListScopesEndpoint          string            `json:"listScopesEndpoint"`
 	ListDashboardScopesEndpoint string            `json:"listDashboardScopesEndpoint"`

@@ -327,6 +327,7 @@ type ConvertPrometheusResponse struct {
 	Error     string `json:"error"`
 }
 
+// swagger:model
 type ConvertAlertmanagerResponse struct {
 	Status    string `json:"status"`
 	ErrorType string `json:"errorType"`

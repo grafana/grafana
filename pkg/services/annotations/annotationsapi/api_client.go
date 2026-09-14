@@ -12,7 +12,10 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +34,7 @@ type annotationClient interface {
 	Delete(ctx context.Context, orgID int64, name string) error
 	GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error)
 	Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error)
+	ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error)
 }
 
 var _ annotationClient = (*annotationAPIClient)(nil)
@@ -197,6 +201,31 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 	return result, nil
 }
 
+// ListTags calls the /tags custom route, which aggregates tag counts across the org.
+func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+	req := s.client.Get().
+		Namespace(s.nsMapper(orgID)).
+		Resource("tags")
+
+	if query.Tag != "" {
+		req = req.Param("contains", query.Tag)
+	}
+	if query.Limit != 0 {
+		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))
+	}
+
+	raw, err := req.DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var body annotationV0.GetTagsBody
+	if err := json.Unmarshal(raw, &body); err != nil {
+		return nil, fmt.Errorf("decode tags response: %w", err)
+	}
+	return body.Tags, nil
+}
+
 // collection builds a request against the namespaced annotations collection for orgID.
 func (s *annotationAPIClient) collection(verb string, orgID int64) *rest.Request {
 	return s.client.Verb(verb).
@@ -302,7 +331,9 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 }
 
 func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper) func(http.RoundTripper) http.RoundTripper {
+	tracingMiddleware := httpclientprovider.TracingMiddleware(log.New("annotations.apiclient"), tracer)
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: rt}
+		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
+		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: tracingRT}
 	}
 }

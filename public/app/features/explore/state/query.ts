@@ -36,7 +36,6 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -488,7 +487,7 @@ async function handleHistory(
       if (query.datasource?.uid === datasource.uid) {
         return filterQuery(datasource, query);
       } else {
-        const queryDS = await getDatasourceSrv().get(query.datasource);
+        const queryDS = await getDataSourceInstance(query.datasource);
         return filterQuery(queryDS, query);
       }
     })

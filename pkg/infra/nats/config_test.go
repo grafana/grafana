@@ -79,7 +79,7 @@ func TestConfig(t *testing.T) {
 		c := newConfig(setting.NATSSettings{ClientURLs: []string{"nats://a:4222"}}, &Server{server: srv})
 
 		var wg sync.WaitGroup
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			wg.Add(2)
 			go func() { defer wg.Done(); _ = c.URLs() }()
 			go func() { defer wg.Done(); _ = c.DialOptions() }()

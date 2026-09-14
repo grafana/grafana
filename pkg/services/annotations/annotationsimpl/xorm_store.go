@@ -601,6 +601,13 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
 
+		switch query.Type {
+		case "alert":
+			sql.WriteString(` AND annotation.alert_id > 0`)
+		case "annotation":
+			sql.WriteString(` AND annotation.alert_id = 0`)
+		}
+
 		sql.WriteString(` AND (`)
 		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)
 		sql.WriteString(s)

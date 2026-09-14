@@ -1,66 +1,63 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/ui';
 
+import { type SignalStatus } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/types';
+
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
-import { type ExistingItem } from './types';
-import { useExistingSolutions } from './useExistingSolutions';
 
-const stubbedExisting: ExistingItem[] = [
-  {
-    id: 'hosted-metrics',
-    title: 'Hosted Metrics',
-    icon: 'chart-line',
-    stats: {
-      primary: '4.2M series',
-      secondary: '12 hosts',
-    },
-    alert: {
-      primary: '3 hosts above 90% disk',
-      details: ['web-03 critical at 96%, ~6 h to full'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open infrastructure',
-    href: '#',
-  },
-  {
-    id: 'hosted-logs',
-    title: 'Hosted Logs',
-    icon: 'file-alt',
-    stats: {
-      primary: '47 GB ingested',
-      secondary: '8 sources',
-    },
-    alert: {
-      primary: 'Ingest spike detected',
-      details: ['checkout-service logs up 3x in the last hour'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open Explore (Logs)',
-    href: '#',
-  },
-];
+interface RecommendationExistingProps {
+  /** Selection the card displays: undefined while providers settle, null when none exists, else the id. */
+  onSelectionChange?: (id: SolutionId | null | undefined) => void;
+  /** Order used after filtering to solutions with data; signals decide the no-data copy. */
+  solutions: Solution[];
+}
 
-export function RecommendationExisting() {
-  const [selectedTitle, setSelectedTitle] = useState<string>();
-  const { loading, solutions } = useExistingSolutions();
+export function RecommendationExisting({ onSelectionChange, solutions }: RecommendationExistingProps) {
+  const [selectedId, setSelectedId] = useState<SolutionId>();
+  // Wait only for the facts that choose this card and its no-data copy.
+  const resolved = useAsync(
+    async () =>
+      Promise.all(
+        solutions.map(async (solution) => ({
+          solution,
+          signal: await solution.signal().catch(() => 'unknown' as const),
+        }))
+      ),
+    [solutions]
+  );
+  const loading = resolved.value === undefined;
+  const existing = (resolved.value ?? []).filter(({ signal }) => signal === 'active').map(({ solution }) => solution);
+
+  // The effective selection (explicit pick ?? default) is computed before the early returns so
+  // the report effect runs unconditionally (Rules of Hooks). While loading it reports undefined
+  // (the parent holds the carousel skeleton); settled with no solution it reports null (the
+  // parent shows the global list).
+  const selected: Solution | undefined = existing.find((item) => item.id === selectedId) ?? existing[0];
+  const effectiveId = loading ? undefined : (selected?.id ?? null);
+  // useLayoutEffect: the parent's carousel swap commits before paint, so the list never
+  // flashes the global order once the default selection settles.
+  useLayoutEffect(() => {
+    onSelectionChange?.(effectiveId);
+  }, [effectiveId, onSelectionChange]);
 
   if (loading) {
     return <RecommendationExistingSkeleton />;
   }
 
-  // Stubs are placeholders, not live solutions: they never satisfy the no-data check.
-  if (solutions.length === 0) {
-    return <NoDataCard />;
+  if (!selected) {
+    // NoDataCard's hard claim is only true when every core signal settled inactive. Anything
+    // inconclusive gets neutral copy so the card never overclaims.
+    const core: SignalStatus[] = (resolved.value ?? []).map(({ signal }) => signal);
+    const variant = core.length > 0 && core.every((v) => v === 'inactive') ? 'empty' : 'unknown';
+    return <NoDataCard variant={variant} />;
   }
 
-  const existing = [...solutions, ...stubbedExisting];
-  const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
+  return <ExistingSolutionCard key={selected.id} existing={existing} selected={selected} onSelect={setSelectedId} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution

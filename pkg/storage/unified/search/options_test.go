@@ -217,3 +217,38 @@ func fileBucketURL(t *testing.T, dir string) string {
 	u := url.URL{Scheme: "file", Path: dir}
 	return u.String()
 }
+
+// Dry run counts what the collector would remove and deletes nothing, so trash of
+// any age is still restorable and must stay searchable.
+func TestNewSearchOptionsTrashRetentionFollowsGarbageCollection(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		enabled     bool
+		dryRun      bool
+		wantEnabled bool
+	}{
+		{name: "collection off", enabled: false, wantEnabled: false},
+		{name: "collection on", enabled: true, wantEnabled: true},
+		{name: "collection on, dry run", enabled: true, dryRun: true, wantEnabled: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.BuildVersion = "11.0.0"
+			cfg.IndexPath = filepath.Join(t.TempDir(), "bleve")
+			cfg.EnableGarbageCollection = tc.enabled
+			cfg.GarbageCollectionDryRun = tc.dryRun
+			cfg.GarbageCollectionMaxAge = time.Hour
+
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+
+			backend, ok := opts.Backend.(*bleveBackend)
+			require.True(t, ok)
+			t.Cleanup(backend.Stop)
+
+			assert.Equal(t, tc.wantEnabled, backend.opts.TrashRetention.Enabled)
+			assert.Equal(t, time.Hour, backend.opts.TrashRetention.MaxAge)
+		})
+	}
+}

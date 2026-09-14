@@ -1,13 +1,10 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
-export function PluginIntegrations() {
-  const styles = useStyles2(getStyles);
+import { ContentBox } from './ContentBox';
 
+export function PluginIntegrations() {
   const { components } = useAlertingHomePageExtensions();
 
   if (components.length === 0) {
@@ -17,19 +14,10 @@ export function PluginIntegrations() {
   return (
     <Stack gap={2} wrap="wrap" direction="row">
       {components.map((Component, i) => (
-        <div key={i} className={styles.box}>
+        <ContentBox key={i} flex={1} maxWidth="460px">
           <Component />
-        </div>
+        </ContentBox>
       ))}
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  box: css({
-    padding: theme.spacing(2),
-    flex: 1,
-    backgroundColor: theme.colors.background.secondary,
-    maxWidth: '460px',
-  }),
-});

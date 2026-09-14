@@ -151,7 +151,7 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 
 	err = addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userId, orgId, teamId, cmd.Permission.String())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update team member.", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update team member.", err)
 	}
 	return response.Success("Team member updated")
 }
@@ -333,7 +333,7 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 			return response.Error(http.StatusNotFound, "Team member not found", nil)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to remove Member from Team", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to remove Member from Team", err)
 	}
 	return response.Success("Team Member removed")
 }

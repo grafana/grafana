@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panel, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -16,23 +14,18 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can toggle transparent background switch', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('can toggle transparent background switch', async ({ gotoDashboardPage, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
       await controls.enterEditMode();
 
       const panelTitle = 'No Data Points Warning';
 
-      const panelContainer = panel.getContainerByTitle(panelTitle);
+      const panelContainer = panels.getPanel(panelTitle);
 
       const initialBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(initialBackground).not.toMatch(/rgba\(0, 0, 0, 0\)/);
 
-      await panel.selectByTitle(panelTitle);
+      await panels.selectByTitle(panelTitle);
       await sidebar.panelOptions.toggleTransparentBackground();
 
       const transparentBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
