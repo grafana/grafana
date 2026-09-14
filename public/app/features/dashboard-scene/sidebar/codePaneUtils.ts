@@ -176,10 +176,14 @@ export function applyJsonToDashboard(
     }
 
     const dto = buildDashboardWithAccessInfoFromScene(dashboard, spec);
-
-    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
     const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
+
+    // we leave `sidebar` out of both snapshots to keep the sidebar live,
+    // so the code pane the user is typing in stays open
+    const { sidebar: _prevSidebar, ...previousState } = sceneUtils.cloneSceneObjectState(dashboard.state);
+    const { sidebar: _newSidebar, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      key: dashboard.state.key,
+    });
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
