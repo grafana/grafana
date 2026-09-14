@@ -1238,7 +1238,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	phase = reconcilePhaseHook
-	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, accessible, shouldRotateWebhookSecret)
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, testResults, accessible, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
 	}
@@ -1343,7 +1343,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1385,17 +1385,23 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		}
 	}
 
-	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
-	// would be an equally doomed call against an inaccessible repository, and
-	// skipped during the hook-failure cooldown too: repoAccessible alone doesn't
-	// catch this window, since a skipped health check reads as accessible. A
-	// secret that stays overdue is counted with the cause it stayed overdue for,
-	// so alerts can page on a genuine rotation malfunction (cause=system) while
-	// routing the "can't rotate yet" cases (cause=blocked/user) to a runbook.
+	// Rotate the webhook secret if due, and count it on the overdue metric with
+	// the cause it stayed overdue for so alerts can page on a genuine rotation
+	// malfunction (cause=system) and ignore user-caused failures (cause=user).
+	//
+	// When the repository is inaccessible the rotation call would be as doomed as
+	// any other write, so it is skipped -- but we still know why from the health
+	// check, so the overdue observation is classified from the test result (bad
+	// credentials/permissions -> user, server unavailable -> system). During the
+	// hook-failure cooldown the health check is skipped (repoAccessible reads
+	// stale), so nothing is recorded; the reconcile after the cooldown expires
+	// classifies it. A rotation that succeeds records nothing.
 	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret {
 		switch {
-		case !repoAccessible || isInHookFailureCooldown:
-			rc.webhookMetrics.recordRotationOverdue(rotationCauseBlocked)
+		case !repoAccessible:
+			rc.webhookMetrics.recordRotationOverdue(classifyOverdueCause(classifyTestResultReason(testResults)))
+		case isInHookFailureCooldown:
+			// Transient backoff window; the post-cooldown reconcile classifies.
 		default:
 			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
@@ -1461,6 +1467,19 @@ func classifyBuildFailureReason(err error) string {
 		return provisioning.ReasonServiceUnavailable
 	}
 	return classifyHookFailureReason(err)
+}
+
+// classifyOverdueCause maps a Ready condition reason to a webhook-secret rotation
+// overdue cause. A transient/infrastructure reason (server unavailable, rate
+// limited) is "system" and should page; everything else is the customer's to fix
+// (bad credentials, permissions, invalid spec) and is "user".
+func classifyOverdueCause(reason string) string {
+	switch reason {
+	case provisioning.ReasonServiceUnavailable, provisioning.ReasonRateLimited:
+		return reconcileCauseSystem
+	default:
+		return reconcileCauseUser
+	}
 }
 
 // classifyHookFailureReason maps a hook failure to a Ready condition reason,

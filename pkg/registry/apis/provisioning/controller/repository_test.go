@@ -2729,24 +2729,30 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 }
 
 // TestProcessHooks_RotationOverdueCause verifies that an overdue rotation is
-// counted with the cause it stayed overdue for: "blocked" when rotation can't be
-// attempted (repository inaccessible or in cooldown), and that nothing is
-// recorded when the secret is not due or rotation is attempted successfully.
+// counted with the cause it stayed overdue for. When the repository is
+// inaccessible the cause is classified from the health result (auth -> user,
+// server unavailable -> system) even though the rotation call is skipped; when
+// rotation is attempted and fails it is classified from the error; and nothing is
+// recorded when the secret is not due, rotation succeeds, or the repository is in
+// the hook-failure cooldown.
 func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 	overdue := &provisioning.WebhookStatus{ID: 123, LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli()}
 	notDue := &provisioning.WebhookStatus{ID: 123, LastRotated: time.Now().Add(-1 * 24 * time.Hour).UnixMilli()}
 
 	tests := []struct {
-		name       string
-		webhook    *provisioning.WebhookStatus
-		accessible bool
-		hookErr    error  // nil => rotation succeeds; assert.AnError => rotation fails
-		wantCause  string // "" => nothing should be recorded
+		name        string
+		webhook     *provisioning.WebhookStatus
+		testResults *provisioning.TestResults // nil => accessible
+		cooldown    bool
+		hookErr     error  // nil => rotation succeeds; assert.AnError => rotation fails
+		wantCause   string // "" => nothing should be recorded
 	}{
-		{"blocked when inaccessible", overdue, false, nil, rotationCauseBlocked},
-		{"system when rotation fails", overdue, true, assert.AnError, reconcileCauseSystem},
-		{"nothing when not due", notDue, true, nil, ""},
-		{"nothing when rotation succeeds", overdue, true, nil, ""},
+		{"user when inaccessible auth failure", overdue, &provisioning.TestResults{Code: http.StatusUnauthorized}, false, nil, reconcileCauseUser},
+		{"system when inaccessible server down", overdue, &provisioning.TestResults{Code: http.StatusServiceUnavailable}, false, nil, reconcileCauseSystem},
+		{"system when rotation attempt fails", overdue, nil, false, assert.AnError, reconcileCauseSystem},
+		{"nothing when not due", notDue, nil, false, nil, ""},
+		{"nothing when rotation succeeds", overdue, nil, false, nil, ""},
+		{"nothing during hook-failure cooldown", overdue, nil, true, nil, ""},
 	}
 
 	metric := "grafana_provisioning_webhook_secret_rotation_overdue_total"
@@ -2761,6 +2767,14 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{ObservedGeneration: 1, Webhook: tt.webhook},
 			}
+			if tt.cooldown {
+				// A recent hook failure puts the repository in the cooldown window.
+				obj.Status.Health = provisioning.HealthStatus{
+					Healthy: false,
+					Error:   provisioning.HealthFailureHook,
+					Checked: time.Now().UnixMilli(),
+				}
+			}
 			// hookErrSet lets a nil hookErr mean "webhook client succeeds" so rotation
 			// can complete; the default zero value would otherwise fail every call.
 			stub := &hookRepoStub{cfg: obj, hookErr: tt.hookErr, hookErrSet: true}
@@ -2774,7 +2788,8 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 			}
 
 			shouldRotate := rc.shouldRotateWebhookSecret(obj)
-			_, _, _, err := rc.processHooks(context.Background(), stub, obj, tt.accessible, shouldRotate)
+			accessible := isRepositoryAccessible(tt.testResults)
+			_, _, _, err := rc.processHooks(context.Background(), stub, obj, tt.testResults, accessible, shouldRotate)
 			require.NoError(t, err)
 
 			if tt.wantCause == "" {
