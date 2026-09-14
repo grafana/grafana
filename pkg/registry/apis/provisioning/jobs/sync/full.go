@@ -704,39 +704,34 @@ func applyResourcesInParallel(
 
 	sem := make(chan struct{}, maxSyncWorkers)
 	var wg sync.WaitGroup
-	startTask := func(run func(context.Context)) bool {
+	quotaBlocked := make([]bool, len(resources))
+
+loop:
+	for i, change := range resources {
 		if progress.TooManyErrors() != nil || ctx.Err() != nil {
-			return false
+			break
 		}
 		select {
 		case sem <- struct{}{}:
 		case <-ctx.Done():
-			return false
+			break loop
 		}
 		wg.Go(func() {
 			defer func() { <-sem }()
 			// A previous worker may have failed while this task waited for a slot.
 			if progress.TooManyErrors() == nil && ctx.Err() == nil {
-				wrapWithTimeout(ctx, resourceTimeout, run)
+				wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
+					quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+				})
 			}
 		})
-		return true
-	}
-
-	quotaBlocked := make([]bool, len(resources))
-	for i, change := range resources {
-		if !startTask(func(timeoutCtx context.Context) {
-			quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
-		}) {
-			break
-		}
 	}
 	wg.Wait()
 
 	// These files were blocked by quota before any write was attempted. Recheck
 	// quota after active writes finish; if capacity is available, attempt the first
 	// write. Keep this pass ordered so a manager-kind rejection can free capacity
-	// for the next file. Files still blocked use workers for read-only manager checks.
+	// for the next file. Files still blocked receive a quota warning without I/O.
 	for i, blocked := range quotaBlocked {
 		if !blocked {
 			continue
@@ -748,13 +743,13 @@ func applyResourcesInParallel(
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
 			blocked = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
 		})
-		if blocked && !startTask(func(timeoutCtx context.Context) {
-			recordQuotaBlockedCreate(timeoutCtx, change.Path, currentRef, repositoryResources, progress)
-		}) {
-			break
+		if blocked {
+			progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+				AsSkipped().
+				Build())
 		}
 	}
-	wg.Wait()
 
 	if err := progress.TooManyErrors(); err != nil {
 		return err

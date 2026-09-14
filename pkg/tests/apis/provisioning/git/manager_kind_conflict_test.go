@@ -17,31 +17,32 @@ import (
 // TestIntegrationProvisioning_GitSync_ManagerKindConflict covers full and incremental
 // pulls containing a Terraform-managed dashboard with allowsEdits=true and a valid
 // dashboard. It verifies that the conflicting dashboard stays unchanged, the valid
-// dashboard syncs, the job reports warnings, and lastRef advances. Both file orders
-// use one free quota slot so quota handling cannot hide the conflict or prevent
-// the valid dashboard from syncing.
+// dashboard syncs, and manager-kind warnings advance lastRef. When quota blocks the
+// conflicting file before a write, the quota warning instead preserves lastRef.
 func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 	for _, tt := range []struct {
 		syncType     string
 		order        string
 		conflictPath string
 		validPath    string
+		quotaLimit   int64
+		quotaBlocked bool
 	}{
-		{"full", "conflict-first", "a-conflicting.json", "b-valid.json"},
-		{"full", "valid-first", "b-conflicting.json", "a-valid.json"},
-		{"incremental", "conflict-first", "a-conflicting.json", "b-valid.json"},
-		{"incremental", "valid-first", "b-conflicting.json", "a-valid.json"},
+		{"full", "conflict-first", "a-conflicting.json", "b-valid.json", 3, false},
+		{"full", "valid-first", "b-conflicting.json", "a-valid.json", 3, false},
+		{"incremental", "conflict-first", "a-conflicting.json", "b-valid.json", 2, false},
+		{"incremental", "valid-first", "b-conflicting.json", "a-valid.json", 2, true},
 	} {
 		t.Run(tt.syncType+"/"+tt.order, func(t *testing.T) {
 			helper := sharedGitHelper(t)
-			helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
+			helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: tt.quotaLimit})
 			t.Cleanup(func() { helper.SetQuotaStatus(provisioning.QuotaStatus{}) })
 			repoName := "git-manager-kind-" + tt.syncType + "-" + tt.order
 			_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 				"initial.json": common.DashboardJSON("initial", "Initial Dashboard", 1),
 			})
 			common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-			helper.WaitForResourceQuotaLimit(t, repoName, 2)
+			helper.WaitForResourceQuotaLimit(t, repoName, tt.quotaLimit)
 			repoBefore, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 			require.NoError(t, err)
 			previousRef := common.MustNestedString(repoBefore.Object, "status", "sync", "lastRef")
@@ -71,8 +72,13 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 
 			conflict := utils.NewResourceManagerKindConflictError(currentManager,
 				utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+			warning, expectedRef := conflict.Error(), currentRef
+			if tt.quotaBlocked {
+				warning = "resource quota exceeded, skipping creation of " + tt.conflictPath
+				expectedRef = previousRef
+			}
 			opts := []common.SyncOption{
-				common.Repo(repoName), common.Warning(), common.Expect(hasWarningContaining(conflict.Error())),
+				common.Repo(repoName), common.Warning(), common.Expect(hasWarningContaining(warning)),
 			}
 			if tt.syncType == "incremental" {
 				opts = append(opts, common.Incremental)
@@ -89,13 +95,15 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 			require.EventuallyWithT(t, func(c *assert.CollectT) {
 				repo, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 				require.NoError(c, err)
-				assert.Equal(c, currentRef, common.MustNestedString(repo.Object, "status", "sync", "lastRef"))
+				assert.Equal(c, expectedRef, common.MustNestedString(repo.Object, "status", "sync", "lastRef"))
 				assert.Equal(c, "warning", common.MustNestedString(repo.Object, "status", "sync", "state"))
 				messages := common.MustNestedStringSlice(repo.Object, "status", "sync", "message")
 				require.Len(c, messages, 1)
-				assert.Contains(c, messages[0], conflict.Error())
+				assert.Contains(c, messages[0], warning)
 				assert.Contains(c, messages[0], "file: "+tt.conflictPath)
-				assert.Contains(c, messages[0], "name: conflicting")
+				if !tt.quotaBlocked {
+					assert.Contains(c, messages[0], "name: conflicting")
+				}
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	}

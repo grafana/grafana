@@ -67,8 +67,6 @@ func runIncrementalSyncTests(t *testing.T, tests []incrementalSyncTestCase) {
 			progress := jobs.NewMockJobProgressRecorder(t)
 
 			tt.setupMocks(repo, repoResources, progress)
-			repoResources.On("CheckResourceManagerKind", mock.Anything, mock.Anything, mock.Anything).
-				Return("", schema.GroupVersionKind{}, 0, nil).Maybe()
 
 			err := IncrementalSync(context.Background(), repo, tt.previousRef, tt.currentRef, repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tt.quotaTracker, false)
 
@@ -1937,6 +1935,6 @@ func TestIncrementalSync_ManagerKindConflictQuota(t *testing.T) {
 	testManagerKindConflictQuota(t, "incremental")
 }
 
-func TestIncrementalSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
-	testManagerKindConflictAfterQuotaFilled(t, "incremental")
+func TestIncrementalSync_QuotaBlockedCreateDoesNotAccessResource(t *testing.T) {
+	testQuotaBlockedCreateDoesNotAccessResource(t, "incremental")
 }

@@ -85,9 +85,6 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			if tt.allowsCreate {
 				repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").
 					Return("valid", gvk, 0, nil).Once()
-			} else {
-				repoResources.On("CheckResourceManagerKind", mock.Anything, "valid.json", "new-ref").
-					Return("valid", gvk, 0, nil).Once()
 			}
 			syncQuota := quotaTracker
 			if syncType == "full" {
@@ -156,81 +153,50 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 	}
 }
 
-func testManagerKindConflictAfterQuotaFilled(t *testing.T, syncType string) {
+func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) {
 	t.Helper()
-	conflict := utils.NewResourceManagerKindConflictError(
-		utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
-		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
-	)
-	for _, tt := range []struct {
-		name     string
-		checkErr error
-	}{
-		{name: "manager-kind conflict", checkErr: conflict},
-		{name: "genuine quota exhaustion"},
-		{name: "forbidden lookup", checkErr: apierrors.NewForbidden(schema.GroupResource{}, "second", fmt.Errorf("access denied"))},
-		{name: "server failure", checkErr: apierrors.NewInternalError(fmt.Errorf("server failure"))},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
-			defer cancel()
-			tracker := quotas.NewInMemoryQuotaTracker(9, 10)
-			progress := jobs.NewMockJobProgressRecorder(t)
-			progress.On("TooManyErrors").Return(nil)
-			validWritten := make(chan struct{})
-			progress.On("HasDirPathFailedCreation", "valid.json").Return(false)
-			progress.On("HasDirPathFailedCreation", "second.json").Run(func(mock.Arguments) {
-				select {
-				case <-validWritten:
-				case <-ctx.Done():
-					t.Error("valid write did not consume the last quota slot")
-				}
-			}).Return(false)
-			var resultsMu sync.Mutex
-			results := make(map[string]jobs.JobResourceResult)
-			progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				resultsMu.Lock()
-				defer resultsMu.Unlock()
-				result := args.Get(1).(jobs.JobResourceResult)
-				results[result.Path()] = result
-			}).Return().Times(2)
-			repoResources := resources.NewMockRepositoryResources(t)
-			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
-			repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").Run(func(mock.Arguments) {
-				close(validWritten)
-			}).Return("valid", gvk, 0, nil).Once()
-			repoResources.On("CheckResourceManagerKind", mock.Anything, "second.json", "new-ref").Return("second", gvk, 123, tt.checkErr).Once()
-			err := runManagerKindSync(t, ctx, syncType, []repository.VersionedFileChange{
-				{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
-				{Path: "second.json", Action: repository.FileActionCreated, Ref: "new-ref"},
-			}, repoResources, progress, tracker)
-			require.NoError(t, err)
-			require.Len(t, results, 2)
-			require.NoError(t, results["valid.json"].Error())
-			require.NoError(t, results["valid.json"].Warning())
-			require.Equal(t, repository.FileActionCreated, results["valid.json"].Action())
-			result := results["second.json"]
-			require.Equal(t, "second", result.Name())
-			require.Equal(t, gvk.Group, result.Group())
-			require.Equal(t, gvk.Kind, result.Kind())
-			require.Equal(t, 123, result.Bytes())
-			switch {
-			case tt.checkErr == nil:
-				require.NoError(t, result.Error())
-				require.Equal(t, repository.FileActionIgnored, result.Action())
-				require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
-			case utils.IsResourceManagerKindConflictError(tt.checkErr):
-				require.NoError(t, result.Error())
-				require.ErrorIs(t, result.Warning(), conflict)
-				require.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
-				require.Equal(t, repository.FileActionCreated, result.Action())
-			default:
-				require.ErrorIs(t, result.Error(), tt.checkErr)
-				require.NoError(t, result.Warning())
-			}
-			require.False(t, tracker.TryAcquire(), "the manager check must not release another file's reservation")
-		})
-	}
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("TooManyErrors").Return(nil)
+	validWritten := make(chan struct{})
+	progress.On("HasDirPathFailedCreation", "valid.json").Return(false)
+	progress.On("HasDirPathFailedCreation", "second.json").Run(func(mock.Arguments) {
+		select {
+		case <-validWritten:
+		case <-ctx.Done():
+			t.Error("valid write did not consume the last quota slot")
+		}
+	}).Return(false)
+	var resultsMu sync.Mutex
+	results := make(map[string]jobs.JobResourceResult)
+	progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		resultsMu.Lock()
+		defer resultsMu.Unlock()
+		result := args.Get(1).(jobs.JobResourceResult)
+		results[result.Path()] = result
+	}).Return().Times(2)
+	repoResources := resources.NewMockRepositoryResources(t)
+	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").Run(func(mock.Arguments) {
+		close(validWritten)
+	}).Return("valid", gvk, 0, nil).Once()
+	err := runManagerKindSync(t, ctx, syncType, []repository.VersionedFileChange{
+		{Path: "valid.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+		{Path: "second.json", Action: repository.FileActionCreated, Ref: "new-ref"},
+	}, repoResources, progress, tracker)
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	require.NoError(t, results["valid.json"].Error())
+	require.NoError(t, results["valid.json"].Warning())
+	require.Equal(t, repository.FileActionCreated, results["valid.json"].Action())
+	result := results["second.json"]
+	require.NoError(t, result.Error())
+	require.Equal(t, repository.FileActionIgnored, result.Action())
+	require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	repoResources.AssertNotCalled(t, "WriteResourceFromFile", mock.Anything, "second.json", mock.Anything)
+	require.False(t, tracker.TryAcquire(), "skipping a blocked file must not release another file's reservation")
 }
 
 func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources resources.RepositoryResources, progress *jobs.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {

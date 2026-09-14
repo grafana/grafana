@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -1204,9 +1203,6 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	// Second and third files: quota exceeded, skipped
 	progress.On("HasDirPathFailedCreation", "dashboards/b.json").Return(false).Maybe()
 	progress.On("HasDirPathFailedCreation", "dashboards/c.json").Return(false).Maybe()
-	for _, path := range []string{"dashboards/b.json", "dashboards/c.json"} {
-		repoResources.On("CheckResourceManagerKind", mock.Anything, path, "ref").Return("", schema.GroupVersionKind{}, 0, nil).Once()
-	}
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return (r.Path() == "dashboards/b.json" || r.Path() == "dashboards/c.json") &&
 			r.Warning() != nil && r.Error() == nil
@@ -2151,8 +2147,8 @@ func TestFullSync_ManagerKindConflictQuota(t *testing.T) {
 	testManagerKindConflictQuota(t, "full")
 }
 
-func TestFullSync_ManagerKindConflictAfterQuotaFilled(t *testing.T) {
-	testManagerKindConflictAfterQuotaFilled(t, "full")
+func TestFullSync_QuotaBlockedCreateDoesNotAccessResource(t *testing.T) {
+	testQuotaBlockedCreateDoesNotAccessResource(t, "full")
 }
 
 func TestFullSync_DeferredCreates(t *testing.T) {
@@ -2254,7 +2250,7 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 	}
 }
 
-func TestFullSync_QuotaChecksUseWorkerLimit(t *testing.T) {
+func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
 	const files, limit, workers = 128, 8, 4
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
@@ -2273,10 +2269,7 @@ func TestFullSync_QuotaChecksUseWorkerLimit(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
 	repoResources.On("WriteResourceFromFile", mock.Anything, mock.Anything, "ref").Return("dashboard", gvk, 0, nil).Times(limit)
-	started := make(chan struct{}, files-limit)
-	release := make(chan struct{})
 	var mu sync.Mutex
-	active, peak := 0, 0
 	results := make(map[string]jobs.JobResourceResult)
 	progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		mu.Lock()
@@ -2284,51 +2277,11 @@ func TestFullSync_QuotaChecksUseWorkerLimit(t *testing.T) {
 		result := args.Get(1).(jobs.JobResourceResult)
 		results[result.Path()] = result
 	}).Return().Times(files)
-	repoResources.On("CheckResourceManagerKind", mock.Anything, mock.Anything, "ref").
-		Return(func(checkCtx context.Context, path, ref string) (string, schema.GroupVersionKind, int, error) {
-			mu.Lock()
-			active++
-			peak = max(peak, active)
-			mu.Unlock()
-			defer func() {
-				mu.Lock()
-				active--
-				mu.Unlock()
-			}()
-			started <- struct{}{}
-			select {
-			case <-release:
-				return path, gvk, 0, nil
-			case <-checkCtx.Done():
-				return path, gvk, 0, checkCtx.Err()
-			}
-		}).Times(files - limit)
 	tracker := quotas.NewInMemoryQuotaTracker(0, limit)
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	clients := resources.NewMockResourceClients(t)
-	done := make(chan struct{})
-	var syncErr error
-	go func() {
-		defer close(done)
-		syncErr = FullSync(ctx, repo, compare.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), workers, metrics, tracker, false, time.Second)
-	}()
-	defer func() {
-		cancel()
-		<-done
-	}()
-	// Hold the first checks so the test observes the pool at full capacity.
-	for range workers {
-		select {
-		case <-started:
-		case <-ctx.Done():
-			t.Fatal("manager checks did not run concurrently")
-		}
-	}
-	close(release)
-	<-done
-	require.NoError(t, syncErr)
-	require.Equal(t, workers, peak, "manager checks must use, and never exceed, the worker limit")
-	require.Zero(t, active)
+	err := FullSync(ctx, repo, compare.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), workers, metrics, tracker, false, time.Second)
+	require.NoError(t, err)
 	require.Len(t, results, files)
 	created, skipped := 0, 0
 	for _, result := range results {
@@ -2345,103 +2298,4 @@ func TestFullSync_QuotaChecksUseWorkerLimit(t *testing.T) {
 	require.Equal(t, limit, created)
 	require.Equal(t, files-limit, skipped)
 	require.False(t, tracker.TryAcquire())
-}
-
-func TestFullSync_QuotaChecksStop(t *testing.T) {
-	const workers = 2
-	for _, tt := range []struct {
-		name    string
-		cancel  bool
-		timeout bool
-	}{
-		{name: "job cancellation", cancel: true},
-		{name: "error limit"},
-		{name: "resource timeout", timeout: true},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
-			defer cancel()
-			repoResources := resources.NewMockRepositoryResources(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
-			progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
-			tooManyErrors := fmt.Errorf("too many resource errors")
-			lookupErr := apierrors.NewInternalError(fmt.Errorf("lookup failed"))
-			var stopped atomic.Bool
-			progress.On("TooManyErrors").Return(func() error {
-				if stopped.Load() {
-					return tooManyErrors
-				}
-				return nil
-			})
-			var mu sync.Mutex
-			var results []jobs.JobResourceResult
-			progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				mu.Lock()
-				defer mu.Unlock()
-				results = append(results, args.Get(1).(jobs.JobResourceResult))
-				if !tt.cancel {
-					stopped.Store(true)
-				}
-			}).Return().Times(workers)
-			started := make(chan struct{}, workers)
-			release := make(chan struct{})
-			repoResources.On("CheckResourceManagerKind", mock.Anything, mock.Anything, "ref").
-				Return(func(checkCtx context.Context, path, ref string) (string, schema.GroupVersionKind, int, error) {
-					started <- struct{}{}
-					select {
-					case <-release:
-						return path, schema.GroupVersionKind{}, 0, lookupErr
-					case <-checkCtx.Done():
-						return path, schema.GroupVersionKind{}, 0, checkCtx.Err()
-					}
-				}).Times(workers)
-			changes := make([]ResourceFileChange, workers+3)
-			for i := range changes {
-				changes[i] = ResourceFileChange{Path: fmt.Sprintf("dashboard-%d.json", i), Action: repository.FileActionCreated}
-			}
-			clients := resources.NewMockResourceClients(t)
-			done := make(chan struct{})
-			var syncErr error
-			go func() {
-				defer close(done)
-				syncErr = applyResourcesInParallel(ctx, changes, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), workers, quotas.NewInMemoryQuotaTracker(1, 1), false, time.Second)
-			}()
-			defer func() {
-				cancel()
-				<-done
-			}()
-			for range workers {
-				select {
-				case <-started:
-				case <-ctx.Done():
-					t.Fatal("manager checks did not fill the worker pool")
-				}
-			}
-			switch {
-			case tt.cancel:
-				cancel()
-			case !tt.timeout:
-				close(release)
-			}
-			<-done
-			if tt.cancel {
-				require.ErrorIs(t, syncErr, context.Canceled)
-			} else {
-				require.ErrorIs(t, syncErr, tooManyErrors)
-				require.NoError(t, ctx.Err(), "resource checks must stop before the job deadline")
-			}
-			require.Len(t, results, workers)
-			for _, result := range results {
-				require.NoError(t, result.Warning())
-				switch {
-				case tt.cancel:
-					require.ErrorIs(t, result.Error(), context.Canceled)
-				case tt.timeout:
-					require.ErrorIs(t, result.Error(), context.DeadlineExceeded)
-				default:
-					require.ErrorIs(t, result.Error(), lookupErr)
-				}
-			}
-		})
-	}
 }

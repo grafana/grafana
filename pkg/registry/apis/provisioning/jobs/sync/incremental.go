@@ -263,7 +263,10 @@ func applyIncrementalChanges(
 		}
 
 		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
-			recordQuotaBlockedCreate(ctx, change.Path, change.Ref, repositoryResources, progress)
+			progress.Record(ctx, resultBuilder.
+				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+				AsSkipped().
+				Build())
 			continue
 		}
 

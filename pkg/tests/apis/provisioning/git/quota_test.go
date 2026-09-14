@@ -55,13 +55,9 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		require.Len(t, jobObj.Status.Warnings, 1,
 			"exactly 1 quota warning expected for the skipped dashboard")
-		require.Equal(t, "resource quota exceeded, skipping creation of dashboard3.json (file: dashboard3.json, name: incr-quota-dash-003, action: ignored)",
+		require.Equal(t, "resource quota exceeded, skipping creation of dashboard3.json (file: dashboard3.json, action: ignored)",
 			jobObj.Status.Warnings[0],
-			"quota warning should identify the skipped file and resource")
-		require.Equal(t, []*provisioning.JobResourceSummary{{
-			Group: "dashboard.grafana.app", Kind: "Dashboard", Warning: 1,
-			Warnings: jobObj.Status.Warnings,
-		}}, jobObj.Status.Summary, "quota warning should be attributed to the dashboard kind")
+			"quota warning should identify the skipped file")
 
 		// Quota is still at 2/2 — dashboard3 was never created.
 		helper.RequireRepoDashboardCount(t, repo, 2)
@@ -214,7 +210,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.Len(t, jobObj.Status.Warnings, 1,
 			"exactly 1 quota warning expected for the skipped dashboard")
 		require.Equal(t,
-			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, name: incr-fblock-dash-003, action: ignored)",
+			"resource quota exceeded, skipping creation of folder2/dashboard3.json (file: folder2/dashboard3.json, action: ignored)",
 			jobObj.Status.Warnings[0],
 			"quota warning should identify the skipped file")
 
