@@ -203,6 +203,8 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
   TableRefresh: "table.refresh",
+  /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
+  TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
@@ -1252,6 +1254,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refresh", false, options).value;
+};
+
+/**
+ * Catch-all toggle for new features developed as part of the Q3 table panel refresh
+ *
+ * **Details:**
+ * - flag key: `table.refreshNewFeatures`
+ * - default value: `false`
+ */
+export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refreshNewFeatures", false, options).value;
 };
 
 /**
