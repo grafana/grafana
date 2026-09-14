@@ -733,9 +733,10 @@ func applyResourcesInParallel(
 	}
 	wg.Wait()
 
-	// Retry quota-blocked creates in order after active writes settle: a
-	// manager-kind rejection can free capacity for the next file. Once quota
-	// stays full, use the workers for the remaining read-only manager checks.
+	// These files were blocked by quota before any write was attempted. Recheck
+	// quota after active writes finish; if capacity is available, attempt the first
+	// write. Keep this pass ordered so a manager-kind rejection can free capacity
+	// for the next file. Files still blocked use workers for read-only manager checks.
 	for i, blocked := range quotaBlocked {
 		if !blocked {
 			continue
