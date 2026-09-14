@@ -5,11 +5,11 @@ go 1.26.6
 // Direct requirements -- every entry needs an owner
 require (
 	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
-	cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
+	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.66.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
-	filippo.io/age v1.3.1 // @grafana/identity-access-team
+	filippo.io/age v1.3.2 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1 // @grafana/grafana-backend-group
@@ -320,7 +320,7 @@ require (
 	cloud.google.com/go/iam v1.11.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	cloud.google.com/go/monitoring v1.29.0 // indirect
-	cuelang.org/go v0.11.1 // indirect
+	cuelang.org/go v0.17.1 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
@@ -711,7 +711,11 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
-require github.com/maypok86/otter/v2 v2.3.0 // indirect
+require (
+	github.com/emicklei/proto v1.14.3 // indirect
+	github.com/maypok86/otter/v2 v2.3.0 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
+)
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
