@@ -95,6 +95,8 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
   GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
+  /** Enables the new command palette architecture */
+  GrafanaNewCmdk: "grafana.newCmdk",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
@@ -660,6 +662,17 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantUserPermissions", false, options).value;
+};
+
+/**
+ * Enables the new command palette architecture
+ *
+ * **Details:**
+ * - flag key: `grafana.newCmdk`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newCmdk", false, options).value;
 };
 
 /**

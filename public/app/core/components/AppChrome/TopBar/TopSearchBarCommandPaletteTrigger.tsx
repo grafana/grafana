@@ -5,10 +5,12 @@ import React, { useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaNewCmdk } from '@grafana/runtime/internal';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getModKey } from 'app/core/utils/browser';
+import { toggleCmdk } from 'app/features/cmdk/visibility';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -17,11 +19,16 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
     kbarSearchQuery: kbarState.searchQuery,
     kbarIsOpen: kbarState.visualState === VisualState.showing,
   }));
+  const newCmdkEnabled = useFlagGrafanaNewCmdk();
 
   const isLargeScreen = useMediaQueryMinWidth('lg');
 
   const onOpenSearch = () => {
-    kbar.toggle();
+    if (newCmdkEnabled) {
+      toggleCmdk();
+    } else {
+      kbar.toggle();
+    }
   };
 
   if (!isLargeScreen) {
