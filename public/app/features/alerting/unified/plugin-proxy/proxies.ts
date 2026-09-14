@@ -1,9 +1,7 @@
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
-import { createBridgeURL } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
-import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
-import { isGrafanaRulesSource } from '../utils/datasource';
+import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { parseQueryParamMatchers } from '../utils/matchers';
 import { isDataSourceManagedIdentifier, toPluginRuleIdentifier, unescapePathSeparators } from '../utils/rule-id';
 
@@ -40,8 +38,14 @@ const DRAWER_PARAMS = {
   globalConfig: 'globalConfig',
 } as const;
 
+/**
+ * Same shape as `createBridgeURL`, written out here rather than imported. That one lives in a file
+ * full of React components, and the route table reaches this module while the app is starting up,
+ * so importing it would drag a component tree into the first bundle the browser downloads.
+ */
 function pluginUrl(path: string, searchParams?: URLSearchParams): string {
-  return createBridgeURL(SupportedPlugin.PrometheusAlerting, `/${path}`, searchParams);
+  const query = new URLSearchParams(searchParams).toString();
+  return `/a/${SupportedPlugin.PrometheusAlerting}/${path}` + (query ? `?${query}` : '');
 }
 
 function decode(value: string): string {
@@ -70,7 +74,7 @@ function isDataSourceManaged(name: string | undefined): boolean {
   if (!name) {
     return false;
   }
-  return !isGrafanaRulesSource(name);
+  return name !== GRAFANA_RULES_SOURCE_NAME;
 }
 
 /** Grafana's URLs name a data source, the plugin's want its UID. */
