@@ -80,7 +80,7 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
 		return provisioning.ReasonResourceInvalid, true
-	case utils.IsResourceManagerKindConflictError(err):
+	case utils.IsForbiddenManagerKindChangeError(err):
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &unmanagedErr):
 		return provisioning.ReasonResourceInvalid, true

@@ -334,7 +334,7 @@ func applyChange(
 	}
 	resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
-		if change.Action == repository.FileActionCreated && utils.IsResourceManagerKindConflictError(err) {
+		if change.Action == repository.FileActionCreated && utils.IsForbiddenManagerKindChangeError(err) {
 			quotaTracker.Release()
 		}
 		writeSpan.RecordError(err)

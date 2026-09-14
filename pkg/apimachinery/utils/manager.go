@@ -109,7 +109,7 @@ func (k ManagerKind) IsClassic() bool {
 	}
 }
 
-func NewResourceManagerKindConflictError(current, requested ManagerProperties) *apierrors.StatusError {
+func NewForbiddenManagerKindChangeError(current, requested ManagerProperties) *apierrors.StatusError {
 	return &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status: metav1.StatusFailure,
 		Code:   http.StatusForbidden,
@@ -125,7 +125,7 @@ func NewResourceManagerKindConflictError(current, requested ManagerProperties) *
 	}}
 }
 
-func IsResourceManagerKindConflictError(err error) bool {
+func IsForbiddenManagerKindChangeError(err error) bool {
 	var statusErr apierrors.APIStatus
 	if !errors.As(err, &statusErr) {
 		return false

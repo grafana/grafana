@@ -12,14 +12,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestNewResourceManagerKindConflictError(t *testing.T) {
+func TestNewForbiddenManagerKindChangeError(t *testing.T) {
 	for _, current := range []ManagerProperties{
 		{Kind: ManagerKindTerraform, Identity: "terraform-provider"},
 		{Kind: ManagerKindClassicFP}, //nolint:staticcheck
 	} {
 		t.Run(string(current.Kind), func(t *testing.T) {
 			requested := ManagerProperties{Kind: ManagerKindRepo, Identity: "dashboards"}
-			err := NewResourceManagerKindConflictError(current, requested)
+			err := NewForbiddenManagerKindChangeError(current, requested)
 			require.True(t, apierrors.IsForbidden(err))
 			require.Equal(t, int32(http.StatusForbidden), err.Status().Code)
 			require.Equal(t, metav1.StatusReasonForbidden, err.Status().Reason)
@@ -31,8 +31,8 @@ func TestNewResourceManagerKindConflictError(t *testing.T) {
 	}
 }
 
-func TestIsResourceManagerKindConflictError(t *testing.T) {
-	conflict := NewResourceManagerKindConflictError(
+func TestIsForbiddenManagerKindChangeError(t *testing.T) {
+	conflict := NewForbiddenManagerKindChangeError(
 		ManagerProperties{Kind: ManagerKindTerraform, Identity: "terraform-provider"},
 		ManagerProperties{Kind: ManagerKindRepo, Identity: "dashboards"},
 	)
@@ -87,7 +87,7 @@ func TestIsResourceManagerKindConflictError(t *testing.T) {
 		}}, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, IsResourceManagerKindConflictError(tt.err))
+			require.Equal(t, tt.want, IsForbiddenManagerKindChangeError(tt.err))
 		})
 	}
 }

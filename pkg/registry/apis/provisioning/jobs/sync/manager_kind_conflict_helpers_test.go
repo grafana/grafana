@@ -25,7 +25,7 @@ import (
 
 func testManagerKindConflictQuota(t *testing.T, syncType string) {
 	t.Helper()
-	conflict := utils.NewResourceManagerKindConflictError(
+	conflict := utils.NewForbiddenManagerKindChangeError(
 		utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
 		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
 	)
@@ -130,7 +130,7 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			firstResult, validResult := results["first.json"], results["valid.json"]
 			require.Equal(t, "first.json", firstResult.Path())
 			require.Equal(t, tt.action, firstResult.Action())
-			if utils.IsResourceManagerKindConflictError(tt.writeErr) {
+			if utils.IsForbiddenManagerKindChangeError(tt.writeErr) {
 				require.NoError(t, firstResult.Error())
 				require.ErrorIs(t, firstResult.Warning(), tt.writeErr)
 				require.Equal(t, provisioning.ReasonResourceInvalid, firstResult.WarningReason())

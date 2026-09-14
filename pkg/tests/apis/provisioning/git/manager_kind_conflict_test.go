@@ -70,7 +70,7 @@ func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 			currentRef := strings.TrimSpace(ref)
 			require.NotEqual(t, previousRef, currentRef)
 
-			conflict := utils.NewResourceManagerKindConflictError(currentManager,
+			conflict := utils.NewForbiddenManagerKindChangeError(currentManager,
 				utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
 			warning, expectedRef := conflict.Error(), currentRef
 			if tt.quotaBlocked {

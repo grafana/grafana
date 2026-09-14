@@ -275,7 +275,7 @@ func applyIncrementalChanges(
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
-				if utils.IsResourceManagerKindConflictError(err) {
+				if utils.IsForbiddenManagerKindChangeError(err) {
 					quotaTracker.Release()
 				}
 				writeSpan.RecordError(err)

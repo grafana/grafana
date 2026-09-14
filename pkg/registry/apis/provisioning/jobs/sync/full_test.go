@@ -2152,7 +2152,7 @@ func TestFullSync_QuotaBlockedCreateDoesNotAccessResource(t *testing.T) {
 }
 
 func TestFullSync_DeferredCreates(t *testing.T) {
-	conflict := utils.NewResourceManagerKindConflictError(
+	conflict := utils.NewForbiddenManagerKindChangeError(
 		utils.ManagerProperties{Kind: utils.ManagerKindTerraform},
 		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
 	)

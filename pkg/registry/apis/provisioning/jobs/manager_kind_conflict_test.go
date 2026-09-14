@@ -21,7 +21,7 @@ import (
 )
 
 func TestResourceResult_ManagerKindConflict(t *testing.T) {
-	conflict := utils.NewResourceManagerKindConflictError(
+	conflict := utils.NewForbiddenManagerKindChangeError(
 		utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider"},
 		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
 	)
@@ -61,7 +61,7 @@ func TestResourceResult_ManagerKindConflict(t *testing.T) {
 }
 
 func TestJobProcessor_ManagerKindConflict(t *testing.T) {
-	conflict := utils.NewResourceManagerKindConflictError(
+	conflict := utils.NewForbiddenManagerKindChangeError(
 		utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider"},
 		utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repo"},
 	)

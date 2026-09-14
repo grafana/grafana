@@ -95,7 +95,7 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Changing the manager kind is not allowed.
 	// Remove the old manager first, then add a new one with a different kind.
 	if hasOld && managerNew.Kind != managerOld.Kind {
-		return utils.NewResourceManagerKindConflictError(managerOld, managerNew)
+		return utils.NewForbiddenManagerKindChangeError(managerOld, managerNew)
 	}
 
 	// For non-Terraform managers, identity changes are also blocked.

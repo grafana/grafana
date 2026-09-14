@@ -44,7 +44,7 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 			err = checkManagerPropertiesOnUpdateSpec(provisioner, obj, old)
 			require.Error(t, err)
 			require.True(t, apierrors.IsForbidden(err))
-			require.True(t, utils.IsResourceManagerKindConflictError(err))
+			require.True(t, utils.IsForbiddenManagerKindChangeError(err))
 			require.True(t, apierrors.HasStatusCause(err, "ResourceManagerKindConflict"))
 			require.Contains(t, err.Error(), string(current.Kind))
 			require.Contains(t, err.Error(), `to "repo" (identity "dashboards")`)
