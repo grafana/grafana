@@ -2225,7 +2225,7 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 }
 
 func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if b.indexMetrics == nil || response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
+	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
 		return
 	}
 	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
