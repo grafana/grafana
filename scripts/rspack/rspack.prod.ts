@@ -5,6 +5,7 @@ import { merge } from 'webpack-merge';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import { fullStatsOptions } from './plugins/webpackStatsCompat.ts';
+import bootConfig from './rspack.boot.ts';
 import common, { type Env, PUBLIC_PATH } from './rspack.common.ts';
 import swaggerConfig from './rspack.swagger.ts';
 
@@ -76,5 +77,5 @@ export default (env: Env = {}) => {
   }
 
   const mergedProdConfig = merge(common(env), prodConfig);
-  return Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });
+  return Object.assign([mergedProdConfig, swaggerConfig(env), bootConfig(env)], { parallelism: 2 });
 };

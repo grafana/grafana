@@ -500,12 +500,9 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
-	if syncInterval < rc.minSyncInterval {
-		// In case the sync interval is lower than the minimum sync interval set by the system
-		// we should default to the latter
-		syncInterval = rc.minSyncInterval
-	}
+	// In case the sync interval is lower than the minimum sync interval set by the system
+	// we should default to the latter
+	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists

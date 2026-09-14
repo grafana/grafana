@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Megtekintheti a Grafana által felügyelt riasztási szabályai által generált összes riasztási esemény előzményeit. Minden riasztási esemény megjelenik, függetlenül attól, hogy be vannak-e állítva némítások vagy némítási időzítések.",
         "notifications": "Megtekintheti a Grafana által felügyelt riasztási szabályok által küldött összes értesítés előzményeit."
@@ -7760,6 +7763,9 @@
         "title": "Nem mentett módosítások"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Nem ezt keresi? Tekintse meg a <2>további javasolt irányítópultokat</2>, vagy <6>hozzon létre egy irányítópultot az alapoktól</6>.",
       "title": "Ön jelenleg a következőt tekinti meg: {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Cím"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Beállítások mentése",
       "save-button-disabled-tooltip": "Mentés előtt javítsa ki a validálási hibákat",
       "save-button-disabled-tooltip-yaml": "A dokumentumban validálási hibák vannak. Váltson JSON-ra a beágyazott hibarészletek megtekintéséhez.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Félkövér",
       "tooltip-bullet-list": "Listajeles lista",
       "tooltip-checklist": "Ellenőrző lista",
+      "tooltip-diagram": "",
       "tooltip-heading": "Irány",
       "tooltip-insert-variable": "Változó beszúrása",
       "tooltip-italic": "Dőlt",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Sávdiagram – halmozott",
       "bar-stacked-percent": "Sávdiagram – százalék szerint halmozott",
       "line": "Vonaldiagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Időzóna hozzáadása",

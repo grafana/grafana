@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Prohlédněte si historii všech událostí výstrah generovaných pravidly výstrah spravovanými Grafanou. Zobrazí se všechny události výstrah bez ohledu na to, zda je nastaveno časování potlačení nebo ztlumení.",
         "notifications": "Zobrazte historii všech oznámení odeslaných na základě pravidel výstrah spravovaných Grafanou."
@@ -7854,6 +7857,9 @@
         "title": "Neuložené změny"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Hledáte něco jiného? Prohlédněte si <2>další navrhované nástěnky</2> nebo <6>vytvořte nástěnku od začátku</6>.",
       "title": "Prohlížíte si {{title}}"
@@ -8110,6 +8116,7 @@
       "title-label": "Název"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Uložit změny",
       "save-button-disabled-tooltip": "Před uložením opravte chyby ověření",
       "save-button-disabled-tooltip-yaml": "Dokument obsahuje chyby ověření. Přepnutím na JSON zobrazíte podrobnosti o chybách v řádku.",
@@ -16871,6 +16878,7 @@
       "tooltip-bold": "Tučné",
       "tooltip-bullet-list": "Seznam s odrážkami",
       "tooltip-checklist": "Kontrolní seznam",
+      "tooltip-diagram": "",
       "tooltip-heading": "Nadpis",
       "tooltip-insert-variable": "Vložit proměnnou",
       "tooltip-italic": "Kurzíva",
@@ -16884,8 +16892,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17106,6 +17124,10 @@
       "bar-stacked": "Sloupcový graf – kumulovaný",
       "bar-stacked-percent": "Sloupcový graf – kumulovaný podle procenta",
       "line": "Čárový graf"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Přidat časové pásmo",
