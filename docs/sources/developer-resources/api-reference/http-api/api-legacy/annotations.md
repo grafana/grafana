@@ -107,7 +107,7 @@ Content-Type: application/json
 ```
 
 {{< admonition type="note" >}}
-Alerting fields (`alertId`, `alertName`, `newState`, `prevState`) are omitted when the annotation is not tied to an alert. A missing `alertId` means the same as `0`: not an alert annotation.
+Alerting fields, `alertId`, `alertName`, `newState`, `prevState`, are omitted when the annotation isn't tied to an alert. A missing `alertId` means the same as `0`: not an alert annotation.
 {{< /admonition >}}
 
 > Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
