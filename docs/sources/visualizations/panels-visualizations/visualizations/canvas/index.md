@@ -367,7 +367,8 @@ Control the placement of elements on the canvas with the following options:
 | Option          | Description     |
 | --------------- | --------------- |
 | Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
-| Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
+| Horizontal constraint | Set the element's horizontal constraint. Choose from: **Left**, **Right**, **Left & right**, **Center**, and **Scale**. |
+| Vertical constraint | Set the element's vertical constraint. Choose from: **Top**, **Bottom**, **Top & bottom**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
 | Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
 
 <!-- prettier-ignore-end -->
