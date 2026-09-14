@@ -9,13 +9,13 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
-import { useStoredString } from 'app/core/hooks/useStored';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
+import { useStoredTeamSelection } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -30,8 +30,6 @@ import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
 import { useHomepageSolutions } from './useHomepageSolutions';
-
-const HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -86,12 +84,10 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  // Persisted team scope for the alerts view and header pill; '' is the "your teams" default.
-  const [storedTeam, setStoredTeam] = useStoredString(HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY, '');
-  const team = storedTeam || undefined;
-  const setTeam = useCallback((next: string | undefined) => setStoredTeam(next ?? ''), [setStoredTeam]);
+  // Persisted team scope shared by the alerts and incidents views and their header pills.
+  const [team, setTeam] = useStoredTeamSelection();
   const alertsData = useFiringAlerts(team);
-  const incidentsData = useIncidents();
+  const incidentsData = useIncidents(team);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;

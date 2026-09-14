@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { useAsync } from 'react-use';
 
-import { rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
-import { fetchTagValues } from 'app/features/alerting/unified/triage/scene/tagKeysProviders';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-const DEFAULT_OPTION_VALUE = '';
-const TEAM_VALUES_TIME_RANGE = { from: 'now-7d', to: 'now' };
+import {
+  ALL_TEAMS,
+  type TeamSelection,
+  decodeTeamSelection,
+  encodeTeamSelection,
+  resolveTeamScope,
+} from './teamFilter';
 
 const collator = new Intl.Collator();
 
@@ -17,7 +17,7 @@ const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
   label: userHasTeams
     ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
     : t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: DEFAULT_OPTION_VALUE,
+  value: encodeTeamSelection(undefined),
 });
 
 // Explicit org-wide scope for users who do belong to teams; without it they'd have
@@ -25,58 +25,52 @@ const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
 // default option already reads "All teams".
 const getAllTeamsOption = (): ComboboxOption<string> => ({
   label: t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: ALL_VARIABLE_VALUE,
+  value: ALL_TEAMS,
 });
 
 interface Props {
-  selectedTeam: string | undefined;
-  onChange: (team: string | undefined) => void;
-  /** Whether the signed-in user belongs to any teams; decides the default option's wording. */
+  /** Options to offer; undefined while loading or on error, which hides the dropdown. */
+  teamValues: string[] | undefined;
+  selectedTeam: TeamSelection;
+  onChange: (team: TeamSelection) => void;
+  /**
+   * Whether the default (unselected) scope is the user's own teams. Decides the default
+   * option's wording and whether the explicit "All teams" escape hatch is offered.
+   */
   userHasTeams: boolean;
+  ariaLabel: string;
 }
 
 /**
- * Dropdown to filter the homepage firing alerts by team. The options are the
- * `team` label values seen on alerts (from the state-history Prometheus
- * datasource), not Grafana org teams — that's what the alertmanager matcher
- * actually filters on. Hidden while values load, on error, when no alert
- * carries a team label, or when the state-history datasource isn't configured.
+ * Dropdown to filter a homepage view by team. Presentational: the caller supplies
+ * the option values (alert label values or incident field values), so both tabs can
+ * share one selection while offering their own option lists.
  */
-export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Props) {
-  // Read at render time (not module scope) so tests can vary the config.
-  const datasourceConfigured = Boolean(config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID);
-
-  // Fetched once per mount; the label-value set changes slowly enough that
-  // client-side filtering over it covers the search box.
-  const {
-    value: teamValues,
-    loading,
-    error,
-  } = useAsync(async () => {
-    if (!datasourceConfigured) {
-      return [];
-    }
-    // Fetch the team values for the last 7 days
-    const values = await fetchTagValues(rangeUtil.convertRawToRange(TEAM_VALUES_TIME_RANGE), 'team');
-    return values.map((v) => String(v.value ?? v.text)).sort((a, b) => collator.compare(a, b));
-  }, [datasourceConfigured]);
-
+export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHasTeams, ariaLabel }: Props) {
+  // Single sort site for both tabs, so neither data hook has to.
+  const sortedValues = useMemo(() => [...(teamValues ?? [])].sort((a, b) => collator.compare(a, b)), [teamValues]);
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
   const valueOption = useMemo(() => {
-    if (selectedTeam === ALL_VARIABLE_VALUE) {
-      // Render the label, never the raw sentinel.
-      return getAllTeamsOption();
+    const scope = resolveTeamScope(selectedTeam);
+    switch (scope.kind) {
+      case 'all':
+        // Render the label, never the raw sentinel. Without a "your teams" scope the
+        // default option already means "All teams", so highlight that one.
+        return userHasTeams ? getAllTeamsOption() : getDefaultOption(false);
+      case 'team':
+        return { label: scope.team, value: scope.team };
+      case 'default':
+        return getDefaultOption(userHasTeams);
     }
-    return selectedTeam ? { label: selectedTeam, value: selectedTeam } : getDefaultOption(userHasTeams);
   }, [selectedTeam, userHasTeams]);
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       const query = inputValue.toLowerCase();
-      const teamOptions = (teamValues ?? [])
-        .filter((team) => team.toLowerCase().includes(query.toLowerCase()))
+      const teamOptions = sortedValues
+        .filter((team) => team.toLowerCase().includes(query))
         .map((team) => ({ label: team, value: team }));
       // The scope sentinels only belong on the unfiltered default list. "All teams"
       // is added only for team members — otherwise the default option already says it.
@@ -84,10 +78,10 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
         ? teamOptions
         : [getDefaultOption(userHasTeams), ...(userHasTeams ? [getAllTeamsOption()] : []), ...teamOptions];
     },
-    [teamValues, userHasTeams]
+    [sortedValues, userHasTeams]
   );
 
-  if (!datasourceConfigured || loading || error || !teamValues || teamValues.length === 0) {
+  if (sortedValues.length === 0) {
     return null;
   }
 
@@ -98,13 +92,18 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
       options={loadOptions}
       value={valueOption}
       onChange={(option) => {
-        const newTeam = option.value === DEFAULT_OPTION_VALUE ? undefined : option.value;
-        // Re-selecting the current value is a no-op so the parent doesn't re-render.
-        if (newTeam !== selectedTeam) {
+        const newTeam = decodeTeamSelection(option.value);
+        // Re-selecting the current value is a no-op so the parent doesn't re-render. Without a
+        // "your teams" scope, the default option and the sentinel both mean "All teams", so
+        // re-picking it must not silently flip the shared selection out of the sentinel.
+        const unchanged =
+          newTeam === selectedTeam ||
+          (!userHasTeams && newTeam === undefined && resolveTeamScope(selectedTeam).kind === 'all');
+        if (!unchanged) {
           onChange(newTeam);
         }
       }}
-      aria-label={t('home.alerts-incidents.team-filter-label', 'Filter alerts by team')}
+      aria-label={ariaLabel}
     />
   );
 }

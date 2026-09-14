@@ -13,6 +13,7 @@ import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { TeamFilterCombobox } from './TeamFilterCombobox';
+import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { type IncidentsData } from './useIncidents';
 
@@ -51,7 +52,10 @@ export function AlertIncidentTabs({
     pluginId: incidentsPluginId,
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
+    teamValues: incidentsTeamValues,
   } = incidentsData;
+  // Fetched here rather than in the dropdown so the values survive tab switches.
+  const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -115,12 +119,25 @@ export function AlertIncidentTabs({
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {canViewAlerts && (
-          // Hidden rather than unmounted on the Incidents tab, so the combobox keeps
-          // its fetched team values instead of refetching them on every tab switch.
-          <div hidden={activeTab !== ALERTS_TAB_ID}>
-            <TeamFilterCombobox selectedTeam={team} onChange={setTeam} userHasTeams={hasTeams} />
-          </div>
+        {/* One shared selection, but each tab offers its own option list. */}
+        {activeTab === ALERTS_TAB_ID && canViewAlerts && (
+          <TeamFilterCombobox
+            teamValues={alertTeamValues}
+            selectedTeam={team}
+            onChange={setTeam}
+            userHasTeams={hasTeams}
+            ariaLabel={t('home.alerts-incidents.team-filter-label', 'Filter alerts by team')}
+          />
+        )}
+        {activeTab === INCIDENTS_TAB_ID && canViewIncidents && (
+          <TeamFilterCombobox
+            teamValues={incidentsTeamValues}
+            selectedTeam={team}
+            onChange={setTeam}
+            // Incidents have no "your teams" scope: the unfiltered default is every active incident.
+            userHasTeams={false}
+            ariaLabel={t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team')}
+          />
         )}
       </Stack>
 

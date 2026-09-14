@@ -35,6 +35,7 @@ setupMockServer();
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
 const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
+const GET_FIELDS_PATH = '/api/plugins/:pluginId/resources/api/v1/FieldsService.GetFields';
 
 const activeIncidents: IncidentPreview[] = [
   {
@@ -67,14 +68,16 @@ beforeEach(() => {
     loading: false,
     settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
   });
+  // useIncidents also loads the team dropdown options; the card itself doesn't render them.
+  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields: [] })));
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData() {
-  const data = useIncidents();
+function IncidentsCardWithData({ team }: { team?: string } = {}) {
+  const data = useIncidents(team);
   return <IncidentsCard data={data} />;
 }
 
@@ -112,6 +115,23 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
+  });
+
+  it('names the selected team in the empty message and scopes the request to it', async () => {
+    const queries: string[] = [];
+    server.use(
+      http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
+        const body = (await request.json()) as { query: { queryString: string } };
+        queries.push(body.query.queryString);
+        return HttpResponse.json({ incidentPreviews: [], cursor: { hasMore: false } });
+      })
+    );
+
+    render(<IncidentsCardWithData team="Team C" />);
+
+    expect(await screen.findByText('No active incidents for Team C.')).toBeInTheDocument();
+    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(queries).toEqual(['isdrill:false status:active field:team:"Team C"']);
   });
 
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {

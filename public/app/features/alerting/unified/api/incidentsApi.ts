@@ -29,6 +29,29 @@ export interface ActiveIncidents {
   hasMore: boolean;
 }
 
+// Subset of the Incident API's custom-field definitions — only what's needed to list the `team` options.
+interface IncidentFieldDto {
+  slug: string;
+  archived?: boolean;
+  selectoptions?: Array<{ value: string; archived?: boolean }>;
+}
+
+interface GetFieldsResponse {
+  fields?: IncidentFieldDto[];
+}
+
+const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
+
+// The Incident query lexer accepts either quote style with no escaping, so pick
+// whichever one the value doesn't contain.
+function quoteQueryValue(value: string) {
+  return value.includes('"') ? `'${value}'` : `"${value}"`;
+}
+
+function buildActiveIncidentsQuery(team?: string) {
+  return team ? `${ACTIVE_INCIDENTS_QUERY} field:team:${quoteQueryValue(team)}` : ACTIVE_INCIDENTS_QUERY;
+}
+
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
 
 export const incidentsApi = alertingApi.injectEndpoints({
@@ -41,12 +64,12 @@ export const incidentsApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
-    getActiveIncidents: build.query<ActiveIncidents, { pluginId: string }>({
-      query: ({ pluginId }) => ({
+    getActiveIncidents: build.query<ActiveIncidents, { pluginId: string; team?: string }>({
+      query: ({ pluginId, team }) => ({
         url: getProxyApiUrl('/api/v1/IncidentsService.QueryIncidentPreviews', pluginId),
         data: {
           query: {
-            queryString: 'isdrill:false status:active',
+            queryString: buildActiveIncidentsQuery(team),
             orderField: 'createdTime',
             orderDirection: 'DESC',
             limit: ACTIVE_INCIDENTS_QUERY_LIMIT,
@@ -59,6 +82,19 @@ export const incidentsApi = alertingApi.injectEndpoints({
         incidents: response.incidentPreviews ?? [],
         hasMore: response.cursor?.hasMore ?? false,
       }),
+    }),
+    // Values of the org's `team` custom field; empty when the org has no such field.
+    getIncidentTeamValues: build.query<string[], { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/api/v1/FieldsService.GetFields', pluginId),
+        data: {},
+        method: 'POST',
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: GetFieldsResponse): string[] => {
+        const teamField = response.fields?.find((field) => field.slug === 'team' && !field.archived);
+        return (teamField?.selectoptions ?? []).filter((option) => !option.archived).map((option) => option.value);
+      },
     }),
   }),
 });
