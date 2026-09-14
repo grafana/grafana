@@ -213,6 +213,42 @@ export interface NotebookLinkCopiedProperties extends EventProperty {
   source: NotebookLinkCopySource;
 }
 
+/**
+ * Which control narrowed the list. No `sort` value: the filter row holds these three and nothing
+ * else. The table's own column headers do sort. The list remounts the table whenever a filter
+ * commits, which resets that choice, so a filter event has nothing to say about it.
+ */
+export const NOTEBOOK_LIST_FILTER_TYPE = {
+  SEARCH: 'search',
+  TAG: 'tag',
+  CREATED_BY_ME: 'created_by_me',
+} as const;
+
+export type NotebookListFilterType = (typeof NOTEBOOK_LIST_FILTER_TYPE)[keyof typeof NOTEBOOK_LIST_FILTER_TYPE];
+
+/**
+ * One committed change to the list's filters. The search box waits for a pause in typing, so a
+ * search here is one somebody finished, not one keystroke.
+ *
+ * No search text and no tag names, for the reason nothing sends a notebook title: people write
+ * anything into them.
+ */
+export interface NotebookListFilteredProperties extends EventProperty {
+  /** Which control the reader changed. */
+  filterType: NotebookListFilterType;
+  /**
+   * Whether the change left that control with nothing on it: the box unchecked, the search emptied,
+   * no tags left. Dropping one tag of several does not count, since that filter still narrows the
+   * list. Both directions report, so this tells applying a filter apart from backing out of one.
+   */
+  cleared: boolean;
+  /**
+   * Matches left after the change, once the new results finished arriving. A zero here is the
+   * signal worth having: it says the reader narrowed the list down to nothing.
+   */
+  resultCount: number;
+}
+
 export interface NotebookDeletedProperties extends EventProperty {
   /**
    * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, and the

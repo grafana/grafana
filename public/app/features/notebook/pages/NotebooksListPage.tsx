@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -11,6 +12,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_LIST_FILTER_TYPE, type NotebookListFilterType } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 import { notebookNewEditUrl } from '../urls';
@@ -32,6 +35,7 @@ export function NotebooksListPage() {
     isFiltered,
     searchQuery,
     setSearchQuery,
+    debouncedSearch,
     createdByMe,
     setCreatedByMe,
     canFilterByMe,
@@ -44,6 +48,37 @@ export function NotebooksListPage() {
     filterKey,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
+
+  /**
+   * The filters the last report went out for, seeded so arriving at the page reports nothing.
+   * The diff checks tagFilter by identity on purpose: addTagFilter returns the same array when it
+   * dedupes, so re-clicking a tag already filtered reports nothing.
+   */
+  const previousFilters = useRef({ search: debouncedSearch, createdByMe, tagFilter });
+
+  /** Which control changed and which way, held while the results for it are still on their way. */
+  const pendingReport = useRef<{ filterType: NotebookListFilterType; cleared: boolean } | null>(null);
+
+  useEffect(() => {
+    const previous = previousFilters.current;
+    if (debouncedSearch !== previous.search) {
+      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.SEARCH, cleared: !debouncedSearch.trim() };
+    } else if (tagFilter !== previous.tagFilter) {
+      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.TAG, cleared: tagFilter.length === 0 };
+    } else if (createdByMe !== previous.createdByMe) {
+      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.CREATED_BY_ME, cleared: !createdByMe };
+    }
+    previousFilters.current = { search: debouncedSearch, createdByMe, tagFilter };
+
+    // No count exists until the answer arrives, and the walk keeps it climbing after the first
+    // page. A failure with no rows reports nothing: zero would read as a search that found nothing.
+    if (!pendingReport.current || isReloading || isLoadingMore || (error && rows.length === 0)) {
+      return;
+    }
+    const { filterType, cleared } = pendingReport.current;
+    pendingReport.current = null;
+    NotebookAnalytics.listFiltered(filterType, cleared, rows.length);
+  }, [debouncedSearch, tagFilter, createdByMe, isReloading, isLoadingMore, rows.length, error]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;
