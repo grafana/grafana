@@ -50,8 +50,7 @@
       ],
       "area_labels": [
         "area/internationalization",
-        "area/panel/text",
-        "area/grafana/ui"
+        "area/panel/text"
       ],
       "enabled": {
         "pr_notify": true,
