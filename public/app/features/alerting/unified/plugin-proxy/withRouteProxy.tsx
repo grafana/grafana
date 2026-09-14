@@ -10,6 +10,7 @@ import { Suspense, lazy, useMemo } from 'react';
 import { useLocation } from 'react-use';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -106,8 +107,17 @@ function proxiedComponent(route: RouteDescriptor, matches: ProxyMatcher): Grafan
 /**
  * Wraps every route that has a matching entry in the proxy table. Paths are matched exactly, so a
  * renamed route silently loses its proxy — `routes.test.tsx` guards against that.
+ *
+ * Does nothing when unified alerting is switched off. Every alerting route serves the "alerting is
+ * not enabled" page in that case, and someone who turned alerting off didn't ask us to find them
+ * another way in. Read per call rather than once at import, because `config` is filled in after
+ * this module is evaluated.
  */
 export function applyRouteProxies(routes: RouteDescriptor[]): RouteDescriptor[] {
+  if (!config.unifiedAlertingEnabled) {
+    return routes;
+  }
+
   return routes.map((route) => {
     const matches = findRouteMatcher(route.path);
     if (!matches) {
