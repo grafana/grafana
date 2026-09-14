@@ -105,6 +105,52 @@ func expectedWebhookURL(baseURL, namespace, repoName string) string {
 		strings.TrimRight(baseURL, "/"), gvr.Group, gvr.Version, namespace, gvr.Resource, repoName)
 }
 
+func postPullRequestWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, payload []byte) *unstructured.Unstructured {
+	t.Helper()
+
+	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+	require.NoError(t, err, "failed to read repository")
+	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+	secretName := repo.Secure.WebhookSecret.Name
+	require.NotEmpty(t, secretName, "webhook secret should be stored")
+
+	decrypted, err := helper.GetEnv().DecryptService.Decrypt(t.Context(), provisioning.GROUP, repo.Namespace, secretName)
+	require.NoError(t, err, "failed to decrypt webhook secret")
+	require.Len(t, decrypted, 1)
+	result, ok := decrypted[secretName]
+	require.True(t, ok, "decrypted webhook secret should be returned")
+	require.NoError(t, result.Error(), "webhook secret decrypt result should not contain an error")
+	value := result.Value()
+	require.NotNil(t, value, "webhook secret value should be present")
+
+	mac := hmac.New(sha256.New, []byte(value.DangerouslyExposeAndConsumeValue()))
+	_, _ = mac.Write(payload)
+	signature := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+
+	code := 0
+	webhookResult := helper.AdminREST.Post().
+		Namespace(helper.Namespace).
+		Resource("repositories").
+		Name(repoName).
+		SubResource("webhook").
+		Body(payload).
+		SetHeader("Content-Type", "application/json").
+		SetHeader(github.EventTypeHeader, "pull_request").
+		SetHeader(github.DeliveryIDHeader, fmt.Sprintf("%s-delivery", repoName)).
+		SetHeader(github.SHA256SignatureHeader, signature).
+		Do(t.Context()).
+		StatusCode(&code)
+
+	require.NoError(t, webhookResult.Error(), "webhook should accept pull request payload")
+	require.Equal(t, http.StatusAccepted, code, "webhook should queue a pull request job")
+
+	jobObj, err := webhookResult.Get()
+	require.NoError(t, err, "webhook response should include the queued job")
+	job, ok := jobObj.(*unstructured.Unstructured)
+	require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
+	return job
+}
+
 // waitForWebhook polls until Status.Webhook is populated with the expected ID.
 func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, expectedID int64) {
 	t.Helper()
@@ -352,58 +398,8 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			})
 			require.NoError(t, err, "failed to marshal pull request payload")
 
-			// Sign with the webhook secret Grafana persisted for this repository,
-			// because the webhook handler validates against that decrypted value.
-			obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-			require.NoError(t, err, "failed to read repository")
-			repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-			secretName := repo.Secure.WebhookSecret.Name
-			require.NotEmpty(t, secretName, "webhook secret should be stored")
-
-			decrypted, err := helper.GetEnv().DecryptService.Decrypt(t.Context(), provisioning.GROUP, repo.Namespace, secretName)
-			require.NoError(t, err, "failed to decrypt webhook secret")
-			require.Len(t, decrypted, 1)
-			result, ok := decrypted[secretName]
-			require.True(t, ok, "decrypted webhook secret should be returned")
-			require.NoError(t, result.Error(), "webhook secret decrypt result should not contain an error")
-			value := result.Value()
-			require.NotNil(t, value, "webhook secret value should be present")
-
-			mac := hmac.New(sha256.New, []byte(value.DangerouslyExposeAndConsumeValue()))
-			_, _ = mac.Write(payload)
-			signature := "sha256=" + hex.EncodeToString(mac.Sum(nil))
-
-			// Post the signed PR event and wait for the queued worker before reading
-			// the captured comment.
-			code := 0
-			webhookResult := helper.AdminREST.Post().
-				Namespace(helper.Namespace).
-				Resource("repositories").
-				Name(repoName).
-				SubResource("webhook").
-				Body(payload).
-				SetHeader("Content-Type", "application/json").
-				SetHeader(github.EventTypeHeader, "pull_request").
-				SetHeader(github.DeliveryIDHeader, fmt.Sprintf("%s-delivery", repoName)).
-				SetHeader(github.SHA256SignatureHeader, signature).
-				Do(t.Context()).
-				StatusCode(&code)
-
-			require.NoError(t, webhookResult.Error(), "webhook should accept pull request payload")
-			require.Equal(t, http.StatusAccepted, code, "webhook should queue a pull request job")
-
-			jobObj, err := webhookResult.Get()
-			require.NoError(t, err, "webhook response should include the queued job")
-			job, ok := jobObj.(*unstructured.Unstructured)
-			require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
-			isFork, found, err := unstructured.NestedBool(job.Object, "spec", "pr", "isFork")
-			require.NoError(t, err)
-			require.True(t, found)
-			require.Equal(t, tt.fork, isFork)
-			require.Equal(t, forkURL, common.MustNestedString(job.Object, "spec", "pr", "forkURL"))
-			finishedJob := helper.AwaitJob(t, job)
-			require.Equal(t, string(provisioning.JobStateSuccess), common.MustNestedString(finishedJob.Object, "status", "state"))
-			require.Empty(t, common.MustNestedStringSlice(finishedJob.Object, "status", "errors"))
+	job := postPullRequestWebhook(t, helper, repoName, payload)
+	helper.AwaitJobSuccess(t, job)
 
 			commentsMu.Lock()
 			capturedComments := append([]string(nil), comments...)
@@ -440,20 +436,87 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			require.NoError(t, err, "comment should contain a valid original URL")
 			require.Equal(t, "/d/gh-pr-comment-dash/github-pr-comment-dashboard-updated", originalURL.Path)
 
-			previewMarker := "[preview changes]("
-			previewStart := strings.Index(comment, previewMarker)
-			require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
-			previewRemainder := comment[previewStart+len(previewMarker):]
-			previewEnd := strings.Index(previewRemainder, ")")
-			require.NotEqualf(t, -1, previewEnd, "comment should close preview link:\n%s", comment)
-			previewURL, err := url.Parse(previewRemainder[:previewEnd])
-			require.NoError(t, err, "comment should contain a valid preview URL")
-			require.Equal(t, fmt.Sprintf("/admin/provisioning/%s/dashboard/preview/%s", repoName, dashboardPath), previewURL.Path)
-			require.Equal(t, branchName, previewURL.Query().Get("ref"))
-			require.Equal(t, url.QueryEscape(prURL), previewURL.Query().Get("pull_request_url"))
-			require.Contains(t, previewURL.RawQuery, "pull_request_url="+url.QueryEscape(url.QueryEscape(prURL)))
-		})
-	}
+	previewMarker := "[preview changes]("
+	previewStart := strings.Index(comment, previewMarker)
+	require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
+	previewRemainder := comment[previewStart+len(previewMarker):]
+	previewEnd := strings.Index(previewRemainder, ")")
+	require.NotEqualf(t, -1, previewEnd, "comment should close preview link:\n%s", comment)
+	previewURL, err := url.Parse(previewRemainder[:previewEnd])
+	require.NoError(t, err, "comment should contain a valid preview URL")
+	require.Equal(t, fmt.Sprintf("/admin/provisioning/%s/dashboard/preview/%s", repoName, dashboardPath), previewURL.Path)
+	require.Equal(t, branchName, previewURL.Query().Get("ref"))
+	require.Equal(t, url.QueryEscape(prURL), previewURL.Query().Get("pull_request_url"))
+	require.Contains(t, previewURL.RawQuery, "pull_request_url="+url.QueryEscape(url.QueryEscape(prURL)))
+}
+
+func TestIntegrationProvisioning_GithubPullRequestWebhookMissingRefCompletesWithWarning(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "github-pr-missing-ref"
+	const dashboardPath = "dashboard.json"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	var commentCalls atomic.Int32
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(655, webhookURL)...)
+	mockOpts = append(mockOpts, ghmock.WithRequestMatchHandler(
+		ghmock.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			commentCalls.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(&github.IssueComment{ID: github.Ptr(int64(1))})
+		}),
+	))
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
+	_, local := helper.CreateGithubRepo(t, repoName, map[string][]byte{
+		dashboardPath: common.DashboardJSON("gh-pr-missing-ref-dash", "GitHub PR Missing Ref Dashboard", 1),
+	}, webhookBaseURL, "write")
+	waitForWebhook(t, helper, repoName, 655)
+
+	const branchName = "feature-pr-missing-ref"
+	_, err := local.Git("checkout", "-b", branchName)
+	require.NoError(t, err, "failed to create feature branch")
+	err = local.UpdateFile(dashboardPath, string(common.DashboardJSON("gh-pr-missing-ref-dash", "GitHub PR Missing Ref Dashboard Updated", 2)))
+	require.NoError(t, err, "failed to update dashboard")
+	_, err = local.Git("add", dashboardPath)
+	require.NoError(t, err, "failed to add dashboard")
+	_, err = local.Git("commit", "-m", "Update dashboard")
+	require.NoError(t, err, "failed to commit dashboard update")
+	headSHA, err := local.Git("rev-parse", "HEAD")
+	require.NoError(t, err, "failed to resolve feature branch SHA")
+	_, err = local.Git("push", "-u", "origin", branchName)
+	require.NoError(t, err, "failed to push feature branch")
+	_, err = local.Git("push", "origin", "--delete", branchName)
+	require.NoError(t, err, "failed to delete feature branch")
+
+	payload, err := json.Marshal(map[string]any{
+		"action": "opened",
+		"repository": map[string]any{
+			"full_name": fmt.Sprintf("git/%s", repoName),
+		},
+		"pull_request": map[string]any{
+			"number":   124,
+			"html_url": fmt.Sprintf("https://github.example.com/git/%s/pull/124", repoName),
+			"base": map[string]any{
+				"ref": "main",
+			},
+			"head": map[string]any{
+				"ref": branchName,
+				"sha": strings.TrimSpace(headSHA),
+			},
+		},
+	})
+	require.NoError(t, err, "failed to marshal pull request payload")
+
+	job := postPullRequestWebhook(t, helper, repoName, payload)
+	completed := helper.AwaitJob(t, job)
+
+	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(completed.Object, "status", "state"))
+	require.Equal(t, `pull request ref "feature-pr-missing-ref" no longer exists; preview skipped`, common.MustNestedString(completed.Object, "status", "message"))
+	require.Empty(t, common.MustNestedStringSlice(completed.Object, "status", "errors"))
+	require.Zero(t, commentCalls.Load(), "missing-ref preview should not post a pull request comment")
 }
 
 func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testing.T) {

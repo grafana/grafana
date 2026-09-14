@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -367,6 +368,50 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			progress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestPullRequestWorker_Process_StopsWhenHeadRefIsMissing(t *testing.T) {
+	evaluator := NewMockEvaluator(t)
+	commenter := NewMockCommenter(t)
+	repo := mockPullRequestRepo{
+		MockRepository:      repository.NewMockRepository(t),
+		MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
+	}
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	repo.MockRepository.On("Config").Return(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+		},
+	})
+	progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
+	repo.MockPullRequestRepo.On("MergeBase", mock.Anything, "test-ref").Return("", repository.ErrFileNotFound)
+	repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(
+		nil,
+		fmt.Errorf("resolve ref: ref not found: refs/heads/test-ref: %w", repository.ErrRefNotFound),
+	)
+
+	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				PR:   123,
+				Ref:  "test-ref",
+				Hash: "b007101f94458ad96b6cd5f6153122916de6a0cf",
+			},
+		},
+	}
+
+	err := worker.Process(logging.Context(t.Context(), logging.DefaultLogger), repo, job, progress)
+	require.EqualError(t, err, `pull request ref "test-ref" no longer exists; preview skipped`)
+	require.True(t, jobs.IsWarning(err), "a missing pull request ref should skip the preview with a warning")
+
+	evaluator.AssertExpectations(t)
+	commenter.AssertExpectations(t)
+	repo.AssertExpectations(t)
+	progress.AssertExpectations(t)
 }
 
 // When Evaluate stops early (UnprocessedFiles > 0), it's because ctx is

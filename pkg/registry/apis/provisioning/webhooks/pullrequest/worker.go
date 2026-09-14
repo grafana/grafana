@@ -156,6 +156,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
+		if errors.Is(err, repository.ErrRefNotFound) {
+			outcome = string(provisioning.JobStateWarning)
+			logger.Info("pull request ref no longer exists, skipping preview", "ref", opts.Ref)
+			return jobs.AsWarning(fmt.Errorf("pull request ref %q no longer exists; preview skipped", opts.Ref))
+		}
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)
 	}
