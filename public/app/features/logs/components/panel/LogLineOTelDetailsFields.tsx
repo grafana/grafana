@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   CoreApp,
   type Field,
-  fuzzySearch,
   type GrafanaTheme2,
   type IconName,
   type LinkModel,
@@ -14,7 +13,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -24,6 +23,7 @@ import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
 import { useLogDetailsContext } from './LogDetailsContext';
+import { filterFields, filterLabels } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
@@ -37,8 +37,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineOTelDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { onClickShowField, fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -85,8 +85,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineOTelDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const { fontSize, onClickShowField } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
@@ -331,9 +331,9 @@ const LogLineOTelDetailsField = ({
           <div className={styles.valueContainer}>
             <div className={styles.valueContent}>
               {singleValue ? (
-                <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
+                <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} />
               ) : (
-                <MultipleValue values={values} />
+                <MultipleValue values={values} links={links} />
               )}
             </div>
             {!disableActions && (
@@ -537,7 +537,7 @@ export const MultipleValue = ({ values = [] }: { values: string[] }) => {
   );
 };
 
-export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
+export const SingleValue = ({ links, value: originalValue, prettifyJSON }: { links?: LinkModelWithIcon[]; value: string; prettifyJSON?: boolean }) => {
   const value = useMemo(() => {
     if (!prettifyJSON) {
       return originalValue;
@@ -551,37 +551,36 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
     return originalValue;
   }, [originalValue, prettifyJSON]);
 
+  if (links?.length === 1) {
+    return <Link link={links[0]}>{value}</Link>
+  }
+
   return value;
 };
 
-export function filterFields(fields: FieldDef[], search: string) {
-  const keys = fields.map((field) => field.keys.join(' '));
-  const keysIdx = fuzzySearch(keys, search);
-  const values = fields.map((field) => field.values.join(' '));
-  const valuesIdx = fuzzySearch(values, search);
+const Link = ({ children, link }: { children: ReactNode; link: LinkModelWithIcon }) => {
+  const icon: IconName | undefined = link.icon ?? (link.target === '_blank' ? 'external-link-alt' : undefined);
 
-  const results = keysIdx.map((index) => fields[index]);
-  valuesIdx.forEach((index) => {
-    if (!results.includes(fields[index])) {
-      results.push(fields[index]);
-    }
-  });
-
-  return results;
-}
-
-function filterLabels(labels: LabelWithLinks[], search: string) {
-  const keys = labels.map((field) => field.key);
-  const keysIdx = fuzzySearch(keys, search);
-  const values = labels.map((field) => field.value);
-  const valuesIdx = fuzzySearch(values, search);
-
-  const results = keysIdx.map((index) => labels[index]);
-  valuesIdx.forEach((index) => {
-    if (!results.includes(labels[index])) {
-      results.push(labels[index]);
-    }
-  });
-
-  return results;
+  return (
+    <>
+      {icon && <Icon name={icon} />}
+      <a
+        href={link.href}
+        target={link.target}
+        rel="noreferrer"
+        onClick={
+          link.onClick
+            ? (event) => {
+              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                event.preventDefault();
+                link.onClick(event);
+              }
+            }
+            : undefined
+        }
+      >
+        {children}
+      </a>
+    </>
+  )
 }
