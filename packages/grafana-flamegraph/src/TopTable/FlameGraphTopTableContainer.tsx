@@ -26,7 +26,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { OTHER_LABEL, TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
@@ -63,7 +63,13 @@ const FlameGraphTopTableContainer = memo(
     tableRefreshEnabled,
     contentAwareWidthsEnabled,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { table, otherEntry } = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    // The "other" label aggregates truncated stacktraces, so instead of a row we surface it as a note below the
+    // table. The note also lists the threshold underneath which stacktraces were truncated - the smallest total
+    // in the flame graph.
+    const minOtherTotal = useMemo(() => (otherEntry ? getMinTotal(data) : undefined), [data, otherEntry]);
+    const isOtherSearched = search === `^${escapeStringForRegex(OTHER_LABEL)}$`;
+    const isOtherSandwiched = sandwichItem === OTHER_LABEL;
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -72,57 +78,90 @@ const FlameGraphTopTableContainer = memo(
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
-
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              Boolean(useTableNG),
-              search,
-              sandwichItem
-            );
-
-            const onSortByChange = (s: TableSortByFieldState[]) => {
-              if (s && s.length) {
-                onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+        <div className={styles.topTableBody}>
+          <AutoSizer style={{ width: '100%' }}>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
               }
-              setSort(s);
-            };
 
-            if (useTableNG) {
-              // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
-              // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
-              return (
-                <div style={{ width, height }}>
-                  <TableNG
-                    sortBy={sort}
-                    sortByBehavior="managed"
-                    onSortByChange={onSortByChange}
-                    data={frame}
-                    width={width}
-                    height={height}
-                    tableRefreshEnabled={tableRefreshEnabled}
-                    contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-                  />
-                </div>
+              const frame = buildTableDataFrame(
+                data,
+                table,
+                width,
+                onSymbolClick,
+                onSearch,
+                onSandwich,
+                theme,
+                colorScheme,
+                Boolean(useTableNG),
+                search,
+                sandwichItem
               );
-            }
 
-            return (
-              <Table initialSortBy={sort} onSortByChange={onSortByChange} data={frame} width={width} height={height} />
-            );
-          }}
-        </AutoSizer>
+              const onSortByChange = (s: TableSortByFieldState[]) => {
+                if (s && s.length) {
+                  onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                }
+                setSort(s);
+              };
+
+              if (useTableNG) {
+                // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
+                // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
+                return (
+                  <div style={{ width, height }}>
+                    <TableNG
+                      sortBy={sort}
+                      sortByBehavior="managed"
+                      onSortByChange={onSortByChange}
+                      data={frame}
+                      width={width}
+                      height={height}
+                      tableRefreshEnabled={tableRefreshEnabled}
+                      contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={onSortByChange}
+                  data={frame}
+                  width={width}
+                  height={height}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+        {otherEntry && minOtherTotal !== undefined && (
+          <div className={styles.otherSection} data-testid="topTable-other-note">
+            <div className={styles.otherDescription}>
+              A total of <strong>{formatWithUnit(otherEntry.total, data)}</strong> has been truncated and is represented
+              by &quot;other&quot; in the flamegraph. Each truncated stacktrace had a total resource consumption of{' '}
+              <strong>{formatWithUnit(minOtherTotal, data)}</strong>.
+            </div>
+            <div className={styles.otherActions}>
+              <IconButton
+                name="search"
+                variant={isOtherSearched ? 'primary' : 'secondary'}
+                tooltip={isOtherSearched ? 'Clear from search' : 'Search for "other"'}
+                aria-label={isOtherSearched ? 'Clear from search' : 'Search for "other"'}
+                onClick={() => onSearch(isOtherSearched ? '' : OTHER_LABEL)}
+              />
+              <IconButton
+                name="gf-show-context"
+                variant={isOtherSandwiched ? 'primary' : 'secondary'}
+                tooltip={isOtherSandwiched ? 'Remove from sandwich view' : 'Show "other" in sandwich view'}
+                aria-label={isOtherSandwiched ? 'Remove from sandwich view' : 'Show "other" in sandwich view'}
+                onClick={() => onSandwich(isOtherSandwiched ? undefined : OTHER_LABEL)}
+              />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -130,10 +169,18 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
+function buildFilteredTable(
+  data: FlameGraphDataContainer,
+  matchedLabels?: Set<string>
+): { table: { [key: string]: TableData }; otherEntry?: TableData } {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
-  let filteredTable: { [key: string]: TableData } = Object.create(null);
+  const table: { [key: string]: TableData } = Object.create(null);
+
+  // Profiling data sources (e.g. Pyroscope) aggregate all stacktraces that were truncated when the node limit was
+  // reached into a single "other" node. Rendering it as a regular row would hide the actual top symbols, so we
+  // extract it separately and let the component surface it as a note below the table instead.
+  let otherEntry: TableData | undefined;
 
   // Track call stack to detect recursive calls
   const callStack: string[] = [];
@@ -155,15 +202,24 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
 
     // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
     if (!matchedLabels || matchedLabels.has(label)) {
-      filteredTable[label] = filteredTable[label] || {};
-      filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+      if (label === OTHER_LABEL) {
+        otherEntry = otherEntry || { self: 0, total: 0, totalRight: 0 };
+        otherEntry.self += self;
 
-      // Only add to total if this is not a recursive call
-      if (!isRecursive) {
-        filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
-        filteredTable[label].totalRight = filteredTable[label].totalRight
-          ? filteredTable[label].totalRight + valueRight
-          : valueRight;
+        // Only add to total if this is not a recursive call
+        if (!isRecursive) {
+          otherEntry.total += value;
+          otherEntry.totalRight += valueRight;
+        }
+      } else {
+        table[label] = table[label] || {};
+        table[label].self = table[label].self ? table[label].self + self : self;
+
+        // Only add to total if this is not a recursive call
+        if (!isRecursive) {
+          table[label].total = table[label].total ? table[label].total + value : value;
+          table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
+        }
       }
     }
 
@@ -171,7 +227,20 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     callStack.push(label);
   }
 
-  return filteredTable;
+  return { table, otherEntry };
+}
+
+// The minimum total in the flame graph is the threshold underneath which stacktraces were truncated into "other".
+function getMinTotal(data: FlameGraphDataContainer): number {
+  let min = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < data.data.length; i++) {
+    min = Math.min(min, data.getValue(i));
+  }
+  return min;
+}
+
+function formatWithUnit(value: number, data: FlameGraphDataContainer): string {
+  return data.valueDisplayProcessor(value).text;
 }
 
 function buildTableDataFrame(
@@ -430,6 +499,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
+      display: 'flex',
+      flexDirection: 'column',
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
@@ -438,6 +509,33 @@ const getStyles = (theme: GrafanaTheme2) => {
         '--rdg-background-color': theme.colors.background.secondary,
         '--rdg-header-background-color': theme.colors.background.secondary,
       },
+    }),
+    topTableBody: css({
+      label: 'topTableBody',
+      // Takes up the remaining vertical space so the truncation note below stays visible.
+      flex: 1,
+      minHeight: 0,
+    }),
+    otherSection: css({
+      label: 'otherSection',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+      marginTop: theme.spacing(1),
+      paddingTop: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      color: theme.colors.text.secondary,
+    }),
+    otherDescription: css({
+      label: 'otherDescription',
+    }),
+    otherActions: css({
+      label: 'otherActions',
+      display: 'flex',
+      gap: theme.spacing(0.5),
     }),
   };
 };
