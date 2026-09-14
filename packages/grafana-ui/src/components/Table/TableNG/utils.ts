@@ -356,8 +356,18 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   };
 }
 
-const PILLS_FONT_SIZE = 12;
-const PILLS_SPACING = 12; // 6px horizontal padding on each side
+// Pill chrome, in the two shapes PillCell renders. Under the visual refresh a pill is a Tag, whose
+// text is smaller but whose horizontal padding is wider, so both the row-height and the column-width
+// measurers have to pick the set that matches what will actually be painted — an under-reserved
+// pill makes the wrap arithmetic fit one too many per line and the row clips.
+const PILL_METRICS = {
+  legacy: { fontSize: 12, spacing: 12 }, // 6px horizontal padding on each side
+  refreshed: { fontSize: 10, spacing: 16 }, // theme.spacing.x1 (8px) on each side
+} as const;
+
+const getPillMetrics = (visualRefreshEnabled?: boolean) =>
+  visualRefreshEnabled ? PILL_METRICS.refreshed : PILL_METRICS.legacy;
+
 const PILLS_GAP = 4; // gap between pills
 
 // Fuzzy chrome estimates for the other inline-run cell types (see measureInlineRunWidth). Used only
@@ -367,7 +377,7 @@ const LINK_GAP = 2; // separator border between inline data links
 const ACTION_SPACING = 20; // horizontal padding of a small action Button
 const ACTION_GAP = 6; // theme.spacing(0.75) gap between action buttons
 
-export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
+export function getPillCellHeightMeasurer(measureWidth: (value: string) => number, spacing: number): MeasureCellHeight {
   // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
   // appears in many rows) and across column widths, so a resize never re-measures pill text.
   const pillWidthCache: Record<string, number> = {};
@@ -393,7 +403,7 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
           rawWidth = measureWidth(strPill);
           pillWidthCache[strPill] = rawWidth;
         }
-        return rawWidth + PILLS_SPACING;
+        return rawWidth + spacing;
       });
       pillWidthsByValue.set(strValue, pillWidths);
     }
@@ -453,7 +463,8 @@ const spaceRegex = /[\s-]/;
 export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
-  maxHeight?: number
+  maxHeight?: number,
+  visualRefreshEnabled?: boolean
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -467,14 +478,15 @@ export function buildCellHeightMeasurers(
     [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
     // pills use a different font size, so they require their own typography context.
     [TableCellDisplayMode.Pill]: () => {
+      const { fontSize, spacing } = getPillMetrics(visualRefreshEnabled);
       const pillTypographyCtx = createTypographyContext(
-        PILLS_FONT_SIZE,
+        fontSize,
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
       // kerned whole-string width, deliberately: the pill measurer lays pills out itself rather than
       // handing the text to the line counter, so a pill is as wide as the browser draws it.
-      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
+      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width, spacing), undefined];
     },
   } as const;
 
@@ -1376,6 +1388,8 @@ export interface ContentAwareColWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
+  /** Visual refresh: pills render as Tags, whose chrome differs from the legacy pill. */
+  visualRefreshEnabled?: boolean;
   /**
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
@@ -1625,6 +1639,8 @@ interface ColWidthMeasureCtx {
   typographyCtx: TypographyCtx;
   /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
   getActions?: GetActionsFunctionLocal;
+  /** Visual refresh: pills render as Tags, whose chrome differs from the legacy pill. */
+  visualRefreshEnabled?: boolean;
 }
 
 /**
@@ -1641,14 +1657,14 @@ const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 // fixed default reads better than the graphical default.
 const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
-const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
+const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, visualRefreshEnabled }) =>
   measureInlineRunWidth(
     sampleIndices(field.values.length, sampleSize),
     // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
     // value mappings/units are reflected. formatCellValue falls back to String() with no display.
     (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
     typographyCtx.avgCharWidth,
-    PILLS_SPACING,
+    getPillMetrics(visualRefreshEnabled).spacing,
     PILLS_GAP
   ) + CELL_HORIZONTAL_CHROME;
 
@@ -1840,6 +1856,7 @@ export function computeContentAwareColWidths(
     hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
+    visualRefreshEnabled = false,
     filter,
     sampleSize,
     enableColumnReorder = false,
@@ -1875,7 +1892,7 @@ export function computeContentAwareColWidths(
   // can't give width back, or that are already sitting at their bound.
   const shrinkFloors = new Map<number, number>();
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, visualRefreshEnabled };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(

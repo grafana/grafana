@@ -1302,25 +1302,39 @@ describe('TableNG utils', () => {
   });
 
   describe('getPillCellHeightMeasurer', () => {
+    // horizontal chrome of a legacy pill: 6px of padding on each side.
+    const PILL_SPACING = 12;
+    // a refreshed pill is a Tag, with theme.spacing.x1 of padding on each side.
+    const REFRESHED_PILL_SPACING = 16;
+
     it('counts up the number of lines using the pill measuring method', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING);
       measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       measurer('tag1,tag2', 100, {} as Field, 0, 20);
       measurer('tag2', 200, {} as Field, 0, 20);
@@ -1330,7 +1344,7 @@ describe('TableNG utils', () => {
 
     it('does not re-measure pill text when only the column width changes (resize)', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING);
       const value = 'aaaa,bbbb,cccc';
       measurer(value, 100, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
@@ -1341,21 +1355,39 @@ describe('TableNG utils', () => {
     });
 
     it('returns a consistent height when the same value and width are measured repeatedly', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       // react-data-grid re-measures every row on each layout pass; repeats must be stable
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
     });
 
     it('wraps to more lines as the column narrows', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
       const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       expect(narrow).toBeGreaterThan(wide);
     });
 
+    it('wraps sooner when the pills carry the wider refreshed chrome', () => {
+      const measureWidth = jest.fn((str: string) => str.length * 5);
+      const value = 'tag1,tag2,tag3';
+      // 3 pills of 20px text: 3*(20+12) + 2*4 = 104, so all three fit one 110px line.
+      expect(getPillCellHeightMeasurer(measureWidth, PILL_SPACING)(value, 110, {} as Field, 0, 20)).toBe(20);
+      // the same pills at 16px chrome need 3*(20+16) + 2*4 = 116, so one wraps to a second line.
+      expect(getPillCellHeightMeasurer(measureWidth, REFRESHED_PILL_SPACING)(value, 110, {} as Field, 0, 20)).toBe(44);
+    });
+
     it('scales the height with the caller line height at the same width', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
       // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
       expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);

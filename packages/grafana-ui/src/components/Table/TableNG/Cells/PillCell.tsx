@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
+import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
 import { inferPills } from '../utils';
@@ -40,18 +41,25 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
     return null;
   }
 
-  return pills.map((pill) => (
-    <span
-      key={pill.key}
-      style={{
-        backgroundColor: pill.bgColor,
-        color: pill.color,
-        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
-      }}
-    >
-      {pill.value}
-    </span>
-  ));
+  return pills.map((pill) => {
+    // Pill colors are data-driven (value mappings, a fixed field color, or a hash over the palette),
+    // so they override whatever the element's own styles paint.
+    const style = {
+      backgroundColor: pill.bgColor,
+      color: pill.color,
+      border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+    };
+
+    // Under the visual refresh, pills are Tag components so they match the refreshed tags rendered
+    // everywhere else. Tag brings the shape and typography; only the colors come from the data.
+    return theme.flags.visualDesignRefresh ? (
+      <Tag key={pill.key} name={pill.value} style={style} />
+    ) : (
+      <span key={pill.key} style={style}>
+        {pill.value}
+      </span>
+    );
+  });
 }
 
 interface Pill {
@@ -100,14 +108,17 @@ export const getStyles: TableCellStyles = memoize(
         },
       }),
 
-      '> span': {
-        display: 'flex',
-        padding: theme.spacing(0.25, 0.75),
-        borderRadius: theme.shape.radius.default,
-        fontSize: theme.typography.bodySmall.fontSize,
-        lineHeight: theme.typography.bodySmall.lineHeight,
-        whiteSpace: 'nowrap',
-      },
+      // Under the visual refresh the pills are Tags, which carry their own shape and typography.
+      ...(!theme.flags.visualDesignRefresh && {
+        '> span': {
+          display: 'flex',
+          padding: theme.spacing(0.25, 0.75),
+          borderRadius: theme.shape.radius.default,
+          fontSize: theme.typography.bodySmall.fontSize,
+          lineHeight: theme.typography.bodySmall.lineHeight,
+          whiteSpace: 'nowrap',
+        },
+      }),
     }),
   { isMatchingKey: isTableCellStylesKeyEqual }
 );
