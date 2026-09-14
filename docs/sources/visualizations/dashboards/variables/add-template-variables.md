@@ -393,6 +393,12 @@ If you don't want Grafana to do this automatic regular expression escaping and f
 - Turn off the **Multi-value** or **Include All option** options.
 - Use the [raw variable format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
+If selecting more than one value returns no data, check the following:
+
+- **Panels reference the variable in the drop-down list**: If a hidden variable derives its value from the visible one, panels that reference the hidden variable receive only a single value. Reference the visible variable directly instead, and use named capture groups if you need both a display name and a full value. For more information, refer to [Show a friendly name and keep the full value](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#show-a-friendly-name-and-keep-the-full-value).
+- **The variable value is complete**: A regular expression with an unnamed capture group replaces the value as well as the display name, so the query might send only a fragment of the original value. To check what Grafana interpolates, refer to the `var-` parameters in the dashboard URL.
+- **Every option has a distinct value**: Grafana drops options that share the same value, which can remove options you expect to select.
+
 ### Include All option
 
 Grafana adds an **All** option to the variable drop-down list. If a user selects this option, then all variable options are selected.
