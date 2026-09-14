@@ -1406,8 +1406,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	// -> user, server unavailable -> system). During the hook-failure cooldown the
 	// health check is skipped (repoAccessible reads stale), so nothing is recorded;
 	// the reconcile after the cooldown expires classifies it. A rotation that
-	// succeeds, or a webhook missing on the remote (self-healed by recreation next
-	// reconcile), records nothing.
+	// succeeds records nothing.
 	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && len(hookOps) == 0 {
 		switch {
 		case !repoAccessible:
@@ -1418,15 +1417,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 			rotateCtx, rotateSpan := rc.tracer.Start(ctx, "provisioning.controller.rotate_webhook_secret", repoSpanAttrs(obj))
 			rotateOps, rotateErr := rotateWebhookSecret(rotateCtx, webhookRepo)
 			rotateSpan.End()
-			switch {
-			case rotateErr == nil:
-				// Rotated; the overdue condition is resolved, nothing to record.
-			case errors.Is(rotateErr, repository.ErrFileNotFound):
-				// The remote webhook was deleted; rotateWebhookSecret clears the status
-				// so the next reconcile recreates it. Self-healing, not a rotation
-				// malfunction -- don't page.
-				logging.FromContext(ctx).Info("webhook missing on remote during rotation; will recreate", "error", rotateErr)
-			default:
+			if rotateErr != nil {
 				cause := rc.rotationErrorCause(rotateErr)
 				rc.webhookMetrics.recordRotationOverdue(cause)
 				logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr, "cause", cause)
@@ -1491,8 +1482,15 @@ func classifyBuildFailureReason(err error) string {
 // User-caused errors (revoked credentials, permissions, app uninstalled) are
 // "user"; everything else, including unrecognized errors, defaults to "system" so
 // a genuine malfunction pages rather than being silently swallowed.
+//
+// A 404 (ErrFileNotFound) is treated as "user" to match how the rest of the
+// webhook code reads GitHub 404s (createWebhook/updateWebhook): the webhook was
+// deleted on the remote, or the token lost access to a private repo (GitHub
+// returns 404, not 403, for private repos). Either way it is the customer's to
+// resolve, not a system malfunction that should page. rotateWebhookSecret surfaces
+// this sentinel raw rather than converting it, so it is matched explicitly here.
 func (rc *RepositoryController) rotationErrorCause(err error) string {
-	if rc.isUserCaused(err) {
+	if errors.Is(err, repository.ErrFileNotFound) || rc.isUserCaused(err) {
 		return reconcileCauseUser
 	}
 	return reconcileCauseSystem

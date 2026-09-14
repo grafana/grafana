@@ -2761,7 +2761,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 		{"nothing when not due", notDue, nil, false, nil, ""},
 		{"nothing when rotation succeeds", overdue, nil, false, nil, ""},
 		{"nothing during hook-failure cooldown", overdue, nil, true, nil, ""},
-		{"nothing when remote webhook missing", overdue, nil, false, repository.ErrFileNotFound, ""},
+		{"user when remote webhook missing (404)", overdue, nil, false, repository.ErrFileNotFound, reconcileCauseUser},
 	}
 
 	metric := "grafana_provisioning_webhook_secret_rotation_overdue_total"
