@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 
 import { DeclareIncidentModal } from './DeclareIncidentModal';
-import { notebookIncidents, stubDeclareForm } from './testHelpers';
+import { STUB_DECLARE_TESTID, notebookIncidents, stubDeclareForm } from './testHelpers';
 import { useNotebookIncidents } from './useNotebookIncidents';
 
 jest.mock('./useNotebookIncidents', () => ({
@@ -37,6 +37,15 @@ describe('DeclareIncidentModal', () => {
   it('renders nothing when IRM is not installed', () => {
     setup({ installed: false });
 
+    expect(screen.queryByTestId(STUB_DECLARE_TESTID)).not.toBeInTheDocument();
+  });
+
+  // Their declare component brings its own Modal, unlike their attach form. Wrapping it in one of
+  // ours stacked two dialogs on top of each other.
+  it('adds no modal chrome of its own', () => {
+    setup();
+
+    expect(screen.getByTestId(STUB_DECLARE_TESTID)).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -45,7 +54,6 @@ describe('DeclareIncidentModal', () => {
   it('prefills the title and attaches the notebook as labelled context', () => {
     const { props } = setup();
 
-    expect(screen.getByRole('dialog', { name: 'Declare incident' })).toBeInTheDocument();
     expect(props.at(-1)).toMatchObject({
       defaultTitle: 'PromQL query (4)',
       attachURL: 'https://grafana.example/notebooks/nb1',

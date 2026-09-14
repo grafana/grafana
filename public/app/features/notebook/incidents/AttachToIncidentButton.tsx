@@ -66,6 +66,9 @@ export function AttachToIncidentButton({ uid, title }: Props) {
       >
         {t('notebooks.incidents.attach-title', 'Attach to incident')}
       </Button>
+      {/* The chrome is ours because their attach form is a bare form — IRM's own dashboard entry
+          point wraps it in openModal for the same reason. Their *declare* component is not like
+          this: it brings its own Modal, so DeclareIncidentModal renders it unwrapped. */}
       {isAttaching && (
         <Modal
           isOpen

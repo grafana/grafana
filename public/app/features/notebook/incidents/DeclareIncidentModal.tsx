@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import { Modal } from '@grafana/ui';
 
 import { notebookShareUrl } from '../urls';
 
@@ -13,6 +12,14 @@ interface Props {
 
 /**
  * IRM's declare form, over the notebook that prompted it.
+ *
+ * Deliberately NOT wrapped in a Modal, unlike the attach form beside it: IRM's two exposed
+ * components are not alike. Their attach form is a bare form whose host supplies the chrome, but
+ * their declare component renders a complete Modal of its own — with a title that becomes "Start a
+ * drill" in drill mode, and closeOnBackdropClick off. Wrapping it produced two stacked dialogs.
+ *
+ * Their own close button reaches us: their handleDismiss strips the declare query params it reads
+ * and then calls this onDismiss, so the toolbar's state is cleared either way.
  *
  * Rendered by the toolbar rather than by the menu item that opens it: that item lives inside a
  * Dropdown overlay, which unmounts as the menu closes and would take this with it. The delete
@@ -30,13 +37,11 @@ export function DeclareIncidentModal({ uid, title, onDismiss }: Props) {
   }
 
   return (
-    <Modal isOpen title={t('notebooks.incidents.declare', 'Declare incident')} onDismiss={onDismiss}>
-      <DeclareIncidentForm
-        defaultTitle={title}
-        attachURL={notebookShareUrl(uid)}
-        attachCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', { title })}
-        onDismiss={onDismiss}
-      />
-    </Modal>
+    <DeclareIncidentForm
+      defaultTitle={title}
+      attachURL={notebookShareUrl(uid)}
+      attachCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', { title })}
+      onDismiss={onDismiss}
+    />
   );
 }
