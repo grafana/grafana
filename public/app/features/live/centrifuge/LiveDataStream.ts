@@ -136,6 +136,19 @@ export class LiveDataStream<T = unknown> {
   // subscription error) must not surface to subscribers that join the cached
   // stream later as though it were a fresh error.
   private lastNonErrorMessage: InternalStreamMessage | undefined;
+  // The most recent error message and whether a subscriber attached at the moment it was emitted
+  // already received it. Such an error is replayed to a subscriber that joins later only while it
+  // is still the definitive state of the stream: either the channel shut the stream down (no
+  // further messages will ever arrive), or it was emitted before any subscriber attached (e.g. an
+  // `invalid`/Live-disabled channel) and would otherwise be silently dropped, leaving that
+  // subscriber on an empty stream. Errors that a previous subscriber already saw are transient
+  // channel conditions and must not be re-served to subscribers joining the cached stream later
+  // (see #132368).
+  private lastErrorMessage: InternalStreamMessage | undefined;
+  private lastErrorWasDelivered = false;
+  // Set when the stream is shut down. Because shutdown completes the internal stream, no further
+  // messages will ever arrive, making the last error the terminal state of the stream.
+  private shutDown = false;
   private shutdownTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private deps: DataStreamHandlerDeps<T>) {
@@ -148,6 +161,7 @@ export class LiveDataStream<T = unknown> {
   }
 
   private shutdown = () => {
+    this.shutDown = true;
     this.stream.complete();
     this.liveEventsSubscription.unsubscribe();
     this.deps.onShutdown();
@@ -201,7 +215,16 @@ export class LiveDataStream<T = unknown> {
   };
 
   private emit = (message: InternalStreamMessage) => {
-    if (message.type !== InternalStreamMessageType.Error) {
+    if (message.type === InternalStreamMessageType.Error) {
+      this.lastErrorMessage = message;
+      // An error emitted while subscribers are attached is delivered to them right away and must
+      // not be replayed to subscribers that join the cached stream later (see #132368).
+      this.lastErrorWasDelivered = this.stream.observed;
+    } else {
+      // A non-error message after an error means the channel recovered, so the earlier error is
+      // stale and must not surface to subscribers that join later.
+      this.lastErrorMessage = undefined;
+      this.lastErrorWasDelivered = false;
       this.lastNonErrorMessage = message;
     }
     this.stream.next(message);
@@ -352,6 +375,14 @@ export class LiveDataStream<T = unknown> {
     const internalStreamForSubscriber = new Observable<InternalStreamMessage>((subscriber) => {
       if (this.lastNonErrorMessage !== undefined) {
         subscriber.next(this.lastNonErrorMessage);
+      }
+
+      // Replay the most recent error message only when it was never delivered to any subscriber
+      // (it arrived before the first `get()` subscriber attached) or the stream has already shut
+      // down - so a subscriber joining after an `invalid`/Live-disabled channel failure still
+      // learns about it instead of hanging on an empty stream.
+      if (this.lastErrorMessage !== undefined && (this.shutDown || !this.lastErrorWasDelivered)) {
+        subscriber.next(this.lastErrorMessage);
       }
       return this.stream.subscribe(subscriber);
     });

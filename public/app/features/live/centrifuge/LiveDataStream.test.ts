@@ -1083,4 +1083,66 @@ describe('LiveDataStream', () => {
       expectStreamingResponse(lateSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
     });
   });
+
+  describe('channel errors before the first subscriber', () => {
+    it('should surface a fatal channel error that arrives before the first subscriber attaches', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+
+      // A fatal channel failure (e.g. an `invalid` or Live-disabled channel) reports an error and
+      // then shuts the stream down, all before any subscriber attaches.
+      deps.liveEventsObservable.next(
+        liveChannelStatusEvent(LiveChannelConnectionState.Invalid, new Error(dummyErrorMessage))
+      );
+      deps.liveEventsObservable.complete();
+
+      const firstSubscriber = new ValuesCollection<DataQueryResponse>();
+      firstSubscriber.subscribeTo(liveDataStream.get(liveDataStreamOptions.withoutFilter, subscriptionKey));
+
+      // The first subscriber has to learn about the failure instead of getting an empty completed stream.
+      expect(firstSubscriber.values).toHaveLength(1);
+      expectErrorResponse(firstSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
+      expect(firstSubscriber.lastValue().error?.message).toContain(dummyErrorMessage);
+      expect(firstSubscriber.complete).toBeTruthy();
+    });
+
+    it('should surface a channel error that arrives before the first subscriber attaches while the channel stays open', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+
+      // An invalid channel reports the error through a status event but the stream stays open.
+      deps.liveEventsObservable.next(
+        liveChannelStatusEvent(LiveChannelConnectionState.Invalid, new Error(dummyErrorMessage))
+      );
+
+      const firstSubscriber = new ValuesCollection<DataQueryResponse>();
+      firstSubscriber.subscribeTo(liveDataStream.get(liveDataStreamOptions.withoutFilter, subscriptionKey));
+
+      // The subscriber that wasn't attached when the error was emitted must still see it, otherwise
+      // it would hang on an empty stream with no indication of the failure.
+      expect(firstSubscriber.values).toHaveLength(1);
+      expectErrorResponse(firstSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
+      expect(firstSubscriber.lastValue().error?.message).toContain(dummyErrorMessage);
+      expect(firstSubscriber.complete).toBeFalsy();
+    });
+
+    it('should not surface a channel error that a later frame superseded before the subscriber attaches', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+
+      // A transient error precedes the channel actually streaming data, so by the time the
+      // subscriber attaches the error is stale and only the current frame state is replayed.
+      deps.liveEventsObservable.next(
+        liveChannelStatusEvent(LiveChannelConnectionState.Invalid, new Error(dummyErrorMessage))
+      );
+      deps.liveEventsObservable.next(liveChannelMessageEvent(dataFrameJsons.schema1()));
+
+      const firstSubscriber = new ValuesCollection<DataQueryResponse>();
+      firstSubscriber.subscribeTo(liveDataStream.get(liveDataStreamOptions.withoutFilter, subscriptionKey));
+
+      expect(firstSubscriber.values).toHaveLength(1);
+      expectStreamingResponse(firstSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
+      expect(firstSubscriber.lastValue().error).toBeUndefined();
+    });
+  });
 });
