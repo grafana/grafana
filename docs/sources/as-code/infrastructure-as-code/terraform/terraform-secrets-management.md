@@ -160,7 +160,7 @@ Keep the following points in mind for this example:
 - `metadata.uid` is the secure value's _name_ in Grafana.
   The resource also exposes a separate, read-only `metadata.uuid`, which is the Grafana-generated identifier rather than the name.
 - `spec.description` is required and limited to 25 characters.
-  Longer values fail on apply with an `Invalid Attribute Value Length` error.
+  Longer values fail at plan with a Terraform length validation error.
 - `spec.value` is a [write-only argument](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) that requires Terraform 1.11 or later.
   Terraform sends the plaintext to Grafana on apply, but never writes it to state, plan output, or any other on-disk artifact.
   Combine it with an `ephemeral`, sensitive variable, as in the preceding example, so the value also stays out of `terraform plan` output.
@@ -427,7 +427,8 @@ You create an AWS Identity and Access Management (IAM) role in your AWS account 
 In addition to the [requirements for secure values](#before-you-begin), you need the following:
 
 - An AWS account with AWS Secrets Manager enabled in your target region.
-- An IAM role that Grafana can assume, along with its role ARN and external ID.
+- An IAM role named exactly `grafana-secrets-manager` that Grafana can assume, along with its role ARN and external ID.
+  Grafana can assume only a role with that name.
   For the IAM role and trust policy that the role requires, refer to [Configure an AWS Secrets Manager keeper](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/configure-aws-secrets-manager-keeper/).
 
 ### Define a keeper
@@ -461,9 +462,11 @@ Replace the placeholders as follows:
 - _`<ACCOUNT_ID>`_ is the ID of the AWS account that hosts your secrets.
 - _`<EXTERNAL_ID>`_ is the external ID that your IAM role's trust policy requires.
 
+The role name in `assume_role_arn` must be `grafana-secrets-manager`. Grafana can't assume a role with any other name.
+
 Apply the keeper with the same `terraform apply` workflow you use for a secure value, described in [Provision the secure value with Terraform](#provision-the-secure-value-with-terraform).
 Unlike a secure value, a keeper has no secret value, so it needs no `ephemeral` variable of its own: `TF_VAR_grafana_auth` for the provider is the only variable you export.
-If the keeper shares a working directory with secure values, a single apply creates the keeper and those secure values together.
+Creating a keeper doesn't make it active, so don't create secure values in the same apply until you add the activation resource in [Activate and use the keeper](#activate-and-use-the-keeper) and make new secrets depend on it.
 
 ### Keeper schema reference
 
@@ -480,14 +483,14 @@ The `spec` block contains the following fields:
 | Field         | Required | Description                                                                            |
 | ------------- | -------- | -------------------------------------------------------------------------------------- |
 | `description` | Yes      | Short description for the keeper, 1 to 253 characters.                                 |
-| `aws`         | No       | AWS Secrets Manager configuration. For the fields, refer to the following `aws` table. |
+| `aws`         | Yes      | AWS Secrets Manager configuration. Grafana currently supports only AWS, so this block is required. For the fields, refer to the following `aws` table. |
 
 The `aws` block contains the following fields:
 
 | Field         | Required | Description                                                                                                               |
 | ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `region`      | Yes      | AWS region that hosts your secrets, for example `us-east-1`.                                                              |
-| `assume_role` | No       | Role that Grafana assumes to access AWS Secrets Manager. When set, `assume_role_arn` and `external_id` are both required. |
+| `assume_role` | Yes      | Role that Grafana assumes to access AWS Secrets Manager. Required for AWS. `assume_role_arn` and `external_id` are both required. |
 
 The `assume_role` block contains the following fields:
 
@@ -512,17 +515,39 @@ resource "grafana_apps_secret_keeper_activation_v1beta1" "aws_secrets_manager" {
 }
 ```
 
+The activation resource already depends on the keeper because it references the keeper's `uid`.
+Any secure value that should use this keeper must depend on the activation, otherwise Terraform can create the secret while the system keeper is still active:
+
+```terraform
+resource "grafana_apps_secret_securevalue_v1beta1" "external_api_key" {
+  metadata {
+    uid = "external-api-key"
+  }
+
+  spec {
+    description = "External API key"
+    value       = var.external_api_key
+    decrypters  = ["synthetic-monitoring"]
+  }
+
+  depends_on = [grafana_apps_secret_keeper_activation_v1beta1.aws_secrets_manager]
+}
+```
+
 Keep the following points in mind for this resource:
 
 - Because a namespace has only one active keeper, applying an activation for a different keeper switches which keeper is active.
 - Running `terraform destroy` on the activation resource reverts the namespace to the built-in system keeper.
+  Destroying the keeper resource doesn't deactivate it first; destroy the activation resource as well.
 
 You can also set the active keeper outside Terraform, in the Grafana UI under **Administration** > **Secrets Management**.
 
 After the keeper is active, Grafana routes new secure values to it automatically.
-A `value`-backed secure value like the one in [Define a secure value](#define-a-secure-value) needs no changes to use the active keeper.
+A `value`-backed secure value like the one in [Define a secure value](#define-a-secure-value) needs no field changes to use the active keeper, but it still needs `depends_on` if you create it in the same configuration as the activation.
+Destroying a `value`-backed secure value that lives in AWS Secrets Manager deletes the AWS secret immediately, with no recovery window.
 
-To reference a secret that already exists in the third-party keeper instead of sending a new value, use `ref` in place of `value`:
+To reference a secret that already exists in AWS Secrets Manager instead of sending a new value, use `ref` in place of `value`.
+Set `ref` to the AWS secret name or the full ARN, not a path inside Grafana:
 
 ```terraform
 resource "grafana_apps_secret_securevalue_v1beta1" "db_password" {
@@ -532,11 +557,16 @@ resource "grafana_apps_secret_securevalue_v1beta1" "db_password" {
 
   spec {
     description = "Production DB password"
-    ref         = "prod/db/password" # Path inside the active keeper.
+    ref         = "grafana-secrets-manager/stacks-<STACK_ID>/db-password/1"
     decrypters  = ["synthetic-monitoring"]
   }
+
+  depends_on = [grafana_apps_secret_keeper_activation_v1beta1.aws_secrets_manager]
 }
 ```
+
+Replace _`<STACK_ID>`_ with the same numeric stack ID you set on the provider.
+You can also set `ref` to the full secret ARN, for example `arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:grafana-secrets-manager/stacks-<STACK_ID>/db-password/1-AbCdEf`.
 
 If you use `ref` while the system keeper is active, the API returns the following error:
 
