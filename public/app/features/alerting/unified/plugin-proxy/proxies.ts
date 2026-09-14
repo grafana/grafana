@@ -117,7 +117,11 @@ const rulePageProxies: RouteProxy[] = [
   {
     // /alerting/<source>/<identifier>/view -> /rules/<identifier>
     path: '/alerting/:sourceName/:id/view',
-    matches: matchesDataSourceManagedRulesSource,
+    // Both halves of the URL have to agree that the rule is data source managed. Every link
+    // Grafana builds for this route puts the full identifier in the path, so a bare UID here means
+    // the URL contradicts itself and the handler was never going to resolve it.
+    matches: (context) =>
+      matchesDataSourceManagedRulesSource(context) && isDataSourceManagedIdentifier(context.params.id),
     handler: async ({ params, searchParams }) => {
       const identifier = await toPluginRuleIdentifier(params.id);
       return identifier ? pluginUrl(`${PLUGIN_ROUTES.rules}/${identifier}`, searchParams) : undefined;

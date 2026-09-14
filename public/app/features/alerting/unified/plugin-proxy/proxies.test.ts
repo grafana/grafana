@@ -3,7 +3,7 @@ import { setupDataSources } from '../testSetup/datasources';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { routeProxies } from './proxies';
-import { resolveProxyTarget } from './resolve';
+import { buildProxyContext, resolveProxyTarget } from './resolve';
 
 const PLUGIN_BASE = `/a/${SupportedPlugin.PrometheusAlerting}`;
 
@@ -28,6 +28,17 @@ function resolve(routePath: string, url: string): Promise<string | undefined> {
 
   const [pathname, search = ''] = url.split('?');
   return resolveProxyTarget(proxy, pathname, search);
+}
+
+/** Runs only the matcher, for cases where saying "not ours" early is the behaviour under test. */
+function matches(routePath: string, url: string): boolean {
+  const proxy = routeProxies.find(({ path }) => path === routePath);
+  if (!proxy) {
+    throw new Error(`No proxy registered for ${routePath}`);
+  }
+
+  const [pathname, search = ''] = url.split('?');
+  return proxy.matches(buildProxyContext(proxy.path, pathname, search));
 }
 
 /** A rule identifier as it appears in a Grafana URL: prefix, source *name*, namespace, group, rule, hash. */
@@ -59,6 +70,13 @@ describe('rule pages', () => {
 
     it('stays on Grafana when the data source name cannot be resolved', async () => {
       expect(await resolve(path, `/alerting/Unknown/${coreRuleId('Unknown')}/view`)).toBeUndefined();
+    });
+
+    it('does not match when the URL names a data source but carries a Grafana identifier', () => {
+      // Asserted on the matcher rather than the resolved target, because a matcher that says no is
+      // the whole point: saying yes here would make the page wait on a plugin check before landing
+      // back on Grafana anyway.
+      expect(matches(path, `/alerting/${MIMIR_NAME}/some-rule-uid/view`)).toBe(false);
     });
 
     it('keeps the query string', async () => {
