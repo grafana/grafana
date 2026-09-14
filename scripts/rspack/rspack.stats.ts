@@ -42,8 +42,13 @@ export default (env: Env = {}) => {
   }
 
   // Only the grafana config takes part. BundleAnalyzerPlugin writes a single
-  // reportFilename, so a second config would overwrite the report.
-  const [grafanaConfig] = prodConfig(env);
+  // reportFilename, so a second config would overwrite the report. Found by name rather than
+  // by position: picking up the wrong config yields a plausible-looking report of the wrong
+  // bundle, which nobody would question.
+  const grafanaConfig = prodConfig(env).find((prodEntry) => prodEntry.name === 'grafana');
+  if (!grafanaConfig) {
+    throw new Error('rspack.prod.ts no longer exports a config named "grafana"');
+  }
 
   return merge(grafanaConfig, config);
 };

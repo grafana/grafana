@@ -120,6 +120,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "grafana.useRouterMiddleware",
+			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -215,6 +225,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "alerting.ruleStatusSync",
+			Description: "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
@@ -385,6 +403,16 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:            "kubernetesFolderCountsLegacyStorage",
+			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:            "grafana.kubernetesAnnotationsClient",
@@ -1592,14 +1620,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "grafana.assetSriChecks",
-			Description: "Enables SRI checks for Grafana JavaScript assets",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "alertRuleRestore",
 			Description: "Enables the alert rule restore feature",
 			Stage:       FeatureStagePublicPreview,
@@ -2654,10 +2674,10 @@ var (
 		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
@@ -2966,6 +2986,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "search.apiFieldValueResults",
+			Description: "Uses field-value results for generic resource search API requests",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3035,6 +3063,15 @@ var (
 		{
 			Name:         "table.refresh",
 			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.refreshNewFeatures",
+			Description:  "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
@@ -3348,6 +3385,16 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
+		{
+			Name:         "alerting.folderHasRulesLabel",
+			Description:  "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

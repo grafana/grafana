@@ -16,6 +16,7 @@ func TestDecodeSearchValues(t *testing.T) {
 		{Name: "ratio", Type: resourcepb.ResourceSearchField_DOUBLE},
 		{Name: "flags", Type: resourcepb.ResourceSearchField_BOOLEAN, IsArray: true},
 		{Name: "created", Type: resourcepb.ResourceSearchField_DATE},
+		{Name: "empty", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
 	}
 	row := &resourcepb.ResourceSearchRow{Values: []*resourcepb.ResourceSearchValue{
 		{FieldIndex: 0, StringValues: []string{"Dashboard"}},
@@ -23,6 +24,9 @@ func TestDecodeSearchValues(t *testing.T) {
 		{FieldIndex: 2, DoubleValues: []float64{0.5}},
 		{FieldIndex: 3, BooleanValues: []bool{true, false}},
 		{FieldIndex: 4, Int64Values: []int64{1234}},
+		// Repeated protobuf values decode as nil after an empty array crosses the wire.
+		// The field-value entry itself preserves that the field was present.
+		{FieldIndex: 5},
 	}}
 
 	values, err := DecodeSearchValues(fields, row)
@@ -33,6 +37,7 @@ func TestDecodeSearchValues(t *testing.T) {
 		"ratio":   0.5,
 		"flags":   []bool{true, false},
 		"created": int64(1234),
+		"empty":   []string{},
 	}, values)
 }
 

@@ -55,7 +55,8 @@ export interface DateTime extends Object {
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
-  utcOffset: () => number;
+  utcOffset(): number;
+  utcOffset(value: number | string, keepLocalTime?: boolean): DateTime;
   hour?: () => number;
   minute?: () => number;
 }

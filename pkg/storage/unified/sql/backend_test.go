@@ -105,6 +105,36 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	}, ctx
 }
 
+func TestContinueTokenMatchesListRequest(t *testing.T) {
+	request := func(keysOnly bool, namespace string) *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace}},
+			KeysOnly: keysOnly,
+		}
+	}
+
+	tests := []struct {
+		name  string
+		token *ContinueToken
+		req   *resourcepb.ListRequest
+		want  bool
+	}{
+		{name: "legacy cluster-wide keys-only token", token: &ContinueToken{}, req: request(true, ""), want: true},
+		{name: "legacy namespaced keys-only token", token: &ContinueToken{}, req: request(true, "ns-one"), want: false},
+		{name: "cluster-wide token", token: &ContinueToken{KeysOnly: true, ClusterWide: true}, req: request(true, ""), want: true},
+		{name: "cluster-wide token used namespaced", token: &ContinueToken{KeysOnly: true, ClusterWide: true}, req: request(true, "ns-one"), want: false},
+		{name: "namespaced token", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(true, "ns-one"), want: true},
+		{name: "namespaced token used in another namespace", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(true, "ns-two"), want: false},
+		{name: "keys-only token used for regular list", token: &ContinueToken{KeysOnly: true, Namespace: "ns-one"}, req: request(false, "ns-one"), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, continueTokenMatchesListRequest(tt.token, tt.req))
+		})
+	}
+}
+
 func TestNewBackend(t *testing.T) {
 	t.Parallel()
 
