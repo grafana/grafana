@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { type DataSourceSrv, type GetDataSourceListFilters, setPluginComponentsHook } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -63,6 +63,10 @@ const props: Props = {
 };
 
 describe('QueryEditorRows', () => {
+  beforeEach(() => {
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+  });
+
   it('Should call onQueriesChange with skipAutoImport when replacing query', () => {
     const onQueriesChangeMock = jest.fn();
     const onUpdateDatasourcesMock = jest.fn();

@@ -1,7 +1,6 @@
 import { type JSX } from 'react';
 
 import {
-  type ComponentTypeWithExtensionMeta,
   type CoreApp,
   type DataSourceInstanceSettings,
   PluginExtensionPoints,
@@ -37,21 +36,10 @@ export function useQueryEditorRowExtensionActions({
   app,
   timeRange,
 }: Props): JSX.Element[] {
-  let components: Array<ComponentTypeWithExtensionMeta<PluginExtensionQueryEditorRowActionsV1Context>> = [];
-  let isLoading = false;
-
-  try {
-    const result = usePluginComponents<PluginExtensionQueryEditorRowActionsV1Context>({
-      extensionPointId: PluginExtensionPoints.QueryEditorRowActions,
-      limitPerPlugin: 1,
-    });
-    components = result.components;
-    isLoading = result.isLoading;
-  } catch (error) {
-    // `usePluginComponents` throws when the Grafana instance has not started, which is the case in
-    // unit tests that render a query editor without bootstrapping the extension registries.
-    return [];
-  }
+  const { components, isLoading } = usePluginComponents<PluginExtensionQueryEditorRowActionsV1Context>({
+    extensionPointId: PluginExtensionPoints.QueryEditorRowActions,
+    limitPerPlugin: 1,
+  });
 
   if (isLoading || !components.length) {
     return [];
