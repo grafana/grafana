@@ -123,7 +123,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	var gcomMeta grafanaComPluginVersionMeta
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
 		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "decode").Inc()
-		return nil, fmt.Errorf("failed to decode grafana.com plugin version API response: %w", err)
+		return nil, fmt.Errorf("failed to decode plugin version API response from %s: %w", p.grafanaComAPIURL, err)
 	}
 
 	// If we're looking up a child plugin, filter for it in the children field

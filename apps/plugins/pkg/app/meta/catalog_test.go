@@ -217,7 +217,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to decode grafana.com plugin version API response")
+		assert.Contains(t, err.Error(), "failed to decode plugin version API response")
 		assert.Nil(t, result)
 	})
 
