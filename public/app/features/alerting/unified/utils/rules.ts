@@ -5,13 +5,11 @@ import { AlertState } from '@grafana/data';
 import {
   type Alert,
   type AlertingRule,
-  type CloudRuleIdentifier,
   type CombinedRule,
   type CombinedRuleGroup,
   type CombinedRuleWithLocation,
   type EditableRuleIdentifier,
   type GrafanaRuleIdentifier,
-  type PrometheusRuleIdentifier,
   type RecordingRule,
   type Rule,
   type RuleGroupIdentifier,
@@ -51,6 +49,7 @@ import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG }
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { type AsyncRequestState } from './redux';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from './rule-identifier';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
@@ -155,20 +154,17 @@ export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
+// Re-exported for backward compatibility. Moved to rule-identifier.ts so the alerting route table
+// can reach them during app startup without pulling this module in.
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export { isCloudRuleIdentifier, isPrometheusRuleIdentifier };
+
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
   return 'uid' in identifier;
 }
 
-export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is CloudRuleIdentifier {
-  return 'rulerRuleHash' in identifier;
-}
-
 export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
   return Object.values<string>(PromRuleType).includes(ruleType);
-}
-
-export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
-  return 'ruleHash' in identifier;
 }
 
 export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier is EditableRuleIdentifier {
