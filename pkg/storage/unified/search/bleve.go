@@ -696,25 +696,26 @@ func (b *bleveBackend) updateIndexedKindsMetric(ctx context.Context) {
 		if idx == nil {
 			continue
 		}
-		// bleveIndex.DocCount counts live documents only, while the raw bleve count
-		// covers everything the index holds, so the difference is what is in trash.
-		live, err := idx.DocCount(ctx, "", nil)
-		if err != nil {
-			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
-			continue
-		}
+		// How many documents the index holds is free to ask for, and counting trash
+		// only visits the documents in it, so live comes out of the difference.
+		// Counting live documents directly would visit every document in the index.
 		total, err := idx.index.DocCount()
 		if err != nil {
 			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
 			continue
 		}
+		deleted, err := idx.deletedDocCount(ctx)
+		if err != nil {
+			b.log.Debug("skipping index in indexed kinds metric because deleted document count is unavailable", "key", key, "err", err)
+			continue
+		}
 
 		// The same kind can be indexed in many namespaces, each with its own index.
 		c := counts[key.Resource]
-		c.live += live
 		// The two counts are read one after the other, so a write in between can make
 		// this negative.
-		c.deleted += max(int64(total)-live, 0)
+		c.live += max(int64(total)-deleted, 0)
+		c.deleted += deleted
 		counts[key.Resource] = c
 	}
 
@@ -2486,6 +2487,28 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
+}
+
+// deletedDocCount counts the documents the index keeps so they can be found in
+// trash. Only documents carrying the marker are visited, so this costs about as
+// much as the trash is big, not as much as the index is big.
+func (b *bleveIndex) deletedDocCount(ctx context.Context) (int64, error) {
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.deletedDocCount")
+	defer span.End()
+
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query:  marked,
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // DocCount counts live documents, so callers using it as a size estimate
