@@ -256,7 +256,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Return a large number of commits that would exceed the maxCommits limit
 						commits := make([]*github.RepositoryCommit, maxCommits+1)
-						for i := 0; i < maxCommits+1; i++ {
+						for i := range maxCommits + 1 {
 							commits[i] = &github.RepositoryCommit{
 								SHA: new(fmt.Sprintf("commit%d", i)),
 								Commit: &github.Commit{
@@ -1189,7 +1189,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Create more files than the maxPRFiles limit
 						files := make([]*github.CommitFile, maxPRFiles+1)
-						for i := 0; i < maxPRFiles+1; i++ {
+						for i := range maxPRFiles + 1 {
 							files[i] = &github.CommitFile{
 								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
 								Additions: new(i + 1),
@@ -2204,7 +2204,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 }
 
 func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
-	var rulesetCalls int32
+	var rulesetCalls atomic.Int32
 	mockHandler := mockhub.NewMockedHTTPClient(
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
@@ -2232,7 +2232,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				atomic.AddInt32(&rulesetCalls, 1)
+				rulesetCalls.Add(1)
 				w.WriteHeader(http.StatusOK)
 				require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
 					"id":                      1,
@@ -2250,7 +2250,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, got)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&rulesetCalls), "GetRuleset should be called once per unique RulesetID")
+	assert.Equal(t, int32(1), rulesetCalls.Load(), "GetRuleset should be called once per unique RulesetID")
 }
 
 func TestGithubClient_GetRepository(t *testing.T) {

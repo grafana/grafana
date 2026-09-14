@@ -361,7 +361,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 		if len(expected) != len(actual) {
 			return false
 		}
-		for i := 0; i < len(expected); i++ {
+		for i := range expected {
 			if expected[i] != actual[i] {
 				return false
 			}
@@ -1784,7 +1784,7 @@ func TestProcessEvalResults(t *testing.T) {
 			results := 0
 			for _, evalTime := range evals {
 				res := tc.evalResults[evalTime]
-				for i := 0; i < len(res); i++ {
+				for i := range res {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)

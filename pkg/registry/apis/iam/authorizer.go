@@ -78,6 +78,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
+	resourceAuthorizer[iamv0.AuthInfoResourceInfo.GetName()] = serviceIdentityAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
 	// The SSOSetting kind had no k8s-API consumers, so no authorizer was ever
 	// registered. Interim: allow authenticated identities; real settings:write

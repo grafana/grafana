@@ -156,6 +156,9 @@ func TestRepositoryUsageStatus_LogValues(t *testing.T) {
 		SyncState:            "error",
 		LastSyncFinishedAt:   42,
 		ManagedResourceCount: 5,
+		TokenLastUpdatedAt:   1_600_000_000_000,
+		TokenExpiresAt:       1_600_003_600_000,
+		WebhookLastRotatedAt: 1_599_000_000_000,
 	}
 
 	// Booleans render as 1/0 so they can be unwrapped in Loki; repository identity
@@ -172,6 +175,9 @@ func TestRepositoryUsageStatus_LogValues(t *testing.T) {
 		"syncState", "error",
 		"lastSyncFinishedAt", int64(42),
 		"managedResourceCount", int64(5),
+		"tokenLastUpdatedAt", int64(1_600_000_000_000),
+		"tokenExpiresAt", int64(1_600_003_600_000),
+		"webhookLastRotatedAt", int64(1_599_000_000_000),
 	}, s.LogValues())
 }
 

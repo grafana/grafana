@@ -49,6 +49,7 @@ import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-sce
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { isRefNotFoundError } from 'app/features/provisioning/components/utils/errors';
 import { type ProvisioningPreview } from 'app/features/provisioning/types';
 import { dispatch } from 'app/store/store';
 import {
@@ -373,7 +374,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await loadWithRef(ref);
     } catch (err) {
       // If ref is not found (404), retry without ref to default to the main branch
-      if (ref && isFetchError(err) && err.status === 404) {
+      if (isRefNotFoundError(err, ref)) {
         return await loadWithRef(undefined);
       }
       throw err;

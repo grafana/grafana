@@ -63,13 +63,10 @@ func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object,
 	defer d.done.Done()
 decode:
 	for {
-		// gRPC cancels the stream context for all terminal statuses, not just
-		// caller cancellation. Read the actual status from Recv instead.
+		// Read the terminal status even if the stream context is already canceled.
 		evt, err := d.client.Recv()
 
 		switch {
-		case errors.Is(err, io.EOF), errors.Is(err, context.Canceled), grpcStatus.Code(err) == grpcCodes.Canceled:
-			return watch.Error, nil, io.EOF
 		case resource.IsResourceVersionExpired(err):
 			// Surface a 410/Expired status object (instead of an error) so clients
 			// such as reflectors re-list from scratch rather than retrying the
@@ -86,6 +83,16 @@ decode:
 				Reason:  metav1.StatusReason(status.Reason),
 				Message: status.Message,
 			}, nil
+		case errors.Is(d.client.Context().Err(), context.Canceled):
+			// gRPC also cancels the context on transport disconnects. Treat these
+			// as EOF so watches can resume without a full re-list.
+			return watch.Error, nil, io.EOF
+		case d.client.Context().Err() != nil:
+			return watch.Error, nil, d.client.Context().Err()
+		case errors.Is(err, io.EOF):
+			return watch.Error, nil, io.EOF
+		case grpcStatus.Code(err) == grpcCodes.Canceled:
+			return watch.Error, nil, err
 		case err != nil:
 			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err

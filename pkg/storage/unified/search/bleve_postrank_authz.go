@@ -71,10 +71,7 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 // limit * OverFetchFactor clamped to MaxWindow. Ranking is unaffected: bleve
 // ranks the full match set and returns the top-N regardless of Size.
 func (c PostRankAuthzConfig) windowSize(limit int) int {
-	w := limit * c.OverFetchFactor
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(limit*c.OverFetchFactor, c.MaxWindow)
 	return w
 }
 
@@ -87,10 +84,7 @@ func (c PostRankAuthzConfig) windowSize(limit int) int {
 // defaults (FacetSampleSize == MaxWindow == 10000) the whole sample is one
 // window.
 func (c PostRankAuthzConfig) facetWindowSize() int {
-	w := c.FacetSampleSize
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.FacetSampleSize, c.MaxWindow)
 	return w
 }
 
@@ -101,10 +95,7 @@ func (c PostRankAuthzConfig) facetWindowSize() int {
 // MaxWindow) until it exhausts the match set — giving an exact authorized
 // total — or reaches MaxCandidates.
 func (c PostRankAuthzConfig) countWindowSize() int {
-	w := c.MaxCandidates
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.MaxCandidates, c.MaxWindow)
 	return w
 }
 
@@ -120,7 +111,7 @@ func (c PostRankAuthzConfig) countWindowSize() int {
 // kicks in when early windows come back sparse.
 func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 	w := base
-	for i := 0; i < nextWindow; i++ {
+	for range nextWindow {
 		w <<= 1
 		if w >= c.MaxWindow {
 			return c.MaxWindow

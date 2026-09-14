@@ -75,6 +75,12 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(0);
     });
 
+    it('reports a dashboard as new by its missing identity, not by its version', () => {
+      expect(setup({ uid: '', version: 0 }).getDashboardChanges().isNew).toBe(true);
+      // A previewed repo file carries version 0 but already has a uid: saving it updates the file
+      expect(setup({ version: 0 }).getDashboardChanges().isNew).toBe(false);
+    });
+
     it('Can detect time changed', () => {
       const dashboard = setup();
 

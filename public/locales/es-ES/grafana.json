@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Consulta un historial de todos los eventos de alerta generados por tus reglas de alerta gestionadas por Grafana. Se muestran todos los eventos de alerta, independientemente de si se han establecido silenciamientos o periodos de inactividad.",
         "notifications": "Consulta un historial de todas las notificaciones enviadas desde tus reglas de alerta gestionadas por Grafana."
@@ -4062,7 +4065,7 @@
       "auth-settings": "Ajustes de autenticación"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2>documentación</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Autenticación avanzada",
@@ -4251,7 +4254,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2><0>documentación</0></2>."
+    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2>documentación</2>."
   },
   "bar-chart": {
     "warn": {
@@ -6023,7 +6026,6 @@
       "description": "Una secuencia vertical de paneles, texto y celdas de código",
       "name": "Cuaderno",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Hora",
       "title-edit": "",
@@ -7091,6 +7093,12 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
@@ -7638,6 +7646,10 @@
       "required": "Requerido"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Cambios",
         "label-details": "Detalles",
@@ -7750,6 +7762,9 @@
         "text-no-save": "Hay cambios no guardados. No tienes permiso para guardarlos. ¿Quieres descartar los cambios y compartir el original?",
         "title": "Cambios sin guardar"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "¿No es lo que estás buscando? Consulta <2>otros dashboards sugeridos</2> o <6>crea uno desde cero</6>.",
@@ -8005,6 +8020,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Guardar cambios",
       "save-button-disabled-tooltip": "Corrige los errores de validación antes de guardar.",
       "save-button-disabled-tooltip-yaml": "El documento contiene errores de validación. Cambia a JSON para ver los detalles de los errores en línea.",
@@ -8682,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Enlace",
-      "open-value-in": "Abrir valor en"
+      "open-value-in": "Abrir valor en",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9142,10 +9159,14 @@
       "share-export-json": "Exportar como JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Fecha de inicio",
       "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID de traza",
       "url": "URL",
       "warning-indicator": ""
@@ -9162,6 +9183,10 @@
       "aria-label-copy": "Copiar al portapapeles",
       "attribute-plugin-promo": {
         "learn-more": "Más información"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "La observabilidad de la base de datos muestra planes de explicación visuales, eventos de espera y muestras de consultas, lo que te ayuda a diagnosticar problemas más allá de los intervalos de trazas.",
@@ -10657,7 +10682,6 @@
       "ariaLabel-panel-loading": "Barra de carga del panel",
       "ariaLabel-panel-status": "Estado del panel",
       "errors-and-notices": "Errores y avisos",
-      "inspect-errors-notices": "Inspeccionar",
       "tooltip-cancel": "Cancelar consulta",
       "tooltip-cancel-loading": "Cancelar consulta",
       "tooltip-stop-streaming": "Detener transmisión",
@@ -10739,9 +10763,13 @@
       "cell-filter-out": "Filtrar valor",
       "cell-inspect": "Inspeccionar valor",
       "cell-inspect-tooltip": "Inspeccionar valor",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copiar al portapapeles",
       "csv-counts": "Filas: {{rows}}, Columnas: {{columns}}",
       "csv-placeholder": "Introducir CSV aquí...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Añadir todos los valores mostrados al filtro",
         "blanks": "(En blanco)",
@@ -12564,6 +12592,7 @@
       "title": "Crear"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nueva regla de alerta"
     },
     "create-dashboard": {
@@ -13056,7 +13085,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13104,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13127,6 +13154,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13171,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13221,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Borrar parámetros"
+      "clear-tooltip": "Borrar parámetros",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Colorear series por"
@@ -15575,7 +15606,7 @@
     },
     "sub-menu-aria-label": "Submenú del selector de roles",
     "title": {
-      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2>documentación</2>."
     }
   },
   "role-picker-drawer": {
@@ -16606,6 +16637,7 @@
       "tooltip-bold": "Negrita",
       "tooltip-bullet-list": "Lista de viñetas",
       "tooltip-checklist": "Lista de verificación",
+      "tooltip-diagram": "",
       "tooltip-heading": "Encabezado",
       "tooltip-insert-variable": "Insertar variable",
       "tooltip-italic": "Cursiva",
@@ -16619,10 +16651,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16843,6 +16883,10 @@
       "bar-stacked": "Gráfico de barras: apilado",
       "bar-stacked-percent": "Gráfico de barras: apilado por porcentaje",
       "line": "Gráfico de líneas"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Añadir zona horaria",

@@ -20,6 +20,8 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
+    | "reportingHeaderSettings"
+    | "reportingFooterSettings"
     | "snapshots.kubernetesSnapshots"
     | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
@@ -59,7 +61,6 @@ declare module "@openfeature/core" {
     | "grafana.scenesFlickeringFix"
     | "grafana.viewPanelPane"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
-    | "flameGraphWithCallTree"
     | "flameGraph.tableNg"
     | "inlineLogDetailsNoScrolls"
     | "logsTablePanelNG"
@@ -104,7 +105,8 @@ declare module "@openfeature/core" {
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
-    | "grafana.multiTenantUserPermissions";
+    | "grafana.multiTenantUserPermissions"
+    | "datasources.gatewayGuardrails";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

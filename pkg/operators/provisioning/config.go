@@ -192,7 +192,7 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
 	}
-	unified, err := setupUnifiedStorageClient(c.Settings, tracer, resourceClientCfg)
+	unified, err := setupUnifiedStorageClient(c.Settings, tracer, c.Registry(), resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
@@ -588,10 +588,10 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
-	// Folder metadata read metrics are a process-global singleton recorded by
-	// resources.ReadFolderMetadata rather than threaded through the returned
-	// extras, so they must be registered regardless of which extras path is taken
-	// below — including the custom RepositoryExtrasFunc path, which returns early.
+	// Folder metadata read metrics are a process-global singleton recorded by the
+	// code that uses them rather than threaded through the returned extras, so they
+	// must be registered regardless of which extras path is taken below — including
+	// the custom RepositoryExtrasFunc path, which returns early.
 	resources.RegisterFolderMetadataMetrics(c.Registry())
 
 	if c.repositoryExtras != nil {
@@ -614,6 +614,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
+	clientMetrics := gitrepo.RegisterClientMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -630,7 +631,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -644,7 +645,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -729,15 +730,13 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 // HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 // search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 // go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
+func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry prometheus.Registerer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
 	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
 	// Connect to Server
 	address := unifiedStorageSec.Key("grpc_address").String()
 	if address == "" {
 		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
 	}
-	// FIXME: These metrics are not going to show up in /metrics
-	registry := prometheus.NewPedanticRegistry()
 	conn, err := unified.GrpcConn(address, registry)
 	if err != nil {
 		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
@@ -747,10 +746,9 @@ func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resource
 	indexConn := conn
 	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
 	if indexAddress != "" {
-		// FIXME: These metrics are not going to show up in /metrics. We will also need to wrap these metrics
-		// to start with something else so it doesn't collide with the storage api metrics.
-		registry2 := prometheus.NewPedanticRegistry()
-		indexConn, err = unified.GrpcConn(indexAddress, registry2)
+		// The index connection registers the same client metrics as the storage connection, so
+		// prefix them to avoid a duplicate-registration collision on the shared registry.
+		indexConn, err = unified.GrpcConn(indexAddress, prometheus.WrapRegistererWithPrefix("index_", registry))
 		if err != nil {
 			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
 		}
