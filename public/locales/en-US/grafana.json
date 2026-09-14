@@ -1447,7 +1447,7 @@
         "must-enter-a-group-name": "Must enter a group name"
       },
       "missing-series-resolve-placeholder": "Default: 2",
-      "or": "",
+      "or": "or",
       "placeholder-select-an-evaluation-group": "Select an evaluation group...",
       "text-configure-no-data-and-error-handling": "Configure no data and error handling",
       "title-set-evaluation-behavior": "Set evaluation behavior"
@@ -2078,7 +2078,7 @@
       }
     },
     "match-details": {
-      "matched": "",
+      "matched": "matched",
       "no-matchers-matched": "Policy matches all labels"
     },
     "matcher-filter": {
@@ -2352,7 +2352,7 @@
     "notification-route-header": {
       "aria-label-expand-policy-route": "Expand policy route",
       "delivered-to": "Delivered to",
-      "instances": ""
+      "instances": "instances"
     },
     "notification-templates": {
       "duplicate": {
@@ -5144,7 +5144,7 @@
   },
   "configuration-tracker": {
     "config-card": {
-      "complete": ""
+      "complete": "complete"
     }
   },
   "connections": {
