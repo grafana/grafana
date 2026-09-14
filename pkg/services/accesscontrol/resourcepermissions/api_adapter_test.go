@@ -25,6 +25,7 @@ import (
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -544,11 +545,12 @@ func (s *countingUserService) ListByIdOrUID(_ context.Context, uids []string, _ 
 
 type countingTeamService struct {
 	*teamtest.FakeService
-	teams       map[string]*team.TeamDTO
-	searchCalls int
-	getCalls    int
-	lastQuery   *team.SearchTeamsQuery
-	querySizes  []int
+	teams         map[string]*team.TeamDTO
+	searchCalls   int
+	getCalls      int
+	lastQuery     *team.SearchTeamsQuery
+	lastRequester identity.Requester
+	querySizes    []int
 }
 
 func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
@@ -556,9 +558,10 @@ func (s *countingTeamService) GetTeamByID(context.Context, *team.GetTeamByIDQuer
 	return nil, team.ErrTeamNotFound
 }
 
-func (s *countingTeamService) SearchTeams(_ context.Context, q *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+func (s *countingTeamService) SearchTeams(ctx context.Context, q *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	s.searchCalls++
 	s.lastQuery = q
+	s.lastRequester, _ = identity.GetRequester(ctx)
 	s.querySizes = append(s.querySizes, len(q.UIDs))
 	res := team.SearchTeamQueryResult{}
 	for _, uid := range q.UIDs {
@@ -620,7 +623,7 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 		},
 	}
 
-	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "org-123", false)
 	require.NoError(t, err)
 	require.Len(t, perms, 5)
 
@@ -638,6 +641,9 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 	require.NotNil(t, teamSvc.lastQuery.SignedInUser, "SearchTeams applies an access-control filter and rejects a nil identity")
 	assert.Contains(t, teamSvc.lastQuery.SignedInUser.GetPermissions()[accesscontrol.ActionTeamsRead], "*",
 		"the service identity must hold wildcard teams:read for the batch to return anything")
+	require.NotNil(t, teamSvc.lastRequester)
+	assert.Equal(t, "org-123", teamSvc.lastRequester.GetNamespace())
+	assert.Equal(t, int64(123), teamSvc.lastRequester.GetOrgID())
 
 	assert.Equal(t, "user-1", perms[0].UserLogin)
 	assert.Equal(t, int64(100), perms[0].ID, "managed role ID should be attached")

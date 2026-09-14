@@ -136,8 +136,11 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 
 	// Resolve subject names with a service identity: the caller is already authorized
 	// to read this resource's permissions but may lack users:read (e.g. an editor),
-	// which would otherwise leave the subject unnamed. Mirrors the legacy SQL join.
-	lookupCtx, serviceIdentity := identity.WithServiceIdentity(ctx, orgID)
+	// which would otherwise leave the subject unnamed. Use the resource namespace
+	// because team search selects its index from the requester's namespace.
+	lookupCtx, serviceIdentity := identity.WithServiceIdentity(ctx, orgID, func(requester *identity.StaticRequester) {
+		requester.Namespace = namespaceInfo.Value
+	})
 
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
