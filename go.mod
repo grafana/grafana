@@ -189,7 +189,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
-	go.etcd.io/bbolt v1.4.3 // @grafana/grafana-search-and-storage
+	go.etcd.io/bbolt v1.5.0 // @grafana/grafana-search-and-storage
 	go.opentelemetry.io/collector/pdata v1.63.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // @grafana/grafana-catalog
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.70.0 // @grafana/grafana-operator-experience-squad
@@ -224,14 +224,14 @@ require (
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/identity-access-team
-	k8s.io/api v0.36.4 // @grafana/grafana-app-platform-squad
-	k8s.io/apiextensions-apiserver v0.36.4 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.36.4 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.36.4 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.36.4 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/apiextensions-apiserver v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.37.0 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.37.0 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.140.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.37.0 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // @grafana/data-sources-plugins
 	pgregory.net/rapid v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -660,9 +660,9 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zclconf/go-cty v1.16.3 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.6.14 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.6.14 // indirect
-	go.etcd.io/etcd/client/v3 v3.6.14 // indirect
+	go.etcd.io/etcd/api/v3 v3.7.0 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.7.0 // indirect
+	go.etcd.io/etcd/client/v3 v3.7.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.63.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.154.0 // indirect
@@ -703,8 +703,8 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/kms v0.36.4 // indirect
-	k8s.io/streaming v0.36.4 // indirect
+	k8s.io/kms v0.37.0 // indirect
+	k8s.io/streaming v0.37.0 // indirect
 	modernc.org/libc v1.74.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
