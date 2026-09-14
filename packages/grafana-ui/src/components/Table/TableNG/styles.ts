@@ -241,6 +241,12 @@ export const getGridStyles = memoize(
         // give the pagination controls their room back, so the grid and the pager together still fit
         // the panel (see getPaginationChromeHeight)
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
+        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
+        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
+        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
+        // the grid's whole content height and it pushes everything below it out of the panel.
+        minBlockSize: 0,
       }),
       // A gradient over the top or bottom of the scroll viewport while rows are scrolled out of view
       // that way (see useScrollShadows). The grid root sets `contain: content`, making it its own
