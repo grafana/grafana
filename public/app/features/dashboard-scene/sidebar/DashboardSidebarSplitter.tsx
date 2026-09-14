@@ -119,6 +119,22 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     sidebar.clearSelection();
   };
 
+  const onCanvasDoubleClick: React.MouseEventHandler<HTMLDivElement> = (evt) => {
+    if (!isEditing || sidebar.state.autoOpenPane || !(evt.target instanceof Element)) {
+      return;
+    }
+
+    const element = evt.target.closest<HTMLElement>(
+      '[data-viz-panel-key], [data-dashboard-element-type="row"], [data-dashboard-element-type="tab"]'
+    );
+    const key = element?.dataset.vizPanelKey ?? element?.dataset.dashboardElementKey;
+
+    if (key) {
+      // Panel and row selection handlers run later, so open the pane after they finish.
+      setTimeout(() => sidebar.editElement(key));
+    }
+  };
+
   const onBodyRef = (ref: HTMLDivElement | null) => {
     if (ref) {
       dashboard.onSetScrollRef(new DivScrollElement(ref));
@@ -150,6 +166,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
           className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
+          onDoubleClick={onCanvasDoubleClick}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
           // The dashboard scrolls inside this element rather than the document body, so make it
           // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
