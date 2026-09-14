@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Collegamento",
-      "open-value-in": "Apri valore in"
+      "open-value-in": "Apri valore in",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Copia negli appunti",
       "attribute-plugin-promo": {
         "learn-more": "Scopri di più"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Il monitoraggio del database mostra graficamente i piani di esecuzione, gli eventi di attesa e alcuni esempi di query, aiutandoti a diagnosticare i problemi al di là degli intervalli delle tracce.",

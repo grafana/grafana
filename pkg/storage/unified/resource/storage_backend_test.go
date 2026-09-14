@@ -1002,10 +1002,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
-		end := batch + concurrency
-		if end > numEvents {
-			end = numEvents
-		}
+		end := min(batch+concurrency, numEvents)
 		batchSize := end - batch
 
 		type writeResult struct {
