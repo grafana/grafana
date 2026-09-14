@@ -1,6 +1,6 @@
-import { render, type RenderResult } from '@testing-library/react';
+import { render, screen, type RenderResult } from '@testing-library/react';
 
-import { type Field, FieldType, MappingType, createTheme } from '@grafana/data';
+import { type Field, FieldType, MappingType, ThemeContext, createTheme } from '@grafana/data';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 
@@ -188,6 +188,53 @@ describe('PillCell', () => {
         <span style=\"background-color: rgb(63, 104, 51); color: rgb(247, 248, 250);\">value3 lbs</span>
         `
       );
+    });
+  });
+
+  describe('Visual refresh', () => {
+    // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
+    // table the prop and the context theme are the same object.
+    const refreshTheme = createTheme();
+    refreshTheme.flags.visualDesignRefresh = true;
+
+    const renderRefreshed = (field: Field) =>
+      render(
+        <ThemeContext.Provider value={refreshTheme}>
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={field}
+            rowIdx={0}
+            theme={refreshTheme}
+          />
+        </ThemeContext.Provider>
+      );
+
+    it('renders refreshed tags rather than bare pill spans', () => {
+      renderRefreshed(fieldWithValues(['value1,value2']));
+      for (const text of ['value1', 'value2']) {
+        const pill = screen.getByText(text);
+        // the refreshed Tag shape, which the legacy pill does not have
+        expect(getComputedStyle(pill).borderRadius).toBe(refreshTheme.shape.radius.pill);
+      }
+    });
+
+    it('keeps the data-driven colors when a value mapping sets them', () => {
+      const mockField = fieldWithValues(['error']);
+      const field = {
+        ...mockField,
+        config: {
+          ...mockField.config,
+          mappings: [{ type: MappingType.ValueToText, options: { error: { color: '#FF0000' } } }],
+        },
+        display: () => ({ text: 'error', color: '#FF0000', numeric: 0 }),
+      } satisfies Field;
+
+      renderRefreshed(field);
+      // inline, so the mapped color wins over whatever Tag's own styles paint
+      expect(screen.getByText('error')).toHaveStyle({
+        backgroundColor: 'rgb(255, 0, 0)',
+        color: 'rgb(247, 248, 250)',
+      });
     });
   });
 
