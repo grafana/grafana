@@ -182,7 +182,6 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 	foundFolderIndex := -1
 
 	for i, currentFolder := range slices.Backward(precedingFolders) {
-
 		att, err := c.bucket.Attributes(ctx, strings.ToLower(currentFolder+Delimiter+directoryMarker))
 		if err != nil {
 			if gcerrors.Code(err) != gcerrors.NotFound {
