@@ -54,7 +54,7 @@ export type AutoSyncHealth =
   | { kind: 'failing'; reason: string; message?: string }
   | { kind: 'pending'; reason?: string; message?: string };
 
-export function hasConfiguredUid(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
+export function hasAutoSyncSource(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
   return state.kind === 'configured' || state.kind === 'orphan-uid' || state.kind === 'operator-managed';
 }
 

@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { describeSyncHealth, hasConfiguredUid, isOperatorManaged } from '../../utils/autoSync';
+import { describeSyncHealth, hasAutoSyncSource, isOperatorManaged } from '../../utils/autoSync';
 
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
@@ -46,10 +46,10 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
   // Health only means something once a UID is configured — including an operator-managed one: the
   // admin cannot change that UID from here, but a stopped or failing sync is still theirs to know
   // about, and the badge is spent on saying who owns the setting.
-  const showsSyncHealth = hasConfiguredUid(state);
+  const showsSyncHealth = hasAutoSyncSource(state);
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
-  const savedUid = hasConfiguredUid(state) ? state.uid : '';
+  const savedUid = hasAutoSyncSource(state) ? state.uid : '';
 
   // A sync tick writes its datasource UID into the single extra_config slot without replacing what is
   // already there, so it fails server-side unless the slot is empty or holds that same UID.
@@ -214,7 +214,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
         isOpen={showDisableConfirm}
         title={t('alerting.settings.auto-sync.disable-confirm-title', 'Disable Mimir Alertmanager auto-sync?')}
         body={
-          hasConfiguredUid(state)
+          hasAutoSyncSource(state)
             ? t(
                 'alerting.settings.auto-sync.disable-confirm-body',
                 'Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.',

@@ -13,6 +13,8 @@ import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmana
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   CONFIG_READ_FAILURE_MESSAGE,
+  SYNC_NOT_CONFIGURED_CONDITION,
+  SYNC_SUCCEEDED_CONDITION,
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
   setupAutoSyncConfigReadError,
@@ -221,7 +223,7 @@ describe('useAutoSyncConfiguration — state resolution', () => {
   it('drops `operator-managed` once the worker stops resolving a removed ini key', async () => {
     // Regression: `operator-managed` offers no picker, no Save and no Disable, so a stale ini status
     // stranded the admin in the exact state the callout tells them to leave.
-    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', syncedReason: 'NotConfigured' });
+    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', condition: SYNC_NOT_CONFIGURED_CONDITION });
     setupDatasourcesEndpoint(server, [MIMIR_DS]);
 
     const { result } = renderAutoSyncHook();
@@ -347,7 +349,7 @@ describe('useAutoSyncConfiguration — sync health', () => {
     setupAutoSyncConfig(server, {
       specUid: 'mimir-uid',
       statusUid: 'mimir-uid',
-      condition: { status: 'True', reason: 'SyncSucceeded' },
+      condition: SYNC_SUCCEEDED_CONDITION,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS]);
 
@@ -405,7 +407,7 @@ describe('useAutoSyncConfiguration — sync health', () => {
     setupAutoSyncConfig(server, {
       specUid: 'cortex-uid',
       statusUid: 'mimir-uid',
-      condition: { status: 'True', reason: 'SyncSucceeded' },
+      condition: SYNC_SUCCEEDED_CONDITION,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS, CORTEX_DS]);
 
@@ -430,7 +432,7 @@ describe('useAutoSyncConfiguration — sync health', () => {
   });
 
   it('reports pending — not healthy — after sync was disabled but status still names the old UID', async () => {
-    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', condition: { status: 'True', reason: 'SyncSucceeded' } });
+    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', condition: SYNC_SUCCEEDED_CONDITION });
     setupDatasourcesEndpoint(server, [MIMIR_DS]);
 
     const { result } = renderAutoSyncHook();
@@ -442,7 +444,7 @@ describe('useAutoSyncConfiguration — sync health', () => {
     setupAutoSyncConfig(server, {
       specUid: 'mimir-uid',
       statusUid: 'mimir-uid',
-      condition: { status: 'Unknown', reason: 'NotConfigured' },
+      condition: SYNC_NOT_CONFIGURED_CONDITION,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS]);
 
@@ -594,7 +596,7 @@ describe('useAutoSyncConfiguration — save / disable', () => {
     const { getStored } = setupStatefulAutoSyncConfig(server, {
       statusUid: 'mimir-uid',
       origin: 'ini',
-      syncedReason: 'NotConfigured',
+      condition: SYNC_NOT_CONFIGURED_CONDITION,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS, CORTEX_DS]);
 

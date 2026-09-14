@@ -1,12 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type Config,
-  type ConfigCondition,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type Config } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { CONFIG_SINGLETON_NAME } from 'app/features/alerting/unified/api/configApi';
 import {
   type MERGE_COMMITTED_REASON,
@@ -37,20 +32,20 @@ type SyncConditionReason =
   | 'ConfigReadFailed'
   | 'SyncFailed';
 
-/** The reasons whose paired status is unambiguous, so `syncedReason` alone can imply the status. */
-const CONDITION_STATUS_BY_REASON = {
-  SyncSucceeded: 'True',
-  [SYNC_REASON_NOT_CONFIGURED]: 'Unknown',
-  MimirFetchFailed: 'False',
-} satisfies Partial<Record<SyncConditionReason, ConfigCondition['status']>>;
-
-type ShorthandReason = keyof typeof CONDITION_STATUS_BY_REASON;
-
 interface SyncConditionOptions {
   status: 'True' | 'False' | 'Unknown';
   reason: SyncConditionReason;
   message?: string;
 }
+
+/** Ready-made conditions for the reasons tests reach for most, so call sites don't restate the status pairing. */
+export const SYNC_SUCCEEDED_CONDITION: SyncConditionOptions = { status: 'True', reason: 'SyncSucceeded' };
+/** The stale status stays after an ini key is removed; only the reason moves on to say so. */
+export const SYNC_NOT_CONFIGURED_CONDITION: SyncConditionOptions = {
+  status: 'Unknown',
+  reason: SYNC_REASON_NOT_CONFIGURED,
+};
+export const MIMIR_FETCH_FAILED_CONDITION: SyncConditionOptions = { status: 'False', reason: 'MimirFetchFailed' };
 
 interface AutoSyncConfigOptions {
   /** spec.externalAlertmanagerSync — the desired configuration. */
@@ -60,23 +55,14 @@ interface AutoSyncConfigOptions {
   /** 'ini' marks the org as operator-managed: the grafana.ini key wins and spec is dormant. */
   origin?: 'api' | 'ini';
   /**
-   * Shorthand for the condition the worker pairs with this reason. Pass 'NotConfigured' with
-   * `origin: 'ini'` for an org whose ini key was removed: the stale status stays, the reason moves on.
-   */
-  syncedReason?: ShorthandReason;
-  /**
-   * The full ExternalAlertmanagerSynced condition, when a test needs a `message` or a status the
-   * shorthand cannot imply. Wins over `syncedReason`. Omit both for a Config with no condition
-   * recorded yet — the state before the worker's first tick.
+   * The ExternalAlertmanagerSynced condition the worker recorded. Omit for a Config with no
+   * condition recorded yet — the state before the worker's first tick.
    */
   condition?: SyncConditionOptions;
 }
 
 function buildAutoSyncConfig(name: string, options: AutoSyncConfigOptions = {}): Config {
-  const { specUid, statusUid, origin = 'api', syncedReason } = options;
-  const condition =
-    options.condition ??
-    (syncedReason ? { status: CONDITION_STATUS_BY_REASON[syncedReason], reason: syncedReason } : undefined);
+  const { specUid, statusUid, origin = 'api', condition } = options;
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Config',

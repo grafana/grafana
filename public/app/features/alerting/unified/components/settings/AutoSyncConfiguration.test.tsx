@@ -14,6 +14,8 @@ import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmana
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   CONFIG_READ_FAILURE_MESSAGE,
+  SYNC_NOT_CONFIGURED_CONDITION,
+  SYNC_SUCCEEDED_CONDITION,
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
   setupAutoSyncConfigReadError,
@@ -57,7 +59,7 @@ const SECOND_MIMIR_DS_PAYLOAD = {
 const SYNCED = {
   specUid: MIMIR_DS_UID,
   statusUid: MIMIR_DS_UID,
-  condition: { status: 'True' as const, reason: 'SyncSucceeded' as const },
+  condition: SYNC_SUCCEEDED_CONDITION,
 };
 
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
@@ -198,7 +200,7 @@ describe('AutoSyncConfiguration — edge-case states', () => {
   it('case 5b: a removed ini key releases the lock, which is what the callout tells the admin to do', async () => {
     // origin stays 'ini' after the key is removed, so trusting it alone left the admin with a locked
     // picker, no Save and no Disable — permanently.
-    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', syncedReason: 'NotConfigured' });
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', condition: SYNC_NOT_CONFIGURED_CONDITION });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
