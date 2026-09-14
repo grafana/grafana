@@ -68,10 +68,7 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 
 	// calculate initial send delay
 	sendInterval := time.Hour * 24
-	nextSendInterval := time.Until(lastSent.Add(sendInterval))
-	if nextSendInterval < time.Minute {
-		nextSendInterval = time.Minute
-	}
+	nextSendInterval := max(time.Until(lastSent.Add(sendInterval)), time.Minute)
 
 	sendReportTicker := time.NewTicker(nextSendInterval)
 
