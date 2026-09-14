@@ -340,6 +340,38 @@ describe('PillCell', () => {
       );
     });
 
+    it('looks the mapped color up by the raw value, not by the text the mapping renders', () => {
+      const mockField = fieldWithValues(['success,error']);
+      // a mapping that rewrites the text as well as the color. `display` resolves against the raw
+      // value, as the real one does, and has no answer for the text it produced — so looking the
+      // color up by that text loses the mapping.
+      const mapped: Record<string, { text: string; color: string }> = {
+        success: { text: 'OK', color: '#00FF00' },
+        error: { text: 'Bad', color: '#FF0000' },
+      };
+      const field = {
+        ...mockField,
+        config: {
+          ...mockField.config,
+          mappings: [{ type: MappingType.ValueToText, options: mapped }],
+        },
+        display: (value: unknown) => ({
+          ...(mapped[String(value)] ?? { text: String(value), color: '#FF780A' }),
+          numeric: 0,
+        }),
+      } satisfies Field;
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">OK</span>
+        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">Bad</span>
+        `
+      );
+    });
+
     // TODO: handle null values?
   });
 });

@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import {
   type GrafanaTheme2,
   classicColors,
+  type DisplayValue,
   type Field,
   getColorByStringHash,
   FALLBACK_COLOR,
@@ -25,8 +26,11 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
     const pillValues = inferPills(value);
     return pillValues.length > 0
       ? pillValues.map((pill, index) => {
-          const renderedValue = formattedValueToString(field.display!(pill));
-          const { background, text } = getPillColors(renderedValue, field, theme, getTextColorForBackground);
+          // `display` resolves the value mappings, so it has to see the raw value, and its result
+          // carries both the label and the mapped color — call it once and use both.
+          const display = field.display!(pill);
+          const renderedValue = formattedValueToString(display);
+          const { background, text } = getPillColors(display, renderedValue, field, theme, getTextColorForBackground);
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
@@ -73,6 +77,7 @@ const TRANSPARENT = 'rgba(0,0,0,0)';
 
 // FIXME: this does not yet support "shades of a color"
 function getPillColors(
+  display: DisplayValue,
   value: string,
   field: Field,
   theme: GrafanaTheme2,
@@ -82,7 +87,7 @@ function getPillColors(
   const onBackground = (background: string) => ({ background, text: getTextColorForBackground(background) });
 
   if (cfg.mappings?.length) {
-    return onBackground(field.display!(value).color ?? FALLBACK_COLOR);
+    return onBackground(display.color ?? FALLBACK_COLOR);
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
