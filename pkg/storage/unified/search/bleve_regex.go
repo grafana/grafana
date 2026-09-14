@@ -35,7 +35,7 @@ func (b *bleveIndex) regexRequirementQuery(req *resourcepb.Requirement, negate b
 		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support regex filtering because it does not preserve original case", req.Key))
 	}
 
-	filter, err := regex.ParseFilter(req.Key, req.Values[0], kf.name == resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS)
+	filter, err := parseRegexFilter(req.Key, req.Values[0], kf.name == resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS)
 	if err != nil {
 		return nil, resource.NewBadRequestError(err.Error())
 	}
@@ -82,12 +82,79 @@ func (b *bleveIndex) regexKeywordFieldFor(key string) (keywordField, bool) {
 	return keywordField{}, false
 }
 
+// Label and value semantics
+
+// regexFilter combines a value regex with an optional literal label prefix.
+// For "severity=crit.*", LabelPrefix is "severity=" and ValueMatcher is "crit.*".
+// MatchMissing includes absent fields or labels by evaluating their value as empty.
+type regexFilter struct {
+	ValueMatcher regex.Matcher
+	LabelPrefix  string
+	MatchMissing bool
+}
+
+func parseRegexFilter(field, expression string, flattenedLabel bool) (regexFilter, error) {
+	var prefix string
+	var err error
+	if flattenedLabel {
+		prefix, expression, err = splitLabel(expression)
+		if err != nil {
+			return regexFilter{}, err
+		}
+	}
+	matcher, err := regex.Parse(expression)
+	if err != nil {
+		return regexFilter{}, fmt.Errorf("invalid regex for field %s: %w", field, err)
+	}
+	// An absent label is evaluated as an empty value, not an empty encoded term.
+	valuePattern, err := compileRegex(matcher, "")
+	if err != nil {
+		return regexFilter{}, fmt.Errorf("invalid regex for field %s: %w", field, err)
+	}
+	return regexFilter{ValueMatcher: matcher, LabelPrefix: prefix, MatchMissing: valuePattern.MatchString("")}, nil
+}
+
+// Existence matches any value for the same field or literal label key.
+func (f regexFilter) Existence() regexFilter {
+	return regexFilter{ValueMatcher: regex.MatchAll(), LabelPrefix: f.LabelPrefix, MatchMissing: true}
+}
+
+// Compile returns a whole-term regex and a safe scan prefix; complete marks an exact term.
+func (f regexFilter) Compile() (pattern *regexp.Regexp, prefix string, complete bool, err error) {
+	pattern, err = compileRegex(f.ValueMatcher, f.LabelPrefix)
+	if err != nil {
+		return nil, "", false, err
+	}
+	prefix, complete = pattern.LiteralPrefix()
+	// Only the literal label prefix is safe for case-insensitive values.
+	if f.ValueMatcher.CaseInsensitive {
+		prefix, complete = f.LabelPrefix, false
+	}
+	return pattern, prefix, complete, nil
+}
+
+// Keys containing "=" remain ambiguous in the existing flattened encoding.
+func splitLabel(expression string) (prefix, value string, err error) {
+	key, value, found := strings.Cut(expression, "=")
+	if !found || key == "" {
+		return "", "", errors.New("flattened label regex requires a literal key=value expression")
+	}
+	return key + "=", value, nil
+}
+
+// Quote the label key and group the value so alternation cannot escape its prefix.
+func compileRegex(m regex.Matcher, prefix string) (*regexp.Regexp, error) {
+	pattern := m.Expression.String()
+	if m.CaseInsensitive {
+		pattern = "(?i:" + pattern + ")"
+	}
+	return regexp.Compile("^" + regexp.QuoteMeta(prefix) + "(?:" + pattern + ")$")
+}
+
 // Bounded Bleve execution
 
-// boundedRegexQuery expands a portable regexp against the field dictionary at
-// search time. The query is intentionally not bleve's native regexp query:
-// that query can enumerate an unbounded number of terms before the caller can
-// enforce a limit.
+// boundedRegexQuery enforces scan and expansion limits during dictionary access;
+// Bleve's native regexp query does not expose those limits.
 type boundedRegexQuery struct {
 	field         string
 	pattern       *regexp.Regexp
@@ -95,7 +162,7 @@ type boundedRegexQuery struct {
 	complete      bool
 }
 
-func newBoundedRegexQuery(field string, filter regex.Filter) (*boundedRegexQuery, error) {
+func newBoundedRegexQuery(field string, filter regexFilter) (*boundedRegexQuery, error) {
 	compiled, prefix, complete, err := filter.Compile()
 	if err != nil {
 		return nil, err
@@ -109,9 +176,7 @@ func newBoundedRegexQuery(field string, filter regex.Filter) (*boundedRegexQuery
 	}, nil
 }
 
-// Searcher implements query.Query. It expands only the dictionary terms under
-// the literal prefix and refuses a query before constructing a disjunction that
-// would exceed the fixed expansion budget.
+// Searcher uses a term lookup for nonempty literals and bounded expansion otherwise.
 func (q *boundedRegexQuery) Searcher(ctx context.Context, reader index.IndexReader, _ mapping.IndexMapping, options blevesearch.SearcherOptions) (blevesearch.Searcher, error) {
 	if q.complete && q.literalPrefix != "" {
 		return searcher.NewTermSearcher(ctx, reader, q.literalPrefix, q.field, 1, options)
@@ -125,8 +190,7 @@ func (q *boundedRegexQuery) Searcher(ctx context.Context, reader index.IndexRead
 		return query.NewMatchNoneQuery().Searcher(ctx, reader, nil, options)
 	}
 	// The fixed regex expansion limit is enforced above. Do not apply Bleve's
-	// optional clause limit as a second, backend-specific limit: it would make
-	// an otherwise valid portable regex fail at a different threshold.
+	// clause limit as a second, backend-specific limit.
 	return searcher.NewMultiTermSearcher(ctx, reader, terms, q.field, 1, options, false)
 }
 
@@ -142,9 +206,7 @@ func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.Inde
 	}
 	defer func() {
 		bytesRead := dict.BytesRead()
-		// Bleve's IO callback contributes to SearchResult.Cost, while
-		// RecordSearchCost feeds unified search's incremental QueryCost accounting.
-		// Dictionary reads must be reported through both paths.
+		// Report reads to both SearchResult.Cost and incremental QueryCost accounting.
 		if callback, ok := ctx.Value(blevesearch.SearchIOStatsCallbackKey).(blevesearch.SearchIOStatsCallbackFunc); ok {
 			callback(bytesRead)
 		}
@@ -155,7 +217,7 @@ func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.Inde
 	}()
 
 	terms = make([]string, 0, 16)
-	budget := regex.ExpansionBudget{Field: q.field}
+	budget := regexExpansionBudget{Field: q.field}
 	for {
 		select {
 		case <-ctx.Done():
@@ -182,10 +244,39 @@ func (q *boundedRegexQuery) matchingTerms(ctx context.Context, reader index.Inde
 	return terms, nil
 }
 
+const (
+	maxRegexDictionaryTerms = 10_000
+	maxRegexExpandedTerms   = 10_000
+)
+
+// regexExpansionBudget bounds one dictionary enumeration. Value and existence queries
+// each get their own budget, as do shards and authorization windows.
+type regexExpansionBudget struct {
+	Field     string
+	inspected int
+	expanded  int
+}
+
+// Observe charges a dictionary term and, when matched, its expansion. Expansion
+// errors take precedence when the same term exceeds both limits.
+func (b *regexExpansionBudget) Observe(matched bool) error {
+	b.inspected++
+	if matched {
+		b.expanded++
+		if b.expanded > maxRegexExpandedTerms {
+			return &regexLimitError{Field: b.Field, Kind: regexExpansionLimit}
+		}
+	}
+	if b.inspected > maxRegexDictionaryTerms {
+		return &regexLimitError{Field: b.Field, Kind: regexDictionaryLimit}
+	}
+	return nil
+}
+
 // Runtime error propagation
 
 func regexSearchError(result *bleve.SearchResult, err error) error {
-	var limitErr *regex.LimitError
+	var limitErr *regexLimitError
 	if errors.As(err, &limitErr) {
 		return apierrors.NewBadRequest(limitErr.Error())
 	}
@@ -198,4 +289,23 @@ func regexSearchError(result *bleve.SearchResult, err error) error {
 		}
 	}
 	return nil
+}
+
+type regexLimitKind uint8
+
+const (
+	regexExpansionLimit regexLimitKind = iota
+	regexDictionaryLimit
+)
+
+type regexLimitError struct {
+	Field string
+	Kind  regexLimitKind
+}
+
+func (e *regexLimitError) Error() string {
+	if e.Kind == regexDictionaryLimit {
+		return fmt.Sprintf("regular expression on field %q exceeds the %d-term dictionary scan limit", e.Field, maxRegexDictionaryTerms)
+	}
+	return fmt.Sprintf("regular expression on field %q exceeds the %d-term expansion limit", e.Field, maxRegexExpandedTerms)
 }

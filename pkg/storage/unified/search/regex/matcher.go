@@ -9,63 +9,36 @@ import (
 	"strings"
 )
 
-// Matcher describes a whole-value regex. Backends translate Expression's
-// normalized operations and ranges rather than the original source spelling.
-// CaseInsensitive applies only to the value, never a structural label prefix.
-// Consumers must treat Expression as read-only.
+// Matcher is a whole-value regex with a read-only, normalized AST.
+// Search engines should normalize expressions with Parse.
 type Matcher struct {
-	Expression      *syntax.Regexp
+	// Expression is a read-only regex expression with the normalized AST.
+	Expression *syntax.Regexp
+	// CaseInsensitive enables whole-value case folding.
 	CaseInsensitive bool
 }
 
-// Parse validates the supported subset and removes redundant whole-value
-// anchors. Case folding stays separate from the AST so backend adapters can apply
-// it to the value without changing a flattened label's literal key.
+// Parse accepts the search regex subset and removes redundant outer anchors.
+// Only one leading (?i) is allowed; other modes and special groups are rejected.
 func Parse(expression string) (Matcher, error) {
 	caseInsensitive := strings.HasPrefix(expression, "(?i)")
 	if caseInsensitive {
 		expression = strings.TrimPrefix(expression, "(?i)")
 	}
+	if err := validateSource(expression); err != nil {
+		return Matcher{}, err
+	}
+	// Perl parses greedy repetition and shorthand classes; DotNL includes newlines.
 	parsed, err := syntax.Parse(expression, (syntax.Perl|syntax.DotNL)&^syntax.UnicodeGroups)
-	// PerlX expands shorthand classes and quoted literals into the AST that each
-	// backend translates, rather than forwarding engine-specific source syntax.
-	// Disabling UnicodeGroups excludes property escapes; DotNL gives dot
-	// Prometheus value semantics. Validation checks the resulting operations/flags.
 	if err != nil {
 		return Matcher{}, fmt.Errorf("invalid regular expression: %w", err)
 	}
-	if caseInsensitive {
-		// Compare normalized expressions with the original leading mode in effect.
-		// Parsing after stripping it otherwise loses case-disabling transitions.
-		original, err := syntax.Parse(expression, (syntax.Perl|syntax.DotNL|syntax.FoldCase)&^syntax.UnicodeGroups)
-		if err != nil {
-			return Matcher{}, fmt.Errorf("invalid regular expression: %w", err)
-		}
-		folded, err := syntax.Parse(parsed.String(), (syntax.Perl|syntax.DotNL|syntax.FoldCase)&^syntax.UnicodeGroups)
-		if err != nil {
-			return Matcher{}, fmt.Errorf("invalid regular expression: %w", err)
-		}
-		if original.String() != folded.String() {
-			return Matcher{}, errors.New("regular expression disables leading case folding")
-		}
-	}
-	// Only top-level text anchors are redundant under whole-value matching.
-	// Nested anchors remain in the AST and are rejected by validation below.
+	// Trim redundant outer text anchors for whole-value matching, nested anchors are rejected.
 	parsed = trimWholeTermAnchors(parsed)
 	if err := validateRegexNode(parsed); err != nil {
 		return Matcher{}, err
 	}
 	return Matcher{Expression: parsed, CaseInsensitive: caseInsensitive}, nil
-}
-
-// SplitLabel separates a literal key from its regex value at the first "=".
-// Keys containing "=" remain ambiguous in the existing flattened encoding.
-func SplitLabel(expression string) (prefix, value string, err error) {
-	key, value, found := strings.Cut(expression, "=")
-	if !found || key == "" {
-		return "", "", errors.New("flattened label regex requires a literal key=value expression")
-	}
-	return key + "=", value, nil
 }
 
 // MatchAll describes every value, including empty strings and newlines.
@@ -75,29 +48,51 @@ func MatchAll() Matcher {
 	}}
 }
 
-// Compile provides whole-value execution for backends that enumerate terms.
-// Native-query adapters can instead translate Expression and CaseInsensitive.
-// The optional literal prefix is outside the value's case-folding scope.
-func (m Matcher) Compile(prefix string) (*regexp.Regexp, error) {
-	pattern := m.Expression.String()
-	if m.CaseInsensitive {
-		pattern = "(?i:" + pattern + ")"
+// Reject syntax that Go may simplify or treat as literals before validating the AST.
+func validateSource(expression string) error {
+	classStart := -1
+	for i := 0; i < len(expression); i++ {
+		c := expression[i]
+		if c == '\\' {
+			i++
+			if i == len(expression) || !strings.ContainsRune("\\.*+?()|[]{}^$-nrtdDwW", rune(expression[i])) {
+				return errors.New("regular expression uses an unsupported escape")
+			}
+			continue
+		}
+		if classStart >= 0 {
+			if c == '[' && i+1 < len(expression) && expression[i+1] == ':' {
+				return errors.New("regular expression uses an unsupported POSIX class")
+			}
+			if c == ']' && i > classStart {
+				classStart = -1
+			}
+			continue
+		}
+		switch c {
+		case '[':
+			classStart = i + 1
+			if classStart < len(expression) && expression[classStart] == '^' {
+				classStart++
+			}
+		case '(':
+			if i+1 < len(expression) && expression[i+1] == '?' {
+				return errors.New("regular expression uses an unsupported group or flag")
+			}
+		case '{':
+			repetition := boundedRepetition.FindString(expression[i:])
+			if repetition == "" {
+				return errors.New("regular expression uses an invalid bounded repetition")
+			}
+			i += len(repetition) - 1
+		case '}':
+			return errors.New("regular expression requires escaping literal braces")
+		}
 	}
-	compiled, err := regexp.Compile("^(?:" + regexp.QuoteMeta(prefix) + "(?:" + pattern + "))$")
-	if err != nil {
-		return nil, fmt.Errorf("invalid regular expression: %w", err)
-	}
-	return compiled, nil
+	return nil
 }
 
-// MatchesEmpty determines whether an absent field or label matches this value.
-func (m Matcher) MatchesEmpty() (bool, error) {
-	compiled, err := m.Compile("")
-	if err != nil {
-		return false, err
-	}
-	return compiled.MatchString(""), nil
-}
+var boundedRepetition = regexp.MustCompile(`^\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*)?)?\}`)
 
 func validateRegexNode(expression *syntax.Regexp) error {
 	if expression.Flags&syntax.FoldCase != 0 {
@@ -124,8 +119,8 @@ func validateRegexNode(expression *syntax.Regexp) error {
 	return nil
 }
 
-// trimWholeTermAnchors removes only top-level text anchors, which are redundant
-// because every term is matched in full. Line or nested anchors remain and are
+// trimWholeTermAnchors removes top-level text anchors, which are redundant
+// because every term is matched in full. Nested anchors remain and are
 // rejected by validateRegexNode.
 func trimWholeTermAnchors(expression *syntax.Regexp) *syntax.Regexp {
 	if expression.Op == syntax.OpBeginText || expression.Op == syntax.OpEndText {
