@@ -10,11 +10,11 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 
 import {
-  DashboardPredefinedVariablesOptions,
+  DashboardCrossDashboardVariablesOptions,
   updateDashboardScopeAll,
   updateDashboardScopeVariable,
-  type PredefinedVariablesDashboard,
-} from './DashboardPredefinedVariablesOptions';
+  type CrossDashboardVariablesDashboard,
+} from './DashboardCrossDashboardVariablesOptions';
 
 const mockFetchPredefinedVariables = jest.fn();
 
@@ -32,7 +32,7 @@ jest.mock('react-use', () => ({
   useLocalStorage: () => [{ isExpanded: true }, () => {}],
 }));
 
-function createDashboard(annotations: Record<string, string> = {}): PredefinedVariablesDashboard {
+function createDashboard(annotations: Record<string, string> = {}): CrossDashboardVariablesDashboard {
   const meta = {
     canSave: true,
     folderUid: 'folder-1',
@@ -56,7 +56,7 @@ function createDashboard(annotations: Record<string, string> = {}): PredefinedVa
     },
     refreshPredefinedVariables: jest.fn().mockResolvedValue(undefined),
     managedResourceCannotBeEdited: () => false,
-  } as unknown as PredefinedVariablesDashboard;
+  } as unknown as CrossDashboardVariablesDashboard;
 }
 
 function makeCandidate(name: string, origin: 'global' | 'folder'): VariableKind {
@@ -184,7 +184,7 @@ describe('updateDashboardScopeVariable', () => {
   });
 });
 
-describe('DashboardPredefinedVariablesOptions', () => {
+describe('DashboardCrossDashboardVariablesOptions', () => {
   beforeAll(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
   });
@@ -203,7 +203,7 @@ describe('DashboardPredefinedVariablesOptions', () => {
     const fetch = deferred<VariableKind[] | null>();
     mockFetchPredefinedVariables.mockReturnValue(fetch.promise);
 
-    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+    render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
     expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
     expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
@@ -223,7 +223,7 @@ describe('DashboardPredefinedVariablesOptions', () => {
   it('shows empty-state copy when Global and Folder have no variables', async () => {
     mockFetchPredefinedVariables.mockResolvedValue([]);
 
-    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+    render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
     expect(await screen.findByText('No global variables in this organization.')).toBeVisible();
     expect(screen.getByText('No folder variables in this folder.')).toBeVisible();
@@ -232,7 +232,7 @@ describe('DashboardPredefinedVariablesOptions', () => {
   it('shows a load error instead of the empty copy when the list fetch fails', async () => {
     mockFetchPredefinedVariables.mockResolvedValue(null);
 
-    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+    render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
     expect(await screen.findByText('Could not load global and folder variables.')).toBeInTheDocument();
     expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
