@@ -11668,7 +11668,7 @@
       "save-button": "Save",
       "test-button": "Test"
     },
-    "documentation": "",
+    "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
       "error": "Server host is a required field",
