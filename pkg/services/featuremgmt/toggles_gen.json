@@ -5168,12 +5168,15 @@
     {
       "metadata": {
         "name": "panelTimeSettings",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-29T08:06:23Z"
+        "resourceVersion": "1789414268182",
+        "creationTimestamp": "2025-10-29T08:06:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-14 19:31:08.182158 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables a new panel time settings drawer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
