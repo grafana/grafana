@@ -238,9 +238,10 @@ function buildFilteredTable(
 
 // The minimum total in the flame graph is the threshold underneath which stacktraces were truncated into "other".
 // Per-level "other" leftovers aggregate the children that fell below the cutoff, so they are themselves smaller
-// than the cutoff and must not participate in the minimum. On a diff flamegraph a node can additionally exist on
-// only one side of the comparison, in which case the other side's total is 0 and must be ignored - otherwise a
-// function that exists only in the comparison profile (baseline total 0) would drag the threshold down to 0.
+// than the cutoff and must not participate in the minimum. On a diff flamegraph the truncated nodes are kept when
+// either side of the comparison meets the cutoff, so the side that decides truncation is the larger of the two:
+// using each side's total independently would let a function that is large on one side and tiny on the other (or
+// exists only in one of the profiles, total 0 on the other side) drag the reported threshold down.
 function getMinTotal(data: FlameGraphDataContainer): number {
   let min = Number.POSITIVE_INFINITY;
   const isDiff = data.isDiffFlamegraph();
@@ -249,14 +250,13 @@ function getMinTotal(data: FlameGraphDataContainer): number {
       continue;
     }
     const value = data.getValue(i);
-    if (value > 0) {
-      min = Math.min(min, value);
-    }
     if (isDiff) {
-      const valueRight = data.getValueRight(i);
-      if (valueRight > 0) {
-        min = Math.min(min, valueRight);
+      const dominantSide = Math.max(value, data.getValueRight(i));
+      if (dominantSide > 0) {
+        min = Math.min(min, dominantSide);
       }
+    } else if (value > 0) {
+      min = Math.min(min, value);
     }
   }
   return min;

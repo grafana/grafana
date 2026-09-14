@@ -231,10 +231,46 @@ describe('FlameGraphTopTableContainer with "other" data', () => {
     // The truncated total is shown for the baseline (3) and the comparison (4) side.
     expect(within(note).getByText('3')).toBeInTheDocument();
     expect(within(note).getByText('4')).toBeInTheDocument();
-    // The threshold is the smallest total present on either side (lib, comparison: 2), not the 0 of the
-    // baseline side where the function doesn't exist.
+    // The threshold is the smallest dominant (larger of the two) side among the real nodes - lib exists only in
+    // the comparison profile (baseline 0), so its dominant side is 2, not the 0 of the side where it doesn't exist.
     expect(within(note).getByText('2')).toBeInTheDocument();
     expect(within(note).queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('should use the dominant side of a diff node as the truncation threshold', async () => {
+    mockTableSize();
+    // A function that is large in the comparison profile and tiny in the baseline (app: 100 vs 1) is kept by the
+    // cutoff because of its comparison side. Its tiny baseline total must not drag the reported truncation
+    // threshold down - the threshold is the smallest dominant side among the real nodes (lib: 4).
+    const diffDataWithAsymmetricNode = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [9, 1, 5, 4] },
+        { name: 'valueRight', values: [12, 100, 6, 4] },
+        { name: 'self', values: [0, 1, 5, 4] },
+        { name: 'selfRight', values: [0, 100, 6, 4] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(diffDataWithAsymmetricNode, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorSchemeDiff.DiffColorBlind}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total is shown for the baseline (5) and the comparison (6) side.
+    expect(within(note).getByText('5')).toBeInTheDocument();
+    expect(within(note).getByText('6')).toBeInTheDocument();
+    // The threshold is the smallest dominant side (lib: 4), not app's tiny baseline total of 1.
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    expect(within(note).queryByText('1')).not.toBeInTheDocument();
   });
 
   it('should render search and sandwich buttons for "other" in the note', async () => {
