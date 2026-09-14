@@ -14,6 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
+// TestIntegrationProvisioning_GitSync_ManagerKindConflict covers full and incremental
+// pulls containing a Terraform-managed dashboard with allowsEdits=true and a valid
+// dashboard. It verifies that the conflicting dashboard stays unchanged, the valid
+// dashboard syncs, the job reports warnings, and lastRef advances. Both file orders
+// use one free quota slot so quota handling cannot hide the conflict or prevent
+// the valid dashboard from syncing.
 func TestIntegrationProvisioning_GitSync_ManagerKindConflict(t *testing.T) {
 	for _, tt := range []struct {
 		syncType     string
