@@ -259,6 +259,73 @@ describe('PanelTimeRange', () => {
     });
   });
 
+  describe('fiscal year start month', () => {
+    // April fiscal year: on 2019-02-11 the current fiscal year started 2018-04-01, so anything
+    // resolving to 2019-01-01 means the panel fell back to a January fiscal year.
+    const APRIL = 3;
+
+    function buildAprilFiscalSceneFor(panelTime: PanelTimeRange) {
+      const sceneTimeRange = new SceneTimeRange({
+        from: 'now-6h',
+        to: 'now',
+        timeZone: 'utc',
+        fiscalYearStartMonth: APRIL,
+      });
+      const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+      const scene = new SceneFlexLayout({
+        $timeRange: sceneTimeRange,
+        children: [new SceneFlexItem({ body: panel })],
+      });
+      activateFullSceneTree(scene);
+
+      return sceneTimeRange;
+    }
+
+    it('should round a fiscal timeFrom to the dashboard fiscal year start', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-04-01T00:00:00.000Z');
+      expect(panelTime.state.value.to.toISOString()).toBe(fakeCurrentDate.toISOString());
+    });
+
+    it('should round a fiscal timeFrom to the dashboard fiscal year start before applying the timeShift', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy', timeShift: '1d' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-03-31T00:00:00.000Z');
+      expect(panelTime.state.value.to.toISOString()).toBe('2019-02-10T19:00:00.000Z');
+    });
+
+    it('should offset the time comparison range from the fiscal-rounded panel range', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy', compareWith: '1d' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      const extraQueries = panelTime.getExtraQueries({
+        targets: [{ refId: 'A' }],
+        range: panelTime.state.value,
+      } as DataQueryRequest);
+
+      // 2018-04-01 fiscal start minus the 1d compare offset, not 2019-01-01 minus 1d.
+      expect(extraQueries[0].req.range.from.toISOString()).toBe('2018-03-31T00:00:00.000Z');
+      expect(extraQueries[0].req.range.to.toISOString()).toBe('2019-02-10T19:00:00.000Z');
+      expect(extraQueries[0].req.rangeRaw).toEqual({ from: 'now/fy-1d', to: 'now-1d' });
+    });
+
+    it('should re-round a fiscal timeFrom when the dashboard fiscal year start month changes', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy' });
+      const sceneTimeRange = buildAprilFiscalSceneFor(panelTime);
+
+      // July fiscal year: the current fiscal year on 2019-02-11 started 2018-07-01.
+      sceneTimeRange.setState({ fiscalYearStartMonth: 6 });
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-07-01T00:00:00.000Z');
+    });
+  });
+
   describe('onTimeRangeChange', () => {
     it('should reverse timeShift when updating time range', () => {
       const oneHourShift = '1h';

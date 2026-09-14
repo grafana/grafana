@@ -136,6 +136,14 @@ export const flows = {
       await controls.variables.setValue(varName, text);
       await page.waitForLoadState('networkidle');
     },
+    async delete(sidebar: Sidebar, variableLabel: string) {
+      return test.step(`Delete variable "${variableLabel}"`, async () => {
+        await sidebar.toolbar.clickButton('Outline');
+        await sidebar.contentOutline.toggleNode('Variables');
+        await sidebar.contentOutline.clickItem(variableLabel);
+        await sidebar.deleteSelection({ confirm: true });
+      });
+    },
   },
   navigation: {
     async goToEmbeddedPanel(page: Page) {

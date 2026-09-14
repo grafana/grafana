@@ -227,6 +227,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "alerting.ruleStatusSync",
+			Description: "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
@@ -1610,14 +1618,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "grafana.assetSriChecks",
-			Description: "Enables SRI checks for Grafana JavaScript assets",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
 		},
 		{
 			Name:        "alertRuleRestore",
