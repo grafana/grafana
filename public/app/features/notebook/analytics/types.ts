@@ -162,6 +162,57 @@ export const NOTEBOOK_DELETE_SOURCE = {
 
 export type NotebookDeleteSource = (typeof NOTEBOOK_DELETE_SOURCE)[keyof typeof NOTEBOOK_DELETE_SOURCE];
 
+/**
+ * Where an export happened. Spelled the same way NOTEBOOK_DELETE_SOURCE is, so a surface reads the
+ * same across every notebook event that names one. NOTEBOOK_AUTOSAVE_FAILED_REASON and
+ * NOTEBOOK_ADD_FAILED_REASON already share values the same way.
+ */
+export const NOTEBOOK_EXPORT_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
+export type NotebookExportSource = (typeof NOTEBOOK_EXPORT_SOURCE)[keyof typeof NOTEBOOK_EXPORT_SOURCE];
+
+/** Where a copy-link click happened. Same two values as NOTEBOOK_EXPORT_SOURCE, for the same reason. */
+export const NOTEBOOK_LINK_COPY_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
+export type NotebookLinkCopySource = (typeof NOTEBOOK_LINK_COPY_SOURCE)[keyof typeof NOTEBOOK_LINK_COPY_SOURCE];
+
+/**
+ * Where an export sent the notebook. Every action writes the same markdown, so the destination is
+ * the only thing that changes between them.
+ */
+export const NOTEBOOK_EXPORT_DESTINATION = {
+  CLIPBOARD: 'clipboard',
+  DOWNLOAD: 'download',
+} as const;
+
+export type NotebookExportDestination = (typeof NOTEBOOK_EXPORT_DESTINATION)[keyof typeof NOTEBOOK_EXPORT_DESTINATION];
+
+export interface NotebookExportedProperties extends EventProperty {
+  /**
+   * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, as it
+   * does for `deleted`. A list row export never opens the notebook. For those the nearest `loaded`
+   * is somebody else's, and can be stale or missing.
+   */
+  notebookUid: string;
+  /** Where this export sent the document. */
+  destination: NotebookExportDestination;
+  /** Which surface held the export menu. */
+  source: NotebookExportSource;
+}
+
+export interface NotebookLinkCopiedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which surface held the copy-link button. */
+  source: NotebookLinkCopySource;
+}
+
 export interface NotebookDeletedProperties extends EventProperty {
   /**
    * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, and the
