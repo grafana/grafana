@@ -45,6 +45,7 @@ const (
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
+	schedulerDefaultRuleStatusSyncInterval  = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultInitialRetryDelay       = 1 * time.Second
@@ -139,6 +140,7 @@ type UnifiedAlertingSettings struct {
 	StatePeriodicSaveInterval      time.Duration
 	StatePeriodicSaveBatchSize     int
 	StatePeriodicSaveJitterEnabled bool
+	RuleStatusSyncInterval         time.Duration
 	RulesPerRuleGroupLimit         int64
 
 	// Retention period for Alertmanager notification log entries.
@@ -180,6 +182,12 @@ type UnifiedAlertingSettings struct {
 	// Configured via the [unified_alerting] ini key "external_ruler_uid" or the
 	// GF_UNIFIED_ALERTING_EXTERNAL_RULER_UID environment variable.
 	ExternalRulerUID string
+
+	// FolderLabelFullSyncInterval is how often the folder label syncer walks every folder to correct
+	// any drift in the has-rules label, on top of the pass it makes at startup.
+	// Configured via the [unified_alerting] ini key "folder_label_full_sync_interval" or the
+	// GF_UNIFIED_ALERTING_FOLDER_LABEL_FULL_SYNC_INTERVAL environment variable.
+	FolderLabelFullSyncInterval time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -641,6 +649,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
+	uaCfg.RuleStatusSyncInterval = ua.Key("rule_status_sync_interval").MustDuration(schedulerDefaultRuleStatusSyncInterval)
+	if uaCfg.RuleStatusSyncInterval <= 0 {
+		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
+	}
+
 	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
 	if uaCfg.DeletedRuleRetention < 0 {
 		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
@@ -659,6 +672,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
 	uaCfg.ExternalRulerUID = ua.Key("external_ruler_uid").MustString("")
+
+	uaCfg.FolderLabelFullSyncInterval = ua.Key("folder_label_full_sync_interval").MustDuration(10 * time.Minute)
+	if uaCfg.FolderLabelFullSyncInterval <= 0 {
+		return fmt.Errorf("setting 'folder_label_full_sync_interval' is invalid, only a positive duration is allowed")
+	}
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
