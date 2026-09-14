@@ -1197,6 +1197,7 @@
         "name": "auth.tokenRotationGracePeriod",
         "resourceVersion": "1782472850879",
         "creationTimestamp": "2026-06-26T10:33:47Z",
+        "deletionTimestamp": "2026-09-14T15:52:22Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-26 11:20:50.87964 +0000 UTC"
         }

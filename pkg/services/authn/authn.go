@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
-	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -327,30 +325,17 @@ func getRedirectURL(r *http.Request) string {
 	return v
 }
 
-const sessionExpiryCookie = "grafana_session_expiry"
-
 func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoken.UserToken) {
 	maxAge := int(cfg.LoginMaxLifetime.Seconds())
 	if cfg.LoginMaxLifetime <= 0 {
 		maxAge = -1
 	}
 
-	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
-	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
-	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
-		opts := cookieOptions(cfg)()
-		opts.NotHttpOnly = true
-		return opts
-	})
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, cookieOptions(cfg))
 }
 
 func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
 	cookies.DeleteCookie(w, cfg.LoginCookieName, cookieOptions(cfg))
-	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
-		opts := cookieOptions(cfg)()
-		opts.NotHttpOnly = true
-		return opts
-	})
 }
 
 func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {

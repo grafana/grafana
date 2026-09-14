@@ -3122,15 +3122,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "auth.tokenRotationGracePeriod",
-			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:        "grafana.dashboardSettingsRedesign",
 			Description: "Redesigns dashboard settings page into Advanced Settings in a modal window",
 			Stage:       FeatureStageGeneralAvailability,

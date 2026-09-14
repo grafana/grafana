@@ -3,7 +3,6 @@ package authtest
 import (
 	"context"
 	"errors"
-	"net"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -17,12 +16,10 @@ var _ auth.UserTokenService = (*FakeUserAuthTokenService)(nil)
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider                 func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error)
-	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
 	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
 	FindExternalSessionsProvider        func(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)
 	UpdateExternalSessionProvider       func(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error
-	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider         func(ctx context.Context, userID int64) error
@@ -40,9 +37,6 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 				UserId:        0,
 				UnhashedToken: "",
 			}, nil
-		},
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
-			return false, nil, nil
 		},
 		LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -82,10 +76,6 @@ func (s *FakeUserAuthTokenService) Init() error {
 
 func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 	return s.CreateTokenProvider(context.Background(), cmd)
-}
-
-func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
-	return s.RotateTokenProvider(ctx, cmd)
 }
 
 func (s *FakeUserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {

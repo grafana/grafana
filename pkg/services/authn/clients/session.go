@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/url"
 	"strconv"
-	"time"
 
 	"go.opentelemetry.io/otel/trace"
 
@@ -62,10 +61,6 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 	if err != nil {
 		return nil, err
-	}
-
-	if token.NeedsRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute) {
-		return nil, authn.NewTokenNeedsRotationError(token.UserId)
 	}
 
 	ident := &authn.Identity{

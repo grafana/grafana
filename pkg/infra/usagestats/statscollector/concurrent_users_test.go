@@ -131,16 +131,13 @@ func createToken(t *testing.T, uID int, sqlStore db.DB) {
 	now := time.Now().Unix()
 
 	userAuthToken := userAuthToken{
-		UserID:        int64(uID),
-		AuthToken:     hashedToken,
-		PrevAuthToken: hashedToken,
-		ClientIP:      "192.168.10.11",
-		UserAgent:     "Mozilla",
-		RotatedAt:     now,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-		SeenAt:        0,
-		AuthTokenSeen: false,
+		UserID:    int64(uID),
+		AuthToken: hashedToken,
+		ClientIP:  "192.168.10.11",
+		UserAgent: "Mozilla",
+		CreatedAt: now,
+		UpdatedAt: now,
+		SeenAt:    now,
 	}
 
 	err = sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
@@ -151,14 +148,11 @@ func createToken(t *testing.T, uID int, sqlStore db.DB) {
 }
 
 type userAuthToken struct {
-	UserID        int64 `xorm:"user_id"`
-	AuthToken     string
-	PrevAuthToken string
-	UserAgent     string
-	ClientIP      string `xorm:"client_ip"`
-	AuthTokenSeen bool
-	SeenAt        int64
-	RotatedAt     int64
-	CreatedAt     int64
-	UpdatedAt     int64
+	UserID    int64 `xorm:"user_id"`
+	AuthToken string
+	UserAgent string
+	ClientIP  string `xorm:"client_ip"`
+	SeenAt    int64
+	CreatedAt int64
+	UpdatedAt int64
 }

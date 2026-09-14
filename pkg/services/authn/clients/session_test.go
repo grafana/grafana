@@ -60,12 +60,9 @@ func TestSession_Authenticate(t *testing.T) {
 	validHTTPReq.AddCookie(&http.Cookie{Name: cookieName, Value: "bob-the-high-entropy-token"})
 
 	validToken := &usertoken.UserToken{
-		Id:            1,
-		UserId:        1,
-		AuthToken:     "hashyToken",
-		PrevAuthToken: "prevHashyToken",
-		AuthTokenSeen: true,
-		RotatedAt:     time.Now().Unix(),
+		Id:        1,
+		UserId:    1,
+		AuthToken: "hashyToken",
 	}
 
 	type fields struct {
@@ -113,21 +110,7 @@ func TestSession_Authenticate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return error for token that needs rotation",
-			fields: fields{
-				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-					return &auth.UserToken{
-						AuthTokenSeen: true,
-						RotatedAt:     time.Now().Add(-11 * time.Minute).Unix(),
-					}, nil
-				}},
-				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{}},
-			},
-			args:    args{r: &authn.Request{HTTPRequest: validHTTPReq}},
-			wantErr: true,
-		},
-		{
-			name: "should return identity for token that don't need rotation",
+			name: "should return identity for a valid session",
 			fields: fields{
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return validToken, nil
@@ -196,7 +179,6 @@ func TestSession_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LoginCookieName = cookieName
-			cfg.TokenRotationIntervalMinutes = 10
 			cfg.LoginMaxLifetime = 20 * time.Second
 			cfgProvider, err := configprovider.ProvideService(cfg)
 			require.NoError(t, err)

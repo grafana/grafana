@@ -258,7 +258,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
 
-	// api renew session based on cookie
+	// Checks authentication and records activity for open browser sessions.
 	r.Get("/api/login/ping", quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginAPIPing))
 
 	// expose plugin file system assets
@@ -266,9 +266,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// add swagger support
 	hs.registerSwaggerUI(r)
-
-	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
-	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 
 	adminAuthPageEvaluator := func() ac.Evaluator {
 		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)

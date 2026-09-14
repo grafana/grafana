@@ -120,12 +120,6 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
-				// Note: special case for token rotation
-				// We don't want to fallthrough in this case
-				if _, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
-					return nil, err
-				}
-
 				authErr = errors.Join(authErr, err)
 				// try next
 				continue

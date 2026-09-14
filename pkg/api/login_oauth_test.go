@@ -170,13 +170,12 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 				assert.Equal(t, "/login", res.Header.Get("Location"))
 				assert.Equal(t, loginErrorCookieName, res.Cookies()[2].Name)
 			} else {
-				require.Len(t, res.Cookies(), 4)
+				require.Len(t, res.Cookies(), 3)
 				assert.Equal(t, http.StatusFound, res.StatusCode)
 				assert.Equal(t, "/", res.Header.Get("Location"))
 
-				// verify session expiry cookie is set
+				// Verify that OAuth login creates the same single session cookie as local login.
 				assert.Equal(t, cfg.LoginCookieName, res.Cookies()[2].Name)
-				assert.Equal(t, "grafana_session_expiry", res.Cookies()[3].Name)
 			}
 
 			require.NoError(t, res.Body.Close())

@@ -95,11 +95,6 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
-		c.Redirect(hs.Cfg.AppSubURL + "/")
-		return
-	}
-
 	start := time.Now()
 	defer func() {
 		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("login"), time.Since(start).Seconds())
