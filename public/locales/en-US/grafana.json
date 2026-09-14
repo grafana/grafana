@@ -3318,7 +3318,9 @@
           "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
           "success-body": "The imported resources were merged into your live config.",
           "success-title": "Configuration promoted",
-          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-ini-managed-body": "Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification resources again.",
+          "sync-ini-managed-title": "Configuration promoted, but auto-sync is still active",
+          "sync-not-cleared-body": "The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification resources again.",
           "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
           "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
           "sync-stops-title": "This will stop auto-sync",
@@ -5742,15 +5744,15 @@
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
-      "panel-background": "Change panel background",
-      "panel-description": "Change panel description",
+      "panel-background": "panel background change",
+      "panel-description": "panel description change",
       "panel-edit": "Panel changes",
       "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
-      "panel-title": "Change panel title",
+      "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-title": "Change row title",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "Delete {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "Remove",
+      "unknown-transformation-title": "Unknown transformation: {{transformationId}}"
+    },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
       "no-transformations-found": "No transformations found",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "description-as-subtitle": "as subtitle"
+      }
     }
   },
   "dashboard-import": {
@@ -8698,7 +8710,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Open value in"
+      "open-value-in": "Open value in",
+      "return-to-previous-title": "Trace"
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9195,10 @@
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
+      },
+      "cloud-provider-promo": {
+        "body": "Cloud Provider Observability maps AWS, Azure, and GCP trace attributes to cloud services, regions, and resources — so you can go from a span to infrastructure health in one place.",
+        "title": "Investigate your cloud services"
       },
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
@@ -11411,8 +11428,6 @@
         "description": "Aggregate and search logs from your applications and infrastructure.",
         "setup-hint": "connect a logs source",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Logs",
         "volume": "Ingest volume · last 24h"
       },

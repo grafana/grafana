@@ -148,11 +148,9 @@ is the immutable-snapshot-swapped-atomically concurrency model, which the group-
 
 - Duplicate group in a single `Load` **overwrites and warns, does not panic** — routes are dynamic
   (GitOps) config, not static code, so a bad duplicate must not crash the router.
-- `pkg/router` does depend on `k8s.io/apimachinery` (`metav1.APIGroupList` etc.) and
-  `k8s.io/kube-openapi/pkg/handler3` (`OpenAPIV3Discovery`) for the synthesized discovery documents
-  — see Discovery endpoints below. These are real k8s wire types reused for exact client-go/kubectl
-  compatibility, not the aggregator/apiserver machinery (`PathRecorderMux`, `UpgradeAwareHandler`,
-  admission, etc.) — that machinery is still deliberately not pulled in (see Scope above).
+- `pkg/router` uses Kubernetes discovery types, content negotiation, and resource-discovery
+  conversion helpers for client-go/kubectl compatibility. API server construction and admission
+  belong to the backends.
 
 ## Transports (`cloud_router.go`, `transportFor`)
 
@@ -189,7 +187,7 @@ TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via 
 | ---------------------------------------------- | -------------- | --------------------------------------------- |
 | `/apis/{group}/{version}`                      | single backend | proxy to the owning backend                   |
 | `/apis/{group}`                                | single backend | proxy to the owning backend (see decision)    |
-| `/apis`                                        | router         | **synthesized** `metav1.APIGroupList`         |
+| `/apis`                                        | router         | negotiated `APIGroupList` or `APIGroupDiscoveryList` |
 | `/openapi/v3`                                  | router         | **synthesized** `handler3.OpenAPIV3Discovery` |
 | `/openapi/v3/apis/{group}/{version}`           | single backend | proxy, cached and key-busted (see below)      |
 
@@ -203,10 +201,22 @@ synthesized from `served`, so it never advertises both). Consequences:
   path→hash discovery index, **never** a merged OpenAPI schema) both require router-side synthesis
   from each backend's `Group()`, done once per `reconcile()` cycle and stored via `atomic.Pointer`
   alongside `snapshot` (`buildAPIGroupList`/`buildOpenAPIV3Index` in `discovery.go`).
+  When mounted as middleware, `discovery_handler.go` merges these with the embedded server's
+  discovery through `next`. A routed group replaces all fallback versions of that group.
+  The merged response's ETag includes fallback content, so changes there invalidate it too.
+- Aggregated discovery requests to `/apis` use Kubernetes content negotiation. The router reads
+  each backend's aggregated discovery with the caller's context and credentials, keeping only
+  the group that backend owns. Older backends fall back to per-version resource discovery;
+  unavailable versions remain advertised with `freshness: Stale`. Responses are not cached across
+  callers, since backend discovery may depend on their credentials. Embedded groups from `next`
+  are included in the aggregate as well.
 - `/openapi/v3/apis/{group}/{version}` (the actual heavy per-group document) is a pure proxy to the
   owning backend, same as `/apis/{group}/{version}` — fronted by a key-validated `sync.Map` cache
-  (`openapiDocs` in `router.go`) so repeat requests between manifest changes skip the backend
-  round-trip. Cache-miss proxy requests strip `If-None-Match`/`If-Modified-Since` before forwarding,
+  (`openapiDocs` in `router.go`) for reusable responses. Private, no-cache, and no-store responses
+  are never shared: backends must authorize each request. Cache hits require matching
+  Accept and Accept-Encoding headers and preserve representation metadata. Only a cached response
+  can produce a router-generated 304. Cache-miss proxy requests strip
+  `If-None-Match`/`If-Modified-Since` before forwarding,
   so an unrelated backend ETag scheme can't produce a bodyless 304 the router would otherwise have
   no way to distinguish from "unchanged" (see `stripConditionalHeaders` in `openapi_cache.go`). A
   matching `If-None-Match` on this path must set the `ETag` header before writing 304, same as the

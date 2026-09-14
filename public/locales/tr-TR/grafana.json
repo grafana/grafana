@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Bağlantı",
-      "open-value-in": "Değeri şurada aç:"
+      "open-value-in": "Değeri şurada aç:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Panoya kopyala",
       "attribute-plugin-promo": {
         "learn-more": "Daha fazla bilgi edinin"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability; görsel açıklama planlarını, bekleme olaylarını ve sorgu örneklerini sunarak iz parçalarında görülemeyen sorunları tanılamanıza yardımcı olur.",
@@ -16562,7 +16567,7 @@
         "delete-modal-error-title": "Ekip silinemedi",
         "delete-modal-invalid-text": "Bu ekip, bir veya daha fazla klasörün sahibidir. Devam etmek için önce sahipliği kaldırın.",
         "delete-modal-invalid-title": "Ekip silinemiyor",
-        "delete-modal-text": "Bu işlem, \"<1>{{ teamName }}</1 >\" ekibini silecektir.",
+        "delete-modal-text": "Bu işlem, \"<1>{{ teamName }}</1>\" ekibini silecektir.",
         "title-edit-team": "Ekibi düzenle",
         "tooltip-delete-button": "{{teamName}} ekibini sil",
         "tooltip-edit-team": "Ekibi düzenle"
