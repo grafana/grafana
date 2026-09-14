@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { memo, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -10,10 +10,11 @@ import {
   type IconName,
   type LinkModel,
   type LogLabelStatsModel,
+  textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -36,35 +37,37 @@ interface LogLineDetailsFieldsProps {
   search?: string;
 }
 
-export const LogLineOTelDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize);
-  const getLogs = useCallback(() => logs, [logs]);
-  const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
+export const LogLineOTelDetailsFields = memo(
+  ({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
+    const { fontSize } = useLogListContext();
+    const styles = useStyles2(getFieldsStyles, fontSize);
+    const getLogs = useCallback(() => logs, [logs]);
+    const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
-  if (!fields.length) {
-    return null;
-  } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    if (!fields.length) {
+      return null;
+    } else if (filteredFields.length === 0) {
+      return t('logs.log-line-details.search.no-results', 'No results to display.');
+    }
+
+    return (
+      <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
+        {filteredFields.map((field, i) => (
+          <LogLineOTelDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            disableActions={disableActions}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </div>
+    );
   }
-
-  return (
-    <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineOTelDetailsField
-          key={`${field.keys[0]}=${field.values[0]}-${i}`}
-          disableActions={disableActions}
-          getLogs={getLogs}
-          fieldIndex={field.fieldIndex}
-          keys={field.keys}
-          links={field.links}
-          log={log}
-          values={field.values}
-        />
-      ))}
-    </div>
-  );
-});
+);
 LogLineOTelDetailsFields.displayName = 'LogLineOTelDetailsFields';
 
 interface LinkModelWithIcon extends LinkModel<Field> {
@@ -113,10 +116,7 @@ export const LogLineOTelDetailsLabelFields = ({ fields, log, logs, search }: Log
   );
 };
 
-const getFieldsStyles = (
-  theme: GrafanaTheme2,
-  fontSize: LogListFontSize,
-) => ({
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
@@ -331,7 +331,12 @@ const LogLineOTelDetailsField = ({
           <div className={styles.valueContainer}>
             <div className={styles.valueContent}>
               {singleValue ? (
-                <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} />
+                <SingleValue
+                  value={values[0]}
+                  links={links}
+                  prettifyJSON={prettifyJSON}
+                  onLinkClick={reportLinkClick}
+                />
               ) : (
                 <MultipleValue values={values} links={links} />
               )}
@@ -356,8 +361,8 @@ const LogLineOTelDetailsField = ({
                       tooltip={
                         app === CoreApp.Explore && log.dataFrame?.refId
                           ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
-                            query: log.dataFrame?.refId,
-                          })
+                              query: log.dataFrame?.refId,
+                            })
                           : t('logs.log-line-details.fields.filter-out', 'Filter out value')
                       }
                       onClick={filterOutLabel}
@@ -478,6 +483,49 @@ const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
   };
 };
 
+const getValueLinkStyles = (theme: GrafanaTheme2) => ({
+  linkValue: css({
+    '& svg': {
+      color: theme.colors.text.primary,
+    },
+    color: theme.colors.text.link,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  linkIcon: css({
+    flexShrink: 0,
+  }),
+  multiLinkValue: css({
+    display: 'inline-flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing(0.25),
+  }),
+  multiLinkContent: css({
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkTrigger: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: 0,
+    margin: 0,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: theme.colors.text.link,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkChevron: css({
+    flexShrink: 0,
+  }),
+});
+
 const ClipboardButtonWrapper = ({ value }: { value: string }) => {
   const styles = useStyles2(getClipboardButtonStyles);
   return (
@@ -518,7 +566,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({ values = [] }: { values: string[] }) => {
+export const MultipleValue = ({ links, values = [] }: { links?: LinkModelWithIcon[], values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -528,7 +576,9 @@ export const MultipleValue = ({ values = [] }: { values: string[] }) => {
         {values.map((val, i) => {
           return (
             <tr key={`${val}-${i}`}>
-              <td>{val}</td>
+              <td>
+                <SingleValue value={val} links={links} />
+              </td>
             </tr>
           );
         })}
@@ -537,7 +587,17 @@ export const MultipleValue = ({ values = [] }: { values: string[] }) => {
   );
 };
 
-export const SingleValue = ({ links, value: originalValue, prettifyJSON }: { links?: LinkModelWithIcon[]; value: string; prettifyJSON?: boolean }) => {
+export const SingleValue = ({
+  links,
+  value: originalValue,
+  prettifyJSON,
+  onLinkClick,
+}: {
+  links?: LinkModelWithIcon[];
+  value: string;
+  prettifyJSON?: boolean;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
   const value = useMemo(() => {
     if (!prettifyJSON) {
       return originalValue;
@@ -547,40 +607,126 @@ export const SingleValue = ({ links, value: originalValue, prettifyJSON }: { lin
       if (parsed) {
         return parsed;
       }
-    } catch (error) { }
+    } catch (error) {}
     return originalValue;
   }, [originalValue, prettifyJSON]);
 
+  if (links && links.length > 1) {
+    return (
+      <LinkValuesMenu links={links} onLinkClick={onLinkClick}>
+        {value}
+      </LinkValuesMenu>
+    );
+  }
+
   if (links?.length === 1) {
-    return <Link link={links[0]}>{value}</Link>
+    return (
+      <Link link={links[0]} onLinkClick={onLinkClick}>
+        {value}
+      </Link>
+    );
   }
 
   return value;
 };
 
-const Link = ({ children, link }: { children: ReactNode; link: LinkModelWithIcon }) => {
-  const icon: IconName | undefined = link.icon ?? (link.target === '_blank' ? 'external-link-alt' : undefined);
+const Link = ({
+  children,
+  link,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  link: LinkModelWithIcon;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const icon: IconName = link.icon ?? 'external-link-alt';
+  const href = link.href ? textUtil.sanitizeUrl(link.href) : link.href;
 
   return (
-    <>
-      {icon && <Icon name={icon} />}
-      <a
-        href={link.href}
-        target={link.target}
-        rel="noreferrer"
-        onClick={
-          link.onClick
-            ? (event) => {
-              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                event.preventDefault();
-                link.onClick(event);
-              }
-            }
-            : undefined
+    <a
+      href={href}
+      title={link.title}
+      target={link.target}
+      rel="noopener noreferrer"
+      className={styles.linkValue}
+      onClick={(event) => {
+        onLinkClick?.(link);
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+          event.preventDefault();
+          link.onClick(event);
+        }
+      }}
+    >
+      <Icon name={icon} className={styles.linkIcon} />
+      {children}
+    </a>
+  );
+};
+
+const LinkValuesMenu = ({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const openValueInLabel = t('logs.log-line-details.open-value-in', 'Open value in');
+  const triggerId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const button = container?.querySelector('button');
+    if (!container || !button) {
+      return;
+    }
+    setMenuOffset([8, container.getBoundingClientRect().left - button.getBoundingClientRect().left]);
+  }, [links, children]);
+
+  return (
+    <div className={styles.multiLinkValue} ref={containerRef}>
+      <label htmlFor={triggerId} className={styles.multiLinkContent}>
+        {children}
+      </label>
+      <Dropdown
+        placement="bottom-start"
+        offset={menuOffset}
+        overlay={
+          <Menu>
+            <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+              {links.map((link, index) => (
+                <div key={index} title={link.title}>
+                  <Menu.Item
+                    label={link.title || t('logs.log-line-details.link-fallback-label', 'Link')}
+                    icon={link.icon}
+                    url={link.href ? textUtil.sanitizeUrl(link.href) : undefined}
+                    target={link.target}
+                    onClick={(event) => {
+                      onLinkClick?.(link);
+                      link.onClick?.(event);
+                    }}
+                  />
+                </div>
+              ))}
+            </Menu.Group>
+          </Menu>
         }
       >
-        {children}
-      </a>
-    </>
-  )
-}
+        <button
+          id={triggerId}
+          type="button"
+          className={styles.multiLinkTrigger}
+          title={openValueInLabel}
+          aria-haspopup="menu"
+        >
+          <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+        </button>
+      </Dropdown>
+    </div>
+  );
+};

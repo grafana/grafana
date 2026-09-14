@@ -1208,6 +1208,75 @@ describe('LogLineDetails', () => {
     expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
   });
 
+  test('OTel details wrap a single attribute extension link around the value', async () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'Open service overview',
+          path: 'https://example.com/overview',
+          category: 'service.name',
+          icon: 'compass',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    const link = screen.getByRole('link', { name: 'Open service overview' });
+    expect(link).toHaveAttribute('href', 'https://example.com/overview');
+    expect(link).toHaveTextContent('checkout');
+    expect(screen.queryByRole('button', { name: 'checkout' })).not.toBeInTheDocument();
+  });
+
+  test('OTel details show a dropdown when an attribute has multiple extension links', async () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'service.name',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'service.name',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'checkout' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
+  });
+
   describe('Width regressions', () => {
     test('should consider Fields Selector width when enabled', async () => {
       jest.mocked(getFieldSelectorWidth).mockClear();
