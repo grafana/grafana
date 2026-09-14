@@ -37,7 +37,7 @@ describe('validateExpressionQueries', () => {
     expect(validateExpressionQueries([dataQuery(), dataQuery('B')])).toBe(true);
   });
 
-  it('reports a threshold that has no query to read', () => {
+  it('blocks a threshold that has no query to read', () => {
     const queries = [
       expression('C', {
         refId: 'C',
@@ -47,12 +47,12 @@ describe('validateExpressionQueries', () => {
       }),
     ];
 
-    expect(validateExpressionQueries(queries)).toBe('C: Select a query to threshold.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
   // The backend does not strip a leading $ for threshold the way it does for reduce and resample,
   // so a rule saved like this never fires.
-  it('reports a threshold whose query name still has a $ prefix', () => {
+  it('blocks a threshold whose query name still has a $ prefix', () => {
     const queries = [
       expression('C', {
         refId: 'C',
@@ -62,10 +62,10 @@ describe('validateExpressionQueries', () => {
       }),
     ];
 
-    expect(validateExpressionQueries(queries)).toBe('C: Reference the query by name only, without a leading "$".');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
-  it('reports a range threshold given only one value', () => {
+  it('blocks a range threshold given only one value', () => {
     const queries = [
       expression('C', {
         refId: 'C',
@@ -75,10 +75,10 @@ describe('validateExpressionQueries', () => {
       }),
     ];
 
-    expect(validateExpressionQueries(queries)).toBe('C: Enter a threshold value.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
-  it('reports a reduce in replaceNN mode with no replacement value', () => {
+  it('blocks a reduce in replaceNN mode with no replacement value', () => {
     const queries = [
       expression('B', {
         refId: 'B',
@@ -89,19 +89,19 @@ describe('validateExpressionQueries', () => {
       }),
     ];
 
-    expect(validateExpressionQueries(queries)).toBe('B: Enter a replacement value.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
-  it('reports an empty math expression', () => {
+  it('blocks an empty math expression', () => {
     const queries = [expression('B', { refId: 'B', type: ExpressionQueryType.math, expression: '' })];
 
-    expect(validateExpressionQueries(queries)).toBe('B: Enter a math expression.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
-  it('reports an empty SQL expression', () => {
+  it('blocks an empty SQL expression', () => {
     const queries = [expression('B', { refId: 'B', type: ExpressionQueryType.sql, expression: '  ' })];
 
-    expect(validateExpressionQueries(queries)).toBe('B: Enter a SQL expression.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 
   // An expression with no usable type is setQueryEditorSettings' problem, not this check's.
@@ -109,12 +109,12 @@ describe('validateExpressionQueries', () => {
     expect(validateExpressionQueries([expression('B', { refId: 'B' })])).toBe(true);
   });
 
-  it('reports the first problem it finds', () => {
+  it('blocks when more than one expression is wrong', () => {
     const queries = [
       expression('B', { refId: 'B', type: ExpressionQueryType.math, expression: '' }),
       expression('C', { refId: 'C', type: ExpressionQueryType.sql, expression: '' }),
     ];
 
-    expect(validateExpressionQueries(queries)).toBe('B: Enter a math expression.');
+    expect(validateExpressionQueries(queries)).toBe(false);
   });
 });

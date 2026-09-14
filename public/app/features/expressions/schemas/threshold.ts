@@ -13,6 +13,7 @@ import {
   queryBaseMemory,
   queryBaseWire,
 } from './common';
+import type { ExpressionIssueId, FieldPath } from './issues';
 
 /**
  * Checks a series against a threshold. Two things here are easy to get wrong:
@@ -102,30 +103,145 @@ export const thresholdCodec = z.codec(thresholdWireSchema, thresholdMemorySchema
   }),
 });
 
+/** Where the single value, or the low end of a range, lives on the recovery threshold. */
+const RECOVERY_FIRST: FieldPath = ['conditions', 0, 'unloadEvaluator', 'params', 0];
+/** Where the high end of a range lives on the recovery threshold. */
+const RECOVERY_SECOND: FieldPath = ['conditions', 0, 'unloadEvaluator', 'params', 1];
+
+/**
+ * The recovery threshold inputs show their own problems, so whatever renders the expression card
+ * should leave these to the threshold editor rather than repeating them.
+ */
+export const RECOVERY_VALUE_PATHS: FieldPath[] = [RECOVERY_FIRST, RECOVERY_SECOND];
+
+/**
+ * Checks the recovery threshold sits on the right side of the threshold itself, which depends on
+ * the comparison being used. Moved here from `isInvalid` in `components/thresholdReducer.ts`, so
+ * these rules and the ones above live in one place.
+ */
+function checkRecoveryThreshold(
+  evaluator: ThresholdCondition['evaluator'],
+  recovery: ThresholdCondition['evaluator'],
+  report: (id: ExpressionIssueId, path: FieldPath, limit: number) => void
+) {
+  const [firstValue, secondValue] = evaluator.params;
+  const [firstRecovery, secondRecovery] = recovery.params;
+
+  switch (evaluator.type) {
+    case EvalFunction.IsAbove:
+      if (firstRecovery > firstValue) {
+        report('threshold.recovery.at-most', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    case EvalFunction.IsBelow:
+      if (firstRecovery < firstValue) {
+        report('threshold.recovery.at-least', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    case EvalFunction.IsEqual:
+      if (firstRecovery === firstValue) {
+        report('threshold.recovery.different', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    // Kept exactly as it has always behaved: this one asks for the recovery value to *match* the
+    // threshold, which is the opposite of every other case here and the reverse of `IsEqual` just
+    // above. Whether that is the right thing for alerting to do is a separate question - do not
+    // "fix" it by pattern-matching the neighbours. A test pins this.
+    case EvalFunction.IsNotEqual:
+      if (firstRecovery !== firstValue) {
+        report('threshold.recovery.same', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    case EvalFunction.IsGreaterThanEqual:
+      if (firstRecovery >= firstValue) {
+        report('threshold.recovery.less-than', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    case EvalFunction.IsLessThanEqual:
+      if (firstRecovery <= firstValue) {
+        report('threshold.recovery.more-than', RECOVERY_FIRST, firstValue);
+      }
+      return;
+
+    case EvalFunction.IsOutsideRange:
+      if (firstRecovery < firstValue) {
+        report('threshold.recovery.at-least', RECOVERY_FIRST, firstValue);
+      } else if (secondRecovery > secondValue) {
+        report('threshold.recovery.at-most', RECOVERY_SECOND, secondValue);
+      }
+      return;
+
+    case EvalFunction.IsWithinRange:
+      if (firstRecovery > firstValue) {
+        report('threshold.recovery.at-most', RECOVERY_FIRST, firstValue);
+      } else if (secondRecovery < secondValue) {
+        report('threshold.recovery.at-least', RECOVERY_SECOND, secondValue);
+      }
+      return;
+
+    case EvalFunction.IsOutsideRangeIncluded:
+      if (firstRecovery <= firstValue) {
+        report('threshold.recovery.more-than', RECOVERY_FIRST, firstValue);
+      } else if (secondRecovery >= secondValue) {
+        report('threshold.recovery.less-than', RECOVERY_SECOND, secondValue);
+      }
+      return;
+
+    case EvalFunction.IsWithinRangeIncluded:
+      if (firstRecovery >= firstValue) {
+        report('threshold.recovery.less-than', RECOVERY_FIRST, firstValue);
+      } else if (secondRecovery <= secondValue) {
+        report('threshold.recovery.more-than', RECOVERY_SECOND, secondValue);
+      }
+      return;
+  }
+}
+
 export const thresholdSaveRules = thresholdMemorySchema
   .refine((query) => query.expression.trim() !== '', {
-    error: 'Select a query to threshold.',
+    error: 'threshold.expression.required' satisfies ExpressionIssueId,
     path: ['expression'],
   })
   .refine((query) => !query.expression.startsWith('$'), {
-    error: 'Reference the query by name only, without a leading "$".',
+    error: 'threshold.expression.bare-name' satisfies ExpressionIssueId,
     path: ['expression'],
   })
   .refine((query) => query.conditions.length === 1, {
-    error: 'A threshold takes exactly one condition.',
+    error: 'threshold.conditions.one-only' satisfies ExpressionIssueId,
     path: ['conditions'],
   })
   .refine((query) => hasEnoughParams(query.conditions[0].evaluator), {
-    error: 'Enter a threshold value.',
+    error: 'threshold.value.required' satisfies ExpressionIssueId,
     path: ['conditions', 0, 'evaluator', 'params'],
   })
-  .refine(
-    (query) => {
-      const unload = query.conditions[0].unloadEvaluator;
-      return !unload || hasEnoughParams(unload);
-    },
-    {
-      error: 'Enter a recovery threshold value.',
-      path: ['conditions', 0, 'unloadEvaluator', 'params'],
+  // `.check` rather than `.refine` because these messages need the threshold value to compare
+  // against, and only `.check` can attach it to the issue.
+  .check((ctx) => {
+    const [condition] = ctx.value.conditions;
+    const recovery = condition.unloadEvaluator;
+
+    if (!recovery) {
+      return;
     }
-  );
+
+    const report = (id: ExpressionIssueId, path: FieldPath, limit: number) =>
+      ctx.issues.push({ code: 'custom', input: ctx.value, message: id, path: [...path], params: { limit } });
+
+    // An empty box comes through as no params at all, since a blank input is not a number.
+    if (!hasEnoughParams(recovery)) {
+      ctx.issues.push({
+        code: 'custom',
+        input: ctx.value,
+        message: 'threshold.recovery.required' satisfies ExpressionIssueId,
+        path: [...RECOVERY_FIRST],
+      });
+      return;
+    }
+
+    checkRecoveryThreshold(condition.evaluator, recovery, report);
+  });
