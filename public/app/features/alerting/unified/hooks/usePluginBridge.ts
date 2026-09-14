@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
+import { withTimeout } from '../utils/promise';
 
 interface PluginBridgeHookResponse {
   loading: boolean;
@@ -106,21 +107,11 @@ async function probePluginWithTimeout(
     return probe;
   }
 
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      probe,
-      new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          const error = new PluginBridgeTimeoutError(plugin, timeoutMs);
-          onTimeout(error);
-          reject(error);
-        }, timeoutMs);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return withTimeout(probe, timeoutMs, () => {
+    const error = new PluginBridgeTimeoutError(plugin, timeoutMs);
+    onTimeout(error);
+    return error;
+  });
 }
 
 type FallbackPlugin = SupportedPlugin.OnCall | SupportedPlugin.Incident;

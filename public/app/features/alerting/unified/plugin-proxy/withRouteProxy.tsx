@@ -13,12 +13,18 @@ import {
 import { logError } from '../Analytics';
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
+import { withTimeout } from '../utils/promise';
 
 import { routeProxies } from './proxies';
 import { buildProxyContext, stripSubPath } from './resolve';
 import { type ProxyContext, type RouteProxy } from './types';
 
 const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
+/**
+ * Handlers look up data sources to swap names for UIDs, which can reach the backend. Without a
+ * ceiling of its own, a request that never comes back would leave the page loading forever.
+ */
+const TARGET_RESOLUTION_TIMEOUT_MS = 5_000;
 
 /**
  * Reads the browser's location instead of react-router's, because react-router hands back a
@@ -58,10 +64,17 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
     );
 
     // Only worth working out a target once we know there's a plugin to send people to.
-    const { value: target, loading: buildingTarget } = useAsync(
-      async () => (belongsToPlugin && pluginAvailable ? proxy.handler(context) : undefined),
-      [belongsToPlugin, pluginAvailable, context]
-    );
+    const { value: target, loading: buildingTarget } = useAsync(async () => {
+      if (!belongsToPlugin || !pluginAvailable) {
+        return undefined;
+      }
+
+      return withTimeout(proxy.handler(context), TARGET_RESOLUTION_TIMEOUT_MS, () => {
+        const error = new Error('Timed out while resolving the Prometheus Alerting plugin URL');
+        logError(error, { timeout: String(TARGET_RESOLUTION_TIMEOUT_MS), path: proxy.path });
+        return error;
+      });
+    }, [belongsToPlugin, pluginAvailable, context]);
 
     // Not a data source managed URL, so don't make this page wait on a check it doesn't need.
     if (!belongsToPlugin) {

@@ -1,5 +1,5 @@
 import { useLocation } from 'react-use';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -13,6 +13,7 @@ import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { routeProxies } from './proxies';
+import { type RouteProxy } from './types';
 import { withRouteProxy } from './withRouteProxy';
 
 jest.mock('react-router-dom-v5-compat', () => ({
@@ -50,7 +51,7 @@ function CorePage() {
   return <div>core alerting page</div>;
 }
 
-function renderProxiedRoute(pathname: string, search = '') {
+function renderProxiedRoute(pathname: string, search = '', override?: Partial<RouteProxy>) {
   jest.mocked(useLocation).mockReturnValue({ pathname, search, trigger: '' });
 
   const proxy = routeProxies.find(({ path }) => path === ROUTE_PATH);
@@ -58,7 +59,7 @@ function renderProxiedRoute(pathname: string, search = '') {
     throw new Error(`No proxy registered for ${ROUTE_PATH}`);
   }
 
-  const ProxiedPage = withRouteProxy(proxy, CorePage);
+  const ProxiedPage = withRouteProxy({ ...proxy, ...override }, CorePage);
 
   const props: GrafanaRouteComponentProps = {
     route: { path: ROUTE_PATH, component: CorePage },
@@ -125,6 +126,27 @@ describe('withRouteProxy', () => {
 
     expect(screen.getByText('Loading…')).toBeInTheDocument();
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
+  });
+
+  it('falls back to Grafana and logs when the handler takes too long to resolve a URL', async () => {
+    // The plugin is reported as available up front so the only thing left to wait on is the
+    // handler, which is what this test is about.
+    jest.spyOn(pluginBridgeHooks, 'usePluginBridge').mockReturnValue({ loading: false, installed: true });
+    const logError = jest.spyOn(Analytics, 'logError').mockImplementation();
+    jest.useFakeTimers();
+
+    // A handler that never settles — without a ceiling of its own this would load forever.
+    renderProxiedRoute(DATA_SOURCE_URL, '', { handler: () => new Promise(() => {}) });
+
+    await act(async () => {
+      jest.advanceTimersByTime(5_000);
+    });
+
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Timed out while resolving the Prometheus Alerting plugin URL' }),
+      { timeout: '5000', path: ROUTE_PATH }
+    );
   });
 
   it('falls back to Grafana and logs when plugin discovery times out', async () => {
