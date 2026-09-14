@@ -666,7 +666,7 @@ func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, index
 
 	for ctx.Err() == nil {
 		b.updateIndexSizeMetric(ctx, indexPath)
-		b.updateIndexedKindsMetric()
+		b.updateIndexedKindsMetric(ctx)
 
 		select {
 		case <-ctx.Done():
@@ -676,28 +676,51 @@ func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, index
 	}
 }
 
+// indexedDocCounts holds the document counts reported for one kind.
+type indexedDocCounts struct {
+	live    int64
+	deleted int64
+}
+
 // updateIndexedKindsMetric reports the number of documents currently indexed per
 // kind. The value is recomputed on every run rather than accumulated, so rebuilds
 // and incremental updates don't inflate it.
-func (b *bleveBackend) updateIndexedKindsMetric() {
-	counts := map[string]int64{}
+func (b *bleveBackend) updateIndexedKindsMetric(ctx context.Context) {
+	counts := map[string]indexedDocCounts{}
 	for _, key := range b.GetOpenIndexes() {
+		if ctx.Err() != nil {
+			return
+		}
 		// peekCachedIndex so this scan doesn't keep unowned indexes from being evicted.
 		idx := b.peekCachedIndex(key)
 		if idx == nil {
 			continue
 		}
-		docCount, err := idx.index.DocCount()
+		// bleveIndex.DocCount counts live documents only, while the raw bleve count
+		// covers everything the index holds, so the difference is what is in trash.
+		live, err := idx.DocCount(ctx, "", nil)
 		if err != nil {
 			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
 			continue
 		}
+		total, err := idx.index.DocCount()
+		if err != nil {
+			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
+			continue
+		}
+
 		// The same kind can be indexed in many namespaces, each with its own index.
-		counts[key.Resource] += int64(docCount)
+		c := counts[key.Resource]
+		c.live += live
+		// The two counts are read one after the other, so a write in between can make
+		// this negative.
+		c.deleted += max(int64(total)-live, 0)
+		counts[key.Resource] = c
 	}
 
 	for kind, count := range counts {
-		b.indexMetrics.IndexedKinds.WithLabelValues(kind).Set(float64(count))
+		b.indexMetrics.IndexedKinds.WithLabelValues(kind, resource.IndexedDocumentsLive).Set(float64(count.live))
+		b.indexMetrics.IndexedKinds.WithLabelValues(kind, resource.IndexedDocumentsDeleted).Set(float64(count.deleted))
 		b.reportedIndexedKinds[kind] = struct{}{}
 	}
 
@@ -707,7 +730,8 @@ func (b *bleveBackend) updateIndexedKindsMetric() {
 		if _, ok := counts[kind]; ok {
 			continue
 		}
-		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind)
+		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsLive)
+		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsDeleted)
 		delete(b.reportedIndexedKinds, kind)
 	}
 }
