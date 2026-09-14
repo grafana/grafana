@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Wert öffnen in"
+      "open-value-in": "Wert öffnen in",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "In die Zwischenablage kopieren",
       "attribute-plugin-promo": {
         "learn-more": "Mehr erfahren"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability zeigt visuelle erklärende Pläne, Warteereignisse und Abfragebeispiele und hilft Ihnen so, über Trace-Spannen hinaus Probleme zu diagnostizieren.",
@@ -15552,7 +15557,7 @@
   },
   "reduce": {
     "strictMode": {
-      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</ 9>",
+      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</9>",
       "title": "Verhalten im strengen Modus"
     }
   },

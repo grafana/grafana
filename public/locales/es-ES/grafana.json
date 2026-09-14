@@ -4065,7 +4065,7 @@
       "auth-settings": "Ajustes de autenticación"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2>documentación</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Autenticación avanzada",
@@ -4254,7 +4254,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2><0>documentación</0></2>."
+    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2>documentación</2>."
   },
   "bar-chart": {
     "warn": {
@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Enlace",
-      "open-value-in": "Abrir valor en"
+      "open-value-in": "Abrir valor en",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Copiar al portapapeles",
       "attribute-plugin-promo": {
         "learn-more": "Más información"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "La observabilidad de la base de datos muestra planes de explicación visuales, eventos de espera y muestras de consultas, lo que te ayuda a diagnosticar problemas más allá de los intervalos de trazas.",
@@ -15601,7 +15606,7 @@
     },
     "sub-menu-aria-label": "Submenú del selector de roles",
     "title": {
-      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2>documentación</2>."
     }
   },
   "role-picker-drawer": {
