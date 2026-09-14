@@ -6,7 +6,6 @@ import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
 
 import { copyToClipboard } from './copyToClipboard';
-import { openCursorPromptDeeplink } from './cursor';
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
 
@@ -66,21 +65,6 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
     }
   };
 
-  const onOpenInCursor = async () => {
-    try {
-      const spec = await loadSpec();
-      // Unconditional, and deliberately not a success message. A deep link into an app that is not
-      // installed is ignored by the browser with no error and no way to detect it, so the honest
-      // report is that the handoff was attempted — otherwise the click does nothing observable at all.
-      notifyApp.info(t('notebooks.export.opening-in-cursor', 'Opening in Cursor'));
-      // Serialized without the link: Cursor's deep link handler mis-parses embedded URLs, and
-      // leaving it out beats generating it and stripping it back out.
-      openCursorPromptDeeplink(notebookToMarkdown(spec, {}));
-    } catch (error) {
-      reportFailure();
-    }
-  };
-
   return (
     <>
       <Menu.Item label={t('notebooks.export.copy-markdown', 'Copy as Markdown')} icon="copy" onClick={onCopy} />
@@ -88,11 +72,6 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
         label={t('notebooks.export.download-markdown', 'Download as .md')}
         icon="download-alt"
         onClick={onDownload}
-      />
-      <Menu.Item
-        label={t('notebooks.export.open-in-cursor', 'Open in Cursor')}
-        icon="external-link-alt"
-        onClick={onOpenInCursor}
       />
     </>
   );

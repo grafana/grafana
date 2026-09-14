@@ -97,6 +97,7 @@ func TestValidateOnCreate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
+				OrgRole:        "Viewer",
 			},
 			searchClient: &FakeUserLegacySearchClient{},
 			expectError:  false,
@@ -112,6 +113,7 @@ func TestValidateOnCreate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
+				OrgRole:        "Viewer",
 			},
 			searchClient: &FakeUserLegacySearchClient{},
 			expectError:  false,
@@ -163,6 +165,39 @@ func TestValidateOnCreate(t *testing.T) {
 			expectError:  false,
 		},
 		{
+			name: "non-admin cannot create a user with a role higher than their own",
+			user: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Login: "testuser",
+					Role:  "Admin",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+				OrgRole:        "Editor",
+			},
+			searchClient:  &FakeUserLegacySearchClient{},
+			expectError:   true,
+			errorContains: "cannot assign a role higher than user's role",
+		},
+		{
+			name: "non-admin can create a user with a role at or below their own",
+			user: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{
+					Login: "testuser",
+					Role:  "Editor",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+				OrgRole:        "Editor",
+			},
+			searchClient: &FakeUserLegacySearchClient{},
+			expectError:  false,
+		},
+		{
 			name: "user with existing email",
 			user: &iamv0alpha1.User{
 				ObjectMeta: metav1.ObjectMeta{
@@ -176,6 +211,7 @@ func TestValidateOnCreate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
+				OrgRole:        "Viewer",
 			},
 			searchClient: &FakeUserLegacySearchClient{
 				Users: []*org.OrgUserDTO{
@@ -200,6 +236,7 @@ func TestValidateOnCreate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
+				OrgRole:        "Viewer",
 			},
 			searchClient: &FakeUserLegacySearchClient{
 				Users: []*org.OrgUserDTO{
@@ -480,6 +517,38 @@ func TestValidateOnUpdate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
+				OrgRole:        "Editor",
+			},
+			expectError: false,
+		},
+		{
+			name: "non-admin org.users:write holder cannot escalate role beyond their own",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Viewer"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Admin"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+				OrgRole:        "Editor",
+			},
+			expectError:   true,
+			errorContains: "cannot assign a role higher than user's role",
+		},
+		{
+			name: "non-admin can update unrelated fields when role is unchanged, even above their own level",
+			oldUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Admin"},
+			},
+			newUser: &iamv0alpha1.User{
+				Spec: iamv0alpha1.UserSpec{Login: "testuser", Role: "Admin"},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: false,
+				OrgRole:        "Editor",
 			},
 			expectError: false,
 		},
