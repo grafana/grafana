@@ -1521,10 +1521,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 		return
 	}
 	s.bgTaskWg.Go(func() {
-		interval := s.rateLimitWindow / 2
-		if interval < time.Minute {
-			interval = time.Minute
-		}
+		interval := max(s.rateLimitWindow/2, time.Minute)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -2306,16 +2303,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return nil, err
 	}
 
-	// Record the number of objects indexed for the kind/resource
-	// We don't pass searchStats to DocCount here, as it's not really user-initiated search. Time spent
-	// here will be recorded in the index build time instead.
-	docCount, err := index.DocCount(ctx, "", nil)
-	if err != nil {
-		logger.Warn("error getting doc count", "error", err)
-	}
-	s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
-
-	return index, err
+	// The indexed kinds metric is not recorded here: the search backend refreshes it
+	// from the open indexes, so it also follows incremental updates and it is not
+	// added up over repeated rebuilds.
+	return index, nil
 }
 
 // keepsDeletedDocuments reports whether deleted objects should stay in this

@@ -616,11 +616,6 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
-  * Enables step mode for alerting queries and expressions
-  * @default true
-  */
-  alertingQueryAndExpressionsStepMode?: boolean;
-  /**
   * Use session storage for handling the redirection after login
   * @default true
   */

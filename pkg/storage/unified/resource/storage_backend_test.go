@@ -1002,10 +1002,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
-		end := batch + concurrency
-		if end > numEvents {
-			end = numEvents
-		}
+		end := min(batch+concurrency, numEvents)
 		batchSize := end - batch
 
 		type writeResult struct {
@@ -1857,6 +1854,87 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid continue token")
+}
+
+func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	tests := []struct {
+		name             string
+		requestNamespace string
+		token            ContinueToken
+	}{
+		{
+			name:             "cluster-wide token reused for its cursor namespace",
+			requestNamespace: "ns-two",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, ClusterWide: true, Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:             "namespaced token reused cluster-wide",
+			requestNamespace: "",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: tt.requestNamespace,
+				}},
+				KeysOnly:      true,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestKvStorageBackend_ListIterator_RejectsContinueTokenListTypeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	tests := []struct {
+		name        string
+		requestType bool
+		token       ContinueToken
+	}{
+		{
+			name:        "regular token used for keys-only list",
+			requestType: true,
+			token:       ContinueToken{Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:        "keys-only token used for regular list",
+			requestType: false,
+			token:       ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: "ns-two",
+				}},
+				KeysOnly:      tt.requestType,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestContinueTokenMatchesListRequest_AcceptsLegacyClusterWideKeysOnlyToken(t *testing.T) {
+	token := &ContinueToken{Name: "bbb", ResourceVersion: 1}
+	req := &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{}},
+		KeysOnly: true,
+	}
+	require.True(t, continueTokenMatchesListRequest(token, req))
+
+	req.Options.Key.Namespace = "ns-two"
+	require.False(t, continueTokenMatchesListRequest(token, req))
 }
 
 func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
