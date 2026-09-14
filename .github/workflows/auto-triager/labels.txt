@@ -64,7 +64,6 @@ area/panel/node-graph
 area/panel/node-graph
 area/panel/piechart
 area/panel/repeat
-area/panel/singlestat
 area/panel/stat
 area/panel/state-timeline
 area/panel/status-history
