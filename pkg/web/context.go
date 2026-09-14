@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -44,8 +45,8 @@ var errMissingWrite = errutil.Internal("web.missingWrite")
 
 func (ctx *Context) run() {
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-	for i := len(ctx.mws) - 1; i >= 0; i-- {
-		h = ctx.mws[i](h)
+	for _, v := range slices.Backward(ctx.mws) {
+		h = v(h)
 	}
 
 	rw := ctx.Resp

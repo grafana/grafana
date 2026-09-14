@@ -39,7 +39,6 @@ type (
 	}, *setting.Cfg, Options, api.ServerOptions) (*TestEnv, error)
 	initializeForCLIFn           func(context.Context, *setting.Cfg) (Runner, error)
 	initializeAPIServerFactoryFn func() (standalone.APIServerFactory, error)
-	initializeRouterFactoryFn    func() (router.RouterFactory, error)
 	initializeRoutesLoaderFn     func(*setting.Cfg, router.RoutesLoaderClients) (router.RoutesLoader, error)
 )
 
@@ -48,7 +47,6 @@ var (
 	initializeForTestServer        initializeForTestFn
 	initializeForCLIServer         initializeForCLIFn
 	initializeAPIServerFactoryFunc initializeAPIServerFactoryFn
-	initializeRouterFactoryFunc    initializeRouterFactoryFn
 	initializeRoutesLoaderFunc     initializeRoutesLoaderFn
 )
 
@@ -59,14 +57,12 @@ func RegisterInitializers(
 	initializeForTest initializeForTestFn,
 	initializeForCLI initializeForCLIFn,
 	initializeAPIServerFactory initializeAPIServerFactoryFn,
-	initializeRouterFactory initializeRouterFactoryFn,
 	initializeRoutesLoader initializeRoutesLoaderFn,
 ) {
 	initializeServer = initialize
 	initializeForTestServer = initializeForTest
 	initializeForCLIServer = initializeForCLI
 	initializeAPIServerFactoryFunc = initializeAPIServerFactory
-	initializeRouterFactoryFunc = initializeRouterFactory
 	initializeRoutesLoaderFunc = initializeRoutesLoader
 }
 
@@ -88,10 +84,6 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return initializeAPIServerFactoryFunc()
-}
-
-func InitializeRouterFactory() (router.RouterFactory, error) {
-	return initializeRouterFactoryFunc()
 }
 
 func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {

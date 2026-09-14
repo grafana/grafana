@@ -51,12 +51,6 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }
 
-// Initialize the standalone router factory
-func InitializeRouterFactory() (router.RouterFactory, error) {
-	wire.Build(RouterFactorySet)
-	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
-}
-
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the
 // app-plugin API registration.
 func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {

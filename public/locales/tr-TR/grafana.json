@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana tarafından yönetilen uyarı kurallarınıza ait tüm uyarı olaylarının geçmişini görüntüleyin. Sesi kapatma veya sessize alma zamanlaması ayarlanmış olup olmadığından bağımsız olarak tüm olaylar listelenir.",
         "notifications": "Grafana tarafından yönetilen uyarı kurallarınızdan gönderilen tüm bildirimlerin geçmişini görüntüleyin."
@@ -7760,6 +7763,9 @@
         "title": "Kaydedilmemiş değişiklikler"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Aradığınız şey bu değil mi? <2>Önerilen diğer panoları</2> görüntüleyin veya <6>sıfırdan bir pano oluşturun</6>.",
       "title": "Şu anda {{title}} görüntüleniyor"
@@ -8014,6 +8020,7 @@
       "title-label": "Başlık"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Değişiklikleri kaydet",
       "save-button-disabled-tooltip": "Kaydetmeden önce doğrulama hatalarını düzeltin",
       "save-button-disabled-tooltip-yaml": "Belgede doğrulama hataları var. Satır içi hata ayrıntılarını görmek için JSON'a geçin.",
@@ -8691,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Bağlantı",
-      "open-value-in": "Değeri şurada aç:"
+      "open-value-in": "Değeri şurada aç:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9156,6 +9164,9 @@
       "success-indicator": "",
       "target": "Hedef",
       "tooltip-url": "{{route}} veya {{url}} veya {{target}} veya {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "İzleme kimliği",
       "url": "URL",
       "warning-indicator": ""
@@ -9172,6 +9183,10 @@
       "aria-label-copy": "Panoya kopyala",
       "attribute-plugin-promo": {
         "learn-more": "Daha fazla bilgi edinin"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability; görsel açıklama planlarını, bekleme olaylarını ve sorgu örneklerini sunarak iz parçalarında görülemeyen sorunları tanılamanıza yardımcı olur.",
@@ -10667,7 +10682,6 @@
       "ariaLabel-panel-loading": "Panel yükleme çubuğu",
       "ariaLabel-panel-status": "Panel durumu",
       "errors-and-notices": "Hatalar ve bildirimler",
-      "inspect-errors-notices": "İncele",
       "tooltip-cancel": "Sorguyu iptal et",
       "tooltip-cancel-loading": "Sorguyu iptal et",
       "tooltip-stop-streaming": "Akışı durdur",
@@ -10749,9 +10763,13 @@
       "cell-filter-out": "Değeri filtre dışı bırak",
       "cell-inspect": "Değeri incele",
       "cell-inspect-tooltip": "Değeri incele",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Panoya kopyala",
       "csv-counts": "Satırlar:{{rows}}, Sütunlar:{{columns}}",
       "csv-placeholder": "Buraya CSV girin...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Görüntülenen tüm değerleri filtreye ekle",
         "blanks": "(Boşluklar)",
@@ -16549,7 +16567,7 @@
         "delete-modal-error-title": "Ekip silinemedi",
         "delete-modal-invalid-text": "Bu ekip, bir veya daha fazla klasörün sahibidir. Devam etmek için önce sahipliği kaldırın.",
         "delete-modal-invalid-title": "Ekip silinemiyor",
-        "delete-modal-text": "Bu işlem, \"<1>{{ teamName }}</1 >\" ekibini silecektir.",
+        "delete-modal-text": "Bu işlem, \"<1>{{ teamName }}</1>\" ekibini silecektir.",
         "title-edit-team": "Ekibi düzenle",
         "tooltip-delete-button": "{{teamName}} ekibini sil",
         "tooltip-edit-team": "Ekibi düzenle"
@@ -16619,6 +16637,7 @@
       "tooltip-bold": "Kalın",
       "tooltip-bullet-list": "Madde imli liste",
       "tooltip-checklist": "Kontrol listesi",
+      "tooltip-diagram": "",
       "tooltip-heading": "Başlık",
       "tooltip-insert-variable": "Değişken ekle",
       "tooltip-italic": "İtalik",
@@ -16632,8 +16651,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16854,6 +16883,10 @@
       "bar-stacked": "Çubuk grafik - yığılmış",
       "bar-stacked-percent": "Çubuk grafik - yüzdeye göre yığılmış",
       "line": "Çizgi grafik"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zaman dilimi ekle",

@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Consultez l’historique de tous les événements d’alerte générés par vos règles d’alerte gérées par Grafana. Tous les événements d’alerte sont affichés, que des périodes de silence ou de mise en sourdine aient été définies ou non.",
         "notifications": "Affichez l’historique de toutes les notifications envoyées par vos règles d’alerte gérées par Grafana."
@@ -7760,6 +7763,9 @@
         "title": "Modifications non enregistrées"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Ce n’est pas ce que vous recherchez ? Consultez <2>d’autres tableaux de bord suggérés</2> ou <6>créez-en un à partir de zéro</6>.",
       "title": "Vous consultez {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Titre"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Enregistrer les modifications",
       "save-button-disabled-tooltip": "Corriger les erreurs de validation avant d’enregistrer",
       "save-button-disabled-tooltip-yaml": "Le document contient des erreurs de validation. Passez en JSON pour voir les détails des erreurs dans les lignes.",
@@ -8691,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Lien",
-      "open-value-in": "Ouvrir la valeur dans"
+      "open-value-in": "Ouvrir la valeur dans",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9156,6 +9164,9 @@
       "success-indicator": "",
       "target": "Cible",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Identifiant de trace",
       "url": "URL",
       "warning-indicator": ""
@@ -9172,6 +9183,10 @@
       "aria-label-copy": "Copier dans le presse-papiers",
       "attribute-plugin-promo": {
         "learn-more": "En savoir plus"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability met en avant des plans d’explication visuels, des événements d’attente et des exemples de requêtes pour vous aider à diagnostiquer les problèmes au-delà des spans de trace.",
@@ -10667,7 +10682,6 @@
       "ariaLabel-panel-loading": "Barre de chargement du panneau",
       "ariaLabel-panel-status": "État du panneau",
       "errors-and-notices": "Erreurs et notifications",
-      "inspect-errors-notices": "Inspecter",
       "tooltip-cancel": "Annuler une requête",
       "tooltip-cancel-loading": "Annuler une requête",
       "tooltip-stop-streaming": "Arrêter la diffusion",
@@ -10749,9 +10763,13 @@
       "cell-filter-out": "Filtrer la valeur",
       "cell-inspect": "Inspecter la valeur",
       "cell-inspect-tooltip": "Inspecter la valeur",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copier dans le presse-papier",
       "csv-counts": "Lignes :{{rows}}, colonnes :{{columns}}",
       "csv-placeholder": "Saisir le CSV ici…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Ajouter toutes les valeurs affichées au filtre",
         "blanks": "(Vides)",
@@ -16619,6 +16637,7 @@
       "tooltip-bold": "Gras",
       "tooltip-bullet-list": "Liste à puces",
       "tooltip-checklist": "Liste de contrôle",
+      "tooltip-diagram": "",
       "tooltip-heading": "Titre",
       "tooltip-insert-variable": "Insérer une variable",
       "tooltip-italic": "Italique",
@@ -16632,8 +16651,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16854,6 +16883,10 @@
       "bar-stacked": "Graphique en barres – empilé",
       "bar-stacked-percent": "Graphique en barres – empilé en pourcentage",
       "line": "Graphique en lignes"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Ajouter le fuseau horaire",
