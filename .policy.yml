@@ -176,7 +176,7 @@ approval_rules:
         paths:
           - ^\.github\/workflows\/create-security-patch-from-security-mirror\.yml$
       targets_branch:
-        pattern: (^main$|^v(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^release-(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$)
+        pattern: (^main$|^v(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^release-(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^(?:[^/]*)#vendor$)
     requires:
       conditions:
         has_workflow_result:
@@ -357,8 +357,6 @@ approval_rules:
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/policybot\.yml$
-      targets_branch:
-        pattern: (^main$)
     requires:
       conditions:
         has_workflow_result:
