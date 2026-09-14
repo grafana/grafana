@@ -7,7 +7,7 @@ import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
-import { ColorScheme } from '../types';
+import { ColorScheme, ColorSchemeDiff } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable, getTruncatedSummary } from './FlameGraphTopTableContainer';
 
@@ -254,7 +254,7 @@ describe('truncated nodes', () => {
   });
 
   it('reports how much self time the truncated nodes hold', () => {
-    expect(getTruncatedSummary(truncatedContainer())).toEqual({ self: 4, count: 1, share: 0.4 });
+    expect(getTruncatedSummary(truncatedContainer())).toEqual({ count: 1, baseline: { self: 4, share: 0.4 } });
   });
 
   it('reports nothing when the profile is not truncated', () => {
@@ -264,6 +264,63 @@ describe('truncated nodes', () => {
     `);
 
     expect(getTruncatedSummary(container!)).toBeUndefined();
+  });
+
+  describe('comparison profiles', () => {
+    // Self time is split across the two profiles, so a group can be truncated on one side only.
+    const diffContainer = (selfLeft: number, selfRight: number) =>
+      new FlameGraphDataContainer(
+        createDataFrame({
+          fields: [
+            { name: 'level', values: [0, 1, 1] },
+            { name: 'value', values: [10, 10 - selfLeft, selfLeft] },
+            { name: 'self', values: [0, 10 - selfLeft, selfLeft] },
+            { name: 'valueRight', values: [20, 20 - selfRight, selfRight] },
+            { name: 'selfRight', values: [0, 20 - selfRight, selfRight] },
+            { name: 'label', values: ['total', 'a', 'other'], type: FieldType.string },
+          ],
+        }),
+        { collapsing: true }
+      );
+
+    it('reports each profile against its own total', () => {
+      expect(getTruncatedSummary(diffContainer(4, 5))).toEqual({
+        count: 1,
+        baseline: { self: 4, share: 0.4 },
+        comparison: { self: 5, share: 0.25 },
+      });
+    });
+
+    it('still reports comparison self time when the baseline truncated nothing', () => {
+      const summary = getTruncatedSummary(diffContainer(0, 5));
+
+      expect(summary).toEqual({
+        count: 1,
+        baseline: { self: 0, share: 0 },
+        comparison: { self: 5, share: 0.25 },
+      });
+    });
+
+    it('names both profiles in the notice', async () => {
+      mockTableSize();
+
+      render(
+        <FlameGraphTopTableContainer
+          data={diffContainer(0, 5)}
+          onSymbolClick={jest.fn()}
+          onSearch={jest.fn()}
+          onSandwich={jest.fn()}
+          colorScheme={ColorSchemeDiff.Default}
+        />
+      );
+
+      const symbolHeader = screen.getAllByRole('columnheader')[1];
+      const notice = await within(symbolHeader).findByRole('button', { name: /not attributed to a symbol/ });
+
+      expect(notice).toHaveAccessibleName(
+        'Self time not attributed to a symbol: 0 (0.0%) baseline, 5 (25.0%) comparison, across 1 truncated group below the detail limit.'
+      );
+    });
   });
 
   describe.each([{ useTableNG: false }, { useTableNG: true }])(

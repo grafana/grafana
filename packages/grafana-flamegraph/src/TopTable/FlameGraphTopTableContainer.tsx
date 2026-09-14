@@ -137,15 +137,23 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-type TruncatedSummary = { self: number; count: number; share: number };
+type TruncatedSide = { self: number; share: number };
+type TruncatedSummary = { count: number; baseline: TruncatedSide; comparison?: TruncatedSide };
 
 function getTruncatedSummary(data: FlameGraphDataContainer): TruncatedSummary | undefined {
+  // A diff profile splits every node's self time across the two profiles being compared, so the
+  // baseline side alone can be 0 for groups that only the comparison side truncated.
+  const isDiff = data.isDiffFlamegraph();
   let self = 0;
+  let selfRight = 0;
   let count = 0;
 
   for (let i = 0; i < data.data.length; i++) {
     if (data.getLabel(i) === TRUNCATED_NODE_NAME) {
       self += data.getSelf(i);
+      if (isDiff) {
+        selfRight += data.getSelfRight(i);
+      }
       count++;
     }
   }
@@ -155,17 +163,39 @@ function getTruncatedSummary(data: FlameGraphDataContainer): TruncatedSummary | 
   }
 
   const levels = data.getLevels();
-  const rootTotal = levels.length && levels[0].length ? data.getValue(levels[0][0].itemIndexes) : 0;
+  const root = levels.length && levels[0].length ? levels[0][0].itemIndexes : undefined;
+  const share = (amount: number, total: number) => (total > 0 ? amount / total : 0);
 
-  return { self, count, share: rootTotal > 0 ? self / rootTotal : 0 };
+  const summary: TruncatedSummary = {
+    count,
+    baseline: { self, share: share(self, root ? data.getValue(root) : 0) },
+  };
+
+  if (isDiff) {
+    summary.comparison = { self: selfRight, share: share(selfRight, root ? data.getValueRight(root) : 0) };
+  }
+
+  return summary;
 }
 
 function formatTruncationNotice(data: FlameGraphDataContainer, truncated: TruncatedSummary) {
-  const self = formattedValueToString(getValueFormat(data.selfField.config.unit)(truncated.self));
-  const share = (truncated.share * 100).toFixed(1);
-  const groups = truncated.count === 1 ? 'group' : 'groups';
+  const format = getValueFormat(data.selfField.config.unit);
+  const amount = ({ self, share }: TruncatedSide) =>
+    `${formattedValueToString(format(self))} (${(share * 100).toFixed(1)}%)`;
+  const groups = `${truncated.count.toLocaleString()} truncated ${
+    truncated.count === 1 ? 'group' : 'groups'
+  } below the detail limit`;
 
-  return `${self} of self time (${share}%) is not attributed to a symbol: ${truncated.count.toLocaleString()} truncated ${groups} below the detail limit.`;
+  if (!truncated.comparison) {
+    const { self, share } = truncated.baseline;
+    return `${formattedValueToString(format(self))} of self time (${(share * 100).toFixed(
+      1
+    )}%) is not attributed to a symbol: ${groups}.`;
+  }
+
+  return `Self time not attributed to a symbol: ${amount(truncated.baseline)} baseline, ${amount(
+    truncated.comparison
+  )} comparison, across ${groups}.`;
 }
 
 function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
