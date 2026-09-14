@@ -43,7 +43,14 @@ function buildDashboard(uid?: string): DashboardScene {
 
 function buildApplyDashboard(uid?: string): DashboardScene {
   return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {}, body: { editModeChanged: jest.fn() } },
+    state: {
+      uid,
+      key: 'key-1',
+      isEditing: true,
+      meta: {},
+      body: { editModeChanged: jest.fn() },
+      sidebar: { clearSelection: jest.fn() },
+    },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
     setState: jest.fn(),
