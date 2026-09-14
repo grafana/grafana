@@ -4,7 +4,6 @@ import {
   dashboardAPIVersionResolver,
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getK8sV2DashboardApiConfig } from 'app/features/dashboard/api/v2';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
