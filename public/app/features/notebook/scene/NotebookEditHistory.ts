@@ -2,8 +2,28 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 const MAX_HISTORY_LENGTH = 100;
 
+/**
+ * What an action did to the notebook, for counting one editing session's activity.
+ *
+ * Separate from `label` for two reasons. `t()` translates a label, so counting on one breaks outside
+ * English. The labels also disagree with themselves. The "/" menu records "Add block" for
+ * Visualization and "Edit block" for Heading, on the same gesture on the same empty slot.
+ *
+ * `ADD_CELL` means a new cell went into the layout. Changing a cell that is already there is `EDIT`,
+ * however much it changes.
+ */
+export const NOTEBOOK_EDIT_KIND = {
+  ADD_CELL: 'add-cell',
+  REMOVE_CELL: 'remove-cell',
+  MOVE_CELL: 'move-cell',
+  EDIT: 'edit',
+} as const;
+
+export type NotebookEditKind = (typeof NOTEBOOK_EDIT_KIND)[keyof typeof NOTEBOOK_EDIT_KIND];
+
 export interface NotebookEditAction {
   label: string;
+  kind: NotebookEditKind;
   perform: () => void;
   undo: () => void;
 }
@@ -15,12 +35,23 @@ export interface NotebookEditHistoryState {
   redoLabel?: string;
 }
 
+/**
+ * Told when an action is recorded or rolled back, so that something outside can count edits.
+ *
+ * The stacks themselves cannot be counted: `record` drops the oldest action once the undo stack is
+ * full, and `clear` empties both.
+ */
+export interface NotebookEditHistoryObserver {
+  onRecord(kind: NotebookEditKind): void;
+  onDiscard(): void;
+}
+
 export class NotebookEditHistory extends StateManagerBase<NotebookEditHistoryState> {
   private undoStack: NotebookEditAction[] = [];
   private redoStack: NotebookEditAction[] = [];
   private redoStackBeforeRecord = new WeakMap<NotebookEditAction, NotebookEditAction[]>();
 
-  public constructor() {
+  public constructor(private readonly observer?: NotebookEditHistoryObserver) {
     super({ canUndo: false, canRedo: false });
   }
 
@@ -36,6 +67,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
       this.undoStack.shift();
     }
     this.redoStack = [];
+    this.observer?.onRecord(action.kind);
     this.publishState();
   }
 
@@ -47,6 +79,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     this.undoStack.pop();
     this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
     this.redoStackBeforeRecord.delete(action);
+    this.observer?.onDiscard();
     this.publishState();
   }
 
