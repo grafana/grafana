@@ -191,6 +191,10 @@ func RegisterAPIService(
 
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
+		if plugin.Manifest != nil && getflag(featuremgmt.FlagGrafanaUseRouterMiddleware) {
+			continue // The app will be registered using the router
+		}
+
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
 			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),

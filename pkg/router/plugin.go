@@ -2,6 +2,9 @@ package router
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,8 +21,8 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginroute"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -50,7 +53,17 @@ type PluginDependencies struct {
 	Cfg             *setting.Cfg
 }
 
-func newPluginLoader(
+type PluginLoaderDependencies struct {
+	PluginDependencies
+
+	PluginClient   plugins.Client
+	ClientV3Loader v3.ClientV3Loader
+	PluginSources  sources.Registry
+	ACService      accesscontrol.Service
+	AccessClient   types.AccessClient
+}
+
+func ProvidePluginLoaderDependencies(
 	pluginClient plugins.Client,
 	contextProvider appplugin.PluginContextWrapper,
 	clientV3Loader v3.ClientV3Loader,
@@ -68,16 +81,14 @@ func newPluginLoader(
 	secureValues secret.InlineSecureValueSupport,
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
-) (RoutesLoader, error) {
-	return &PluginLoader{
-		pluginClient:    pluginClient,
-		contextProvider: contextProvider,
-		clientV3Loader:  clientV3Loader,
-		pluginSources:   pluginSources,
-		acService:       acService,
-		accessControl:   accessControl,
-		accessClient:    accessClient,
-		deps: PluginDependencies{
+) PluginLoaderDependencies {
+	return PluginLoaderDependencies{
+		PluginClient:   pluginClient,
+		ClientV3Loader: clientV3Loader,
+		PluginSources:  pluginSources,
+		ACService:      acService,
+		AccessClient:   accessClient,
+		PluginDependencies: PluginDependencies{
 			ContextProvider: contextProvider,
 			AccessControl:   accessControl,
 			DualWrite:       dualWrite,
@@ -91,24 +102,58 @@ func newPluginLoader(
 			Features:        features,
 			Cfg:             cfg,
 		},
-	}, nil
+	}
+}
+
+// The router module supplies these clients so its Wire graph does not construct
+// a second resource client or initialize local storage migrations.
+func ProvidePluginLoaderDependenciesWithClients(
+	pluginClient plugins.Client,
+	contextProvider appplugin.PluginContextWrapper,
+	clientV3Loader v3.ClientV3Loader,
+	pluginSources sources.Registry,
+	pluginSettings pluginsettings.Service,
+	acService accesscontrol.Service,
+	accessControl accesscontrol.AccessControl,
+	decrypter decrypt.DecryptService,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	reg prometheus.Registerer,
+	builderMetrics *builder.BuilderMetrics,
+	clients RoutesLoaderClients,
+) PluginLoaderDependencies {
+	return ProvidePluginLoaderDependencies(
+		pluginClient,
+		contextProvider,
+		clientV3Loader,
+		pluginSources,
+		pluginSettings,
+		acService,
+		accessControl,
+		clients.Resource,
+		clients.Access,
+		decrypter,
+		tracer,
+		features,
+		cfg,
+		clients.DualWrite,
+		clients.SecureValues,
+		reg,
+		builderMetrics,
+	)
+}
+
+func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
+	return &PluginLoader{deps: deps}, nil
 }
 
 type PluginLoader struct {
-	pluginClient    plugins.Client
-	contextProvider appplugin.PluginContextWrapper
-	clientV3Loader  v3.ClientV3Loader
-	pluginSources   sources.Registry
-	acService       accesscontrol.Service
-	accessControl   accesscontrol.AccessControl
-	accessClient    types.AccessClient
-
-	deps PluginDependencies
+	deps PluginLoaderDependencies
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
-	// Get all apps
-	pluginDefs, err := definition.LoadPluginDefinition(ctx, pl.pluginSources, definition.Options{
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, pl.deps.PluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
@@ -121,7 +166,7 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 			return false
 		},
 		Schemas:     true,
-		AppManifest: true,
+		AppManifest: true, // Load manifests
 	})
 
 	if err != nil {
@@ -136,8 +181,8 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 
 		backend, err := NewPluginBackend(plugin,
 			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
-				return pl.pluginClient, v3.NewLazyClient(pl.clientV3Loader, plugin.JSONData.ID), nil
-			}, pl.deps,
+				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
+			}, pl.deps.PluginDependencies,
 		)
 		if err != nil {
 			return nil, err
@@ -161,8 +206,19 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 		return nil, err
 	}
 
+	b, err := json.Marshal(plugin.Manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	hasher := sha256.New()
+	hasher.Write([]byte(plugin.JSONData.ID))
+	hasher.Write([]byte(plugin.JSONData.Info.Version))
+	hasher.Write(b)
+	sum := hasher.Sum(nil)
+
 	return &PluginBackend{
-		key:    "static", // hash the config?
+		key:    hex.EncodeToString(sum),
 		group:  group,
 		plugin: plugin,
 		client: client,

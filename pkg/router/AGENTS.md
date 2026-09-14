@@ -354,11 +354,11 @@ server handler as its fallback. There is no standalone `grafana router` process 
 directly); the module server's HTTP listener, `/metrics`, `/livez`, `/readyz` are what front it now.
 
 The dskit target gets its `RoutesLoader` from a Wire sub-injector (`server.InitializeRoutesLoader`).
-Both editions build it from the same full dependency graph as app-plugin API registration --
-`ProvideRoutesLoader`/`ProvideRoutesLoaderWithClients` (`loader_factory.go`) try
-`ProvideCloudRoutesLoaderFactory` first and fall back to the dummy loader; there's nothing
-edition-specific left to wire (`wireExtsRoutesLoaderSet` in the enterprise `wireexts_enterprise.go`
-just points at the same OSS provider now).
+`ProvideRoutesLoader` (`loader_factory.go`) takes the config and injected
+`PluginLoaderDependencies`, then selects cloud routes, local plugins, or dummy groups.
+`ProvidePluginLoaderDependencies` (`plugin.go`) assembles the embedded server's dependencies;
+`ProvidePluginLoaderDependenciesWithClients` uses the router module's existing clients so the
+module does not construct another resource client or initialize local storage migrations.
 
 - `ProvideCloudRoutesLoaderFactory(cfg)` builds one `rest.Config` for the whole apps group (CAP token
   exchanged for a signed access token per request) and a `k8s.ClientRegistry` from grafana.ini (see

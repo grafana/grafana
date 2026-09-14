@@ -1,4 +1,4 @@
-# Plugin API handler
+# Plugin Route handler
 
 `NewHandler(plugin, Options)` builds one plugin's API server as an `http.Handler`.
 It lives beside `appplugin` because it assembles that package's resources,
