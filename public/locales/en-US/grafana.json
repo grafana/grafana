@@ -2947,7 +2947,7 @@
       }
     },
     "rule-health": {
-      "error": ""
+      "error": "error"
     },
     "rule-inspector": {
       "title-inspect-alert-rule": "Inspect Alert rule"
@@ -11668,7 +11668,7 @@
       "save-button": "Save",
       "test-button": "Test"
     },
-    "documentation": "",
+    "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
       "error": "Server host is a required field",
@@ -16745,7 +16745,7 @@
       "backwards-time-aria-label": "Move time range backwards",
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
-      "to": "",
+      "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },
@@ -17518,7 +17518,7 @@
     },
     "query-validation-message": "One or more queries failed to return fields. This transformation can only reference fields from queries with a successful and visible result.",
     "range-matcher-editor": {
-      "and": "",
+      "and": "and",
       "placeholder-from": "From",
       "placeholder-to": "To"
     },
