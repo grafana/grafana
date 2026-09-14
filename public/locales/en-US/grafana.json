@@ -13144,9 +13144,7 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export",
-      "open-in-cursor": "Open in Cursor",
-      "opening-in-cursor": "Opening in Cursor"
+      "label": "Export"
     },
     "history": {
       "add-block": "Add block",
