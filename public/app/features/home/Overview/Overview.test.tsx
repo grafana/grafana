@@ -34,12 +34,14 @@ describe('Overview', () => {
     mockCtaClicked.mockClear();
   });
 
-  it('hides the filter while guides load and omits Get started when they settle empty', async () => {
+  it('renders nothing while guides load and omits Get started when they settle empty', async () => {
     mockUseGuides.mockReturnValue(undefined);
     const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    // Cards settled, guides still loading: the filter stays hidden so its label cannot flip.
-    expect(await screen.findByText('Recommended getting started guides')).toBeInTheDocument();
+    // Cards settled, guides still loading: neither filter nor content renders, since Get started
+    // painted now would flip to All solutions if guides settle empty.
+    expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
+    expect(screen.queryByText('Recommended getting started guides')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
 
     mockUseGuides.mockReturnValue([]);
@@ -49,11 +51,12 @@ describe('Overview', () => {
     expect(screen.queryByRole('menuitem', { name: 'Get started' })).not.toBeInTheDocument();
   });
 
-  it('renders guide skeletons and then the loaded guide', async () => {
+  it('renders guide skeletons and then the loaded guide for a stored Get started pick', async () => {
     mockUseGuides.mockReturnValue(undefined);
+    window.localStorage.setItem('grafana.home.overview.option', 'get-started');
     const { rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    // Guides still loading + no live solution: the unset default already lands on Get started.
+    // An explicit pick renders at once; the guide grid holds skeletons until guides load.
     const heading = (await screen.findByText('Recommended getting started guides')).parentElement;
     expect(heading).not.toBeNull();
     expect(within(heading!).queryByText('0')).not.toBeInTheDocument();
@@ -263,7 +266,7 @@ describe('Overview', () => {
     render(<Overview solutions={[metrics, logs]} />);
 
     // Metrics settles on its own: its card paints while the logs card still awaits its group.
-    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    const metricsHeading = await screen.findByRole('heading', { name: metrics.title });
     expect(await screen.findByText('4.2 M series')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
@@ -273,7 +276,7 @@ describe('Overview', () => {
     expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
     expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
     // The already-placed card was not remounted by its sibling settling.
-    expect(firstStats).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('heading', { name: metrics.title })).toBe(metricsHeading);
   });
 
   it('returns to skeletons while a changed solution set is classified', async () => {

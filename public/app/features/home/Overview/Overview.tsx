@@ -106,15 +106,15 @@ export function Overview({ solutions }: OverviewProps) {
   const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
   const settled = pendingCount === 0;
   const anyLive = cards.some((card) => card.kind === 'live');
-  // The unset default is knowable once a live card exists or every solution settled; until then
-  // nothing renders, since offers painted now could flip to Get started in front of the user.
-  const decided = !!storedRaw || anyLive || settled;
-  const defaultView = !anyLive && guidesOffered ? GET_STARTED_OPTION_VALUE : options[0].value;
-  const option = options.find((o) => o.value === (storedRaw || defaultView)) ?? options[0];
-
   // The unset default is computed from settled cards and guides; keep the filter hidden until
   // then so its label never flips (e.g. All solutions → Get started) in front of the user.
   const optionsSettled = settled && guides !== undefined;
+  // The unset default is knowable once a live card exists or every input behind it settled; until
+  // then nothing renders, since offers painted now could flip to Get started, and Get started
+  // painted now could flip to All solutions once guides settle empty.
+  const decided = !!storedRaw || anyLive || optionsSettled;
+  const defaultView = !anyLive && guidesOffered ? GET_STARTED_OPTION_VALUE : options[0].value;
+  const option = options.find((o) => o.value === (storedRaw || defaultView)) ?? options[0];
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
