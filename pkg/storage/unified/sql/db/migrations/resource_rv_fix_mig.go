@@ -124,10 +124,7 @@ func fixGroupResource(sess *xorm.Session, quoteFn func(string) string, mg *migra
 
 	// Apply updates in batches
 	for start := 0; start < len(updates); start += rvFixBatchSize {
-		end := start + rvFixBatchSize
-		if end > len(updates) {
-			end = len(updates)
-		}
+		end := min(start+rvFixBatchSize, len(updates))
 		batch := updates[start:end]
 
 		if err := updatePrevRVRefs(sess, quoteFn, gr, batch); err != nil {

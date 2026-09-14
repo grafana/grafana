@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana 관리 경고 규칙에 의해 생성된 모든 경고 이벤트의 기록을 확인하세요. 경고 비활성화 또는 알림 비활성화 시간이 설정되어 있는지 여부에 관계없이 모든 경고 이벤트가 표시됩니다.",
         "notifications": "Grafana 관리 경고 규칙에서 전송된 모든 알림의 기록을 확인하세요."
@@ -953,7 +956,7 @@
         "jira": "'{{project}}' 프로젝트에 '{{issueType}}' 이슈 생성"
       },
       "telegram": {
-        "parse-mode-warning-body": "<3>없음(None)</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
+        "parse-mode-warning-body": "<3>None</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
         "parse-mode-warning-title": "Telegram 메시지는 UTF-8 문자 기준으로 4,096자까지 제한됩니다."
       },
       "used-by_other": "{{count}}개의 알림 정책에서 사용됨",
@@ -1275,7 +1278,7 @@
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
       "delete-modal-deleting": "삭제 중…",
-      "delete-modal-text": "{{folderName}}이 작업을 수행하면 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
+      "delete-modal-text": "이 작업을 수행하면 <1>{{folderName}}</1> 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
       "delete-modal-title": "삭제",
       "error": "{{error}} 폴더 작업 실행 실패:",
       "pause": {
@@ -5731,7 +5734,7 @@
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
+      "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "layout-default-hint": "선택한 레이아웃은 모든 새 탭과 행의 기본 레이아웃으로도 사용됩니다. 나중에 '대시보드 설정 > 일반'에서 이 설정을 변경할 수 있습니다.",
@@ -7713,6 +7716,9 @@
         "title": "저장되지 않은 변경 사항"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "찾고 있는 대시보드가 아니신가요? <2>다른 추천 대시보드</2>를 확인하거나 <6>처음부터 새로 만들기</6>를 선택하세요.",
       "title": "현재 {{title}} 보는 중"
@@ -7966,6 +7972,7 @@
       "title-label": "제목"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "변경 사항 저장",
       "save-button-disabled-tooltip": "저장하기 전에 유효성 검사 오류를 수정하세요.",
       "save-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
@@ -8642,7 +8649,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "링크",
-      "open-value-in": "값을 다음에서 열기"
+      "open-value-in": "값을 다음에서 열기",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9122,6 +9130,10 @@
       "aria-label-copy": "클립보드로 복사",
       "attribute-plugin-promo": {
         "learn-more": "자세히 알아보기"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability는 시각적 실행 계획, 대기 이벤트 및 쿼리 샘플을 제공하여 트레이스 스팬만으로는 파악하기 어려운 문제를 진단하는 데 도움을 줍니다.",
@@ -15906,7 +15918,7 @@
     },
     "empty-state": {
       "message": "아직 생성된 공유 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <4>자세히 알아보기</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "액세스 권한 일시 중지"
@@ -15977,7 +15989,7 @@
   "snapshot": {
     "empty-state": {
       "message": "아직 생성된 스냅샷이 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <4>자세히 알아보기</4>"
     },
     "external-badge": "외부",
     "load-error": {
@@ -16502,6 +16514,7 @@
       "tooltip-bold": "굵게",
       "tooltip-bullet-list": "글머리 기호 목록",
       "tooltip-checklist": "체크리스트",
+      "tooltip-diagram": "",
       "tooltip-heading": "제목",
       "tooltip-insert-variable": "변수 삽입",
       "tooltip-italic": "이탤릭체",
@@ -16515,8 +16528,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16760,10 @@
       "bar-stacked": "막대 차트 - 누적",
       "bar-stacked-percent": "막대 차트 - 백분율 누적형",
       "line": "선 차트"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "시간대 추가",

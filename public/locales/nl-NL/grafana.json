@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Bekijk een geschiedenis van alle waarschuwingsgebeurtenissen die zijn gegenereerd door je door Grafana beheerde waarschuwingsregels. Alle waarschuwingsgebeurtenissen worden weergegeven, ongeacht of er stilstanden of demptimings zijn ingesteld.",
         "notifications": "Bekijk een geschiedenis van alle meldingen die zijn verzonden op basis van je door Grafana beheerde waarschuwingsregels."
@@ -5773,7 +5776,7 @@
       "custom-grid": "Aangepast raster",
       "custom-grid-description": "Plaats en formatteer elk paneel afzonderlijk",
       "description": "Voeg een paneel toe om je gegevens te visualiseren",
-      "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Importeer dashboards uit bestanden of <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
@@ -7760,6 +7763,9 @@
         "title": "Onopgeslagen wijzigingen"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Niet wat je zoekt? Bekijk <2>andere voorgestelde dashboards</2> of <6>maak er zelf een</6>.",
       "title": "Je bekijkt momenteel {{title}} "
@@ -8014,6 +8020,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Wijzigingen opslaan",
       "save-button-disabled-tooltip": "Los validatiefouten op voordat je opslaat",
       "save-button-disabled-tooltip-yaml": "Het document bevat validatiefouten. Schakel over naar JSON om de inline-foutdetails te bekijken.",
@@ -8691,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Waarde openen in"
+      "open-value-in": "Waarde openen in",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9175,6 +9183,10 @@
       "aria-label-copy": "Kopiëren naar klembord",
       "attribute-plugin-promo": {
         "learn-more": "Meer informatie"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability brengt visuele verklaringsplannen, wachtgebeurtenissen en queryvoorbeelden aan het licht, zodat je problemen kunt diagnosticeren die verder gaan dan trace-spans.",
@@ -15825,7 +15837,7 @@
       "confirmText-delete": "Verwijderen",
       "confirmText-disable-service-account": "Serviceaccount uitschakelen",
       "placeholder-search-service-account-by-name": "Serviceaccount zoeken op naam",
-      "sub-title": "Serviceaccounts en hun tokens kunnen worden gebruikt om te verifiëren tegen de Grafana API. Lees meer in onze <2>documentatie</2>.</2>",
+      "sub-title": "Serviceaccounts en hun tokens kunnen worden gebruikt om te verifiëren tegen de Grafana API. Lees meer in onze <2>documentatie</2>.",
       "title-delete-service-account": "Serviceaccount verwijderen",
       "title-disable-service-account": "Serviceaccount uitschakelen",
       "body-delete_one": "Weet je zeker dat je {{serviceAccountName}} en {{count}} bijbehorende tokens wilt verwijderen?",
@@ -16028,7 +16040,7 @@
     },
     "empty-state": {
       "message": "Je hebt nog geen gedeelde dashboards gemaakt",
-      "more-info": "Maak een gedeeld dashboard van een bestaand dashboard via het <1>Delen</1>-venster. <2>Meer informatie</2>"
+      "more-info": "Maak een gedeeld dashboard van een bestaand dashboard via het <1>Delen</1>-venster. <4>Meer informatie</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Toegang pauzeren"
@@ -16099,7 +16111,7 @@
   "snapshot": {
     "empty-state": {
       "message": "Je hebt nog geen snapshots gemaakt",
-      "more-info": "Je kunt een snapshot van een dashboard maken via het <1>Delen</1>-venster. <2>Meer informatie</2>"
+      "more-info": "Je kunt een snapshot van een dashboard maken via het <1>Delen</1>-venster. <4>Meer informatie</4>"
     },
     "external-badge": "Extern",
     "load-error": {
@@ -16625,6 +16637,7 @@
       "tooltip-bold": "Vet",
       "tooltip-bullet-list": "Opsommingstekens",
       "tooltip-checklist": "Checklist",
+      "tooltip-diagram": "",
       "tooltip-heading": "Titel",
       "tooltip-insert-variable": "Variabele invoegen",
       "tooltip-italic": "Cursief",
@@ -16638,8 +16651,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16883,10 @@
       "bar-stacked": "Staafdiagram - gestapeld",
       "bar-stacked-percent": "Staafdiagram - gestapeld op percentage",
       "line": "Lijndiagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Tijdzone toevoegen",
