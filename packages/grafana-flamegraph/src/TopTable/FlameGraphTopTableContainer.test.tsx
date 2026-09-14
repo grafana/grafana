@@ -7,7 +7,7 @@ import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
-import { ColorScheme } from '../types';
+import { ColorScheme, ColorSchemeDiff } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
@@ -198,6 +198,43 @@ describe('FlameGraphTopTableContainer with "other" data', () => {
     // The threshold stays the minimum among the real (non-"other") nodes, i.e. lib with total 2.
     expect(within(note).getByText('2')).toBeInTheDocument();
     expect(within(note).queryByText('1')).not.toBeInTheDocument();
+  });
+
+  it('should account for both sides of a diff flamegraph in the truncation note', async () => {
+    mockTableSize();
+    // A diff flamegraph whose "other" node aggregates truncated stacktraces from both profiles. The smallest real
+    // node ("lib") exists only in the comparison profile, so its baseline total is 0 - a baseline-only minimum
+    // would wrongly report the truncation threshold as 0.
+    const diffDataWithOther = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [8, 5, 3, 0] },
+        { name: 'valueRight', values: [11, 5, 4, 2] },
+        { name: 'self', values: [0, 5, 3, 0] },
+        { name: 'selfRight', values: [0, 5, 4, 2] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(diffDataWithOther, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorSchemeDiff.DiffColorBlind}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total is shown for the baseline (3) and the comparison (4) side.
+    expect(within(note).getByText('3')).toBeInTheDocument();
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    // The threshold is the smallest total present on either side (lib, comparison: 2), not the 0 of the
+    // baseline side where the function doesn't exist.
+    expect(within(note).getByText('2')).toBeInTheDocument();
+    expect(within(note).queryByText('0')).not.toBeInTheDocument();
   });
 
   it('should render search and sandwich buttons for "other" in the note', async () => {

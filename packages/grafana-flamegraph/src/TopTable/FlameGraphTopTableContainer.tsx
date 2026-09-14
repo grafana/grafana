@@ -140,9 +140,15 @@ const FlameGraphTopTableContainer = memo(
         {otherEntry && minOtherTotal !== undefined && (
           <div className={styles.otherSection} data-testid="topTable-other-note">
             <div className={styles.otherDescription}>
-              A total of <strong>{formatWithUnit(otherEntry.total, data)}</strong> has been truncated and is represented
-              by &quot;other&quot; in the flamegraph. Each truncated stacktrace had a total resource consumption of{' '}
-              <strong>{formatWithUnit(minOtherTotal, data)}</strong>.
+              A total of <strong>{formatWithUnit(otherEntry.total, data)}</strong>
+              {data.isDiffFlamegraph() && (
+                <>
+                  {' '}
+                  (baseline) and <strong>{formatWithUnit(otherEntry.totalRight, data)}</strong> (comparison)
+                </>
+              )}{' '}
+              has been truncated and is represented by &quot;other&quot; in the flamegraph. Each truncated stacktrace
+              had a total resource consumption of <strong>{formatWithUnit(minOtherTotal, data)}</strong>.
             </div>
             <div className={styles.otherActions}>
               <IconButton
@@ -232,14 +238,26 @@ function buildFilteredTable(
 
 // The minimum total in the flame graph is the threshold underneath which stacktraces were truncated into "other".
 // Per-level "other" leftovers aggregate the children that fell below the cutoff, so they are themselves smaller
-// than the cutoff and must not participate in the minimum.
+// than the cutoff and must not participate in the minimum. On a diff flamegraph a node can additionally exist on
+// only one side of the comparison, in which case the other side's total is 0 and must be ignored - otherwise a
+// function that exists only in the comparison profile (baseline total 0) would drag the threshold down to 0.
 function getMinTotal(data: FlameGraphDataContainer): number {
   let min = Number.POSITIVE_INFINITY;
+  const isDiff = data.isDiffFlamegraph();
   for (let i = 0; i < data.data.length; i++) {
     if (data.getLabel(i) === OTHER_LABEL) {
       continue;
     }
-    min = Math.min(min, data.getValue(i));
+    const value = data.getValue(i);
+    if (value > 0) {
+      min = Math.min(min, value);
+    }
+    if (isDiff) {
+      const valueRight = data.getValueRight(i);
+      if (valueRight > 0) {
+        min = Math.min(min, valueRight);
+      }
+    }
   }
   return min;
 }
