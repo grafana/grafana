@@ -3,27 +3,22 @@ import { useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import {
-  ALL_TEAMS,
-  type TeamSelection,
-  decodeTeamSelection,
-  encodeTeamSelection,
-  resolveTeamScope,
-} from './teamFilter';
+import { ALL_TEAMS, type TeamSelection, resolveTeamScope } from './teamFilter';
 
 const collator = new Intl.Collator();
 
-const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
+// '' is the default scope of TeamSelection, so the option value is the selection itself.
+const getDefaultOption = (userHasTeams: boolean): ComboboxOption<TeamSelection> => ({
   label: userHasTeams
     ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
     : t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: encodeTeamSelection(undefined),
+  value: '',
 });
 
 // Explicit org-wide scope for users who do belong to teams; without it they'd have
 // no way back to unfiltered alerts. Users without teams don't need it — their
 // default option already reads "All teams".
-const getAllTeamsOption = (): ComboboxOption<string> => ({
+const getAllTeamsOption = (): ComboboxOption<TeamSelection> => ({
   label: t('home.alerts-incidents.team-filter-all', 'All teams'),
   value: ALL_TEAMS,
 });
@@ -67,7 +62,7 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHas
   }, [selectedTeam, userHasTeams]);
 
   const loadOptions = useCallback(
-    async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+    async (inputValue: string): Promise<Array<ComboboxOption<TeamSelection>>> => {
       const query = inputValue.toLowerCase();
       const teamOptions = sortedValues
         .filter((team) => team.toLowerCase().includes(query))
@@ -92,15 +87,10 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHas
       options={loadOptions}
       value={valueOption}
       onChange={(option) => {
-        const newTeam = decodeTeamSelection(option.value);
-        // Re-selecting the current value is a no-op so the parent doesn't re-render. Without a
-        // "your teams" scope, the default option and the sentinel both mean "All teams", so
-        // re-picking it must not silently flip the shared selection out of the sentinel.
-        const unchanged =
-          newTeam === selectedTeam ||
-          (!userHasTeams && newTeam === undefined && resolveTeamScope(selectedTeam).kind === 'all');
-        if (!unchanged) {
-          onChange(newTeam);
+        // Compare against what's displayed, not the raw selection: re-picking the shown option
+        // is a no-op even when it stands in for a different underlying value (see valueOption).
+        if (option.value !== valueOption.value) {
+          onChange(option.value);
         }
       }}
       aria-label={ariaLabel}

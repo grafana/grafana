@@ -19,7 +19,7 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * When `selectedTeam` is an explicit team pick, incidents are filtered to that
  * team's custom field value; the default and "All teams" scopes fetch every active incident.
  */
-export function useIncidents(selectedTeam?: TeamSelection) {
+export function useIncidents(selectedTeam: TeamSelection = '') {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
   const pluginId = SupportedPlugin.Irm;
 
@@ -46,11 +46,6 @@ export function useIncidents(selectedTeam?: TeamSelection) {
   // True when the server truncated the result at the query limit, i.e. the real total exceeds count.
   const hasMore = data?.hasMore ?? false;
 
-  // Options for the incidents team dropdown. Undefined while loading or on any error (a 404
-  // included) so the dropdown stays hidden rather than showing an empty or stale list.
-  const teamValuesQuery = incidentsApi.useGetIncidentTeamValuesQuery(skip ? skipToken : { pluginId });
-  const teamValues = teamValuesQuery.isLoading || teamValuesQuery.error ? undefined : teamValuesQuery.data;
-
   const loading = pluginLoading || isFetching;
   const count = incidents.length;
   const hasIncidents = count > 0;
@@ -76,7 +71,6 @@ export function useIncidents(selectedTeam?: TeamSelection) {
     count,
     hasMore,
     hasIncidents,
-    teamValues,
     // Echoed back so the card can scope its empty message to the filtered team.
     selectedTeam,
     enabled: pluginLoading ? undefined : !!installed,

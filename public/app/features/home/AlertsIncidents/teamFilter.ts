@@ -1,17 +1,18 @@
-import { useCallback } from 'react';
-
-import { useStoredString } from 'app/core/hooks/useStored';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 /**
  * The homepage team filter, shared by the alerts and incidents views.
- * `undefined` is the default scope ("your teams" for alerts, everything for
- * incidents); ALL_TEAMS is an explicit org-wide pick; anything else is a team name.
+ * '' is the default scope ("your teams" for alerts, everything for incidents);
+ * ALL_TEAMS is an explicit org-wide pick; anything else is a team name.
+ * A plain string so localStorage and the Combobox can hold it as-is.
  */
-export type TeamSelection = string | undefined;
+export type TeamSelection = string;
 
 /** Sentinel for an explicit "All teams" pick; never a real team name. */
 export const ALL_TEAMS = ALL_VARIABLE_VALUE;
+
+// Predates the incidents filter, hence the "alerts" in the name; kept so users' saved picks survive.
+export const TEAM_FILTER_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
 
 export type TeamScope = { kind: 'default' } | { kind: 'all' } | { kind: 'team'; team: string };
 
@@ -29,22 +30,4 @@ export function resolveTeamScope(selection: TeamSelection): TeamScope {
 export function explicitTeam(selection: TeamSelection): string | undefined {
   const scope = resolveTeamScope(selection);
   return scope.kind === 'team' ? scope.team : undefined;
-}
-
-// '' stands in for undefined where a plain string is required (localStorage, Combobox values).
-export function encodeTeamSelection(selection: TeamSelection): string {
-  return selection ?? '';
-}
-
-export function decodeTeamSelection(encoded: string): TeamSelection {
-  return encoded || undefined;
-}
-
-export const TEAM_FILTER_STORAGE_KEY = 'grafana.home.teamFilter';
-
-/** Persisted team selection shared by the alerts and incidents views and their header pills. */
-export function useStoredTeamSelection(): [TeamSelection, (next: TeamSelection) => void] {
-  const [stored, setStored] = useStoredString(TEAM_FILTER_STORAGE_KEY, '');
-  const setSelection = useCallback((next: TeamSelection) => setStored(encodeTeamSelection(next)), [setStored]);
-  return [decodeTeamSelection(stored), setSelection];
 }

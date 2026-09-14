@@ -9,13 +9,14 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
-import { useStoredTeamSelection } from './AlertsIncidents/teamFilter';
+import { TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -85,7 +86,7 @@ export default function HomePage() {
   });
 
   // Persisted team scope shared by the alerts and incidents views and their header pills.
-  const [team, setTeam] = useStoredTeamSelection();
+  const [team, setTeam] = useStoredString(TEAM_FILTER_STORAGE_KEY, '');
   const alertsData = useFiringAlerts(team);
   const incidentsData = useIncidents(team);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);

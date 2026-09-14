@@ -27,6 +27,7 @@ import {
   INCIDENTS_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
+import { type TeamSelection } from './teamFilter';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -218,7 +219,7 @@ afterEach(async () => {
 });
 
 function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
-  const [team, setTeam] = useState<string | undefined>();
+  const [team, setTeam] = useState<TeamSelection>('');
   const alertsData = useFiringAlerts(team);
   const incidentsData = useIncidents(team);
   return (

@@ -13,8 +13,10 @@ import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { TeamFilterCombobox } from './TeamFilterCombobox';
+import { type TeamSelection } from './teamFilter';
 import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
 import { type FiringAlertsData } from './useFiringAlerts';
+import { useIncidentTeamValues } from './useIncidentTeamValues';
 import { type IncidentsData } from './useIncidents';
 
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
@@ -34,8 +36,8 @@ export function AlertIncidentTabs({
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
-  team: string | undefined;
-  setTeam: (team: string | undefined) => void;
+  team: TeamSelection;
+  setTeam: (team: TeamSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   const canViewIncidents = !!incidentsData.enabled;
@@ -52,10 +54,25 @@ export function AlertIncidentTabs({
     pluginId: incidentsPluginId,
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
-    teamValues: incidentsTeamValues,
   } = incidentsData;
   // Fetched here rather than in the dropdown so the values survive tab switches.
   const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
+  const incidentTeamValues = useIncidentTeamValues(canViewIncidents);
+
+  // One shared selection, but each tab offers its own option list and default-scope wording.
+  const teamFilter =
+    activeTab === ALERTS_TAB_ID
+      ? {
+          teamValues: alertTeamValues,
+          userHasTeams: hasTeams,
+          ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
+        }
+      : {
+          teamValues: incidentTeamValues,
+          // Incidents have no "your teams" scope: the unfiltered default is every active incident.
+          userHasTeams: false,
+          ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
+        };
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -119,26 +136,8 @@ export function AlertIncidentTabs({
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {/* One shared selection, but each tab offers its own option list. */}
-        {activeTab === ALERTS_TAB_ID && canViewAlerts && (
-          <TeamFilterCombobox
-            teamValues={alertTeamValues}
-            selectedTeam={team}
-            onChange={setTeam}
-            userHasTeams={hasTeams}
-            ariaLabel={t('home.alerts-incidents.team-filter-label', 'Filter alerts by team')}
-          />
-        )}
-        {activeTab === INCIDENTS_TAB_ID && canViewIncidents && (
-          <TeamFilterCombobox
-            teamValues={incidentsTeamValues}
-            selectedTeam={team}
-            onChange={setTeam}
-            // Incidents have no "your teams" scope: the unfiltered default is every active incident.
-            userHasTeams={false}
-            ariaLabel={t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team')}
-          />
-        )}
+        {/* Keyed by tab so switching remounts the dropdown with the other tab's options. */}
+        <TeamFilterCombobox key={activeTab} {...teamFilter} selectedTeam={team} onChange={setTeam} />
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>

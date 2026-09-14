@@ -135,9 +135,6 @@ describe('HomePage', () => {
     window.localStorage.setItem(TEAM_FILTER_STORAGE_KEY, 'platform');
     const queries: string[] = [];
     server.use(
-      http.post('/api/plugins/:pluginId/resources/api/v1/FieldsService.GetFields', () =>
-        HttpResponse.json({ fields: [] })
-      ),
       http.post(
         '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews',
         async ({ request }) => {

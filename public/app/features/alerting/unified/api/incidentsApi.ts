@@ -42,8 +42,9 @@ interface GetFieldsResponse {
 
 const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
 
-// The Incident query lexer accepts either quote style with no escaping, so pick
-// whichever one the value doesn't contain.
+// The Incident lexer has no escape form ('[^']*'|"[^"]*"), so use the quote the value lacks.
+// A value with both quotes can't be expressed; the server rejects it and the card shows its
+// retryable error, which beats silently showing unfiltered incidents. Accepted for admin-set names.
 function quoteQueryValue(value: string) {
   return value.includes('"') ? `'${value}'` : `"${value}"`;
 }

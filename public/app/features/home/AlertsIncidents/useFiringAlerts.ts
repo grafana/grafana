@@ -89,7 +89,7 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
  * When `selectedTeam` is set (from the team dropdown) it overrides the default
  * filter of the user's own teams.
  */
-export function useFiringAlerts(selectedTeam?: TeamSelection) {
+export function useFiringAlerts(selectedTeam: TeamSelection = '') {
   // The hook gates its own fetching so it's safe to call unconditionally,
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();

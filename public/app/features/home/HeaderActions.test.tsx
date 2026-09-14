@@ -90,13 +90,7 @@ beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
-  server.use(
-    http.get('/api/user/teams', () => HttpResponse.json([])),
-    // useIncidents also loads the team dropdown options; the header only reads the count.
-    http.post('/api/plugins/:pluginId/resources/api/v1/FieldsService.GetFields', () =>
-      HttpResponse.json({ fields: [] })
-    )
-  );
+  server.use(http.get('/api/user/teams', () => HttpResponse.json([])));
   mockAlerts([]);
   mockNoIrmPlugin();
 });
