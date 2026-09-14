@@ -221,6 +221,18 @@ describe('TableDataGrid', () => {
     });
   });
 
+  describe('layout', () => {
+    it('lets its wrapper shrink below the content height', () => {
+      // The multi-frame panel stacks the frame picker under the table in a flex column. The grid
+      // itself could always shrink because it scrolls; the wrapper around it does not, so without
+      // an explicit minimum of 0 its flex base size is the whole content height and whatever sits
+      // below the table gets pushed out of the panel.
+      const { container } = render(<TableDataGrid {...makeProps()} />);
+      expect(screen.getByRole('grid').parentElement).toHaveStyle({ 'min-block-size': '0' });
+      expect(container.firstElementChild).toHaveStyle({ position: 'relative' });
+    });
+  });
+
   describe('scroll shadows', () => {
     // jsdom has no layout, so the grid reports every scroll metric as 0. Fake the viewport the hook
     // reads, then fire the scroll it would have listened to.
