@@ -3,15 +3,15 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { useAsync, useLocation } from 'react-use';
 
 import { t } from '@grafana/i18n';
+import { getLogger } from '@grafana/runtime/unstable';
 import { LoadingPlaceholder } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
-import { logError } from '../Analytics';
-import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { withTimeout } from '../utils/promise';
@@ -19,6 +19,18 @@ import { withTimeout } from '../utils/promise';
 import { routeProxies } from './proxies';
 import { buildProxyContext, stripSubPath } from './resolve';
 import { type ProxyContext, type RouteProxy } from './types';
+
+/**
+ * What a proxied page shows while we work out where it belongs. Kept as its own component so the
+ * wait always looks the same, whichever part of the work is still in flight.
+ */
+export function RedirectingPage() {
+  return (
+    <Page navId="alerting">
+      <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
+    </Page>
+  );
+}
 
 const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
 /**
@@ -45,7 +57,7 @@ function useProxyContext(routePath: string): ProxyContext {
  *
  * Access control is left to the plugin — we only decide where the URL should be served from.
  */
-export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): GrafanaRouteComponent {
+export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteComponent): GrafanaRouteComponent {
   return function ProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
     const context = useProxyContext(proxy.path);
     const belongsToPlugin = proxy.matches(context);
@@ -57,9 +69,12 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
       {
         timeoutMs: belongsToPlugin ? PLUGIN_DISCOVERY_TIMEOUT_MS : undefined,
         onTimeout: (error) => {
-          logError(new Error('Timed out while checking Prometheus Alerting plugin status'), {
-            timeout: String(error.timeoutMs),
-          });
+          getLogger('features.alerting').logError(
+            new Error('Timed out while checking Prometheus Alerting plugin status'),
+            {
+              timeout: String(error.timeoutMs),
+            }
+          );
         },
       }
     );
@@ -72,14 +87,17 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
 
       return withTimeout(proxy.handler(context), TARGET_RESOLUTION_TIMEOUT_MS, () => {
         const error = new Error('Timed out while resolving the Prometheus Alerting plugin URL');
-        logError(error, { timeout: String(TARGET_RESOLUTION_TIMEOUT_MS), path: proxy.path });
+        getLogger('features.alerting').logError(error, {
+          timeout: String(TARGET_RESOLUTION_TIMEOUT_MS),
+          path: proxy.path,
+        });
         return error;
       });
     }, [belongsToPlugin, pluginAvailable, context]);
 
     // Not a data source managed URL, so don't make this page wait on a check it doesn't need.
     if (!belongsToPlugin) {
-      return <Page {...props} />;
+      return <RoutePage {...props} />;
     }
 
     // Shown with the usual page furniture around it, so a slow check looks like a page that hasn't
@@ -92,16 +110,12 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
     // work out where in it this URL lives. Both of those land on the Grafana page below, which is
     // the page people expected in the first place, so there's nothing to walk back.
     if (checkingPlugin || buildingTarget) {
-      return (
-        <AlertingPageWrapper navId="alerting">
-          <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
-        </AlertingPageWrapper>
-      );
+      return <RedirectingPage />;
     }
 
     // Either the plugin isn't available, or we couldn't work out where in it this URL belongs.
     if (!target) {
-      return <Page {...props} />;
+      return <RoutePage {...props} />;
     }
 
     return <Navigate replace to={target} />;

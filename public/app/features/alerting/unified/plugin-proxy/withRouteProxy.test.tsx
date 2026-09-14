@@ -1,9 +1,9 @@
 import { useLocation } from 'react-use';
 import { act, render, screen } from 'test/test-utils';
 
+import { setLogger } from '@grafana/runtime/unstable';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import * as Analytics from '../Analytics';
 import * as pluginBridgeHooks from '../hooks/usePluginBridge';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource } from '../mocks';
@@ -38,8 +38,19 @@ const PLUGIN_TARGET = `/a/${SupportedPlugin.PrometheusAlerting}/rules/${encodeUR
   `cri$${MIMIR_UID}$ns$group$rule$abc`
 )}`;
 
+const logError = jest.fn();
+
 beforeEach(() => {
   setupDataSources(mockDataSource({ name: MIMIR_NAME, uid: MIMIR_UID, type: 'prometheus' }));
+
+  logError.mockClear();
+  setLogger('features.alerting', {
+    logDebug: jest.fn(),
+    logError,
+    logInfo: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning: jest.fn(),
+  });
 });
 
 afterEach(() => {
@@ -136,7 +147,6 @@ describe('withRouteProxy', () => {
     // The plugin is reported as available up front so the only thing left to wait on is the
     // handler, which is what this test is about.
     jest.spyOn(pluginBridgeHooks, 'usePluginBridge').mockReturnValue({ loading: false, installed: true });
-    const logError = jest.spyOn(Analytics, 'logError').mockImplementation();
     jest.useFakeTimers();
 
     // A handler that never settles — without a ceiling of its own this would load forever.
@@ -159,7 +169,6 @@ describe('withRouteProxy', () => {
       loading: false,
       error: timeoutError,
     });
-    const logError = jest.spyOn(Analytics, 'logError').mockImplementation();
 
     renderProxiedRoute(DATA_SOURCE_URL);
 
