@@ -192,6 +192,7 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
+		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		ofClient:        openfeature.NewDefaultClient(),
 	}
@@ -1064,6 +1065,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 	enableUserPermissionsApi := client.Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx))
+	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1086,6 +1088,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	routes = append(routes, b.display.GetAPIRoutes(defs))
 	if enableUserPermissionsApi && b.userPermissions != nil {
 		routes = append(routes, b.userPermissions.GetAPIRoutes(defs))
+	}
+	if enableSsoSettingsApi && b.ssoLoginConfig != nil {
+		routes = append(routes, b.ssoLoginConfig.GetAPIRoutes(defs))
 	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
