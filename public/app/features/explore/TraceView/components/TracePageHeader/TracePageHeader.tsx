@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
+import { flushSync } from 'react-dom';
 
 import {
   type CoreApp,
@@ -122,6 +123,18 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      // VirtualizedTraceView only scrolls when focusedSpanIdForSearch changes.
+      // Clear first so a second click after the user scrolls away still re-scrolls.
+      flushSync(() => {
+        setFocusedSpanIdForSearch('');
+      });
+      setFocusedSpanIdForSearch(spanId);
+    },
+    [setFocusedSpanIdForSearch]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -343,7 +356,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       </div>
 
       {!hideHeaderDetails && traceBanner && (
-        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={setFocusedSpanIdForSearch} />
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
       )}
 
       {/* Metadata row */}

@@ -364,7 +364,7 @@ describe('TracePageHeader test', () => {
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
   });
 
-  it('focuses the highlighted span when Go to span is clicked', async () => {
+  it('focuses the highlighted span on each Go to span click, including repeats', async () => {
     const errorTraceId = 'go-to-span-trace-id';
     const errorTrace = {
       ...trace,
@@ -397,10 +397,17 @@ describe('TracePageHeader test', () => {
     };
 
     const { setFocusedSpanIdForSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+    const goToSpan = screen.getByRole('button', { name: 'Go to span' });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+    await userEvent.click(goToSpan);
+    await userEvent.click(goToSpan);
 
-    expect(setFocusedSpanIdForSearch).toHaveBeenCalledWith('payment-error');
+    expect(setFocusedSpanIdForSearch.mock.calls).toEqual([
+      [''],
+      ['payment-error'],
+      [''],
+      ['payment-error'],
+    ]);
   });
 
   it('should render the trace-level logs link when provided', () => {
