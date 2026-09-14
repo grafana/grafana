@@ -715,7 +715,7 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
-require github.com/grafana/codejen v0.0.4
+require github.com/grafana/codejen v0.0.4 // @grafana/grafana-as-code
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
