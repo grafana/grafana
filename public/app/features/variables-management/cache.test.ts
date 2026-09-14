@@ -11,6 +11,7 @@ import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/
 import * as predefinedVariables from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { setStore } from 'app/store/store';
 
+import { variablesManagementAPI } from './api';
 import { invalidateVariablesAfterFolderDelete } from './cache';
 
 setBackendSrv(backendSrv);
@@ -38,7 +39,7 @@ describe('invalidateVariablesAfterFolderDelete', () => {
         })
       );
 
-      const subscription = store.dispatch(dashboardAPIv2beta1.endpoints.listVariable.initiate({}));
+      const subscription = store.dispatch(variablesManagementAPI.endpoints.listAllVariables.initiate());
       await subscription;
       expect(listSpy).toHaveBeenCalledTimes(1);
 

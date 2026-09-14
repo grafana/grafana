@@ -22,7 +22,7 @@ const LIST_PAGE_SIZE = 500;
  * hook is the data-fetching seam for the variables tree: if fetch-all proves not to
  * scale, swap this for a per-folder labelSelector strategy without touching the UI.
  */
-const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
+export const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
     listAllVariables: build.query<Variable[], void>({
       queryFn: async (_arg, _api, _extraOptions, baseQuery) => {

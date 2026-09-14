@@ -286,7 +286,7 @@ describe('browseDashboardsAPI', () => {
     }
   });
 
-  it('does not invalidate the variables list when deleting a folder fails', async () => {
+  it('invalidates the variables list even when deleting a folder fails', async () => {
     const store = createTestStore();
     const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
 
@@ -301,7 +301,9 @@ describe('browseDashboardsAPI', () => {
         browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
       );
 
-      expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
     } finally {
       invalidateVariablesSpy.mockRestore();
     }
@@ -623,7 +625,7 @@ describe('browseDashboardsAPI', () => {
       }
     });
 
-    it('does not invalidate the variables list when bulk delete yields no successes', async () => {
+    it('invalidates the variables list when bulk delete yields no successes', async () => {
       const store = createTestStore();
       const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
 
@@ -641,7 +643,9 @@ describe('browseDashboardsAPI', () => {
           browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
         );
 
-        expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
       } finally {
         invalidateVariablesSpy.mockRestore();
       }

@@ -223,10 +223,12 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
-          invalidateVariablesAfterFolderDelete();
           dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
+        } finally {
+          // Variables are cascade-deleted before the folder write; a failed DELETE can still drop them.
+          invalidateVariablesAfterFolderDelete();
         }
       },
     }),
@@ -359,27 +361,30 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
-        let deletedCount = 0;
-        for (const folderUID of folderUIDs) {
-          if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
-            continue;
-          }
+        let attempted = 0;
+        try {
+          for (const folderUID of folderUIDs) {
+            if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
+              continue;
+            }
 
-          const response = await baseQuery({
-            url: `/folders/${folderUID}`,
-            method: 'DELETE',
-            params: deleteFolderParams,
-          });
-          if (!response.error) {
-            // Only clear the nav starred entry for folders that were actually deleted
-            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
-            deletedCount++;
+            attempted++;
+            const response = await baseQuery({
+              url: `/folders/${folderUID}`,
+              method: 'DELETE',
+              params: deleteFolderParams,
+            });
+            if (!response.error) {
+              // Only clear the nav starred entry for folders that were actually deleted
+              api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+            }
           }
-        }
-
-        if (deletedCount > 0) {
-          // queryFn always resolves, so do this here rather than in onQueryStarted
-          invalidateVariablesAfterFolderDelete();
+        } finally {
+          // Variables are cascade-deleted before the folder write, so any attempted DELETE
+          // can leave the Variables list stale even when the folder DELETE itself fails.
+          if (attempted > 0) {
+            invalidateVariablesAfterFolderDelete();
+          }
         }
 
         return { data: undefined };
