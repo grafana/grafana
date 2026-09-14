@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -101,6 +102,14 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
 		}
 	}
+
+	if ds.IsDefault {
+		if obj.Labels == nil {
+			obj.Labels = map[string]string{}
+		}
+		obj.Labels["default"] = "true"
+	}
+
 	return obj, nil
 }
 
@@ -136,6 +145,12 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		return nil, err
 	}
 
+	// Can configure in the body or in the labels
+	isDefault := ds.Spec.IsDefault()
+	if ds.Labels != nil && !isDefault {
+		isDefault = ds.Labels["default"] == "true"
+	}
+
 	cmd := &datasources.AddDataSourceCommand{
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
@@ -149,8 +164,8 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
 		ReadOnly:        ds.Spec.ReadOnly(),
+		IsDefault:       isDefault,
 	}
 
 	jsonData := ds.Spec.JSONData()
