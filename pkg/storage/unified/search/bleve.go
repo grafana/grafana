@@ -265,6 +265,10 @@ type bleveBackend struct {
 	// and BuildIndex unregisters it after the call completes.
 	inFlightBuildDirsMu sync.Mutex
 	inFlightBuildDirs   map[string]int
+
+	// Kinds with a value in the indexed kinds metric. Used to drop series for kinds
+	// that no longer have an open index. Only touched by updateIndexMetricsPeriodically.
+	reportedIndexedKinds map[string]struct{}
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
@@ -343,6 +347,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
 		inFlightBuildDirs:       map[string]int{},
+		reportedIndexedKinds:    map[string]struct{}{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -380,7 +385,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	}
 
 	be.bgTasksWg.Add(1)
-	go be.updateIndexSizeMetric(ctx, opts.Root)
+	go be.updateIndexMetricsPeriodically(ctx, opts.Root)
 
 	return be, nil
 }
@@ -652,42 +657,86 @@ func (b *bleveBackend) recordSnapshotUploadStatus(status string) {
 	b.indexMetrics.IndexSnapshotUploads.WithLabelValues(status).Inc()
 }
 
-// updateIndexSizeMetric sets the total size of all file-based indices metric.
-func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+const indexMetricsRefreshInterval = 60 * time.Second
+
+// updateIndexMetricsPeriodically refreshes the metrics that describe what the
+// indexes currently hold.
+func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
 	for ctx.Err() == nil {
-		var totalSize int64
-
-		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if err = ctx.Err(); err != nil {
-				return err
-			}
-			if !info.IsDir() {
-				fileInfo, err := info.Info()
-				if err != nil {
-					return err
-				}
-				totalSize += fileInfo.Size()
-			}
-			return nil
-		})
-
-		if err == nil {
-			b.indexMetrics.IndexSize.Set(float64(totalSize))
-		} else {
-			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
-		}
+		b.updateIndexSizeMetric(ctx, indexPath)
+		b.updateIndexedKindsMetric()
 
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(60 * time.Second):
+		case <-time.After(indexMetricsRefreshInterval):
+		}
+	}
+}
+
+// updateIndexedKindsMetric reports the number of documents currently indexed per
+// kind. The value is recomputed on every run rather than accumulated, so rebuilds
+// and incremental updates don't inflate it.
+func (b *bleveBackend) updateIndexedKindsMetric() {
+	counts := map[string]int64{}
+	for _, key := range b.GetOpenIndexes() {
+		// peekCachedIndex so this scan doesn't keep unowned indexes from being evicted.
+		idx := b.peekCachedIndex(key)
+		if idx == nil {
 			continue
 		}
+		docCount, err := idx.index.DocCount()
+		if err != nil {
+			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
+			continue
+		}
+		// The same kind can be indexed in many namespaces, each with its own index.
+		counts[key.Resource] += int64(docCount)
+	}
+
+	for kind, count := range counts {
+		b.indexMetrics.IndexedKinds.WithLabelValues(kind).Set(float64(count))
+		b.reportedIndexedKinds[kind] = struct{}{}
+	}
+
+	// Without this, a kind whose index was closed or evicted would keep reporting
+	// the count it had when it was last open.
+	for kind := range b.reportedIndexedKinds {
+		if _, ok := counts[kind]; ok {
+			continue
+		}
+		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind)
+		delete(b.reportedIndexedKinds, kind)
+	}
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+	var totalSize int64
+
+	err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if err = ctx.Err(); err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			fileInfo, err := info.Info()
+			if err != nil {
+				return err
+			}
+			totalSize += fileInfo.Size()
+		}
+		return nil
+	})
+
+	if err == nil {
+		b.indexMetrics.IndexSize.Set(float64(totalSize))
+	} else {
+		b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 	}
 }
 
