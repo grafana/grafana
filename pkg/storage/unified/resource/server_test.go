@@ -3097,7 +3097,7 @@ func TestServerListKeysOnly(t *testing.T) {
 		firstToken, err := GetContinueToken(first.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, ns, firstToken.Namespace)
-		require.Equal(t, ns, firstToken.ListNamespace)
+		require.False(t, firstToken.ClusterWide)
 
 		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             newKey("ccc"),
@@ -3476,7 +3476,7 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 		}},
 		KeysOnly: true,
 		NextPageToken: ContinueToken{
-			Namespace: "ns-two", ListNamespace: "ns-two", Name: "aaa", ResourceVersion: rsp.ResourceVersion,
+			Namespace: "ns-two", Name: "aaa", ResourceVersion: rsp.ResourceVersion,
 		}.String(),
 	})
 	require.NoError(t, err)

@@ -1513,7 +1513,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace)
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
 	defer it.stop()
 
 	if err := cb(it); err != nil {
@@ -1524,11 +1524,14 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 }
 
 func continueTokenMatchesListScope(token *ContinueToken, namespace string) bool {
-	return token.ListNamespace == namespace
+	if namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == namespace
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly bool, listNamespace string) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListIterator {
 	objs := batchGetResourceKeys(ctx, ds, keys)
 	if keysOnly {
 		// The data key already carries namespace/name/rv/folder, so the value
@@ -1540,7 +1543,7 @@ func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKe
 		listRV:                listRV,
 		includeTokenNamespace: includeTokenNamespace,
 		keysOnly:              keysOnly,
-		listNamespace:         listNamespace,
+		clusterWide:           clusterWide,
 		next:                  next,
 		stopFn:                stopFn,
 	}
@@ -1593,7 +1596,7 @@ type kvListIterator struct {
 	listRV                int64
 	includeTokenNamespace bool
 	keysOnly              bool
-	listNamespace         string
+	clusterWide           bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1654,7 +1657,7 @@ func (i *kvListIterator) ContinueToken() string {
 		token.Namespace = i.nextDataObj.Key.Namespace
 	}
 	if i.keysOnly {
-		token.ListNamespace = i.listNamespace
+		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
 }
