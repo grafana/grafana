@@ -87,6 +87,23 @@ func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, hand
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
 }
 
+func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
+	var opts []sql.StorageBackendOption
+	if publisher != nil {
+		opts = append(opts, sql.WithEventPublisher(publisher))
+	}
+	if subscriber == nil {
+		return opts
+	}
+	switch {
+	case cfg.NATS.Notifier:
+		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}))
+	case cfg.NATS.NotifierShadow:
+		opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: subscriber}))
+	}
+	return opts
+}
+
 type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
 	requestRetries  *prometheus.CounterVec
@@ -202,12 +219,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher), sql.WithVectorBackend(vectorBackend)}
-		if cfg.NATS.Notifier && eventSubscriber != nil {
-			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
-		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
-			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
-		}
+		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
 		if experimentalKV != nil {
 			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
 		}
@@ -297,6 +310,48 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 		}
 	}
 	return searchClient, nil
+}
+
+// NewRemoteResourceClientFromConfig creates a unified-storage client using the
+// storage and optional search-server addresses from [grafana-apiserver].
+func NewRemoteResourceClientFromConfig(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+) (resource.ResourceClient, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	address := apiserverCfg.Key("address").MustString("")
+	if address == "" {
+		return nil, fmt.Errorf("expecting address to be set for remote unified storage client under grafana-apiserver section")
+	}
+	keepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime)
+	metrics := newClientMetrics(reg)
+	storageConn, err := grpcConn(address, metrics, keepaliveTime)
+	if err != nil {
+		return nil, fmt.Errorf("create unified storage connection: %w", err)
+	}
+
+	indexConn := grpc.ClientConnInterface(storageConn)
+	var searchConn *grpc.ClientConn
+	if searchAddress := apiserverCfg.Key("search_server_address").MustString(""); searchAddress != "" {
+		searchConn, err = grpcConn(searchAddress, metrics, keepaliveTime)
+		if err != nil {
+			_ = storageConn.Close()
+			return nil, fmt.Errorf("create search server connection: %w", err)
+		}
+		indexConn = searchConn
+	}
+
+	client, err := resource.NewResourceClient(storageConn, indexConn, cfg, features, tracer)
+	if err != nil {
+		_ = storageConn.Close()
+		if searchConn != nil {
+			_ = searchConn.Close()
+		}
+		return nil, fmt.Errorf("create remote resource client: %w", err)
+	}
+	return client, nil
 }
 
 func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
@@ -412,6 +467,10 @@ func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
 			Name:    "resource_server_client_request_duration_seconds",
 			Help:    "Time spent executing requests to the resource server.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"operation", "status_code"}),
 		requestRetries: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "resource_server_client_request_retries_total",

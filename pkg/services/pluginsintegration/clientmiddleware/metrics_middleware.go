@@ -179,6 +179,26 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	return resp, err
 }
 
+func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	var requestSize float64
+	for _, v := range req.Queries {
+		requestSize += float64(len(v.JSON))
+	}
+
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
+		return err
+	}
+
+	// The chunked response is streamed through the writer rather than returned, so wrap
+	// it to observe per-refID errors reported via WriteError. This lets the status
+	// reflect partial failures the same way QueryData inspects per-refID response errors.
+	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
+	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		return cw.requestStatus(innerErr), innerErr
+	})
+}
+
 func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err

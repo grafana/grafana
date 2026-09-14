@@ -1,26 +1,15 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-
-import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { renderHook, act } from '@testing-library/react';
 
 import { TestDataSettings } from '../query/state/mocks/mockDataSource';
 
-import { useDatasourcesAsync, useRecentlyUsedDataSources } from './hooks';
+import { useRecentlyUsedDataSources } from './hooks';
 
-// Mock react-use's useLocalStorage, keeping the real useAsync
+// Mock react-use's useLocalStorage
 jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
   useLocalStorage: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  getDataSourceInstanceList: jest.fn(),
-  getDataSourceInstanceSettings: jest.fn(),
-}));
-
 const mockUseLocalStorage = jest.requireMock('react-use').useLocalStorage;
-const mockGetDataSourceInstanceList = jest.mocked(getDataSourceInstanceList);
-const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 
 describe('useRecentlyUsedDataSources', () => {
   let mockSetStorage: jest.Mock;
@@ -121,109 +110,5 @@ describe('useRecentlyUsedDataSources', () => {
       // Should remove the first item and add new one at the end
       expect(mockSetStorage).toHaveBeenCalledWith(['uid2', 'uid3', 'uid4', 'uid5', 'test-uid']);
     });
-  });
-});
-
-describe('useDatasourcesAsync', () => {
-  function createSettings(uid: string, name: string): DataSourceInstanceSettings {
-    return { ...TestDataSettings, uid, name };
-  }
-
-  function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
-    const { uid, type, name, meta, readOnly } = settings;
-    return { uid, type, name, meta, readOnly, isDefault: settings.isDefault ?? false };
-  }
-
-  const settingsA = createSettings('uid-a', 'Datasource A');
-  const settingsB = createSettings('uid-b', 'Datasource B');
-  const settingsByUid: Record<string, DataSourceInstanceSettings> = {
-    [settingsA.uid]: settingsA,
-    [settingsB.uid]: settingsB,
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockGetDataSourceInstanceList.mockResolvedValue([settingsA, settingsB].map(toListItem));
-    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
-      typeof ref === 'string' ? settingsByUid[ref] : undefined
-    );
-  });
-
-  it('should resolve the full settings for each listed data source, preserving order', async () => {
-    const { result } = renderHook(() => useDatasourcesAsync({}));
-
-    await waitFor(() => expect(result.current.dataSources).toEqual([settingsA, settingsB]));
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeUndefined();
-  });
-
-  it('should forward the filters to getDataSourceInstanceList', async () => {
-    const filters = { alerting: true, type: 'prometheus' };
-
-    renderHook(() => useDatasourcesAsync(filters));
-
-    await waitFor(() => expect(mockGetDataSourceInstanceList).toHaveBeenCalledWith(filters));
-  });
-
-  it('should report isLoading with an empty list while the lookup is pending', () => {
-    // Never resolves so the hook stays in its loading state.
-    mockGetDataSourceInstanceList.mockReturnValue(new Promise(() => {}));
-
-    const { result } = renderHook(() => useDatasourcesAsync({}));
-
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.dataSources).toEqual([]);
-  });
-
-  it('should surface a failed lookup through the error field', async () => {
-    const lookupError = new Error('lookup failed');
-    mockGetDataSourceInstanceList.mockRejectedValue(lookupError);
-
-    const { result } = renderHook(() => useDatasourcesAsync({}));
-
-    await waitFor(() => expect(result.current.error).toBe(lookupError));
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.dataSources).toEqual([]);
-  });
-
-  it('should re-fetch when the filters change value, but not for a value-equal object', async () => {
-    const { rerender } = renderHook(({ filters }) => useDatasourcesAsync(filters), {
-      initialProps: { filters: { alerting: true } },
-    });
-
-    await waitFor(() => expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1));
-
-    rerender({ filters: { alerting: true } });
-    // Flush microtasks so a second fetch would have started by now.
-    await act(async () => {});
-    expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1);
-
-    rerender({ filters: { alerting: false } });
-    await waitFor(() => expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(2));
-  });
-
-  it('should keep the previous list with isLoading=true while a re-fetch is pending', async () => {
-    const { result, rerender } = renderHook(({ filters }) => useDatasourcesAsync(filters), {
-      initialProps: { filters: { alerting: true } },
-    });
-
-    await waitFor(() => expect(result.current.dataSources).toEqual([settingsA, settingsB]));
-
-    // The re-fetch never resolves so the hook stays in its re-fetching state.
-    mockGetDataSourceInstanceList.mockReturnValue(new Promise(() => {}));
-    rerender({ filters: { alerting: false } });
-
-    await waitFor(() => expect(result.current.isLoading).toBe(true));
-    expect(result.current.dataSources).toEqual([settingsA, settingsB]);
-  });
-
-  it('should omit data sources whose settings cannot be resolved', async () => {
-    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
-      ref === settingsA.uid ? settingsA : undefined
-    );
-
-    const { result } = renderHook(() => useDatasourcesAsync({}));
-
-    await waitFor(() => expect(result.current.dataSources).toEqual([settingsA]));
   });
 });

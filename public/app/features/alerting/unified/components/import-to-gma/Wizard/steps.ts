@@ -24,22 +24,41 @@ export const getWizardSteps = (): WizardStep[] => [
   },
 ];
 
+/** Whether Step 1's notifications will be handled via continuous Auto-sync instead of a one-time import. */
+export function isAutoSyncSelected(
+  autoSyncNotificationsEnabled: boolean,
+  notificationsSource: 'yaml' | 'datasource'
+): boolean {
+  return autoSyncNotificationsEnabled && notificationsSource === 'datasource';
+}
+
 /**
- * Get the next step in the wizard
+ * Whether Auto-sync will actually be enabled on confirm. Skipping Step 1 discards whatever was
+ * selected there — same rule the plain notifications import already follows via
+ * `step1Completed && !step1Skipped` — so an Auto-sync selection left behind by a skip must not
+ * take effect either.
  */
+export function isAutoSyncCommitted(
+  autoSyncNotificationsEnabled: boolean,
+  notificationsSource: 'yaml' | 'datasource',
+  step1Skipped: boolean
+): boolean {
+  return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
+}
+
 export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   return steps[currentIndex + 1];
 };
 
-/**
- * Get the previous step in the wizard
- */
 export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
-  return currentIndex > 0 ? steps[currentIndex - 1] : undefined;
+  if (currentIndex <= 0) {
+    return undefined;
+  }
+  return steps[currentIndex - 1];
 };
 
 /**

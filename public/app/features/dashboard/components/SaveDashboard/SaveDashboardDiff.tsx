@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
-import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
 import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
@@ -63,7 +63,7 @@ export const SaveDashboardDiff = ({
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
-      jsonView: <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />,
+      jsonView: <MonacoDiffEditor original={oldJSON} modified={newJSON} language="json" height="65vh" />,
     };
   }, [diff, oldValue, newValue]);
 
@@ -119,12 +119,7 @@ export const SaveDashboardDiff = ({
         <>
           {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
           {value && value.showDiffs && value.diffs}
-          <Box paddingTop={1}>
-            <h4>
-              <Trans i18nKey="dashboard.save-dashboard-diff.full-json-diff">Full JSON diff</Trans>
-            </h4>
-            {value.jsonView}
-          </Box>
+          <Box paddingTop={1}>{value.jsonView}</Box>
         </>
       ) : (
         <Box paddingTop={1}>

@@ -119,8 +119,11 @@ export function useResourceStats(
   // For instance sync: migrate if there are resources (checkbox is disabled and always true)
   // For folder and folderless sync: only migrate if user explicitly opts in via checkbox
   const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
-  const shouldSkipSync =
-    (resourceCount === 0 || syncTarget === 'folder' || syncTarget === 'folderless') && fileCount === 0;
+  // Only skip the synchronize step when there is nothing to pull and nothing that
+  // could be migrated. Folder and folderless targets used to skip whenever the
+  // repository had no files, which hid the migrate option for empty repos even
+  // when the Grafana instance still had resources (issue #128917).
+  const shouldSkipSync = resourceCount === 0 && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =

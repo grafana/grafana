@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -870,6 +871,7 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 
 func isActionSetEnabledResource(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+		strings.HasPrefix(action, notebooks.ScopeNotebooksRoot) ||
 		strings.HasPrefix(action, folder.ScopeFoldersRoot) ||
 		strings.HasPrefix(action, accesscontrol.AlertingRoutesKind) ||
 		strings.HasPrefix(action, serviceaccounts.ScopeServiceAccountRoot) ||

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -832,6 +833,14 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 	t.Run("serviceaccounts actions are enabled", func(t *testing.T) {
 		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":edit"))
 		assert.True(t, isActionSetEnabledResource(serviceaccounts.ScopeServiceAccountRoot+":admin"))
+	})
+}
+
+func TestIsActionSetEnabledResource_Notebook(t *testing.T) {
+	t.Run("notebooks actions are enabled", func(t *testing.T) {
+		assert.True(t, isActionSetEnabledResource(notebooks.ScopeNotebooksRoot+":view"))
+		assert.True(t, isActionSetEnabledResource(notebooks.ScopeNotebooksRoot+":edit"))
+		assert.True(t, isActionSetEnabledResource(notebooks.ScopeNotebooksRoot+":admin"))
 	})
 }
 

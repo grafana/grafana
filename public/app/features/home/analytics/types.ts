@@ -89,7 +89,7 @@ export type CtaClicked = EventVariants<
     }
   | {
       surface: 'recommendations';
-      action: 'enable' | 'setup';
+      action: 'enable' | 'setup' | 'learn_more';
       placement: 'card' | 'pill';
       /** Stable id of the recommendation whose Enable CTA was clicked. */
       recommendation_id: string;
@@ -129,6 +129,11 @@ export type CtaClicked = EventVariants<
         }
       | {
           action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution' | 'view_alerts' | 'enable' | 'setup' | 'learn_more';
           placement: 'card';
           solution: string;
         }

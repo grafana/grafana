@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 
 import { getPreviewToggle } from './previewToggles';
-import { isAdmin } from './utils/misc';
+import { isAdmin } from './utils/environment';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 

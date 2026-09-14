@@ -1,7 +1,9 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-// Time configuration
-// It defines the default time config for the time picker, the refresh picker for the specific dashboard.
+/**
+ * Time configuration
+ * It defines the default time config for the time picker, the refresh picker for the specific dashboard.
+ */
 export interface TimeSettingsSpec {
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	timezone?: string;
@@ -65,15 +67,19 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 	to: "now",
 });
 
-// A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
-// Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
-// CellKind is listed first so it is the generated default (a notebook is narrative-first).
+/**
+ * A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
+ * Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
+ * CellKind is listed first so it is the generated default (a notebook is narrative-first).
+ */
 export type NotebookElement = CellKind | V2PanelKind | LibraryPanelKind;
 
 export const defaultNotebookElement = (): NotebookElement => (defaultCellKind());
 
-// A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse V2PanelKind.
+/**
+ * A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
+ * Panel cells are not represented here — they reuse V2PanelKind.
+ */
 export interface CellKind {
 	kind: "Cell";
 	spec: CellSpec;
@@ -92,8 +98,10 @@ export const defaultCellSpec = (): CellSpec => ({
 	content: defaultCellContentKind(),
 });
 
-// Pluggable cell content discriminated by `kind`. New content types are added
-// by extending this union with another <Name>CellContentKind member.
+/**
+ * Pluggable cell content discriminated by `kind`. New content types are added
+ * by extending this union with another <Name>CellContentKind member.
+ */
 export type CellContentKind = MarkdownCellContentKind | CodeCellContentKind;
 
 export const defaultCellContentKind = (): CellContentKind => (defaultMarkdownCellContentKind());
@@ -138,11 +146,13 @@ export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
 	code: "",
 });
 
-// The notebook's own panel chain. It is a copy of the dashboard one down to the transformation,
-// which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has
-// to be forked rather than shared because PanelKind reaches TransformationKind through
-// QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
-// change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
+/**
+ * The notebook's own panel chain. It is a copy of the dashboard one down to the transformation,
+ * which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has
+ * to be forked rather than shared because PanelKind reaches TransformationKind through
+ * QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
+ * change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
+ */
 export interface V2PanelKind {
 	kind: "Panel";
 	spec: V2PanelSpec;
@@ -249,7 +259,9 @@ export const defaultDataQueryKind = (): DataQueryKind => ({
 	spec: {},
 });
 
-// Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
+/**
+ * Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
+ */
 export interface V2TransformationKind {
 	kind: "Transformation";
 	// The group is the transformation ID
@@ -263,7 +275,9 @@ export const defaultV2TransformationKind = (): V2TransformationKind => ({
 	spec: defaultV2TransformationSpec(),
 });
 
-// Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
+/**
+ * Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
+ */
 export interface V2TransformationSpec {
 	// Disabled transformations are skipped
 	disabled?: boolean;
@@ -280,8 +294,10 @@ export const defaultV2TransformationSpec = (): V2TransformationSpec => ({
 	options: {},
 });
 
-// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+/**
+ * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+ * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+ */
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
@@ -299,8 +315,10 @@ export type MatcherScope = "series" | "nested" | "annotation" | "exemplar";
 
 export const defaultMatcherScope = (): MatcherScope => ("series");
 
-// A topic is attached to DataFrame metadata in query results.
-// This specifies where the data should be used.
+/**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
 export type DataTopic = "series" | "annotations" | "alertStates";
 
 export const defaultDataTopic = (): DataTopic => ("series");
@@ -335,7 +353,9 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 	spec: defaultVizConfigSpec(),
 });
 
-// --- Kinds ---
+/**
+ * --- Kinds ---
+ */
 export interface VizConfigSpec {
 	options: Record<string, any>;
 	fieldConfig: FieldConfigSource;
@@ -346,9 +366,11 @@ export const defaultVizConfigSpec = (): VizConfigSpec => ({
 	fieldConfig: defaultFieldConfigSource(),
 });
 
-// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
-// Each column within this structure is called a field. A field can represent a single time series or table column.
-// Field options allow you to change how the data is displayed in your visualizations.
+/**
+ * The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+ * Each column within this structure is called a field. A field can represent a single time series or table column.
+ * Field options allow you to change how the data is displayed in your visualizations.
+ */
 export interface FieldConfigSource {
 	// Defaults are the options applied to all fields.
 	defaults: FieldConfig;
@@ -366,9 +388,11 @@ export const defaultFieldConfigSource = (): FieldConfigSource => ({
 	overrides: [],
 });
 
-// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
-// Each column within this structure is called a field. A field can represent a single time series or table column.
-// Field options allow you to change how the data is displayed in your visualizations.
+/**
+ * The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+ * Each column within this structure is called a field. A field can represent a single time series or table column.
+ * Field options allow you to change how the data is displayed in your visualizations.
+ */
 export interface FieldConfig {
 	// The display value for this field.  This supports template variables blank is auto
 	displayName?: string;
@@ -436,8 +460,10 @@ export type ValueMapping = ValueMap | RangeMap | RegexMap | SpecialValueMap;
 
 export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 
-// Maps text values to a color or different display text and color.
-// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+/**
+ * Maps text values to a color or different display text and color.
+ * For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+ */
 export interface ValueMap {
 	type: "value";
 	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
@@ -449,16 +475,20 @@ export const defaultValueMap = (): ValueMap => ({
 	options: {},
 });
 
-// Supported value mapping types
-// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+/**
+ * Supported value mapping types
+ * `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+ * `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+ * `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+ * `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+ */
 export type MappingType = "value" | "range" | "regex" | "special";
 
 export const defaultMappingType = (): MappingType => ("value");
 
-// Result used as replacement with text and color when the value matches
+/**
+ * Result used as replacement with text and color when the value matches
+ */
 export interface ValueMappingResult {
 	// Text to display when the value matches
 	text?: string;
@@ -473,8 +503,10 @@ export interface ValueMappingResult {
 export const defaultValueMappingResult = (): ValueMappingResult => ({
 });
 
-// Maps numerical ranges to a display text and color.
-// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+/**
+ * Maps numerical ranges to a display text and color.
+ * For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+ */
 export interface RangeMap {
 	type: "range";
 	// Range to match against and the result to apply when the value is within the range
@@ -497,8 +529,10 @@ export const defaultRangeMap = (): RangeMap => ({
 },
 });
 
-// Maps regular expressions to replacement text and a color.
-// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+/**
+ * Maps regular expressions to replacement text and a color.
+ * For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+ */
 export interface RegexMap {
 	type: "regex";
 	// Regular expression to match against and the result to apply when the value matches the regex
@@ -518,9 +552,11 @@ export const defaultRegexMap = (): RegexMap => ({
 },
 });
 
-// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
-// See SpecialValueMatch to see the list of special values.
-// For example, you can configure a special value mapping so that null values appear as N/A.
+/**
+ * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+ * See SpecialValueMatch to see the list of special values.
+ * For example, you can configure a special value mapping so that null values appear as N/A.
+ */
 export interface SpecialValueMap {
 	type: "special";
 	options: {
@@ -539,7 +575,9 @@ export const defaultSpecialValueMap = (): SpecialValueMap => ({
 },
 });
 
-// Special value types supported by the `SpecialValueMap`
+/**
+ * Special value types supported by the `SpecialValueMap`
+ */
 export type SpecialValueMatch = "true" | "false" | "null" | "nan" | "null+nan" | "empty";
 
 export const defaultSpecialValueMatch = (): SpecialValueMatch => ("true");
@@ -571,7 +609,9 @@ export const defaultThreshold = (): Threshold => ({
 	color: "",
 });
 
-// Map a field to a color.
+/**
+ * Map a field to a color.
+ */
 export interface FieldColor {
 	// The main color scheme mode.
 	mode: FieldColorModeId;
@@ -587,39 +627,43 @@ export const defaultFieldColor = (): FieldColor => ({
 	mode: "thresholds",
 });
 
-// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
-// Continuous color interpolates a color using the percentage of a value relative to min and max.
-// Accepted values are:
-// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
-// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
-// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
-// `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
-// `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
-// `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
-// `continuous-viridis`: Continuous Viridis palette mode
-// `continuous-magma`: Continuous Magma palette mode
-// `continuous-plasma`: Continuous Plasma palette mode
-// `continuous-inferno`: Continuous Inferno palette mode
-// `continuous-cividis`: Continuous Cividis palette mode
-// `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
-// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
-// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
-// `continuous-YlRd`: Continuous Yellow-Red palette mode
-// `continuous-BlPu`: Continuous Blue-Purple palette mode
-// `continuous-YlBl`: Continuous Yellow-Blue palette mode
-// `continuous-blues`: Continuous Blue palette mode
-// `continuous-reds`: Continuous Red palette mode
-// `continuous-greens`: Continuous Green palette mode
-// `continuous-purples`: Continuous Purple palette mode
-// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
-// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-// `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
+/**
+ * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+ * Continuous color interpolates a color using the percentage of a value relative to min and max.
+ * Accepted values are:
+ * `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+ * `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+ * `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+ * `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
+ * `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+ * `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+ * `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+ * `continuous-viridis`: Continuous Viridis palette mode
+ * `continuous-magma`: Continuous Magma palette mode
+ * `continuous-plasma`: Continuous Plasma palette mode
+ * `continuous-inferno`: Continuous Inferno palette mode
+ * `continuous-cividis`: Continuous Cividis palette mode
+ * `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
+ * `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+ * `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+ * `continuous-YlRd`: Continuous Yellow-Red palette mode
+ * `continuous-BlPu`: Continuous Blue-Purple palette mode
+ * `continuous-YlBl`: Continuous Yellow-Blue palette mode
+ * `continuous-blues`: Continuous Blue palette mode
+ * `continuous-reds`: Continuous Red palette mode
+ * `continuous-greens`: Continuous Green palette mode
+ * `continuous-purples`: Continuous Purple palette mode
+ * `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+ * `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+ * `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
+ */
 export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "palette-colorblind" | "palette-categorical-next" | "palette-categorical-next-2" | "palette-categorical-next-3" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "gradient";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 
-// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
+/**
+ * Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
+ */
 export type FieldColorSeriesByMode = "min" | "max" | "last";
 
 export const defaultFieldColorSeriesByMode = (): FieldColorSeriesByMode => ("min");
@@ -696,10 +740,14 @@ export const defaultActionVariable = (): ActionVariable => ({
 	type: ActionVariableType,
 });
 
-// Action variable type
+/**
+ * Action variable type
+ */
 export const ActionVariableType = "string";
 
-// How null values should be handled
+/**
+ * How null values should be handled
+ */
 export type NullValueMode = "null" | "connected" | "null as zero";
 
 export const defaultNullValueMode = (): NullValueMode => ("null");
@@ -737,9 +785,11 @@ export const defaultLibraryPanelKindSpec = (): LibraryPanelKindSpec => ({
 	libraryPanel: defaultLibraryPanelRef(),
 });
 
-// A library panel is a reusable panel that you can use in any dashboard.
-// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
-// Library panels streamline reuse of panels across multiple dashboards.
+/**
+ * A library panel is a reusable panel that you can use in any dashboard.
+ * When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+ * Library panels streamline reuse of panels across multiple dashboards.
+ */
 export interface LibraryPanelRef {
 	// Library panel name
 	name: string;
@@ -780,9 +830,11 @@ export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
 	spec: defaultNotebookLayoutItemSpec(),
 });
 
-// One ordered item in a notebook layout. `element` references either a CellKind
-// (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI.
+/**
+ * One ordered item in a notebook layout. `element` references either a CellKind
+ * (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
+ * records who authored the cell; `collapsed` hides the body in the UI.
+ */
 export interface NotebookLayoutItemSpec {
 	element: ElementReference;
 	source: "assistant" | "user";

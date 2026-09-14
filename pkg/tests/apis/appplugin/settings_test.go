@@ -28,6 +28,7 @@ import (
 
 const instanceName = "instance" // the name is always "instance"
 const testAppID = "test-app-with-backend"
+const testAppGroup = testAppID + ".ext.grafana.app"
 
 var gvrSettings = schema.GroupVersionResource{
 	Group:    testAppID,
@@ -341,18 +342,37 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
+func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
+	return setupHelperFull(t, mode, false, extraFeatures...)
+}
+
+// setupHelperWithManifest installs and enables the test app manifest.
+func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
+	return setupHelperFull(t, mode, true, extraFeatures...)
+}
+
+func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+
+	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
+	if withManifest {
+		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+	}
+
+	// The settings resource moves to the manifest group along with the rest of
+	// the plugin's API, and the storage config is keyed by <resource>.<group>.
+	storageGroup := testAppID
+	if withManifest {
+		storageGroup = testAppGroup
+	}
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagApppluginsRegisterAPIServer,
-		},
+		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("app.%s", testAppID): {
+			fmt.Sprintf("app.%s", storageGroup): {
 				DualWriterMode: mode,
 			},
 		},
@@ -369,6 +389,11 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	testAppDst := filepath.Join(dir, "plugins", testAppID)
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
+
+	if withManifest {
+		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json")
+		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
+	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 		GrafanaOpts: testinfra.GrafanaOpts{

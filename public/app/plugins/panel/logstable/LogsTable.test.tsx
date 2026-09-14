@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import {
   type AbsoluteTimeRange,
   CoreApp,
+  type DataQueryRequest,
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
@@ -18,6 +19,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { mockClientSize } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
@@ -49,16 +51,10 @@ const mockEventBus: EventBus = {
   newScopedBus: jest.fn(),
 };
 
-// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
-jest.mock('@grafana/ui/unstable', () => {
-  const actual = jest.requireActual('@grafana/ui/unstable');
-  const MockTableNG = actual.TableNG;
-  return {
-    ...actual,
-    TableNG: (props: React.ComponentProps<typeof MockTableNG>) => (
-      <MockTableNG {...props} enableVirtualization={false} />
-    ),
-  };
+// react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
+// this the table only renders a single column.
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();
@@ -423,6 +419,43 @@ describe('LogsTable', () => {
       });
 
       expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+    });
+  });
+
+  describe('Loki time column tooltip', () => {
+    const lokiTooltip =
+      "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right.";
+
+    it('shows a tooltip on the timestamp column when the query uses Loki', async () => {
+      const { container } = setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'loki' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.getByRole('button', { name: lokiTooltip })).toBeInTheDocument();
+      const timestampHeader = Array.from(container.querySelectorAll('[role="columnheader"]')).find((header) =>
+        header.textContent?.includes('timestamp')
+      );
+      expect(timestampHeader).toContainElement(screen.getByRole('button', { name: lokiTooltip }));
+    });
+
+    it('does not show a timestamp tooltip for other data sources', async () => {
+      setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'elasticsearch' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByRole('button', { name: lokiTooltip })).not.toBeInTheDocument();
     });
   });
 });

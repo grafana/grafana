@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -19,7 +20,7 @@ import (
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
-	wire.Build(Server, wireext.BasicSet)
+	wire.Build(Server, wireext.BasicSet, router.ProvideRoutesLoader)
 	return &server.Server{}, nil
 }
 
@@ -28,7 +29,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	Cleanup(func())
 }, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions,
 ) (*server.TestEnv, error) {
-	wire.Build(Test, wireext.BasicSet)
+	wire.Build(Test, wireext.BasicSet, router.ProvideRoutesLoader)
 	return &server.TestEnv{Server: &server.Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
@@ -48,4 +49,15 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.Modul
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(StandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
+}
+
+// InitializeRoutesLoader uses the same configured OSS dependency graph as the
+// app-plugin API registration.
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
+	wire.Build(CLI, wireext.BasicSet, provideRoutesLoaderContext, router.ProvideRoutesLoaderWithClients)
+	return nil, nil
+}
+
+func provideRoutesLoaderContext() context.Context {
+	return context.Background()
 }
