@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -16,6 +16,9 @@ import {
   type ResultItem,
   type WhereNode,
 } from './notebookSearchApi';
+
+/** For ordering tag names for a reader, rather than by code point. */
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 /**
  * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the
@@ -106,6 +109,18 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   // Without an identity there is nobody to filter by, so the toggle cannot be honoured
   // server-side and asking would filter everything out.
   const filterByAuthor = createdByMe && Boolean(currentUserUid);
+
+  /**
+   * Adds one tag to the filter, for callers that offer a tag rather than the whole selection — the
+   * table's rows, where a tag is clickable. A functional update with no dependencies, so this keeps
+   * one identity for the life of the hook: the table memoizes its columns, and a new callback each
+   * render would rebuild them.
+   *
+   * Already-selected tags are ignored rather than repeated, as they are in dashboard search.
+   */
+  const addTagFilter = useCallback((tag: string) => {
+    setTagFilter((current) => (current.includes(tag) ? current : [...current, tag]));
+  }, []);
 
   const searchBody = useMemo(
     () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter),
@@ -224,6 +239,17 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [rows, authorNames]
   );
 
+  /**
+   * Every tag carried by the notebooks loaded so far — not the library's tags, which only the search
+   * index's facet knows. It is here for a tag picker that has no facet to read, on a deployment that
+   * does not serve the search route.
+   *
+   * From the rows before client-side filtering, so the options do not narrow as the reader filters —
+   * the trap that left the author filter with nothing but the authors already on screen. Alphabetical
+   * because, with no counts to order by, nothing else says anything.
+   */
+  const loadedTags = useMemo(() => uniq(namedRows.flatMap((row) => row.tags)).sort(collator.compare), [namedRows]);
+
   // On the fallback path the server did no filtering, so it has to happen here. When search
   // is serving, the predicates are already in the request and this is a no-op.
   const filteredRows = useMemo(() => {
@@ -281,6 +307,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     setCreatedByMe,
     tagFilter,
     setTagFilter,
+    addTagFilter,
+    loadedTags,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
     /**

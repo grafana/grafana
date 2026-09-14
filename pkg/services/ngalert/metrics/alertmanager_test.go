@@ -14,7 +14,7 @@ func Test_NewAlertmanagerConfigMetrics(t *testing.T) {
 		l := log.NewNopLogger()
 
 		require.NotPanics(t, func() {
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				m := NewAlertmanagerConfigMetrics(r, l)
 				m.ConfigHash.WithLabelValues("test").Set(1)
 				m.Matchers.Set(1)
@@ -25,7 +25,7 @@ func Test_NewAlertmanagerConfigMetrics(t *testing.T) {
 				mf, err := r.Gather()
 				require.NoError(t, err)
 
-				for j := 0; j < len(mf); j++ {
+				for j := range mf {
 					require.Equal(t, float64(1), mf[j].GetMetric()[0].GetGauge().GetValue())
 				}
 			}

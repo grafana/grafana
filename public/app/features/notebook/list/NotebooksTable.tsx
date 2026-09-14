@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
@@ -18,10 +18,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
-import { getNeutralTagListStyle } from '../tagColors';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
@@ -29,6 +29,8 @@ import { type NotebookRow } from './useNotebooksList';
 
 interface Props {
   notebooks: NotebookRow[];
+  /** Adds the clicked tag to the filter. Required, so a row's tags cannot end up inert by omission. */
+  onTagClick: (tag: string) => void;
 }
 
 /**
@@ -40,12 +42,10 @@ interface Props {
  */
 function getColumnLayout() {
   return {
-    // Title is capped so it stops absorbing all the table's slack; tags take the remainder.
     title: {
       id: 'title',
       header: t('notebooks.list.table.title', 'Title'),
-      width: 320,
-      maxWidth: 320,
+      minWidth: 320,
       skeleton: () => <Skeleton width={220} />,
     },
     authorName: {
@@ -58,6 +58,7 @@ function getColumnLayout() {
       id: 'tags',
       header: t('notebooks.list.table.tags', 'Tags'),
       minWidth: 160,
+      maxWidth: 320,
       skeleton: () => <TagList.Skeleton />,
     },
     created: {
@@ -91,12 +92,12 @@ function withoutSkeleton({ skeleton, ...column }: ColumnLayout) {
   return column;
 }
 
-export function NotebooksTable({ notebooks }: Props) {
+export function NotebooksTable({ notebooks, onTagClick }: Props) {
   const styles = useStyles2(getStyles);
   // Held here rather than in the row menu, which lives in a Dropdown overlay that unmounts as the menu
   // closes. Only the uid and title, because the rows are flattened and carry no resource envelope.
   const [toDelete, setToDelete] = useState<{ uid: string; title: string } | undefined>();
-  const { remove, isDeleting } = useDeleteNotebook();
+  const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_LIST);
 
   // Stable, so the memoized rows and the memoized columns below are not rebuilt on every render.
   const onDelete = useCallback((uid: string, title: string) => setToDelete({ uid, title }), []);
@@ -132,7 +133,17 @@ export function NotebooksTable({ notebooks }: Props) {
       },
       {
         ...withoutSkeleton(layout.tags),
-        cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} className={styles.tagList} />,
+        cell: ({ row: { original } }) => (
+          <TagList
+            tags={original.tags}
+            displayMax={3}
+            className={styles.tagList}
+            onClick={onTagClick}
+            // A clickable Tag renders a button, whose only accessible name would otherwise be the tag
+            // itself — "cost, button" says nothing about what pressing it does.
+            getAriaLabel={(tag) => t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', { tag })}
+          />
+        ),
       },
       {
         ...withoutSkeleton(layout.created),
@@ -151,7 +162,7 @@ export function NotebooksTable({ notebooks }: Props) {
         ),
       },
     ];
-  }, [styles, onDelete]);
+  }, [styles, onDelete, onTagClick]);
 
   return (
     <>
@@ -288,8 +299,8 @@ const NotebookRowActions = memo(function NotebookRowActions({
 
 // Module scope so useStyles2 can memoize — it keys its cache on the function's identity, so an
 // inline arrow would rebuild the styles on every render of every row.
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   // TagList centers its tags by default; in a table column they need to line up with the header.
-  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
+  tagList: css({ justifyContent: 'flex-start' }),
   nowrap: css({ whiteSpace: 'nowrap' }),
 });

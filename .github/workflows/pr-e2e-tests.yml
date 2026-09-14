@@ -246,7 +246,7 @@ jobs:
         run: |
           echo "Tests in this shard failed."
           echo ""
-          echo "View combined logs and HTML report in the 'All Playwright tests complete' job once all tests finish."
+          echo "View combined logs and HTML report in the 'Playwright test report' job once all tests finish."
           exit 1
 
       - uses: actions/upload-artifact@v7
@@ -275,12 +275,10 @@ jobs:
       backend-artifact-name: grafana-backend
       frontend-artifact-name: grafana-frontend
 
-  required-playwright-tests:
-    needs:
-      - run-playwright-tests
-      - run-storybook-test
+  playwright-report:
+    needs: run-playwright-tests
     if: ${{ !cancelled() }}
-    name: All Playwright tests complete
+    name: Playwright test report
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -318,23 +316,13 @@ jobs:
           path: playwright-report
           retention-days: 7
 
-      - name: Check test suites
-        id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
-        continue-on-error: true # Failure will be reported on Check test results step
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
-
-      - name: Check test results
+      - name: Show test results
         env:
-          FAILED: ${{ steps.check-jobs.outputs.any-failed }}
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
           RUN_ID: ${{ github.run_id }}
           TESTS_RAN: ${{ needs.run-playwright-tests.result != 'skipped' }}
         # sed removes the leading `../../src/` from the paths
-        # Only show the report if the tests actually ran, but fail if the `check-jobs` step failed
+        # Only show the report if the tests actually ran.
         run: |
           if [ "$TESTS_RAN" = "true" ]; then
             npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
@@ -345,10 +333,6 @@ jobs:
             echo "Alternatively, download the test report from $REPORT_URL"
             echo "and view it locally with:"
             echo "  yarn playwright show-report <path-to-unzipped-report>"
-          fi
-
-          if [ "$FAILED" = "true" ]; then
-            exit 1
           fi
 
   report-playwright-bench:
@@ -425,16 +409,3 @@ jobs:
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
-
-  # 'All E2E tests complete' is still a required check. To help with this transition, we keep
-  # a placeholder job to avoid needing to remove the required check from github yet.
-  required-e2e-tests:
-    needs:
-      - run-playwright-tests
-    if: always()
-
-    name: All E2E tests complete
-    runs-on: ubuntu-arm64-small
-    steps:
-    - name: Placeholder step
-      run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."

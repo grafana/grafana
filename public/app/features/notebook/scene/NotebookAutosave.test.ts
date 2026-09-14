@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { defaultVisualizationPanelKind } from '../types';
 
@@ -20,6 +21,8 @@ jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
 }));
+
+jest.mock('../analytics/main', () => ({ NotebookAnalytics: { created: jest.fn() } }));
 
 // Mirrors the constants in NotebookAutosave. Duplicated rather than exported so that changing a timing
 // number has to be a deliberate edit here too.
@@ -122,6 +125,7 @@ describe('NotebookAutosave', () => {
       .mocked(createNotebook)
       .mockReset()
       .mockResolvedValue({ uid: 'nb-new', url: '/notebooks/nb-new', generation: 1 });
+    jest.mocked(NotebookAnalytics.created).mockClear();
   });
 
   afterEach(() => {
@@ -152,6 +156,8 @@ describe('NotebookAutosave', () => {
       spec: { content: { kind: 'Markdown', spec: { text: 'Hello world' } } },
     });
     expect(scene.autosave.state.status).toBe('saved');
+    // Only a first write creates a notebook; this scene already has a uid.
+    expect(NotebookAnalytics.created).not.toHaveBeenCalled();
   });
 
   it('reports unsaved changes while a save is still waiting on the debounce', async () => {
@@ -1006,6 +1012,8 @@ describe('NotebookAutosave', () => {
         { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'first thought' } } } },
       ]);
       expect(scene.state.uid).toBe('nb-new');
+      expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'notebook_list', 1);
     });
 
     it('is not created at all when nothing was typed', async () => {
@@ -1113,6 +1121,8 @@ describe('NotebookAutosave', () => {
       expect(createNotebook).toHaveBeenCalledTimes(1);
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(jest.mocked(updateNotebook).mock.calls[0][0]).toBe('nb-new');
+      // The second write updates the notebook the first one created; it does not create another.
+      expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
     });
 
     it('is created on the way out when it is left before the debounce fired', async () => {

@@ -1857,6 +1857,152 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	}, callOrder)
 }
 
+// TestCollectFolderMoves verifies that only moves preserving an existing UID
+// receive a relocation exemption. Updates at the same path, UID replacements,
+// and changes without a known previous location must not bypass UID validation.
+func TestCollectFolderMoves(t *testing.T) {
+	changes := []ResourceFileChange{
+		// Real stable-UID moves: the old path (Existing.Path) differs from the new
+		// path (Path). augmentChangesForFolderMoves produces these.
+		{Action: repository.FileActionUpdated, Path: "new-parent/", Existing: &provisioning.ResourceListItem{Name: "parent-uid", Path: "old-parent/"}},
+		{Action: repository.FileActionUpdated, Path: "new-parent/new-child/", Existing: &provisioning.ResourceListItem{Name: "child-uid", Path: "old-parent/old-child/"}},
+		// Same-path metadata update (title/hash change or child reparenting) —
+		// excluded: it still needs WithForceWalk but is not a relocation.
+		{Action: repository.FileActionUpdated, Path: "same/", Existing: &provisioning.ResourceListItem{Name: "same-uid", Path: "same/"}},
+		// Same path modulo a trailing slash — excluded after normalization.
+		{Action: repository.FileActionUpdated, Path: "sibling/", Existing: &provisioning.ResourceListItem{Name: "sibling-uid", Path: "sibling"}},
+		// Update without an old path — excluded: cannot prove a move.
+		{Action: repository.FileActionUpdated, Path: "no-old-path/", Existing: &provisioning.ResourceListItem{Name: "no-old-path-uid", Path: ""}},
+		// FolderRenamed (the UID itself changed) — excluded: the old UID is not relocating.
+		{Action: repository.FileActionUpdated, Path: "renamed/", FolderRenamed: true, Existing: &provisioning.ResourceListItem{Name: "old-renamed-uid", Path: "old-renamed/"}},
+		// A plain created folder — excluded.
+		{Action: repository.FileActionCreated, Path: "created/", Existing: &provisioning.ResourceListItem{Name: "created-uid", Path: "old-created/"}},
+		// Update without an existing name — excluded.
+		{Action: repository.FileActionUpdated, Path: "noname/", Existing: &provisioning.ResourceListItem{Name: "", Path: "old-noname/"}},
+	}
+
+	moves := collectFolderMoves(changes)
+	require.ElementsMatch(t, []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+		{Path: "new-parent/new-child/", UID: "child-uid"},
+	}, moves)
+}
+
+// TestCollectFolderMoves_NestedSubtrees covers a batch that renames several levels
+// of a folder tree and a separate subtree alongside file and metadata changes.
+// Every moving folder must be collected regardless of input order, while the
+// other changes must not gain relocation exemptions.
+func TestCollectFolderMoves_NestedSubtrees(t *testing.T) {
+	changes := []ResourceFileChange{
+		{Action: repository.FileActionUpdated, Path: "RD/Grafana/Backend/As Code/", Existing: &provisioning.ResourceListItem{Name: "as-code-uid", Path: "RnD/Grafana/Grafana Backend/As Code/"}},
+		{Action: repository.FileActionUpdated, Path: "RD/Grafana/Frontend/", Existing: &provisioning.ResourceListItem{Name: "frontend-uid", Path: "RnD/Grafana/UI/"}},
+		{Action: repository.FileActionUpdated, Path: "Operations/Services/", Existing: &provisioning.ResourceListItem{Name: "services-uid", Path: "Ops/Services/"}},
+		{Action: repository.FileActionUpdated, Path: "RD/Grafana/Backend/", Existing: &provisioning.ResourceListItem{Name: "backend-uid", Path: "RnD/Grafana/Grafana Backend/"}},
+		{Action: repository.FileActionUpdated, Path: "Operations/", Existing: &provisioning.ResourceListItem{Name: "ops-uid", Path: "Ops/"}},
+		{Action: repository.FileActionUpdated, Path: "RD/Grafana/", Existing: &provisioning.ResourceListItem{Name: "grafana-uid", Path: "RnD/Grafana/"}},
+		{Action: repository.FileActionUpdated, Path: "RD/", Existing: &provisioning.ResourceListItem{Name: "rd-uid", Path: "RnD/"}},
+		{Action: repository.FileActionUpdated, Path: "RD/Grafana/Backend/As Code/dashboard.json", Existing: &provisioning.ResourceListItem{Name: "dashboard-uid", Path: "RnD/Grafana/Grafana Backend/As Code/dashboard.json"}},
+		{Action: repository.FileActionCreated, Path: "RD/Grafana/New/"},
+		{Action: repository.FileActionDeleted, Path: "retired/", Existing: &provisioning.ResourceListItem{Name: "retired-uid", Path: "retired/"}},
+		{Action: repository.FileActionUpdated, Path: "metadata-update/", Existing: &provisioning.ResourceListItem{Name: "metadata-uid", Path: "metadata-update/"}},
+		{Action: repository.FileActionUpdated, Path: "uid-change/", FolderRenamed: true, Existing: &provisioning.ResourceListItem{Name: "old-uid", Path: "uid-change/"}},
+	}
+
+	buckets := categorizeChanges(changes)
+	require.ElementsMatch(t, []folderMove{
+		{Path: "RD/", UID: "rd-uid"},
+		{Path: "RD/Grafana/", UID: "grafana-uid"},
+		{Path: "RD/Grafana/Backend/", UID: "backend-uid"},
+		{Path: "RD/Grafana/Backend/As Code/", UID: "as-code-uid"},
+		{Path: "RD/Grafana/Frontend/", UID: "frontend-uid"},
+		{Path: "Operations/", UID: "ops-uid"},
+		{Path: "Operations/Services/", UID: "services-uid"},
+	}, collectFolderMoves(buckets.folderCreations))
+}
+
+// TestRelocatingFoldersForPath restricts a folder's relocation exemptions to its
+// own destination and moving ancestors, keeping the destination attached to each UID.
+// Deep branches, independent trees, similar path prefixes, and trailing slashes
+// exercise the boundaries that keep unrelated UID conflicts visible.
+func TestRelocatingFoldersForPath(t *testing.T) {
+	moves := []folderMove{
+		{Path: "RD/Grafana/Backend/As Code/", UID: "as-code-uid"},
+		{Path: "Operations/Services/", UID: "services-uid"},
+		{Path: "RD/Grafana/Frontend/", UID: "frontend-uid"},
+		{Path: "RD/", UID: "rd-uid"},
+		{Path: "RD/Grafana/Backend/", UID: "backend-uid"},
+		{Path: "Operations/", UID: "ops-uid"},
+		{Path: "RD/Grafana/", UID: "grafana-uid"},
+	}
+
+	for _, tt := range []struct {
+		name string
+		path string
+		want []folderMove
+	}{
+		{
+			name: "deeply nested folder receives every relocating ancestor",
+			path: "RD/Grafana/Backend/As Code/",
+			want: []folderMove{
+				{Path: "RD/", UID: "rd-uid"},
+				{Path: "RD/Grafana/", UID: "grafana-uid"},
+				{Path: "RD/Grafana/Backend/", UID: "backend-uid"},
+				{Path: "RD/Grafana/Backend/As Code/", UID: "as-code-uid"},
+			},
+		},
+		{
+			name: "ancestor excludes its relocating descendants",
+			path: "RD/Grafana/",
+			want: []folderMove{
+				{Path: "RD/", UID: "rd-uid"},
+				{Path: "RD/Grafana/", UID: "grafana-uid"},
+			},
+		},
+		{
+			name: "new descendant receives only its own branch of relocations",
+			path: "RD/Grafana/Frontend/New/Nested/",
+			want: []folderMove{
+				{Path: "RD/", UID: "rd-uid"},
+				{Path: "RD/Grafana/", UID: "grafana-uid"},
+				{Path: "RD/Grafana/Frontend/", UID: "frontend-uid"},
+			},
+		},
+		{
+			name: "independent subtree receives its own relocations",
+			path: "Operations/Services/",
+			want: []folderMove{
+				{Path: "Operations/", UID: "ops-uid"},
+				{Path: "Operations/Services/", UID: "services-uid"},
+			},
+		},
+		{
+			name: "similar folder names do not share relocation exemptions",
+			path: "RD/Grafana/Backend-old/",
+			want: []folderMove{
+				{Path: "RD/", UID: "rd-uid"},
+				{Path: "RD/Grafana/", UID: "grafana-uid"},
+			},
+		},
+		{
+			name: "query without trailing slash still matches all ancestors",
+			path: "RD/Grafana/Backend/As Code",
+			want: []folderMove{
+				{Path: "RD/", UID: "rd-uid"},
+				{Path: "RD/Grafana/", UID: "grafana-uid"},
+				{Path: "RD/Grafana/Backend/", UID: "backend-uid"},
+				{Path: "RD/Grafana/Backend/As Code/", UID: "as-code-uid"},
+			},
+		},
+		{name: "similar root name is unrelated", path: "RD-old/Grafana/"},
+		{name: "unrelated path has no relocations", path: "unrelated/"},
+		{name: "root has no relocating ancestors", path: ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.ElementsMatch(t, tt.want, relocatingFoldersForPath(tt.path, moves))
+		})
+	}
+}
+
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	// When multiple folders have OldFolderUID, deeper paths must be deleted first.
 	repoResources := resources.NewMockRepositoryResources(t)

@@ -76,11 +76,10 @@ jobs:
           # clone/checkout (enterprise/upstream + the build checkouts). Do NOT repoint it.
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
 
-          # public_commit is the commit STAMPED into the binary (-X main.commit). For a mirror
-          # #patched build it's the sibling unpatched branch HEAD — a real grafana/grafana
-          # commit — so artifacts advertise a public commit instead of the mirror-only one.
-          # Everywhere else it's just the checkout HEAD. This value is only ever passed to the
-          # Makefile's COMMIT_SHA; it is never used as a checkout/clone ref.
+          # public_commit is a real, publicly-resolvable grafana/grafana commit, used wherever a
+          # downstream step needs to perform a git operation against the public repo (tag
+          # creation, npm publish, test-infra checkout). It is not used to stamp the binary
+          # (main.commit uses grafana_commit instead, below) or as a checkout/clone ref.
           if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *'#patched' ]]; then
             sibling="${REF_NAME%\#patched}"
             public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${sibling}" --jq '.object.sha')
@@ -262,9 +261,9 @@ jobs:
           arm: ${{ matrix.arm }}
           build-number: ${{ github.run_id }}
           build-version: ${{ needs.setup.outputs.version }}
-          # Stamp the public (non-#patched) commit while still compiling the #patched
-          # source that was checked out above. See the build invariant in the plan.
-          commit: ${{ needs.setup.outputs.public-commit }}
+          # Stamp the commit actually built, not public-commit (used elsewhere where a publicly
+          # resolvable commit is required, e.g. tag creation and npm publish).
+          commit: ${{ needs.setup.outputs.grafana-commit }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}

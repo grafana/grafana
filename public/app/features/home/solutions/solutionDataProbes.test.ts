@@ -26,7 +26,6 @@ function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListIt
     name,
     type,
     meta: { id: type } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: false,
   };
 }

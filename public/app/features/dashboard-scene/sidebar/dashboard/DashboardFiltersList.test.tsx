@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -80,14 +80,18 @@ afterEach(() => {
 });
 
 describe('<DashboardFiltersList />', () => {
-  test('renders 3 sections (one per filter display type)', () => {
+  test('renders 3 sections (one per filter display type)', async () => {
     const { visibleFilter1, visibleFilter2, controlsMenuFilter1, hiddenFilter1 } = buildTestFilters();
-    const { getByRole, elements } = renderFiltersList([
+    const { container, getByRole, elements } = renderFiltersList([
       hiddenFilter1,
       controlsMenuFilter1,
       visibleFilter2,
       visibleFilter1,
     ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -151,6 +155,9 @@ describe('<DashboardFiltersList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();
@@ -194,6 +201,9 @@ describe('<DashboardFiltersList />', () => {
 
         const { container, findByText } = render(<DashboardFiltersList variableSet={variableSet} />);
 
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(0);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[0] as HTMLElement;
         handle.focus();

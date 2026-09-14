@@ -3,8 +3,9 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { merge } from 'webpack-merge';
 
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import common, { type Env } from './rspack.common.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
+import { fullStatsOptions } from './plugins/webpackStatsCompat.ts';
+import common, { type Env, PUBLIC_PATH } from './rspack.common.ts';
 import swaggerConfig from './rspack.swagger.ts';
 
 export default (env: Env = {}) => {
@@ -56,7 +57,7 @@ export default (env: Env = {}) => {
     plugins: [
       new rspack.SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       function (this: Compiler) {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
@@ -67,6 +68,12 @@ export default (env: Env = {}) => {
       },
     ],
   };
+
+  // `rspack build --json` serialises `compiler.options.stats`. yarn stats:rspack asks for the
+  // whole graph; a normal build leaves it off so the console output stays short.
+  if (env.fullStats) {
+    prodConfig.stats = fullStatsOptions;
+  }
 
   const mergedProdConfig = merge(common(env), prodConfig);
   return Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });

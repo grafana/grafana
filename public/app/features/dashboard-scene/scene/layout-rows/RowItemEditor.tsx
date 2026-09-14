@@ -25,7 +25,7 @@ import {
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 

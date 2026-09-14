@@ -45,7 +45,7 @@ const meta: Meta<typeof CodeEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'completionSources', 'extensions'],
+      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
     },
   },
   argTypes: {
@@ -88,6 +88,8 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
         setValue(nextValue);
         action('onChange')(nextValue);
       }}
+      onBlur={(currentValue) => action('onBlur')(currentValue)}
+      onSave={(currentValue) => action('onSave')(currentValue)}
     />
   );
 };

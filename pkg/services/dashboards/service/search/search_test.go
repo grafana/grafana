@@ -18,6 +18,7 @@ import (
 func TestParseResults(t *testing.T) {
 	t.Run("should parse results", func(t *testing.T) {
 		resSearchResp := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
@@ -64,6 +65,70 @@ func TestParseResults(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, results.Hits, 1)
 		require.Equal(t, "description", results.Hits[0].Description)
+	})
+
+	t.Run("should parse field-value results", func(t *testing.T) {
+		score := 0.75
+		resSearchResp := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: resource.SEARCH_FIELD_TAGS, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+				{Name: resource.SEARCH_FIELD_DESCRIPTION, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: resource.SEARCH_FIELD_OWNER_REFERENCES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+				{Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: "customFlags", Type: resourcepb.ResourceSearchField_BOOLEAN, IsArray: true},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key:   &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
+				Score: &score,
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder1"}},
+					{FieldIndex: 2, StringValues: []string{"tag1", "tag2"}},
+					{FieldIndex: 3, StringValues: []string{"description"}},
+					{FieldIndex: 4, StringValues: []string{"repo"}},
+					{FieldIndex: 5, StringValues: []string{"manager"}},
+					{FieldIndex: 6, StringValues: []string{"iam.grafana.app/Team/devops"}},
+					{FieldIndex: 7, Int64Values: []int64{100}},
+					{FieldIndex: 8, BooleanValues: []bool{true, false}},
+				},
+			}},
+			TotalHits: 1,
+		}
+
+		results, err := ParseResults(resSearchResp, 4)
+		require.NoError(t, err)
+		require.Len(t, results.Hits, 1)
+		hit := results.Hits[0]
+		assert.Equal(t, int64(4), results.Offset)
+		assert.Equal(t, "Dashboard 1", hit.Title)
+		assert.Equal(t, "folder1", hit.Folder)
+		assert.Equal(t, []string{"tag1", "tag2"}, hit.Tags)
+		assert.Equal(t, "description", hit.Description)
+		assert.Equal(t, "repo", string(hit.ManagedBy.Kind))
+		assert.Equal(t, "manager", hit.ManagedBy.ID)
+		assert.Equal(t, []string{"iam.grafana.app/Team/devops"}, hit.OwnerReferences)
+		assert.Equal(t, score, hit.Score)
+		assert.Equal(t, int64(100), hit.Field.Object[builders.DASHBOARD_ERRORS_LAST_1_DAYS])
+		assert.Equal(t, []any{true, false}, hit.Field.Object["customFlags"])
+	})
+
+	t.Run("should reject an invalid field-value index", func(t *testing.T) {
+		resSearchResp := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []*resourcepb.ResourceSearchField{{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING}},
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key:    &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
+				Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 1, StringValues: []string{"Dashboard 1"}}},
+			}},
+		}
+
+		_, err := ParseResults(resSearchResp, 0)
+		require.ErrorContains(t, err, "field index 1 is out of range")
 	})
 
 	t.Run("should return error when trying to parse results with mismatch length between Columns and row Cells", func(t *testing.T) {

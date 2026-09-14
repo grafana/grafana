@@ -15,11 +15,19 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// noopRESTOptionsGetter satisfies generic.RESTOptionsGetter for apps that do not need Unified Storage.
-// Lets k8s complete store registration; NewStorage discards the stub in favour of the app's own storage.
+// noopRESTOptionsGetter provides placeholder storage when API registration does
+// not need Unified Storage. App installers replace it with their own storage;
+// offline renderers never serve requests through it.
 type noopRESTOptionsGetter struct{}
 
 var _ generic.RESTOptionsGetter = (*noopRESTOptionsGetter)(nil)
+
+// NewNoopRESTOptionsGetter returns a getter for a server that registers stores
+// it never reads or writes through, such as one built only to render an
+// OpenAPI spec.
+func NewNoopRESTOptionsGetter() generic.RESTOptionsGetter {
+	return &noopRESTOptionsGetter{}
+}
 
 func (n *noopRESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
 	return generic.RESTOptions{
@@ -46,7 +54,8 @@ func (n *noopRESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ 
 	}, nil
 }
 
-// noopStorage satisfies storage.Interface at registration time; never called at request time.
+// noopStorage satisfies storage.Interface for registration and rejects storage
+// operations.
 type noopStorage struct{}
 
 var _ storage.Interface = (*noopStorage)(nil)
