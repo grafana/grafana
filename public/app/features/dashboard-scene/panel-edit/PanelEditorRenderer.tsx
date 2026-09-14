@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, LoadingBar, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useSidebarCollapsed } from '../sidebar/shared';
@@ -30,6 +31,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const [isInitiallyCollapsed, setIsCollapsed] = useSidebarCollapsed();
 
   const isScrollingLayout = useScrollReflowLimit();
+  const [optionsPaneRef, { width: optionsPaneWidth }] = useMeasure<HTMLDivElement>();
 
   const theme = useTheme2();
   const panePadding = useMemo(() => +theme.spacing(2).replace(/px$/, ''), [theme]);
@@ -57,6 +59,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
         </div>
         <div {...splitterProps} />
         <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
+          <div ref={optionsPaneRef} className={styles.loadingBarContainer}>
+            {!splitterState.collapsed && !optionsPane && <LoadingBar width={optionsPaneWidth} />}
+          </div>
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
@@ -73,7 +78,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
             </div>
           )}
           {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
-          {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
     </div>
@@ -186,6 +190,7 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
     }),
     optionsPane: css(
       {
+        position: 'relative',
         flexDirection: 'column',
         borderLeft: `1px solid ${theme.colors.border.weak}`,
         background: theme.colors.background.primary,
@@ -196,6 +201,13 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
         borderBottomRightRadius: theme.shape.radius.lg,
       }
     ),
+    loadingBarContainer: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      overflow: 'hidden',
+    }),
     expandOptionsWrapper: css({
       display: 'flex',
       flexDirection: 'column',

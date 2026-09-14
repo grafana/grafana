@@ -107,7 +107,9 @@ async function chooseExisting(user: ReturnType<typeof render>['user']) {
 function renderModal() {
   const buildPanel = jest.fn(async () => panel());
   const onDismiss = jest.fn();
-  const result = render(<AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onDismiss} />);
+  const result = render(
+    <AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onDismiss} entryPoint="dashboard_panel" />
+  );
   return { ...result, buildPanel, onDismiss };
 }
 
@@ -235,7 +237,9 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeEnabled();
 
       setPicker({ rows: [row('nb2', 'Checkout error spike')] });
-      rerender(<AddPanelToNotebookModalBody buildPanel={jest.fn()} onDismiss={jest.fn()} />);
+      rerender(
+        <AddPanelToNotebookModalBody buildPanel={jest.fn()} onDismiss={jest.fn()} entryPoint="dashboard_panel" />
+      );
 
       expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeDisabled();
       expect(addToExisting).not.toHaveBeenCalled();
@@ -388,7 +392,8 @@ describe('AddPanelToNotebookModalBody', () => {
         expect(createWithPanel).toHaveBeenCalledWith(
           // Trimmed, so a stray space doesn't become part of the notebook's name.
           { title: 'Checkout latency', description: 'Why is checkout slow?', tags: ['latency'] },
-          panel()
+          panel(),
+          'dashboard_panel'
         )
       );
       expect(onDismiss).toHaveBeenCalled();

@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana 관리 경고 규칙에 의해 생성된 모든 경고 이벤트의 기록을 확인하세요. 경고 비활성화 또는 알림 비활성화 시간이 설정되어 있는지 여부에 관계없이 모든 경고 이벤트가 표시됩니다.",
         "notifications": "Grafana 관리 경고 규칙에서 전송된 모든 알림의 기록을 확인하세요."
@@ -5981,7 +5984,6 @@
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "시간",
       "title-edit": "",
@@ -7046,6 +7048,12 @@
       "type": "유형"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
     "dashboard-scene": {
@@ -7592,6 +7600,10 @@
       "required": "필수 항목"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "변경 사항",
         "label-details": "세부 정보",
@@ -7703,6 +7715,9 @@
         "text-no-save": "저장되지 않은 변경 사항이 있습니다. 저장할 권한이 없습니다. 변경 사항을 취소하고 원본을 공유하시겠어요?",
         "title": "저장되지 않은 변경 사항"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "찾고 있는 대시보드가 아니신가요? <2>다른 추천 대시보드</2>를 확인하거나 <6>처음부터 새로 만들기</6>를 선택하세요.",
@@ -7957,6 +7972,7 @@
       "title-label": "제목"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "변경 사항 저장",
       "save-button-disabled-tooltip": "저장하기 전에 유효성 검사 오류를 수정하세요.",
       "save-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
@@ -9089,10 +9105,14 @@
       "share-export-json": "JSON으로 내보내기",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "시작 시간",
       "success-indicator": "",
       "target": "대상",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "트레이스 ID",
       "url": "URL",
       "warning-indicator": ""
@@ -10594,7 +10614,6 @@
       "ariaLabel-panel-loading": "패널 로딩 표시줄",
       "ariaLabel-panel-status": "패널 상태",
       "errors-and-notices": "오류 및 알림",
-      "inspect-errors-notices": "검사",
       "tooltip-cancel": "쿼리 취소",
       "tooltip-cancel-loading": "쿼리 취소",
       "tooltip-stop-streaming": "스트리밍 중지",
@@ -10676,9 +10695,13 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -12476,6 +12499,7 @@
       "title": "생성"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "새 경고 규칙"
     },
     "create-dashboard": {
@@ -12965,7 +12989,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -12985,7 +13008,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13036,6 +13058,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13052,6 +13075,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
@@ -13099,7 +13123,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "설정 지우기"
+      "clear-tooltip": "설정 지우기",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "기준별 색상 시리즈"
@@ -16483,6 +16509,7 @@
       "tooltip-bold": "굵게",
       "tooltip-bullet-list": "글머리 기호 목록",
       "tooltip-checklist": "체크리스트",
+      "tooltip-diagram": "",
       "tooltip-heading": "제목",
       "tooltip-insert-variable": "변수 삽입",
       "tooltip-italic": "이탤릭체",
@@ -16496,10 +16523,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16720,6 +16755,10 @@
       "bar-stacked": "막대 차트 - 누적",
       "bar-stacked-percent": "막대 차트 - 백분율 누적형",
       "line": "선 차트"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "시간대 추가",

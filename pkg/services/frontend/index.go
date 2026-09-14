@@ -86,6 +86,10 @@ type IndexViewData struct {
 
 	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
 	OFREPRootUrlEnabled bool
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool
 }
 
 // Templates setup.
@@ -203,6 +207,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		BootScript:                            bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
 		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
 
 	// Check for login_error cookie. Two writers exist:
