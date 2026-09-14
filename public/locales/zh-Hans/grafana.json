@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "查看由 Grafana 管理的警报规则生成的所有警报事件的历史记录。无论是否设置了静默或静音时段，都会显示所有警报事件。",
         "notifications": "查看由 Grafana 管理的警报规则发送的所有通知的历史记录。"
@@ -6174,7 +6177,7 @@
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
       "file-path": "<strong>文件路径：</strong>{{filePath}}",
       "save-json-to-file": "将 JSON 保存到文件",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
+      "see-docs": "有关预配的更多信息，请参阅<2>文档</2>。"
     },
     "schema-editor": {
       "identifier-change-unsupported": "",
@@ -7490,7 +7493,7 @@
       "cannot-be-deleted": "此数据面板由 Grafana 配置管理，无法删除。从配置文件中移除数据面板以将其删除。",
       "file-path": "文件路径：{{dashboardId}}",
       "ok": "好",
-      "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。",
+      "see-docs": "有关预配的更多信息，请参阅<2>文档</2>。",
       "title-cannot-delete-provisioned-dashboard": "无法删除已配置的数据面板"
     },
     "query-editor": {
@@ -7712,6 +7715,9 @@
         "text-no-save": "您有未保存的更改。您没有保存权限。是否放弃更改并共享原始数据面板？",
         "title": "未保存的更改"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "这不是您要找的吗？请查看<2>其他推荐的数据面板</2>或<6>从头开始创建数据面板</6>。",
@@ -7966,6 +7972,7 @@
       "title-label": "标题"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "保存更改",
       "save-button-disabled-tooltip": "在保存之前，请先修复验证错误",
       "save-button-disabled-tooltip-yaml": "文档存在验证错误。切换到 JSON 格式以查看内联错误详情。",
@@ -8642,7 +8649,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "链接",
-      "open-value-in": "在以下位置打开值"
+      "open-value-in": "在以下位置打开值",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9122,6 +9130,10 @@
       "aria-label-copy": "复制到剪贴板",
       "attribute-plugin-promo": {
         "learn-more": "了解更多"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "数据库可观测性显示可视化解释计划、等待事件和查询示例，帮助您诊断追踪跨度之外的问题。",
@@ -16502,6 +16514,7 @@
       "tooltip-bold": "粗体",
       "tooltip-bullet-list": "项目符号列表",
       "tooltip-checklist": "检查清单",
+      "tooltip-diagram": "",
       "tooltip-heading": "标题",
       "tooltip-insert-variable": "插入变量",
       "tooltip-italic": "斜体",
@@ -16515,8 +16528,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16760,10 @@
       "bar-stacked": "条形图 - 堆叠",
       "bar-stacked-percent": "条形图 - 按百分比堆叠",
       "line": "折线图"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "添加时区",
