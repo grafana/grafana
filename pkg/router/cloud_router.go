@@ -46,6 +46,11 @@ const cloudRouterSection = "cloud_router"
 func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
+	pluginsURL := section.Key("plugins_url").MustString("")
+	if pluginsURL == "" {
+		return &remotePluginLoader{url: pluginsURL}, nil
+	}
+
 	apiserverURL := section.Key("apiserver_url").MustString("")
 	if apiserverURL == "" {
 		return nil, nil
@@ -99,6 +104,9 @@ type cloudLoader struct {
 	transports                 map[tlsCacheKey]*http.Transport
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
+
+	// Remote plugins
+	plugins remotePluginLoader
 
 	// clients builds the informers that feed Watcher() -- started in
 	// starting/running so this loader satisfies LifecycleRoutesLoader and
