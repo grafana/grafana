@@ -152,6 +152,8 @@ function mockIncidentTeamField(values: string[]) {
               ...values.map((value) => ({ value, archived: false })),
               // Archived options are retired values that shouldn't be offered anymore.
               { value: 'Disbanded Team', archived: true },
+              // Blank values would collide with the default-scope selection.
+              { value: '  ', archived: false },
             ],
           },
         ],
@@ -790,7 +792,7 @@ describe('AlertIncidentTabs', () => {
       await user.click(combobox);
 
       // Incidents have no "your teams" scope, so "All teams" is the only default option,
-      // followed by the active (non-archived) field values sorted by name.
+      // followed by the active (non-archived, non-blank) field values sorted by name.
       const options = await screen.findAllByRole('option');
       expect(options.map((option) => option.textContent)).toEqual(['All teams', 'Team A', 'Team B']);
       await user.click(screen.getByRole('option', { name: 'Team B' }));

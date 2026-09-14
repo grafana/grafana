@@ -93,7 +93,10 @@ export const incidentsApi = alertingApi.injectEndpoints({
       }),
       transformResponse: (response: GetFieldsResponse): string[] => {
         const teamField = response.fields?.find((field) => field.slug === 'team' && !field.archived);
-        return (teamField?.selectoptions ?? []).filter((option) => !option.archived).map((option) => option.value);
+        // Blank values would render as an empty row and '' collides with the default-scope selection.
+        return (teamField?.selectoptions ?? [])
+          .filter((option) => !option.archived && option.value.trim() !== '')
+          .map((option) => option.value);
       },
     }),
   }),
