@@ -100,7 +100,7 @@ The data is converted as follows:
 ### Histogram options
 
 Use the following options to refine your histogram visualization.
-When the query data is already a histogram frame, the bucket options are read-only and Grafana shows frequencies calculated by the query.
+When the query data is already a histogram frame, Grafana hides the bucket options (**Bucket count**, **Bucket size**, **Bucket offset**, and **Combine series**) and shows a single **Values** field indicating that frequencies are calculated in the query.
 
 <!-- prettier-ignore-start -->
 
