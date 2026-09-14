@@ -36,7 +36,7 @@ describe('ContactPointHeader', () => {
     grafana_managed_receiver_configs: [],
   };
 
-  it('disables export when the contact point contains a v0 integration', async () => {
+  it('disables export when the contact point contains a legacy integration', async () => {
     const user = userEvent.setup();
     const contactPointWithV0Integration = {
       ...mockContactPoint,
@@ -47,7 +47,13 @@ describe('ContactPointHeader', () => {
     renderWithProvider(<ContactPointHeader contactPoint={contactPointWithV0Integration} onDelete={jest.fn()} />);
 
     await user.click(screen.getByRole('button', { name: 'More actions for contact point "Test Contact Point"' }));
-    expect(await screen.findByRole('menuitem', { name: 'Export' })).toBeDisabled();
+    const exportButton = await screen.findByRole('menuitem', { name: 'Export' });
+    expect(exportButton).toBeDisabled();
+
+    await user.hover(exportButton);
+    expect(
+      await screen.findByText('Export is not available for contact points that contain legacy integrations')
+    ).toBeInTheDocument();
   });
 
   it('shows Provisioned badge when contact point has file provenance via K8s annotations', () => {
