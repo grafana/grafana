@@ -131,6 +131,9 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
 	for _, recv := range res {
 		for _, gr := range recv.Integrations {
+			if gr.Config.Version != schema.V1 {
+				continue
+			}
 			if !q.Decrypt {
 				// Provisioning API redacts by default.
 				gr.Redact(func(value string) string {
@@ -162,7 +165,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 	for _, receiver := range revision.Config.GetGrafanaReceiverMap() {
-		if receiver.UID != uid {
+		if receiver.UID != uid || !isV1IntegrationVersion(receiver.Version) {
 			continue
 		}
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
@@ -431,19 +434,25 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	// Name of the contact point that will be removed, might be used if a
 	// full removal is done to check if it's referenced in any route.
 	name := ""
+	found := false
 	for i, receiver := range revision.Config.AlertmanagerConfig.Receivers {
 		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
-			if grafanaReceiver.UID == uid {
-				name = grafanaReceiver.Name
-				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
-				// if this was the last receiver we removed, we remove the whole receiver
-				if len(receiver.GrafanaManagedReceivers) == 0 {
-					fullRemoval = true
-					revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers[:i], revision.Config.AlertmanagerConfig.Receivers[i+1:]...)
-				}
-				break
+			if grafanaReceiver.UID != uid || !isV1IntegrationVersion(grafanaReceiver.Version) {
+				continue
 			}
+			found = true
+			name = grafanaReceiver.Name
+			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
+			// if this was the last receiver we removed, we remove the whole receiver
+			if len(receiver.GrafanaManagedReceivers) == 0 {
+				fullRemoval = true
+				revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers[:i], revision.Config.AlertmanagerConfig.Receivers[i+1:]...)
+			}
+			break
 		}
+	}
+	if !found {
+		return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 	}
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
@@ -650,6 +659,10 @@ groupLoop:
 	}
 
 	return oldReceiverName, fullRemoval, newReceiverCreated
+}
+
+func isV1IntegrationVersion(version string) bool {
+	return version == "" || version == string(schema.V1)
 }
 
 func (ecp *ContactPointService) validateContactPoint(ctx context.Context, orgID int64, e *apimodels.EmbeddedContactPoint) error {
