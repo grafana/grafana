@@ -19,6 +19,19 @@ import (
 func TestCatalogProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("returns not found without a version", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t.Fatal("catalog must not be called without a plugin version")
+		}))
+		defer server.Close()
+
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "core-plugin"})
+
+		assert.Nil(t, result)
+		require.ErrorIs(t, err, ErrMetaNotFound)
+	})
+
 	t.Run("successfully fetches plugin metadata", func(t *testing.T) {
 		expectedMeta := pluginsv0alpha1.MetaJSONData{
 			Id:   "test-plugin",

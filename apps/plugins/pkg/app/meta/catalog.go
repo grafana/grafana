@@ -62,6 +62,13 @@ func (p *CatalogProvider) Name() string {
 // If ParentID is set in the query, it fetches the parent plugin's version and
 // filters for the child plugin ID in the children field.
 func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
+	// The single-version metadata response decoded below requires a plugin version;
+	// an unversioned catalog request returns a version collection instead. Returning
+	// ErrMetaNotFound lets a subsequent provider (such as the core provider) handle it.
+	if ref.Version == "" {
+		return nil, ErrMetaNotFound
+	}
+
 	logger := p.logger.WithContext(ctx)
 	if ns, nsErr := request.NamespaceInfoFrom(ctx, false); nsErr == nil && ns.Value != "" {
 		logger = logger.With("requestNamespace", ns.Value)
