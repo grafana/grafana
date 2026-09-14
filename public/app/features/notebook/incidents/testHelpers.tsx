@@ -13,11 +13,8 @@ export const STUB_ATTACH_TESTID = 'stub-attach-form';
 export const STUB_DECLARE_TESTID = 'stub-declare-form';
 
 /**
- * Stands in for IRM's exposed components, which are not installed in the test environment.
- *
- * Each stub records the props it was handed and renders a control that fires the callback the real
- * form would, so the tests assert the contract in `useNotebookIncidents` — the notebook's identity
- * going in, and the attach result coming back — rather than anything about IRM's own UI.
+ * Stands in for IRM's exposed components, which are not installed under test. Records the props it
+ * was handed and fires the callback the real form would.
  */
 export function stubAttachForm() {
   const props: AttachToIncidentFormProps[] = [];
@@ -27,7 +24,6 @@ export function stubAttachForm() {
 
   const Stub: ComponentType<AttachToIncidentFormProps> = (received) => {
     props.push(received);
-    // Identified by testid rather than copy: a stub has no user-facing text to translate.
     return <button type="button" data-testid={STUB_ATTACH_TESTID} onClick={() => received.onAttach?.(attached)} />;
   };
 

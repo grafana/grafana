@@ -17,12 +17,8 @@ interface Props {
 }
 
 /**
- * Hands this notebook to an incident that is already running, using IRM's own form.
- *
- * Their form does the write itself — AddIncidentContext with the caption as the attachment's title —
- * so there is nothing here but the trigger, the modal around it, and the notebook's identity going
- * in. Rebuilding the picker gave a worse result: without a caption IRM falls back to unfurling the
- * URL, which reads "Grafana" because core serves one static page title for every route.
+ * Hands this notebook to a running incident, using IRM's own form — which does the write itself, so
+ * all this supplies is the trigger, the chrome, and the notebook's identity.
  */
 export function AttachToIncidentButton({ uid, title }: Props) {
   const { pluginId, AttachToIncidentForm } = useNotebookIncidents();
@@ -32,8 +28,7 @@ export function AttachToIncidentButton({ uid, title }: Props) {
     return null;
   }
 
-  // Their form raises its own success toast, which cannot be suppressed from here and carries no
-  // link. This adds the one thing it is missing rather than replacing it.
+  // Their form raises its own toast, which has no link and cannot be suppressed from here.
   const onAttach = (data: AttachToIncidentFormData) => {
     const incident = data.selectedIncident?.incident;
     if (!incident) {
@@ -66,9 +61,8 @@ export function AttachToIncidentButton({ uid, title }: Props) {
       >
         {t('notebooks.incidents.attach-title', 'Attach to incident')}
       </Button>
-      {/* The chrome is ours because their attach form is a bare form — IRM's own dashboard entry
-          point wraps it in openModal for the same reason. Their *declare* component is not like
-          this: it brings its own Modal, so DeclareIncidentModal renders it unwrapped. */}
+      {/* Chrome is ours because their attach form is bare. Their declare component is not — it
+          brings its own Modal, so DeclareIncidentModal renders it unwrapped. */}
       {isAttaching && (
         <Modal
           isOpen
@@ -77,8 +71,6 @@ export function AttachToIncidentButton({ uid, title }: Props) {
         >
           <AttachToIncidentForm
             attachURL={notebookShareUrl(uid)}
-            // Prefilled rather than left blank: this is the attachment's label, and a notebook's
-            // title is the best guess at what someone would have typed.
             defaultCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', { title })}
             onAttach={onAttach}
             onDismiss={() => setIsAttaching(false)}

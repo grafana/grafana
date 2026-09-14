@@ -54,8 +54,7 @@ describe('AttachToIncidentButton', () => {
     expect(screen.getByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
   });
 
-  // The URL is what IRM attaches, and the caption is what labels it — without one it falls back to
-  // unfurling the URL, which reads "Grafana" because core serves one page title for every route.
+  // The caption is what labels the attachment; without one IRM unfurls the URL and gets "Grafana".
   it('hands the form the notebook’s absolute url and a caption naming it', async () => {
     const { user, props } = setup();
 
@@ -67,7 +66,7 @@ describe('AttachToIncidentButton', () => {
     });
   });
 
-  // IRM raises its own success toast, which carries no link. This is the one that can be followed.
+  // IRM's own toast carries no link. This is the one that can be followed.
   it('raises a toast linking to the incident once attached', async () => {
     const { user } = setup();
 

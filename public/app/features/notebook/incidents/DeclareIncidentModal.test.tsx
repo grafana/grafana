@@ -40,8 +40,7 @@ describe('DeclareIncidentModal', () => {
     expect(screen.queryByTestId(STUB_DECLARE_TESTID)).not.toBeInTheDocument();
   });
 
-  // Their declare component brings its own Modal, unlike their attach form. Wrapping it in one of
-  // ours stacked two dialogs on top of each other.
+  // Their declare component brings its own Modal; wrapping it stacked two dialogs.
   it('adds no modal chrome of its own', () => {
     setup();
 
@@ -49,8 +48,7 @@ describe('DeclareIncidentModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  // The notebook goes in as attached context, so the incident links back from the moment it exists,
-  // and attachCaption is what labels that attachment.
+  // Attached context, so the incident links back from the moment it exists.
   it('prefills the title and attaches the notebook as labelled context', () => {
     const { props } = setup();
 

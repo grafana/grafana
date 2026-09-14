@@ -39,12 +39,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
-  // Declare is the other item in the overflow menu, and it comes and goes with IRM — so delete
-  // alone no longer decides whether there is a menu to open.
+  // Declare comes and goes with IRM, so delete alone no longer decides whether there is a menu.
   const { available: hasIncidents } = useNotebookIncidents();
   const hasMoreActions = hasIncidents || canDeleteNotebooks();
-  // Owned here rather than by the menu item that opens it: that item is inside the Dropdown overlay,
-  // which unmounts as the menu closes. Same arrangement as the delete confirmation below.
+  // Owned here, not by the menu item: that item is inside the Dropdown overlay, which unmounts as
+  // the menu closes. Same as the delete confirmation below.
   const [isDeclaring, setIsDeclaring] = useState(false);
 
   const onConfirmDelete = async () => {

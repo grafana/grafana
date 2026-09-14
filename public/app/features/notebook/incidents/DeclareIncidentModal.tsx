@@ -13,21 +13,11 @@ interface Props {
 /**
  * IRM's declare form, over the notebook that prompted it.
  *
- * Deliberately NOT wrapped in a Modal, unlike the attach form beside it: IRM's two exposed
- * components are not alike. Their attach form is a bare form whose host supplies the chrome, but
- * their declare component renders a complete Modal of its own — with a title that becomes "Start a
- * drill" in drill mode, and closeOnBackdropClick off. Wrapping it produced two stacked dialogs.
+ * Not wrapped in a Modal: unlike their attach form, this component brings its own, and wrapping it
+ * stacked two dialogs. Their close button still calls the onDismiss passed here.
  *
- * Their own close button reaches us: their handleDismiss strips the declare query params it reads
- * and then calls this onDismiss, so the toolbar's state is cleared either way.
- *
- * Rendered by the toolbar rather than by the menu item that opens it: that item lives inside a
- * Dropdown overlay, which unmounts as the menu closes and would take this with it. The delete
- * confirmation is arranged the same way and for the same reason.
- *
- * The notebook goes in as attached context, so the incident links back here from the moment it is
- * declared — and attachCaption labels it, which is the difference between the attachment reading
- * "Notebook: Q2 latency" and reading "Grafana".
+ * Rendered by the toolbar rather than the menu item that opens it — that item is inside a Dropdown
+ * overlay which unmounts as the menu closes, as the delete confirmation is arranged too.
  */
 export function DeclareIncidentModal({ uid, title, onDismiss }: Props) {
   const { DeclareIncidentForm } = useNotebookIncidents();

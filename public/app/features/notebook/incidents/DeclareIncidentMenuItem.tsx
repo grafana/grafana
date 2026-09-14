@@ -9,11 +9,10 @@ interface Props {
 }
 
 /**
- * Opens IRM's declare form over the notebook, rather than navigating to their page.
+ * Opens IRM's declare form over the notebook rather than navigating to their page.
  *
- * Renders nothing when IRM is absent. Deliberately not the shared DeclareIncidentMenuItem from
- * alerting, which renders a disabled item with a tooltip in that case — right in an alert rule menu,
- * wrong as a permanently dead entry in every notebook menu on a stack without IRM.
+ * Not alerting's shared DeclareIncidentMenuItem, which renders a disabled item with a tooltip when
+ * IRM is absent — a permanently dead entry in every notebook menu without it.
  */
 export function DeclareIncidentMenuItem({ onSelect }: Props) {
   const { DeclareIncidentForm } = useNotebookIncidents();

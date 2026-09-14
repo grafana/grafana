@@ -25,9 +25,8 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // page and the row menu stub it for the same reason.
 jest.mock('../list/notebookSearchApi', () => ({}));
 
-// The incident actions probe for the IRM plugin, which settles asynchronously — unmocked, that
-// update lands after a synchronous assertion and outside act(). Stubbed here so each test states
-// whether IRM is there; the availability rules themselves are covered in useNotebookIncidents.test.
+// Stubbed so each test states whether IRM is there. The rules themselves are covered in
+// useNotebookIncidents.test.
 jest.mock('../incidents/useNotebookIncidents', () => ({
   ...jest.requireActual('../incidents/useNotebookIncidents'),
   useNotebookIncidents: jest.fn(),
@@ -289,7 +288,7 @@ describe('NotebookToolbar', () => {
       expect(history.getLocation().pathname).toBe('/notebooks/nb1');
     });
 
-    // With no IRM either, delete is the only thing the menu would hold — so there is no menu.
+    // With no IRM either, the menu would hold nothing.
     it('offers no delete at all to a user who cannot delete dashboards', () => {
       setupDelete();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -330,8 +329,7 @@ describe('NotebookToolbar', () => {
       expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
     });
 
-    // Delete used to decide on its own whether there was a menu, so without this a user who may
-    // read a notebook but not delete it would have no way to reach declare.
+    // Delete used to decide on its own whether there was a menu, which left declare unreachable.
     it('opens the overflow menu for declare even when the user cannot delete', async () => {
       setIrmAvailable(true);
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);

@@ -34,8 +34,7 @@ describe('useNotebookIncidents', () => {
     expect(mockUsePluginComponent).toHaveBeenCalledWith(DECLARE_INCIDENT_COMPONENT_ID);
   });
 
-  // Which is also what a stack still on the legacy grafana-incident-app returns: the ids are IRM's,
-  // and the legacy app never exposed them.
+  // Also what a legacy grafana-incident-app stack returns: it never exposed these ids.
   it('is unavailable when IRM exposes neither', () => {
     setComponents({});
 
@@ -46,7 +45,7 @@ describe('useNotebookIncidents', () => {
     expect(result.current.DeclareIncidentForm).toBeNull();
   });
 
-  // Reported per component rather than as one flag, so a stack exposing only one still offers it.
+  // Per component, so a stack exposing only one still offers it.
   it('reports each component on its own', () => {
     setComponents({ [ATTACH_TO_INCIDENT_COMPONENT_ID]: true });
 

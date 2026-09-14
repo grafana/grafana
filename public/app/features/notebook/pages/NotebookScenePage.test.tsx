@@ -12,9 +12,8 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookScenePage } from './NotebookScenePage';
 
-// The toolbar asks for IRM's exposed incident components, and usePluginComponent throws outright
-// until the hook app.ts installs at startup is there. Answered with "no plugin", which is this
-// suite's concern with IRM either way — the incident actions have their own tests.
+// The toolbar asks for IRM's exposed components, and usePluginComponent throws until the hook
+// app.ts installs at startup is there. Answered with "no plugin".
 setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
 // Partial rather than a whole-module replacement so `loaded` stays real: the tests that open an

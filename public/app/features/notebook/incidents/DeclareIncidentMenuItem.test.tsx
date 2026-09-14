@@ -29,15 +29,14 @@ function setup({ installed = true } = {}) {
 }
 
 describe('DeclareIncidentMenuItem', () => {
-  // Rendered rather than disabled-with-a-tooltip, which is what alerting's shared menu item does:
-  // that would be a permanently dead entry in every notebook menu on a stack without IRM.
+  // Absent rather than disabled-with-a-tooltip, which is what alerting's shared item does.
   it('renders nothing at all when IRM is not installed', () => {
     setup({ installed: false });
 
     expect(screen.queryByText('Declare incident')).not.toBeInTheDocument();
   });
 
-  // A plain item, not a link: the form opens over the notebook rather than navigating to IRM.
+  // A plain item, not a link: the form opens in place.
   it('raises the modal rather than navigating away', async () => {
     const { user, onSelect } = setup();
 
