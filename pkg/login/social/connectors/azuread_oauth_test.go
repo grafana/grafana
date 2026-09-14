@@ -1137,6 +1137,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 func TestSocialAzureAD_Validate(t *testing.T) {
 	testCases := []struct {
 		name      string
+		setup     func(t *testing.T)
 		settings  ssoModels.SSOSettings
 		requester identity.Requester
 		wantErr   error
@@ -1171,6 +1172,35 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+		},
+		{
+			name: "workload identity is valid without a configured token file when the Azure environment provides one",
+			setup: func(t *testing.T) {
+				t.Setenv(azureFederatedTokenFileEnv, "/var/run/secrets/azure/wi/token/azure-identity-token")
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication": "workload_identity",
+					"client_id":             "client-id",
+					"auth_url":              "https://example.com/auth",
+					"token_url":             "https://example.com/token",
+				},
+			},
+		},
+		{
+			name: "fails if workload identity has no token file from either the settings or the Azure environment",
+			setup: func(t *testing.T) {
+				t.Setenv(azureFederatedTokenFileEnv, "")
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication": "workload_identity",
+					"client_id":             "client-id",
+					"auth_url":              "https://example.com/auth",
+					"token_url":             "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrInvalidOAuthConfig(""),
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -1303,6 +1333,10 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.setup != nil {
+				tc.setup(t)
+			}
+
 			s := mustNewAzureADProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {

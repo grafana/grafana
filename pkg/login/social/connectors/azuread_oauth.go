@@ -564,7 +564,7 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 
 	case social.WorkloadIdentity:
 		if info.WorkloadIdentityTokenFile == "" {
-			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication. Leave it empty only when AZURE_FEDERATED_TOKEN_FILE is set in Grafana's environment.")
 		}
 		return nil
 

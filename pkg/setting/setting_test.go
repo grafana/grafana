@@ -105,6 +105,16 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "grafana.com/auth", genericOAuthSection.Key("auth_url").Value())
 	})
 
+	t.Run("Azure AD workload identity token file ships no default", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		require.NoError(t, err)
+
+		azureADSection, err := cfg.Raw.GetSection("auth.azuread")
+		require.NoError(t, err)
+		require.Empty(t, azureADSection.Key("workload_identity_token_file").Value())
+	})
+
 	t.Run("Should replace password when defined in environment", func(t *testing.T) {
 		t.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 

@@ -363,6 +363,8 @@ func TestOAuth_Authenticate(t *testing.T) {
 			assert.ErrorIs(t, err, tt.expectedErr)
 
 			if tt.expectedIdentity != nil {
+				require.NoError(t, err)
+				require.NotNil(t, identity)
 				assert.Equal(t, tt.expectedIdentity.Login, identity.Login)
 				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)

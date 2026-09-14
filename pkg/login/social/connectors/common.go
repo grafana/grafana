@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"reflect"
 	"slices"
 	"strconv"
@@ -33,6 +34,8 @@ type ExtraKeyInfo struct {
 }
 
 const (
+	azureFederatedTokenFileEnv = "AZURE_FEDERATED_TOKEN_FILE"
+
 	// consider moving this to OAuthInfo
 	teamIdsKey = "team_ids"
 	// consider moving this to OAuthInfo
@@ -226,6 +229,10 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 
 	if oauthInfo.EmptyScopes {
 		oauthInfo.Scopes = []string{}
+	}
+
+	if oauthInfo.ClientAuthentication == social.WorkloadIdentity && oauthInfo.WorkloadIdentityTokenFile == "" {
+		oauthInfo.WorkloadIdentityTokenFile = os.Getenv(azureFederatedTokenFileEnv)
 	}
 
 	return &oauthInfo, err

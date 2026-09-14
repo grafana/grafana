@@ -191,6 +191,57 @@ func TestSocialService_GetConnectorUsesCurrentSettings(t *testing.T) {
 	require.NotSame(t, initial, rotated)
 }
 
+func TestSocialService_GetOAuthInfoProvider_WorkloadIdentityTokenFile(t *testing.T) {
+	azureADSettings := func() *models.SSOSettings {
+		return &models.SSOSettings{
+			Provider: social.AzureADProviderName,
+			Settings: map[string]any{
+				"enabled":                      true,
+				"client_id":                    "client-id",
+				"client_authentication":        social.WorkloadIdentity,
+				"auth_url":                     "https://login.microsoftonline.com/authorize",
+				"token_url":                    "https://login.microsoftonline.com/token",
+				"workload_identity_token_file": "",
+			},
+		}
+	}
+
+	settingsSvc := ssosettingstests.NewFakeService()
+	settingsSvc.GetForProviderFn = func(_ context.Context, provider string) (*models.SSOSettings, error) {
+		require.Equal(t, social.AzureADProviderName, provider)
+		return azureADSettings(), nil
+	}
+
+	newService := func(t *testing.T) *SocialService {
+		return ProvideService(
+			context.Background(),
+			mustConfigProvider(t, setting.NewCfg()),
+			featuremgmt.WithFeatures(),
+			&usagestats.UsageStatsMock{},
+			supportbundlestest.NewFakeBundleService(),
+			remotecache.NewFakeStore(t),
+			nil,
+			settingsSvc,
+		)
+	}
+
+	t.Run("resolves the path from the Azure environment", func(t *testing.T) {
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "/from/env/azure-identity-token")
+
+		info, err := newService(t).GetOAuthInfoProvider(context.Background(), social.AzureADProviderName)
+		require.NoError(t, err)
+		require.Equal(t, "/from/env/azure-identity-token", info.WorkloadIdentityTokenFile)
+	})
+
+	t.Run("leaves the path empty when the Azure environment provides none", func(t *testing.T) {
+		t.Setenv("AZURE_FEDERATED_TOKEN_FILE", "")
+
+		info, err := newService(t).GetOAuthInfoProvider(context.Background(), social.AzureADProviderName)
+		require.NoError(t, err)
+		require.Empty(t, info.WorkloadIdentityTokenFile)
+	})
+}
+
 func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
