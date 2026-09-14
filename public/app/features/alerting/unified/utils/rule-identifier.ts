@@ -88,7 +88,7 @@ export function tryParse(value: string | undefined, decodeFromUri = false): Rule
 }
 
 /** `decodeURIComponent`, but a stray '%' gives the raw value back instead of throwing. */
-function tryDecodeUriComponent(value: string): string {
+export function tryDecodeUriComponent(value: string): string {
   try {
     return decodeURIComponent(value);
   } catch {

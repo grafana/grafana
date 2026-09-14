@@ -2,7 +2,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
-import { routeProxies } from './unified/plugin-proxy/proxies';
+import { routeMatchers } from './unified/plugin-proxy/matchers';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -110,8 +110,21 @@ describe('data source managed route proxies', () => {
   it('every proxy points at a route that actually exists', () => {
     const routePaths = getAlertingRoutes().map((route) => route.path);
 
-    for (const { path } of routeProxies) {
+    for (const { path } of routeMatchers) {
       expect(routePaths).toContain(path);
+    }
+  });
+
+  it('pairs every matcher with a handler', async () => {
+    // TypeScript already enforces this — `handlers` in proxies.ts is typed against the matcher
+    // list — but only as long as that typing survives a refactor, and losing it would show up as
+    // a route that quietly stops being proxied rather than as an error.
+    const { routeProxies } = await import('./unified/plugin-proxy/proxies');
+
+    expect(routeProxies.map(({ path }) => path)).toEqual(routeMatchers.map(({ path }) => path));
+    for (const { path, handler } of routeProxies) {
+      expect(typeof handler).toBe('function');
+      expect(path).toBeTruthy();
     }
   });
 });

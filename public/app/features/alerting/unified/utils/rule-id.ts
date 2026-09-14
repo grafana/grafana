@@ -45,6 +45,7 @@ export {
   isPrometheusRuleIdentifier,
   parse,
   stringifyDataSourceIdentifier,
+  tryDecodeUriComponent,
   tryParse,
   unescapePathSeparators,
 } from './rule-identifier';
