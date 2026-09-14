@@ -1888,7 +1888,7 @@ func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(
 				KeysOnly:      true,
 				NextPageToken: tt.token.String(),
 			}, func(ListIterator) error { return nil })
-			require.ErrorContains(t, err, "namespace does not match request")
+			require.ErrorContains(t, err, "list scope does not match request")
 		})
 	}
 }
@@ -1923,9 +1923,21 @@ func TestKvStorageBackend_ListIterator_RejectsContinueTokenListTypeChanges(t *te
 				KeysOnly:      tt.requestType,
 				NextPageToken: tt.token.String(),
 			}, func(ListIterator) error { return nil })
-			require.ErrorContains(t, err, "list type does not match request")
+			require.ErrorContains(t, err, "list scope does not match request")
 		})
 	}
+}
+
+func TestContinueTokenMatchesListRequest_AcceptsLegacyClusterWideKeysOnlyToken(t *testing.T) {
+	token := &ContinueToken{Name: "bbb", ResourceVersion: 1}
+	req := &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{}},
+		KeysOnly: true,
+	}
+	require.True(t, continueTokenMatchesListRequest(token, req))
+
+	req.Options.Key.Namespace = "ns-two"
+	require.False(t, continueTokenMatchesListRequest(token, req))
 }
 
 func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {

@@ -1487,11 +1487,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		if token.KeysOnly != req.KeysOnly {
-			return 0, apierrors.NewBadRequest("invalid continue token: list type does not match request")
-		}
-		if token.KeysOnly && !continueTokenMatchesListScope(token, req.Options.Key.Namespace) {
-			return 0, apierrors.NewBadRequest("invalid continue token: namespace does not match request")
+		if !continueTokenMatchesListRequest(token, req) {
+			return 0, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
 		}
 		// Only use token namespace for cross-namespace queries (when request namespace is empty).
 		if req.Options.Key.Namespace == "" {
@@ -1526,11 +1523,17 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-func continueTokenMatchesListScope(token *ContinueToken, namespace string) bool {
-	if namespace == "" {
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
 		return token.ClusterWide
 	}
-	return !token.ClusterWide && token.Namespace == namespace
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.

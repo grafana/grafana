@@ -3483,7 +3483,7 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, wrongScope.Error)
 	require.Equal(t, int32(http.StatusBadRequest), wrongScope.Error.Code)
-	require.Contains(t, wrongScope.Error.Message, "namespace does not match")
+	require.Contains(t, wrongScope.Error.Message, "list scope does not match")
 
 	missingScope, err := srv.List(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
@@ -3497,7 +3497,7 @@ func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, missingScope.Error)
 	require.Equal(t, int32(http.StatusBadRequest), missingScope.Error.Code)
-	require.Contains(t, missingScope.Error.Message, "namespace does not match")
+	require.Contains(t, missingScope.Error.Message, "list scope does not match")
 
 	for _, namespace := range []string{"ns-empty", "ns-two"} {
 		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
