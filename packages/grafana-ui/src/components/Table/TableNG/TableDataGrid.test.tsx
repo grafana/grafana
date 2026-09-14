@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { createTheme } from '@grafana/data';
@@ -73,6 +73,71 @@ describe('TableDataGrid', () => {
       render(<TableDataGrid {...makeProps()} />);
       const classic = window.getComputedStyle(screen.getByRole('grid'));
       expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+    });
+  });
+
+  describe('scroll shadows', () => {
+    // jsdom has no layout, so the grid reports every scroll metric as 0. Fake the viewport the hook
+    // reads, then fire the scroll it would have listened to.
+    function scrollTo(el: HTMLElement, { scrollTop, clientHeight, scrollHeight }: Record<string, number>) {
+      Object.defineProperty(el, 'clientHeight', { configurable: true, value: clientHeight });
+      Object.defineProperty(el, 'scrollHeight', { configurable: true, value: scrollHeight });
+      el.scrollTop = scrollTop;
+      fireEvent.scroll(el);
+    }
+
+    function getShadows(container: HTMLElement) {
+      const [top, bottom] = container.querySelectorAll<HTMLElement>('div[role="presentation"]');
+      return { top, bottom };
+    }
+
+    it('shows a shadow on each edge that has rows scrolled out of view', () => {
+      const { container } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const grid = screen.getByRole('grid');
+      const { top, bottom } = getShadows(container);
+
+      // parked at the top of a table taller than its viewport: more rows below, none above
+      scrollTo(grid, { scrollTop: 0, clientHeight: 100, scrollHeight: 400 });
+      expect(top).toHaveStyle({ opacity: '0' });
+      expect(bottom).toHaveStyle({ opacity: '1' });
+
+      // somewhere in the middle: rows hidden both ways
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+      expect(top).toHaveStyle({ opacity: '1' });
+      expect(bottom).toHaveStyle({ opacity: '1' });
+
+      // scrolled to the very bottom
+      scrollTo(grid, { scrollTop: 300, clientHeight: 100, scrollHeight: 400 });
+      expect(top).toHaveStyle({ opacity: '1' });
+      expect(bottom).toHaveStyle({ opacity: '0' });
+    });
+
+    it('stays hidden when every row already fits', () => {
+      const { container } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const { top, bottom } = getShadows(container);
+
+      scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 400, scrollHeight: 400 });
+      expect(top).toHaveStyle({ opacity: '0' });
+      expect(bottom).toHaveStyle({ opacity: '0' });
+    });
+
+    it('starts the shadows where the scrolling rows do, below the header and above the footer', () => {
+      const { container } = render(
+        <TableDataGrid
+          {...makeProps({ tableRefreshEnabled: true, headerHeight: 36, hasFooter: true, footerHeight: 45 })}
+        />
+      );
+      const { top, bottom } = getShadows(container);
+
+      // the header and footer rows are sticky children of the grid, so a shadow at the grid's own
+      // edges would sit on top of them instead of on the rows sliding underneath
+      expect(top).toHaveStyle({ top: '36px' });
+      expect(bottom).toHaveStyle({ bottom: '45px' });
+    });
+
+    it('is not rendered without table.refresh', () => {
+      const { container } = render(<TableDataGrid {...makeProps()} />);
+      expect(container.querySelectorAll('div[role="presentation"]')).toHaveLength(0);
     });
   });
 
