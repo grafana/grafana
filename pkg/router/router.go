@@ -238,19 +238,17 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 		return
 	}
 
-	etag := quoteETag(entry.key)
-	if req.Header.Get("If-None-Match") == etag {
-		w.Header().Set("ETag", etag)
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}
-
 	cacheKey := group + "/" + version
-	if cached, ok := cr.openapiDocs.Load(cacheKey); ok {
+	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	if cached, ok := cr.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
-		if c.key == entry.key {
-			w.Header().Set("Content-Type", "application/json")
+		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
+			maps.Copy(w.Header(), c.header.Clone())
 			w.Header().Set("ETag", c.etag)
+			if req.Header.Get("If-None-Match") == c.etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write(c.body)
 			return
@@ -276,8 +274,14 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	}
 
 	maps.Copy(w.Header(), rec.header)
-	if rec.statusCode == http.StatusOK {
-		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{key: entry.key, etag: etag, body: rec.body.Bytes()})
+	// Plugin schemas pass through authorization on every request. Honor their
+	// private/no-cache responses instead of bypassing that check on a cache hit.
+	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
+		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
+		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{
+			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
+			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),
+		})
 		w.Header().Set("ETag", etag)
 	}
 	w.WriteHeader(rec.statusCode)

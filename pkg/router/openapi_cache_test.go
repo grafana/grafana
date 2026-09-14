@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // countingHandler serves body and counts how many times it was hit, so tests
@@ -12,6 +14,64 @@ import (
 type countingHandler struct {
 	body string
 	hits atomic.Int64
+}
+
+func TestOpenAPIGroupVersionDoesNotCachePrivateResponses(t *testing.T) {
+	for _, directive := range []string{"private", "no-store", "no-cache"} {
+		t.Run(directive, func(t *testing.T) {
+			hits := 0
+			s := buildRouterWithBackend("test-app", "1", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				hits++
+				w.Header().Set("Cache-Control", directive)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"openapi":"3.0.0"}`))
+			}))
+			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+			for range 2 {
+				res := httptest.NewRecorder()
+				s.HandleFunc(res, req, http.NotFoundHandler())
+				require.Equal(t, http.StatusOK, res.Code)
+				require.Equal(t, directive, res.Header().Get("Cache-Control"))
+			}
+			require.Equal(t, 2, hits)
+		})
+	}
+}
+
+func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
+	for _, first := range []string{"application/json", "application/com.github.proto-openapi.spec.v3@v1.0+protobuf"} {
+		t.Run(first, func(t *testing.T) {
+			hits := 0
+			s := buildRouterWithBackend("test-app", "1", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				hits++
+				w.Header().Set("Content-Type", req.Header.Get("Accept"))
+				w.Header().Set("Vary", "Accept")
+				_, _ = w.Write([]byte(req.Header.Get("Accept"))) //nolint:gosec // G705: echo a test-controlled header to distinguish representations.
+			}))
+			previousETag := ""
+			for _, accept := range []string{first, "application/json", "application/com.github.proto-openapi.spec.v3@v1.0+protobuf"} {
+				req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+				req.Header.Set("Accept", accept)
+				for range 2 {
+					res := httptest.NewRecorder()
+					s.HandleFunc(res, req, http.NotFoundHandler())
+					require.Equal(t, http.StatusOK, res.Code)
+					require.Equal(t, accept, res.Header().Get("Content-Type"))
+					require.Equal(t, accept, res.Body.String())
+					require.Equal(t, "Accept", res.Header().Get("Vary"))
+					previousETag = res.Header().Get("ETag")
+				}
+			}
+			require.LessOrEqual(t, hits, 3)
+			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("If-None-Match", previousETag)
+			res := httptest.NewRecorder()
+			s.HandleFunc(res, req, http.NotFoundHandler())
+			require.Equal(t, http.StatusOK, res.Code)
+			require.NotEqual(t, previousETag, res.Header().Get("ETag"))
+		})
+	}
 }
 
 func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

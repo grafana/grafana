@@ -176,3 +176,33 @@ func TestPluginBackendLoad(t *testing.T) {
 		require.Nil(t, handler)
 	})
 }
+
+func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
+	access := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	backend, err := NewPluginBackend(definition.PluginDefinition{
+		JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp},
+	}, func(context.Context, string) (plugins.Client, v3.ClientV3, error) {
+		return nil, nil, nil
+	}, PluginDependencies{Unified: &resource.MockResourceClient{}, AccessControl: access})
+	require.NoError(t, err)
+	handler, err := backend.Load(t.Context())
+	require.NoError(t, err)
+	t.Cleanup(handler.(interface{ Destroy() }).Destroy)
+	router := buildRouterWithBackend(backend.Group().Name, backend.Key(), handler)
+	req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
+	req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+		Type: claims.TypeUser, OrgID: 1, Namespace: "default",
+	}))
+	res := httptest.NewRecorder()
+	router.HandleFunc(res, req, http.NotFoundHandler())
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	require.Contains(t, res.Header().Get("Cache-Control"), "private")
+
+	access.ExpectedEvaluate = false
+	for _, etag := range []string{"", res.Header().Get("ETag")} {
+		req.Header.Set("If-None-Match", etag)
+		denied := httptest.NewRecorder()
+		router.HandleFunc(denied, req, http.NotFoundHandler())
+		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
+	}
+}

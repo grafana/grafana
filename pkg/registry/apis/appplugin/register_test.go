@@ -23,14 +23,23 @@ import (
 )
 
 func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
-	for _, routed := range []bool{false, true} {
+	for _, tc := range []struct {
+		router   bool
+		register bool
+		manifest bool
+	}{
+		{false, false, false}, {false, false, true},
+		{false, true, false}, {false, true, true},
+		{true, false, false}, {true, false, true},
+		{true, true, false}, {true, true, true},
+	} {
 		for _, roleErr := range []error{nil, errors.New("role registration failed")} {
-			t.Run(fmt.Sprintf("router=%t/error=%v", routed, roleErr), func(t *testing.T) {
+			t.Run(fmt.Sprintf("router=%t/register=%t/manifest=%t/error=%v", tc.router, tc.register, tc.manifest, roleErr), func(t *testing.T) {
 				flags := map[string]memprovider.InMemoryFlag{}
 				for flag, enabled := range map[string]bool{
-					featuremgmt.FlagApppluginsRegisterAPIServer: true,
-					featuremgmt.FlagApppluginsLoadAppManifest:   true,
-					featuremgmt.FlagGrafanaUseRouterMiddleware:  routed,
+					featuremgmt.FlagApppluginsRegisterAPIServer: tc.register,
+					featuremgmt.FlagApppluginsLoadAppManifest:   tc.manifest,
+					featuremgmt.FlagGrafanaUseRouterMiddleware:  tc.router,
 				} {
 					flags[flag] = memprovider.InMemoryFlag{
 						Key: flag, DefaultVariant: "default", Variants: map[string]any{"default": enabled},
@@ -61,27 +70,40 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 				}
 				_, err := RegisterAPIService(registrar, nil, nil, nil, sources, nil,
 					roles, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
-				if roleErr != nil {
+				if !tc.router && !tc.register {
+					require.NoError(t, err)
+					require.Empty(t, registrar.builders)
+					require.Empty(t, roles.roles)
+					return
+				}
+				withManifest := tc.router || tc.manifest
+				if roleErr != nil && withManifest {
 					require.ErrorIs(t, err, roleErr)
 					require.Empty(t, registrar.builders)
 					return
 				}
 				require.NoError(t, err)
-				registeredRoles := byName(t, roles.roles)
-				require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:reader")
-				require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:writer")
+				group := "example-app"
+				if withManifest {
+					group = "example.ext.grafana.app"
+					registeredRoles := byName(t, roles.roles)
+					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:reader")
+					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:writer")
+				} else {
+					require.Empty(t, roles.roles)
+				}
 				groups := make([]string, 0, len(registrar.builders))
 				for _, b := range registrar.builders {
 					groups = append(groups, builder.GetGroupVersions(b)[0].Group)
 				}
-				if routed {
+				if tc.router {
 					require.Empty(t, groups)
 					for _, group := range []string{"example.ext.grafana.app", "legacy-app"} {
 						require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app."+group].DualWriterMode,
 							"the shared dual-write service must see the resolved settings configuration for %s", group)
 					}
 				} else {
-					require.Equal(t, []string{"example.ext.grafana.app", "legacy-app"}, groups)
+					require.Equal(t, []string{group, "legacy-app"}, groups)
 				}
 			})
 		}

@@ -161,7 +161,8 @@ func RegisterAPIService(
 	getflag := func(f string) bool {
 		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
 	}
-	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
+	routed := getflag(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	if !routed && !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
 
@@ -182,8 +183,9 @@ func RegisterAPIService(
 			}
 			return false
 		},
-		Schemas:     true,
-		AppManifest: getflag(featuremgmt.FlagApppluginsLoadAppManifest),
+		Schemas: true,
+		// The router always loads manifests, so startup must provision matching roles and settings.
+		AppManifest: routed || getflag(featuremgmt.FlagApppluginsLoadAppManifest),
 	})
 
 	if err != nil {
@@ -225,7 +227,7 @@ func RegisterAPIService(
 		}
 
 		// Routed plugins still need their roles declared before startup registers them.
-		if getflag(featuremgmt.FlagGrafanaUseRouterMiddleware) {
+		if routed {
 			// The handler copies storage options; resolve defaults here so the shared
 			// dual-write service observes them before requests start using the config.
 			b.applyDefaultStorageConfig(builder.APIGroupOptions{

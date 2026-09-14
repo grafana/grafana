@@ -212,8 +212,11 @@ synthesized from `served`, so it never advertises both). Consequences:
   are included in the aggregate as well.
 - `/openapi/v3/apis/{group}/{version}` (the actual heavy per-group document) is a pure proxy to the
   owning backend, same as `/apis/{group}/{version}` — fronted by a key-validated `sync.Map` cache
-  (`openapiDocs` in `router.go`) so repeat requests between manifest changes skip the backend
-  round-trip. Cache-miss proxy requests strip `If-None-Match`/`If-Modified-Since` before forwarding,
+  (`openapiDocs` in `router.go`) for reusable responses. Private, no-cache, and no-store responses
+  are never shared: plugin handlers must authorize each request. Cache hits require matching
+  Accept and Accept-Encoding headers and preserve representation metadata. Only a cached response
+  can produce a router-generated 304. Cache-miss proxy requests strip
+  `If-None-Match`/`If-Modified-Since` before forwarding,
   so an unrelated backend ETag scheme can't produce a bodyless 304 the router would otherwise have
   no way to distinguish from "unchanged" (see `stripConditionalHeaders` in `openapi_cache.go`). A
   matching `If-None-Match` on this path must set the `ETag` header before writing 304, same as the

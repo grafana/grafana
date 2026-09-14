@@ -15,7 +15,9 @@ same served versions, including the existing settings version and excluding
 manifest versions with `served: false`. Plugins without a manifest keep their
 plugin ID as the API group and serve settings and their subresources at `v0alpha1`.
 When the router middleware is enabled, it serves both kinds of plugins;
-`RegisterAPIService` leaves API installation to the router.
+`RegisterAPIService` leaves API installation to the router. The router always loads
+plugin APIs and manifests, independently of `appplugins.registerAPIServer` and
+`appplugins.loadAppManifest`; those flags control the legacy registration path.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for

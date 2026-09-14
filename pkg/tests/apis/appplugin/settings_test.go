@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
@@ -363,9 +364,12 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
 
-	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
-	if withManifest {
-		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+	features := slices.Clone(extraFeatures)
+	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
+		features = append(features, featuremgmt.FlagApppluginsRegisterAPIServer)
+		if withManifest {
+			features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+		}
 	}
 
 	// The settings resource moves to the manifest group along with the rest of
