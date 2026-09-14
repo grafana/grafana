@@ -1144,5 +1144,36 @@ describe('LiveDataStream', () => {
       expectStreamingResponse(firstSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
       expect(firstSubscriber.lastValue().error).toBeUndefined();
     });
+
+    it('should surface a pre-subscribe channel error even when an initial frame is provided (as in production)', async () => {
+      const deps = createDeps();
+      const liveDataStream = new LiveDataStream(deps);
+
+      // In production the initial query response reaches `get()` as the `frame` seed (via
+      // `toStreamingDataResponse`) before the subscriber attaches. The seed must not be
+      // mistaken for channel recovery: the pre-subscribe channel error (e.g. an `invalid` or
+      // Live-disabled channel) has to stay pending so the first subscriber still learns about
+      // the failure instead of hanging on an empty stream.
+      deps.liveEventsObservable.next(
+        liveChannelStatusEvent(LiveChannelConnectionState.Invalid, new Error(dummyErrorMessage))
+      );
+
+      const firstSubscriber = new ValuesCollection<DataQueryResponse>();
+      firstSubscriber.subscribeTo(
+        liveDataStream.get(
+          { ...liveDataStreamOptions.withoutFilter, frame: dataFrameJsons.schema1() },
+          subscriptionKey
+        )
+      );
+
+      expect(firstSubscriber.values).toHaveLength(2);
+      // The seed frame is replayed first (the frame state is real query data), followed by the
+      // pending channel error - the first subscriber must still learn about the failure.
+      expectStreamingResponse(firstSubscriber.values[0], StreamingResponseDataType.FullFrame);
+      expect(firstSubscriber.values[0].error).toBeUndefined();
+      expectErrorResponse(firstSubscriber.lastValue(), StreamingResponseDataType.FullFrame);
+      expect(firstSubscriber.lastValue().error?.message).toContain(dummyErrorMessage);
+      expect(firstSubscriber.complete).toBeFalsy();
+    });
   });
 });

@@ -245,6 +245,24 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
+  // Applies the initial `frame` seed (the query response that opened this stream) to the frame
+  // buffer and records it as the frame state to replay to subscribers. Unlike `process()`, this
+  // must not be treated as the channel recovering: production always delivers `LiveDataStreamOptions.frame`
+  // through `toStreamingDataResponse`, so routing it through `emit()` would wipe a channel error that
+  // arrived before the first subscriber (e.g. an `invalid` or Live-disabled channel) and leave that
+  // subscriber hanging on an empty stream (see #132368).
+  private processInitialFrame = (msg: DataFrameJSON): void => {
+    const packetInfo = this.frameBuffer.push(msg);
+    const message: InternalStreamMessage = packetInfo.schemaChanged
+      ? { type: InternalStreamMessageType.ChangedSchema }
+      : {
+          type: InternalStreamMessageType.NewValuesSameSchema,
+          values: this.frameBuffer.getValuesFromLastPacket(),
+        };
+    this.lastNonErrorMessage = message;
+    this.stream.next(message);
+  };
+
   private resizeBuffer = (bufferOptions: StreamingFrameOptions) => {
     if (bufferOptions && this.frameBuffer.needsResizing(bufferOptions)) {
       this.frameBuffer.resize(bufferOptions);
@@ -254,7 +272,7 @@ export class LiveDataStream<T = unknown> {
   private prepareInternalStreamForNewSubscription = (options: LiveDataStreamOptions): void => {
     if (!this.frameBuffer.hasAtLeastOnePacket() && options.frame) {
       // will skip initial frames from subsequent subscribers
-      this.process(options.frame);
+      this.processInitialFrame(options.frame);
     }
   };
 
