@@ -396,13 +396,6 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnectionQuery(ref common.Re
 							Format:      "",
 						},
 					},
-					"plugin": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The plugin ID",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"namespace"},
 			},

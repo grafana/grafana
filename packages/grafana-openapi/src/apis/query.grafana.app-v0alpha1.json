@@ -42,14 +42,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "plugin",
-            "in": "query",
-            "description": "plugin identifier",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
