@@ -147,6 +147,11 @@ describe('valueFormats', () => {
       expect(toFixed(1.5, 100)).toBe(`1.5${'0'.repeat(99)}`);
     });
 
+    it('toFixed should keep exponent output for values too small for 100 decimals', () => {
+      expect(toFixed(1e-101)).toBe('1e-101');
+      expect(toFixed(-1e-101)).toBe('-1e-101');
+    });
+
     it('toFixed should not throw for a decimal count outside the range toFixed accepts', () => {
       expect(toFixed(0, 101)).toBe(`0.${'0'.repeat(100)}`);
       expect(toFixed(0, -3)).toBe('0');

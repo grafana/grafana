@@ -18,14 +18,13 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 
   if (decimals === null || decimals === undefined) {
     decimals = getDecimalsForValue(value);
+  } else {
+    // Number.prototype.toFixed throws a RangeError outside 0 to 100, and the zero
+    // padding below builds a string of that length, so a count from field config
+    // is bounded before either sees it. An explicit `decimals` can land outside
+    // that range, because nothing validates it on the way in from dashboard JSON.
+    decimals = clamp(decimals, 0, 100);
   }
-
-  // Number.prototype.toFixed throws a RangeError outside 0 to 100, and the zero
-  // padding below builds a string of that length, so a count from field config
-  // is bounded before either sees it. The auto path never lands outside this
-  // range; an explicit `decimals` can, because nothing validates it on the way
-  // in from dashboard JSON.
-  decimals = clamp(decimals, 0, 100);
 
   if (value === 0) {
     return value.toFixed(decimals);
