@@ -329,12 +329,13 @@ const LogLineOTelDetailsField = ({
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? (
-              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
-            ) : (
-              <MultipleValue values={values} />
-            )}
-
+            <div className={styles.valueContent}>
+              {singleValue ? (
+                <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
+              ) : (
+                <MultipleValue values={values} />
+              )}
+            </div>
             {!disableActions && (
               <div className={styles.actions}>
                 <div className={styles.actionIcons}>
@@ -404,59 +405,78 @@ export function resolveAppFromLink(href: string): string | undefined {
   return href.match(/\/a\/([^/?#]+)/)?.[1];
 }
 
-const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
-  row: css({
-    display: 'contents',
-    position: 'relative',
-  }),
-  actions: css({
-    float: 'right',
+const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
+  const actions = css({
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    background: theme.colors.background.primary,
     whiteSpace: 'nowrap',
-  }),
-  actionIcons: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-    paddingRight: 2,
-  }),
-  statsIcon: css({
-    margin: 0,
-    paddingRight: 4,
-  }),
-  label: css({
-    color: theme.colors.text.secondary,
-    paddingRight: theme.spacing(1),
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  }),
-  value: css({
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  }),
-  link: css({
-    gridColumn: '2 / 4',
-  }),
-  linkNoActions: css({
-    gridColumn: 'span 2',
-    paddingBottom: theme.spacing(0.5),
-  }),
-  stats: css({
-    paddingRight: theme.spacing(1),
-    wordBreak: 'break-all',
-    width: '100%',
-    maxWidth: '50vh',
-  }),
-  statsColumn: css({
-    gridColumn: '2 / 4',
-  }),
-  valueContainer: css({
-    display: 'flex',
-    lineHeight: theme.typography.body.lineHeight,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    maxHeight: '50vh',
-    overflow: 'auto',
-  }),
-});
+    visibility: 'hidden',
+  });
+
+  return {
+    row: css({
+      display: 'contents',
+      position: 'relative',
+    }),
+    actions,
+    actionIcons: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      paddingRight: 2,
+    }),
+    statsIcon: css({
+      margin: 0,
+      paddingRight: 4,
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+      paddingRight: theme.spacing(1),
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+    }),
+    value: css({
+      position: 'relative',
+      minWidth: 0,
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+      [`&:hover .${actions}, &:focus-within .${actions}`]: {
+        visibility: 'visible',
+      },
+    }),
+    link: css({
+      gridColumn: '2 / 4',
+    }),
+    linkNoActions: css({
+      gridColumn: 'span 2',
+      paddingBottom: theme.spacing(0.5),
+    }),
+    stats: css({
+      paddingRight: theme.spacing(1),
+      wordBreak: 'break-all',
+      width: '100%',
+      maxWidth: '50vh',
+    }),
+    statsColumn: css({
+      gridColumn: '2 / 4',
+    }),
+    valueContainer: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      width: '100%',
+      lineHeight: theme.typography.body.lineHeight,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      maxHeight: '50vh',
+      overflow: 'auto',
+    }),
+    valueContent: css({
+      flex: 1,
+      minWidth: 0,
+    }),
+  };
+};
 
 const ClipboardButtonWrapper = ({ value }: { value: string }) => {
   const styles = useStyles2(getClipboardButtonStyles);
