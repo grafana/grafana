@@ -626,6 +626,18 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Equal(t, []string{"child1", "child2"}, meta.Children)
 	})
 
+	t.Run("errors when cdnUrl is empty", func(t *testing.T) {
+		// A grafana.com response that decodes without error but isn't actually
+		// shaped like a single plugin version (e.g. hitting the wrong endpoint)
+		// leaves CDNURL blank. Building a module path from that would silently
+		// produce a bare "module.js" path instead of surfacing the problem.
+		gcomMeta := grafanaComPluginVersionMeta{}
+
+		_, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cdnUrl")
+	})
+
 	t.Run("falls back to gcom version when plugin.json version is empty", func(t *testing.T) {
 		gcomMeta := grafanaComPluginVersionMeta{
 			PluginSlug:          "test-plugin",

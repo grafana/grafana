@@ -872,6 +872,10 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		metaSpec.Signature = signature
 	}
 
+	if gcomMeta.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for plugin %s is missing cdnUrl", gcomMeta.PluginSlug)
+	}
+
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
 	if err != nil {
 		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build module.js URL for plugin %s: %w", gcomMeta.PluginSlug, err)
