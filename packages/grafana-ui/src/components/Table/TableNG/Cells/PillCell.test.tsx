@@ -1,8 +1,18 @@
 import { render, screen, type RenderResult } from '@testing-library/react';
 
-import { type Field, FieldType, MappingType, ThemeContext, createTheme } from '@grafana/data';
+import {
+  type Field,
+  FieldType,
+  MappingType,
+  ThemeContext,
+  createTheme,
+  fieldColorModeRegistry,
+  getColorByStringHash,
+} from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
+import { getTagColorsFromName } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
 
@@ -216,6 +226,53 @@ describe('PillCell', () => {
         // the refreshed Tag shape, which the legacy pill does not have
         expect(getComputedStyle(pill).borderRadius).toBe(refreshTheme.shape.radius.pill);
       }
+    });
+
+    it('takes its colors from the theme tag palette when the field configures none', () => {
+      renderRefreshed(fieldWithValues(['value1,value2']));
+      for (const text of ['value1', 'value2']) {
+        // the same background/text pair every other refreshed tag with this name gets, rather than
+        // a classic-palette hash with near-white text over it
+        const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
+        expect(screen.getByText(text)).toHaveStyle({ backgroundColor: background, color: textColor });
+      }
+    });
+
+    it('takes tag colors under the thresholds mode every table field is given by default', () => {
+      const mockField = fieldWithValues(['value1']);
+      const field = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Thresholds } },
+      } satisfies Field;
+
+      // thresholds carries no categorical palette, so the pill color is still ours to pick
+      const { background, text } = getTagColorsFromName('value1', refreshTheme);
+      renderRefreshed(field);
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+    });
+
+    it('still honours an explicitly configured palette over the tag colors', () => {
+      const mockField = fieldWithValues(['value1']);
+      const fixed = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      } satisfies Field;
+      const classic = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
+      } satisfies Field;
+
+      const { unmount } = renderRefreshed(fixed);
+      expect(screen.getByText('value1')).toHaveStyle({
+        backgroundColor: refreshTheme.visualization.getColorByName('red'),
+      });
+      unmount();
+
+      renderRefreshed(classic);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
+      expect(screen.getByText('value1')).toHaveStyle({
+        backgroundColor: getColorByStringHash(palette, 'value1'),
+      });
     });
 
     it('keeps the data-driven colors when a value mapping sets them', () => {

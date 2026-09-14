@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
+import { getTagColorsFromName } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
@@ -25,13 +26,12 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
     return pillValues.length > 0
       ? pillValues.map((pill, index) => {
           const renderedValue = formattedValueToString(field.display!(pill));
-          const bgColor = getPillColor(renderedValue, field, theme);
-          const textColor = getTextColorForBackground(bgColor);
+          const { background, text } = getPillColors(renderedValue, field, theme, getTextColorForBackground);
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
-            bgColor,
-            color: textColor,
+            bgColor: background,
+            color: text,
           };
         })
       : [];
@@ -72,27 +72,40 @@ interface Pill {
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
 // FIXME: this does not yet support "shades of a color"
-function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): string {
+function getPillColors(
+  value: string,
+  field: Field,
+  theme: GrafanaTheme2,
+  getTextColorForBackground: (color: string) => string
+): { background: string; text: string } {
   const cfg = field.config;
+  const onBackground = (background: string) => ({ background, text: getTextColorForBackground(background) });
 
-  if (cfg.mappings?.length ?? 0 > 0) {
-    return field.display!(value).color ?? FALLBACK_COLOR;
+  if (cfg.mappings?.length) {
+    return onBackground(field.display!(value).color ?? FALLBACK_COLOR);
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
-    return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
+    return onBackground(theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR));
   }
 
-  let colors = classicColors;
-  const configuredColor = cfg.color;
-  if (configuredColor) {
-    const mode = fieldColorModeRegistry.get(configuredColor.mode);
-    if (typeof mode?.getColors === 'function') {
-      colors = mode.getColors(theme);
-    }
+  // Only a mode that carries a categorical palette can color pills. Modes that don't — thresholds,
+  // which every table field gets by default, and the continuous scales — leave the choice to us.
+  const mode = cfg.color && fieldColorModeRegistry.get(cfg.color.mode);
+  if (typeof mode?.getColors === 'function') {
+    return onBackground(getColorByStringHash(mode.getColors(theme), value));
   }
 
-  return getColorByStringHash(colors, String(value));
+  // Under the visual refresh the pills fall in with the refreshed tags, which take a background and
+  // a matching same-hue text color from the theme's tag palette — a pair `getTextColorForBackground`
+  // cannot derive, since it only ever answers with near-black or near-white. The hash is the one
+  // tags use, so a value reads the same color here as it does in any other tag across the UI.
+  if (theme.flags.visualDesignRefresh) {
+    const { background, text } = getTagColorsFromName(value, theme);
+    return { background, text };
+  }
+
+  return onBackground(getColorByStringHash(classicColors, value));
 }
 
 export const getStyles: TableCellStyles = memoize(
