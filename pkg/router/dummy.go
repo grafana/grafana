@@ -50,5 +50,5 @@ func (d *dummyBackend) Key() string {
 }
 
 func (d *dummyBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group)
+	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }
