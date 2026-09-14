@@ -42,13 +42,30 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 		return http.StatusBadRequest // rsp is nil, so we return a 400
 	}
 	for _, res := range rsp.Responses {
-		if res.Error != nil && res.Status != 0 {
+		if res.Error == nil {
+			continue
+		}
+
+		// A downstream error is the data source's failure, not this API server's, so it must
+		// never surface as a 5xx here. Note that we cannot trust res.Status to say so: the
+		// SDK sets ErrorSource and Status independently, and Status falls back to
+		// StatusUnknown (500) for any error it cannot classify -- which is most of them, since
+		// plugins typically return a plain error. That fallback is applied both by
+		// ErrorSourceMiddleware and again during protobuf conversion, so a plugin that leaves
+		// Status unset always arrives here as a 500. Honor an explicit downstream 4xx so
+		// callers keep the detail; collapse everything else to 400.
+		if res.ErrorSource == backend.ErrorSourceDownstream {
+			if res.Status >= 400 && res.Status < 500 {
+				return int(res.Status)
+			}
+			return http.StatusBadRequest
+		}
+
+		if res.Status != 0 {
 			return int(res.Status)
 		}
 
-		if res.Error != nil {
-			return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
-		}
+		return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
 	}
 	return http.StatusOK
 }
