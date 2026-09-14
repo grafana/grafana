@@ -161,13 +161,8 @@ const LogLineOTelDetailsField = ({
     noInteractions,
     onClickFilterLabel,
     onClickFilterOutLabel,
-    onClickShowField,
-    onClickHideField,
-    onPinLine,
-    pinLineButtonTooltipTitle,
     prettifyJSON,
   } = useLogListContext();
-  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles, fontSize);
 
@@ -205,26 +200,6 @@ const LogLineOTelDetailsField = ({
     },
     [noInteractions]
   );
-
-  const showField = useCallback(() => {
-    if (onClickShowField) {
-      onClickShowField(keys[0]);
-    }
-
-    reportInteractionWrapper('logs_log_line_details_show_field_clicked', {
-      datasourceType: log.datasourceType,
-    });
-  }, [onClickShowField, reportInteractionWrapper, log.datasourceType, keys]);
-
-  const hideField = useCallback(() => {
-    if (onClickHideField) {
-      onClickHideField(keys[0]);
-    }
-
-    reportInteractionWrapper('logs_log_line_details_hide_field_clicked', {
-      datasourceType: log.datasourceType,
-    });
-  }, [onClickHideField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
@@ -415,8 +390,10 @@ export function resolveAppFromLink(href: string): string | undefined {
 
 const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
   const actions = css({
-    float: 'right',
     background: theme.colors.background.primary,
+    position: 'absolute',
+    top: 0,
+    right: 0,
     whiteSpace: 'nowrap',
     visibility: 'hidden',
   });
