@@ -42,6 +42,12 @@ func ProvideRoutesLoader(
 		return cloud, nil
 	}
 
+	// Plugin sources
+	if pluginSources != nil {
+		return newPluginLoader(pluginClient, contextProvider, clientV3Loader, pluginSources, pluginSettings,
+			acService, accessControl, unified, accessClient, decrypter, tracer, features, cfg)
+	}
+
 	return dummyRoutesLoader{groups: []string{
 		"dummy-backend-1.ext.grafana.app",
 		"dummy-backend-2.ext.grafana.app",
