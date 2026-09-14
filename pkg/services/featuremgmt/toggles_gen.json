@@ -3012,6 +3012,7 @@
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1782832293915",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-26T10:54:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
         }
@@ -6747,6 +6748,21 @@
       },
       "spec": {
         "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refreshNewFeatures",
+        "resourceVersion": "1789154182177",
+        "creationTimestamp": "2026-09-11T19:16:22Z"
+      },
+      "spec": {
+        "description": "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

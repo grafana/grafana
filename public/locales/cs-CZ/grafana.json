@@ -8796,7 +8796,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Odkaz",
-      "open-value-in": "Otevřít hodnotu v"
+      "open-value-in": "Otevřít hodnotu v",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9288,6 +9289,10 @@
       "aria-label-copy": "Kopírovat do schránky",
       "attribute-plugin-promo": {
         "learn-more": "Další informace"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Pozorovatelnost databáze odhaluje vizuální plány vysvětlení, události čekání a vzorky dotazů, což vám pomůže diagnostikovat problémy nad rámec rozpětí trasování.",

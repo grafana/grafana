@@ -1620,14 +1620,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "grafana.assetSriChecks",
-			Description: "Enables SRI checks for Grafana JavaScript assets",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "alertRuleRestore",
 			Description: "Enables the alert rule restore feature",
 			Stage:       FeatureStagePublicPreview,
@@ -3071,6 +3063,15 @@ var (
 		{
 			Name:         "table.refresh",
 			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.refreshNewFeatures",
+			Description:  "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

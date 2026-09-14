@@ -961,7 +961,7 @@
         "jira": "„{{issueType}}” problémát hoz létre a(z) „{{project}}” projektben"
       },
       "telegram": {
-        "parse-mode-warning-body": "Ha a < 3 >Nincs</3 > < 1>parse_mode</1 > opciótól eltérő opciót használ, a rövidítés érvénytelen üzenetet eredményezhet, ami miatt az értesítés sikertelen lehet. Hosszabb üzenetek esetén javasoljuk egy alternatív kapcsolatfelvételi módszer használatát.",
+        "parse-mode-warning-body": "Ha a <3>Nincs</3> <1>parse_mode</1> opciótól eltérő opciót használ, a rövidítés érvénytelen üzenetet eredményezhet, ami miatt az értesítés sikertelen lehet. Hosszabb üzenetek esetén javasoljuk egy alternatív kapcsolatfelvételi módszer használatát.",
         "parse-mode-warning-title": "A Telegram-üzenetek legfeljebb 4096 UTF-8-karakterből állhatnak."
       },
       "used-by_one": "{{count}} értesítési házirend használja",
@@ -7983,7 +7983,7 @@
     }
   },
   "dashboard-scene-help-wizard": {
-    "support-bundle": "A < 1 >támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
+    "support-bundle": "A <1>támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
   },
   "dashboard-schema-editor": {
     "json-disabled-tooltip": "Javítsa ki a YAML-szintaxishibákat a JSON-ra való átváltáshoz",
@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Hivatkozás",
-      "open-value-in": "Érték megnyitása itt:"
+      "open-value-in": "Érték megnyitása itt:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9021,7 +9022,7 @@
       "unknown-datasource": "Ismeretlen adatforrás"
     },
     "span-bar": {
-      "tooltip-critical-path": "A teljes nyomkövetés/kérés/munkafolyamat <1>kritikus útvonalának</1 > egy szegmense."
+      "tooltip-critical-path": "A teljes nyomkövetés/kérés/munkafolyamat <1>kritikus útvonalának</1> egy szegmense."
     },
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": "Adaptív nyomkövetések által helyreállítva.",
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Másolás vágólapra",
       "attribute-plugin-promo": {
         "learn-more": "További információk"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Az adatbázis-megfigyelhetőség vizuális magyarázati terveket, várakozási eseményeket és lekérdezési mintákat jelenít meg, segítve a nyomkövetési terjedelmeken túlmutató problémák diagnosztizálását.",
@@ -11097,7 +11102,7 @@
   "help-wizard": {
     "download-snapshot": "Pillanatkép letöltése ({{snapshotSize}})",
     "github-comment": "GitHub-megjegyzés másolása",
-    "support-bundle": "A < 1 >támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti.",
+    "support-bundle": "A <1>támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti.",
     "troubleshooting-help": "Hibaelhárítási segítség kéréséhez küldjön egy pillanatfelvételt erről a panelről a Grafana Labs műszaki ügyfélszolgálatának. A pillanatfelvétel lekérdezési válaszadatokat és panelbeállításokat tartalmaz."
   },
   "histogram": {

@@ -8698,7 +8698,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Länk",
-      "open-value-in": "Öppna värde i"
+      "open-value-in": "Öppna värde i",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9183,10 @@
       "aria-label-copy": "Kopiera till urklippet",
       "attribute-plugin-promo": {
         "learn-more": "Läs mer"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Observerbarhet för databaser visar visuella förklaringsplaner, väntningshändelser och frågeexempel – vilket hjälper dig att diagnostisera problem bortom spårningens intervall.",
