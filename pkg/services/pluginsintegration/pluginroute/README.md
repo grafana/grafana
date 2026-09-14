@@ -12,11 +12,17 @@ routes; `appplugin.RegisterAPIService` remains available during the transition.
 The handler serves group and resource discovery, manifest kinds, settings and their
 subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin)` describes the
 same served versions, including the existing settings version and excluding
-manifest versions with `served: false`.
+manifest versions with `served: false`. Plugins without a manifest keep their
+plugin ID as the API group and serve settings and their subresources at `v0alpha1`.
+When the router middleware is enabled, it serves both kinds of plugins;
+`RegisterAPIService` leaves API installation to the router.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
-shared resource client to that scheme. Supplying a legacy settings store and a
-dual-write service preserves the embedded server's settings migration policy.
+shared resource client to that scheme and accepts a REST config provider for
+parent-folder lookups. The router supplies the embedded server's provider so folder
+existence and repository-manager consistency checks run for routed plugin kinds.
+Supplying a legacy settings store and a dual-write service preserves the embedded
+server's settings migration policy.
 
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and

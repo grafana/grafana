@@ -75,9 +75,11 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 					groups = append(groups, builder.GetGroupVersions(b)[0].Group)
 				}
 				if routed {
-					require.Equal(t, []string{"legacy-app"}, groups)
-					require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app.example.ext.grafana.app"].DualWriterMode,
-						"the shared dual-write service must see the resolved settings configuration")
+					require.Empty(t, groups)
+					for _, group := range []string{"example.ext.grafana.app", "legacy-app"} {
+						require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app."+group].DualWriterMode,
+							"the shared dual-write service must see the resolved settings configuration for %s", group)
+					}
 				} else {
 					require.Equal(t, []string{"example.ext.grafana.app", "legacy-app"}, groups)
 				}

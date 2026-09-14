@@ -18,7 +18,7 @@ func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.hits.Add(1)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(h.body))
+	_, _ = w.Write([]byte(h.body)) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }
 
 // buildRouterWithBackend seeds a router with one real handlerEntry (fake
@@ -127,7 +127,7 @@ func (u *conditionalUpstream) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(u.body))
+	_, _ = w.Write([]byte(u.body)) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }
 
 func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {

@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -39,18 +40,19 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
-	ContextProvider appplugin.PluginContextWrapper
-	AccessControl   accesscontrol.AccessControl
-	DualWrite       dualwrite.Service
-	SecureValues    secret.InlineSecureValueSupport
-	MetricsRegister prometheus.Registerer
-	BuilderMetrics  *builder.BuilderMetrics
-	PluginSettings  pluginsettings.Service
-	Unified         resource.ResourceClient
-	Decrypter       decrypt.DecryptService
-	Tracer          tracing.Tracer             // needed for proxy (legacy)
-	Features        featuremgmt.FeatureToggles // needed for proxy (legacy)
-	Cfg             *setting.Cfg
+	ContextProvider    appplugin.PluginContextWrapper
+	AccessControl      accesscontrol.AccessControl
+	DualWrite          dualwrite.Service
+	SecureValues       secret.InlineSecureValueSupport
+	MetricsRegister    prometheus.Registerer
+	BuilderMetrics     *builder.BuilderMetrics
+	RESTConfigProvider restcfg.RestConfigProvider
+	PluginSettings     pluginsettings.Service
+	Unified            resource.ResourceClient
+	Decrypter          decrypt.DecryptService
+	Tracer             tracing.Tracer             // needed for proxy (legacy)
+	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
+	Cfg                *setting.Cfg
 }
 
 type PluginLoaderDependencies struct {
@@ -81,6 +83,7 @@ func ProvidePluginLoaderDependencies(
 	secureValues secret.InlineSecureValueSupport,
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
+	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
 		PluginClient:   pluginClient,
@@ -89,18 +92,19 @@ func ProvidePluginLoaderDependencies(
 		ACService:      acService,
 		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
-			ContextProvider: contextProvider,
-			AccessControl:   accessControl,
-			DualWrite:       dualWrite,
-			SecureValues:    secureValues,
-			MetricsRegister: reg,
-			BuilderMetrics:  builderMetrics,
-			PluginSettings:  pluginSettings,
-			Unified:         unified,
-			Decrypter:       decrypter,
-			Tracer:          tracer,
-			Features:        features,
-			Cfg:             cfg,
+			ContextProvider:    contextProvider,
+			AccessControl:      accessControl,
+			DualWrite:          dualWrite,
+			SecureValues:       secureValues,
+			MetricsRegister:    reg,
+			BuilderMetrics:     builderMetrics,
+			RESTConfigProvider: restConfigProvider,
+			PluginSettings:     pluginSettings,
+			Unified:            unified,
+			Decrypter:          decrypter,
+			Tracer:             tracer,
+			Features:           features,
+			Cfg:                cfg,
 		},
 	}
 }
@@ -122,6 +126,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
+	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -141,6 +146,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.SecureValues,
 		reg,
 		builderMetrics,
+		restConfigProvider,
 	)
 }
 
@@ -175,10 +181,6 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
-		if plugin.Manifest == nil {
-			continue // not yet supported
-		}
-
 		backend, err := NewPluginBackend(plugin,
 			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
 				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
@@ -251,7 +253,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts := pluginroute.Options{
-		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues),
+		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
 		PluginClient:    clientV2,
 		ClientV3:        clientV3,
 		ContextProvider: b.deps.ContextProvider,

@@ -887,7 +887,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, inlineSecureValueSupport, registerer, builderMetrics)
+	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, inlineSecureValueSupport, registerer, builderMetrics, eventualRestConfigProvider)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
 		return nil, err
@@ -1663,7 +1663,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, inlineSecureValueSupport, registerer, builderMetrics)
+	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, resourceClient, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, inlineSecureValueSupport, registerer, builderMetrics, eventualRestConfigProvider)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
 		return nil, err
@@ -2216,7 +2216,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients)
+	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients, eventualRestConfigProvider)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
 		return nil, err

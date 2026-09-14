@@ -267,11 +267,10 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		change func(*definition.PluginDefinition, *Options)
 		want   string
 	}{
-		{"missing manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifest = nil }, "no app manifest"},
-		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifest = &app.ManifestData{} }, "no app manifest"},
+		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifest = &app.ManifestData{} }, "empty app manifest"},
 		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
-		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil) }, "unified storage client is required"},
+		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Versions[0].Kinds[0].Kind = "Settings" }, "reserved kind name"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -298,6 +297,40 @@ func TestAPIGroupMatchesHandler(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, res.Code, res.Body.String())
 }
 
+func TestHandlerWithoutManifest(t *testing.T) {
+	plugin := testPlugin()
+	plugin.Manifest = nil
+	expected, err := APIGroup(plugin)
+	require.NoError(t, err)
+	require.Equal(t, plugin.JSONData.ID, expected.Name)
+	require.Equal(t, []metav1.GroupVersionForDiscovery{
+		{GroupVersion: "example-app/v0alpha1", Version: "v0alpha1"},
+	}, expected.Versions)
+	require.Equal(t, expected.Versions[0], expected.PreferredVersion)
+	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
+	var actual metav1.APIGroup
+	getJSON(t, handler, "/apis/example-app", &actual)
+	require.Equal(t, expected.Versions, actual.Versions)
+	require.Equal(t, expected.PreferredVersion, actual.PreferredVersion)
+	var resources metav1.APIResourceList
+	getJSON(t, handler, "/apis/example-app/v0alpha1", &resources)
+	names := make([]string, 0, len(resources.APIResources))
+	for _, r := range resources.APIResources {
+		names = append(names, r.Name)
+	}
+	require.Contains(t, names, "app")
+	require.Contains(t, names, "app/health")
+	require.Contains(t, names, "app/resources")
+
+	var oas spec3.OpenAPI
+	getJSON(t, handler, "/openapi/v3/apis/example-app/v0alpha1", &oas)
+	require.Contains(t, oas.Paths.Paths, "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance")
+
+	denied := withRequester(loadHandler(t, plugin, testOptions()))
+	res := get(t, denied, "/apis/example-app/v0alpha1/namespaces/default/app/instance")
+	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+}
+
 func TestHandlerDeniesOtherNamespaces(t *testing.T) {
 	handler := withRequester(loadHandler(t, testPlugin(), allowAll(testOptions())))
 	for _, namespace := range []string{"org-2", "invalid"} {
@@ -311,7 +344,7 @@ const testObjectJSON = `{"apiVersion":"example.ext.grafana.app/v1alpha1","kind":
 func TestHandlerResourceStorage(t *testing.T) {
 	client := &resourceClient{}
 	opts := allowAll(testOptions())
-	opts.Storage = UnifiedStorage(client, nil)
+	opts.Storage = UnifiedStorage(client, nil, nil)
 	plugin := testPlugin()
 	folderScoped := false
 	plugin.Manifest.Versions[0].Kinds[0].FolderScoped = &folderScoped
@@ -395,18 +428,27 @@ func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.Admis
 }
 
 func TestHandlerLegacySettings(t *testing.T) {
-	plugin := testPlugin()
-	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifest.Group, plugin.JSONData.ID,
-		&pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-			plugin.JSONData.ID: {Enabled: true, JSONData: map[string]any{"source": "legacy"}},
-		}})
-	opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
-	handler := withRequester(loadHandler(t, plugin, opts))
-	for _, version := range []string{"v0alpha1", "v1alpha1"} {
-		var settings apppluginV0.Settings
-		getJSON(t, handler, "/apis/"+plugin.Manifest.Group+"/"+version+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)
-		require.True(t, settings.Spec.Enabled)
-		require.Equal(t, "legacy", settings.Spec.JsonData.Object["source"])
+	for _, withManifest := range []bool{false, true} {
+		t.Run(fmt.Sprint("manifest=", withManifest), func(t *testing.T) {
+			plugin := testPlugin()
+			if !withManifest {
+				plugin.Manifest = nil
+			}
+			group, err := APIGroup(plugin)
+			require.NoError(t, err)
+			opts := allowAll(testOptions())
+			opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
+				&pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					plugin.JSONData.ID: {Enabled: true, JSONData: map[string]any{"source": "legacy"}},
+				}})
+			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
+			handler := withRequester(loadHandler(t, plugin, opts))
+			for _, version := range group.Versions {
+				var settings apppluginV0.Settings
+				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)
+				require.True(t, settings.Spec.Enabled)
+				require.Equal(t, "legacy", settings.Spec.JsonData.Object["source"])
+			}
+		})
 	}
 }

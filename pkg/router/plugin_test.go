@@ -11,6 +11,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kube-openapi/pkg/handler3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
@@ -18,9 +19,75 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
+	legacy := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "legacy-app", Type: plugins.TypeApp},
+		FS:       plugins.NewFakeFS(),
+	}}
+	manifest := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "manifest-app", Type: plugins.TypeApp},
+		FS: plugins.NewInMemoryFS(map[string][]byte{
+			"app-sdk-manifest.json": []byte(`{
+				"apiVersion": "apps.grafana.app/v1alpha2",
+				"spec": {"appName": "manifest", "group": "manifest.ext.grafana.app",
+					"versions": [{"name": "v1", "served": true}]}
+			}`),
+		}),
+	}}
+	for _, tc := range []struct {
+		name    string
+		bundles []*plugins.FoundBundle
+	}{
+		{"legacy first", []*plugins.FoundBundle{legacy, manifest}},
+		{"manifest first", []*plugins.FoundBundle{manifest, legacy}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+				return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+					return tc.bundles, nil
+				}}}
+			}}
+			loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
+				PluginSources: sources,
+				PluginDependencies: PluginDependencies{
+					Unified:       &resource.MockResourceClient{},
+					AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+				},
+			})
+			require.NoError(t, err)
+			router := NewGrafanaRouter(loader)
+			require.NoError(t, router.reconcile(t.Context()))
+			for _, entry := range router.served {
+				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)
+			}
+			require.Len(t, router.served, 2)
+
+			req := httptest.NewRequest(http.MethodGet, "/openapi/v3", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+				Type: claims.TypeUser, OrgID: 1, Namespace: "default",
+			}))
+			res := httptest.NewRecorder()
+			router.HandleFunc(res, req, http.NotFoundHandler())
+			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+			var discovery handler3.OpenAPIV3Discovery
+			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
+			for _, gv := range []string{"legacy-app/v0alpha1", "manifest.ext.grafana.app/v0alpha1", "manifest.ext.grafana.app/v1"} {
+				require.Contains(t, discovery.Paths, "apis/"+gv)
+				path := discovery.Paths["apis/"+gv].ServerRelativeURL
+				document := httptest.NewRecorder()
+				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()), http.NotFoundHandler())
+				require.Equal(t, http.StatusOK, document.Code, document.Body.String())
+				require.Contains(t, document.Body.String(), gv)
+			}
+		})
+	}
+}
 
 func TestPluginBackendKey(t *testing.T) {
 	plugin := definition.PluginDefinition{

@@ -194,12 +194,14 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 }
 
 func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
-	if plugin.Manifest == nil || plugin.Manifest.IsEmpty() {
-		return nil, fmt.Errorf("plugin %q has no app manifest", plugin.JSONData.ID)
-	}
-	group := plugin.Manifest.Group
-	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
+	if plugin.Manifest != nil {
+		if plugin.Manifest.IsEmpty() {
+			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
+		}
+		group := plugin.Manifest.Group
+		if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
+		}
 	}
 	if opts.AccessChecker == nil {
 		opts.AccessChecker = func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
@@ -217,13 +219,13 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		opts.Runner, opts.Tracer, opts.Features)
 }
 
-func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport) StorageProvider {
+func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {
 	return func(_ *runtime.Scheme, codecs serializer.CodecFactory, gvs []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
 		if client == nil {
 			return nil, fmt.Errorf("a unified storage client is required")
 		}
 		return apistore.NewRESTOptionsGetterForClient(client, secrets,
-			storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, nil, nil), nil
+			storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, configProvider, nil), nil
 	}
 }
 

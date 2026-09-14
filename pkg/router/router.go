@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sony/gobreaker/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -45,6 +46,7 @@ type handlerEntry struct {
 // per-group-version openapi cache; served (reconcile-goroutine-owned) isn't
 // safe to read from serving goroutines, so it is duplicated here.
 type servingEntry struct {
+	group   metav1.APIGroup
 	handler http.Handler
 	key     string
 	breaker *gobreaker.CircuitBreaker[struct{}]
@@ -144,7 +146,7 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
-		cr.serveAPIGroupList(w, req)
+		cr.serveAPIGroupList(w, req, next)
 		return
 	}
 
@@ -194,12 +196,6 @@ func (cr *GrafanaRouter) KnownGroup(group string) bool {
 	return ok
 }
 
-// serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
-// group snapshot.
-func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
-	serveCachedDoc(w, req, cr.apiGroupList.Load())
-}
-
 // serveCachedDoc writes a synthesized document, honoring conditional GET via
 // If-None-Match against the document's key-derived ETag. Shared by
 // serveAPIGroupList and the /openapi/v3 root doc.
@@ -218,8 +214,8 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 // HandleFunc; not exported, so /openapi/v3 always flows through the one serving
 // entry point.
 func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if req.URL.Path == openapiV3Prefix {
-		serveCachedDoc(w, req, cr.openapiIndex.Load())
+	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
+		cr.serveOpenAPIIndex(w, req, next)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
@@ -483,10 +479,12 @@ func (r *GrafanaRouter) publish() {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		snap[group] = servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
 		if e.backend != nil {
+			entry.group = e.backend.Group()
 			backends = append(backends, e.backend)
 		}
+		snap[group] = entry
 	}
 	r.snapshot.Store(&snap)
 

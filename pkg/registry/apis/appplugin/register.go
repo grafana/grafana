@@ -225,7 +225,7 @@ func RegisterAPIService(
 		}
 
 		// Routed plugins still need their roles declared before startup registers them.
-		if plugin.Manifest != nil && getflag(featuremgmt.FlagGrafanaUseRouterMiddleware) {
+		if getflag(featuremgmt.FlagGrafanaUseRouterMiddleware) {
 			// The handler copies storage options; resolve defaults here so the shared
 			// dual-write service observes them before requests start using the config.
 			b.applyDefaultStorageConfig(builder.APIGroupOptions{

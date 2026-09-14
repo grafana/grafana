@@ -41,12 +41,21 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAppPluginSettings(t *testing.T) {
+	testIntegrationAppPluginSettings(t)
+}
+
+func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
+	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := setupHelper(t, mode)
+			helper := setupHelper(t, mode, features...)
 			ctx := context.Background()
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
