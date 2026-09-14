@@ -32,7 +32,13 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  getPaginationChromeHeight,
+  SCROLL_SHADOW_THRESHOLD,
+  TABLE,
+} from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -779,6 +785,52 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   }, [ref, height, updateScrollbarDimensions]);
 
   return scrollbarWidth;
+}
+
+/**
+ * Fades a shadow in at the top or bottom edge of the grid's scroll viewport while rows are scrolled
+ * out of view in that direction, the same cue `ScrollContainer`'s `showScrollIndicators` gives:
+ * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
+ * scrolls, so nothing otherwise tells them more rows exist.
+ *
+ * The visibility is written straight to the overlay nodes rather than held in state, so scrolling
+ * never re-renders the grid.
+ */
+export function useScrollShadows(ref: RefObject<DataGridHandle | null>, enabled: boolean, rows: readonly TableRow[]) {
+  const topRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+
+    const sync = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      const scrollBottom = scrollHeight - clientHeight - scrollTop;
+      if (topRef.current) {
+        topRef.current.style.opacity = scrollTop > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
+      }
+      if (bottomRef.current) {
+        bottomRef.current.style.opacity = scrollBottom > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
+      }
+    };
+
+    sync();
+    el.addEventListener('scroll', sync, { passive: true });
+    // resizing the panel changes what fits without moving the scroll position, so a scroll event
+    // alone can't keep the shadows honest. `rows` covers the other half of that: content growing or
+    // shrinking under a fixed viewport.
+    const resizeObserver = new ResizeObserver(sync);
+    resizeObserver.observe(el);
+    return () => {
+      el.removeEventListener('scroll', sync);
+      resizeObserver.disconnect();
+    };
+  }, [ref, enabled, rows]);
+
+  return { topRef, bottomRef };
 }
 
 /**

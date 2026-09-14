@@ -128,3 +128,8 @@ export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
 // the title would start ellipsizing the moment the handle slides in.
 export const HEADER_DRAG_HANDLE_WIDTH = 16;
 export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;
+
+// How far the grid has to be scrollable in a direction before that edge's scroll shadow appears
+// (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
+// — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
+export const SCROLL_SHADOW_THRESHOLD = 1;
