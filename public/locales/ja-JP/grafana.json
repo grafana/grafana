@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana管理アラートルールによって生成されたすべてのアラートイベントの履歴を表示します。サイレントまたはミュートタイミングが設定されているかどうかにかかわらず、すべてのアラートイベントが表示されます。",
         "notifications": "Grafana管理アラートルールから送信されたすべての通知の履歴を表示します。"
@@ -7713,6 +7716,9 @@
         "title": "未保存の変更"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "お探しのものが見つかりませんか？<2>その他の推奨ダッシュボード</2>を表示するか、<6>一からダッシュボードを作成</6>してください。",
       "title": "現在表示中：{{title}}"
@@ -7966,6 +7972,7 @@
       "title-label": "タイトル"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "変更を保存",
       "save-button-disabled-tooltip": "保存する前に検証エラーを修正してください",
       "save-button-disabled-tooltip-yaml": "ドキュメントに検証エラーがあります。インラインエラーの詳細を表示するには、JSONに切り替えてください。",
@@ -9103,6 +9110,9 @@
       "success-indicator": "",
       "target": "ターゲット",
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "トレースID",
       "url": "URL",
       "warning-indicator": ""
@@ -10604,7 +10614,6 @@
       "ariaLabel-panel-loading": "パネル読み込みバー",
       "ariaLabel-panel-status": "パネルステータス",
       "errors-and-notices": "エラーと通知",
-      "inspect-errors-notices": "検査",
       "tooltip-cancel": "クエリをキャンセル",
       "tooltip-cancel-loading": "クエリをキャンセル",
       "tooltip-stop-streaming": "ストリーミングを停止",
@@ -10686,9 +10695,13 @@
       "cell-filter-out": "値を除外してフィルタリング",
       "cell-inspect": "値を検査",
       "cell-inspect-tooltip": "値を検査",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "クリップボードにコピー",
       "csv-counts": "行：{{rows}}、列：{{columns}}",
       "csv-placeholder": "ここにCSVを入力...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "表示されたすべての値をフィルターに追加",
         "blanks": "（空白）",
@@ -16496,6 +16509,7 @@
       "tooltip-bold": "太字",
       "tooltip-bullet-list": "箇条書き",
       "tooltip-checklist": "チェックリスト",
+      "tooltip-diagram": "",
       "tooltip-heading": "見出し",
       "tooltip-insert-variable": "変数を挿入",
       "tooltip-italic": "イタリック体",
@@ -16509,8 +16523,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16731,6 +16755,10 @@
       "bar-stacked": "棒グラフ - 積み上げ",
       "bar-stacked-percent": "棒グラフ - パーセンテージで積み上げ",
       "line": "折れ線グラフ"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "タイムゾーンを追加",

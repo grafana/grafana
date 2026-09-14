@@ -1,19 +1,25 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestConnectionTokenMetrics_NilSafe(t *testing.T) {
 	var m *connectionTokenMetrics
 	assert.NotPanics(t, func() {
 		m.recordGeneration(0.5)
-		m.recordGenerationError()
+		m.recordGenerationError(reconcileCauseSystem)
 		m.recordRefreshReason(refreshReasonMissing)
 		m.recordTimeToExpiry(300)
 		m.recordExpired()
@@ -33,7 +39,7 @@ func TestRepositoryTokenMetrics_NilSafe(t *testing.T) {
 	var m *repositoryTokenMetrics
 	assert.NotPanics(t, func() {
 		m.recordGeneration(0.5)
-		m.recordGenerationError()
+		m.recordGenerationError(reconcileCauseSystem)
 		m.recordRefreshReason(refreshReasonExpiring)
 		m.recordTimeToExpiry(300)
 		m.recordExpired()
@@ -68,10 +74,13 @@ func TestConnectionTokenMetrics_RecordGenerationError(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := registerConnectionTokenMetrics(reg)
 
-	m.recordGenerationError()
+	m.recordGenerationError(reconcileCauseUser)
+	m.recordGenerationError(reconcileCauseSystem)
+	m.recordGenerationError(reconcileCauseSystem)
 
-	val := counterValue(t, reg, "grafana_provisioning_connection_token_generation_errors_total")
-	assert.Equal(t, 1.0, val)
+	const name = "grafana_provisioning_connection_token_generation_errors_total"
+	assert.Equal(t, 1.0, counterValueWithLabel(t, reg, name, "cause", reconcileCauseUser))
+	assert.Equal(t, 2.0, counterValueWithLabel(t, reg, name, "cause", reconcileCauseSystem))
 }
 
 func TestConnectionTokenMetrics_RecordRefreshReason(t *testing.T) {
@@ -128,11 +137,36 @@ func TestRepositoryTokenMetrics_RecordGenerationError(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := registerRepositoryTokenMetrics(reg)
 
-	m.recordGenerationError()
-	m.recordGenerationError()
+	m.recordGenerationError(reconcileCauseUser)
+	m.recordGenerationError(reconcileCauseUser)
+	m.recordGenerationError(reconcileCauseSystem)
 
-	val := counterValue(t, reg, "grafana_provisioning_repository_token_generation_errors_total")
-	assert.Equal(t, 2.0, val)
+	const name = "grafana_provisioning_repository_token_generation_errors_total"
+	assert.Equal(t, 2.0, counterValueWithLabel(t, reg, name, "cause", reconcileCauseUser))
+	assert.Equal(t, 1.0, counterValueWithLabel(t, reg, name, "cause", reconcileCauseSystem))
+}
+
+func TestClassifyTokenErrorCause(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"nil error", nil, reconcileCauseSystem},
+		{"authentication (app uninstalled / perms revoked)", connection.ErrAuthentication, reconcileCauseUser},
+		{"not found (installation gone)", connection.ErrNotFound, reconcileCauseUser},
+		{"repository access (repo not selected)", connection.ErrRepositoryAccess, reconcileCauseUser},
+		{"repository unauthorized", repository.ErrUnauthorized, reconcileCauseUser},
+		{"repository permission denied", repository.ErrPermissionDenied, reconcileCauseUser},
+		{"wrapped authentication", fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication), reconcileCauseUser},
+		{"github service unavailable", github.ErrServiceUnavailable, reconcileCauseSystem},
+		{"transient/other", errors.New("connection reset by peer"), reconcileCauseSystem},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, classifyTokenErrorCause(tt.err))
+		})
+	}
 }
 
 func TestRepositoryTokenMetrics_RecordRefreshReason(t *testing.T) {
@@ -188,6 +222,21 @@ func counterValue(t *testing.T, reg *prometheus.Registry, name string) float64 {
 	require.True(t, ok, "metric %s not found", name)
 	require.NotEmpty(t, f.GetMetric())
 	return f.GetMetric()[0].GetCounter().GetValue()
+}
+
+func counterValueWithLabel(t *testing.T, reg *prometheus.Registry, name, labelName, labelValue string) float64 {
+	t.Helper()
+	families := gatherMetrics(t, reg)
+	f, ok := families[name]
+	require.True(t, ok, "metric %s not found", name)
+	for _, metric := range f.GetMetric() {
+		for _, lp := range metric.GetLabel() {
+			if lp.GetName() == labelName && lp.GetValue() == labelValue {
+				return metric.GetCounter().GetValue()
+			}
+		}
+	}
+	return 0
 }
 
 func histogramCount(t *testing.T, reg *prometheus.Registry, name string) uint64 {

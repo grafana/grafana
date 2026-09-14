@@ -1429,15 +1429,12 @@ func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 	rc.reconcileMetrics.RecordReconcileError(phase, cause)
 }
 
-// Returns errors that are due to user errors
+// Returns errors that are due to user errors. Token-generation failures surface
+// connection-level sentinels (app uninstalled, permissions revoked, installation
+// gone), so classification is shared with the token metric to keep the
+// reconcile-error and token-generation-error metrics consistent.
 func (rc *RepositoryController) isUserCaused(err error) bool {
-	// List of errors that are user-caused errors and are left recorded on the repository
-	if errors.Is(err, repository.ErrUnauthorized) ||
-		errors.Is(err, repository.ErrPermissionDenied) {
-		return true
-	}
-
-	return false
+	return classifyTokenErrorCause(err) == reconcileCauseUser
 }
 
 // classifyBuildFailureReason maps a repository Build failure to a Ready condition
@@ -1591,7 +1588,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	defer func() {
 		elapsed := time.Since(start).Seconds()
 		if err != nil {
-			rc.tokenMetrics.recordGenerationError()
+			rc.tokenMetrics.recordGenerationError(classifyTokenErrorCause(err))
 		} else {
 			rc.tokenMetrics.recordGeneration(elapsed)
 		}

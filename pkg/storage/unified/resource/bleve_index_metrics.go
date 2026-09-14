@@ -33,6 +33,7 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
 	SearchCapabilityViolations *prometheus.CounterVec
+	SearchResultFormats        *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -66,6 +67,8 @@ const (
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
+// ProvideIndexMetrics builds the index metrics. A nil reg leaves them
+// unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
@@ -193,6 +196,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_search_capability_violations_total",
 			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
 		}, []string{"resource", "capability"}),
+		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_search_result_format_total",
+			Help: "Number of search responses by result format.",
+		}, []string{"format"}),
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
@@ -200,6 +207,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	// is disabled — see InitSnapshotMetrics for rationale.
 	m.OpenIndexes.WithLabelValues("file").Set(0)
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
+	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
 	return m
 }
 

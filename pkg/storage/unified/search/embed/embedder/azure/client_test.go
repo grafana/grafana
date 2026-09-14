@@ -2,13 +2,20 @@ package azure
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
 // TestRestClient_EmbedTexts drives the SDK-backed client against a stub Azure
@@ -80,4 +87,91 @@ func TestNewClient_Validation(t *testing.T) {
 	require.Error(t, err)
 	_, err = NewClient("https://x", "dep", "v", "")
 	require.Error(t, err)
+}
+
+func TestRetryableError(t *testing.T) {
+	now := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	for _, tt := range []struct {
+		code      int
+		retryable bool
+	}{
+		{http.StatusRequestTimeout, true},
+		{http.StatusConflict, true},
+		{http.StatusTooManyRequests, true},
+		{http.StatusInternalServerError, true},
+		{http.StatusBadGateway, true},
+		{http.StatusServiceUnavailable, true},
+		{http.StatusGatewayTimeout, true},
+		{http.StatusBadRequest, false},
+		{http.StatusUnauthorized, false},
+		{http.StatusNotImplemented, false},
+		{http.StatusHTTPVersionNotSupported, false},
+	} {
+		t.Run(fmt.Sprint(tt.code), func(t *testing.T) {
+			original := &openai.Error{StatusCode: tt.code, Response: &http.Response{Header: http.Header{retryAfterMsHeader: []string{"90000"}}}}
+			err := retryableError(original, now)
+			var retryErr *embedder.RetryableError
+			require.Equal(t, tt.retryable, errors.As(err, &retryErr))
+			assert.ErrorIs(t, err, original)
+			if retryErr != nil {
+				assert.Equal(t, 90*time.Second, retryErr.RetryAfter)
+			}
+		})
+	}
+	for _, cause := range []error{context.DeadlineExceeded, context.Canceled, errors.New("unknown")} {
+		var retryErr *embedder.RetryableError
+		err := retryableError(fmt.Errorf("client: %w", cause), now)
+		assert.Equal(t, errors.Is(cause, context.DeadlineExceeded), errors.As(err, &retryErr))
+		assert.ErrorIs(t, err, cause)
+	}
+}
+
+func TestRetryAfter(t *testing.T) {
+	now := time.Date(2026, 9, 10, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name    string
+		ms      string
+		seconds string
+		want    time.Duration
+	}{
+		{"milliseconds", "90000", "", 90 * time.Second},
+		{"seconds", "", "120", 2 * time.Minute},
+		{"fractional seconds", "", "1.5", 1500 * time.Millisecond},
+		{"prefer milliseconds", "1500", "2", 1500 * time.Millisecond},
+		{"invalid milliseconds falls back", "invalid", "2", 2 * time.Second},
+		{"HTTP date", "", now.Add(3 * time.Minute).Format(http.TimeFormat), 3 * time.Minute},
+		{"past date", "", now.Add(-time.Minute).Format(http.TimeFormat), 0},
+		{"negative", "-60", "-60", 0},
+		{"invalid", "", "tomorrow", 0},
+		{"overflow", "1e100", "1e100", 0},
+		{"NaN", "NaN", "NaN", 0},
+		{"infinity", "+Inf", "+Inf", 0},
+		{"missing", "", "", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := http.Header{}
+			h.Set(retryAfterMsHeader, tt.ms)
+			h.Set(retryAfterHeader, tt.seconds)
+			assert.Equal(t, tt.want, retryAfter(h, now))
+		})
+	}
+}
+
+func TestRestClient_EmbedTexts_ReturnsRetryHint(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(retryAfterMsHeader, "90000")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte(`{"error":{"message":"quota exhausted","type":"rate_limit_error","code":"429"}}`))
+	}))
+	defer srv.Close()
+	c := &restClient{client: openai.NewClient(option.WithBaseURL(srv.URL), option.WithAPIKey("test"), option.WithMaxRetries(0)), deployment: "dep"}
+	_, err := c.EmbedTexts(t.Context(), []string{"CPU usage"}, 4)
+	var retryErr *embedder.RetryableError
+	require.ErrorAs(t, err, &retryErr)
+	assert.Equal(t, 90*time.Second, retryErr.RetryAfter)
+	var apiErr *openai.Error
+	require.ErrorAs(t, err, &apiErr)
+	assert.Equal(t, http.StatusTooManyRequests, apiErr.StatusCode)
 }

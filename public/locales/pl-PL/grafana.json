@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Możesz sprawdzać historię wszystkich zdarzeń związanych z alertami wygenerowanych na podstawie reguł alertów zarządzanych przez Grafanę. Wyświetlane są wszystkie zdarzenia alertów niezależnie od tego, czy ustawiono okresy lub harmonogramy wyciszenia.",
         "notifications": "Przeglądaj historię wszystkich powiadomień wysłanych na podstawie reguł alertów zarządzanych przez Grafanę."
@@ -7854,6 +7857,9 @@
         "title": "Niezapisane zmiany"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Szukasz czegoś innego? Zobacz <2>inne sugerowane pulpity</2> lub <6>utwórz pulpit od podstaw</6>.",
       "title": "Obecnie wyświetlane: {{title}}"
@@ -8110,6 +8116,7 @@
       "title-label": "Tytuł"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Zapisz zmiany",
       "save-button-disabled-tooltip": "Przed zapisaniem napraw błędy wykryte podczas weryfikacji",
       "save-button-disabled-tooltip-yaml": "Dokument zawiera błędy weryfikacji. Przełącz na format JSON, aby zobaczyć szczegóły błędów w tekście.",
@@ -9262,6 +9269,9 @@
       "success-indicator": "",
       "target": "Cel",
       "tooltip-url": "{{route}} lub {{url}} lub {{target}} lub {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Identyfikator śledzenia",
       "url": "URL",
       "warning-indicator": ""
@@ -10793,7 +10803,6 @@
       "ariaLabel-panel-loading": "Pasek ładowania panelu",
       "ariaLabel-panel-status": "Status panelu",
       "errors-and-notices": "Błędy i powiadomienia",
-      "inspect-errors-notices": "Sprawdź",
       "tooltip-cancel": "Anuluj zapytanie",
       "tooltip-cancel-loading": "Anuluj zapytanie",
       "tooltip-stop-streaming": "Zatrzymaj strumieniowanie",
@@ -10875,9 +10884,13 @@
       "cell-filter-out": "Odfiltruj wartość",
       "cell-inspect": "Sprawdź wartość",
       "cell-inspect-tooltip": "Sprawdź wartość",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Kopiuj do schowka",
       "csv-counts": "Wiersze: {{rows}}, Kolumny: {{columns}}",
       "csv-placeholder": "Wprowadź plik CSV tutaj…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Dodaj wszystkie wyświetlane wartości do filtra",
         "blanks": "(Puste)",
@@ -16865,6 +16878,7 @@
       "tooltip-bold": "Pogrubiona",
       "tooltip-bullet-list": "Lista punktowana",
       "tooltip-checklist": "Lista kontrolna",
+      "tooltip-diagram": "",
       "tooltip-heading": "Nagłówek",
       "tooltip-insert-variable": "Wstaw zmienną",
       "tooltip-italic": "Kursywa",
@@ -16878,8 +16892,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17100,6 +17124,10 @@
       "bar-stacked": "Wykres słupkowy – skumulowany",
       "bar-stacked-percent": "Wykres słupkowy – skumulowany procentowo",
       "line": "Wykres liniowy"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Dodaj strefę czasową",

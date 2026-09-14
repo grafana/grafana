@@ -1,9 +1,6 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -197,6 +194,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -246,8 +244,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	}
 
 	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		Identifier: identifier,
 	}
 }
 
@@ -266,17 +263,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
