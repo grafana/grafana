@@ -115,7 +115,9 @@ export function extractConfigFromQueryDynamic(
       const context = {};
       config[fieldName].forEach((h) => {
         const res = h.processor(h.value, newConfig, context, h.handlerArgs || {});
-        newConfig[h.targetProperty] = res;
+        if (res !== null && res !== undefined) {
+          newConfig[h.targetProperty] = res;
+        }
       });
 
       finalizeFieldToConfig(newConfig, context);
