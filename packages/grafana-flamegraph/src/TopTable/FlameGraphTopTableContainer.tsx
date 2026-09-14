@@ -231,16 +231,24 @@ function buildFilteredTable(
 }
 
 // The minimum total in the flame graph is the threshold underneath which stacktraces were truncated into "other".
+// Per-level "other" leftovers aggregate the children that fell below the cutoff, so they are themselves smaller
+// than the cutoff and must not participate in the minimum.
 function getMinTotal(data: FlameGraphDataContainer): number {
   let min = Number.POSITIVE_INFINITY;
   for (let i = 0; i < data.data.length; i++) {
+    if (data.getLabel(i) === OTHER_LABEL) {
+      continue;
+    }
     min = Math.min(min, data.getValue(i));
   }
   return min;
 }
 
+// Formats the value the same way the table cells do - number plus unit suffix (e.g. "5.58 Bil") - rather than just
+// the bare number, so the note is unambiguous about the scale and unit of the truncated values.
 function formatWithUnit(value: number, data: FlameGraphDataContainer): string {
-  return data.valueDisplayProcessor(value).text;
+  const displayValue = data.valueDisplayProcessor(value);
+  return displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 }
 
 function buildTableDataFrame(

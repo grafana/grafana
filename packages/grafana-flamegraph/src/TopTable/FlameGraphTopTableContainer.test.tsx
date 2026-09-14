@@ -139,6 +139,67 @@ describe('FlameGraphTopTableContainer with "other" data', () => {
     expect(within(note).getByText('2')).toBeInTheDocument();
   });
 
+  it('should render the truncated totals with the value unit in the note', async () => {
+    mockTableSize();
+    // Same shape as dataWithOther but the value field is scaled so the display processor emits an SI suffix
+    // ("3 K"/"2 K"). The note must include that suffix, otherwise "3" and "2" are ambiguous.
+    const dataWithOtherAndUnit = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10000, 5000, 3000, 2000], config: { unit: 'short' } },
+        { name: 'self', values: [0, 5000, 3000, 2000], config: { unit: 'short' } },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(dataWithOtherAndUnit, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    expect(within(note).getByText('3 K')).toBeInTheDocument();
+    expect(within(note).getByText('2 K')).toBeInTheDocument();
+  });
+
+  it('should not let nested "other" leftovers lower the truncation threshold', async () => {
+    mockTableSize();
+    // A level-2 "other" leftover (1) sits under "lib". It aggregates children that fell below the cutoff, so it is
+    // itself smaller than the real truncation threshold (lib, total: 2) and must be excluded from the minimum.
+    const dataWithNestedOther = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1, 2] },
+        { name: 'value', values: [10, 5, 3, 2, 1] },
+        { name: 'self', values: [0, 5, 3, 2, 1] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib', 'other'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(dataWithNestedOther, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total aggregates both "other" nodes (3 + 1).
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    // The threshold stays the minimum among the real (non-"other") nodes, i.e. lib with total 2.
+    expect(within(note).getByText('2')).toBeInTheDocument();
+    expect(within(note).queryByText('1')).not.toBeInTheDocument();
+  });
+
   it('should render search and sandwich buttons for "other" in the note', async () => {
     mockTableSize();
     const { mocks } = setup();
