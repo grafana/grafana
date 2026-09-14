@@ -649,28 +649,29 @@ export class RowsLayoutManager
   }
 
   public collapseAllRows() {
-    this.state.rows.forEach((row) => {
-      if (!row.getCollapsedState()) {
-        row.setCollapsedState(true);
-      }
-      row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (!repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(true);
-        }
-      });
-    });
+    this.setAllRowsCollapsed(true, t('dashboard.edit-actions.collapse-all-rows', 'Collapse all rows'));
   }
 
   public expandAllRows() {
-    this.state.rows.forEach((row) => {
-      if (row.getCollapsedState()) {
-        row.setCollapsedState(false);
-      }
-      row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(false);
-        }
-      });
+    this.setAllRowsCollapsed(false, t('dashboard.edit-actions.expand-all-rows', 'Expand all rows'));
+  }
+
+  private setAllRowsCollapsed(collapse: boolean, description: string) {
+    // Only rows whose state actually changes are captured, so undo restores exactly the rows
+    // that were toggled and leaves the rest untouched.
+    const rowsToToggle = this.state.rows
+      .flatMap((row) => [row, ...(row.state.repeatedRows ?? [])])
+      .filter((row) => row.getCollapsedState() !== collapse);
+
+    if (rowsToToggle.length === 0) {
+      return;
+    }
+
+    edit({
+      source: this,
+      description,
+      perform: () => rowsToToggle.forEach((row) => row.setCollapsedState(collapse)),
+      undo: () => rowsToToggle.forEach((row) => row.setCollapsedState(!collapse)),
     });
   }
 }

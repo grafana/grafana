@@ -4,6 +4,7 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -552,6 +553,80 @@ describe('RowsLayoutManager', () => {
       expect(rowsLayoutManager.state.rows).toHaveLength(1);
       expect(rowsLayoutManager.state.rows[0]).toBe(innerRow);
       expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+  });
+
+  describe('collapseAllRows / expandAllRows', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      lastEditPerform = undefined;
+      lastEditUndo = undefined;
+    });
+
+    it('should collapse all rows, including repeated rows, as a single undoable action', () => {
+      const repeatedRow = new RowItem({ title: 'Row 1 (b)', collapse: false });
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: false, repeatedRows: [repeatedRow] }),
+        new RowItem({ title: 'Row 2', collapse: false }),
+      ]);
+      const [row1, row2] = rowsLayoutManager.state.rows;
+
+      rowsLayoutManager.collapseAllRows();
+
+      expect(edit).toHaveBeenCalledTimes(1);
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ source: rowsLayoutManager, description: 'Collapse all rows' })
+      );
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(true);
+      expect(repeatedRow.getCollapsedState()).toBe(true);
+
+      lastEditUndo!();
+
+      expect(row1.getCollapsedState()).toBe(false);
+      expect(row2.getCollapsedState()).toBe(false);
+      expect(repeatedRow.getCollapsedState()).toBe(false);
+
+      lastEditPerform!();
+
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(true);
+      expect(repeatedRow.getCollapsedState()).toBe(true);
+    });
+
+    it('should expand all rows and only restore the rows that were actually toggled on undo', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: true }),
+        new RowItem({ title: 'Row 2', collapse: false }),
+      ]);
+      const [row1, row2] = rowsLayoutManager.state.rows;
+
+      rowsLayoutManager.expandAllRows();
+
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ source: rowsLayoutManager, description: 'Expand all rows' })
+      );
+      expect(row1.getCollapsedState()).toBe(false);
+      expect(row2.getCollapsedState()).toBe(false);
+
+      lastEditUndo!();
+
+      // Row 2 was already expanded, so undo must not collapse it
+
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(false);
+    });
+
+    it('should not record an edit action when no row needs to change', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: true }),
+        new RowItem({ title: 'Row 2', collapse: true }),
+      ]);
+
+      rowsLayoutManager.collapseAllRows();
+
+      expect(edit).not.toHaveBeenCalled();
+      expect(lastEditUndo).toBeUndefined();
     });
   });
 
