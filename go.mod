@@ -48,8 +48,8 @@ require (
 	github.com/aws/smithy-go v1.27.3 // @grafana/data-sources-plugins
 	github.com/beevik/etree v1.7.0 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
-	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
-	github.com/blevesearch/bleve_index_api v1.3.11 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve/v2 v2.6.1 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve_index_api v1.4.1 // @grafana/grafana-search-and-storage
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // @grafana/grafana-backend-group
 	github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 	github.com/cenkalti/backoff/v4 v4.3.0 // @grafana/alerting-backend
@@ -379,12 +379,12 @@ require (
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/blevesearch/geo v0.2.5 // indirect
-	github.com/blevesearch/go-faiss v1.1.0 // indirect
+	github.com/blevesearch/geo v0.2.6 // indirect
+	github.com/blevesearch/go-faiss v1.1.5 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/gtreap v0.1.1 // indirect
 	github.com/blevesearch/mmap-go v1.2.0 // indirect
-	github.com/blevesearch/scorch_segment_api/v2 v2.4.7 // indirect
+	github.com/blevesearch/scorch_segment_api/v2 v2.4.10 // indirect
 	github.com/blevesearch/segment v0.9.1 // indirect
 	github.com/blevesearch/snowballstem v0.9.0 // indirect
 	github.com/blevesearch/upsidedown_store_api v1.0.2 // indirect
@@ -712,6 +712,7 @@ require (
 )
 
 require (
+	github.com/blevesearch/zapx/v17 v17.2.3 // indirect
 	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/maypok86/otter/v2 v2.3.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
