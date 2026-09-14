@@ -15,10 +15,11 @@ import {
 } from '../otel/details';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
-import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
-import { type LogListModel } from './processing';
+import { type LabelWithLinks } from './LogLineDetailsFields';
+import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
+import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
-import { LogListFontSize } from './LogList';
+import { type LogListModel } from './processing';
 
 interface LogLineDetailsOTelComponentProps {
   log: LogListModel;
@@ -145,7 +146,11 @@ const LogLineDetailsOTelComponentBody = ({
                     aria-expanded={isCategoryOpen}
                     onClick={() => toggleCategory(category.id)}
                   >
-                    <Icon name={isCategoryOpen ? 'angle-down' : 'angle-right'} className={styles.chevronIcon} size={fontSize === 'small' ? 'md' : 'lg'} />
+                    <Icon
+                      name={isCategoryOpen ? 'angle-down' : 'angle-right'}
+                      className={styles.chevronIcon}
+                      size={fontSize === 'small' ? 'md' : 'lg'}
+                    />
                     <span className={styles.categoryHeaderContent}>
                       {category.icon === SERVICE_HEXAGON_CATEGORY_ICON ? (
                         <ServiceHexagonIcon className={styles.categoryIcon} />
@@ -195,7 +200,7 @@ function OTelAttributeItems({
 }) {
   if (groupedAttributes.kind === 'fields') {
     return (
-      <LogLineDetailsFields
+      <LogLineOTelDetailsFields
         log={log}
         logs={logs}
         fields={groupedAttributes.groups.flatMap((group) => group.items)}
@@ -205,7 +210,7 @@ function OTelAttributeItems({
   }
 
   return (
-    <LogLineDetailsLabelFields
+    <LogLineOTelDetailsLabelFields
       log={log}
       logs={logs}
       fields={groupedAttributes.groups.flatMap((group) => group.items)}
