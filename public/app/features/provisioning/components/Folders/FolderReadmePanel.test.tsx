@@ -402,61 +402,16 @@ describe('FolderReadmePanel', () => {
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
   });
 
-  describe('mermaid diagrams', () => {
-    it('renders a ```mermaid fenced block as a diagram', async () => {
-      setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
+  // The renderer itself is covered in core/utils/mermaid.test.ts and
+  // core/components/HtmlWithMermaid; this only checks the README is wired to it.
+  it('renders a ```mermaid fenced block as a diagram', async () => {
+    setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
 
-      const { container } = setup();
+    setup();
 
-      expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
-      // The source code block is replaced by the rendered diagram.
-      expect(container.querySelector('code.language-mermaid')).toBeNull();
-    });
-
-    it('renders multiple mermaid diagrams in the same README', async () => {
-      setReadmeResult({
-        markdownContent: [
-          '## One',
-          '',
-          '```mermaid',
-          'graph TD; A-->B;',
-          '```',
-          '',
-          '## Two',
-          '',
-          '```mermaid',
-          'graph LR; C-->D;',
-          '```',
-        ].join('\n'),
-      });
-
-      const { container } = setup();
-
-      // Both fenced blocks are turned into diagrams. (Render call count isn't asserted:
-      // React StrictMode double-invokes the effect, so it can exceed the diagram count.)
-      await waitFor(() => expect(container.querySelectorAll('.textng-mermaid')).toHaveLength(2));
-    });
-
-    it('keeps the source and flags the block when a diagram fails to render', async () => {
-      mockMermaidRender.mockRejectedValue(new Error('parse error'));
-      setReadmeResult({ markdownContent: '## Broken\n\n```mermaid\nnot a real diagram\n```' });
-
-      const { container } = setup();
-
-      await waitFor(() => expect(container.querySelector('.textng-mermaid-error')).not.toBeNull());
-      // A broken diagram leaves its source visible instead of hiding the README.
-      expect(screen.getByText(/not a real diagram/)).toBeInTheDocument();
-      expect(screen.getByText('Broken')).toBeInTheDocument();
-    });
-
-    it('does not render diagrams for READMEs without mermaid blocks', async () => {
-      setReadmeResult({ markdownContent: '# Hello\n\nNo diagrams here.' });
-
-      const { container } = setup();
-
-      await screen.findByText('Hello');
-      expect(mockMermaidRender).not.toHaveBeenCalled();
-      expect(container.querySelector('.textng-mermaid')).toBeNull();
-    });
+    expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
+    expect(screen.getByText('Flow')).toBeInTheDocument();
+    // The source code block is replaced by the rendered diagram.
+    expect(screen.queryByText('graph TD; A-->B;')).not.toBeInTheDocument();
   });
 });
