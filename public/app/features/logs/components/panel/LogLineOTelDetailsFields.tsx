@@ -340,47 +340,50 @@ const LogLineOTelDetailsField = ({
               ) : (
                 <MultipleValue values={values} links={links} />
               )}
-            </div>
-            {!disableActions && (
-              <div className={styles.actions}>
-                <div className={styles.actionIcons}>
-                  {onClickFilterLabel && fieldSupportsFilters && (
-                    <AsyncIconButton
-                      name="search-plus"
-                      size={fontSize === 'small' ? 'sm' : undefined}
-                      onClick={filterLabel}
-                      // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
-                      isActive={labelFilterActive}
-                      tooltipSuffix={refIdTooltip}
-                    />
-                  )}
-                  {onClickFilterOutLabel && fieldSupportsFilters && (
+              {!disableActions && (
+                <div className={styles.actions}>
+                  <div className={styles.actionIcons}>
+                    {onClickFilterLabel && fieldSupportsFilters && (
+                      <AsyncIconButton
+                        name="search-plus"
+                        size={fontSize === 'small' ? 'sm' : undefined}
+                        onClick={filterLabel}
+                        // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                        isActive={labelFilterActive}
+                        tooltipSuffix={refIdTooltip}
+                      />
+                    )}
+                    {onClickFilterOutLabel && fieldSupportsFilters && (
+                      <IconButton
+                        name="search-minus"
+                        size={fontSize === 'small' ? 'sm' : undefined}
+                        tooltip={
+                          app === CoreApp.Explore && log.dataFrame?.refId
+                            ? t(
+                                'logs.log-line-details.fields.filter-out-query',
+                                'Filter out value in query {{query}}',
+                                {
+                                  query: log.dataFrame?.refId,
+                                }
+                              )
+                            : t('logs.log-line-details.fields.filter-out', 'Filter out value')
+                        }
+                        onClick={filterOutLabel}
+                      />
+                    )}
                     <IconButton
-                      name="search-minus"
+                      variant={showFieldsStats ? 'primary' : 'secondary'}
+                      name="signal"
                       size={fontSize === 'small' ? 'sm' : undefined}
-                      tooltip={
-                        app === CoreApp.Explore && log.dataFrame?.refId
-                          ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
-                              query: log.dataFrame?.refId,
-                            })
-                          : t('logs.log-line-details.fields.filter-out', 'Filter out value')
-                      }
-                      onClick={filterOutLabel}
+                      tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+                      disabled={!singleKey}
+                      onClick={showStats}
                     />
-                  )}
-                  <IconButton
-                    variant={showFieldsStats ? 'primary' : 'secondary'}
-                    name="signal"
-                    size={fontSize === 'small' ? 'sm' : undefined}
-                    tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                    className={styles.statsIcon}
-                    disabled={!singleKey}
-                    onClick={showStats}
-                  />
-                  <ClipboardButtonWrapper value={values[0]} />
+                    <ClipboardButtonWrapper value={values[0]} />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -412,9 +415,7 @@ export function resolveAppFromLink(href: string): string | undefined {
 
 const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
   const actions = css({
-    position: 'absolute',
-    top: 0,
-    right: 0,
+    float: 'right',
     background: theme.colors.background.primary,
     whiteSpace: 'nowrap',
     visibility: 'hidden',
@@ -427,13 +428,9 @@ const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
     }),
     actions,
     actionIcons: css({
+      alignContent: 'center',
       display: 'flex',
-      justifyContent: 'flex-end',
-      paddingRight: 2,
-    }),
-    statsIcon: css({
-      margin: 0,
-      paddingRight: 4,
+      gap: theme.spacing(0.5),
     }),
     label: css({
       color: theme.colors.text.secondary,
@@ -536,7 +533,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
         fill="text"
         variant="secondary"
         icon="copy"
-        size="md"
+        size="sm"
       />
     </div>
   );
@@ -549,7 +546,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
       gap: 0,
       padding: 0,
       justifyContent: 'center',
-      borderRadius: theme.shape.radius.circle,
+      borderRadius: theme.shape.radius.default,
       height: theme.spacing(theme.components.height.sm),
       width: theme.spacing(theme.components.height.sm),
       svg: {
@@ -566,7 +563,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({ links, values = [] }: { links?: LinkModelWithIcon[], values: string[] }) => {
+export const MultipleValue = ({ links, values = [] }: { links?: LinkModelWithIcon[]; values: string[] }) => {
   if (values.every((val) => val === '')) {
     return null;
   }
