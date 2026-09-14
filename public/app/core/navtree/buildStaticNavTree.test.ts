@@ -41,6 +41,21 @@ describe('buildStaticNavTree', () => {
       ]);
     });
 
+    it('places notebooks after drilldown when the flag is on and the user can read dashboards', () => {
+      const dashboardReader = [AccessControlAction.DashboardsRead, AccessControlAction.DataSourcesExplore];
+      setup({ permissions: dashboardReader, openFeatureFlags: { 'dashboard.notebooks': true } });
+
+      const treeIds = ids(buildStaticNavTree());
+      expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
+
+      setup({ permissions: dashboardReader });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+
+      // Notebooks reuse dashboard RBAC; without dashboards:read there is no entry
+      setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+    });
+
     it('omits signed-in-only sections for anonymous users', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: true } });
       const tree = buildStaticNavTree();

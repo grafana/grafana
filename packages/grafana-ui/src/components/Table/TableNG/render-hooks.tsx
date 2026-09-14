@@ -151,6 +151,14 @@ export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
+  /**
+   * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
+   * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
+   * box, so it has to be taken off the width handed to width-driven cells. Only set by callers
+   * whose first column is a field column: a nested table's first column is the expander, which
+   * carries the inset itself.
+   */
+  firstColumnExtraPadding?: number;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
   getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>;
@@ -164,6 +172,7 @@ export interface ColumnBuildConfig {
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
+  tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -251,7 +260,9 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     disableSanitizeHtml,
     showTypeIcons,
+    tableRefreshEnabled,
     timeRange,
+    firstColumnExtraPadding = 0,
   } = config;
 
   // Resolve the apply-to-row background function against this frame's own fields.
@@ -318,14 +329,14 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
-    const contentWidth = width - CELL_HORIZONTAL_CHROME;
+    const contentWidth = width - CELL_HORIZONTAL_CHROME - (i === 0 ? firstColumnExtraPadding : 0);
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -560,6 +571,7 @@ function buildColumnsFromFields(
           parentIndex={parentIndex}
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
+          tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

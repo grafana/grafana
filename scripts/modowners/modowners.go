@@ -166,7 +166,7 @@ func hasCommonElement(a []string, b []string) bool {
 }
 
 func teamSlug(owner string) (string, bool) {
-	owner = strings.TrimPrefix(owner, "@")
+	owner = strings.TrimLeft(owner, "/@")
 	const prefix = "grafana/"
 	if !strings.HasPrefix(owner, prefix) {
 		return "", false

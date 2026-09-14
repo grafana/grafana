@@ -105,7 +105,8 @@ declare module "@openfeature/core" {
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
-    | "grafana.multiTenantUserPermissions";
+    | "grafana.multiTenantUserPermissions"
+    | "datasources.gatewayGuardrails";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

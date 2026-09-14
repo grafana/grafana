@@ -7,7 +7,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
+import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookScene } from './NotebookScene';
@@ -19,6 +22,22 @@ import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 jest.mock('../api/notebookResource', () => ({
   createNotebook: jest.fn(),
   updateNotebook: jest.fn(),
+}));
+
+// The serializer runs for real by default, restored in beforeEach. One test replaces it, because no
+// real notebook state makes the spec build throw.
+jest.mock('../serialization/transformNotebookSceneToSaveModel', () => ({
+  ...jest.requireActual('../serialization/transformNotebookSceneToSaveModel'),
+  transformNotebookSceneToSaveModel: jest.fn(),
+}));
+
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: {
+    created: jest.fn(),
+    editSessionStarted: jest.fn(),
+    editSessionEnded: jest.fn(),
+    autosaveFailed: jest.fn(),
+  },
 }));
 
 // Mirrors the constants in NotebookAutosave. Duplicated rather than exported so that changing a timing
@@ -122,6 +141,14 @@ describe('NotebookAutosave', () => {
       .mocked(createNotebook)
       .mockReset()
       .mockResolvedValue({ uid: 'nb-new', url: '/notebooks/nb-new', generation: 1 });
+    jest.mocked(NotebookAnalytics.created).mockClear();
+    jest.mocked(NotebookAnalytics.autosaveFailed).mockClear();
+    jest
+      .mocked(transformNotebookSceneToSaveModel)
+      .mockReset()
+      .mockImplementation(
+        jest.requireActual('../serialization/transformNotebookSceneToSaveModel').transformNotebookSceneToSaveModel
+      );
   });
 
   afterEach(() => {
@@ -152,6 +179,9 @@ describe('NotebookAutosave', () => {
       spec: { content: { kind: 'Markdown', spec: { text: 'Hello world' } } },
     });
     expect(scene.autosave.state.status).toBe('saved');
+    // Only a first write creates a notebook; this scene already has a uid.
+    expect(NotebookAnalytics.created).not.toHaveBeenCalled();
+    expect(NotebookAnalytics.autosaveFailed).not.toHaveBeenCalled();
   });
 
   it('reports unsaved changes while a save is still waiting on the debounce', async () => {
@@ -203,6 +233,11 @@ describe('NotebookAutosave', () => {
     editFirstCell(scene, 'work I would rather not lose');
     await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
     expect(scene.autosave.state.status).toBe('error');
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+      1
+    );
 
     deactivate?.();
     deactivate = scene.activate();
@@ -210,6 +245,8 @@ describe('NotebookAutosave', () => {
 
     expect(savedTexts()).toEqual(['work I would rather not lose', 'work I would rather not lose']);
     expect(scene.autosave.state.status).toBe('saved');
+    // Nothing reports a save that landed, and nothing failed again after it.
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledTimes(1);
   });
 
   it('sends nothing when a notebook with no unsaved work is reopened', async () => {
@@ -239,6 +276,67 @@ describe('NotebookAutosave', () => {
 
     expect(savedTexts()).toEqual(['Hello world', 'Hello world']);
     expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('reports increasing attempts for failures in a row, and starts over after a save lands', async () => {
+    const scene = activateEditing();
+    jest
+      .mocked(updateNotebook)
+      .mockRejectedValueOnce(new Error('apiserver said no'))
+      .mockRejectedValueOnce(new Error('apiserver said no again'));
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenLastCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+      1
+    );
+
+    scene.autosave.retry();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenLastCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+      2
+    );
+
+    scene.autosave.retry();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(scene.autosave.state.status).toBe('saved');
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledTimes(2);
+
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no once more'));
+    editFirstCell(scene, 'Hello again');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenLastCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+      1
+    );
+  });
+
+  it('reports a build failure and sends nothing, when the spec cannot be assembled', async () => {
+    const scene = activateEditing();
+    // Not `mockImplementationOnce`. `hasSomethingToWrite` calls this on every edit and swallows the
+    // error. A single throw lands there, before the save ever runs.
+    jest.mocked(transformNotebookSceneToSaveModel).mockImplementation(() => {
+      throw new Error('cannot serialize this notebook');
+    });
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(scene.autosave.state.status).toBe('error');
+    expect(scene.autosave.state.errorMessage).toBe('cannot serialize this notebook');
+    expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledWith(
+      'nb-1',
+      NOTEBOOK_AUTOSAVE_FAILED_REASON.BUILD_FAILED,
+      1
+    );
+    expect(updateNotebook).not.toHaveBeenCalled();
+    expect(createNotebook).not.toHaveBeenCalled();
   });
 
   it('records the generation the server returned, so a later load can tell its own save apart', async () => {
@@ -1006,6 +1104,8 @@ describe('NotebookAutosave', () => {
         { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'first thought' } } } },
       ]);
       expect(scene.state.uid).toBe('nb-new');
+      expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb-new', 'notebook_list', 1);
     });
 
     it('is not created at all when nothing was typed', async () => {
@@ -1090,6 +1190,12 @@ describe('NotebookAutosave', () => {
 
       expect(scene.autosave.state.status).toBe('error');
       expect(scene.state.uid).toBeUndefined();
+      // No uid exists yet to join on.
+      expect(NotebookAnalytics.autosaveFailed).toHaveBeenCalledWith(
+        '',
+        NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+        1
+      );
 
       scene.autosave.retry();
       await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
@@ -1113,6 +1219,8 @@ describe('NotebookAutosave', () => {
       expect(createNotebook).toHaveBeenCalledTimes(1);
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(jest.mocked(updateNotebook).mock.calls[0][0]).toBe('nb-new');
+      // The second write updates the notebook the first one created; it does not create another.
+      expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
     });
 
     it('is created on the way out when it is left before the debounce fired', async () => {
