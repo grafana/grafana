@@ -79,8 +79,19 @@ describe('TableDataGrid', () => {
   describe('scroll shadows', () => {
     // jsdom has no layout, so the grid reports every scroll metric as 0. Fake the viewport the hook
     // reads, then fire the scroll it would have listened to.
-    function scrollTo(el: HTMLElement, { scrollTop, clientHeight, scrollHeight }: Record<string, number>) {
+    function scrollTo(
+      el: HTMLElement,
+      {
+        scrollTop,
+        clientHeight,
+        scrollHeight,
+        // a horizontal scrollbar is the gap between the two: it eats into the padding box without
+        // changing the element's own height
+        offsetHeight = clientHeight,
+      }: { scrollTop: number; clientHeight: number; scrollHeight: number; offsetHeight?: number }
+    ) {
       Object.defineProperty(el, 'clientHeight', { configurable: true, value: clientHeight });
+      Object.defineProperty(el, 'offsetHeight', { configurable: true, value: offsetHeight });
       Object.defineProperty(el, 'scrollHeight', { configurable: true, value: scrollHeight });
       el.scrollTop = scrollTop;
       fireEvent.scroll(el);
@@ -133,6 +144,37 @@ describe('TableDataGrid', () => {
       // edges would sit on top of them instead of on the rows sliding underneath
       expect(top).toHaveStyle({ top: '36px' });
       expect(bottom).toHaveStyle({ bottom: '45px' });
+    });
+
+    it('lifts the bottom shadow clear of a horizontal scrollbar', () => {
+      const { container } = render(
+        <TableDataGrid {...makeProps({ tableRefreshEnabled: true, hasFooter: true, footerHeight: 45 })} />
+      );
+      const { bottom } = getShadows(container);
+
+      // the scrollbar sits below the rows and the sticky footer alike, so without clearing it the
+      // shadow lands on the scrollbar rather than on the last visible row
+      scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 100, scrollHeight: 400, offsetHeight: 111 });
+      expect(bottom).toHaveStyle({ bottom: '56px' });
+
+      // and drops back down once the columns fit again
+      scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 100, scrollHeight: 400 });
+      expect(bottom).toHaveStyle({ bottom: '45px' });
+    });
+
+    it('re-measures on render, so content that grows without a scroll or a resize still gets a shadow', () => {
+      // expanding a nested row or re-wrapping text after a column resize changes the content height
+      // without firing a scroll event or resizing the grid itself
+      const { container, rerender } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const grid = screen.getByRole('grid');
+      const { bottom } = getShadows(container);
+
+      scrollTo(grid, { scrollTop: 0, clientHeight: 400, scrollHeight: 400 });
+      expect(bottom).toHaveStyle({ opacity: '0' });
+
+      Object.defineProperty(grid, 'scrollHeight', { configurable: true, value: 900 });
+      rerender(<TableDataGrid {...makeProps({ tableRefreshEnabled: true, noValue: 'forces a re-render' })} />);
+      expect(bottom).toHaveStyle({ opacity: '1' });
     });
 
     it('is not rendered without table.refresh', () => {

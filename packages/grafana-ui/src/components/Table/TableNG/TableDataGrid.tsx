@@ -179,7 +179,9 @@ export function TableDataGrid({
   const { topRef: topShadowRef, bottomRef: bottomShadowRef } = useScrollShadows(
     gridRef,
     Boolean(tableRefreshEnabled),
-    rows
+    // the sticky header and footer rows are part of the grid, so the shadows start and end where the
+    // scrolling rows do rather than at the grid's own edges
+    { topOffset: noHeader ? 0 : headerHeight, bottomOffset: hasFooter ? footerHeight : 0 }
   );
 
   const itemsRangeStart = pageRangeStart;
@@ -214,18 +216,10 @@ export function TableDataGrid({
 
         {tableRefreshEnabled && (
           <>
-            {/* the sticky header and footer rows are part of the grid, so the shadows start and end
-                where the scrolling rows do rather than at the grid's own edges */}
-            <div
-              ref={topShadowRef}
-              className={clsx(styles.scrollShadow, styles.scrollShadowTop)}
-              style={{ top: noHeader ? 0 : headerHeight }}
-              role="presentation"
-            />
+            <div ref={topShadowRef} className={clsx(styles.scrollShadow, styles.scrollShadowTop)} role="presentation" />
             <div
               ref={bottomShadowRef}
               className={clsx(styles.scrollShadow, styles.scrollShadowBottom)}
-              style={{ bottom: hasFooter ? footerHeight : 0 }}
               role="presentation"
             />
           </>
