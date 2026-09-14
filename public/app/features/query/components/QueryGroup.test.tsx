@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook } from '@grafana/runtime';
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -43,7 +42,6 @@ describe('QueryGroup', () => {
 
   beforeEach(() => {
     config.expressionsEnabled = true;
-    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   });
 
   it('Should add expression on click', async () => {
