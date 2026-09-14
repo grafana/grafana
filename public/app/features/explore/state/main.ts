@@ -139,7 +139,7 @@ export const navigateToExplore = (
       dsRef: panel.datasource,
       scopedVars: panel.scopedVars,
       timeRange,
-      adhocFilters: await getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
+      adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
     });
 
     if (openInNewWindow && path) {

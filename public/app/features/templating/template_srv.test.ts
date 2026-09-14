@@ -1,12 +1,5 @@
-import {
-  dateTime,
-  type DataSourceInstanceSettings,
-  type QueryVariableModel,
-  type TimeRange,
-  type TypedVariableModel,
-} from '@grafana/data';
+import { dateTime, type QueryVariableModel, type TimeRange, type TypedVariableModel } from '@grafana/data';
 import { type VariableInterpolation } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   ConstantVariable,
   CustomVariable,
@@ -51,13 +44,6 @@ jest.mock('@grafana/scenes', () => ({
     getTimeRange: (...args: unknown[]) => timeRangeMock(...args),
   },
 }));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: jest.fn(),
-}));
-
-const getDataSourceInstanceSettingsMock = jest.mocked(getDataSourceInstanceSettings);
 
 describe('templateSrv', () => {
   silenceConsoleOutput();
@@ -238,29 +224,30 @@ describe('templateSrv', () => {
         { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
         { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
-      getDataSourceInstanceSettingsMock.mockImplementation(async (name) => {
-        if (name === 'oogle') {
-          return { uid: 'oogle', type: 'prometheus' } as DataSourceInstanceSettings;
-        }
-        if (name === 'logstash') {
-          return { uid: 'logstash-id', type: 'prometheus' } as DataSourceInstanceSettings;
-        }
-        return undefined;
-      });
+      setupDataSources(
+        mockDataSource({
+          name: 'oogle',
+          uid: 'oogle',
+        }),
+        mockDataSource({
+          name: 'logstash',
+          uid: 'logstash-id',
+        })
+      );
     });
 
-    it('should return filters if datasourceName match', async () => {
-      const filters = await _templateSrv.getAdhocFilters('oogle');
+    it('should return filters if datasourceName match', () => {
+      const filters = _templateSrv.getAdhocFilters('oogle');
       expect(filters).toMatchObject([1]);
     });
 
-    it('should return empty array if datasourceName does not match', async () => {
-      const filters = await _templateSrv.getAdhocFilters('oogleasdasd');
+    it('should return empty array if datasourceName does not match', () => {
+      const filters = _templateSrv.getAdhocFilters('oogleasdasd');
       expect(filters).toMatchObject([]);
     });
 
-    it('should return filters when datasourceName match via data source variable', async () => {
-      const filters = await _templateSrv.getAdhocFilters('logstash');
+    it('should return filters when datasourceName match via data source variable', () => {
+      const filters = _templateSrv.getAdhocFilters('logstash');
       expect(filters).toMatchObject([2]);
     });
   });
