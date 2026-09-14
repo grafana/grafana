@@ -201,8 +201,7 @@ func isAlreadyExistsError(err error) bool {
 		return false
 	}
 	// Check for pgx error code "42P07" (duplicate_table)
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "42P07"
 	}
 	return false

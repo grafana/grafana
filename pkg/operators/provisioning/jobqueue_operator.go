@@ -81,7 +81,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval)
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
 	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)
@@ -89,15 +89,13 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		logger.Info("job queue controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
-	}()
+	})
 
 	// Start the informer and wait for its cache to sync.
 	go jobInformer.Run(ctx.Done())

@@ -3,6 +3,7 @@ import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, renderHook, screen, waitFor } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -565,6 +566,47 @@ describe('ResourceEditFormSharedFields', () => {
       await user.keyboard('{Enter}');
 
       await waitFor(() => expect(refsInRequest).toContain('feature-branch'));
+    });
+  });
+
+  describe('Folder suggestions', () => {
+    it('should not request folder suggestions for a branch that does not exist yet', async () => {
+      mockComboboxRect();
+      jest.mocked(useGetRepositoryFolders).mockClear();
+
+      const { user } = setup({
+        isNew: true,
+        repository: mockRepo.github,
+        workflow: 'branch',
+        formDefaultValues: { workflow: 'branch', ref: 'dashboard/2026-01-01-abc123' },
+      });
+
+      // Refs are loaded once a known remote branch shows up in the dropdown
+      await user.click(screen.getByRole('combobox', { name: /branch/i }));
+      expect(await screen.findByRole('option', { name: /develop/ })).toBeInTheDocument();
+
+      const calls = jest.mocked(useGetRepositoryFolders).mock.calls;
+      expect(calls.length).toBeGreaterThan(0);
+      for (const [args] of calls) {
+        expect(args.ref).toBeUndefined();
+      }
+    });
+
+    it('should request folder suggestions at the selected branch once it is a known ref', async () => {
+      jest.mocked(useGetRepositoryFolders).mockClear();
+
+      setup({
+        isNew: true,
+        repository: mockRepo.github,
+        workflow: 'branch',
+        formDefaultValues: { workflow: 'branch', ref: 'develop' },
+      });
+
+      await waitFor(() => {
+        expect(jest.mocked(useGetRepositoryFolders)).toHaveBeenLastCalledWith(
+          expect.objectContaining({ repositoryName: 'test-repo', ref: 'develop' })
+        );
+      });
     });
   });
 });

@@ -1,7 +1,8 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -10,6 +11,8 @@ import {
   SceneVariableSet,
   type SceneVariable,
 } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
@@ -30,6 +33,7 @@ jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
     addVariableButtonClicked: jest.fn(),
+    variableActionButtonClicked: jest.fn(),
   },
 }));
 
@@ -67,6 +71,7 @@ function renderVariablesList(
     user,
     elements: {
       dashboardScene,
+      variableSet,
       aboveListItems: () => within(renderResult.getByTestId('variables-list-visible')).getAllByTestId('variable-name'),
       controlsMenuListItems: () =>
         within(renderResult.getByTestId('variables-list-controls-menu')).getAllByTestId('variable-name'),
@@ -90,10 +95,23 @@ function buildTestVariables() {
   };
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('<DashboardVariablesList />', () => {
-  test('renders 3 sections (one per variable display type)', () => {
+  test('renders 3 sections (one per variable display type)', async () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
-    const { getByRole, elements } = renderVariablesList([hiddenVar1, controlsMenuVar1, visibleVar2, visibleVar1]);
+    const { container, getByRole, elements } = renderVariablesList([
+      hiddenVar1,
+      controlsMenuVar1,
+      visibleVar2,
+      visibleVar1,
+    ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -109,16 +127,24 @@ describe('<DashboardVariablesList />', () => {
     expect(hiddenNames).toEqual(['ninjaVar1']);
   });
 
-  test('uses custom top placement label when provided', () => {
+  test('uses custom top placement label when provided', async () => {
     const { visibleVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+    const { container, getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
 
-  test('always renders all 3 section titles even when some are empty', () => {
+  test('always renders all 3 section titles even when some are empty', async () => {
     const { hiddenVar1 } = buildTestVariables();
-    const { getByRole } = renderVariablesList([hiddenVar1]);
+    const { container, getByRole } = renderVariablesList([hiddenVar1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -126,14 +152,42 @@ describe('<DashboardVariablesList />', () => {
   });
 
   describe('User interactions', () => {
-    describe('when a variable name is clicked', () => {
-      test('selects the variable in the pane', async () => {
+    describe('variable list interactions', () => {
+      test('clicking the edit button selects the variable in the pane', async () => {
         const { visibleVar1 } = buildTestVariables();
-        const { user, getByText, elements } = renderVariablesList([visibleVar1]);
+        const { user, getByText, getByTestId, elements } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
 
-        await user.click(getByText(visibleVar1.state.name));
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
         expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(visibleVar1);
+      });
+
+      test('clicking the delete button triggers confirmation modal', async () => {
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { visibleVar1 } = buildTestVariables();
+        const { user, getByText, getByTestId } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
+
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
+
+        expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+
+      test('clicking the duplicate button creates a duplicate variable', async () => {
+        const { visibleVar1 } = buildTestVariables();
+        const { user, getByText, getByTestId, elements } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
+
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
+
+        expect(elements.variableSet.state.variables).toHaveLength(2);
+        expect(elements.variableSet.state.variables[1].state.name).toBe('visibleVar1_copy1');
       });
     });
 
@@ -145,6 +199,9 @@ describe('<DashboardVariablesList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();

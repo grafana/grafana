@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
+	"github.com/grafana/nanogit/metrics"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
@@ -53,12 +54,18 @@ type gitRepository struct {
 	client        nanogit.Client
 	writerOptions []nanogit.WriterOption
 	maxBytes      atomic.Int64
+	metrics       *repository.OperationRecorder
+	// clientMetrics is injected into the context nanogit operates on, so its
+	// HTTP/fetch/cache signals are recorded. Nil when no metrics are registered.
+	clientMetrics metrics.Recorder
 }
 
 func NewRepository(
 	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
+	metrics *repository.OperationMetrics,
+	clientMetrics *ClientMetrics,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
@@ -95,6 +102,8 @@ func NewRepository(
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
+		metrics:       metrics.Recorder(config.Spec.Type),
+		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
 	}, nil
 }
 
@@ -227,7 +236,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 	}
 
 	// Check authorization
-	if ok, err := r.client.IsAuthorized(ctx); err != nil || !ok {
+	if ok, err := r.client.CanRead(ctx); err != nil || !ok {
 		// Map nanogit errors to repository errors for proper HTTP status codes
 		if err != nil {
 			err = mapNanogitError(err)
@@ -242,7 +251,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			Code:    http.StatusUnauthorized,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
@@ -268,7 +277,11 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			// NotFound (rather than the generic BadRequest other field
+			// validation failures use) so isRepositoryAccessible correctly
+			// classifies this as inaccessible rather than an accessible-but-blocked
+			// failure like branch protection, which also fails Test().
+			Code:    http.StatusNotFound,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
@@ -347,7 +360,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("secure", "token").String(),
-					Detail: "write permission denied",
+					Detail: repository.WritePermissionDeniedDetail,
 				}},
 			}, nil
 		}
@@ -360,7 +373,10 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 }
 
 // Read implements provisioning.Repository.
-func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
+func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *repository.FileInfo, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Read(start, out, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository path", "path", filePath)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
@@ -425,7 +441,10 @@ func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
 	r.maxBytes.Store(maxBytes)
 }
 
-func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []repository.FileTreeEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.List(start, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository tree")
 
@@ -471,7 +490,10 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	return entries, nil
 }
 
-func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -517,7 +539,10 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
-func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -564,6 +589,9 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
+// Write is deliberately not instrumented: it delegates to Read plus Create or
+// Update, which each record their own operation. Observing it here as well
+// would count the same write twice.
 func (r *gitRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	if ref == "" {
 		ref = r.gitConfig.Branch
@@ -586,7 +614,10 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	return r.Create(ctx, path, ref, data, message)
 }
 
-func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) error {
+func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -610,7 +641,10 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	return r.commitAndPush(ctx, writer, comment)
 }
 
-func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -739,7 +773,10 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	return branchRef.Hash.String(), nil
 }
 
-func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
+func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (changes []repository.VersionedFileChange, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Compare(start, err) }()
+
 	if base == "" && ref == "" {
 		return nil, fmt.Errorf("base and ref cannot be empty")
 	}
@@ -753,7 +790,6 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	// Resolve base ref to hash
 	var baseHash hash.Hash
 	if base != "" {
-		var err error
 		baseHash, err = r.resolveRefToHash(ctx, base)
 		if err != nil {
 			return nil, fmt.Errorf("resolve base ref: %w", err)
@@ -771,7 +807,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]repository.VersionedFileChange, 0)
+	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
 		switch f.Status {
 		case protocol.FileStatusAdded:
@@ -965,7 +1001,8 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 }
 
 // createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature. The committer is overridden by
+// falling back to default Grafana signature. The author is overridden by
+// spec.commit.authorName/Email when set. The committer is overridden by
 // spec.commit.signerName/Email when set; that identity must match the signing
 // key for providers to mark commits as Verified. The author is overridden by
 // the signer identity when spec.commit.signerIsAuthor is true.
@@ -991,6 +1028,11 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 
 	if author.Time.IsZero() {
 		author.Time = time.Now()
+	}
+
+	if commit := r.config.Spec.Commit; commit != nil && (commit.AuthorName != "" || commit.AuthorEmail != "") {
+		author.Name = cmp.Or(commit.AuthorName, "Grafana")
+		author.Email = cmp.Or(commit.AuthorEmail, "noreply@grafana.com")
 	}
 
 	committer := nanogit.Committer(author)
@@ -1080,6 +1122,12 @@ func ensureRetryContext(ctx context.Context) context.Context {
 func (r *gitRepository) withGitContext(ctx context.Context, ref string) (context.Context, logging.Logger) {
 	// Ensure retry logic is configured first, before any early returns
 	ctx = ensureRetryContext(ctx)
+
+	// Report nanogit's HTTP/fetch/cache signals for this repository. Injected
+	// unconditionally so it survives even the early return below.
+	if r.clientMetrics != nil {
+		ctx = metrics.ToContext(ctx, r.clientMetrics)
+	}
 
 	logger := logging.FromContext(ctx)
 

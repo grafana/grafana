@@ -1,5 +1,6 @@
 import { PluginLoadingStrategy, type PluginMeta, PluginType } from '@grafana/data';
 import { type AppPluginConfig, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { mockPluginLinkExtension } from '../mocks';
@@ -157,6 +158,52 @@ export const pluginMeta = {
     module: 'public/plugins/grafana-labels-app/module.js',
     baseUrl: 'public/plugins/grafana-labels-app',
   } satisfies PluginMeta,
+  [SupportedPlugin.Assistant]: {
+    id: SupportedPlugin.Assistant,
+    name: 'Grafana Assistant',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: '',
+      },
+      description: 'Grafana Assistant',
+      links: [],
+      logos: {
+        small: 'public/plugins/grafana-assistant-app/img/logo.svg',
+        large: 'public/plugins/grafana-assistant-app/img/logo.svg',
+      },
+      screenshots: [],
+      version: 'local-dev',
+      updated: '2024-04-09',
+    },
+    module: 'public/plugins/grafana-assistant-app/module.js',
+    baseUrl: 'public/plugins/grafana-assistant-app',
+  } satisfies PluginMeta,
+  [SupportedPlugin.MachineLearning]: {
+    id: SupportedPlugin.MachineLearning,
+    name: 'Machine Learning',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: '',
+      },
+      description: 'Machine Learning',
+      links: [],
+      logos: {
+        small: 'public/plugins/grafana-ml-app/img/logo.svg',
+        large: 'public/plugins/grafana-ml-app/img/logo.svg',
+      },
+      screenshots: [],
+      version: 'local-dev',
+      updated: '2024-04-09',
+    },
+    module: 'public/plugins/grafana-ml-app/module.js',
+    baseUrl: 'public/plugins/grafana-ml-app',
+  } satisfies PluginMeta,
 };
 
 export const plugins: PluginMeta[] = [
@@ -173,7 +220,7 @@ export function pluginMetaToPluginConfig(pluginMeta: PluginMeta): AppPluginConfi
     path: pluginMeta.baseUrl,
     preload: true,
     version: pluginMeta.info.version,
-    angular: { detected: false, hideDeprecation: false },
+    angular: pluginMeta.angular ?? { detected: false, hideDeprecation: false },
     loadingStrategy: PluginLoadingStrategy.script,
     dependencies: {
       plugins: [],
@@ -190,4 +237,33 @@ export function pluginMetaToPluginConfig(pluginMeta: PluginMeta): AppPluginConfi
       addedFunctions: [],
     },
   };
+}
+
+/**
+ * App plugin metas mirror bootdata's `config.apps`, which is what `isAppPluginInstalled` reads.
+ * Hooks like `usePluginBridge` consult it before requesting plugin settings, so a plugin must be
+ * registered here to be considered installed at all — a settings handler alone is not enough.
+ *
+ * `setAppPluginMetas` replaces the whole map, so we track the current set to support add / remove.
+ */
+const defaultAppPluginMetas: AppPluginMetas = Object.fromEntries(
+  plugins.map((plugin) => [plugin.id, pluginMetaToPluginConfig(plugin)])
+);
+
+let currentAppPluginMetas: AppPluginMetas = {};
+
+export function resetAppPluginMetas() {
+  currentAppPluginMetas = { ...defaultAppPluginMetas };
+  setAppPluginMetas(currentAppPluginMetas);
+}
+
+export function installAppPluginMeta(pluginMeta: PluginMeta) {
+  currentAppPluginMetas = { ...currentAppPluginMetas, [pluginMeta.id]: pluginMetaToPluginConfig(pluginMeta) };
+  setAppPluginMetas(currentAppPluginMetas);
+}
+
+export function uninstallAppPluginMeta(pluginId: string) {
+  const { [pluginId]: _removed, ...rest } = currentAppPluginMetas;
+  currentAppPluginMetas = rest;
+  setAppPluginMetas(currentAppPluginMetas);
 }

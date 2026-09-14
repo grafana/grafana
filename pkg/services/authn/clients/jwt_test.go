@@ -253,7 +253,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			}
 
 			jwtClient := ProvideJWT(jwtService,
-				connectors.ProvideOrgRoleMapper(tc.cfg,
+				connectors.ProvideOrgRoleMapper(testConfigProvider(t, tc.cfg),
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				tc.cfg, tracing.InitializeTracerForTest())
 			validHTTPReq := &http.Request{
@@ -371,7 +371,7 @@ func TestJWTClaimConfig(t *testing.T) {
 				Header: map[string][]string{
 					jwtHeaderName: {token}},
 			}
-			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(cfg,
+			jwtClient := ProvideJWT(jwtService, connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				cfg, tracing.InitializeTracerForTest())
 			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
@@ -484,7 +484,7 @@ func TestJWTTest(t *testing.T) {
 				},
 			}
 			jwtClient := ProvideJWT(jwtService,
-				connectors.ProvideOrgRoleMapper(cfg,
+				connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				cfg, tracing.InitializeTracerForTest())
 			httpReq := &http.Request{
@@ -540,7 +540,7 @@ func TestJWTStripParam(t *testing.T) {
 		URL: &url.URL{RawQuery: "auth_token=" + token + "&other_param=other_value"},
 	}
 	jwtClient := ProvideJWT(jwtService,
-		connectors.ProvideOrgRoleMapper(cfg,
+		connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 		cfg, tracing.InitializeTracerForTest())
 	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
@@ -599,7 +599,7 @@ func TestJWTSubClaimsConfig(t *testing.T) {
 	}
 
 	jwtClient := ProvideJWT(jwtService,
-		connectors.ProvideOrgRoleMapper(cfg,
+		connectors.ProvideOrgRoleMapper(testConfigProvider(t, cfg),
 			&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 		cfg, tracing.InitializeTracerForTest())
 	identity, err := jwtClient.Authenticate(context.Background(), &authn.Request{

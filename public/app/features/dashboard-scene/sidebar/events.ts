@@ -6,6 +6,7 @@ export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
+  selectOnMove?: boolean;
   source: SceneObject;
   description?: string;
   perform: () => void;

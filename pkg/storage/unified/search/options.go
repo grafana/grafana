@@ -86,7 +86,7 @@ func NewSearchOptions(
 		// MergeManifestsByKind is the single point a future live-manifest source will
 		// be added to; the built-in manifests are the only source today.
 		manifests := resource.MergeManifestsByKind(resource.AppManifests())
-		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
@@ -115,10 +115,22 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
+			IndexDeletedDocuments:          cfg.IndexDeletedDocuments,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+			},
+			// From the garbage collection settings, so trash and storage cannot
+			// disagree about what is expired.
+			TrashRetention: TrashRetentionConfig{
+				// Dry run counts what it would remove and deletes nothing, so trash
+				// stays restorable and this stays off.
+				Enabled:          cfg.EnableGarbageCollection && !cfg.GarbageCollectionDryRun,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 		}, indexMetrics)
 
@@ -139,6 +151,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
+			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,

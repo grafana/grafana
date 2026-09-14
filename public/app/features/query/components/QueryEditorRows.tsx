@@ -46,10 +46,16 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
-  queryLibraryRef?: string;
-  onCancelQueryLibraryEdit?: () => void;
+  editSavedQueryRef?: string;
+  onExitQueryLibraryEdit?: () => void;
+  addingSavedQuery?: boolean;
+  onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
   panelRef?: SceneObjectRef<VizPanel>;
+  /** refId of a row to scroll into view once it renders (e.g. a freshly added query). */
+  scrollToRefId?: string;
+  /** Called after the row identified by scrollToRefId has been scrolled into view. */
+  onScrollIntoView?: () => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -227,10 +233,14 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
-      queryLibraryRef,
-      onCancelQueryLibraryEdit,
+      editSavedQueryRef,
+      onExitQueryLibraryEdit,
+      addingSavedQuery,
+      onCancelAddSavedQuery,
       isOpen,
       panelRef,
+      scrollToRefId,
+      onScrollIntoView,
     } = this.props;
 
     // Scene scope for resolving section-scoped (row/tab) datasource variables, which live on a
@@ -277,9 +287,13 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
-                      queryLibraryRef={queryLibraryRef}
-                      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+                      editSavedQueryRef={editSavedQueryRef}
+                      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
+                      addingSavedQuery={addingSavedQuery}
+                      onCancelAddSavedQuery={onCancelAddSavedQuery}
                       isOpen={isOpen}
+                      scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
+                      onScrollIntoView={onScrollIntoView}
                     />
                   );
 

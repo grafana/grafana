@@ -148,6 +148,27 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
+  describe('null values in the time field (#130379)', () => {
+    // A frame whose time field carries null cells must route to the error view
+    // instead of reaching the chart, where zoom-to-data would propagate a null
+    // timestamp into the dashboard time range and crash range parsing.
+    const frameWithNullTime = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: { custom: {} } },
+      ],
+    });
+
+    it('renders the error view instead of the chart when a time cell is null', () => {
+      renderPanel(undefined, [frameWithNullTime]);
+
+      expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+      expect(screen.getByText(/Unable to render data/)).toBeVisible();
+      expect(screen.getByText(/query A returned a time field with null values/i)).toBeVisible();
+    });
+  });
+
   describe('faceted filter pin-to-sidebar persistence', () => {
     it('calls onOptionsChange with facetedFilterPinned: true when "Pin to sidebar" is clicked', async () => {
       const { onOptionsChange, props } = renderPanelWithFacetedFilter();
@@ -179,6 +200,54 @@ describe('TimeSeriesPanel', () => {
         ...props.options,
         legend: { ...props.options.legend, facetedFilterPinned: false },
       });
+    });
+  });
+
+  describe('TimeComparison high cardinality (#126181)', () => {
+    function makePodFrame(pod: string, opts: { compare?: boolean } = {}) {
+      return createDataFrame({
+        refId: opts.compare ? 'A-compare' : 'A',
+        meta: opts.compare ? { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } } : undefined,
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 2, 3],
+            labels: { pod },
+            config: { custom: {} },
+          },
+        ],
+      });
+    }
+
+    it('renders compare legend names for reordered high-cardinality series', () => {
+      // Current: a, b. Compare window: b, a (reordered) — the #126181 mismatch scenario.
+      // Color pairing is covered in utils.test.ts; here we lock the visible legend contract:
+      // names stay tied to labels (with " (comparison)"), and compare series use dashed icons.
+      renderPanel(undefined, [
+        makePodFrame('a'),
+        makePodFrame('b'),
+        makePodFrame('b', { compare: true }),
+        makePodFrame('a', { compare: true }),
+      ]);
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
+
+      for (const label of ['a', 'b', 'a (comparison)', 'b (comparison)']) {
+        expect(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).toBeInTheDocument();
+      }
+
+      const currentIcon = within(screen.getByTestId(selectors.components.VizLegend.seriesName('a'))).getByTestId(
+        'series-icon'
+      );
+      const compareIcon = within(
+        screen.getByTestId(selectors.components.VizLegend.seriesName('a (comparison)'))
+      ).getByTestId('series-icon');
+
+      // Solid current-period icon vs dashed compare icon (lineStyle from alignTimeRangeCompareData).
+      expect(currentIcon.style.borderRadius).toBeTruthy();
+      expect(compareIcon.style.backgroundSize).toBe('6px 4px');
     });
   });
 });

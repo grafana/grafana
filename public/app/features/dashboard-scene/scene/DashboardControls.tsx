@@ -35,6 +35,7 @@ import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
+import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { type DashboardScene } from './DashboardScene';
@@ -223,6 +224,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
+            {!hideVariableControls && config.featureToggles.dashboardNewLayouts && (
+              <AddControlsButton dashboard={dashboard} />
+            )}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
@@ -276,6 +280,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+      {!hideVariableControls && config.featureToggles.dashboardNewLayouts && (
+        <AddControlsButton dashboard={dashboard} />
+      )}
       <DefaultControlsLoadingSkeleton
         dashboard={dashboard}
         hideVariableControls={hideVariableControls}

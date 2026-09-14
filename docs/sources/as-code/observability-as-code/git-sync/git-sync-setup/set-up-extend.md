@@ -37,36 +37,43 @@ In Grafana OSS/Enterprise, Git Sync uses webhooks to enable real-time updates fr
 To set up webhooks:
 
 1. Expose your Grafana instance to the public Internet.
-
-- Use port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
-- The permissions set in your GitHub access token provide the authorization for this communication.
-
+   - Use port forwarding and DNS, `ngrok`, or any other method you prefer.
+   - The permissions set in your GitHub access token provide the authorization for this communication.
 1. After you have the public URL, add it to your Grafana configuration file:
-
-```ini
-[server]
-root_url = https://<PUBLIC_DOMAIN>
-```
-
+   ```ini
+   [server]
+   root_url = https://<PUBLIC_DOMAIN>
+   ```
 1. Replace _`<PUBLIC_DOMAIN>`_ with your public domain.
 
 To check the configured webhooks, go to **Administration > General > Provisioning** and click the **View** link for your GitHub repository.
 
-{{< admonition type="warning" >}}
+### Webhook limits
 
-GitHub limits each repository to **20 webhooks per event type** (for example, `push` and `pull_request`). Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. After the limit is exceeded, GitHub rejects new webhooks with an error such as:
+Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. Since [Git providers limit the amount of webhooks](#webhook-limitations-per-provider) you can set for each repository, when the limit is exceeded, your Git provider rejects new webhooks.
+
+For example, in GitHub you can get an error such as:
 
 ```
 GitHub API error (HTTP 422: Validation Failed: The "pull_request" event cannot have more than 20 hooks; The "push" event cannot have more than 20 hooks)
 ```
 
-If you hit this limit, remove unused or duplicate webhooks from your repository's **Settings > Webhooks** page, or disable webhook integration for connections that don't need real-time sync so those instances poll on an interval instead. Refer to [Webhook options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#webhook-options) to disable webhook integration.
+If you hit this limit, you can either:
 
-{{< /admonition >}}
+- Remove unused or duplicate webhooks from your repository's **Settings > Webhooks** page.
+- Disable webhook integration for connections that don't need real-time sync so those instances poll on an interval instead. Refer to [Webhook options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#webhook-options) to disable webhook integration.
 
-{{< admonition type="note" >}}
+#### Webhook limitations per provider
 
-If your `[server] root_url` must point at an internal address (for example, when Grafana runs behind a private ingress in a Kubernetes cluster), set the publicly-reachable URL with `[provisioning] public_root_url` instead. This URL is used both to register webhook callbacks with the Git provider and as the base for screenshot images embedded in pull-request comments, which the Git provider's servers fetch from the public internet.
+The following limits apply:
+
+- GitHub limits each repository to 20 webhooks per event type, such `push` and `pull_request`. For more information refer to the official [GitHub webhooks documentation](https://docs.github.com/en/webhooks/types-of-webhooks).
+- GitLab defaults to 100 webhooks for each project, 50 for each group, although subgroup webhooks are not counted towards parent group limits. Refer to [GitLab settings](https://docs.gitlab.com/user/gitlab_com/#other-limits) for more information.
+- BitBucket limits to 50 webhooks per repository. Refer to [BitBucket webhook documentation](https://support.atlassian.com/bitbucket-cloud/docs/manage-webhooks/#Create-webhooks) for more details.
+
+### Set a publicly-reachable URL
+
+If you need to point `[server] root_url` to an internal address (for example, when Grafana runs behind a private ingress in a Kubernetes cluster), set the publicly-reachable URL with `[provisioning] public_root_url` instead. This URL is used both to register webhook callbacks with the Git provider and as the base for screenshot images embedded in pull-request comments, which the Git provider's servers fetch from the public internet.
 
 ```ini
 [server]
@@ -76,9 +83,7 @@ root_url = http://internal.cluster.local
 public_root_url = https://<PUBLIC_DOMAIN>
 ```
 
-The per-repository `spec.webhook.baseUrl` field still overrides `public_root_url` for webhook registration; screenshot URLs always use `public_root_url` (or `root_url` when unset).
-
-{{< /admonition >}}
+The per-repository `spec.webhook.baseUrl` field still overrides `public_root_url` for webhook registration, and screenshot URLs always use `public_root_url` (or `root_url` when unset).
 
 ### Expose necessary paths only
 
@@ -86,21 +91,19 @@ If your security setup doesn't permit publicly exposing the Grafana instance, yo
 
 For information about the traffic between Grafana and your Git server, refer to [Network connectivity and IP allowlisting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#network-connectivity-and-ip-allowlisting).
 
-The necessary paths required to be exposed are, in RegExp:
-
-- `/apis/provisioning\.grafana\.app/v0(alpha1)?/namespaces/[^/]+/repositories/[^/]+/(webhook|render/.*)$`
+In RegExp, the necessary paths required to be exposed are `/apis/provisioning\.grafana\.app/v0(alpha1)?/namespaces/[^/]+/repositories/[^/]+/(webhook|render/.*)$`.
 
 ## Set up image rendering for dashboard previews
 
 {{< admonition type="caution" >}}
 
-Only available in Grafana OSS and Grafana Enterprise.
+Available in Grafana OSS and Grafana Enterprise only.
 
 {{< /admonition >}}
 
-Set up image rendering to add visual previews of dashboard updates directly in pull requests. Image rendering also requires webhooks.
+To set up image rendering to add visual previews of dashboard updates directly in pull requests, **install the Grafana Image Renderer** in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
+Image rendering requires webhooks.
 
 ## Next steps
 

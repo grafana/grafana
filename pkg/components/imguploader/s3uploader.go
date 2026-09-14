@@ -3,6 +3,7 @@ package imguploader
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -38,13 +39,15 @@ type S3Uploader struct {
 var newS3Client = func(cfg aws.Config, opts S3UploaderOptions) (s3ifaces.S3Client, error) {
 	svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		if opts.Endpoint != "" {
-			o.BaseEndpoint = aws.String(opts.Endpoint)
+			o.BaseEndpoint = aws.String(normalizeEndpoint(opts.Endpoint))
 		}
 		o.UsePathStyle = opts.PathStyleAccess
 	})
 	return &s3ClientWrapper{
-		uploader: manager.NewUploader(svc),
-		presign:  s3.NewPresignClient(svc),
+		uploader: manager.NewUploader(svc, func(u *manager.Uploader) {
+			u.RequestChecksumCalculation = cfg.RequestChecksumCalculation
+		}),
+		presign: s3.NewPresignClient(svc),
 	}, nil
 }
 
@@ -76,18 +79,7 @@ func NewS3Uploader(opts S3UploaderOptions) *S3Uploader {
 }
 
 func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
-	loadOpts := []func(*config.LoadOptions) error{}
-	if u.opts.Region != "" {
-		loadOpts = append(loadOpts, config.WithRegion(u.opts.Region))
-	}
-	// When explicit credentials are configured they take precedence; otherwise fall
-	// back to the default chain (env vars, web identity, ECS endpoint, EC2 IMDS).
-	if u.opts.AccessKey != "" {
-		loadOpts = append(loadOpts, config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(u.opts.AccessKey, u.opts.SecretKey, ""),
-		))
-	}
-	cfg, err := config.LoadDefaultConfig(ctx, loadOpts...)
+	cfg, err := buildAWSConfig(ctx, u.opts)
 	if err != nil {
 		return "", err
 	}
@@ -137,4 +129,36 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	}
 
 	return result.Location, nil
+}
+
+// normalizeEndpoint ensures a custom endpoint carries a scheme.
+// v2 SDK requires BaseEndpoint to be a full URI and rejects a bare host.
+// v1 SDK accepted a bare host and defaulted the scheme to https.
+// Preserve that behavior so existing S3-compatible configurations keep working.
+func normalizeEndpoint(endpoint string) string {
+	if endpoint == "" || strings.Contains(endpoint, "://") {
+		return endpoint
+	}
+	return "https://" + endpoint
+}
+
+// buildAWSConfig loads the AWS config for the uploader.
+// Explicit credentials take precedence, otherwise the default chain is used.
+func buildAWSConfig(ctx context.Context, opts S3UploaderOptions) (aws.Config, error) {
+	loadOpts := []func(*config.LoadOptions) error{
+		// S3-compatible stores (like Ceph) do not always support the data-integrity checksums v2 SDK sends by default,
+		// and reject the upload with XAmzContentSHA256Mismatch.
+		// The v1 SDK did not send them, so restrict checksums to when required to preserve the previous behavior.
+		config.WithRequestChecksumCalculation(aws.RequestChecksumCalculationWhenRequired),
+		config.WithResponseChecksumValidation(aws.ResponseChecksumValidationWhenRequired),
+	}
+	if opts.Region != "" {
+		loadOpts = append(loadOpts, config.WithRegion(opts.Region))
+	}
+	if opts.AccessKey != "" {
+		loadOpts = append(loadOpts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(opts.AccessKey, opts.SecretKey, ""),
+		))
+	}
+	return config.LoadDefaultConfig(ctx, loadOpts...)
 }

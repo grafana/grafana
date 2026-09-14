@@ -28,7 +28,7 @@ describe('downloadDiagnosticsForQueries', () => {
   it('does nothing when there are no visible queries', async () => {
     const fetch = setupBackendSrv({});
 
-    await downloadDiagnosticsForQueries([{ refId: 'A', hide: true }], '1', '2');
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A', hide: true }], from: '1', to: '2' });
 
     expect(fetch).not.toHaveBeenCalled();
     expect(saveAs).not.toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe('downloadDiagnosticsForQueries', () => {
     });
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
-    await downloadDiagnosticsForQueries(queries, '100', '200');
+    await downloadDiagnosticsForQueries({ queries, from: '100', to: '200' });
 
     expect(fetch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -62,7 +62,7 @@ describe('downloadDiagnosticsForQueries', () => {
     const panel = { id: 1, type: 'timeseries' };
     const dashboard = { uid: 'd1', panels: [panel] };
 
-    await downloadDiagnosticsForQueries([{ refId: 'A' }], '100', '200', undefined, panel, dashboard);
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '100', to: '200', panel, dashboard });
 
     expect(fetch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -74,11 +74,28 @@ describe('downloadDiagnosticsForQueries', () => {
     );
   });
 
+  it('includes the captured frontend panel data in the POST body when provided', async () => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    const fetch = setupBackendSrv({ data: blob, headers: new Headers() });
+    const panelData = { version: 1, panelKey: 'panel-1', pluginId: 'timeseries', frames: [] };
+
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '100', to: '200', panelData });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/ds/diagnostics',
+        method: 'POST',
+        // paneldata.json is bundled server-side from this, and is what querydata.json gets diffed against.
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }], panelData },
+      })
+    );
+  });
+
   it('falls back to a generated filename when no Content-Disposition is returned', async () => {
     const blob = new Blob(['bundle'], { type: 'application/gzip' });
     setupBackendSrv({ data: blob, headers: new Headers() });
 
-    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '1', to: '2' });
 
     expect(saveAs).toHaveBeenCalledTimes(1);
     const [, filename] = jest.mocked(saveAs).mock.calls[0];
@@ -166,7 +183,7 @@ describe('Content-Disposition filename parsing', () => {
     const blob = new Blob(['bundle'], { type: 'application/gzip' });
     setupBackendSrv({ data: blob, headers: new Headers({ 'Content-Disposition': header }) });
 
-    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '1', to: '2' });
 
     expect(saveAs).toHaveBeenCalledWith(blob, expected);
   });
@@ -181,7 +198,7 @@ describe('Content-Disposition filename parsing', () => {
     const blob = new Blob(['bundle'], { type: 'application/gzip' });
     setupBackendSrv({ data: blob, headers: new Headers({ 'Content-Disposition': header }) });
 
-    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '1', to: '2' });
 
     expect(saveAs).toHaveBeenCalledTimes(1);
     const [, filename] = jest.mocked(saveAs).mock.calls[0];
@@ -198,7 +215,7 @@ describe('abort signal handling', () => {
     const fetch = setupBackendSrv({ data: new Blob(['x']), headers: new Headers() });
     const { signal } = new AbortController();
 
-    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2', signal);
+    await downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '1', to: '2', signal });
 
     // The drawer's AbortController.signal must reach getBackendSrv so cancel/unmount can abort the
     // in-flight request; showErrorAlert stays false so the drawer surfaces failures itself.
@@ -232,7 +249,7 @@ describe('abort signal handling', () => {
     const fetch = jest.fn().mockReturnValue(throwError(() => err));
     jest.mocked(getBackendSrv).mockReturnValue({ fetch } as unknown as ReturnType<typeof getBackendSrv>);
 
-    await expect(downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2')).rejects.toBe(err);
+    await expect(downloadDiagnosticsForQueries({ queries: [{ refId: 'A' }], from: '1', to: '2' })).rejects.toBe(err);
     expect(saveAs).not.toHaveBeenCalled();
   });
 });

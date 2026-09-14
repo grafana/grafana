@@ -64,4 +64,43 @@ describe('alerting route guards', () => {
       expect(guard()).toEqual([]);
     });
   });
+
+  describe('Import to Grafana Alerting route', () => {
+    const importToGmaPath = '/alerting/import-to-gma';
+
+    it('allows users holding both convert permissions', () => {
+      contextSrv.user.permissions = {
+        [AccessControlAction.AlertingRuleCreate]: true,
+        [AccessControlAction.AlertingProvisioningSetStatus]: true,
+      };
+
+      const guard = getRouteRolesGuard(importToGmaPath);
+      expect(guard()).toEqual([]);
+    });
+
+    it('rejects users with only rule-create permission', () => {
+      contextSrv.user.permissions = {
+        [AccessControlAction.AlertingRuleCreate]: true,
+      };
+
+      const guard = getRouteRolesGuard(importToGmaPath);
+      expect(guard()).toEqual(['Reject']);
+    });
+
+    it('rejects users with only provisioning-set-status permission', () => {
+      contextSrv.user.permissions = {
+        [AccessControlAction.AlertingProvisioningSetStatus]: true,
+      };
+
+      const guard = getRouteRolesGuard(importToGmaPath);
+      expect(guard()).toEqual(['Reject']);
+    });
+
+    it('rejects users with neither permission', () => {
+      contextSrv.user.permissions = {};
+
+      const guard = getRouteRolesGuard(importToGmaPath);
+      expect(guard()).toEqual(['Reject']);
+    });
+  });
 });

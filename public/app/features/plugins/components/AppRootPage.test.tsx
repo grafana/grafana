@@ -268,11 +268,11 @@ describe('AppRootPage', () => {
 
     renderUnderRouter();
 
-    expect(await screen.findByText('my great component')).toBeVisible();
     expect(await screen.findByTestId(selectors.components.Plugins.appPage('my-awesome-plugin'))).toHaveAttribute(
       'data-plugin-id',
       'my-awesome-plugin'
     );
+    expect(await screen.findByText('my great component')).toBeVisible();
   });
 
   it('refetches registered plugin settings when re-entering the route after uninstall', async () => {

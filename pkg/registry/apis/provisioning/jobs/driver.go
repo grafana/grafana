@@ -9,6 +9,8 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,8 +19,10 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // Store is an abstraction for the storage API.
@@ -32,7 +36,7 @@ type Store interface {
 	// API error if the job no longer exists.
 	//
 	// If err is not nil, the job and rollback values are always nil.
-	Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error)
+	Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error)
 
 	// Complete marks a job as completed and removes it from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
@@ -83,8 +87,16 @@ type jobProcessor struct {
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
 
+	// driverID identifies this worker within the pod, used as the driver_id label on
+	// the in-flight gauge so per-worker saturation can be observed.
+	driverID string
+
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
+
+	// processed records the event-processing metrics (source counts + delivery
+	// latency) once a claim confirms a genuine pickup.
+	processed *usinformer.ProcessedMetrics
 
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
@@ -97,7 +109,9 @@ func newJobProcessor(
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
+	driverID string,
 	metrics *JobMetrics,
+	processed *usinformer.ProcessedMetrics,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
@@ -107,30 +121,64 @@ func newJobProcessor(
 		repoGetter:           repoGetter,
 		historicJobs:         historicJobs,
 		workers:              workers,
+		driverID:             driverID,
 		metrics:              metrics,
+		processed:            processed,
 	}
 }
 
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
-// to process; both mean the key can be dropped.
-func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) error {
+// to process; both mean the key can be dropped. trigger records what enqueued
+// the key so the start of processing can be attributed to a live event, a
+// re-list, or the initial list. enqueuedAt is when the key joined the work
+// queue, used to record how late the event arrived once the claim confirms this
+// is a genuine (non-duplicate) pickup.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
 
 	// Claim the job to work on.
-	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name)
+	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name, d.driverID)
 	if err != nil {
 		if !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 		}
 		return apifmt.Errorf("failed to claim job: %w", err)
 	}
+	// Mark this worker slot busy for the whole claim->release window — including job
+	// completion and rollback. This release defer is registered BEFORE the rollback
+	// defer below so LIFO runs rollback first: the slot stays busy (and busy_seconds
+	// keeps accruing) until rollback actually finishes, which matters when the storage
+	// API is slow. busy_seconds thus measures full slot occupancy, not just the worker's
+	// processing time. Metrics methods are nil-safe for drivers built without metrics.
+	inFlightAction := string(claimedJob.Spec.Action)
+	slotStart := time.Now()
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer func() {
+		d.metrics.DecInFlight(d.driverID, inFlightAction)
+		d.metrics.RecordBusySeconds(d.driverID, inFlightAction, time.Since(slotStart).Seconds())
+	}()
+
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
+
+	// The claim is the cluster-wide exactly-once gate, so this is the point that
+	// attributes each processed job to what enqueued its key. errPostClaim
+	// outcomes still count — processing did start; the execution outcome remains
+	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
+	// claim-time RecordWaitTime precedent.
+	d.processed.RecordProcessed(trigger)
+	// The claim confirms this is a genuine pickup (a job claimed elsewhere returns
+	// ErrAlreadyClaimed above, before here), so record how late the event reached
+	// the queue: from job creation (the event's origin) to when it was enqueued.
+	// This excludes the time the key then waited in the queue for a worker.
+	if !enqueuedAt.IsZero() {
+		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+	}
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
@@ -153,6 +201,12 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
 	defer cancel() // Ensure resources are released when the function returns
+
+	// Scope the git client stats to this job, so the round trips, retries, fetched
+	// objects/bytes and cache hits/misses it drives can be attributed back to the
+	// one execution at completion. Populated only when the repository makes git
+	// calls; stays zero otherwise (e.g. local repositories).
+	jobctx, gitStats := gitrepo.WithClientStats(jobctx)
 
 	// Set up lease renewal goroutine
 	leaseRenewalCtx, cancelLeaseRenewal := context.WithCancel(jobctx)
@@ -196,6 +250,59 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
 	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
+
+	// variance further breaks an action down (full vs incremental) and only applies
+	// to pull jobs. The sync worker is reused internally by delete/move/migrate to
+	// reconcile, tagging their shared recorder as "full" — so only trust the variance
+	// when the top-level job is actually a pull, otherwise it leaks onto other actions.
+	variance := ""
+	if d.currentJob.Spec.Action == provisioning.JobActionPull {
+		variance = recorder.Variance()
+	}
+	resourcesChanged := sumTotalChanges(d.currentJob.Status.Summary)
+	resourcesDryRun := sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary)
+	// Per-execution throughput: resources processed per second of wall-clock time.
+	// Pull-request jobs do their work as dry-runs (they never change anything), so
+	// they are measured by the dry-run count, matching RecordJob's numerator.
+	resourcesProcessed := resourcesChanged
+	if d.currentJob.Spec.Action == provisioning.JobActionPullRequest {
+		resourcesProcessed = resourcesDryRun
+	}
+	var opsPerSecond float64
+	if secs := duration.Seconds(); secs > 0 {
+		opsPerSecond = float64(resourcesProcessed) / secs
+	}
+	// Attribute the git client work to this one execution. The round-trip count
+	// also feeds a histogram (per-execution percentiles a fleet counter cannot
+	// give); the rest ride the span and log line for forensics on a single job.
+	git := gitStats.Snapshot()
+	span.SetAttributes(
+		attribute.String("variance", variance),
+		attribute.Int("resources_processed", resourcesProcessed),
+		attribute.Float64("throughput_ops_per_second", opsPerSecond),
+		attribute.Int64("git.http_requests", git.HTTPRequests),
+		attribute.Int64("git.http_retries", git.HTTPRetries),
+		attribute.Int64("git.objects_fetched", git.ObjectsFetched),
+		attribute.Int64("git.bytes_fetched", git.BytesFetched),
+		attribute.Int64("git.cache_hits", git.CacheHits),
+		attribute.Int64("git.cache_misses", git.CacheMisses),
+	)
+	// Record the job metric here, from the authoritative final status, rather than in
+	// each worker: this covers every action uniformly, uses the driver-measured
+	// duration (accurate even on timeout), and makes the `outcome` label reflect the
+	// job status (success/warning/error) — so a job that "completed with errors" is
+	// recorded as an error, not a success.
+	if d.metrics != nil {
+		d.metrics.RecordJob(
+			string(d.currentJob.Spec.Action),
+			variance,
+			string(d.currentJob.Status.State),
+			resourcesChanged,
+			resourcesDryRun,
+			duration.Seconds(),
+		)
+		d.metrics.RecordGitClientStats(string(d.currentJob.Spec.Action), variance, git.HTTPRequests)
+	}
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
@@ -211,13 +318,30 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 		"errorCount", len(status.Errors),
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
+		"variance", variance,
+		"resourcesProcessed", resourcesProcessed,
+		"opsPerSecond", opsPerSecond,
+		"gitHTTPRequests", git.HTTPRequests,
+		"gitHTTPRetries", git.HTTPRetries,
+		"gitObjectsFetched", git.ObjectsFetched,
+		"gitBytesFetched", git.BytesFetched,
+		"gitCacheHits", git.CacheHits,
+		"gitCacheMisses", git.CacheMisses,
 	}
-	switch {
-	case err != nil:
-		logger.Error("job failed", append(logFields, "error", err)...)
-	case status.State == provisioning.JobStateError:
-		logger.Error("job completed with errors", logFields...)
-	case status.State == provisioning.JobStateWarning:
+	if err != nil {
+		logFields = append(logFields, "error", err)
+	}
+	// Key the log level off the final job state, not off err: a worker can return
+	// an error that maps to a warning state (e.g. a feature disabled by
+	// configuration), which should not be logged or alerted as a failure.
+	switch status.State {
+	case provisioning.JobStateError:
+		if err != nil {
+			logger.Error("job failed", logFields...)
+		} else {
+			logger.Error("job completed with errors", logFields...)
+		}
+	case provisioning.JobStateWarning:
 		logger.Warn("job completed with warnings", logFields...)
 	default:
 		logger.Info("job complete", logFields...)
@@ -438,6 +562,19 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			return nil
 		}
 
+		// Most workers talk to the repository, so a repository whose credentials
+		// are known to be broken only produces a failed job the user can't act on
+		// from the job itself. Skip it with a warning instead of burning the job
+		// success-rate SLI; the repository status stays the place the reason lives.
+		// The synthetic test action is exempt: its worker does no repository work
+		// and exists purely to exercise the queue, so it must run even when the
+		// repository is unhealthy.
+		if job.Spec.Action != provisioning.JobActionTest && repositoryAuthenticationFailed(r) {
+			logger.Info("repository authentication failed - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository authentication failed - job skipped")).Build())
+			return nil
+		}
+
 		err = worker.Process(ctx, repo, *job, recorder)
 		if err != nil {
 			span.RecordError(err)
@@ -450,6 +587,65 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	return err
 }
 
+// repositoryAuthenticationFailed reports whether the repository's latest health
+// check concluded its credentials are broken (revoked or expired), so any job
+// against it would fail in a way only the user can fix on the repository itself.
+//
+// The check is intentionally narrow, so a repository that is merely
+// misconfigured or briefly unavailable is not skipped:
+//   - Checked > 0: trust the status only once a health check has actually run,
+//     so a brand-new repository is not skipped before its first check.
+//   - Healthy == false with Error == HealthFailureHealth: a webhook-permission
+//     gap (HealthFailureHook) doesn't mean content reads/writes are broken.
+//   - Ready == AuthenticationFailed: keys off the structured condition reason,
+//     not health message text, so an accessible-but-blocked failure (e.g. branch
+//     protection, classified InvalidSpec) does not trigger the skip.
+//   - ObservedGeneration == Generation: ignore a stale condition from before a
+//     spec edit that may already have repaired the credentials.
+func repositoryAuthenticationFailed(r *provisioning.Repository) bool {
+	health := r.Status.Health
+	if health.Checked == 0 || health.Healthy || health.Error != provisioning.HealthFailureHealth {
+		return false
+	}
+
+	ready := meta.FindStatusCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+	return ready != nil &&
+		ready.Status == metav1.ConditionFalse &&
+		ready.Reason == provisioning.ReasonAuthenticationFailed &&
+		ready.ObservedGeneration == r.Generation
+}
+
+// sumTotalChanges totals the per-summary TotalChanges for the duration-histogram
+// bucket. Each JobResourceSummary carries an action-aware change count set by the
+// progress recorder as results are recorded (see updateSummary), so the driver only
+// has to add them up.
+func sumTotalChanges(summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		total += int(s.TotalChanges)
+	}
+	return total
+}
+
+// sumTotalDryRun totals the resources a job processed while doing its work.
+func sumTotalDryRun(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		if action == provisioning.JobActionPullRequest {
+			total += int(s.Create + s.Update + s.Delete + s.Noop)
+		} else {
+			total += int(s.TotalChanges)
+		}
+	}
+	return total
+}
+
 func (d *jobProcessor) onProgress() ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {
 		ctx, span := tracing.Start(ctx, "provisioning.jobs.update_progress")
@@ -458,7 +654,7 @@ func (d *jobProcessor) onProgress() ProgressFn {
 		logging.FromContext(ctx).Debug("job progress", "status", status)
 
 		const maxRetries = 3
-		for attempt := 0; attempt < maxRetries; attempt++ {
+		for attempt := range maxRetries {
 			d.mu.Lock()
 			if d.currentJob == nil {
 				d.mu.Unlock()

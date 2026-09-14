@@ -64,45 +64,33 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
 
 	// Get original imported intervals (before deduplication)
-	importedMute := e.importedConfig.ToGrafanaMuteTimeIntervals()
-	importedTime := e.importedConfig.ToGrafanaTimeIntervals()
-
-	if len(importedMute) == 0 && len(importedTime) == 0 {
+	imported := e.importedConfig.ToGrafanaTimeIntervals()
+	if len(imported) == 0 {
 		return nil, nil
 	}
 
-	// Get Grafana time intervals for merge
-	grafanaMute := e.rev.Config.AlertmanagerConfig.MuteTimeIntervals
-	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
-
 	// Merge to get the renames map (only renamed if name collision occurs)
 	timeIntervals, _, added := merge.TimeIntervals(
-		grafanaMute,
-		grafanaTime,
-		importedMute,
-		importedTime,
+		e.rev.Config.TimeIntervals,
+		imported,
 		e.identifier,
 	)
 
-	importedTitles := make(map[string]struct{}, len(added))
-	for _, title := range added {
-		importedTitles[title] = struct{}{}
-	}
-
-	// Filter to imported intervals
-	result := make([]v1.MuteTimeInterval, 0, len(added))
-	for _, ti := range timeIntervals {
-		if _, ok := importedTitles[ti.Name]; !ok {
+	result := make([]v1.TimeInterval, 0, len(added))
+	for _, uid := range added {
+		ti, ok := timeIntervals[uid]
+		if !ok {
 			continue
 		}
 
-		result = append(result, v1.MuteTimeInterval(ti))
+		ti.Provenance = models.ProvenanceConvertedPrometheus
+		result = append(result, ti)
 	}
 
 	return result, nil
@@ -132,7 +120,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 
 	route := e.importedConfig.ToGrafanaRoute()
 
-	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
+	renamed := merge.DeduplicateResources(*e.rev.Config, *e.importedConfig, e.identifier)
 
 	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 

@@ -227,10 +227,10 @@ func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		binaryKey := namespacedKey(nsPrefix, "binary-key")
 
 		binaryData := []byte{0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD}
-		saveKVHelper(t, kv, ctx, testSection, binaryKey, bytes.NewReader(binaryData))
+		saveKVHelper(t, kv, ctx, kvpkg.SearchSnapshotDataSection, binaryKey, bytes.NewReader(binaryData))
 
 		// Verify binary data
-		reader, err := kv.Get(ctx, testSection, binaryKey)
+		reader, err := kv.Get(ctx, kvpkg.SearchSnapshotDataSection, binaryKey)
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
@@ -744,6 +744,27 @@ func runTestKVBatchGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		for _, r := range results {
 			assert.Equal(t, testData[r.key], r.value, "key = %s", r.key)
 		}
+	})
+
+	t.Run("batch get retains request order beyond ten keys", func(t *testing.T) {
+		// The SQL backend rebuilds the request order from an index column. Three
+		// keys cannot tell a numeric ordering from a lexicographic one, so use
+		// enough that 10 would sort before 2 if the index were compared as text.
+		const numKeys = 20
+		names := make([]string, numKeys)
+		for i := range numKeys {
+			names[i] = fmt.Sprintf("ordered-key-%d", i)
+			saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, names[i]), strings.NewReader(fmt.Sprintf("value-%d", i)))
+		}
+
+		keys := namespacedKeys(nsPrefix, names)
+		actualKeys := make([]string, 0, numKeys)
+		for item, err := range kv.BatchGet(ctx, testSection, keys) {
+			require.NoError(t, err)
+			require.NoError(t, item.Value.Close())
+			actualKeys = append(actualKeys, item.Key)
+		}
+		assert.Equal(t, keys, actualKeys, "BatchGet must return keys in request order")
 	})
 
 	t.Run("batch get with empty section", func(t *testing.T) {

@@ -128,7 +128,7 @@ func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 		acService:         acSvc,
 		permissions:       pSvc,
 		store:             storeMock,
-		db:                db.InitTestDB(t),
+		db:                db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		log:               log.NewNopLogger(),
 		secretScanEnabled: false,
 	}

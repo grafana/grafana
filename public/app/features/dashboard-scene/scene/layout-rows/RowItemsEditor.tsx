@@ -3,9 +3,11 @@ import { Checkbox } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { getGroupSelectedCategory } from '../layouts-shared/GroupSelectedActions';
+
 import { type RowItems } from './RowItems';
 
-export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
+export function getSidebarOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
   const categoryId = 'rows-options';
   const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({
@@ -15,7 +17,7 @@ export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[]
     })
   );
 
-  return [options];
+  return [getGroupSelectedCategory(model.getRows()), options];
 }
 
 function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {

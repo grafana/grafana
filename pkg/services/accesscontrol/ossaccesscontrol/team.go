@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type TeamPermissionsService struct {
@@ -56,6 +57,14 @@ func ProvideTeamPermissions(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
+	// The hooks below run inside transactions that resourcepermissions opens on sql,
+	// so their table names must resolve for that same database. Deriving the helper
+	// from sql keeps the two in step.
+	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	options := resourcepermissions.Options{
 		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
@@ -99,11 +108,11 @@ func ProvideTeamPermissions(
 			}
 			switch permission {
 			case "Member":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
 			case "Admin":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
+				return teamimpl.RemoveTeamMemberHook(dbHelper, session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,
 					UserID: user.ID,
 					TeamID: teamId,

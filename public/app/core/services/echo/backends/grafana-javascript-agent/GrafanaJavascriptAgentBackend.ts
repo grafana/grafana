@@ -101,6 +101,7 @@ export class GrafanaJavascriptAgentBackend
         'Failed sending payload to the receiver',
       ],
       ignoreUrls,
+      trackResources: options.trackResources,
       sessionTracking: {
         persistent: true,
         // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the

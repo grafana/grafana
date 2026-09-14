@@ -3,17 +3,16 @@ import { useCallback, useMemo } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
+import { ContentOutlineItem, QUERIES_PANEL_ID } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
-import { updateQueryLibraryRefAction } from './state/explorePane';
+import { setAddingSavedQueryAction, updateEditSavedQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -30,32 +29,35 @@ const makeSelectors = (exploreId: string) => {
     getQueryResponse: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.queryResponse),
     getHistory: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.history),
     getEventBridge: createSelector(exploreItemSelector, (s: ExploreItemState | undefined) => s!.eventBridge),
-    getDatasourceInstanceSettings: createSelector(
+    getDatasourceUid: createSelector(
       exploreItemSelector,
-      (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
+      (s: ExploreItemState | undefined) => s!.datasourceInstance?.uid
     ),
-    getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
+    getEditSavedQueryRef: createSelector(exploreItemSelector, (s) => s!.editSavedQueryRef),
+    getAddingSavedQuery: createSelector(exploreItemSelector, (s) => s!.addingSavedQuery),
   };
 };
 
 export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
-  const { openDrawer } = useQueryLibraryContext();
   const {
     getQueries,
-    getDatasourceInstanceSettings,
+    getDatasourceUid,
     getQueryResponse,
     getHistory,
     getEventBridge,
-    getQueryLibraryRef,
+    getEditSavedQueryRef,
+    getAddingSavedQuery,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
-  const dsSettings = useSelector(getDatasourceInstanceSettings);
+  const datasourceUid = useSelector(getDatasourceUid);
+  const { settings: dsSettings } = useDataSourceInstanceSettings(datasourceUid);
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
-  const queryLibraryRef = useSelector(getQueryLibraryRef);
+  const editSavedQueryRef = useSelector(getEditSavedQueryRef);
+  const addingSavedQuery = useSelector(getAddingSavedQuery);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -98,30 +100,28 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onCancelQueryLibraryEdit = () => {
-    // Store the current queryLibraryRef before clearing it
-    const originalQueryRef = queryLibraryRef;
+  const onExitQueryLibraryEdit = useCallback(
+    () => dispatch(updateEditSavedQueryRefAction({ exploreId, editSavedQueryRef: undefined })),
+    [dispatch, exploreId]
+  );
 
-    // Clear the queryLibraryRef to exit editing mode
-    dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
-
-    // Open drawer with the original query highlighted
-    if (originalQueryRef) {
-      openDrawer({
-        datasourceFilters: [],
-        options: {
-          context: 'explore',
-          highlightQuery: originalQueryRef,
-        },
-      });
-    }
-  };
+  const onCancelAddSavedQuery = useCallback(() => {
+    dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: false }));
+  }, [dispatch, exploreId]);
 
   const onQueryOpenChanged = () => {
     // Disables compact mode when query is opened.
     // Compact mode can also be disabled by opening Content Outline.
     changeCompactMode(false);
   };
+
+  // QueryEditorRows dereferences dsSettings unconditionally, so it cannot mount without them.
+  // Only the first resolution can leave us with nothing to render: a later datasource switch keeps
+  // serving the previous settings while the next lookup is in flight, so the editors stay mounted
+  // instead of being torn down and rebuilt. Both windows are a microtask — too short for a spinner.
+  if (!dsSettings) {
+    return null;
+  }
 
   return (
     <QueryEditorRows
@@ -140,15 +140,17 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      queryLibraryRef={queryLibraryRef}
-      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+      editSavedQueryRef={editSavedQueryRef}
+      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
+      addingSavedQuery={addingSavedQuery}
+      onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}
           icon="arrow"
           key={refId}
-          panelId="Queries"
+          panelId={QUERIES_PANEL_ID}
           customTopOffset={-10}
           level="child"
         >

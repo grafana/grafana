@@ -9,12 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type decodedResults struct {
+	items          []searchv0.ResultItem
+	lastSortFields []string
+}
+
 // searchResults maps a backend search response into the public envelope.
 //
 // limit is the page size that was requested; it decides whether a continue
 // token is offered, since the backend does not say whether more results exist.
 func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.SearchResults, error) {
-	items, err := resultItems(res.GetResults(), kind)
+	decoded, err := decodeResults(res, kind)
 	if err != nil {
 		return nil, err
 	}
@@ -24,12 +29,31 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 		Metadata: searchv0.ResultsMetadata{
 			TotalHits:         res.GetTotalHits(),
 			TotalHitsRelation: totalHitsRelation(res.GetTotalHitsExact()),
-			Continue:          continueToken(res.GetResults(), limit, res.GetTotalHitsExact()),
+			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact()),
 		},
-		Items:  items,
+		Items:  decoded.items,
 		Facets: facets(res.GetFacet()),
 	}
 	return out, nil
+}
+
+// trashResults maps a backend search response into the trash envelope. No facets:
+// trash never requests any, so the backend never returns any.
+func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.TrashResults, error) {
+	decoded, err := decodeResults(res, kind)
+	if err != nil {
+		return nil, err
+	}
+
+	return &searchv0.TrashResults{
+		TypeMeta: metaForKind(searchv0.KindTrashResults),
+		Metadata: searchv0.ResultsMetadata{
+			TotalHits:         res.GetTotalHits(),
+			TotalHitsRelation: totalHitsRelation(res.GetTotalHitsExact()),
+			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact()),
+		},
+		Items: decoded.items,
+	}, nil
 }
 
 func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
@@ -46,54 +70,55 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 // total as inexact. Ending the walk there would leave those results
 // unreachable, so only an exact total lets a short page finish. The cost is at
 // most one extra empty page.
-func continueToken(table *resourcepb.ResourceTable, limit int64, totalIsExact bool) string {
-	rows := table.GetRows()
+func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsExact bool) string {
 	// Translation always resolves a limit, so the zero check is only here to keep
 	// the function honest if it is ever called directly.
-	if limit <= 0 || len(rows) == 0 {
+	if limit <= 0 || rowCount == 0 {
 		return ""
 	}
-	if int64(len(rows)) < limit && totalIsExact {
+	if int64(rowCount) < limit && totalIsExact {
 		return ""
 	}
 	// The cursor is the last row's sort values. The backend returns them per row
 	// and takes them back as SearchAfter, so the next page resumes at the point
 	// this one stopped, in the same order. A row without them cannot be resumed
 	// from, which happens when the query has no sort to position against.
-	last := rows[len(rows)-1]
-	if len(last.GetSortFields()) == 0 {
+	if len(lastSortFields) == 0 {
 		return ""
 	}
-	return encodeContinue(last.GetSortFields())
+	return encodeContinue(lastSortFields)
 }
 
-// resultItems converts the backend result table into envelope items. Column
-// names are already public names: the backend resolves them back from their
-// physical fields.* form when it builds the table.
-func resultItems(table *resourcepb.ResourceTable, kind kindRef) ([]searchv0.ResultItem, error) {
+func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decodedResults, error) {
+	switch res.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return decodeTableResults(res.GetResults(), kind)
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		return decodeFieldValueResults(res.GetFields(), res.GetRows(), kind)
+	default:
+		return decodedResults{}, fmt.Errorf("unsupported search result format %d", res.GetResultFormat())
+	}
+}
+
+// decodeTableResults converts the legacy backend result table into envelope items.
+// Column names are already public names: the backend resolves them back from
+// their physical fields.* form when it builds the table.
+func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef) (decodedResults, error) {
 	rows := table.GetRows()
 	items := make([]searchv0.ResultItem, 0, len(rows))
 	cols := table.GetColumns()
 
 	for _, row := range rows {
 		if len(row.GetCells()) != len(cols) {
-			return nil, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.GetCells()), len(cols))
+			return decodedResults{}, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.GetCells()), len(cols))
 		}
 
-		item := searchv0.ResultItem{
-			Resource: searchv0.ResourceRef{
-				Group:    kind.group,
-				Resource: kind.resource,
-				Kind:     kind.kind,
-				Name:     row.GetKey().GetName(),
-			},
-		}
-
+		item := resultItem(kind, row.GetKey())
 		values := map[string]any{}
 		for i, col := range cols {
 			v, err := resource.DecodeCell(col, i, row.GetCells()[i])
 			if err != nil {
-				return nil, fmt.Errorf("decoding column %q: %w", col.GetName(), err)
+				return decodedResults{}, fmt.Errorf("decoding column %q: %w", col.GetName(), err)
 			}
 			if v == nil {
 				continue
@@ -113,7 +138,52 @@ func resultItems(table *resourcepb.ResourceTable, kind kindRef) ([]searchv0.Resu
 
 		items = append(items, item)
 	}
-	return items, nil
+
+	var lastSortFields []string
+	if len(rows) > 0 {
+		lastSortFields = rows[len(rows)-1].GetSortFields()
+	}
+	return decodedResults{items: items, lastSortFields: lastSortFields}, nil
+}
+
+func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, kind kindRef) (decodedResults, error) {
+	items := make([]searchv0.ResultItem, 0, len(rows))
+	for i, row := range rows {
+		if row == nil || row.GetKey() == nil {
+			return decodedResults{}, fmt.Errorf("field-value search result row %d has no resource key", i)
+		}
+		values, err := resource.DecodeSearchValues(fields, row)
+		if err != nil {
+			return decodedResults{}, fmt.Errorf("decoding field-value search result row %d: %w", i, err)
+		}
+
+		item := resultItem(kind, row.GetKey())
+		if len(values) > 0 {
+			item.Fields = &common.Unstructured{Object: values}
+		}
+		if row.Score != nil {
+			score := row.GetScore()
+			item.Score = &score
+		}
+		items = append(items, item)
+	}
+
+	var lastSortFields []string
+	if len(rows) > 0 {
+		lastSortFields = rows[len(rows)-1].GetSortFields()
+	}
+	return decodedResults{items: items, lastSortFields: lastSortFields}, nil
+}
+
+func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {
+	return searchv0.ResultItem{
+		Resource: searchv0.ResourceRef{
+			Group:    kind.group,
+			Resource: kind.resource,
+			Kind:     kind.kind,
+			Name:     key.GetName(),
+		},
+	}
 }
 
 func toFloat64(v any) (float64, bool) {

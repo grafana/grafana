@@ -110,6 +110,25 @@ export class Store {
     this.storage?.removeItem(key);
     this.notifySubscribers(key);
   }
+
+  all(prefix?: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    const storage = this.storage;
+    if (!storage) {
+      return result;
+    }
+    for (let i = 0; i < storage.length; i++) {
+      const rawKey = storage.key(i);
+      if (rawKey && rawKey.startsWith(prefix ?? '')) {
+        const key = rawKey.slice(prefix?.length ?? 0);
+        const value = storage.getItem(rawKey);
+        if (value !== null) {
+          result[key] = value;
+        }
+      }
+    }
+    return result;
+  }
 }
 
 export const store = new Store();

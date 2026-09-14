@@ -69,7 +69,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			{
 				Receiver: "",
 				MuteTimeIntervals: []string{
-					rev.Config.AlertmanagerConfig.TimeIntervals[0].Name,
+					"test-mute-interval",
 				},
 			},
 			{
@@ -298,19 +298,15 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("", "test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
-		{
-			Name: "test",
-		},
+	currentRevision.Config.TimeIntervals = map[v1.ResourceUID]v1.TimeInterval{
+		v1.TimeIntervalUID("test"): {Title: "test"},
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
 		{
-			Receiver: definitions.Receiver{Name: "receiver"},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-					{
-						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
-					},
+			Name: "receiver",
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+				{
+					UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
 				},
 			},
 		},
@@ -477,7 +473,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
 
-		receiverType := reflect.TypeOf((*v1.Route)(nil)).Elem()
+		receiverType := reflect.TypeFor[v1.Route]()
 		for i := 0; i < receiverType.NumField(); i++ {
 			field := receiverType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
@@ -535,19 +531,15 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []v1.TimeInterval{
-						{
-							Name: "test-mute-interval",
-						},
-					},
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "test-receiver",
-						},
+						Name: "test-receiver",
 					},
 				},
+			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+				v1.TimeIntervalUID("test-mute-interval"): {Title: "test-mute-interval"},
 			},
 		},
 		ConcurrencyToken: util.GenerateShortUID(),

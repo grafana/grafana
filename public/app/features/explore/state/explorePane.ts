@@ -89,12 +89,21 @@ export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperD
   'explore/changeCorrelationHelperData'
 );
 
-export interface UpdateQueryLibraryRefPayload {
+export interface UpdateEditSavedQueryRefPayload {
   exploreId: string;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
 }
 
-export const updateQueryLibraryRefAction = createAction<UpdateQueryLibraryRefPayload>('explore/updateQueryLibraryRef');
+export const updateEditSavedQueryRefAction = createAction<UpdateEditSavedQueryRefPayload>(
+  'explore/updateEditSavedQueryRef'
+);
+
+export interface SetAddingSavedQueryPayload {
+  exploreId: string;
+  addingSavedQuery: boolean;
+}
+
+export const setAddingSavedQueryAction = createAction<SetAddingSavedQueryPayload>('explore/setAddingSavedQuery');
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -108,7 +117,8 @@ interface InitializeExplorePayload {
   datasourceInstance?: DataSourceApi;
   compact: boolean;
   eventBridge: EventBusExtended;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
+  addingSavedQuery?: boolean;
 }
 
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
@@ -141,7 +151,8 @@ export interface InitializeExploreOptions {
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
+  addingSavedQuery?: boolean;
   compact: boolean;
 }
 
@@ -165,7 +176,8 @@ export const initializeExplore = createAsyncThunk(
       compact,
       correlationHelperData,
       eventBridge,
-      queryLibraryRef,
+      editSavedQueryRef,
+      addingSavedQuery,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
@@ -188,7 +200,8 @@ export const initializeExplore = createAsyncThunk(
         history,
         compact,
         eventBridge,
-        queryLibraryRef,
+        editSavedQueryRef,
+        addingSavedQuery,
       })
     );
     if (panelsState !== undefined) {
@@ -258,15 +271,23 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
-  if (updateQueryLibraryRefAction.match(action)) {
+  if (updateEditSavedQueryRefAction.match(action)) {
     return {
       ...state,
-      queryLibraryRef: action.payload.queryLibraryRef,
+      editSavedQueryRef: action.payload.editSavedQueryRef,
+    };
+  }
+
+  if (setAddingSavedQueryAction.match(action)) {
+    return {
+      ...state,
+      addingSavedQuery: action.payload.addingSavedQuery,
     };
   }
 
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge, compact, editSavedQueryRef, addingSavedQuery } =
+      action.payload;
 
     return {
       ...state,
@@ -280,7 +301,8 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       correlations: [],
-      queryLibraryRef,
+      editSavedQueryRef,
+      addingSavedQuery,
       compact,
     };
   }

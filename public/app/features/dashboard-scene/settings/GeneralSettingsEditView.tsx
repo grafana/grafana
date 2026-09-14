@@ -387,7 +387,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             >
               <Switch
                 id="preload-panels-dashboards-toggle"
-                value={dashboard.state.preload}
+                value={dashboard.state.preload ?? false}
                 onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
               />
             </Field>

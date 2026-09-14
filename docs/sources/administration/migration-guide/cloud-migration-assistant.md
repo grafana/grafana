@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana-cloud/security-and-account-management/migration-guide/cloud-migration-assistant/
 description: Migrate from Grafana OSS/Enterprise to Grafana Cloud using the Grafana Cloud Migration Assistant
 keywords:
   - Grafana Cloud

@@ -5,6 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
@@ -20,7 +21,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
+import { getSourcePath, isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -45,11 +46,15 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  // At root, the starred param turns the page into the "Starred" view — give it the Starred nav identity
+  // so the mega menu highlights Starred instead of Dashboards. Inside a folder it's just a filter.
+  const isStarredView = !folderUID && search.has('starred');
   const {
     isReadOnlyRepo,
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -159,14 +164,18 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} enableRepositoryLink />
+        <FolderRepo
+          folder={folder}
+          enableRepositoryLink
+          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+        />
       </Stack>
     );
   };
 
   return (
     <Page
-      navId="dashboards/browse"
+      navId={isStarredView ? 'starred' : 'dashboards/browse'}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
@@ -184,6 +193,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
+            data-testid={selectors.pages.BrowseDashboards.searchInput}
             placeholder={getSearchPlaceholder(searchState.includePanels)}
             value={searchState.query}
             escapeRegex={false}

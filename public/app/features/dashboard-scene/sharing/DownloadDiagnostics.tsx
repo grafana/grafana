@@ -17,6 +17,11 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import {
+  capturePanelData,
+  capturePanelDataFailure,
+  type PanelDataPayload,
+} from 'app/features/query/diagnostics/capturePanelData';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
@@ -47,6 +52,8 @@ export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsStat
 }
 
 const SAVE_MODEL_FAILURE_MESSAGE = 'Download diagnostics: failed to build panel/dashboard JSON, bundling without it';
+const PANEL_DATA_FAILURE_MESSAGE =
+  'Download diagnostics: failed to serialize frontend panel data, recording the failure in paneldata.json';
 
 // Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
 // DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
@@ -197,14 +204,39 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       panelModel = undefined;
     }
 
-    await downloadDiagnosticsForQueries(
+    // Serialize the frames the frontend is holding. Reads resolved scene state only -- no queries run and
+    // no transformations re-apply -- and it reuses the runner resolved above so the frames come from the
+    // same runner as the queries.
+    //
+    // dataFrameToJSON copies field config and values by reference rather than stringifying them, so an
+    // unserializable frame (a circular object in field.config.custom, a BigInt value) does not fail here:
+    // it fails later inside backendSrv's JSON.stringify, outside this guard, taking the whole bundle with
+    // it. Stringify once here so that failure is contained to this artifact -- one extra pass over the
+    // payload is worth not losing traffic.har and querydata.json to a single bad frame.
+    let panelData: PanelDataPayload | undefined;
+    try {
+      const captured = capturePanelData(panel, runner);
+      JSON.stringify(captured);
+      panelData = captured;
+    } catch (error) {
+      console.warn(PANEL_DATA_FAILURE_MESSAGE, error);
+      logError(error instanceof Error ? error : new Error(PANEL_DATA_FAILURE_MESSAGE), {
+        panelKey: panel.state.key ?? '',
+      });
+      // Record the failure rather than dropping it: an absent artifact would be indistinguishable from a
+      // panel that had no frames to give.
+      panelData = capturePanelDataFailure(panel, error);
+    }
+
+    await downloadDiagnosticsForQueries({
       queries,
-      String(timeRange.from.valueOf()),
-      String(timeRange.to.valueOf()),
-      controller.signal,
-      panelModel,
-      dashboardModel
-    );
+      from: String(timeRange.from.valueOf()),
+      to: String(timeRange.to.valueOf()),
+      signal: controller.signal,
+      panel: panelModel,
+      dashboard: dashboardModel,
+      panelData,
+    });
   }, [panelRef, dashboardRef]);
 
   const handleDismiss = () => {

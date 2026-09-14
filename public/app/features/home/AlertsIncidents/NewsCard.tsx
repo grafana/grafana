@@ -33,7 +33,17 @@ export function NewsCard() {
       emptyMessage={t('home.news-card.empty', 'No recent blog posts.')}
       items={Array.from({ length: state.value?.length ?? 0 }, (_, i) => i)}
       getItemKey={(index) => state.value?.get(index)?.link ?? String(index)}
-      renderItem={(index) => state.value && <News showImage data={state.value} index={index} className={styles.post} />}
+      renderItem={(index) =>
+        state.value && (
+          <News
+            showImage
+            data={state.value}
+            index={index}
+            className={styles.post}
+            onClick={() => ctaClicked({ surface: 'news_card', action: 'news_detail', placement: 'list' })}
+          />
+        )
+      }
       footer={
         !!state.value?.length && (
           <FooterActions>

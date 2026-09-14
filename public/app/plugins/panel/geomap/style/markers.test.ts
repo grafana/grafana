@@ -1,4 +1,4 @@
-import { Fill, Stroke, Style } from 'ol/style';
+import { Fill, RegularShape, Stroke, Style } from 'ol/style';
 
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
@@ -258,5 +258,27 @@ describe('shape marker makers', () => {
     const maker = await getMarkerMaker(getMarkerAsPath('square')!);
     const result = maker({ color: '#000', opacity: 1 });
     expect(result).toBeInstanceOf(Style);
+  });
+});
+
+describe('getMarkerMaker fallbacks', () => {
+  it('returns the text marker when no symbol is given but a text label is present', async () => {
+    const maker = await getMarkerMaker(undefined, true);
+    expect(maker).toBe(textMarker);
+  });
+
+  it('falls back to the error marker for an unknown, non-svg symbol', async () => {
+    const maker = await getMarkerMaker('not-a-registered-shape');
+
+    const result = maker({ color: '#000', opacity: 1, size: 10 });
+    // errorMarker renders two red-stroked RegularShapes (an X over a plus).
+    expect(Array.isArray(result)).toBe(true);
+    const styles = Array.isArray(result) ? result : [result];
+    expect(styles).toHaveLength(2);
+    for (const s of styles) {
+      const image = s.getImage();
+      expect(image).toBeInstanceOf(RegularShape);
+      expect((image as RegularShape).getStroke()?.getColor()).toBe('#F00');
+    }
   });
 });

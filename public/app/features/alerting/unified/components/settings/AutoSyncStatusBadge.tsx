@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
-import { type AutoSyncState } from './useAutoSyncConfiguration';
+import { type AutoSyncState } from '../../utils/autoSync';
 
 /**
  * Status badge for the external Alertmanager auto-sync feature. Shared between the

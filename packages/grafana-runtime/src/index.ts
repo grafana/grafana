@@ -34,8 +34,8 @@ export {
   type HealthCheckResultDetails,
   HealthStatus,
   type StreamOptionsProvider,
-  isExpressionReference,
 } from './utils/DataSourceWithBackend';
+export { isExpressionReference } from './utils/expressionRef';
 export {
   toDataQueryResponse,
   frameToMetricFindValue,

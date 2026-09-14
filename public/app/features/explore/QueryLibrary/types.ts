@@ -11,7 +11,7 @@ export type OnSelectQueryType = (query: DataQuery, title?: string) => void;
 // Multi-query selection (e.g. a recent-queries entry that ran several queries together).
 export type OnSelectQueriesType = (queries: DataQuery[], title?: string) => void;
 
-export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
+export type QueryLibraryEventsPropertyMap = Record<string, string | number | boolean | undefined>;
 
 // flattened data from API response to facilitate structs
 export type SavedQueryBase = {

@@ -20,9 +20,7 @@ import (
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name: name,
-			},
+			Name: name,
 		}
 	}
 
@@ -159,189 +157,175 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.TimeInterval{
-			Name: name,
-		}
+		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
 	}
-	mti := func(name string) v1.MuteTimeInterval {
-		return v1.MuteTimeInterval{
-			Name: name,
+	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
+		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
+		for _, interval := range intervals {
+			m[interval.UID] = interval
 		}
+		return m
 	}
 
 	identifier := "dupe"
 	suffix := getDedupSuffix(identifier)
 
+	// Mute and time intervals are already folded into a single ordered list at the model
+	// boundary (mute intervals first), so these fixtures reflect that combined ordering.
 	testCases := []struct {
-		name                  string
-		existingMuteIntervals []v1.MuteTimeInterval
-		existingTimeIntervals []v1.TimeInterval
-		incomingMuteIntervals []v1.MuteTimeInterval
-		incomingTimeIntervals []v1.TimeInterval
-		expected              []v1.TimeInterval
-		expectedRenames       map[string]string
-		expectedAdded         []string
+		name            string
+		existing        []v1.TimeInterval
+		incoming        []v1.TimeInterval
+		expected        map[v1.ResourceUID]v1.TimeInterval
+		expectedRenames map[string]string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("mti3"),
 				ti("ti4"),
 			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti3"),
-			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("mti1"),
 				ti("ti2"),
 				ti("mti3"),
 				ti("ti4"),
-			},
+			),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"mti3", "ti4"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("mti3"),
+				v1.TimeIntervalUID("ti4"),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
-				ti("ti2"),
-			},
-			incomingTimeIntervals: []v1.TimeInterval{
-				ti("mti1"),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti2"),
-			},
-			expected: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
 				ti("mti1"),
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("mti1" + suffix),
 			},
+			incoming: []v1.TimeInterval{
+				ti("ti2"),
+				ti("mti1"),
+			},
+			expected: toMap(
+				ti("mti1"),
+				ti("ti2"),
+				ti("ti2"+suffix),
+				ti("mti1"+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti2":  "ti2" + suffix,
 				"mti1": "mti1" + suffix,
 			},
-			expectedAdded: []string{"ti2" + suffix, "mti1" + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("mti1" + suffix),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
-				ti("ti1" + suffix),
-			},
-			incomingTimeIntervals: []v1.TimeInterval{
-				ti("ti1" + suffix),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
-			},
-			expected: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
 				ti("ti1"),
 				ti("ti1" + suffix),
-				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + suffix),
 			},
+			incoming: []v1.TimeInterval{
+				ti("ti1"),
+				ti("ti1" + suffix),
+			},
+			expected: toMap(
+				ti("ti1"),
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti1" + suffix: "ti1" + suffix + suffix,
 				"ti1":          "ti1" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + suffix),
+			},
 		},
 		{
 			name: "should rename dupe among incoming",
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("ti2"),
 				ti("ti2"),
 			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti2"),
-			},
-			expected: []v1.TimeInterval{ // mute intervals have precedence over time intervals in the case of duplicates (see https://github.com/grafana/alerting/blob/85dab908dcb43f7718a638b4c3cf9c214f7e48da/notify/grafana_alertmanager.go#L676-L685)
+			expected: toMap(
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("ti2" + suffix + "_01"),
-			},
+				ti("ti2"+suffix),
+				ti("ti2"+suffix+"_01"),
+			),
 			expectedRenames: map[string]string{
 				"ti2": "ti2" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti2" + suffix, "ti2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("ti2" + suffix + "_01"),
+			},
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
-				ti("ti1" + suffix),
-			},
-			incomingTimeIntervals: []v1.TimeInterval{
-				ti("ti1"),
-				ti("ti2"),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1" + suffix + "_01"),
-			},
-			expected: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
 				ti("ti1"),
 				ti("ti1" + suffix),
+			},
+			incoming: []v1.TimeInterval{
 				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + "_02"),
+				ti("ti1"),
 				ti("ti2"),
 			},
+			expected: toMap(
+				ti("ti1"),
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+"_02"),
+				ti("ti2"),
+			),
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + "_02", "ti2"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + "_02"),
+				v1.TimeIntervalUID("ti2"),
+			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var existingNames, incomingNames []string
-			for _, r := range tc.existingMuteIntervals {
-				existingNames = append(existingNames, r.Name)
+			for _, r := range tc.existing {
+				existingNames = append(existingNames, r.Title)
 			}
-			for _, r := range tc.existingTimeIntervals {
-				existingNames = append(existingNames, r.Name)
-			}
-			for _, r := range tc.incomingTimeIntervals {
-				incomingNames = append(incomingNames, r.Name)
-			}
-			for _, r := range tc.incomingMuteIntervals {
-				incomingNames = append(incomingNames, r.Name)
+			for _, r := range tc.incoming {
+				incomingNames = append(incomingNames, r.Title)
 			}
 
-			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, identifier)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(toMap(tc.existing...), tc.incoming, identifier)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
 
 			// check that existing and incoming lists are not changed
 			var names []string
-			for _, r := range tc.existingMuteIntervals {
-				names = append(names, r.Name)
-			}
-			for _, r := range tc.existingTimeIntervals {
-				names = append(names, r.Name)
+			for _, r := range tc.existing {
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, existingNames, names)
 			names = nil
-			for _, r := range tc.incomingTimeIntervals {
-				names = append(names, r.Name)
-			}
-			for _, r := range tc.incomingMuteIntervals {
-				names = append(names, r.Name)
+			for _, r := range tc.incoming {
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, incomingNames, names)
 		})
@@ -451,7 +435,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
 		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
 			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Receiver: definition.Receiver{Name: "grafana-default-email" + getDedupSuffix(identifier)},
+				Name: "grafana-default-email" + getDedupSuffix(identifier),
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)

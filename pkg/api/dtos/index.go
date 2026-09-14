@@ -35,21 +35,33 @@ type IndexViewData struct {
 	NewsFeedEnabled        bool              `json:"-"`
 	Assets                 *EntryPointAssets `json:"assets"` // Includes CDN info
 	RenderBindingSupported bool              `json:"-"`
+	UseLuxon               bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
 	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled bool   `json:"-"`
-	NewPreferencesPage    bool   `json:"-"`
+	OFREPRootUrlEnabled   bool   `json:"-"`
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool `json:"-"`
 }
 
 type EntryPointAssets struct {
-	ContentDeliveryURL string            `json:"cdn,omitempty"`
-	JSFiles            []EntryPointAsset `json:"jsFiles"`
-	CSSFiles           []EntryPointAsset `json:"cssFiles"`
-	Dark               string            `json:"dark"`
-	Light              string            `json:"light"`
-	Swagger            []EntryPointAsset `json:"swagger"`
-	SwaggerCSSFiles    []EntryPointAsset `json:"swaggerCssFiles"`
+	ContentDeliveryURL string `json:"cdn,omitempty"`
+
+	// ESModule is true when the bundler that produced these assets emitted ES modules
+	// rather than classic scripts, as declared in assets-manifest.json.
+	ESModule bool `json:"-"`
+
+	// PublicPath is the URL prefix the bundler compiled its asset references against.
+	// The page rebuilds that prefix for a CDN, and it varies by bundler.
+	PublicPath string `json:"-"`
+
+	JSFiles  []EntryPointAsset `json:"jsFiles"`
+	CSSFiles []EntryPointAsset `json:"cssFiles"`
+	Dark     string            `json:"dark"`
+	Light    string            `json:"light"`
 }
 
 type EntryPointAsset struct {
@@ -69,11 +81,5 @@ func (a *EntryPointAssets) SetContentDeliveryURL(prefix string) {
 	}
 	for i, p := range a.CSSFiles {
 		a.CSSFiles[i].FilePath = prefix + p.FilePath
-	}
-	for i, p := range a.Swagger {
-		a.Swagger[i].FilePath = prefix + p.FilePath
-	}
-	for i, p := range a.SwaggerCSSFiles {
-		a.SwaggerCSSFiles[i].FilePath = prefix + p.FilePath
 	}
 }

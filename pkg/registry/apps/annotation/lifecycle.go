@@ -17,10 +17,7 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 	ctx, cancel := context.WithCancel(parentCtx)
 	a.cleanupCancel = cancel
 
-	a.cleanupWg.Add(1)
-	go func() {
-		defer a.cleanupWg.Done()
-
+	a.cleanupWg.Go(func() {
 		ticker := time.NewTicker(cleanupInterval)
 		defer ticker.Stop()
 
@@ -38,7 +35,7 @@ func (a *AppInstaller) startCleanup(parentCtx context.Context, lifecycleMgr Life
 				return
 			}
 		}
-	}()
+	})
 }
 
 // runCleanup executes the cleanup operation with a timeout
@@ -47,7 +44,7 @@ func (a *AppInstaller) runCleanup(ctx context.Context, lifecycleMgr LifecycleMan
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	ctx, span := a.tracer.Start(ctx, "annotation.cleanup")
+	ctx, span := tracer.Start(ctx, "annotation.cleanup")
 	defer span.End()
 
 	before := time.Now().UTC().Add(-retentionTTL)

@@ -10,11 +10,12 @@ import { type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -125,7 +126,48 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     render(<BrowseFolderVariablesPage />);
 
     expect(await screen.findByText('env')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'env' })).toBeInTheDocument();
+  });
+
+  it('does not display "New folder variable" when the user cannot edit the folder', async () => {
+    server.use(
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          id: 1,
+          uid: mockFolderUid,
+          title: mockFolderName,
+          canEdit: false,
+          canSave: false,
+          canAdmin: false,
+          canDelete: false,
+        });
+      })
+    );
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New folder variable' })).not.toBeInTheDocument();
+  });
+
+  it('does not display "New folder variable" without variables:create', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.VariablesCreate);
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New folder variable' })).not.toBeInTheDocument();
+  });
+
+  it('does not make variable names edit links without variables:write', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.VariablesWrite);
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByText('env')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'env' })).not.toBeInTheDocument();
   });
 
   it('displays an empty state when the folder has no variables', async () => {

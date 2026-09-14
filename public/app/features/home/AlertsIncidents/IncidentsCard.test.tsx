@@ -8,7 +8,7 @@ import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClic
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { configureStore } from 'app/store/configureStore';
@@ -16,10 +16,11 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
+import { useIncidents } from './useIncidents';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
-  useIrmPlugin: jest.fn(),
+  usePluginBridge: jest.fn(),
 }));
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
@@ -31,7 +32,7 @@ jest.mock('../analytics/main', () => ({
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const mockUseIrmPlugin = jest.mocked(useIrmPlugin);
+const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
 const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
 
@@ -61,11 +62,10 @@ function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Default: plugin installed. Individual tests override availability as needed.
-  mockUseIrmPlugin.mockReturnValue({
-    pluginId: SupportedPlugin.Incident,
+  mockUsePluginBridge.mockReturnValue({
     installed: true,
     loading: false,
-    settings: { ...pluginMeta[SupportedPlugin.Incident], includes: [] },
+    settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
   });
 });
 
@@ -73,11 +73,16 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+function IncidentsCardWithData() {
+  const data = useIncidents();
+  return <IncidentsCard data={data} />;
+}
+
 describe('IncidentsCard', () => {
   it('lists active incidents with severity, count badge, and detail links', async () => {
     mockIncidents(activeIncidents);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByText('Elevated latency')).toBeInTheDocument();
@@ -92,7 +97,7 @@ describe('IncidentsCard', () => {
     // Detail link is keyed by incidentID, routed through the plugin bridge
     expect(screen.getByRole('link', { name: 'Database outage' })).toHaveAttribute(
       'href',
-      '/a/grafana-incident-app/incidents/101'
+      '/a/grafana-irm-app/incidents/101'
     );
 
     // Populated card footer shows both the declare action and the view-all link.
@@ -103,7 +108,7 @@ describe('IncidentsCard', () => {
   it('shows the declare CTA in the empty state', async () => {
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
@@ -112,7 +117,7 @@ describe('IncidentsCard', () => {
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 404 })));
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
@@ -121,7 +126,7 @@ describe('IncidentsCard', () => {
   it('shows a retryable error for genuine failures (5xx)', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 500 })));
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
@@ -130,25 +135,24 @@ describe('IncidentsCard', () => {
 
   it('renders incident titles as plain text when the user cannot access the incidents page', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockUseIrmPlugin.mockReturnValue({
-      pluginId: SupportedPlugin.Incident,
+    mockUsePluginBridge.mockReturnValue({
       installed: true,
       loading: false,
       settings: {
-        ...pluginMeta[SupportedPlugin.Incident],
+        ...pluginMeta[SupportedPlugin.Irm],
         includes: [
           {
             type: PluginIncludeType.page,
             name: 'Incidents',
-            path: '/a/grafana-incident-app/incidents',
-            action: 'grafana-incident-app.incidents:read',
+            path: '/a/grafana-irm-app/incidents',
+            action: 'grafana-irm-app.incidents:read',
           },
         ],
       },
     });
     mockIncidents(activeIncidents);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
@@ -164,7 +168,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many, { hasMore: true });
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
   });
@@ -178,7 +182,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many, { hasMore: false });
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText(String(ACTIVE_INCIDENTS_QUERY_LIMIT))).toBeInTheDocument();
     expect(screen.queryByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).not.toBeInTheDocument();
@@ -193,7 +197,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Incident 0')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
@@ -202,36 +206,35 @@ describe('IncidentsCard', () => {
   it('shows a Declare CTA in the empty state when the user can declare', async () => {
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toHaveAttribute(
       'href',
-      '/a/grafana-incident-app/incidents?declare=new'
+      '/a/grafana-irm-app/incidents?declare=new'
     );
     expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
   });
 
   it('hides the Declare CTA when the user cannot declare incidents', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockUseIrmPlugin.mockReturnValue({
-      pluginId: SupportedPlugin.Incident,
+    mockUsePluginBridge.mockReturnValue({
       installed: true,
       loading: false,
       settings: {
-        ...pluginMeta[SupportedPlugin.Incident],
+        ...pluginMeta[SupportedPlugin.Irm],
         includes: [
           {
             type: PluginIncludeType.page,
             name: 'Declare',
-            path: '/a/grafana-incident-app/incidents/declare',
-            action: 'grafana-incident-app.incidents:write',
+            path: '/a/grafana-irm-app/incidents/declare',
+            action: 'grafana-irm-app.incidents:write',
           },
         ],
       },
     });
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
@@ -253,7 +256,7 @@ describe('IncidentsCard', () => {
       },
     ]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Warning but newer')).toBeInTheDocument();
 
@@ -266,7 +269,7 @@ describe('IncidentsCard', () => {
     const store = configureStore();
     mockIncidents([]);
 
-    const { unmount } = render(<IncidentsCard />, { store });
+    const { unmount } = render(<IncidentsCardWithData />, { store });
     // The declare CTA only renders once the first query resolves as empty (not while loading).
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
 
@@ -274,7 +277,7 @@ describe('IncidentsCard', () => {
 
     // Incident declared out-of-band in the IRM plugin; user returns to Home (card remounts).
     mockIncidents([activeIncidents[0]]);
-    render(<IncidentsCard />, { store });
+    render(<IncidentsCardWithData />, { store });
 
     // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
     // cache would persist and this assertion would time out.
@@ -296,7 +299,7 @@ describe('IncidentsCard', () => {
     it('tracks incident_detail when an incident title link is clicked', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: 'Database outage' }));
 
@@ -310,7 +313,7 @@ describe('IncidentsCard', () => {
     it('tracks declare_incident from the empty-state CTA', async () => {
       mockIncidents([]);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
@@ -324,7 +327,7 @@ describe('IncidentsCard', () => {
     it('tracks declare_incident from the footer when incidents exist', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
@@ -338,7 +341,7 @@ describe('IncidentsCard', () => {
     it('tracks view_all_incidents from the footer', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /view all incidents/i }));
 

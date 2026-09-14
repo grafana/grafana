@@ -21,4 +21,9 @@ export const getLayoutControlsStyles = (theme: GrafanaTheme2) => ({
     left: 0,
     minWidth: 'min-content',
   }),
+  // Keeps the controls in the layout (no jumping) while making them impossible to reveal via the
+  // opacity-based hover rules or interact with. Used while a multi-selection is active.
+  controlsHidden: css({
+    visibility: 'hidden',
+  }),
 });

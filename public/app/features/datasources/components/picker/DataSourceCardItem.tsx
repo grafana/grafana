@@ -1,4 +1,5 @@
 import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type FavoriteDatasources, reportInteraction } from '@grafana/runtime';
 
 import { DataSourceCard } from './DataSourceCard';
@@ -26,7 +27,7 @@ export function DataSourceCardItem({
 }: DataSourceCardItemProps) {
   return (
     <DataSourceCard
-      data-testid="data-source-card"
+      data-testid={selectors.components.DataSourcePicker.dataSourceCard(ds.name)}
       {...(enableKeyboardNavigation && {
         'data-role': 'keyboardSelectableItem',
         'data-selecteditem': isSelected ? 'true' : 'false',

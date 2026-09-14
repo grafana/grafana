@@ -79,7 +79,7 @@ export function clearPredefinedVariablesCache() {
  * keep-current (refresh). An empty array means a successful fetch with no variables.
  */
 export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[] | null> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
     return [];
   }
 

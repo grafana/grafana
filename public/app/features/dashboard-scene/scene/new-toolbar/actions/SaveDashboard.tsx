@@ -95,6 +95,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
               icon="copy"
               onClick={onSaveAsCopy}
+              testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
             />
             {isDashboardTemplatesFlagEnabled &&
               canManageDashboardTemplates() &&
@@ -119,6 +120,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
           icon="angle-down"
           variant={isDirty ? 'primary' : 'secondary'}
           size={buttonSize}
+          data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
         />
       </Dropdown>
     </ButtonGroup>

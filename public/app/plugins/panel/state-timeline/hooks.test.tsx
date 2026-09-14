@@ -26,6 +26,32 @@ describe('StateTimelinePanel hooks', () => {
           paginationHeight: 0,
         });
       });
+
+      it('renders no pagination when there are no frames to paginate', () => {
+        const { result } = renderHook(() => usePagination([], 5));
+
+        expect(result.current.paginatedFrames).toEqual([]);
+        expect(result.current.paginationRev).toBe('0/5');
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+        expect(screen.queryByText('0')).not.toBeInTheDocument();
+      });
+
+      it('renders no pagination when the frames hold no series', () => {
+        const timeOnly = createDataFrame({
+          fields: [{ name: 'time', type: FieldType.time, values: [100, 200, 300] }],
+        });
+
+        const { result } = renderHook(() => usePagination([timeOnly], 5));
+
+        expect(result.current.paginatedFrames).toEqual([]);
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      });
     });
 
     it('returns the React element to be rendered for pagination', () => {
@@ -43,20 +69,59 @@ describe('StateTimelinePanel hooks', () => {
       expect(result.current.paginatedFrames?.length).toBe(2);
     });
 
-    const frame = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
-        { name: 'value-A', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-        { name: 'value-B', type: FieldType.number, values: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
-        { name: 'value-C', type: FieldType.number, values: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
-      ],
+    describe('single page', () => {
+      const buildFrame = (numberOfSeries: number) =>
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            ...Array.from({ length: numberOfSeries }, (_, index) => ({
+              name: `value-${index}`,
+              type: FieldType.number,
+              values: [4, 5, 6],
+            })),
+          ],
+        });
+
+      it('renders nothing while every series fits on one page', () => {
+        const { result } = renderHook(() => usePagination([buildFrame(3)], 3));
+
+        expect(result.current.paginatedFrames).toHaveLength(3);
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('next page')).not.toBeInTheDocument();
+      });
+
+      it('renders as soon as one series does not fit', () => {
+        const { result } = renderHook(() => usePagination([buildFrame(4)], 3));
+
+        expect(result.current.paginatedFrames).toHaveLength(3); // 4 series, page 1 of 2
+
+        render(result.current.paginationElement);
+
+        expect(screen.getByRole('navigation')).toBeInTheDocument();
+        expect(screen.getByText('2')).toBeInTheDocument(); // last page
+        expect(screen.getByLabelText('next page')).not.toBeDisabled();
+      });
     });
-    const { result } = renderHook(() => usePagination([frame], 2));
 
-    render(result.current.paginationElement);
+    it('renders the pagination control when there is more than one page', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
+          { name: 'value-A', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+          { name: 'value-B', type: FieldType.number, values: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
+          { name: 'value-C', type: FieldType.number, values: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
+        ],
+      });
+      const { result } = renderHook(() => usePagination([frame], 2));
 
-    expect(screen.getByText('1')).toBeInTheDocument(); // current page
-    expect(screen.getByText('2')).toBeInTheDocument(); // last page
-    expect(screen.getByLabelText('next page')).not.toBeDisabled();
+      render(result.current.paginationElement);
+
+      expect(screen.getByText('1')).toBeInTheDocument(); // current page
+      expect(screen.getByText('2')).toBeInTheDocument(); // last page
+      expect(screen.getByLabelText('next page')).not.toBeDisabled();
+    });
   });
 });

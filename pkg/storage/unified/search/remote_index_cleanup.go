@@ -100,7 +100,7 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 	if err != nil {
 		// We can't attribute this error to any single namespace, so it shows up
 		// as a single "error" cleanup. Logged at warn so operators see it.
-		b.recordSnapshotNamespaceCleanupStatus(snapshotNamespaceCleanupStatusError)
+		b.indexMetrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusError).Inc()
 		span.SetAttributes(attribute.String("outcome", snapshotNamespaceCleanupStatusError))
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -125,7 +125,7 @@ func (b *bleveBackend) runCleanup(ctx context.Context) {
 		outcome, err := b.runNamespaceCleanup(ctx, ns)
 		// Cancellation usually means shutdown; keep it out of the namespace outcome metric.
 		if outcome != snapshotNamespaceCleanupStatusCanceled {
-			b.recordSnapshotNamespaceCleanupStatus(outcome)
+			b.indexMetrics.IndexSnapshotNamespaceCleanups.WithLabelValues(outcome).Inc()
 		}
 		if err != nil {
 			hadNamespaceError = true
@@ -297,12 +297,12 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 			return store.DeleteIndex(ctx, res, key)
 		}); err != nil {
 			logger.Warn("deleting index snapshot", "resource", res, "snapshot", key.String(), "err", err)
-			b.recordSnapshotDeleted(snapshotDeleteOutcomeError)
+			b.indexMetrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeError).Inc()
 			deleteFailures++
 			continue
 		}
 		logger.Info("deleted index snapshot", "resource", res, "snapshot", key.String(), "uploaded", metas[key].UploadTimestamp, "age", time.Since(metas[key].UploadTimestamp))
-		b.recordSnapshotDeleted(snapshotDeleteOutcomeSuccess)
+		b.indexMetrics.IndexSnapshotDeleted.WithLabelValues(snapshotDeleteOutcomeSuccess).Inc()
 	}
 
 	// CleanupIncompleteIndexSnapshots returns a partial cleaned count even on error;
@@ -311,7 +311,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 	// delete loop above: log, flag, continue — don't short-circuit the resource.
 	cleaned, incompleteErr := CleanupIncompleteIndexSnapshots(ctx, store, res, time.Now().Add(-cleanupIncompleteUploadsMinAge), logger)
 	for range cleaned {
-		b.recordIncompleteUploadCleaned()
+		b.indexMetrics.IndexSnapshotIncompleteUploadsCleaned.Inc()
 	}
 	if incompleteErr != nil {
 		logger.Warn("cleaning up incomplete uploads", "resource", res, "err", incompleteErr)
@@ -400,25 +400,4 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 	}
 
 	return toDelete
-}
-
-func (b *bleveBackend) recordSnapshotNamespaceCleanupStatus(status string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexSnapshotNamespaceCleanups.WithLabelValues(status).Inc()
-}
-
-func (b *bleveBackend) recordSnapshotDeleted(outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexSnapshotDeleted.WithLabelValues(outcome).Inc()
-}
-
-func (b *bleveBackend) recordIncompleteUploadCleaned() {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexSnapshotIncompleteUploadsCleaned.Inc()
 }

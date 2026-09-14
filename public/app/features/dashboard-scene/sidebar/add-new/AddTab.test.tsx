@@ -1,6 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { VizPanel } from '@grafana/scenes';
+
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -40,13 +43,35 @@ jest.mock('./AddButton', () => ({
 const mockedAddNewTabTo = jest.mocked(addNewTabTo);
 const mockedUseNestingRestrictions = jest.mocked(useNestingRestrictions);
 
+function createAutoGridWithPanel(): AutoGridLayoutManager {
+  const layout = AutoGridLayoutManager.createEmpty();
+  layout.state.layout.setState({
+    children: [new AutoGridItem({ body: new VizPanel({ pluginId: 'timeseries' }) })],
+  });
+  return layout;
+}
+
 describe('AddTab', () => {
   beforeEach(() => {
     mockedAddNewTabTo.mockReset();
     mockedUseNestingRestrictions.mockReset();
   });
 
-  it('shows "Group into tabs" label when layout is not tabs', () => {
+  it('shows "Group into tabs" label when layout is not tabs and has panels', () => {
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
+    const layout = createAutoGridWithPanel();
+    const dashboardScene = { getLayout: () => layout } as never;
+
+    render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
+
+    expect(screen.getByRole('button', { name: 'Group into tabs' })).toBeEnabled();
+  });
+
+  it('shows "Add tab" label when layout is empty', () => {
     mockedUseNestingRestrictions.mockReturnValue({
       disableGrouping: false,
       disableTabs: false,
@@ -56,6 +81,28 @@ describe('AddTab', () => {
     const dashboardScene = { getLayout: () => layout } as never;
 
     render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
+
+    expect(screen.getByRole('button', { name: 'Add tab' })).toBeEnabled();
+  });
+
+  it('updates label from "Add tab" to "Group into tabs" when a panel is added', () => {
+    mockedUseNestingRestrictions.mockReturnValue({
+      disableGrouping: false,
+      disableTabs: false,
+      disableTabsReason: undefined,
+    });
+    const layout = AutoGridLayoutManager.createEmpty();
+    const dashboardScene = { getLayout: () => layout } as never;
+
+    render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
+
+    expect(screen.getByRole('button', { name: 'Add tab' })).toBeEnabled();
+
+    act(() => {
+      layout.state.layout.setState({
+        children: [new AutoGridItem({ body: new VizPanel({ pluginId: 'timeseries' }) })],
+      });
+    });
 
     expect(screen.getByRole('button', { name: 'Group into tabs' })).toBeEnabled();
   });
@@ -80,7 +127,7 @@ describe('AddTab', () => {
       disableTabs: true,
       disableTabsReason: 'nested-tabs',
     });
-    const layout = AutoGridLayoutManager.createEmpty();
+    const layout = createAutoGridWithPanel();
     const dashboardScene = { getLayout: () => layout } as never;
 
     render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
@@ -96,7 +143,7 @@ describe('AddTab', () => {
       disableTabs: true,
       disableTabsReason: 'max-depth',
     });
-    const layout = AutoGridLayoutManager.createEmpty();
+    const layout = createAutoGridWithPanel();
     const dashboardScene = { getLayout: () => layout } as never;
 
     render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
@@ -113,7 +160,7 @@ describe('AddTab', () => {
       disableTabs: true,
       disableTabsReason: 'max-depth',
     });
-    const layout = AutoGridLayoutManager.createEmpty();
+    const layout = createAutoGridWithPanel();
     const dashboardScene = { getLayout: () => layout } as never;
 
     render(<AddTab dashboardScene={dashboardScene} selectedElement={undefined} />);
@@ -129,7 +176,7 @@ describe('AddTab', () => {
       disableTabs: false,
       disableTabsReason: undefined,
     });
-    const layout = AutoGridLayoutManager.createEmpty();
+    const layout = createAutoGridWithPanel();
     const dashboardScene = { getLayout: () => layout } as never;
     const user = userEvent.setup();
 
@@ -148,7 +195,7 @@ describe('AddTab', () => {
       disableTabsReason: undefined,
     });
     const rootLayout = AutoGridLayoutManager.createEmpty();
-    const rowInnerLayout = AutoGridLayoutManager.createEmpty();
+    const rowInnerLayout = createAutoGridWithPanel();
     const selectedRow = new RowItem({ layout: rowInnerLayout });
     const dashboardScene = { getLayout: () => rootLayout } as never;
     const user = userEvent.setup();

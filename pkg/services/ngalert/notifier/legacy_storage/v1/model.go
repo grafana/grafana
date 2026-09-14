@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/grafana/alerting/definition/compat"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -24,8 +22,10 @@ type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly
 
 // AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
 type AMConfigV1 struct {
-	Templates          map[ResourceUID]TemplateGroup
-	InhibitionRules    map[ResourceUID]InhibitionRule
+	Templates       map[ResourceUID]TemplateGroup
+	InhibitionRules map[ResourceUID]InhibitionRule
+	TimeIntervals   map[ResourceUID]TimeInterval
+
 	AlertmanagerConfig PostableApiAlertingConfig
 	ExtraConfigs       []ExtraConfiguration
 	ManagedRoutes      ManagedRoutes
@@ -68,6 +68,11 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
+	for _, r := range c.TimeIntervals {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
 	for _, r := range c.ExtraConfigs {
 		if err := r.Validate(); err != nil {
 			return err
@@ -105,10 +110,9 @@ type ExtraAlertmanagerConfig struct {
 func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, error) {
 	receivers := make([]*PostableApiReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
-		def := compat.UpstreamReceiverToDefinitionReceiver(receiver)
-		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(&PostableApiReceiver{Receiver: def})
+		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(compat.UpstreamReceiverToDefinitionReceiver(receiver))
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
+			return nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", receiver.Name, err)
 		}
 		receivers = append(receivers, grafana)
 	}
@@ -120,14 +124,16 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
 	return RouteToModel(definition.AsGrafanaRoute(c.Route))
 }
 
-// ToGrafanaMuteTimeIntervals converts the imported mute time intervals to Grafana's type.
-func (c *ExtraAlertmanagerConfig) ToGrafanaMuteTimeIntervals() []MuteTimeInterval {
-	return MuteTimeIntervalsToModel(c.MuteTimeIntervals)
-}
-
 // ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
-	return TimeIntervalsToModel(c.TimeIntervals)
+	out := make([]TimeInterval, 0, len(c.MuteTimeIntervals)+len(c.TimeIntervals))
+	for _, interval := range c.MuteTimeIntervals {
+		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+	}
+	for _, interval := range c.TimeIntervals {
+		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+	}
+	return out
 }
 
 // ReceiverNameStubs returns the imported receivers as Grafana receivers populated with only
@@ -136,7 +142,7 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
 func (c *ExtraAlertmanagerConfig) ReceiverNameStubs() []*PostableApiReceiver {
 	stubs := make([]*PostableApiReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
-		stubs = append(stubs, &PostableApiReceiver{Receiver: definition.Receiver{Name: receiver.Name}})
+		stubs = append(stubs, &PostableApiReceiver{Name: receiver.Name})
 	}
 	return stubs
 }
@@ -281,12 +287,6 @@ func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
 	return c.Receivers
 }
 
-func (c *PostableApiAlertingConfig) GetMuteTimeIntervals() []MuteTimeInterval {
-	return c.MuteTimeIntervals
-}
-
-func (c *PostableApiAlertingConfig) GetTimeIntervals() []TimeInterval { return c.TimeIntervals }
-
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
 }
@@ -340,11 +340,7 @@ type Config struct {
 	Global       *config.GlobalConfig
 	Route        *Route
 	InhibitRules []config.InhibitRule
-
-	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
-	MuteTimeIntervals []MuteTimeInterval
-	TimeIntervals     []TimeInterval
-	Templates         []string
+	Templates    []string
 }
 
 type ObjectMatchers labels.Matchers
@@ -509,44 +505,12 @@ func (r *Route) ResourceID() string {
 
 type Provenance string
 
-type MuteTimeInterval struct {
-	Name          string
-	TimeIntervals []timeinterval.TimeInterval
-}
-
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.Name
-}
-
-type TimeInterval struct {
-	Name          string
-	TimeIntervals []timeinterval.TimeInterval
-}
-
 type PostableApiReceiver struct {
-	definition.Receiver
-	PostableGrafanaReceivers
-}
-
-type PostableGrafanaReceivers struct {
+	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }
 
 type PostableGrafanaReceiver definition.PostableGrafanaReceiver
-
-func (r *PostableApiReceiver) HasMimirIntegrations() bool {
-	cpy := r.Receiver
-	cpy.Name = ""
-	return !reflect.ValueOf(cpy).IsZero()
-}
-
-func (r *PostableApiReceiver) HasGrafanaIntegrations() bool {
-	return len(r.GrafanaManagedReceivers) > 0
-}
 
 func (r *PostableApiReceiver) GetName() string {
 	return r.Name

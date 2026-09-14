@@ -108,6 +108,153 @@ func TestGetPluginArchive(t *testing.T) {
 	}
 }
 
+func TestPluginVersionWithExplicitVersion(t *testing.T) {
+	const (
+		pluginID       = "grafana-test-datasource"
+		grafanaVersion = "10.0.0"
+		opSys          = "darwin"
+		arch           = "amd64"
+	)
+	compatOpts := NewCompatOpts(grafanaVersion, opSys, arch)
+
+	type hits struct {
+		single int
+		list   int
+	}
+
+	// newManager serves /versions/1.0.0 with the given status code and body,
+	// and /versions with the given listing, counting requests to each.
+	newManager := func(t *testing.T, singleStatus int, singleBody, listBody string, count *hits) *Manager {
+		t.Helper()
+		mux := http.NewServeMux()
+		mux.HandleFunc(fmt.Sprintf("/%s/versions/1.0.0", pluginID), func(w http.ResponseWriter, r *http.Request) {
+			count.single++
+			require.Equal(t, grafanaVersion, r.Header.Get("grafana-version"))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(singleStatus)
+			_, _ = w.Write([]byte(singleBody))
+		})
+		mux.HandleFunc(fmt.Sprintf("/%s/versions", pluginID), func(w http.ResponseWriter, r *http.Request) {
+			count.list++
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(listBody))
+		})
+		srv := httptest.NewServer(mux)
+		t.Cleanup(srv.Close)
+		return NewManager(ManagerCfg{
+			SkipTLSVerify: false,
+			BaseURL:       srv.URL,
+			Logger:        log.NewTestPrettyLogger(),
+		})
+	}
+
+	activeSingle := `{"version": "1.0.0", "status": "active", "packages": {"darwin-amd64": {"sha256": "abc"}}, "url": "https://github.com/grafana/test", "isCompatible": true}`
+	listWithV100 := `{"items": [{"version": "1.0.0", "packages": {"darwin-amd64": {"sha256": "abc"}}, "url": "https://github.com/grafana/test", "isCompatible": true}]}`
+	listWithoutV100 := `{"items": [{"version": "2.0.0", "packages": {"darwin-amd64": {"sha256": "def"}}, "isCompatible": true}]}`
+
+	t.Run("active version is fetched directly without the listing", func(t *testing.T) {
+		count := &hits{}
+		m := newManager(t, http.StatusOK, activeSingle, listWithV100, count)
+
+		v, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.NoError(t, err)
+		require.Equal(t, "1.0.0", v.Version)
+		require.Equal(t, "abc", v.Checksum)
+		require.Equal(t, hits{single: 1, list: 0}, *count)
+	})
+
+	t.Run("version prefix is normalized before the direct fetch", func(t *testing.T) {
+		count := &hits{}
+		m := newManager(t, http.StatusOK, activeSingle, listWithV100, count)
+
+		v, err := m.PluginVersion(context.Background(), pluginID, "v1.0.0", compatOpts)
+		require.NoError(t, err)
+		require.Equal(t, "1.0.0", v.Version)
+		require.Equal(t, hits{single: 1, list: 0}, *count)
+	})
+
+	t.Run("no explicit version uses the listing only", func(t *testing.T) {
+		count := &hits{}
+		m := newManager(t, http.StatusOK, activeSingle, listWithV100, count)
+
+		v, err := m.PluginVersion(context.Background(), pluginID, "", compatOpts)
+		require.NoError(t, err)
+		require.Equal(t, "1.0.0", v.Version)
+		require.Equal(t, hits{single: 0, list: 1}, *count)
+	})
+
+	t.Run("missing version falls back and keeps the not found error", func(t *testing.T) {
+		count := &hits{}
+		m := newManager(t, http.StatusNotFound, `{"code": "NotFound"}`, listWithoutV100, count)
+
+		_, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.ErrorIs(t, err, ErrVersionNotFoundBase)
+		require.Equal(t, hits{single: 1, list: 1}, *count)
+	})
+
+	t.Run("non-active version stays uninstallable", func(t *testing.T) {
+		// the listing only contains active versions, so a pending version is
+		// not found today; the direct fetch returns it and must reject it
+		pendingSingle := `{"version": "1.0.0", "status": "pending", "packages": {"darwin-amd64": {"sha256": "abc"}}, "isCompatible": true}`
+		count := &hits{}
+		m := newManager(t, http.StatusOK, pendingSingle, listWithoutV100, count)
+
+		_, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.ErrorIs(t, err, ErrVersionNotFoundBase)
+		require.Equal(t, hits{single: 1, list: 1}, *count)
+	})
+
+	t.Run("incompatible version keeps the not compatible error", func(t *testing.T) {
+		incompatibleSingle := `{"version": "1.0.0", "status": "active", "packages": {"darwin-amd64": {"sha256": "abc"}}, "isCompatible": false}`
+		listV100Incompatible := `{"items": [
+			{"version": "2.0.0", "packages": {"darwin-amd64": {"sha256": "def"}}, "isCompatible": true},
+			{"version": "1.0.0", "packages": {"darwin-amd64": {"sha256": "abc"}}, "isCompatible": false}
+		]}`
+		count := &hits{}
+		m := newManager(t, http.StatusOK, incompatibleSingle, listV100Incompatible, count)
+
+		_, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.ErrorIs(t, err, ErrVersionNotCompatibleBase)
+		require.Equal(t, hits{single: 1, list: 1}, *count)
+	})
+
+	t.Run("unsupported arch keeps the unsupported error", func(t *testing.T) {
+		linuxOnlySingle := `{"version": "1.0.0", "status": "active", "packages": {"linux-amd64": {"sha256": "abc"}}, "isCompatible": true}`
+		listV100LinuxOnly := `{"items": [
+			{"version": "2.0.0", "packages": {"darwin-amd64": {"sha256": "def"}}, "isCompatible": true},
+			{"version": "1.0.0", "packages": {"linux-amd64": {"sha256": "abc"}}, "isCompatible": true}
+		]}`
+		count := &hits{}
+		m := newManager(t, http.StatusOK, linuxOnlySingle, listV100LinuxOnly, count)
+
+		_, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.ErrorIs(t, err, ErrVersionUnsupportedBase)
+		require.Equal(t, hits{single: 1, list: 1}, *count)
+	})
+
+	t.Run("direct fetch failure falls back to the listing", func(t *testing.T) {
+		count := &hits{}
+		m := newManager(t, http.StatusInternalServerError, `oops`, listWithV100, count)
+
+		v, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.NoError(t, err)
+		require.Equal(t, "1.0.0", v.Version)
+		require.Equal(t, "abc", v.Checksum)
+		require.Equal(t, hits{single: 1, list: 1}, *count)
+	})
+
+	t.Run("core plugin is rejected on the direct fetch", func(t *testing.T) {
+		coreSingle := `{"version": "1.0.0", "status": "active", "packages": {"any": {"sha256": "abc"}}, "url": "https://github.com/grafana/grafana/tree/main/public/app/plugins/test", "isCompatible": true}`
+		count := &hits{}
+		m := newManager(t, http.StatusOK, coreSingle, listWithV100, count)
+
+		_, err := m.PluginVersion(context.Background(), pluginID, "1.0.0", compatOpts)
+		require.ErrorIs(t, err, ErrCorePluginBase)
+		require.Equal(t, hits{single: 1, list: 0}, *count)
+	})
+}
+
 func TestPluginIndex(t *testing.T) {
 	const (
 		pluginID = "grafana-test-datasource"

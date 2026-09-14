@@ -1,9 +1,10 @@
 import { Icon } from '@grafana/ui';
-import mimirLogoSvg from 'app/plugins/datasource/prometheus/img/mimir_logo.svg';
-import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
 import { PromApplication, type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import lokiIconSvg from '../../../../loki-helpers/loki_icon.svg';
+
+import mimirLogoSvg from './img/mimir_logo.svg';
+import prometheusLogoSvg from './img/prometheus_logo.svg';
 
 interface DataSourceIconProps {
   application?: RulesSourceApplication;

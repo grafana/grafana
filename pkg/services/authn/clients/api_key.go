@@ -85,7 +85,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	return newServiceAccountIdentity(key), nil
 }
 
-func (s *APIKey) IsEnabled() bool {
+func (s *APIKey) IsEnabled(context.Context) bool {
 	return true
 }
 
@@ -156,31 +156,35 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook")
 	defer span.End()
 
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}
 
-	go func(keyID string) {
+	// Detach the write from the request deadline but keep context values, so
+	// stores that resolve their database from the context keep working.
+	updateCtx := context.WithoutCancel(ctx)
+
+	go func(keyID string, logger log.Logger) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
+				logger.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 
 		id, err := strconv.ParseInt(keyID, 10, 64)
 		if err != nil {
-			s.log.Warn("Invalid api key id", "id", keyID, "err", err)
+			logger.Warn("Invalid api key id", "id", keyID, "err", err)
 			return
 		}
 
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(updateCtx, id); err != nil {
+			logger.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
 			return
 		}
-	}(r.GetMeta(metaKeyID))
+	}(r.GetMeta(metaKeyID), s.log.FromContext(ctx))
 
 	return nil
 }
