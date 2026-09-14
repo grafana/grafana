@@ -12,6 +12,7 @@ import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { AttachToIncidentButton } from '../incidents/AttachToIncidentButton';
 import { DeclareIncidentMenuItem } from '../incidents/DeclareIncidentMenuItem';
+import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
@@ -42,6 +43,9 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   // alone no longer decides whether there is a menu to open.
   const { available: hasIncidents } = useNotebookIncidents();
   const hasMoreActions = hasIncidents || canDeleteNotebooks();
+  // Owned here rather than by the menu item that opens it: that item is inside the Dropdown overlay,
+  // which unmounts as the menu closes. Same arrangement as the delete confirmation below.
+  const [isDeclaring, setIsDeclaring] = useState(false);
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -74,7 +78,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   const moreMenu = () => (
     <Menu>
-      <DeclareIncidentMenuItem uid={uid} title={scene.state.title} />
+      <DeclareIncidentMenuItem onSelect={() => setIsDeclaring(true)} />
       {canDeleteNotebooks() && (
         <Menu.Item
           destructive
@@ -111,6 +115,9 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
             tooltip={t('notebooks.view.more-actions', 'More actions')}
           />
         </Dropdown>
+      )}
+      {isDeclaring && (
+        <DeclareIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsDeclaring(false)} />
       )}
       {isConfirmingDelete && (
         <DeleteNotebookModal

@@ -1,14 +1,11 @@
 import { render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { DeclareIncidentMenuItem } from './DeclareIncidentMenuItem';
+import { notebookIncidents, stubDeclareForm } from './testHelpers';
 import { useNotebookIncidents } from './useNotebookIncidents';
 
-// The availability rules are this hook's own, and are covered by its tests; here it is the seam
-// that decides whether the item exists at all.
 jest.mock('./useNotebookIncidents', () => ({
   ...jest.requireActual('./useNotebookIncidents'),
   useNotebookIncidents: jest.fn(),
@@ -16,48 +13,37 @@ jest.mock('./useNotebookIncidents', () => ({
 
 const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
 
-function setup(available: boolean) {
-  mockUseNotebookIncidents.mockReturnValue({ pluginId: SupportedPlugin.Irm, available });
+function setup({ installed = true } = {}) {
+  mockUseNotebookIncidents.mockReturnValue(
+    notebookIncidents(installed ? { DeclareIncidentForm: stubDeclareForm().Stub } : {})
+  );
+  const onSelect = jest.fn();
 
-  return render(
+  const rendered = render(
     <Menu>
-      <DeclareIncidentMenuItem uid="nb1" title="PromQL query (4)" />
+      <DeclareIncidentMenuItem onSelect={onSelect} />
     </Menu>
   );
+
+  return { ...rendered, onSelect };
 }
 
 describe('DeclareIncidentMenuItem', () => {
-  const originalAppUrl = config.appUrl;
-
-  beforeEach(() => {
-    config.appUrl = 'https://grafana.example/';
-  });
-
-  afterEach(() => {
-    config.appUrl = originalAppUrl;
-  });
-
-  // Rendered rather than disabled-with-a-tooltip, which is what the shared alerting menu item does:
-  // on a stack with no IRM that would be a permanently dead entry in every notebook's menu.
-  it('renders nothing at all when IRM is unavailable', () => {
-    setup(false);
+  // Rendered rather than disabled-with-a-tooltip, which is what alerting's shared menu item does:
+  // that would be a permanently dead entry in every notebook menu on a stack without IRM.
+  it('renders nothing at all when IRM is not installed', () => {
+    setup({ installed: false });
 
     expect(screen.queryByText('Declare incident')).not.toBeInTheDocument();
   });
 
-  // The notebook's own title, unmodified, and the absolute url — which is what IRM turns into
-  // attached context on the incident it creates.
-  it('deep-links to the declare form prefilled with the notebook', () => {
-    setup(true);
+  // A plain item, not a link: the form opens over the notebook rather than navigating to IRM.
+  it('raises the modal rather than navigating away', async () => {
+    const { user, onSelect } = setup();
 
-    const link = screen.getByRole('menuitem', { name: 'Declare incident' });
-    const href = link.getAttribute('href') ?? '';
-    const params = new URLSearchParams(href.split('?')[1]);
+    await user.click(screen.getByRole('menuitem', { name: 'Declare incident' }));
 
-    expect(href.split('?')[0]).toBe('/a/grafana-irm-app/incidents/declare');
-    expect(params.get('title')).toBe('PromQL query (4)');
-    expect(params.get('url')).toBe('https://grafana.example/notebooks/nb1');
-    // Left for the form to ask about — a notebook says nothing about how bad the thing is.
-    expect(params.get('severity')).toBeNull();
+    expect(onSelect).toHaveBeenCalled();
+    expect(screen.getByRole('menuitem', { name: 'Declare incident' })).not.toHaveAttribute('href');
   });
 });

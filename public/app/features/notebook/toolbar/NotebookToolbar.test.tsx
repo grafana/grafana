@@ -6,8 +6,8 @@ import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
+import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookScene } from '../scene/NotebookScene';
@@ -36,9 +36,12 @@ jest.mock('../incidents/useNotebookIncidents', () => ({
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
 
-/** Whether the stack this toolbar is rendered on has IRM, and the user may reach it. */
+/** Whether IRM's exposed incident components are there for the toolbar to render. */
 function setIrmAvailable(available: boolean) {
-  mockUseNotebookIncidents.mockReturnValue({ pluginId: SupportedPlugin.Irm, available });
+  const stubs = available
+    ? { AttachToIncidentForm: stubAttachForm().Stub, DeclareIncidentForm: stubDeclareForm().Stub }
+    : {};
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents(stubs));
 }
 
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */

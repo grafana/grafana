@@ -1,35 +1,67 @@
-import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginComponent } from '@grafana/runtime';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-/** IRM's declare form. Also the page the access check is made against — see below. */
-export const DECLARE_INCIDENT_PATH = '/incidents/declare';
+/**
+ * The IRM components this feature renders. Exposed components are addressed by id and their props
+ * are the plugin's own, so the contracts below are transcribed from grafana/irm rather than
+ * imported — there is no package to import them from, and `usePluginComponent`'s generic is
+ * asserted by the caller.
+ *
+ * Neither component draws modal chrome; both are form bodies their host wraps. IRM's own dashboard
+ * entry point does this with openModal({ title, body }), which is why the modal looks like core's.
+ */
+export const ATTACH_TO_INCIDENT_COMPONENT_ID = 'grafana-irm-app/attach-to-incident-modal/v1';
+export const DECLARE_INCIDENT_COMPONENT_ID = 'grafana-irm-app/declare-incident-modal/v1';
 
-interface NotebookIncidents {
-  /** IRM, or the legacy Incident app on a stack that has not migrated. */
-  pluginId: string;
-  /** Whether to offer the incident actions at all. False while the probe is still in flight. */
-  available: boolean;
+/** What `onAttach` reports back, narrowed to the part we read. */
+export interface AttachToIncidentFormData {
+  selectedIncident: {
+    incident: {
+      incidentID: string;
+      title?: string;
+    } | null;
+  } | null;
+}
+
+export interface AttachToIncidentFormProps {
+  onDismiss?: () => void;
+  /** Defaults to window.location.href if omitted, so always pass the notebook's own. */
+  attachURL?: string;
+  /** Prefills the caption field. Whatever it ends as becomes the attachment's label in IRM. */
+  defaultCaption?: string;
+  onAttach?: (data: AttachToIncidentFormData) => void;
+}
+
+export interface DeclareIncidentFormProps {
+  onDismiss?: () => void;
+  /** Attached to the incident the form creates, and labelled by attachCaption. */
+  attachURL?: string;
+  attachCaption?: string;
+  defaultTitle?: string;
 }
 
 /**
- * Whether this notebook can talk to IRM, asked once for the whole toolbar.
+ * Whether IRM's incident components are here to render.
  *
- * Both entry points need the same answer, and asking here rather than in each of them means the
- * plugin is probed once per page instead of once per control.
+ * `usePluginComponent` answers this on its own: it loads the app plugin when needed and hands back
+ * a null component when IRM is absent or disabled. That replaces the settings probe and page-access
+ * check this hook used to do — those existed to decide whether a link to a plugin *page* was safe
+ * to offer, and neither entry point navigates to one any more.
  *
- * Unavailable covers three cases the toolbar treats alike, because the outcome is the same either
- * way — nothing to offer: still probing, not installed, or installed but not this user's to open.
- * Declare navigates to the plugin page the check is made against; attach only posts to the plugin's
- * resource proxy, but gating it on the same page keeps one notion of "has IRM" rather than letting
- * someone attach to incidents they cannot then go and read.
+ * Null is also what a stack still on the legacy grafana-incident-app returns, since the component
+ * ids are IRM's. That is the right answer rather than a gap: the legacy app never exposed them.
  */
-export function useNotebookIncidents(): NotebookIncidents {
-  const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
+export function useNotebookIncidents() {
+  const attach = usePluginComponent<AttachToIncidentFormProps>(ATTACH_TO_INCIDENT_COMPONENT_ID);
+  const declare = usePluginComponent<DeclareIncidentFormProps>(DECLARE_INCIDENT_COMPONENT_ID);
 
-  const available = Boolean(
-    installed && settings && canAccessPluginPage(settings, createBridgeURL(pluginId, DECLARE_INCIDENT_PATH))
-  );
-
-  return { pluginId, available };
+  return {
+    // A constant now rather than a probe result: these components only exist on an IRM install, so
+    // there is no legacy plugin id for the incident links to be built against.
+    pluginId: SupportedPlugin.Irm,
+    AttachToIncidentForm: attach.component,
+    DeclareIncidentForm: declare.component,
+    /** Whether either control has anything to render. Used for the overflow menu's own gate. */
+    available: Boolean(attach.component || declare.component),
+  };
 }

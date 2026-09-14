@@ -13135,17 +13135,12 @@
       "undo-action": "Undo: {{action}}"
     },
     "incidents": {
-      "active": "Active incidents",
-      "attach": "Attach",
       "attach-title": "Attach to incident",
       "attach-tooltip": "Attach this notebook to an incident as context",
       "attached": "Notebook attached to \"{{incident}}\"",
-      "attaching": "Attaching...",
-      "cancel": "Cancel",
+      "caption": "Notebook: {{title}}",
       "declare": "Declare incident",
-      "load-failed": "Could not load incidents",
-      "load-failed-body": "Check that you have access to Incident, then try again.",
-      "none-active": "There are no active incidents to attach this notebook to."
+      "view-incident": "View incident"
     },
     "list": {
       "count_one": "{{count}} notebook",

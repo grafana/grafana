@@ -1,31 +1,24 @@
 import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
-import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 
-import { notebookShareUrl } from '../urls';
-
-import { DECLARE_INCIDENT_PATH, useNotebookIncidents } from './useNotebookIncidents';
+import { useNotebookIncidents } from './useNotebookIncidents';
 
 interface Props {
-  uid: string;
-  title: string;
+  /** Raises the modal, which the toolbar owns — see DeclareIncidentModal. */
+  onSelect: () => void;
 }
 
 /**
- * Starts an incident from this notebook, by way of IRM's own declare form.
+ * Opens IRM's declare form over the notebook, rather than navigating to their page.
  *
- * A deep link rather than an API call: `url` is what IRM turns into attached context, so the new
- * incident comes out linked back here without this needing to write anything. Severity is left for
- * the form to ask about — a notebook says nothing about how bad the thing is.
- *
- * Deliberately not the shared DeclareIncidentMenuItem from alerting, which renders a disabled item
- * with an explanatory tooltip when IRM is missing. That suits an alert rule menu; here it would put
- * a permanently dead item in the menu of every stack without IRM.
+ * Renders nothing when IRM is absent. Deliberately not the shared DeclareIncidentMenuItem from
+ * alerting, which renders a disabled item with a tooltip in that case — right in an alert rule menu,
+ * wrong as a permanently dead entry in every notebook menu on a stack without IRM.
  */
-export function DeclareIncidentMenuItem({ uid, title }: Props) {
-  const { pluginId, available } = useNotebookIncidents();
+export function DeclareIncidentMenuItem({ onSelect }: Props) {
+  const { DeclareIncidentForm } = useNotebookIncidents();
 
-  if (!available) {
+  if (!DeclareIncidentForm) {
     return null;
   }
 
@@ -33,7 +26,7 @@ export function DeclareIncidentMenuItem({ uid, title }: Props) {
     <Menu.Item
       icon="fire"
       label={t('notebooks.incidents.declare', 'Declare incident')}
-      url={createBridgeURL(pluginId, DECLARE_INCIDENT_PATH, { title, url: notebookShareUrl(uid) })}
+      onClick={onSelect}
       testId="notebook-declare-incident"
     />
   );
