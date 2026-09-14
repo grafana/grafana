@@ -12,9 +12,9 @@ import { setupDataSources } from '../testSetup/datasources';
 import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
+import { withRouteProxy } from './ProxiedAlertingRoute';
 import { routeProxies } from './proxies';
 import { type RouteProxy } from './types';
-import { withRouteProxy } from './withRouteProxy';
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
