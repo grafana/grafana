@@ -711,6 +711,8 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
+require github.com/grafana/codejen v0.0.4 // @grafana/grafana-as-code
+
 require (
 	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/maypok86/otter/v2 v2.3.0 // indirect
