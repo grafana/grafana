@@ -52,6 +52,11 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
  */
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+
+// Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
+// a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.
+export const STRIPED_ROW_CLASS = 'table-ng-row-striped';
+export const NESTED_ROW_CLASS = 'table-ng-row-nested';
 export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
 
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
