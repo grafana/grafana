@@ -10228,7 +10228,12 @@
           },
           "name": "Volume"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_few": "rd",
+      "ordinal-suffix_ordinal_many": "th",
+      "ordinal-suffix_ordinal_one": "st",
+      "ordinal-suffix_ordinal_other": "th",
+      "ordinal-suffix_ordinal_two": "nd"
     }
   },
   "grafana-ui": {

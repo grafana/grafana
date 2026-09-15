@@ -1,3 +1,5 @@
+import { t } from '@grafana/i18n';
+
 import { type DecimalCount } from '../types/displayValue';
 import { type FormattedValue } from '../types/valueFormats';
 
@@ -18,23 +20,23 @@ export function toPercentUnit(size: number | null, decimals: DecimalCount): Form
 }
 
 function ordinalSuffix(value: number): string {
-  const lastTwoDigits = Math.abs(value) % 100;
-
-  // 11th, 12th and 13th break the last-digit rule, as do 111th, 212th and so on.
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
-    return 'th';
-  }
-
-  switch (lastTwoDigits % 10) {
-    case 1:
-      return 'st';
-    case 2:
-      return 'nd';
-    case 3:
-      return 'rd';
-    default:
-      return 'th';
-  }
+  // Delegates to Intl.PluralRules (via i18next's `ordinal` option) so the suffix follows each
+  // locale's own ordinal rules (e.g. English's 1st/2nd/3rd/4th) instead of assuming English.
+  return t('grafana-data.valueFormats.ordinal-suffix', '', {
+    count: value,
+    ordinal: true,
+    // Cardinal fallbacks required by the t-plural-defaults lint rule; i18next only falls back to
+    // these if a locale is missing the ordinal-specific defaults above, which none do here.
+    defaultValue_one: 'st',
+    defaultValue_other: 'th',
+    defaultValue_ordinal_one: 'st',
+    defaultValue_ordinal_two: 'nd',
+    defaultValue_ordinal_few: 'rd',
+    // Italian's ordinal rule resolves to "many" for numbers like 8, 11, 18 and 80 — without this,
+    // those numbers would silently fall back to the "other" suffix once Italian is translated.
+    defaultValue_ordinal_many: 'th',
+    defaultValue_ordinal_other: 'th',
+  });
 }
 
 export function toOrdinal(value: number | null): FormattedValue {
