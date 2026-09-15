@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -26,6 +26,10 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const homeNav = useHomeNav();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
+  // While customising the nav, lock the header so the user can only pin/hide/reorder or finish editing:
+  // home navigation and closing are disabled until they leave customise mode.
+  const customising = state.megaMenuCustomising ?? false;
+
   // When undocked we do not show a header, but just the org switcher (which only renders when there are multiple orgs)
   if (!state.megaMenuDocked) {
     return <OrganizationSwitcher undocked={true} />;
@@ -34,17 +38,27 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        {state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
-        <OrganizationSwitcher>
-          {state.megaMenuDocked && <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
-          {!state.megaMenuDocked && (
-            <Box paddingLeft={2}>
-              <Text color="secondary">
-                <Trans i18nKey="navigation.megamenu.header-title">Navigation</Trans>
-              </Text>
-            </Box>
-          )}
-        </OrganizationSwitcher>
+        {/* `inert` (not just pointer-events) so the links are also removed from the tab order and can't
+            be reached/activated by keyboard while customising. */}
+        <div className={cx(customising && styles.disabled)} inert={customising}>
+          {state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
+        </div>
+        {/* Wrap the switcher itself, not its child: with multiple orgs it renders a dropdown instead of
+            the passed HomeTitle, so this is what disables the org dropdown while customising. */}
+        <div className={cx(customising && styles.disabled)} inert={customising}>
+          <OrganizationSwitcher>
+            {state.megaMenuDocked && (
+              <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+            )}
+            {!state.megaMenuDocked && (
+              <Box paddingLeft={2}>
+                <Text color="secondary">
+                  <Trans i18nKey="navigation.megamenu.header-title">Navigation</Trans>
+                </Text>
+              </Box>
+            )}
+          </OrganizationSwitcher>
+        </div>
       </Stack>
       <div className={styles.flexGrow} />
       <IconButton
@@ -52,6 +66,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}
+        disabled={customising}
         size="lg"
         variant="secondary"
       />
@@ -80,4 +95,9 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     flexShrink: 0,
   }),
   flexGrow: css({ flexGrow: 1 }),
+  // Non-interactive (and visibly muted) while customising, without removing the element from layout.
+  disabled: css({
+    opacity: 0.5,
+    pointerEvents: 'none',
+  }),
 });
