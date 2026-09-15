@@ -1,16 +1,15 @@
-import { memo, type ReactNode } from 'react';
+import { memo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
+import { Heading, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
 import { type Team } from 'app/types/teams';
 
 export interface Props {
   teams: Team[];
   isLoading: boolean;
-  heading: ReactNode;
 }
 
-export const UserTeams = memo<Props>(({ isLoading, teams, heading }) => {
+export const UserTeams = memo<Props>(({ isLoading, teams }) => {
   if (isLoading) {
     return <LoadingPlaceholder text={t('profile.user-teams.text-loading-teams', 'Loading teams...')} />;
   }
@@ -21,7 +20,9 @@ export const UserTeams = memo<Props>(({ isLoading, teams, heading }) => {
 
   return (
     <div>
-      {heading}
+      <Heading variant="h2">
+        <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
+      </Heading>
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table
