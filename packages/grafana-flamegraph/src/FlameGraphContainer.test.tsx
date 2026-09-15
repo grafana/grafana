@@ -5,6 +5,7 @@ import { useRef, useCallback } from 'react';
 import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
+import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
@@ -144,11 +145,13 @@ describe('FlameGraphContainer', () => {
     onFocusChange,
     onVisibleTruncatedPathsChange,
     loadingPaths,
+    getExtraContextMenuButtons,
     data: frameData = data,
   }: {
     onFocusChange?: (path: string[] | undefined) => void;
     onVisibleTruncatedPathsChange?: (paths: string[][]) => void;
     loadingPaths?: string[][];
+    getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
     data?: Parameters<typeof createDataFrame>[0];
   } = {}) => {
     const flameGraphData = createDataFrame(frameData);
@@ -166,8 +169,19 @@ describe('FlameGraphContainer', () => {
         onFocusChange={onFocusChange}
         onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
         loadingPaths={loadingPaths}
+        getExtraContextMenuButtons={getExtraContextMenuButtons}
       />
     );
+  };
+
+  /** Opens the flame graph's context menu on the root node. */
+  const openContextMenu = async () => {
+    const clickEvent = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(clickEvent, 'offsetX', { get: () => 10 });
+    Object.defineProperty(clickEvent, 'offsetY', { get: () => 10 });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
+
+    fireEvent(await screen.findByTestId('flameGraph'), clickEvent);
   };
 
   // A truncated node under a bar wide enough to read, and another under a sliver the flame graph mutes.
@@ -192,13 +206,7 @@ describe('FlameGraphContainer', () => {
     const onFocusChange = jest.fn();
     render(<FlameGraphContainerWithProps onFocusChange={onFocusChange} />);
 
-    const clickEvent = new MouseEvent('click', { bubbles: true });
-    Object.defineProperty(clickEvent, 'offsetX', { get: () => 10 });
-    Object.defineProperty(clickEvent, 'offsetY', { get: () => 10 });
-    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
-
-    const canvas = await screen.findByTestId('flameGraph');
-    fireEvent(canvas, clickEvent);
+    await openContextMenu();
     await userEvent.click(screen.getByText('Focus block'));
 
     await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(['total']));
@@ -207,6 +215,23 @@ describe('FlameGraphContainer', () => {
     await userEvent.click(screen.getByLabelText('Remove focus'));
 
     await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(undefined));
+  });
+
+  it('calls the latest getExtraContextMenuButtons, which is held at a stable identity', async () => {
+    const onClick = jest.fn();
+    const stale: GetExtraContextMenuButtonsFunction = () => [
+      { label: 'Stale action', icon: 'eye', onClick: jest.fn() },
+    ];
+    const latest: GetExtraContextMenuButtonsFunction = () => [{ label: 'Latest action', icon: 'eye', onClick }];
+
+    const { rerender } = render(<FlameGraphContainerWithProps getExtraContextMenuButtons={stale} />);
+    rerender(<FlameGraphContainerWithProps getExtraContextMenuButtons={latest} />);
+
+    await openContextMenu();
+    await userEvent.click(screen.getByText('Latest action'));
+
+    expect(onClick).toHaveBeenCalled();
+    expect(screen.queryByText('Stale action')).not.toBeInTheDocument();
   });
 
   it('marks the nodes given in loadingPaths as loading', async () => {
