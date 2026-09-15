@@ -3178,6 +3178,81 @@
     },
     {
       "metadata": {
+        "name": "grafana.exampleBooleanFlag",
+        "resourceVersion": "1789487888747",
+        "creationTimestamp": "2026-09-15T15:58:08Z"
+      },
+      "spec": {
+        "description": "Example boolean frontend feature flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.exampleFloatFlag",
+        "resourceVersion": "1789487888747",
+        "creationTimestamp": "2026-09-15T15:58:08Z"
+      },
+      "spec": {
+        "description": "Example float frontend feature flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "1.5"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.exampleIntegerFlag",
+        "resourceVersion": "1789487888747",
+        "creationTimestamp": "2026-09-15T15:58:08Z"
+      },
+      "spec": {
+        "description": "Example integer frontend feature flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "42"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.exampleObjectFlag",
+        "resourceVersion": "1789487888747",
+        "creationTimestamp": "2026-09-15T15:58:08Z"
+      },
+      "spec": {
+        "description": "Example object frontend feature flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "{\"allowList\":[]}"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.exampleStringFlag",
+        "resourceVersion": "1789487888747",
+        "creationTimestamp": "2026-09-15T15:58:08Z"
+      },
+      "spec": {
+        "description": "Example string frontend feature flag",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "example"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.exploreMetricsSidebar",
         "resourceVersion": "1784553980624",
         "creationTimestamp": "2026-07-20T13:26:20Z"

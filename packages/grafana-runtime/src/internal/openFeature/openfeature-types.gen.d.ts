@@ -107,8 +107,13 @@ declare module "@openfeature/core" {
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
-    | "datasources.gatewayGuardrails";
-  export type NumberFlagKey = never;
-  export type StringFlagKey = never;
-  export type ObjectFlagKey = never;
+    | "datasources.gatewayGuardrails"
+    | "grafana.exampleBooleanFlag";
+  export type NumberFlagKey =
+    | "grafana.exampleIntegerFlag"
+    | "grafana.exampleFloatFlag";
+  export type StringFlagKey =
+    | "grafana.exampleStringFlag";
+  export type ObjectFlagKey =
+    | "grafana.exampleObjectFlag";
 }
