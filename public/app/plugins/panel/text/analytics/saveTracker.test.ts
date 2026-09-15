@@ -1,4 +1,5 @@
 import { type FieldConfigSource, MappingType, type ValueMapping } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { DashboardDiscardedEvent, DashboardSavedEvent } from 'app/types/events';
 
@@ -34,18 +35,17 @@ function withContent(content: string, overrides: Partial<TextPanelSnapshot> = {}
   });
 }
 
-/** Derived against an empty baseline, so `contentChanged` reflects the content under test. */
 function forContent(content: string, options: Partial<Options> = {}) {
   const snap = snapshot({
     content,
     options: { mode: TextMode.Markdown, content, renderMode: RenderMode.Once, ...options },
   });
-  return deriveSavedProperties(snap, '');
+  return deriveSavedProperties(snap);
 }
 
 function forFieldConfig(defaults: FieldConfigSource['defaults'], overrides: FieldConfigSource['overrides'] = []) {
   const snap = snapshot({ fieldConfig: { defaults, overrides } });
-  return deriveSavedProperties(snap, snap.content);
+  return deriveSavedProperties(snap);
 }
 
 describe('deriveSavedProperties', () => {
@@ -66,7 +66,7 @@ describe('deriveSavedProperties', () => {
   it('falls back to the default render mode when the panel has none', () => {
     const snap = snapshot({ options: { mode: TextMode.Markdown, content: '' } });
 
-    expect(deriveSavedProperties(snap, snap.content).renderMode).toBe(RenderMode.Once);
+    expect(deriveSavedProperties(snap).renderMode).toBe(RenderMode.Once);
   });
 
   it.each([
@@ -133,17 +133,12 @@ describe('deriveSavedProperties', () => {
       editorViewChanged: true,
     });
 
-    expect(deriveSavedProperties(snap, snap.content)).toMatchObject({
+    expect(deriveSavedProperties(snap)).toMatchObject({
       newFeaturesEnabled: false,
       hasData: true,
       editorViewAtSave: 'split',
       editorViewChanged: true,
     });
-  });
-
-  it('measures contentChanged against the baseline content it is given', () => {
-    expect(deriveSavedProperties(withContent('# Edited'), '# Start').contentChanged).toBe(true);
-    expect(deriveSavedProperties(withContent('# Start'), '# Start').contentChanged).toBe(false);
   });
 });
 
@@ -152,13 +147,14 @@ describe('TextPanelSaveTracker', () => {
 
   beforeEach(() => {
     saved.mockClear();
+    locationService.push('/d/dash-a/a');
     tracker = new TextPanelSaveTracker();
   });
 
-  /** The first record of an editing session is the panel as the author found it. */
+  /** The first record of a session is the panel as the author found it, and gates the rest. */
   const open = (panelId: number, snap: TextPanelSnapshot) => tracker.record(panelId, snap);
 
-  it('reports one event per edited panel when the dashboard is saved', () => {
+  it('reports one event per changed panel when the dashboard is saved', () => {
     open(1, withContent('# Plain'));
     open(2, withContent('# Plain'));
     tracker.record(1, withContent('# Plain, edited'));
@@ -171,13 +167,6 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).toHaveBeenNthCalledWith(2, expect.objectContaining({ hasHandlebars: true }));
   });
 
-  it('reports nothing for a dashboard where no text panel was edited', () => {
-    appEvents.publish(new DashboardSavedEvent());
-
-    expect(saved).not.toHaveBeenCalled();
-  });
-
-  // Such a panel leaves the dashboard clean, so no discard event would ever clear its receipt.
   it('reports nothing for a panel the author opened but did not change', () => {
     open(1, withContent('# Untouched'));
     tracker.record(
@@ -190,7 +179,23 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).not.toHaveBeenCalled();
   });
 
-  it('reports a field config edit, with contentChanged false', () => {
+  it('reports nothing once the author reverts the edit', () => {
+    open(1, withContent('# Start'));
+    tracker.record(1, withContent('# Edited'));
+    tracker.record(1, withContent('# Start'));
+
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing for a dashboard where no text panel was opened', () => {
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('reports a field config edit', () => {
     const mappings: ValueMapping[] = [
       { type: MappingType.ValueToText, options: { ok: { text: 'Healthy', index: 0 } } },
     ];
@@ -199,7 +204,7 @@ describe('TextPanelSaveTracker', () => {
 
     appEvents.publish(new DashboardSavedEvent());
 
-    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ contentChanged: false, hasValueMappings: true }));
+    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ hasValueMappings: true }));
   });
 
   it('reports the panel as it looked when last recorded', () => {
@@ -224,8 +229,7 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).not.toHaveBeenCalled();
   });
 
-  // Closing and reopening the editor replays the edited state as the session's first record. That
-  // must not become the new baseline, or the pending edit is lost.
+  // Reopening replays the edited state as the session's first record.
   it('still reports a panel whose editor was reopened after the edit', () => {
     open(1, withContent('# Start'));
     tracker.record(1, withContent('# Edited'));
@@ -234,10 +238,8 @@ describe('TextPanelSaveTracker', () => {
     appEvents.publish(new DashboardSavedEvent());
 
     expect(saved).toHaveBeenCalledTimes(1);
-    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ contentChanged: true }));
   });
 
-  // What was saved is the new baseline, so an editor left open cannot report the same edit twice.
   it('does not report the same edit again on a later save', () => {
     open(1, withContent('# Start'));
     tracker.record(1, withContent('# Edited'));
@@ -249,5 +251,49 @@ describe('TextPanelSaveTracker', () => {
     appEvents.publish(new DashboardSavedEvent());
 
     expect(saved).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a further edit made after an earlier save', () => {
+    open(1, withContent('# Start'));
+    tracker.record(1, withContent('# First edit'));
+    appEvents.publish(new DashboardSavedEvent());
+
+    tracker.record(1, withContent('# Second edit'));
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a panel first edited after a save made for some other change', () => {
+    open(1, withContent('# Start'));
+    appEvents.publish(new DashboardSavedEvent());
+    expect(saved).not.toHaveBeenCalled();
+
+    tracker.record(1, withContent('# Edited'));
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops what it recorded when the author moves to another dashboard', () => {
+    open(1, withContent('# Dashboard A panel'));
+    tracker.record(1, withContent('# Dashboard A edited'));
+
+    locationService.push('/d/dash-b/b');
+    open(1, withContent('# Dashboard B panel'));
+
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing when the save belongs to a dashboard it recorded nothing for', () => {
+    open(1, withContent('# Dashboard A panel'));
+    tracker.record(1, withContent('# Dashboard A edited'));
+
+    locationService.push('/d/dash-b/b');
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
   });
 });

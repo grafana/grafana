@@ -141,7 +141,6 @@ export function TextNGPanel(props: Props) {
     setView(next);
   };
 
-  // The tracker decides what counts as a change, so it holds the baseline across editor sessions.
   useEffect(() => {
     if (!isEditing) {
       return;

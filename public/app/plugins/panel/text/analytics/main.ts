@@ -2,6 +2,7 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
 import { type TextPanelSavedProperties } from './types';
 
+/** @owner dataviz-squad */
 const createTextPanelEvent = defineFeatureEvents('grafana', 'text_panel');
 
 export const TextPanelInteractions = {

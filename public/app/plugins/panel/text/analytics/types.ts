@@ -8,9 +8,6 @@ export type TextPanelEditorView = 'write' | 'split' | 'preview';
 export interface TextPanelSavedProperties extends EventProperty {
   /** Whether the `text.newFeatures` flag was on, which splits every property below by rollout state. */
   newFeaturesEnabled: boolean;
-  /** Whether the author changed the template while editing, which separates a real edit from a panel that was only opened. */
-  contentChanged: boolean;
-
   /** Whether at least one query returned both fields and rows. No query and an empty result both report false. */
   hasData: boolean;
 
