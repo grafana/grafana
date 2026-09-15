@@ -124,8 +124,8 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           <div className={styles.appsIconWrap}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
           </div>
-          <Text color="secondary">
-            <Trans i18nKey="dashboard.empty.build-assistant">Use Assistant to build your dashboard</Trans>
+          <Text element="h2" variant="h5" weight="medium">
+            <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
           </Text>
           <div className={styles.prompt}>
             <DashboardLandingPrompt onSubmit={onSubmitPrompt} />
@@ -135,7 +135,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         <Stack alignItems="center" height={4}>
           <div className={styles.orLine} />
           <Text color="secondary">
-            <Trans i18nKey="dashboard.empty.or-start-blank">Or build it from scratch</Trans>
+            <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
           </Text>
           <div className={styles.orLine} />
         </Stack>

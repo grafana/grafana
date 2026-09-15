@@ -55,7 +55,7 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
           placeholder ??
           t(
             'dashboard.empty.assistant-placeholder',
-            'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.'
+            'Describe your dashboard This will open the assistant chat and start a conversation.'
           )
         }
         hideModeSelector

@@ -50,7 +50,7 @@ describe('DashboardLandingPrompt', () => {
   });
 
   it('renders the plugin prompt once it is available', () => {
-    const Prompt = () => <textarea aria-label="Describe your dashboard to the assistant" />;
+    const Prompt = () => <textarea aria-label="Describe your dashboard" />;
     usePluginComponentMock.mockReturnValue({
       component: Prompt,
       isLoading: false,
@@ -58,7 +58,7 @@ describe('DashboardLandingPrompt', () => {
 
     render(<DashboardLandingPrompt onSubmit={jest.fn()} />);
 
-    expect(screen.getByRole('textbox', { name: 'Describe your dashboard to the assistant' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Describe your dashboard' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Loading')).not.toBeInTheDocument();
   });
 
@@ -68,7 +68,7 @@ describe('DashboardLandingPrompt', () => {
     const Prompt = (props: CapturedPromptProps) => {
       received.push(props);
       return (
-        <textarea aria-label="Describe your dashboard to the assistant. This will open the assistant chat and start a conversation." />
+        <textarea aria-label="Describe your dashboard. This will open the assistant chat and start a conversation." />
       );
     };
     usePluginComponentMock.mockReturnValue({
@@ -83,8 +83,7 @@ describe('DashboardLandingPrompt', () => {
     expect(received).toHaveLength(1);
     expect(received[0]).toEqual({
       onSubmit,
-      placeholder:
-        'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.',
+      placeholder: 'Describe your dashboard. This will open the assistant chat and start a conversation.',
       hideModeSelector: true,
       mode: 'dashboarding',
     });
