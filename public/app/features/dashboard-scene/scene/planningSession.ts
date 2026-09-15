@@ -2,6 +2,7 @@ import { type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
 import type { DashboardScene } from './DashboardScene';
+import { PlanPlaceholderBadge } from './PlanPlaceholderBadge';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -40,8 +41,11 @@ export function trackPlanningSection(scene: DashboardScene, section: RowItem | T
   sessions.get(scene)?.sections.add(section);
 }
 
-export function trackPlanningPanel(scene: DashboardScene, panel: VizPanel) {
-  sessions.get(scene)?.panels.add(panel);
+export function trackPlanningPanel(scene: DashboardScene | undefined, panel: VizPanel) {
+  // Layout insertion also handles moved real panels; only planning placeholders belong to cleanup.
+  if (scene && panel.state.titleItems?.some((item) => item instanceof PlanPlaceholderBadge)) {
+    sessions.get(scene)?.panels.add(panel);
+  }
 }
 
 export function trackPlanningVariable(

@@ -1,9 +1,12 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
-import { CustomVariable, sceneGraph, SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, sceneGraph, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -12,6 +15,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { deactivatePlanningSession } from '../../scene/planningSession';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDefaultVizPanel } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
 jest.mock('../../actions/utils/edit', () => ({ edit: ({ perform }: { perform: () => void }) => perform() }));
@@ -264,3 +268,41 @@ it.each(['row', 'tab'] as const)(
     expect(section.state.$variables).toBeUndefined();
   }
 );
+
+it.each([
+  { layout: 'grid', discard: true },
+  { layout: 'auto-grid', discard: true },
+  { layout: 'grid', discard: false },
+  { layout: 'auto-grid', discard: false },
+])('handles UI-created and duplicated $layout placeholders with discard=$discard', async ({ layout, discard }) => {
+  const { scene, client } = setup();
+  const existing = new VizPanel({ title: 'Existing', pluginId: 'text', key: 'panel-1' });
+  const grid =
+    layout === 'grid'
+      ? DefaultGridLayoutManager.fromVizPanels([existing])
+      : new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [new AutoGridItem({ body: existing })] }) });
+  const row = new RowItem({ title: 'Existing row', layout: grid });
+  scene.setState({ body: new RowsLayoutManager({ rows: [row] }) });
+  await client.execute(start);
+
+  // Moving an existing real panel also inserts a clone through addPanel.
+  const movedExisting = existing.clone();
+  grid.removePanel(existing);
+  grid.addPanel(movedExisting);
+
+  // The sidebar and drag/drop insert into the selected layout, bypassing ADD_PANEL.
+  const added = await getDefaultVizPanel(scene);
+  grid.addPanel(added);
+  scene.duplicatePanel(added);
+  const before = grid.getVizPanels();
+  expect(before.map((panel) => panel.state.title)).toEqual(['Existing', 'New panel', 'New panel']);
+  expect(before.slice(1).map((panel) => getQueryRunnerFor(panel))).toEqual([undefined, undefined]);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard } })).success).toBe(true);
+
+  expect(grid.getVizPanels().map((panel) => panel.state.title)).toEqual(
+    discard ? ['Existing'] : ['Existing', 'New panel', 'New panel']
+  );
+  expect(grid.getVizPanels()[0]).toBe(movedExisting);
+  expect(row.getRoot()).toBe(scene);
+});

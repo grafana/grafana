@@ -43,6 +43,7 @@ import {
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
+  findDashboardSceneFor,
 } from '../../utils/utils';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -50,6 +51,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { trackPlanningPanel } from '../planningSession';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -150,6 +152,7 @@ export class DefaultGridLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
+    trackPlanningPanel(findDashboardSceneFor(this), vizPanel);
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
@@ -296,6 +299,8 @@ export class DefaultGridLayoutManager
       $data: panelData,
       key: getVizPanelKeyForPanelId(newPanelId),
     });
+
+    trackPlanningPanel(findDashboardSceneFor(this), newPanel);
 
     newGridItem = new DashboardGridItem({
       x: gridItem.state.x,

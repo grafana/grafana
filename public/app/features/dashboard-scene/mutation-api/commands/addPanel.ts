@@ -12,7 +12,6 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { trackPlanningPanel } from '../../scene/planningSession';
 import { buildVizPanel, getElements } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
@@ -64,7 +63,6 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
       const targetLayout = resolved.layoutManager;
 
       targetLayout.addPanel(vizPanel);
-      trackPlanningPanel(scene, vizPanel);
 
       const isAutoGrid = targetLayout instanceof AutoGridLayoutManager;
 
