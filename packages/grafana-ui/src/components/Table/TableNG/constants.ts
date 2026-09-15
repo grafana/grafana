@@ -16,6 +16,12 @@ export const COLUMN = {
 export const TABLE = {
   CELL_PADDING: 6,
   LINE_HEIGHT: 22,
+  /**
+   * The header label's own line box, which is shorter than a body row's `LINE_HEIGHT`. Kept here
+   * because two places have to agree on it: the label's `line-height` in `HeaderCell`, and
+   * `useHeaderHeight`, which multiplies it by the wrapped line count to size the header row.
+   */
+  HEADER_LINE_HEIGHT: 20,
   MAX_CELL_HEIGHT: 48,
   PAGINATION_LIMIT: 750,
   SCROLL_BAR_WIDTH: 8,

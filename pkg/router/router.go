@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sony/gobreaker/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -22,31 +23,32 @@ const (
 // handlerEntry is the router's persistent, reconcile-only record for one group:
 // the live Backend (kept so discovery synthesis reflects whatever is actually
 // being served — see publish — even when a later reload fails and the old
-// handler stays live), the built handler, and lastRV, the RouteConfig
-// fingerprint last applied. lastRV lets reconcile skip rebuilding a group
+// handler stays live), the built handler, and lastKey, the route
+// fingerprint last applied. lastKey lets reconcile skip rebuilding a group
 // whose config has not changed. Touched only by reconcile (single goroutine),
 // so it needs no lock.
 type handlerEntry struct {
 	backend Backend
 	handler http.Handler
-	lastRV  string
+	lastKey string
 
 	// breaker is a passive, per-group circuit breaker: it observes real
 	// proxied request outcomes (transport errors, 502/503/504) rather than
 	// running any active probe of its own -- see AGENTS.md "Passive circuit
 	// breaking". Reset to a fresh instance whenever this group is rebuilt for
-	// a changed RV (the target may have moved), but left untouched across an
-	// unchanged-RV reconcile, same as backend/handler above.
+	// a changed key (the target may have moved), but left untouched across an
+	// unchanged-key reconcile, same as backend/handler above.
 	breaker *gobreaker.CircuitBreaker[struct{}]
 }
 
 // servingEntry is the immutable per-group record published into snapshot: the
-// proxy handler plus the RV. RV is needed at serve time to validate/label the
+// proxy handler plus the key. The key is needed at serve time to validate/label the
 // per-group-version openapi cache; served (reconcile-goroutine-owned) isn't
-// safe to read from serving goroutines, so RV is duplicated here.
+// safe to read from serving goroutines, so it is duplicated here.
 type servingEntry struct {
+	group   metav1.APIGroup
 	handler http.Handler
-	rv      string
+	key     string
 	breaker *gobreaker.CircuitBreaker[struct{}]
 }
 
@@ -89,7 +91,7 @@ type GrafanaRouter struct {
 	snapshot atomic.Pointer[map[string]servingEntry]
 
 	// apiGroupList and openapiIndex are the router-synthesized root documents
-	// for /apis and /openapi/v3, rebuilt from served's Backend.Manifest() on
+	// for /apis and /openapi/v3, rebuilt from served's Backend.Group() on
 	// every reconcile and stored atomically alongside snapshot — never from the
 	// raw Load() result, so a group that failed to (re)load or a duplicate in a
 	// single Load never gets advertised inconsistently with what's actually
@@ -102,7 +104,7 @@ type GrafanaRouter struct {
 	// the owning backend, keyed by "group/version". Written by many
 	// concurrent serving goroutines on cache-miss (unlike snapshot/
 	// apiGroupList/openapiIndex, which have exactly one writer, reconcile),
-	// so it's a sync.Map rather than an atomic.Pointer swap. A stale rv is
+	// so it's a sync.Map rather than an atomic.Pointer swap. A stale key is
 	// simply overwritten on next fetch, not actively evicted.
 	openapiDocs sync.Map
 }
@@ -144,7 +146,7 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
-		cr.serveAPIGroupList(w, req)
+		cr.serveAPIGroupList(w, req, next)
 		return
 	}
 
@@ -194,14 +196,8 @@ func (cr *GrafanaRouter) KnownGroup(group string) bool {
 	return ok
 }
 
-// serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
-// group snapshot.
-func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
-	serveCachedDoc(w, req, cr.apiGroupList.Load())
-}
-
 // serveCachedDoc writes a synthesized document, honoring conditional GET via
-// If-None-Match against the document's RV-derived ETag. Shared by
+// If-None-Match against the document's key-derived ETag. Shared by
 // serveAPIGroupList and the /openapi/v3 root doc.
 func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 	w.Header().Set("Content-Type", "application/json")
@@ -218,8 +214,8 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 // HandleFunc; not exported, so /openapi/v3 always flows through the one serving
 // entry point.
 func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if req.URL.Path == openapiV3Prefix {
-		serveCachedDoc(w, req, cr.openapiIndex.Load())
+	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
+		cr.serveOpenAPIIndex(w, req, next)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
@@ -231,7 +227,7 @@ func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request
 }
 
 // serveOpenAPIGroupVersion serves one group's OpenAPI v3 document: a
-// conditional-GET-aware, RV-keyed cache in front of a plain proxy to the
+// conditional-GET-aware cache keyed by the backend fingerprint in front of a plain proxy to the
 // owning backend. Never merges across groups — this is one backend's
 // document, verbatim.
 func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
@@ -242,26 +238,24 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 		return
 	}
 
-	etag := quoteETag(entry.rv)
-	if req.Header.Get("If-None-Match") == etag {
-		w.Header().Set("ETag", etag)
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}
-
 	cacheKey := group + "/" + version
-	if cached, ok := cr.openapiDocs.Load(cacheKey); ok {
+	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	if cached, ok := cr.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
-		if c.rv == entry.rv {
-			w.Header().Set("Content-Type", "application/json")
+		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
+			maps.Copy(w.Header(), c.header.Clone())
 			w.Header().Set("ETag", c.etag)
+			if req.Header.Get("If-None-Match") == c.etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write(c.body)
 			return
 		}
 	}
 
-	// Cache miss or stale rv: proxy through, capturing the response so it can
+	// Cache miss or stale key: proxy through, capturing the response so it can
 	// be cached on success. Strip conditional headers first — see
 	// stripConditionalHeaders' doc comment for why. Gated by the same
 	// per-group breaker as the main dispatch — this is still a real proxy
@@ -280,8 +274,14 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	}
 
 	maps.Copy(w.Header(), rec.header)
-	if rec.statusCode == http.StatusOK {
-		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{rv: entry.rv, etag: etag, body: rec.body.Bytes()})
+	// Private schemas pass through authorization on every request. Honor their
+	// private/no-cache responses instead of bypassing that check on a cache hit.
+	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
+		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
+		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{
+			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
+			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),
+		})
 		w.Header().Set("ETag", etag)
 	}
 	w.WriteHeader(rec.statusCode)
@@ -404,7 +404,7 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 }
 
 // reconcile re-reads the full desired route set and converges served to it:
-// rebuild changed/new groups, leave unchanged ones (RV match) untouched, drop
+// rebuild changed/new groups, leave unchanged ones (key match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake.
 func (r *GrafanaRouter) reconcile(ctx context.Context) error {
@@ -417,7 +417,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	var errs []error
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
-		group := b.Group()
+		group := b.Group().Name
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group; a duplicate group in a
 			// single load is a config error. Last-wins, warn — do not crash the
@@ -429,7 +429,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		seen[group] = struct{}{}
 
 		e, ok := r.served[group]
-		if ok && e.lastRV == b.RV() {
+		if ok && e.lastKey == b.Key() {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
 
@@ -437,28 +437,28 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		if err != nil {
 			// Load failed: keep last-known-good for this group (leave the
 			// existing entry, if any, untouched) and don't publish a nil
-			// handler. lastRV is not advanced, so a later wake retries. Because
-			// the old entry (old backend, old manifest) is left untouched,
+			// handler. lastKey is not advanced, so a later wake retries. Because
+			// the old entry (old backend, old API group) is left untouched,
 			// publish's discovery synthesis stays consistent with what's
-			// actually being served, not with this failed reload's manifest.
+			// actually being served, not with this failed reload's API group.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
 
 		if !ok {
 			// New group: create the entry, starting with a fresh, closed breaker.
-			r.served[group] = &handlerEntry{backend: b, handler: handler, lastRV: b.RV(), breaker: newGroupBreaker(group)}
+			r.served[group] = &handlerEntry{backend: b, handler: handler, lastKey: b.Key(), breaker: newGroupBreaker(group)}
 			continue
 		}
 		// Changed: swap the backend/handler in place. The transport (and its
 		// pool) is reused from the shared cache when the TLS key is unchanged,
 		// so the pool survives. The breaker is reset to a fresh instance,
-		// though: an RV change can mean the target itself moved, so any prior
+		// though: a key change can mean the target itself moved, so any prior
 		// trip state would be stale -- see AGENTS.md "Passive circuit
 		// breaking".
 		e.backend = b
 		e.handler = handler
-		e.lastRV = b.RV()
+		e.lastKey = b.Key()
 		e.breaker = newGroupBreaker(group)
 	}
 
@@ -483,10 +483,12 @@ func (r *GrafanaRouter) publish() {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		snap[group] = servingEntry{handler: e.handler, rv: e.lastRV, breaker: e.breaker}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
 		if e.backend != nil {
+			entry.group = e.backend.Group()
 			backends = append(backends, e.backend)
 		}
+		snap[group] = entry
 	}
 	r.snapshot.Store(&snap)
 

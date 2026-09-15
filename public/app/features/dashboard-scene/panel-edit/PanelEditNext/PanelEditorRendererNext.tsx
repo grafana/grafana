@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { LoadingBar, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelEditModals } from '../LibraryPanelEditModals';
 import { type PanelEditor } from '../PanelEditor';
@@ -18,6 +19,7 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
+  const [optionsPaneRef, { width: optionsPaneWidth }] = useMeasure<HTMLDivElement>();
 
   return (
     <div className={styles.container} data-testid={selectors.components.PanelEditor.General.content}>
@@ -30,6 +32,9 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
           </div>
           <div {...splitterProps} />
           <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
+            <div ref={optionsPaneRef} className={styles.loadingBarContainer}>
+              {!splitterState.collapsed && !optionsPane && <LoadingBar width={optionsPaneWidth} />}
+            </div>
             {splitterState.collapsed && (
               <div className={styles.expandOptionsWrapper}>
                 <ToolbarButton
@@ -46,7 +51,6 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
               </div>
             )}
             {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
-            {!splitterState.collapsed && !optionsPane && <Spinner />}
           </div>
         </div>
       </div>
@@ -99,11 +103,19 @@ function getWrapperStyles(theme: GrafanaTheme2) {
       minHeight: 0,
     }),
     optionsPane: css({
+      position: 'relative',
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,
+    }),
+    loadingBarContainer: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      overflow: 'hidden',
     }),
     expandOptionsWrapper: css({
       display: 'flex',

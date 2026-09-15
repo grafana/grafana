@@ -568,6 +568,9 @@ export const versionedComponents = {
       title: {
         [MIN_GRAFANA_VERSION]: (title: string) => `data-testid Panel header ${title}`,
       },
+      subtitle: {
+        '13.2.0': `data-testid Panel subtitle`,
+      },
       content: {
         '11.1.0': 'data-testid panel content',
       },
@@ -1636,6 +1639,14 @@ export const versionedComponents = {
       },
       feedbackLink: {
         '13.3.0': 'data-testid TraceViewer share feedback-link',
+      },
+    },
+    traceBanner: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      row: {
+        '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
       },
     },
   },

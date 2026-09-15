@@ -70,6 +70,12 @@ func ProvideDBStore(
 	return &store, nil
 }
 
+// RuleChangeEvent is published via DBSession.PublishAfterCommit, so subscribers observe it only
+// once the rule write has committed and can safely read the new state back.
 type RuleChangeEvent struct {
 	RuleKeys []models.AlertRuleKey
+	// FolderKeys is the deduplicated set of folders affected by this change. For an update that
+	// moves a rule between folders it holds both the old and the new folder, so subscribers can
+	// re-evaluate each.
+	FolderKeys []models.FolderKey
 }

@@ -18,8 +18,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-func strPtr(s string) *string { return &s }
-
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
@@ -227,7 +225,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -240,7 +238,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -253,7 +251,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
