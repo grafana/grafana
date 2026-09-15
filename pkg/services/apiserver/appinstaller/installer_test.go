@@ -165,6 +165,14 @@ func (m *mockAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribut
 	return authorizer.DecisionAllow, "test", nil
 }
 
+func (m *mockAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(m.Authorize(ctx, attr))
+}
+
+func (m *mockAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 func TestRegisterStorageOptions(t *testing.T) {
 	makeManifest := func(group string, kinds ...app.ManifestVersionKind) *app.ManifestData {
 		return &app.ManifestData{
