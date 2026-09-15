@@ -186,6 +186,30 @@ func TestSingleObjectWireCap(t *testing.T) {
 	require.Positive(t, singleObjectWireCap(math.MaxInt64-1), "must not overflow to a negative limit")
 }
 
+// TestWrapNanogitError verifies that a mapped API-status error (e.g. the 413
+// from a capped response) is returned unwrapped so responsewriters.ErrorToAPIStatus,
+// which type-switches on the concrete error rather than unwrapping, still emits
+// the intended status code; non-status errors keep the context prefix.
+func TestWrapNanogitError(t *testing.T) {
+	t.Run("status error is returned unwrapped", func(t *testing.T) {
+		got := wrapNanogitError("list refs", &client.ErrResponseTooLarge{Limit: 1024, Op: "ls-refs"})
+
+		// A direct type assertion (what ErrorToAPIStatus does) must succeed.
+		_, ok := got.(apierrors.APIStatus)
+		require.True(t, ok, "mapped status error must not be wrapped")
+		require.True(t, apierrors.IsRequestEntityTooLargeError(got))
+	})
+
+	t.Run("non-status error keeps context prefix", func(t *testing.T) {
+		got := wrapNanogitError("list refs", errors.New("boom"))
+		require.EqualError(t, got, "list refs: boom")
+	})
+
+	t.Run("nil error is unwrapped nil", func(t *testing.T) {
+		require.NoError(t, wrapNanogitError("list refs", nil))
+	})
+}
+
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes
 func TestMapNanogitError_HTTPStatusCodes(t *testing.T) {
 	tests := []struct {

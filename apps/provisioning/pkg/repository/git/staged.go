@@ -41,7 +41,7 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 	if err != nil {
 		// The staged-writer fetch can exceed max_bulk_fetch_size; map it to a
 		// 413 like the other capped operations instead of leaking a raw error.
-		return nil, fmt.Errorf("build staged writer: %w", mapNanogitError(err))
+		return nil, wrapNanogitError("build staged writer", err)
 	}
 
 	return &stagedGitRepository{
