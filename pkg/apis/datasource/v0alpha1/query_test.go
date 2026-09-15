@@ -161,6 +161,50 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}))
 	})
+	t.Run("a plugin error outranks a downstream error regardless of map order", func(t *testing.T) {
+		// Responses is a map, so iteration order is randomized. Returning on the first
+		// errored entry made a batch holding both kinds flap between 400 and 500. A plugin
+		// error has to win: matching the SDK's ErrorSourceMiddleware, and so that a real
+		// plugin failure is never hidden behind a tenant's bad config.
+		rsp := &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Error:       fmt.Errorf("database not found: db_example"),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusUnknown,
+				},
+				"B": {
+					Error:       fmt.Errorf("plugin blew up"),
+					ErrorSource: backend.ErrorSourcePlugin,
+					Status:      backend.StatusInternal,
+				},
+			},
+		}
+
+		for i := 0; i < 100; i++ {
+			require.Equal(t, 500, datasourceV0.GetResponseCode(rsp), "iteration %d", i)
+		}
+	})
+	t.Run("the reported status is stable when several downstream errors disagree", func(t *testing.T) {
+		rsp := &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				"A": {
+					Error:       fmt.Errorf("unauthorized access"),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusUnauthorized,
+				},
+				"B": {
+					Error:       fmt.Errorf("bucket not found"),
+					ErrorSource: backend.ErrorSourceDownstream,
+					Status:      backend.StatusNotFound,
+				},
+			},
+		}
+
+		for i := 0; i < 100; i++ {
+			require.Equal(t, 401, datasourceV0.GetResponseCode(rsp), "iteration %d", i)
+		}
+	})
 	t.Run("a downstream error from a plugin that sets no status survives the wire as 400", func(t *testing.T) {
 		// End-to-end guard for the shape that actually caused the incident. The influxdb
 		// plugin labels the error downstream but leaves Status unset, and the SDK stamps
