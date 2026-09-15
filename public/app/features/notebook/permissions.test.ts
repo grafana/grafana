@@ -5,7 +5,7 @@ import { canAddPanelToNotebook, canCreateNotebooks, canDeleteNotebooks, canEditN
 
 /** Grants exactly these actions and nothing else. */
 function grant(...actions: AccessControlAction[]) {
-  jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => actions.includes(action));
+  jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => actions.some((granted) => granted === action));
 }
 
 describe('notebook permissions', () => {
