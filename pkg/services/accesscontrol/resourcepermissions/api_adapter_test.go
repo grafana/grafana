@@ -629,7 +629,7 @@ func TestConvertK8sResourcePermissionToDTOBatchesSubjectLookups(t *testing.T) {
 
 	assert.Equal(t, 1, userSvc.listCalls, "all users must resolve in a single batch")
 	assert.Zero(t, userSvc.getCalls, "no per-entry user lookups")
-	assert.Equal(t, []string{"user-uid-1", "user-uid-2"}, userSvc.lastUIDs, "duplicate subjects must be deduplicated")
+	assert.ElementsMatch(t, []string{"user-uid-1", "user-uid-2"}, userSvc.lastUIDs, "duplicate subjects must be deduplicated")
 
 	assert.Equal(t, 1, teamSvc.searchCalls, "all teams must resolve in a single batch")
 	assert.Zero(t, teamSvc.getCalls, "no per-entry team lookups")
