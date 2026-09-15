@@ -22,6 +22,10 @@ import { type IncidentsData } from './useIncidents';
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
 
+// The team filter row (32px combobox + 8px padding each side) sits inside the fixed-height
+// tab content, so it's taken out of the list height to keep the card level with the dashboards card.
+const TEAM_FILTER_ROW_HEIGHT = 48;
+
 type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
 export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
@@ -68,6 +72,7 @@ export function AlertIncidentTabs({
   const teamFilter =
     activeTab === ALERTS_TAB_ID
       ? {
+          // Undefined while loading or on error, which hides the dropdown.
           teamValues: alertTeamValues,
           selectedTeam: alertsTeam,
           onChange: onAlertsTeamChange,
@@ -82,6 +87,9 @@ export function AlertIncidentTabs({
           offersYourTeams: false,
           ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
         };
+  const teamValues = teamFilter.teamValues ?? [];
+  const hasTeamFilter = teamValues.length > 0;
+  const listHeight = DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN - (hasTeamFilter ? TEAM_FILTER_ROW_HEIGHT : 0);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -145,8 +153,6 @@ export function AlertIncidentTabs({
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {/* Keyed by tab so switching remounts the dropdown with the other tab's options. */}
-        <TeamFilterCombobox key={activeTab} {...teamFilter} />
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
@@ -166,11 +172,12 @@ export function AlertIncidentTabs({
           ))}
         </TabsBar>
         <TabContent>
-          <ScrollContainer
-            showScrollIndicators
-            maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
-            minHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
-          >
+          {hasTeamFilter && (
+            <Box paddingX={1} paddingY={1}>
+              <TeamFilterCombobox key={activeTab} {...teamFilter} teamValues={teamValues} />
+            </Box>
+          )}
+          <ScrollContainer showScrollIndicators maxHeight={`${listHeight}px`} minHeight={`${listHeight}px`}>
             {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
             {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
           </ScrollContainer>

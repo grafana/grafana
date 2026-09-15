@@ -19,8 +19,8 @@ const getAllTeamsOption = (value: TeamSelection): ComboboxOption<TeamSelection> 
 });
 
 interface Props {
-  /** Options to offer; undefined while loading or on error, which hides the dropdown. */
-  teamValues: string[] | undefined;
+  /** Team options to offer; the caller hides the dropdown when there are none. */
+  teamValues: string[];
   selectedTeam: TeamSelection;
   onChange: (team: TeamSelection) => void;
   /**
@@ -38,7 +38,7 @@ interface Props {
  */
 export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, offersYourTeams, ariaLabel }: Props) {
   // Single sort site for both tabs, so neither data hook has to.
-  const sortedValues = useMemo(() => [...(teamValues ?? [])].sort((a, b) => collator.compare(a, b)), [teamValues]);
+  const sortedValues = useMemo(() => [...teamValues].sort((a, b) => collator.compare(a, b)), [teamValues]);
 
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
   const allTeamsValue: TeamSelection = offersYourTeams ? ALL_TEAMS : '';
@@ -73,10 +73,6 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, offersY
     },
     [sortedValues, offersYourTeams, allTeamsValue]
   );
-
-  if (sortedValues.length === 0) {
-    return null;
-  }
 
   return (
     <Combobox
