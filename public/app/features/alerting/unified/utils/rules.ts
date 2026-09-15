@@ -155,26 +155,20 @@ export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
 
-/**
- * A Ruler identifier carries the hash of the rule as the Ruler API returned it. Kept here rather
- * than with the other rule type guards in `utils/rules.ts`, so that telling two identifiers apart
- * doesn't pull in everything that module reaches.
- */
-export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is CloudRuleIdentifier {
-  return 'rulerRuleHash' in identifier;
-}
-
-/** As above, for identifiers built from the Prometheus API rather than the Ruler one. */
-export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
-  return 'ruleHash' in identifier;
-}
-
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
   return 'uid' in identifier;
 }
 
+export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is CloudRuleIdentifier {
+  return 'rulerRuleHash' in identifier;
+}
+
 export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
   return Object.values<string>(PromRuleType).includes(ruleType);
+}
+
+export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
+  return 'ruleHash' in identifier;
 }
 
 export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier is EditableRuleIdentifier {

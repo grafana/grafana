@@ -10,7 +10,7 @@ import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
-import { tryParse } from '../../utils/rule-id';
+import * as ruleId from '../../utils/rule-id';
 import { rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -20,7 +20,7 @@ import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExpor
 function GrafanaModifyExport() {
   const { id } = useParams();
   const ruleIdentifier = useMemo<RuleIdentifier | undefined>(() => {
-    return tryParse(id, true);
+    return ruleId.tryParse(id, true);
   }, [id]);
 
   if (!ruleIdentifier) {
