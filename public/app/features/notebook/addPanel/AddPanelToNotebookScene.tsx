@@ -9,7 +9,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { Modal, Spinner, useStyles2 } from '@grafana/ui';
-import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 
@@ -38,6 +38,12 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
   };
 
   public buildPanel = () => buildPanelElementFromDashboard(this.state.panelRef.resolve());
+
+  /**
+   * Read from the panel the user opened this on, not from what buildPanel returns. buildPanel inlines
+   * a loaded library panel, so its element no longer says where the panel came from.
+   */
+  public isLibraryPanel = () => Boolean(getLibraryPanelBehavior(this.state.panelRef.resolve()));
 }
 
 function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanelToNotebookScene>) {
@@ -50,6 +56,7 @@ function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanel
           buildPanel={model.buildPanel}
           onDismiss={model.onDismiss}
           entryPoint={NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL}
+          isLibraryPanel={model.isLibraryPanel()}
         />
       </Suspense>
     </Modal>

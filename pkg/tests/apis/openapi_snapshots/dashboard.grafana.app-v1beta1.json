@@ -942,12 +942,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1.Dashboard"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1.Dashboard"
             }
           },
           "kind": {
@@ -1111,8 +1106,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -1240,15 +1234,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -1267,7 +1259,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SortField"
             }
           },
@@ -1295,7 +1286,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.FacetTerm"
               }
             }
@@ -1303,7 +1293,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResultItem"
             }
           },
@@ -1348,8 +1337,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -1372,8 +1360,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -1387,7 +1374,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SortField"
             }
           },
@@ -1411,7 +1397,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResultItem"
             }
           },
@@ -1433,7 +1418,6 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
@@ -1449,7 +1433,6 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
@@ -1629,7 +1612,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -1638,8 +1620,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -1667,8 +1648,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }
