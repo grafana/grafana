@@ -504,9 +504,10 @@ export function useRowHeight({
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
-    [nestedFields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight, visualRefreshEnabled),
+    [nestedFields, typographyCtx, maxHeight, visualRefreshEnabled]
   );
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
@@ -552,8 +553,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight, visualRefreshEnabled),
+    [fields, typographyCtx, maxHeight, visualRefreshEnabled]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -650,9 +651,10 @@ export function useFlatRowHeight({
   maxHeight,
   noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight, visualRefreshEnabled),
+    [fields, typographyCtx, maxHeight, visualRefreshEnabled]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -794,6 +796,7 @@ export interface ContentAwareWidths {
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
+  visualRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
 }
@@ -842,6 +845,7 @@ export function useContentAwareWidths({
   noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const headerTypographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -861,6 +865,7 @@ export function useContentAwareWidths({
             showTypeIcons,
             getActions,
             tableRefreshEnabled,
+            visualRefreshEnabled,
             filter,
             noPanelPadding,
           }
@@ -873,6 +878,7 @@ export function useContentAwareWidths({
       getActions,
       filter,
       tableRefreshEnabled,
+      visualRefreshEnabled,
       noPanelPadding,
     ]
   );
