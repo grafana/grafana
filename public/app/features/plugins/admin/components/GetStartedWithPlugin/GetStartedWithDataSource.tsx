@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
@@ -66,7 +67,13 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
   // Without the assistant there's only one action, so skip the dropdown and add the data source directly.
   if (!showAssistantSetup) {
     return (
-      <Button variant="primary" disabled={disabledButton} title={buttonTitle} onClick={onAddDataSource}>
+      <Button
+        variant="primary"
+        disabled={disabledButton}
+        title={buttonTitle}
+        onClick={onAddDataSource}
+        data-testid={Pages.DataSources.dataSourceAddButton}
+      >
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name="plus" />
           <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
@@ -97,7 +104,12 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
   return (
     <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsOpen}>
-      <Button variant="primary" disabled={disabledButton} title={buttonTitle}>
+      <Button
+        variant="primary"
+        disabled={disabledButton}
+        title={buttonTitle}
+        data-testid={Pages.DataSources.dataSourceAddButton}
+      >
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name="plus" />
           <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
