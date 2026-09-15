@@ -3486,6 +3486,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginExtensionReactElementProps",
+        "resourceVersion": "1789477067014",
+        "creationTimestamp": "2026-09-15T12:50:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-15 12:57:47.014948 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Pass React elements in plugin extension props by reference",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginPathNesting",
         "resourceVersion": "1785918906185",
         "creationTimestamp": "2026-08-05T08:35:06Z"

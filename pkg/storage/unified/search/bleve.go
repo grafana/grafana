@@ -2449,7 +2449,7 @@ func (b *bleveIndex) Search(
 		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
-	res, err := index.SearchInContext(ctx, searchrequest)
+	res, err := searchInContext(ctx, index, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -2484,6 +2484,14 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
+}
+
+func searchInContext(ctx context.Context, index bleve.Index, req *bleve.SearchRequest) (*bleve.SearchResult, error) {
+	result, err := index.SearchInContext(ctx, req)
+	if err := regexSearchError(result, err); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // deletedDocCount counts the documents the index keeps so they can be found in
@@ -2586,6 +2594,10 @@ func (b *bleveIndex) getIndex(
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
+
+	if errResult := rejectInternalFields(req); errResult != nil {
+		return nil, errResult
+	}
 
 	if errResult := validateTrashRequest(req); errResult != nil {
 		return nil, errResult
@@ -2960,6 +2972,48 @@ func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.Err
 	// backstop for callers that reach an index directly.
 	if len(req.Federated) > 0 {
 		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
+	}
+	return nil
+}
+
+// rejectInternalFields refuses a request naming an index field that exists for the
+// backend's own use. Without this a filter on one matches nothing and a sort on one
+// orders by nothing, neither with any sign the field was never usable.
+//
+// Unconditional, unlike the sort capability check: an internal name is not a field
+// whose capabilities fall short, it is a field no request may name.
+func rejectInternalFields(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is internal to the search index", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsInternalSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsInternalSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	for _, f := range req.QueryFields {
+		if resource.IsInternalSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
+	for _, facet := range req.Facet {
+		if resource.IsInternalSearchField(facet.GetField()) {
+			return refused(facet.GetField())
+		}
+	}
+	// Labels are left out on purpose: a label key is user data, and an object may
+	// carry a label named like an internal field without any conflict.
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsInternalSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
 	}
 	return nil
 }
@@ -3558,6 +3612,13 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 // every value, while "in" is an OR, so at least one is enough. The numeric path
 // (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if selection.Operator(req.Operator) == resource.OperatorRegex {
+		return b.regexRequirementQuery(req, false)
+	}
+	if selection.Operator(req.Operator) == resource.OperatorNotRegex {
+		return b.regexRequirementQuery(req, true)
+	}
+
 	// Boolean and numeric fields are indexed in their native form, which a term
 	// or match query cannot reach, so they take a separate path.
 	if nb, ok := b.numberOrBoolFieldFor(req.Key); ok {

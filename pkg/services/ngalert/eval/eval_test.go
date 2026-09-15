@@ -1710,6 +1710,11 @@ func TestSanitizeHeaderValue(t *testing.T) {
 			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
 			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
 		},
+		{
+			name:     "truncation does not split a multi-byte rune at the boundary",
+			input:    strings.Repeat("a", 127) + "é", // 'é' is 2 bytes, so byte 128 would land mid-rune
+			expected: strings.Repeat("a", 127),
+		},
 	}
 
 	for _, tt := range tests {

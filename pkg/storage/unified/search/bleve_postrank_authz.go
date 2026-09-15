@@ -319,7 +319,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -505,7 +505,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 
 	var firstRes *bleve.SearchResult
 	for {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}
