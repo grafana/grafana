@@ -1215,10 +1215,64 @@
           "type": "object",
           "properties": {
             "rowHoverBackground": {
-              "type": "string"
+              "type": "string",
+              "description": "Existing hover background for TableRT and other table consumers."
             },
             "rowSelected": {
-              "type": "string"
+              "type": "string",
+              "description": "Existing selection background for TableRT."
+            },
+            "background": {
+              "type": "string",
+              "description": "Opaque background for body rows and frozen cells."
+            },
+            "backgroundOnCanvas": {
+              "type": "string",
+              "description": "Opaque backing surface when the surrounding panel has no background."
+            },
+            "headerBackground": {
+              "type": "string",
+              "description": "Opaque header surface, distinct from body rows."
+            },
+            "headerBorder": {
+              "type": "string",
+              "description": "Opaque header cell dividers."
+            },
+            "border": {
+              "type": "string",
+              "description": "Opaque body and footer dividers."
+            },
+            "rowStripedBackground": {
+              "type": "string",
+              "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
+            },
+            "rowHoverBackgroundSolid": {
+              "type": "string",
+              "description": "Opaque hover surface for an unstriped row."
+            },
+            "rowHoverOverlay": {
+              "type": "string",
+              "description": "Translucent hover tint to composite over plain, striped or selected rows instead of replacing their background."
+            },
+            "rowSelectedBackground": {
+              "type": "string",
+              "description": "Opaque background for a selected row."
+            },
+            "rowSelectedHoverBackground": {
+              "type": "string",
+              "description": "Opaque background for a hovered selected row when not using the hover overlay."
+            },
+            "headerDraggingBackground": {
+              "type": "string",
+              "description": "Opaque background of a header being dragged."
+            },
+            "headerDragTargetBackground": {
+              "type": "string",
+              "description": "Opaque background of a header that is a drop target."
+            },
+            "cellSelectionBorder": {
+              "type": "string",
+              "description": "Outline of the focused cell."
             }
           },
           "additionalProperties": false
