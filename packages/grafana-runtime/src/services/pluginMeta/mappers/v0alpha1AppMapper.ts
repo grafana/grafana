@@ -1,4 +1,4 @@
-import { type AppPluginMetaConfig, type PluginInclude, PluginIncludeType } from '@grafana/data';
+import { type AppPluginConfig, type PluginInclude, PluginIncludeType } from '@grafana/data';
 
 import { logPluginMetaWarning } from '../logging';
 import type { AppPluginMetasMapper, PluginMetasResponse } from '../types';
@@ -33,7 +33,7 @@ function includesMapper(includes: v0alpha1Include[] = []): PluginInclude[] {
   return result;
 }
 
-function specMapper(spec: v0alpha1Spec): AppPluginMetaConfig {
+function specMapper(spec: v0alpha1Spec): AppPluginConfig {
   const { id, info, name, preload = false } = spec.pluginJson;
   const angular = angularMapper(spec);
   const dependencies = dependenciesMapper(spec, logPluginMetaWarning);
@@ -67,15 +67,25 @@ function specMapper(spec: v0alpha1Spec): AppPluginMetaConfig {
 }
 
 export const v0alpha1AppMapper: AppPluginMetasMapper<PluginMetasResponse> = (response) => {
-  const result: Record<string, AppPluginMetaConfig> = {};
+  const result: Record<string, AppPluginConfig> = {};
 
   return response.items.reduce((acc, curr) => {
     if (curr.spec?.pluginJson?.type !== 'app') {
       return acc;
     }
 
-    const config = specMapper(curr.spec);
-    acc[config.id] = config;
+    try {
+      const config = specMapper(curr.spec);
+      acc[config.id] = config;
+    } catch (error) {
+      // One meta missing a field the mapper reads must not cost us the rest:
+      // this runs during app plugin init, so throwing here would leave the
+      // whole apps cache unpopulated for the session
+      logPluginMetaWarning('PluginMeta: skipping an app plugin meta that could not be mapped', {
+        pluginId: curr.spec?.pluginJson?.id,
+        error: String(error),
+      });
+    }
     return acc;
   }, result);
 };

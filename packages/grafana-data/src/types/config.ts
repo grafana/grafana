@@ -45,20 +45,13 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
-};
-
-/**
- * An app plugin config sourced from the plugins.grafana.app metas API. Unlike
- * the bootdata-sourced {@link AppPluginConfig} it always carries the plugin's
- * display and navigation fields, so consumers of the metas-only accessors
- * (e.g. the client-built nav tree) don't need bootdata fallbacks.
- */
-export type AppPluginMetaConfig = AppPluginConfig & {
-  name: string;
-  includes: PluginInclude[];
-  info: {
+  // Display and navigation fields, absent from the bootdata-sourced configs and
+  // populated only when these come from the plugins.grafana.app metas API
+  name?: string;
+  includes?: PluginInclude[];
+  info?: {
     description?: string;
-    logos: {
+    logos?: {
       small: string;
       large: string;
     };
