@@ -2,8 +2,6 @@ import { type LevelItem } from './dataTransform';
 import { levelsToString, textToDataContainer, trimLevelsString } from './testHelpers';
 import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
 
-// Minimal DataInterface implementation, one label per index, for building diff-profile LevelItem trees by hand
-// (textToDataContainer/arrayToDataFrame doesn't support valueRight, so it can't build diff test fixtures).
 const diffData = { getLabel: (index: number) => String(index) };
 
 describe('mergeSubtrees', () => {
