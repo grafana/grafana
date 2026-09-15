@@ -485,16 +485,19 @@
             "canvas": {
               "type": "string"
             },
-            "page": {
-              "type": "string"
-            },
             "primary": {
               "type": "string"
             },
             "secondary": {
               "type": "string"
             },
+            "tertiary": {
+              "type": "string"
+            },
             "elevated": {
+              "type": "string"
+            },
+            "page": {
               "type": "string"
             }
           },
@@ -982,6 +985,15 @@
             },
             "lg": {
               "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "page": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
             }
           },
           "additionalProperties": false

@@ -68,6 +68,9 @@ export const ThemeComponentsInputSchema = z
       md: z.number().optional(),
       lg: z.number().optional(),
     }),
+    page: z.object({
+      background: z.string().optional(),
+    }),
     input: z.object({
       background: z.string().optional(),
       borderColor: z.string().optional(),
@@ -194,6 +197,9 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       sm: 3,
       md: 4,
       lg: 6,
+    },
+    page: {
+      background: colors.background.primary,
     },
     input: {
       borderColor: colors.border.medium,

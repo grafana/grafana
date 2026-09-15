@@ -36,17 +36,23 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       background: z.object({
         /** Body background */
         canvas: z.string().optional(),
-        /** Page container background */
-        page: z.string().optional(),
-        /** Primary content pane background (panels etc) */
+        /** Primary page background */
         primary: z.string().optional(),
-        /** Cards and elements that need to stand out on the primary background */
+        /** For containers that sit on the primary background (e.g. panels, cards) */
         secondary: z.string().optional(),
+        /** For elements that sit inside secondary containers */
+        tertiary: z.string().optional(),
         /**
          * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
         elevated: z.string().optional(),
+
+        /**
+         * @deprecated
+         * use theme.components.page.background instead
+         */
+        page: z.string().optional(),
       }),
 
       border: z.object({
