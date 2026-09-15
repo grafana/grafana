@@ -1773,62 +1773,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		}`, string(jj))
 	})
 
-	t.Run("Should find connection by plugin alone", func(t *testing.T) {
-		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Plugin:    "test",
-		})
-		require.NoError(t, err)
-
-		jj, _ := json.MarshalIndent(res, "", "  ")
-		require.JSONEq(t, `{
-			"kind": "DataSourceConnectionList",
-			"apiVersion": "datasource.grafana.app/v0alpha1",
-			"items": [
-				{
-					"title": "CCC",
-					"name": "ccc",
-					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
-					"plugin": "test"
-				}
-			]
-		}`, string(jj))
-	})
-
-	t.Run("Should query with uid and plugin", func(t *testing.T) {
-		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Name:      "ccc",
-			Plugin:    "grafana-testdata-datasource", // an alias
-		})
-		require.NoError(t, err)
-
-		jj, _ := json.MarshalIndent(res, "", "  ")
-		require.JSONEq(t, `{
-			"kind": "DataSourceConnectionList",
-			"apiVersion": "datasource.grafana.app/v0alpha1",
-			"items": [
-				{
-					"title": "CCC",
-					"name": "ccc",
-					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
-					"plugin": "test"
-				}
-			]
-		}`, string(jj))
-	})
-
-	t.Run("Should return error when plugin is unknown", func(t *testing.T) {
-		_, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Plugin:    "not-installed",
-		})
-		require.Error(t, err)
-	})
-
-	t.Run("Should filter connections by user permissions when querying by plugin", func(t *testing.T) {
+	t.Run("Should filter connections by user permissions when querying", func(t *testing.T) {
 		// Provisioning identity has wildcard read. Swap in a user that can only see "aaa".
 		restrictedCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			OrgID: 1,
@@ -1838,7 +1783,6 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		res, err := dsService.ListConnections(restrictedCtx, v0alpha1.DataSourceConnectionQuery{
 			Namespace: "default",
-			Plugin:    "graphite",
 		})
 		require.NoError(t, err)
 		require.Len(t, res.Items, 1)
@@ -1848,12 +1792,11 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		emptyCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {datasources.ActionRead: {datasources.ScopeProvider.GetResourceScopeUID("ccc")}},
+				1: {datasources.ActionRead: {datasources.ScopeProvider.GetResourceScopeUID("xyz")}},
 			},
 		})
 		res, err = dsService.ListConnections(emptyCtx, v0alpha1.DataSourceConnectionQuery{
 			Namespace: "default",
-			Plugin:    "graphite",
 		})
 		require.NoError(t, err)
 		require.Empty(t, res.Items)

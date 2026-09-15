@@ -55,7 +55,7 @@ func TestHitsToFieldValuesUsesZeroForInvalidResourceVersion(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1"}
 	hits := blevesearch.DocumentMatchCollection{{
 		ID:     resource.SearchID(key),
-		Fields: map[string]any{resource.SEARCH_FIELD_RV: "not-an-integer"},
+		Fields: map[string]any{resource.SEARCH_FIELD_RV_STRING: "not-an-integer"},
 	}}
 	index := &bleveIndex{logger: log.NewNopLogger()}
 
@@ -133,4 +133,31 @@ func TestNewSearchResultValue(t *testing.T) {
 		_, err = newSearchResultValue(0, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeInt64}, "not a number")
 		require.ErrorContains(t, err, "expected int64-compatible number")
 	})
+}
+
+// A stored value that is not a valid resource version must not fail the search:
+// it is indexed data, and the caller can do nothing about it.
+func TestHitResourceVersion(t *testing.T) {
+	idx := &bleveIndex{logger: log.NewNopLogger()}
+
+	for _, tc := range []struct {
+		name  string
+		value any
+		want  int64
+	}{
+		{name: "absent", value: nil, want: 0},
+		{name: "valid", value: "1958241239561142273", want: 1958241239561142273},
+		{name: "not a number", value: "nope", want: 0},
+		{name: "empty", value: "", want: 0},
+		{name: "overflows int64", value: "99999999999999999999", want: 0},
+		{name: "not a string", value: float64(12), want: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			match := &blevesearch.DocumentMatch{ID: "default/group/resource/name"}
+			if tc.value != nil {
+				match.Fields = map[string]any{resource.SEARCH_FIELD_RV_STRING: tc.value}
+			}
+			require.Equal(t, tc.want, idx.hitResourceVersion(match))
+		})
+	}
 }
