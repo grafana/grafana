@@ -72,6 +72,10 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
       pagedResourceGraphRequest: jest.fn().mockResolvedValue([]),
       ...overrides?.azureResourceGraphDatasource,
     },
+    azureHealthModelsDatasource: {
+      getHealthModels: jest.fn().mockResolvedValue([]),
+      ...overrides?.azureHealthModelsDatasource,
+    },
     getVariablesRaw: jest.fn().mockReturnValue([]),
     getDefaultSubscriptionId: jest.fn().mockReturnValue('defaultSubscriptionId'),
     getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),

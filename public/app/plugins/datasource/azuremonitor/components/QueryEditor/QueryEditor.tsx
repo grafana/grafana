@@ -18,6 +18,7 @@ import {
 } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import HealthModelsQueryEditor from '../HealthModelsQueryEditor/HealthModelsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
@@ -188,6 +189,18 @@ const EditorForQueryType = ({
     case AzureQueryType.AzureResourceGraph:
       return (
         <ArgQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AzureQueryType.AzureHealthModels:
+      return (
+        <HealthModelsQueryEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}
