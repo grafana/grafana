@@ -13,6 +13,7 @@ import {
   FieldColorModeId,
   FieldType,
   type LinkModel,
+  ThemeContext,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
@@ -24,7 +25,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -733,6 +734,106 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it.each([
+      [true, '12px'],
+      [false, '6px'],
+    ])('sets only the outer final-column padding with table.refresh=%s', async (tableRefreshEnabled, expected) => {
+      const { container } = render(
+        <TableNG data={createNestedDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const outerGrid = screen.getByRole('treegrid');
+      const innerGrid = screen.getByRole('grid');
+      for (const rowSelector of ['.rdg-header-row', '.rdg-row']) {
+        const outerCell = outerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const innerCell = innerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const outerStyle = window.getComputedStyle(outerCell);
+        const innerStyle = window.getComputedStyle(innerCell);
+        expect(outerStyle.paddingInlineEnd || outerStyle.paddingRight).toBe(expected);
+        expect(innerStyle.paddingInlineEnd || innerStyle.paddingRight).toBe('6px');
+      }
+    });
+
+    it.each([
+      ['dark', false, 'medium'],
+      ['dark', true, 'table'],
+      ['light', false, 'table'],
+    ] as const)(
+      'uses the %s theme border for nested tables when transparent=%s and table.refresh is enabled',
+      async (mode, transparent, borderToken) => {
+        const theme = createTheme({ colors: { mode }, components: { table: { border: '#123456' } } });
+        const { container } = render(
+          <ThemeContext.Provider value={theme}>
+            <TableNG
+              data={createNestedDataFrame()}
+              width={800}
+              height={600}
+              tableRefreshEnabled
+              transparent={transparent}
+            />
+          </ThemeContext.Provider>
+        );
+
+        await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+        const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+        const nestedGridClasses = Array.from(nestedGrid?.classList ?? []);
+        const nestedGridRule = Array.from(document.styleSheets)
+          .flatMap((sheet) => Array.from(sheet.cssRules))
+          .find(
+            (rule): rule is CSSStyleRule =>
+              rule instanceof CSSStyleRule &&
+              nestedGridClasses.some((className) => rule.selectorText === `.${className}`) &&
+              rule.style.getPropertyValue('scrollbar-color') === `${theme.colors.scrollbar} transparent`
+          );
+        expect(nestedGridRule).toBeDefined();
+        expect(nestedGridRule?.style.getPropertyValue('border-inline')).toBe(
+          `1px solid ${borderToken === 'medium' ? theme.colors.border.medium : theme.components.table.border}`
+        );
+        expect(nestedGridRule?.style.getPropertyValue('overflow-x')).toBe('auto');
+        expect(nestedGridRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
+
+        const finalRow = nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`);
+        expect(finalRow).toBeInTheDocument();
+        expect(finalRow?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndStartRadius: theme.shape.radius.default,
+        });
+        expect(finalRow?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndEndRadius: theme.shape.radius.default,
+        });
+      }
+    );
+
+    it('does not add the refreshed nested border when table.refresh is disabled', async () => {
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      expect(window.getComputedStyle(screen.getByRole('grid')).borderInlineStartStyle).toBe('');
+    });
+
+    it('rounds the nested footer instead of the final data row when table.refresh is enabled', async () => {
+      const theme = createTheme();
+      const { container } = render(
+        <ThemeContext.Provider value={theme}>
+          <TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} tableRefreshEnabled />
+        </ThemeContext.Provider>
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+      const footer = nestedGrid?.querySelector('.rdg-bottom-summary-row');
+      expect(nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`)).not.toBeInTheDocument();
+      expect(footer?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndStartRadius: theme.shape.radius.default,
+      });
+      expect(footer?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndEndRadius: theme.shape.radius.default,
+      });
     });
 
     it('colors each expanded nested row from its own nested apply-to-row field value (10 -> red, 20 -> blue)', async () => {

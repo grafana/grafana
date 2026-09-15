@@ -21,7 +21,7 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 import { TableDataGrid } from './TableDataGrid';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { RowExpander } from './components/RowExpander';
-import { COLUMN, TABLE } from './constants';
+import { COLUMN, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -224,6 +224,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     () => width - (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) - scrollbarWidth,
     [width, scrollbarWidth, firstRowNestedData]
   );
+  const nestedAvailableWidth = useMemo(() => availableWidth - TABLE.CELL_PADDING - 1, [availableWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -282,7 +283,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
     nestedVisibleFields: nestedPreparedFields,
-    availableWidth,
+    availableWidth: nestedAvailableWidth,
     structureRev,
     contentAware: nestedContentAwareWidths,
   });
@@ -534,6 +535,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
               onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
+              rowClass={(_, rowIdx) =>
+                !hasNestedFooter && rowIdx === expandedRecords.length - 1 ? NESTED_LAST_ROW_CLASS : undefined
+              }
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
               columnWidths={nestedColWidths}
@@ -646,6 +650,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   return (
     <TableDataGrid
       role="treegrid"
+      className={tableRefreshEnabled ? styles.lastColumnInset : undefined}
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
