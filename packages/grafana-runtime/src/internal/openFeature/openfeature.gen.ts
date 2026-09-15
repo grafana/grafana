@@ -7,6 +7,7 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
@@ -81,6 +82,16 @@ export const FlagKeys = {
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Example boolean frontend feature flag */
+  GrafanaExampleBooleanFlag: "grafana.exampleBooleanFlag",
+  /** Example float frontend feature flag */
+  GrafanaExampleFloatFlag: "grafana.exampleFloatFlag",
+  /** Example integer frontend feature flag */
+  GrafanaExampleIntegerFlag: "grafana.exampleIntegerFlag",
+  /** Example object frontend feature flag */
+  GrafanaExampleObjectFlag: "grafana.exampleObjectFlag",
+  /** Example string frontend feature flag */
+  GrafanaExampleStringFlag: "grafana.exampleStringFlag",
   /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
@@ -583,6 +594,61 @@ export const useFlagGrafanaDynamicTraceToLogs = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Example boolean frontend feature flag
+ *
+ * **Details:**
+ * - flag key: `grafana.exampleBooleanFlag`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExampleBooleanFlag = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.exampleBooleanFlag", false, options).value;
+};
+
+/**
+ * Example float frontend feature flag
+ *
+ * **Details:**
+ * - flag key: `grafana.exampleFloatFlag`
+ * - default value: `1.5`
+ */
+export const useFlagGrafanaExampleFloatFlag = (options?: ReactFlagEvaluationOptions): number => {
+  return useFlag("grafana.exampleFloatFlag", 1.5, options).value;
+};
+
+/**
+ * Example integer frontend feature flag
+ *
+ * **Details:**
+ * - flag key: `grafana.exampleIntegerFlag`
+ * - default value: `42`
+ */
+export const useFlagGrafanaExampleIntegerFlag = (options?: ReactFlagEvaluationOptions): number => {
+  return useFlag("grafana.exampleIntegerFlag", 42, options).value;
+};
+
+/**
+ * Example object frontend feature flag
+ *
+ * **Details:**
+ * - flag key: `grafana.exampleObjectFlag`
+ * - default value: `{"allowList":[]}`
+ */
+export const useFlagGrafanaExampleObjectFlag = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.exampleObjectFlag", {"allowList":[]}, options).value;
+};
+
+/**
+ * Example string frontend feature flag
+ *
+ * **Details:**
+ * - flag key: `grafana.exampleStringFlag`
+ * - default value: `example`
+ */
+export const useFlagGrafanaExampleStringFlag = (options?: ReactFlagEvaluationOptions): string => {
+  return useFlag("grafana.exampleStringFlag", "example", options).value;
 };
 
 /**
