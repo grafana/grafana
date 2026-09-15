@@ -2881,8 +2881,8 @@ __metadata:
   linkType: hard
 
 "@grafana/plugin-ui@npm:^0.17.3":
-  version: 0.17.4
-  resolution: "@grafana/plugin-ui@npm:0.17.4"
+  version: 0.17.5
+  resolution: "@grafana/plugin-ui@npm:0.17.5"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@hello-pangea/dnd": "npm:17.0.0"
@@ -2913,7 +2913,7 @@ __metadata:
   peerDependenciesMeta:
     monaco-editor:
       optional: true
-  checksum: 10/3dc22694195b48e386cdb6bf338337951a5d2ad21f639c07a3b3318a5debd71bb79b62d39094a3796ea913bed888eba22528c0ba2c424983b4b4ee08a258f7c5
+  checksum: 10/26eb87ce74c706044a0f4c4911eab0f8a516cfff903f3c25dbdec94faf65dc1812098d383614a2177214e8010402421ae5e674d7e73816103e45a50da7acd9b3
   languageName: node
   linkType: hard
 
