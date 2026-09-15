@@ -9,9 +9,10 @@ import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsD
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { annotationEditActions } from '../../settings/annotations/actions';
+import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { DashboardAnnotationsList, partitionAnnotationsByDisplay } from './DashboardAnnotationsList';
+import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
