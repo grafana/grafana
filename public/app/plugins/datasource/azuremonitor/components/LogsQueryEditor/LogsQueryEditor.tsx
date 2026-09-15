@@ -103,6 +103,7 @@ const LogsQueryEditor = ({
     }
 
     let cancelled = false;
+    setSchema(undefined);
     setIsLoadingSchema(true);
 
     const loadSchema = async () => {

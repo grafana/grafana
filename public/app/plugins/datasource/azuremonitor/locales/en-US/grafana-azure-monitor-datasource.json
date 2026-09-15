@@ -226,6 +226,7 @@
       "description-auxiliary-enabled": "Selecting this table will switch the query mode to Auxiliary Logs",
       "description-basic-disabled": "This table is on the Basic Logs plan. Enable \"Basic Logs\" in the data source settings to query it.",
       "description-basic-enabled": "Selecting this table will switch the query mode to Basic Logs",
+      "description-plan-unavailable": "This table cannot be selected because its Logs plan could not be determined.",
       "label-all-columns": "All Columns"
     },
     "metric-name-field": {

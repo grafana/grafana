@@ -53,11 +53,17 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
   const tableOptions: Array<SelectableValue<string>> = tables.map((table) => {
+    const hasUnknownPlan = table.plan === undefined;
     const isBasic = table.plan === TablePlan.Basic;
     const isAux = table.plan === TablePlan.Auxiliary;
-    const disabled = (isBasic && !basicLogsEnabled) || (isAux && !auxiliaryLogsEnabled);
+    const disabled = hasUnknownPlan || (isBasic && !basicLogsEnabled) || (isAux && !auxiliaryLogsEnabled);
     let description = '';
-    if (isBasic) {
+    if (hasUnknownPlan) {
+      description = t(
+        'components.logs-table-section.description-plan-unavailable',
+        'This table cannot be selected because its Logs plan could not be determined.'
+      );
+    } else if (isBasic) {
       description = disabled
         ? t(
             'components.logs-table-section.description-basic-disabled',
@@ -109,7 +115,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const handleTableChange = (selected: SelectableValue<string>) => {
     const selectedTable = tables.find((t) => t.name === selected.value);
-    if (!selectedTable) {
+    if (!selectedTable || selectedTable.plan === undefined) {
       return;
     }
     const isBasic = selectedTable.plan === TablePlan.Basic;

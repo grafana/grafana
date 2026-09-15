@@ -4,7 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType, ResultFormat } from '../../dataquery.gen';
+import {
+  BuilderQueryEditorExpressionType,
+  BuilderQueryEditorPropertyType,
+  LogsEditorMode,
+  ResultFormat,
+} from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
 import { type EngineSchema, TablePlan } from '../../types/types';
@@ -765,6 +770,116 @@ describe('LogsQueryEditor', () => {
   });
 
   describe('schema loading and auto-completion', () => {
+    it('keeps Raw schema unavailable in Builder until table plans finish loading', async () => {
+      const table = {
+        columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+        id: 'AuxiliaryTable',
+        name: 'AuxiliaryTable',
+        timespanColumn: 'TimeGenerated',
+        related: { solutions: [], functions: [], categories: [] },
+      };
+      const database = {
+        name: 'la-workspace',
+        tables: [table],
+        functions: [],
+        majorVersion: 0,
+        minorVersion: 0,
+        entityGroups: [],
+      };
+      const mockSchema: EngineSchema = {
+        clusterType: 'Engine',
+        cluster: {
+          connectionString: 'la-workspace',
+          databases: [database],
+        },
+        database,
+      };
+      let resolvePlan: (plan: TablePlan) => void = () => {};
+      const planPromise = new Promise<TablePlan>((resolve) => {
+        resolvePlan = resolve;
+      });
+      let resolveRawSchema: (schema: EngineSchema) => void = () => {};
+      const rawSchemaPromise = new Promise<EngineSchema>((resolve) => {
+        resolveRawSchema = resolve;
+      });
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest
+        .fn()
+        .mockReturnValueOnce(rawSchemaPromise)
+        .mockResolvedValue(mockSchema);
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn().mockReturnValue(planPromise);
+      const resources = [
+        '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+      ];
+      const rawQuery = createMockQuery({
+        azureLogAnalytics: {
+          resources,
+          mode: LogsEditorMode.Raw,
+        },
+      });
+      const builderQuery = createMockQuery({
+        azureLogAnalytics: {
+          resources,
+          mode: LogsEditorMode.Builder,
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      const { rerender } = render(
+        <LogsQueryEditor
+          query={rawQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={jest.fn()}
+          onQueryChange={onQueryChange}
+          setError={jest.fn()}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() => expect(mockDatasource.azureLogAnalyticsDatasource.getKustoSchema).toHaveBeenCalledTimes(1));
+      await act(async () => resolveRawSchema(mockSchema));
+      onQueryChange.mockClear();
+
+      rerender(
+        <LogsQueryEditor
+          query={builderQuery}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={jest.fn()}
+          onQueryChange={onQueryChange}
+          setError={jest.fn()}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() => expect(mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan).toHaveBeenCalledTimes(1));
+      const tableSelect = screen.getByLabelText('Table');
+      await userEvent.click(tableSelect);
+      expect(screen.queryByText('AuxiliaryTable')).not.toBeInTheDocument();
+      expect(onQueryChange).not.toHaveBeenCalled();
+
+      resolvePlan(TablePlan.Auxiliary);
+
+      await selectOptionInTest(tableSelect, 'AuxiliaryTable');
+      expect(onQueryChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({
+            basicLogsQuery: true,
+            logTier: 'Auxiliary',
+            builderQuery: expect.objectContaining({
+              from: expect.objectContaining({
+                property: expect.objectContaining({ name: 'AuxiliaryTable' }),
+              }),
+            }),
+          }),
+        })
+      );
+    });
+
     it('loads schema and table plans when resources change and builder mode is set', async () => {
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
@@ -896,7 +1011,7 @@ describe('LogsQueryEditor', () => {
       );
     });
 
-    it('keeps the base schema and successful table plans when a table plan request fails', async () => {
+    it('keeps successful table plans and disables a table when its plan request fails', async () => {
       const tables = [
         {
           columns: [],
@@ -959,20 +1074,14 @@ describe('LogsQueryEditor', () => {
         />
       );
 
-      await selectOptionInTest(await screen.findByLabelText('Table'), 'UnavailablePlanTable');
-      expect(onQueryChange).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          azureLogAnalytics: expect.objectContaining({
-            builderQuery: expect.objectContaining({
-              from: expect.objectContaining({
-                property: expect.objectContaining({ name: 'UnavailablePlanTable' }),
-              }),
-            }),
-          }),
-        })
-      );
+      const tableSelect = await screen.findByLabelText('Table');
+      await selectOptionInTest(tableSelect, 'UnavailablePlanTable').catch(() => {});
+      expect(
+        screen.getByText('This table cannot be selected because its Logs plan could not be determined.')
+      ).toBeInTheDocument();
+      expect(onQueryChange).not.toHaveBeenCalled();
 
-      await selectOptionInTest(await screen.findByLabelText('Table'), 'BasicTable');
+      await selectOptionInTest(tableSelect, 'BasicTable');
       expect(onQueryChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
           azureLogAnalytics: expect.objectContaining({

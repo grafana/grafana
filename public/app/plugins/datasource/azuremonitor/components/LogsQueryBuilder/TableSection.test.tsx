@@ -54,6 +54,22 @@ describe('TableSection', () => {
   });
 
   describe('per-tier table availability', () => {
+    it('disables tables whose plan could not be determined', async () => {
+      const { buildAndUpdateQuery } = renderTableSection({
+        tables: [baseTable({ name: 'UnknownPlanTable' })],
+        basicLogsEnabled: true,
+        auxiliaryLogsEnabled: true,
+      });
+
+      const select = await screen.findByLabelText('Table');
+      await selectOptionInTest(select, 'UnknownPlanTable').catch(() => {});
+
+      expect(
+        screen.getByText('This table cannot be selected because its Logs plan could not be determined.')
+      ).toBeInTheDocument();
+      expect(buildAndUpdateQuery).not.toHaveBeenCalled();
+    });
+
     it('disables Basic-plan tables when basicLogsEnabled is false', async () => {
       renderTableSection({ basicLogsEnabled: false, auxiliaryLogsEnabled: true });
 
