@@ -792,6 +792,8 @@ export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  /** Whether the table renders a header row; when it doesn't, header labels don't bound the columns. */
+  hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
@@ -821,6 +823,7 @@ interface UseContentAwareWidthsOptions {
   enabled: boolean;
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
@@ -836,6 +839,7 @@ export function useContentAwareWidths({
   enabled,
   typographyCtx,
   showTypeIcons = false,
+  hasHeader = true,
   getActions,
   tableRefreshEnabled = false,
   filter,
@@ -859,6 +863,7 @@ export function useContentAwareWidths({
             typographyCtx,
             headerTypographyCtx,
             showTypeIcons,
+            hasHeader,
             getActions,
             tableRefreshEnabled,
             filter,
@@ -870,6 +875,7 @@ export function useContentAwareWidths({
       typographyCtx,
       headerTypographyCtx,
       showTypeIcons,
+      hasHeader,
       getActions,
       filter,
       tableRefreshEnabled,

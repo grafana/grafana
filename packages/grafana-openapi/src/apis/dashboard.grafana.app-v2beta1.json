@@ -2281,12 +2281,7 @@
           "variables": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardActionVariable"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardActionVariable"
             }
           }
         }
@@ -2342,15 +2337,13 @@
           "valueLabels": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -2374,8 +2367,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -2400,23 +2392,13 @@
           "baseFilters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "defaultKeys": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardMetricFindValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardMetricFindValue"
             }
           },
           "description": {
@@ -2429,12 +2411,7 @@
           "filters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "hide": {
@@ -2488,8 +2465,7 @@
             "type": "array",
             "items": {
               "type": "number",
-              "format": "double",
-              "default": 0
+              "format": "double"
             }
           }
         }
@@ -2545,12 +2521,7 @@
             "description": "Mappings define how to convert data frame fields to annotation event fields.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
             }
           },
           "name": {
@@ -2645,12 +2616,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
             }
           },
           "maxColumnCount": {
@@ -2982,12 +2948,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3057,8 +3018,7 @@
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "targetBlank": {
@@ -3127,8 +3087,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -3267,12 +3226,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3335,8 +3289,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3350,8 +3303,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3393,12 +3345,7 @@
             "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAction"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAction"
             }
           },
           "color": {
@@ -3513,12 +3460,7 @@
             "description": "Overrides are the options applied to specific fields overriding the defaults.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardV2beta1FieldConfigSourceOverrides"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardV2beta1FieldConfigSourceOverrides"
             }
           }
         }
@@ -3638,12 +3580,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
             }
           }
         }
@@ -3667,8 +3604,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -3718,12 +3654,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3751,8 +3682,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3766,8 +3696,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3850,12 +3779,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3946,12 +3870,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              ]
+              "$ref": "#/components/schemas/Dashboard"
             }
           },
           "kind": {
@@ -4108,12 +4027,7 @@
           "links": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDataLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDataLink"
             }
           },
           "subtitle": {
@@ -4162,12 +4076,7 @@
           "queries": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardPanelQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardPanelQueryKind"
             }
           },
           "queryOptions": {
@@ -4181,12 +4090,7 @@
           "transformations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTransformationKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTransformationKind"
             }
           }
         }
@@ -4337,12 +4241,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -4381,12 +4280,7 @@
           "staticOptions": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "staticOptionsOrder": {
@@ -4545,12 +4439,7 @@
           "rows": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
             }
           }
         }
@@ -4573,12 +4462,7 @@
           "annotations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
             }
           },
           "cursorSync": {
@@ -4607,12 +4491,7 @@
             "description": "Links with references to other dashboards or external websites.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDashboardLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDashboardLink"
             }
           },
           "liveNow": {
@@ -4633,8 +4512,7 @@
             "description": "Tags associated with dashboard.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "timeSettings": {
@@ -4697,8 +4575,7 @@
           "ArrayOfString": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "String": {
@@ -4814,12 +4691,7 @@
           "tabs": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
             }
           }
         }
@@ -4955,12 +4827,7 @@
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardThreshold"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardThreshold"
             }
           }
         }
@@ -4997,8 +4864,7 @@
             "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fiscalYearStartMonth": {
@@ -5025,12 +4891,7 @@
             "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTimeRangeOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTimeRangeOption"
             }
           },
           "timezone": {
@@ -5110,12 +4971,7 @@
           "properties": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDynamicConfigValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDynamicConfigValue"
             }
           }
         }
@@ -5202,12 +5058,7 @@
             "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardValueMappingResult"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardValueMappingResult"
             }
           },
           "type": {
@@ -5265,8 +5116,7 @@
             "description": "Additional properties for multi-props variables",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "selected": {
@@ -5462,12 +5312,7 @@
           "variables": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookActionVariable"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookActionVariable"
             }
           }
         }
@@ -5565,8 +5410,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "int64",
-              "default": 0
+              "format": "int64"
             }
           },
           "language": {
@@ -5615,8 +5459,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -5670,8 +5513,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5685,8 +5527,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5728,12 +5569,7 @@
             "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookAction"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookAction"
             }
           },
           "color": {
@@ -5848,12 +5684,7 @@
             "description": "Overrides are the options applied to specific fields overriding the defaults.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookV2beta1FieldConfigSourceOverrides"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookV2beta1FieldConfigSourceOverrides"
             }
           }
         }
@@ -5874,8 +5705,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5889,8 +5719,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5971,12 +5800,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Notebook"
-                }
-              ]
+              "$ref": "#/components/schemas/Notebook"
             }
           },
           "kind": {
@@ -6124,12 +5948,7 @@
           "cells": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookNotebookLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookNotebookLayoutItemKind"
             }
           }
         }
@@ -6272,8 +6091,7 @@
           "tags": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "timeSettings": {
@@ -6339,12 +6157,7 @@
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookThreshold"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookThreshold"
             }
           }
         }
@@ -6381,8 +6194,7 @@
             "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fiscalYearStartMonth": {
@@ -6409,12 +6221,7 @@
             "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookTimeRangeOption"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookTimeRangeOption"
             }
           },
           "timezone": {
@@ -6475,12 +6282,7 @@
           "links": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookDataLink"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookDataLink"
             }
           },
           "subtitle": {
@@ -6529,12 +6331,7 @@
           "queries": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookPanelQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookPanelQueryKind"
             }
           },
           "queryOptions": {
@@ -6548,12 +6345,7 @@
           "transformations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookV2TransformationKind"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookV2TransformationKind"
             }
           }
         }
@@ -6644,12 +6436,7 @@
           "properties": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookDynamicConfigValue"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookDynamicConfigValue"
             }
           }
         }
@@ -6728,12 +6515,7 @@
             "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookValueMappingResult"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookValueMappingResult"
             }
           },
           "type": {
@@ -6878,12 +6660,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Variable"
-                }
-              ]
+              "$ref": "#/components/schemas/Variable"
             }
           },
           "kind": {
@@ -6988,8 +6765,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -7105,15 +6881,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -7132,7 +6906,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -7157,7 +6930,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/FacetTerm"
               }
             }
@@ -7165,7 +6937,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -7206,8 +6977,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -7230,8 +7000,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -7245,7 +7014,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -7266,7 +7034,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -7288,7 +7055,6 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -7304,7 +7070,6 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -7475,7 +7240,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -7484,8 +7248,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -7510,8 +7273,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

@@ -3285,6 +3285,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5702,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "移動 {{typeName}}",
-      "panel-background": "變更面板背景",
-      "panel-description": "變更面板描述",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "面板變更",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "每列最大重複次數",
       "panel-preset": "套用面板預設值",
       "panel-repeat-direction": "重複方向",
       "panel-repeat-variable": "面板重複方式",
-      "panel-title": "變更面板標題",
+      "panel-title": "",
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "row-title": "變更列標題",
@@ -6662,6 +6664,10 @@
       },
       "title-delete": "要刪除「{{name}}」嗎？"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "清除搜尋",
       "no-transformations-found": "未找到任何轉換",
@@ -6711,6 +6717,12 @@
     "view-panel": {
       "back-to-dashboard": "返回儀表板",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8597,6 +8609,16 @@
       "title-raw-prometheus": "原始 Prometheus",
       "title-table": "表格",
       "title-traces": "追蹤"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11346,8 +11368,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13033,9 +13054,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

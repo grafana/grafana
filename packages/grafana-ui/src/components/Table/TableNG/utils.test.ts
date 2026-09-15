@@ -2152,6 +2152,45 @@ describe('TableNG utils', () => {
       expect(wideHeader).toBeGreaterThan(baseline);
     });
 
+    it('ignores the header label when the header row is hidden', () => {
+      // header "A really long header" (20) => 20*8 + arrow 22 + 13 = 195; content "hi" (2) => 29,
+      // floored to MIN_WIDTH 50. availWidth leaves no leftover in either case, so the only
+      // difference is whether the (hidden) header still bounds the column.
+      const fields: Field[] = [{ name: 'A really long header', type: FieldType.string, values: ['hi'], config: {} }];
+
+      expect(compute(fields, 50)).toEqual([195]);
+      expect(
+        computeContentAwareColWidths(fields, 50, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          hasHeader: false,
+        })
+      ).toEqual([COLUMN.MIN_WIDTH]);
+    });
+
+    it('still sizes to the footer when the header row is hidden', () => {
+      // The footer renders regardless of the header, so it keeps bounding the column.
+      const values = [100000, 200000, 300000];
+      const headless = (field: Field) =>
+        computeContentAwareColWidths([field], 50, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          hasHeader: false,
+        })[0];
+
+      const withFooter = headless({
+        name: 'N',
+        type: FieldType.number,
+        values,
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      });
+      const withoutFooter = headless({ name: 'N', type: FieldType.number, values, config: {} });
+
+      // content "100000" (6) => 6*8 + 13 = 61, so the footer ("SUM" + the sum) is what widens it.
+      expect(withoutFooter).toBe(61);
+      expect(withFooter).toBeGreaterThan(withoutFooter);
+    });
+
     it('does not mutate the shared field state.calcs while measuring a footer', () => {
       const field: Field = {
         name: 'N',
