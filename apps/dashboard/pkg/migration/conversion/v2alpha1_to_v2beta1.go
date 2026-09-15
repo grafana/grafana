@@ -294,6 +294,7 @@ func convertQueryOptions_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryOpti
 	out.TimeFrom = in.TimeFrom
 	out.MaxDataPoints = in.MaxDataPoints
 	out.TimeShift = in.TimeShift
+	out.TimeCompare = in.TimeCompare
 	out.QueryCachingTTL = in.QueryCachingTTL
 	out.Interval = in.Interval
 	out.CacheTimeout = in.CacheTimeout
@@ -354,8 +355,9 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		for i, step := range in.Thresholds.Steps {
 			// Convert threshold values: preserve null values from v2alpha1
 			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
-				Value: step.Value,
-				Color: step.Color,
+				Value:     step.Value,
+				ValueExpr: step.ValueExpr,
+				Color:     step.Color,
 			}
 		}
 	}

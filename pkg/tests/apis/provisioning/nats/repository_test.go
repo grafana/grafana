@@ -18,10 +18,9 @@ func TestIntegrationProvisioningNATS_RepositoryCreateReconciledOverNATS(t *testi
 	const repo = "nats-repo-create"
 
 	helper.CreateRepositoryNoWait(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.WaitForHealthyRepository(t, repo)
 }
@@ -35,10 +34,9 @@ func TestIntegrationProvisioningNATS_RepositoryUpdateReconciledOverNATS(t *testi
 	const repo = "nats-repo-update"
 
 	helper.CreateRepositoryNoWait(t, common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
 	})
 	helper.WaitForHealthyRepository(t, repo)
 	helper.RequireRepositoryReReconciles(t, repo)

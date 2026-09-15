@@ -27,9 +27,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		AppModeProduction:      false, // required for experimental APIs
 		RBACSingleOrganization: true,  // required for the Users API
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagQueryService, // Query Library
-			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagQueryService,                         // Query Library
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
@@ -41,10 +39,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesLogsDrilldown,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagAuthzUserPermissions,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
-			featuremgmt.FlagGlobalDashboardVariables,
+			featuremgmt.FlagGrafanaDashboardGlobalVariables,
 			featuremgmt.FlagDashboardNotebooks,
 		},
 	})
@@ -57,7 +56,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, runtime.Version(), info.GoVersion)
 		require.Equal(t, "1", info.Major)
-		require.Equal(t, "36", info.Minor)
+		require.Equal(t, "37", info.Minor)
 
 		// Make sure the gitVersion is parsable
 		v, err := version.Parse(info.GitVersion)
@@ -156,6 +155,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v1beta1",
 	}, {
 		Group:   "quotas.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "plugins.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

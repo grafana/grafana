@@ -5,7 +5,6 @@ import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
 import { QueryOperationRowHeader, type ExpanderMessages } from './QueryOperationRowHeader';
@@ -64,24 +63,6 @@ export function QueryOperationRow({
     }
   }, [isOpen]);
 
-  const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
-    // When drag detected react-beautiful-dnd will preventDefault the event
-    // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
-    if (e.defaultPrevented) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      // report relative mouse position within the header element
-      reportInteraction('query_row_reorder_drag_position', {
-        x: x / rect.width,
-        y: y / rect.height,
-        width: rect.width,
-        height: rect.height,
-      });
-    }
-  }, []);
-
   useUpdateEffect(() => {
     if (isContentVisible) {
       if (onOpen) {
@@ -125,7 +106,6 @@ export function QueryOperationRow({
                     headerElement={headerElementRendered}
                     isContentVisible={isContentVisible}
                     onRowToggle={onRowToggle}
-                    reportDragMousePosition={reportDragMousePosition}
                     title={title}
                     expanderMessages={expanderMessages}
                   />
@@ -154,7 +134,6 @@ export function QueryOperationRow({
         headerElement={headerElementRendered}
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}
-        reportDragMousePosition={reportDragMousePosition}
         title={title}
         expanderMessages={expanderMessages}
       />

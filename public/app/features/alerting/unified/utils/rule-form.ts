@@ -17,14 +17,11 @@ import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
-import {
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-} from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
   type AlertDataQuery,
@@ -40,6 +37,7 @@ import {
   type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { type LokiQuery } from '../../../loki-helpers/types';
 import { EvalFunction } from '../../state/alertDef';
 import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';

@@ -272,6 +272,8 @@ export const WithHeaderTooltips: TableStoryObj = {
   },
 };
 
+const collator = new Intl.Collator();
+
 export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   const [data, setData] = useState(pageableData);
 
@@ -289,9 +291,9 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const bData = b[sort.id as keyof Omit<CarData, 'age' | 'car'>];
         if (sort.desc) {
-          return bData.localeCompare(aData);
+          return collator.compare(bData, aData);
         }
-        return aData.localeCompare(bData);
+        return collator.compare(aData, bData);
       });
       setData(newData);
     }, 300);

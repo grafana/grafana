@@ -23,9 +23,13 @@ func DSTypeFromDatasourceAPIGroup(group string) string {
 }
 
 // LegacyUIDScopeToK8s builds a k8s-style datasource resource scope from the suffix of
-// legacy scope "datasources:uid:<uid>"
+// legacy scope "datasources:uid:<uid>". Wildcard ("*") stays as "datasources:*";
+// concrete UIDs use the "datasources:uid:<uid>" form.
 func LegacyUIDScopeToK8s(dsType, uid string) string {
-	return K8sDatasourceAPIGroup(dsType) + "/datasources:" + uid
+	if uid == "*" {
+		return K8sDatasourceAPIGroup(dsType) + "/datasources:*"
+	}
+	return K8sDatasourceAPIGroup(dsType) + "/datasources:uid:" + uid
 }
 
 // LegacyVerbToK8sAction maps the substring after legacy prefix "datasources:" to a Kubernetes API action.
@@ -64,7 +68,8 @@ func legacyActionToK8s(dsType, action string) (string, bool) {
 	if !ok || strings.Contains(legacyVerb, ":") {
 		return action, false
 	}
-	return LegacyVerbToK8sAction(dsType, legacyVerb), true
+	convertedAction := LegacyVerbToK8sAction(dsType, legacyVerb)
+	return convertedAction, convertedAction != action
 }
 
 // LegacyDatasourceAction replaces a legacy ds action string with its k8s form
@@ -88,9 +93,10 @@ func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (
 		return scope, action
 	}
 
-	scope = LegacyUIDScopeToK8s(datasourceType, uid)
-	if converted, ok := legacyActionToK8s(datasourceType, action); ok {
-		action = converted
+	convertedAction, ok := legacyActionToK8s(datasourceType, action)
+	if !ok {
+		return scope, action
 	}
-	return scope, action
+
+	return LegacyUIDScopeToK8s(datasourceType, uid), convertedAction
 }

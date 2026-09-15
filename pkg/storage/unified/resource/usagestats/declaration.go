@@ -7,7 +7,12 @@
 // stats/daily and stats/aggregates KV sections.
 package usagestats
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+)
 
 const (
 	dashboardsGroup    = "dashboard.grafana.app"
@@ -29,12 +34,7 @@ func (d StatsDeclaration) GroupResource() string {
 }
 
 func (d StatsDeclaration) HasMetric(name string) bool {
-	for _, m := range d.Metrics {
-		if m == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(d.Metrics, name)
 }
 
 var dashboardsDeclaration = StatsDeclaration{
@@ -64,6 +64,16 @@ func (d *Declarations) add(decl StatsDeclaration) {
 func (d *Declarations) Lookup(group, resource string) (StatsDeclaration, bool) {
 	decl, ok := d.byGR[group+"/"+resource]
 	return decl, ok
+}
+
+func (d *Declarations) Validate() error {
+	for _, decl := range d.byGR {
+		if len(decl.Metrics) > kv.MaxBatchOps {
+			return fmt.Errorf("resource %s declares %d metrics, exceeding the max batch size of %d",
+				decl.GroupResource(), len(decl.Metrics), kv.MaxBatchOps)
+		}
+	}
+	return nil
 }
 
 // MaxWindow returns the largest window (in days) across all declarations.

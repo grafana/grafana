@@ -37,74 +37,135 @@ type serverWrapper struct {
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
-	log := logging.FromContext(s.ctx)
+	group := s.installer.ManifestData().Group
+	// Prune first so servedForResource and the installed storage see the same set.
+	s.pruneDisabledResources(apiGroupInfo, group)
+	servedForResource := servedVersionsForResource(apiGroupInfo, group)
+
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
-		for storagePath, restStorage := range storageMap {
-			legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
-			resource, err := getResourceFromStoragePath(storagePath)
-			if err != nil {
-				return err
-			}
-			gr := schema.GroupResource{
-				Group:    s.installer.ManifestData().Group,
-				Resource: resource,
-			}
-			gvr := gr.WithVersion(v)
-			if s.apiResourceConfig != nil && !s.apiResourceConfig.ResourceEnabled(gvr) {
-				log.Debug("Skipping storage for disabled resource", "gvr", gvr.String(), "storagePath", storagePath)
-				delete(apiGroupInfo.VersionedResourcesStorageMap[v], storagePath)
-				continue
-			}
-			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
-			if dualWriteSupported {
-				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
-					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-					legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
-					if legacyStorage == nil {
-						log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-					} else {
-						storage, err = NewDualWriter(
-							gr,
-							s.storageOpts,
-							legacyStorage,
-							unifiedStorage,
-							s.dualWriteService,
-							s.builderMetrics,
-						)
-						if err != nil {
-							return err
-						}
-					}
-				} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
-					parentPath := strings.TrimSuffix(storagePath, "/status")
-					parentStore, ok := apiGroupInfo.VersionedResourcesStorageMap[v][parentPath]
-					if ok {
-						if _, isMode4or5 := parentStore.(*genericregistry.Store); !isMode4or5 {
-							// When legacy resources have status, the dual writing must be handled explicitly
-							if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
-								storage = statusProvider.GetLegacyStatus(gr.WithVersion(v), statusRest)
-							} else {
-								log.Warn("skipped registering status sub-resource that does not support dual writing",
-									"resource", gr.String(), "version", v, "storagePath", storagePath)
-								continue
-							}
-						}
-					}
+		// Configure top-level resources before their subresources: a subresource inspects
+		// its parent's configured storage, and map iteration order is non-deterministic.
+		for _, subresource := range [...]bool{false, true} {
+			for storagePath, restStorage := range storageMap {
+				if isSubresourcePath(storagePath) != subresource {
+					continue
+				}
+				if err := s.configureStoragePath(apiGroupInfo, v, storagePath, restStorage, servedForResource); err != nil {
+					return err
 				}
 			}
-			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
 		}
 	}
 
 	return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
 }
 
-func getResourceFromStoragePath(storagePath string) (string, error) {
-	parts := strings.Split(storagePath, "/")
-	if len(parts) < 1 {
-		return "", fmt.Errorf("invalid storage path: %s", storagePath)
+// isSubresourcePath reports whether a storage path addresses a subresource (e.g. "shorturls/status").
+func isSubresourcePath(storagePath string) bool {
+	return strings.Contains(storagePath, "/")
+}
+
+// pruneDisabledResources drops storage paths for GVRs disabled via apiResourceConfig. It is the
+// single place resources are removed, keeping every later reader in sync with the installed set.
+func (s *serverWrapper) pruneDisabledResources(apiGroupInfo *genericapiserver.APIGroupInfo, group string) {
+	if s.apiResourceConfig == nil {
+		return
 	}
-	return parts[0], nil
+	log := logging.FromContext(s.ctx)
+	for version, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
+		for storagePath := range storageMap {
+			gvr := schema.GroupVersionResource{Group: group, Version: version, Resource: resourceFromStoragePath(storagePath)}
+			if !s.apiResourceConfig.ResourceEnabled(gvr) {
+				log.Debug("Skipping storage for disabled resource", "gvr", gvr.String(), "storagePath", storagePath)
+				delete(storageMap, storagePath)
+			}
+		}
+	}
+}
+
+// servedVersionsForResource maps each resource to the group versions it is installed under.
+func servedVersionsForResource(apiGroupInfo *genericapiserver.APIGroupInfo, group string) map[string][]schema.GroupVersion {
+	served := make(map[string][]schema.GroupVersion)
+	for version, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
+		// Distinct resources within one version, deduping subresource paths that share a
+		// resource (e.g. "dashboards" and "dashboards/dto" both count once).
+		seen := make(map[string]struct{}, len(storageMap))
+		for storagePath := range storageMap {
+			resource := resourceFromStoragePath(storagePath)
+			if _, ok := seen[resource]; ok {
+				continue
+			}
+			seen[resource] = struct{}{}
+			served[resource] = append(served[resource], schema.GroupVersion{Group: group, Version: version})
+		}
+	}
+	return served
+}
+
+func (s *serverWrapper) configureStoragePath(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	v string,
+	storagePath string,
+	restStorage genericrest.Storage,
+	servedForResource map[string][]schema.GroupVersion,
+) error {
+	log := logging.FromContext(s.ctx)
+	legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
+	gr := schema.GroupResource{
+		Group:    s.installer.ManifestData().Group,
+		Resource: resourceFromStoragePath(storagePath),
+	}
+	storage := s.configureStorage(gr, dualWriteSupported, restStorage)
+	if dualWriteSupported {
+		if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
+			log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+			key := gr.String()
+			if resourceConfig, ok := s.storageOpts.UnifiedStorageConfig[key]; ok {
+				s.builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
+			}
+			legacyStorage := legacyProvider.GetLegacyStorage(gr.WithVersion(v))
+			// unified must never serve an apiVersion the scheme never registered; with no
+			// legacy fallback there is nothing safe to serve, so refuse to install.
+			if err := s.dualWriteService.ValidateServedVersions(s.ctx, gr, servedForResource[gr.Resource]); err != nil {
+				if legacyStorage == nil {
+					return fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+				}
+				log.Warn("serving legacy storage", "resource", gr.String(), "error", err)
+				storage = legacyStorage
+			} else if legacyStorage == nil {
+				log.Debug("Skipping dual writer; no legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+			} else {
+				storage, err = s.dualWriteService.NewStorage(gr, legacyStorage, unifiedStorage)
+				if err != nil {
+					return err
+				}
+			}
+		} else if statusRest, ok := storage.(*appsdkapiserver.StatusREST); ok {
+			parentPath := strings.TrimSuffix(storagePath, "/status")
+			parentStore, ok := apiGroupInfo.VersionedResourcesStorageMap[v][parentPath]
+			if ok {
+				if _, isMode4or5 := parentStore.(*genericregistry.Store); !isMode4or5 {
+					// When legacy resources have status, the dual writing must be handled explicitly
+					if statusProvider, ok := s.installer.(LegacyStatusProvider); ok {
+						storage = statusProvider.GetLegacyStatus(gr.WithVersion(v), statusRest)
+					} else {
+						log.Warn("skipped registering status sub-resource that does not support dual writing",
+							"resource", gr.String(), "version", v, "storagePath", storagePath)
+						return nil
+					}
+				}
+			}
+		}
+	}
+	apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
+	return nil
+}
+
+// resourceFromStoragePath returns the top-level resource of a storage path, dropping any
+// subresource suffix (e.g. "dashboards/status" → "dashboards").
+func resourceFromStoragePath(storagePath string) string {
+	resource, _, _ := strings.Cut(storagePath, "/")
+	return resource
 }
 
 func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {

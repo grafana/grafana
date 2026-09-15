@@ -1,31 +1,52 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { Grid, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 
 import { DashboardTabsSkeleton } from './DashboardTabs/DashboardTabsSkeleton';
+import { HomeGrid } from './HomeGrid';
 import { HomeSection } from './HomeSection';
 
 interface Props {
   showAlertsCard?: boolean;
+  showIRMNewsCard?: boolean;
   showExtra?: boolean;
+  redesignEnabled?: boolean;
 }
 
 // Opt-in sections so the skeleton never reserves a block the real page won't render.
-export function HomePageSkeleton({ showAlertsCard, showExtra }: Props) {
+export function HomePageSkeleton({ showAlertsCard, showIRMNewsCard, showExtra, redesignEnabled }: Props) {
   return (
     <div data-testid="home-page-skeleton">
       <Stack direction="column" gap={2}>
-        <HomeSection direction="column" display="flex" gap={2}>
-          <DashboardTabsSkeleton />
-        </HomeSection>
-
-        {showAlertsCard && (
-          <Grid gap={2} columns={{ xs: 1, md: 2 }} data-testid="home-page-skeleton-cards">
-            <CardSkeleton />
-          </Grid>
+        {redesignEnabled ? (
+          <>
+            {/* Recommendations block: heading + carousel card */}
+            <HomeSection direction="column" display="flex" gap={2}>
+              <Skeleton width={280} height={24} />
+              <Skeleton height={120} containerClassName={styles.block} />
+            </HomeSection>
+            {/* DashboardTabs and Alerts card*/}
+            <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
+              <HomeSection direction="column" display="flex" gap={2}>
+                <DashboardTabsSkeleton redesignEnabled />
+              </HomeSection>
+              {showAlertsCard && <CardSkeleton />}
+            </HomeGrid>
+          </>
+        ) : (
+          <>
+            <HomeSection direction="column" display="flex" gap={2}>
+              <DashboardTabsSkeleton />
+            </HomeSection>
+            {(showAlertsCard || showIRMNewsCard) && (
+              <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
+                {showAlertsCard && <CardSkeleton />}
+                {showIRMNewsCard && <CardSkeleton />}
+              </HomeGrid>
+            )}
+          </>
         )}
-
         {showExtra && (
           <HomeSection data-testid="home-page-skeleton-extra">
             <Skeleton height={120} containerClassName={styles.block} />

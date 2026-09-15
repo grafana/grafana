@@ -1,1 +1,0 @@
-{"results":[{"series":[{"name":"cpu","columns":["time","mean","path","isActive"],"tags":{"datacenter":"America"},"values":[[111,222,null,null],[111,222,"/usr/path",false],[111,null,"/usr/path",true]]}]}]}

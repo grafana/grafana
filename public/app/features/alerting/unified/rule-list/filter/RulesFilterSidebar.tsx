@@ -6,10 +6,7 @@ import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/uns
 import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
@@ -18,6 +15,9 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
@@ -59,7 +59,7 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const defaults = searchQueryToDefaultValues(filterState);
 
@@ -327,127 +327,121 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
         <div className={styles.divider} />
 
-        {(canRenderContactPointSelector || config.featureToggles.alertingMultiplePolicies) && (
-          <>
-            <SidebarSection>
-              {canRenderContactPointSelector && (
-                <SidebarField
-                  label={
-                    <Stack gap={0.5} alignItems="center">
-                      <span>
-                        <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                      </span>
+        <SidebarSection>
+          {canRenderContactPointSelector && (
+            <SidebarField
+              label={
+                <Stack gap={0.5} alignItems="center">
+                  <span>
+                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                  </span>
+                  <Tooltip
+                    content={
+                      <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                        Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                        notification policies will not be displayed.
+                      </Trans>
+                    }
+                  >
+                    <Icon
+                      name="info-circle"
+                      size="sm"
+                      title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
+                    />
+                  </Tooltip>
+                </Stack>
+              }
+            >
+              <Controller
+                name="contactPoint"
+                control={control}
+                render={({ field }) => {
+                  const selector = (
+                    <ContactPointSelector
+                      placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
+                      value={field.value}
+                      isClearable
+                      disabled={isContactPointDisabled}
+                      onChange={handleContactPointChange}
+                    />
+                  );
+
+                  if (isContactPointDisabled) {
+                    return (
                       <Tooltip
-                        content={
-                          <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                            Filters alert rules which route directly to the selected contact point. Alert rules routed
-                            to notification policies will not be displayed.
-                          </Trans>
-                        }
+                        content={t(
+                          'alerting.rules-filter.contact-point-disabled-tooltip',
+                          'Contact point filtering is not available while a notification policy filter is active.'
+                        )}
+                        placement="top"
                       >
-                        <Icon
-                          name="info-circle"
-                          size="sm"
-                          title={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
-                        />
+                        <div>{selector}</div>
                       </Tooltip>
-                    </Stack>
+                    );
+                  }
+
+                  return selector;
+                }}
+              />
+            </SidebarField>
+          )}
+          <SidebarField
+            label={
+              <Stack gap={0.5} alignItems="center">
+                <span>
+                  <Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                      Filters alert rules which route to the selected notification policy tree. Alert rules using direct
+                      contact point routing will not be displayed.
+                    </Trans>
                   }
                 >
-                  <Controller
-                    name="contactPoint"
-                    control={control}
-                    render={({ field }) => {
-                      const selector = (
-                        <ContactPointSelector
-                          placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
-                          value={field.value}
-                          isClearable
-                          disabled={isContactPointDisabled}
-                          onChange={handleContactPointChange}
-                        />
-                      );
-
-                      if (isContactPointDisabled) {
-                        return (
-                          <Tooltip
-                            content={t(
-                              'alerting.rules-filter.contact-point-disabled-tooltip',
-                              'Contact point filtering is not available while a notification policy filter is active.'
-                            )}
-                            placement="top"
-                          >
-                            <div>{selector}</div>
-                          </Tooltip>
-                        );
-                      }
-
-                      return selector;
-                    }}
+                  <Icon
+                    name="info-circle"
+                    size="sm"
+                    title={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
                   />
-                </SidebarField>
-              )}
-              {config.featureToggles.alertingMultiplePolicies && (
-                <SidebarField
-                  label={
-                    <Stack gap={0.5} alignItems="center">
-                      <span>
-                        <Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>
-                      </span>
-                      <Tooltip
-                        content={
-                          <Trans i18nKey="alerting.rules-filter.policy-tooltip">
-                            Filters alert rules which route to the selected notification policy tree. Alert rules using
-                            direct contact point routing will not be displayed.
-                          </Trans>
-                        }
-                      >
-                        <Icon
-                          name="info-circle"
-                          size="sm"
-                          title={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
-                        />
-                      </Tooltip>
-                    </Stack>
-                  }
-                >
-                  <Controller
-                    name="policy"
-                    control={control}
-                    render={({ field }) => {
-                      const selector = (
-                        <RoutingTreeSelector
-                          placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
-                          value={field.value ?? undefined}
-                          isClearable
-                          disabled={isPolicyDisabled}
-                          onChange={handlePolicyChange}
-                        />
-                      );
-
-                      if (isPolicyDisabled) {
-                        return (
-                          <Tooltip
-                            content={t(
-                              'alerting.rules-filter.policy-disabled-tooltip',
-                              'Notification policy filtering is not available while a contact point filter is active.'
-                            )}
-                            placement="top"
-                          >
-                            <div>{selector}</div>
-                          </Tooltip>
-                        );
-                      }
-
-                      return selector;
-                    }}
+                </Tooltip>
+              </Stack>
+            }
+          >
+            <Controller
+              name="policy"
+              control={control}
+              render={({ field }) => {
+                const selector = (
+                  <RoutingTreeSelector
+                    placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
+                    value={field.value ?? undefined}
+                    isClearable
+                    disabled={isPolicyDisabled}
+                    onChange={handlePolicyChange}
                   />
-                </SidebarField>
-              )}
-            </SidebarSection>
-            <div className={styles.divider} />
-          </>
-        )}
+                );
+
+                if (isPolicyDisabled) {
+                  return (
+                    <Tooltip
+                      content={t(
+                        'alerting.rules-filter.policy-disabled-tooltip',
+                        'Notification policy filtering is not available while a contact point filter is active.'
+                      )}
+                      placement="top"
+                    >
+                      <div>{selector}</div>
+                    </Tooltip>
+                  );
+                }
+
+                return selector;
+              }}
+            />
+          </SidebarField>
+        </SidebarSection>
+        <div className={styles.divider} />
 
         <SidebarSection>
           <SidebarField

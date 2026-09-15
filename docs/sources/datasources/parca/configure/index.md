@@ -22,6 +22,10 @@ review_date: 2026-04-10
 
 # Configure the Parca data source
 
+{{< admonition type="warning" >}}
+This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
+{{< /admonition >}}
+
 This document explains how to configure the Parca data source in Grafana.
 
 You can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.

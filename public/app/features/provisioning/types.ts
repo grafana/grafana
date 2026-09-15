@@ -47,6 +47,9 @@ type ConnectionFormDataBase = {
   title: string;
   description: string;
   privateKey?: string;
+  clientID?: string;
+  clientSecret?: string;
+  workspace?: string;
   webhookDisabled?: boolean;
 };
 
@@ -56,13 +59,27 @@ type GitHubConnectionFormData = ConnectionFormDataBase &
 type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
   GitHubEnterpriseConnectionConfig & { type: 'githubEnterprise' };
 
-export type ConnectionFormData = GitHubConnectionFormData | GitHubEnterpriseConnectionFormData;
+type OAuthConnectionFormData = ConnectionFormDataBase &
+  Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
+
+export type OAuthConnectionType = 'githubOAuth' | 'githubEnterpriseOAuth' | 'gitlabOAuth' | 'bitbucketOAuth';
+
+export type ConnectionFormData =
+  | GitHubConnectionFormData
+  | GitHubEnterpriseConnectionFormData
+  | OAuthConnectionFormData;
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
   repo: string;
   file: string;
   ref?: string;
+}
+
+/** Provisioned preview whose branch was deleted: commit the draft to a fresh branch. */
+export interface RecoverToNewBranch {
+  /** False when the file was born on the deleted branch and never merged, so the save must create it. */
+  fileExistsOnConfiguredBranch: boolean;
 }
 
 export type WorkflowOption = RepositorySpec['workflows'][number];
@@ -121,6 +138,10 @@ export interface TreeItem {
 export interface FlatTreeItem {
   item: TreeItem;
   level: number;
+  // Whether this row is a folder with children that can be folded/unfolded.
+  isExpandable: boolean;
+  // Whether an expandable row is currently showing its children.
+  isExpanded: boolean;
 }
 
 // External repository from the provider (e.g., GitHub)

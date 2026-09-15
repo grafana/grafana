@@ -165,6 +165,14 @@ func (m *mockAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribut
 	return authorizer.DecisionAllow, "test", nil
 }
 
+func (m *mockAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(m.Authorize(ctx, attr))
+}
+
+func (m *mockAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 func TestRegisterStorageOptions(t *testing.T) {
 	makeManifest := func(group string, kinds ...app.ManifestVersionKind) *app.ManifestData {
 		return &app.ManifestData{
@@ -180,7 +188,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 		installer := &mockAppInstaller{
 			groupVersions: []schema.GroupVersion{{Group: "test.example.com", Version: "v1"}},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 	})
 
@@ -201,7 +209,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 				return nil
 			},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 
 		require.Len(t, called, 2)
@@ -226,7 +234,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 				return &apistore.StorageOptions{EnableFolderSupport: true}
 			},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 
 		assert.Equal(t, 1, callCount)

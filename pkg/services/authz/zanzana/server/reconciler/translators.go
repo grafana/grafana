@@ -128,7 +128,7 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 
 	tuples := make([]*openfgav1.TupleKey, 0, len(rp.Spec.Permissions))
 	for _, perm := range rp.Spec.Permissions {
-		tuple, err := zanzana.GetResourcePermissionWriteTuple(&authzextv1.CreatePermissionOperation{
+		permissionTuples, err := zanzana.GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
 			Resource: resource,
 			Permission: &authzextv1.Permission{
 				Kind: string(perm.Kind),
@@ -139,7 +139,7 @@ func TranslateResourcePermissionToTuples(obj *unstructured.Unstructured) ([]*ope
 		if err != nil {
 			return nil, err
 		}
-		tuples = append(tuples, tuple)
+		tuples = append(tuples, permissionTuples...)
 	}
 
 	return tuples, nil

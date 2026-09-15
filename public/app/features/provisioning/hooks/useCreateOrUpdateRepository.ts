@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 
 import { generateUUID } from '@grafana/data';
 import {
-  type InlineSecureValue,
   type RepositorySpec,
   type SecureValues,
   useCreateRepositoryMutation,
@@ -10,19 +9,21 @@ import {
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 
+export type RepositorySecureChanges = Pick<SecureValues, 'token' | 'commitSigningKey'>;
+
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec, token?: string, signingKeySecret?: InlineSecureValue) => {
+    async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
       const secureEntries: SecureValues = {};
-      if (token?.length) {
-        secureEntries.token = { create: token };
+      if (secureChanges?.token) {
+        secureEntries.token = secureChanges.token;
       }
-      if (signingKeySecret) {
-        secureEntries.commitSigningKey = signingKeySecret;
+      if (secureChanges?.commitSigningKey) {
+        secureEntries.commitSigningKey = secureChanges.commitSigningKey;
       }
       const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
 

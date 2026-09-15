@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -47,8 +48,17 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 	}
 }
 
+// iamTestRegistry seeds a registry with the IAM kinds' fields so the
+// registry-backed builders extract them, as they do in production.
+func iamTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
+	t.Helper()
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(iam.LocalManifest().ManifestData)
+	require.NoError(t, err)
+	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
+}
+
 func TestUserDocumentBuilder(t *testing.T) {
-	info, err := GetUserBuilder()
+	info, err := GetUserBuilder(iamTestRegistry(t))
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "user", &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -62,7 +72,7 @@ func TestUserDocumentBuilder(t *testing.T) {
 }
 
 func TestExternalGroupMappingDocumentBuilder(t *testing.T) {
-	info, err := GetExternalGroupMappingBuilder()
+	info, err := GetExternalGroupMappingBuilder(iamTestRegistry(t))
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "external_group_mapping", &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -74,7 +84,7 @@ func TestExternalGroupMappingDocumentBuilder(t *testing.T) {
 }
 
 func TestTeamSearchBuilder(t *testing.T) {
-	info, err := GetTeamSearchBuilder()
+	info, err := GetTeamSearchBuilder(iamTestRegistry(t))
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "team", &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -87,7 +97,7 @@ func TestTeamSearchBuilder(t *testing.T) {
 }
 
 func TestTeamBindingSearchBuilder(t *testing.T) {
-	info, err := GetTeamBindingBuilder()
+	info, err := GetTeamBindingBuilder(iamTestRegistry(t))
 	require.NoError(t, err)
 	doSnapshotTests(t, info.Builder, "team_binding", &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -212,7 +222,7 @@ func TestBuildSelectableFields(t *testing.T) {
 }
 
 func TestUserDocumentBuilder_Created(t *testing.T) {
-	info, err := GetUserBuilder()
+	info, err := GetUserBuilder(iamTestRegistry(t))
 	require.NoError(t, err)
 
 	value := []byte(`{
@@ -230,5 +240,6 @@ func TestUserDocumentBuilder_Created(t *testing.T) {
 		1, value)
 	require.NoError(t, err)
 
-	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Fields[USER_CREATED])
+	// The creation timestamp is carried on the standard created field.
+	assert.Equal(t, time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli(), doc.Created)
 }

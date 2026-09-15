@@ -77,14 +77,32 @@ func V20(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Update data links and field options in panel options
-		if options, ok := panel["options"].(map[string]interface{}); ok {
-			updateDataLinksVariableSyntax(options)
-			updateFieldOptionsVariableSyntax(options)
+		migratePanelV20(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
+			continue
+		}
+		for _, nestedPanel := range panel["panels"].([]interface{}) {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migratePanelV20(np)
 		}
 	}
 
 	return nil
+}
+
+// migratePanelV20 updates legacy variable syntax in a single panel's data links and field options.
+func migratePanelV20(panel map[string]interface{}) {
+	options, ok := panel["options"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	updateDataLinksVariableSyntax(options)
+	updateFieldOptionsVariableSyntax(options)
 }
 
 // updateDataLinksVariableSyntax updates variable syntax in panel data links

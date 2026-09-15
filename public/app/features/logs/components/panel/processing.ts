@@ -52,6 +52,7 @@ export class LogListModel implements LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uid: string;
+  readonly uniqueKey: string;
   uniqueLabels: Labels | undefined;
   uniqueLabelsExpanded = false;
 
@@ -80,7 +81,9 @@ export class LogListModel implements LogRowModel {
       timeZone,
       virtualization,
       wrapLogMessage,
-    }: PreProcessLogOptions
+    }: PreProcessLogOptions,
+    // Position of this row within the array being processed.
+    index: number
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -105,6 +108,9 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
+    // log.uid is not guaranteed unique, which causes troubles with virtualization. To that end, we create a truly unique
+    // identifier, while leaving the data source identifier unmodified
+    this.uniqueKey = `${log.uid}#${index}`;
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
@@ -130,9 +136,12 @@ export class LogListModel implements LogRowModel {
     }
   }
 
-  clone() {
+  clone({ prettifyJSON }: { prettifyJSON?: boolean } = {}) {
     const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
+    if (prettifyJSON !== undefined) {
+      clone._prettifyJSON = prettifyJSON;
+    }
     clone._wrapLogMessage = true;
     clone._body = undefined;
     clone._highlightTokens = undefined;
@@ -142,8 +151,9 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
+      let raw = this.raw;
       try {
-        const parsed = parse(this.raw, undefined, {
+        const parsed = parse(raw, undefined, {
           onDuplicateKey: ({ newValue }) => newValue,
         });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
@@ -151,15 +161,14 @@ export class LogListModel implements LogRowModel {
         }
         const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
-          this.raw = reStringified;
+          raw = reStringified;
         }
       } catch (error) {}
 
       // always escape for literal \n, \t, \r sequences so "Escape newlines" works for all log types.
       if (this._escapeUnescapedString) {
-        this.raw = escapeUnescapedString(this.raw);
+        raw = escapeUnescapedString(raw);
       }
-      const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : raw;
@@ -315,17 +324,21 @@ export const preProcessLogs = (
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) =>
-    preProcessLog(log, {
-      escape,
-      getFieldLinks,
-      grammar,
-      otelLogsFormattingEnabled,
-      prettifyJSON,
-      timeZone,
-      virtualization,
-      wrapLogMessage,
-    })
+  return orderedLogs.map((log, index) =>
+    preProcessLog(
+      log,
+      {
+        escape,
+        getFieldLinks,
+        grammar,
+        otelLogsFormattingEnabled,
+        prettifyJSON,
+        timeZone,
+        virtualization,
+        wrapLogMessage,
+      },
+      index
+    )
   );
 };
 
@@ -339,8 +352,8 @@ interface PreProcessLogOptions {
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
-const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
-  return new LogListModel(log, options);
+const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions, index: number): LogListModel => {
+  return new LogListModel(log, options, index);
 };
 
 function logLevelToDisplayLevel(level = '') {

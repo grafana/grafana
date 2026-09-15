@@ -76,6 +76,38 @@ func TestV23TemplateVariableMigration(t *testing.T) {
 			},
 			description: "When value is already an array, text should remain as string to match frontend behavior",
 		},
+		{
+			name: "preserve_text_array_when_value_is_single_for_single_variables",
+			input: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":  "singleVar",
+							"multi": false,
+							"current": map[string]interface{}{
+								"text":  []interface{}{"A"},
+								"value": "A",
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":  "singleVar",
+							"multi": false,
+							"current": map[string]interface{}{
+								"text":  []interface{}{"A"},
+								"value": "A",
+							},
+						},
+					},
+				},
+			},
+			description: "For a single-value variable whose value is not an array, current must be left untouched (text stays an array), matching frontend alignCurrentWithMulti",
+		},
 	}
 
 	for _, tt := range tests {

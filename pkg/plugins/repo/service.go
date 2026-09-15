@@ -82,6 +82,17 @@ func (m *Manager) GetPluginArchiveInfo(ctx context.Context, pluginID, version st
 
 // PluginVersion will return plugin version based on the requested information
 func (m *Manager) PluginVersion(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
+	if version != "" {
+		if v, ok := m.specificPluginVersion(ctx, pluginID, version, compatOpts); ok {
+			if err := corePluginError(pluginID, v); err != nil {
+				return VersionData{}, err
+			}
+			return v, nil
+		}
+		// The requested version couldn't be used directly, so fall through to
+		// the version listing, which reproduces the existing error behavior.
+	}
+
 	versions, err := m.grafanaCompatiblePluginVersions(ctx, pluginID, compatOpts)
 	if err != nil {
 		return VersionData{}, err
@@ -92,14 +103,70 @@ func (m *Manager) PluginVersion(ctx context.Context, pluginID, version string, c
 		return VersionData{}, err
 	}
 
-	isGrafanaCorePlugin := strings.HasPrefix(compatibleVer.URL, "https://github.com/grafana/grafana/tree/main/public/app/plugins/")
-	_, hasAnyArch := compatibleVer.Arch["any"]
-	if isGrafanaCorePlugin && hasAnyArch {
-		// Trying to install a coupled core plugin
-		return VersionData{}, ErrCorePlugin(pluginID)
+	if err = corePluginError(pluginID, compatibleVer); err != nil {
+		return VersionData{}, err
 	}
 
 	return compatibleVer, nil
+}
+
+func corePluginError(pluginID string, v VersionData) error {
+	isGrafanaCorePlugin := strings.HasPrefix(v.URL, "https://github.com/grafana/grafana/tree/main/public/app/plugins/")
+	_, hasAnyArch := v.Arch["any"]
+	if isGrafanaCorePlugin && hasAnyArch {
+		// Trying to install a coupled core plugin
+		return ErrCorePlugin(pluginID)
+	}
+	return nil
+}
+
+// specificPluginVersion optimistically fetches the requested version from
+// /api/plugins/$pluginID/versions/$version, which is much cheaper for the
+// backend than the full version listing. It returns false whenever the
+// version can't be used directly, so the caller falls back to the listing.
+// The version listing only contains active versions, so any other status
+// must be rejected here to keep hidden versions uninstallable.
+func (m *Manager) specificPluginVersion(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (VersionData, bool) {
+	sysCompatOpts, exists := compatOpts.System()
+	if !exists {
+		return VersionData{}, false
+	}
+
+	u, err := url.Parse(m.client.grafanaComAPIURL)
+	if err != nil {
+		return VersionData{}, false
+	}
+
+	u.Path = path.Join(u.Path, pluginID, "versions", normalizeVersion(version))
+
+	body, err := m.client.SendReq(ctx, u, compatOpts)
+	if err != nil {
+		m.log.Debugf("Failed to fetch plugin version %s v%s directly, falling back to the version listing: %s", pluginID, version, err)
+		return VersionData{}, false
+	}
+
+	var v Version
+	if err = json.Unmarshal(body, &v); err != nil {
+		m.log.Error("Failed to unmarshal plugin repo response", err)
+		return VersionData{}, false
+	}
+
+	if v.Status != "active" {
+		return VersionData{}, false
+	}
+	if v.IsCompatible != nil && !*v.IsCompatible {
+		return VersionData{}, false
+	}
+	if !supportsCurrentArch(v, sysCompatOpts) {
+		return VersionData{}, false
+	}
+
+	return VersionData{
+		Version:  v.Version,
+		Checksum: checksum(v, sysCompatOpts),
+		Arch:     v.Arch,
+		URL:      v.URL,
+	}, true
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {

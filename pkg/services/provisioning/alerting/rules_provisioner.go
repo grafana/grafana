@@ -71,7 +71,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 			}
 		}
 		for _, deleteRule := range file.DeleteRules {
-			err := prov.ruleService.DeleteAlertRule(ctx, provisionerUser(deleteRule.OrgID), deleteRule.UID, alert_models.ProvenanceFile)
+			err := prov.ruleService.DeleteAlertRule(ctx, provisionerUser(deleteRule.OrgID), deleteRule.UID, alert_models.ProvenanceToManagerProperties(alert_models.ProvenanceFile))
 			if err != nil {
 				return err
 			}
@@ -92,10 +92,10 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 		prov.logger.Debug("creating rule", "uid", rule.UID, "org", rule.OrgID)
 		// a nil user is passed in as then the quota logic will only check for
 		// the organization quota since we don't have any user scope here.
-		_, err = prov.ruleService.CreateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
+		_, err = prov.ruleService.CreateAlertRule(ctx, user, rule, alert_models.ProvenanceToManagerProperties(alert_models.ProvenanceFile))
 	} else {
 		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
-		_, err = prov.ruleService.UpdateAlertRule(ctx, user, rule, alert_models.ProvenanceFile)
+		_, err = prov.ruleService.UpdateAlertRule(ctx, user, rule, alert_models.ProvenanceToManagerProperties(alert_models.ProvenanceFile))
 	}
 	return err
 }

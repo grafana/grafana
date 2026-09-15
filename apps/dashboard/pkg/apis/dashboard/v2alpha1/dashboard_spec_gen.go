@@ -96,14 +96,14 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint32 `json:"ids"`
+	Ids []float64 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
 func NewDashboardAnnotationPanelFilter() *DashboardAnnotationPanelFilter {
 	return &DashboardAnnotationPanelFilter{
 		Exclude: (func(input bool) *bool { return &input })(false),
-		Ids:     []uint32{},
+		Ids:     []float64{},
 	}
 }
 
@@ -183,9 +183,12 @@ func (DashboardPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
-	Id          float64                 `json:"id"`
-	Title       string                  `json:"title"`
-	Description string                  `json:"description"`
+	Id    float64 `json:"id"`
+	Title string  `json:"title"`
+	// Shown in a info icon tooltip next to panel title
+	Description *string `json:"description,omitempty"`
+	// Shown in a sub header below the title.
+	Subtitle    *string                 `json:"subtitle,omitempty"`
 	Links       []DashboardDataLink     `json:"links"`
 	Data        DashboardQueryGroupKind `json:"data"`
 	VizConfig   DashboardVizConfigKind  `json:"vizConfig"`
@@ -409,6 +412,7 @@ type DashboardQueryOptionsSpec struct {
 	TimeFrom         *string `json:"timeFrom,omitempty"`
 	MaxDataPoints    *int64  `json:"maxDataPoints,omitempty"`
 	TimeShift        *string `json:"timeShift,omitempty"`
+	TimeCompare      *string `json:"timeCompare,omitempty"`
 	QueryCachingTTL  *int64  `json:"queryCachingTTL,omitempty"`
 	Interval         *string `json:"interval,omitempty"`
 	CacheTimeout     *string `json:"cacheTimeout,omitempty"`
@@ -755,7 +759,9 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 type DashboardThreshold struct {
 	// Value null means -Infinity
 	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
+	Color     string  `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.

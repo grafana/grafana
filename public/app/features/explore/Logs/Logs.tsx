@@ -55,8 +55,6 @@ import { LogList, type LogListOptions } from 'app/features/logs/components/panel
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
-import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
@@ -65,6 +63,8 @@ import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
+import { isLokiQuery } from '../../loki-helpers/queryUtils';
+import { LokiQueryDirection } from '../../loki-helpers/types';
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -160,6 +160,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logsVolumeData,
     loadLogsVolumeData,
     loading = false,
+    loadingState,
     onClickFilterLabel,
     onClickFilterOutLabel,
     timeZone,
@@ -775,11 +776,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const panelData: PanelData = {
-    state: loading ? LoadingState.Loading : LoadingState.Done,
-    series: props.logsFrames ?? [],
-    timeRange: props.range,
-  };
+  const panelData: PanelData = useMemo(
+    () => ({
+      state: loading ? LoadingState.Loading : LoadingState.Done,
+      series: props.logsFrames ?? [],
+      timeRange: props.range,
+      request: getState().explore.panes[exploreId]?.queryResponse.request,
+    }),
+    [exploreId, loading, props.logsFrames, props.range]
+  );
 
   return (
     <>
@@ -791,6 +796,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getRowContext={(row, options) => getRowContext(row, contextRow, options)}
           getRowContextQuery={getRowContextQuery}
           getLogRowContextUi={getLogRowContextUi}
+          getFieldLinks={getFieldLinks}
           logOptionsStorageKey={SETTING_KEY_ROOT}
           timeZone={timeZone}
           displayedFields={displayedFields}
@@ -938,7 +944,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
-                  loading={loading}
+                  loadingState={loadingState}
                   loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}

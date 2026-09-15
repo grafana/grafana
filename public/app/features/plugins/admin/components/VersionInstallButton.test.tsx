@@ -5,13 +5,20 @@ import { Provider } from 'react-redux';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { type Version } from '../types';
+import { PluginStatus, type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
+
+const mockInstall = jest.fn();
+jest.mock('../state/hooks', () => ({
+  ...jest.requireActual('../state/hooks'),
+  useInstall: () => mockInstall,
+}));
 
 describe('VersionInstallButton', () => {
   const originalConfig = { ...config };
   afterEach(() => {
+    mockInstall.mockClear();
     config.featureToggles = {
       ...originalConfig.featureToggles,
     };
@@ -198,6 +205,80 @@ describe('VersionInstallButton', () => {
       />
     );
     expect(screen.getByText('Install')).toBeInTheDocument();
+  });
+
+  it('should clear the spinner once installedVersion catches up, even with hideInstallState set', () => {
+    // Regression test: hideInstallState (used for managed plugins) must only suppress the
+    // Installed/Upgrade/Downgrade labeling — it must not prevent this component from noticing
+    // that a triggered install has actually completed and clearing its own local spinner state.
+    const version: Version = {
+      version: '1.0.1',
+      createdAt: '',
+      isCompatible: false,
+      grafanaDependency: null,
+    };
+    const store = configureStore();
+
+    const { rerender } = render(
+      <Provider store={store}>
+        <VersionInstallButton
+          installedVersion={undefined}
+          hideInstallState
+          pluginId={'test'}
+          version={version}
+          disabled={false}
+          onConfirmInstallation={() => {}}
+        />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Install'));
+    expect(screen.getByRole('button')).toBeDisabled();
+
+    rerender(
+      <Provider store={store}>
+        <VersionInstallButton
+          installedVersion={version.version}
+          hideInstallState
+          pluginId={'test'}
+          version={version}
+          disabled={false}
+          onConfirmInstallation={() => {}}
+        />
+      </Provider>
+    );
+
+    expect(screen.getByRole('button')).not.toBeDisabled();
+    expect(screen.getByText('Install')).toBeInTheDocument();
+  });
+
+  it('should dispatch an update (not a fresh install) for a managed plugin upgrade', () => {
+    // Regression test: hideInstallState only neutralizes the displayed label to "Install" — the
+    // dispatched operation must still be an UPDATE so hasUpdate is cleared and the plugin info
+    // cache is invalidated, exactly as it would be for a non-managed upgrade.
+    const version: Version = {
+      version: '2.0.0',
+      createdAt: '',
+      isCompatible: true,
+      grafanaDependency: null,
+    };
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion="1.0.0"
+        hideInstallState
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+
+    // Display is a neutral "Install" (no Upgrade label) for managed plugins...
+    const button = screen.getByText('Install');
+    fireEvent.click(button);
+
+    // ...but the underlying operation is still an update.
+    expect(mockInstall).toHaveBeenCalledWith('test', '2.0.0', PluginStatus.UPDATE);
   });
 
   it('should show the installation button if invalid semver installed version is provided', () => {

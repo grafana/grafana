@@ -15,7 +15,6 @@ import (
 
 func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := t.Context()
 
 	const (
 		repoName = "job-commit-author"
@@ -52,12 +51,12 @@ func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 			},
 		})).
 		SetHeader("Content-Type", "application/json").
-		Do(ctx)
+		Do(t.Context())
 	obj, err := result.Get()
 	require.NoError(t, err, "should trigger delete job")
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	require.True(t, ok)
-	helper.AwaitJob(t, ctx, unstruct)
+	helper.AwaitJob(t, unstruct)
 
 	name, email := user.Identity.GetName(), user.Identity.GetEmail()
 	require.NotEmpty(t, name)

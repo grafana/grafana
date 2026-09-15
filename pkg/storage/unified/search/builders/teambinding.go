@@ -12,16 +12,14 @@ const (
 	TEAM_BINDING_EXTERNAL   = "external"
 )
 
-// teamBindingSearchFields are read from the generated IAM manifest, where they
+// TeamBindingSearchFields are read from the generated IAM manifest, where they
 // are declared in apps/iam/kinds/teambinding.cue.
-var teamBindingSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
+//
+// Exported for the IAM legacy SQL search backend; do not mutate.
+var TeamBindingSearchFields = iamProvider.Fields(
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 )
 
-// TeamBindingTableColumnDefinitions exposes column-defs by name for the
-// IAM legacy SQL backend in teambinding/legacy_search.go.
-var TeamBindingTableColumnDefinitions = tableColumnsByName(teamBindingSearchFields)
-
-func GetTeamBindingBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.TeamBindingResourceInfo, teamBindingSearchFields)
+func GetTeamBindingBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.TeamBindingResourceInfo)
 }

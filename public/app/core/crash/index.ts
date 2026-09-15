@@ -4,10 +4,10 @@ import { nanoid } from 'nanoid';
 
 import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
+import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from 'app/core/utils/CorsSharedWorker';
 import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
-import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
 

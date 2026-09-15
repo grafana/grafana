@@ -3,7 +3,6 @@ package notifier
 import (
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +18,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 					Route: &v1.Route{Receiver: "default"},
 				},
 				Receivers: []*v1.PostableApiReceiver{
-					{Receiver: definition.Receiver{Name: "default"}},
+					{Name: "default"},
 				},
 			},
 		}

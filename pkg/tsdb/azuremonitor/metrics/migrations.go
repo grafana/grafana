@@ -3,15 +3,20 @@ package metrics
 import "github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 
 func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataquery.AzureMetricDimension {
-	var newFilters []dataquery.AzureMetricDimension
+	newFilters := []dataquery.AzureMetricDimension{}
 	for _, filter := range filters {
+		// Drop filters without dimension
+		if filter.Dimension == nil {
+			continue
+		}
+
 		newFilter := filter
 		// Ignore the deprecation check as this is a migration
 		// nolint:staticcheck
 		newFilter.Filter = nil
-		// If there is no old field and the new field is specified - append as this is valid
+		// If there is no legacy filter field, there is nothing to migrate, append as-is
 		// nolint:staticcheck
-		if filter.Filter == nil && filter.Filters != nil {
+		if filter.Filter == nil {
 			newFilters = append(newFilters, newFilter)
 		} else {
 			// nolint:staticcheck

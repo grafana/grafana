@@ -29,6 +29,21 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => dsMock,
 }));
 
+const datasources: Record<string, { uid: string; name: string }> = {
+  'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
+  'name-of-dev-test-2': { uid: 'dev-test-2', name: 'name-of-dev-test-2' },
+};
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
+  },
+}));
+
 let loggerMock: MonitoringLogger;
 
 interface MockQuery extends DataQuery {

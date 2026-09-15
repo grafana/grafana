@@ -5,11 +5,7 @@ import * as runtime from '@grafana/runtime';
 
 import { customBuilder } from '../shared/testing/builders';
 
-import {
-  SLOW_VARIABLES_EXPANSION_THRESHOLD,
-  VariablesUnknownTable,
-  type VariablesUnknownTableProps,
-} from './VariablesUnknownTable';
+import { VariablesUnknownTable, type VariablesUnknownTableProps } from './VariablesUnknownTable';
 import { type UsagesToNetwork } from './types';
 import * as utils from './utils';
 
@@ -88,56 +84,13 @@ describe('VariablesUnknownTable', () => {
       it('then it should render the table', async () => {
         const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
         const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-        const { reportInteractionSpy } = await getTestContext({}, usages);
+        await getTestContext({}, usages);
 
         await userEvent.click(screen.getByLabelText('Renamed or missing variables'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();
         expect(screen.getByText('Renamed Variable')).toBeInTheDocument();
         expect(screen.getAllByTestId('VariablesUnknownButton')).toHaveLength(1);
-
-        // make sure we don't report the interaction for slow expansion
-        expect(reportInteractionSpy).toHaveBeenCalledTimes(1);
-        expect(reportInteractionSpy).toHaveBeenCalledWith('Unknown variables section expanded');
-      });
-
-      describe('but when the unknown processing takes a while', () => {
-        let user: ReturnType<typeof userEvent.setup>;
-
-        beforeEach(() => {
-          jest.useFakeTimers();
-          // Need to use delay: null here to work with fakeTimers
-          // see https://github.com/testing-library/user-event/issues/833
-          user = userEvent.setup({ delay: null });
-        });
-
-        afterEach(() => {
-          jest.useRealTimers();
-        });
-
-        it('then it should report slow expansion', async () => {
-          const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
-          const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { getUnknownsNetworkSpy, reportInteractionSpy } = await getTestContext({}, usages);
-          getUnknownsNetworkSpy.mockImplementation(() => {
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(usages);
-              }, SLOW_VARIABLES_EXPANSION_THRESHOLD);
-            });
-          });
-
-          await user.click(screen.getByLabelText('Renamed or missing variables'));
-
-          jest.advanceTimersByTime(SLOW_VARIABLES_EXPANSION_THRESHOLD);
-
-          // make sure we report the interaction for slow expansion
-          await waitFor(() =>
-            expect(reportInteractionSpy).toHaveBeenCalledWith('Slow unknown variables expansion', {
-              elapsed: expect.any(Number),
-            })
-          );
-        });
       });
     });
   });

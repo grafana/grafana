@@ -87,7 +87,7 @@ Filters automatically query your data source for available dimensions and lets u
 This allows you to quickly apply filters dashboard-wide to all metric queries that use the specified data source.
 The group by function allows you to then group data by keys, letting you split it up.
 
-For more information, refer to [Filter and Group by documentation](https://grafana.com/docs/<GRAFANA_VERSION>visualizations/dashboards/build-dashboards/filter-group-by).
+For more information, refer to [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by).
 
 To pass a filter as a query parameter, use the variable syntax to pass the filter. Then provide the key, operator, and value as a pipe-separated list.
 

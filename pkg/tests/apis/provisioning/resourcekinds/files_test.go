@@ -27,7 +27,6 @@ import (
 // TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope.
 func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	for _, rk := range resourceKinds {
 		rk := rk
@@ -38,17 +37,17 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			filePath := rk.name + "-files.json"
 			name := rk.name + "-files"
 			helper.CreateLocalRepo(t, common.TestRepo{
-				Name:                   repo,
-				SyncTarget:             "folder",
-				Workflows:              []string{"write"},
-				SkipResourceAssertions: true,
+				Name:       repo,
+				SyncTarget: "folder",
+				Workflows:  []string{"write"},
 			})
-			t.Cleanup(func() { _ = client.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
+			cleanupCtx := context.WithoutCancel(t.Context())
+			t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 
 			// Create: stores the file and provisions the resource.
-			postResourceFile(t, ctx, helper, rk, repo, filePath, name, "Files "+rk.kind)
-			require.Contains(t, repositoryFilePaths(t, ctx, helper, repo), filePath, "the file should exist in the repository")
-			got := common.RequireResource(t, ctx, client.Resource, name)
+			postResourceFile(t, helper, rk, repo, filePath, name, "Files "+rk.kind)
+			require.Contains(t, repositoryFilePaths(t, helper, repo), filePath, "the file should exist in the repository")
+			got := common.RequireResource(t, client.Resource, name)
 			title, _, _ := unstructured.NestedString(got.Object, "spec", "title")
 			require.Equal(t, "Files "+rk.kind, title)
 
@@ -60,10 +59,10 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 				SubResource("files", filePath).
 				Body(common.ResourceToJSON(t, rk.newResource(t, name, "Files "+rk.kind+" Updated"))).
 				SetHeader("Content-Type", "application/json").
-				Do(ctx).Error()
+				Do(t.Context()).Error()
 			require.NoError(t, updateErr, "%s update via files PUT should succeed", rk.name)
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+				got, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 				if !assert.NoError(collect, err) {
 					return
 				}
@@ -83,11 +82,11 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			require.NoError(t, moveResp.Body.Close())
 			require.Equalf(t, 200, moveResp.StatusCode, "%s move via files endpoint should succeed; body: %s", rk.name, moveBody)
 
-			repoFiles := repositoryFilePaths(t, ctx, helper, repo)
+			repoFiles := repositoryFilePaths(t, helper, repo)
 			require.NotContains(t, repoFiles, filePath, "the file should no longer be at its original path")
 			require.Contains(t, repoFiles, movedPath, "the file should be at the moved path")
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				got, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+				got, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 				if !assert.NoError(collect, err) {
 					return
 				}
@@ -99,9 +98,9 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			delResp := helper.NewFilesClient(repo).Delete(t, movedPath)
 			require.Equal(t, 200, delResp.StatusCode, "deleting a %s file should succeed", rk.name)
 
-			require.NotContains(t, repositoryFilePaths(t, ctx, helper, repo), movedPath, "the file should be removed from the repository")
+			require.NotContains(t, repositoryFilePaths(t, helper, repo), movedPath, "the file should be removed from the repository")
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				_, err := client.Resource.Get(ctx, name, metav1.GetOptions{})
+				_, err := client.Resource.Get(t.Context(), name, metav1.GetOptions{})
 				assert.True(collect, apierrors.IsNotFound(err), "%s should be removed from Grafana after a files DELETE, got: %v", rk.name, err)
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "%s should be deleted after a files DELETE", rk.name)
 		})

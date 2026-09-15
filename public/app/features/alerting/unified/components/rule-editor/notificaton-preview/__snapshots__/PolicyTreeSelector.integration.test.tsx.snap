@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default policy view adds __grafana_managed_route__ label when custom policy is selected 1`] = `
+exports[`PolicyTreeSelector new rule - collapsed default policy view adds __grafana_managed_route__ label when custom policy is selected 1`] = `
 [
   {
     "body": {
@@ -173,7 +173,7 @@ exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default pol
 ]
 `;
 
-exports[`PolicyTreeSelector - feature toggle ON new rule - collapsed default policy view does not add __grafana_managed_route__ label when saving with default policy 1`] = `
+exports[`PolicyTreeSelector new rule - collapsed default policy view does not add __grafana_managed_route__ label when saving with default policy 1`] = `
 [
   {
     "body": {

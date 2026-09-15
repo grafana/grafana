@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
@@ -46,6 +47,11 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
+	tracer, err := controllerCfg.Tracer()
+	if err != nil {
+		return fmt.Errorf("failed to get tracer: %w", err)
+	}
+
 	// The connection delta source and the getter it backs.
 	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	connController := controller.NewConnectionController(
@@ -59,6 +65,8 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		controllerCfg.ResyncInterval(),
 		controllerCfg.DrainTimeout(),
 		controllerCfg.Registry(),
+		tracer,
+		nats.Enabled(controllerCfg.natsSubscriber),
 	)
 
 	reg, err := connSource.AddEventHandler(connController.EventHandler())

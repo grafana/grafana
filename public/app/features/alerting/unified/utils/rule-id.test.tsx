@@ -394,6 +394,43 @@ max by (environment, namespace, service) (service_condition{environment!="produc
 
     expect(hashQuery(query1)).toBe(hashQuery(query2));
   });
+
+  it('should produce the same hash for queries with and without an empty label selector', () => {
+    const query1 = `max by (cluster) (cluster:app_sync:healthy{  })`;
+    const query2 = `max by (cluster) (cluster:app_sync:healthy)`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with and without a trailing comma in a selector', () => {
+    const query1 = `group by (cluster) (
+  monitor_status{
+    cluster!~".+autotest.+",
+  }
+)`;
+    const query2 = `group by (cluster) (monitor_status{cluster!~".+autotest.+"})`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for a ruler expr and its re-serialized Prometheus query', () => {
+    const rulerExpr = `(group by (k8s_cluster) (platform_cluster_monitor_status)
+) * on(k8s_cluster) group_left() ((max by (k8s_cluster) (k8s_cluster:app_sync:healthy{  })) * on(k8s_cluster) group_left() (group by (k8s_cluster) (
+  platform_cluster_monitor_status{
+    governance_zone!~"china|fedhigh",
+  }
+)
+)
+)
+ < 1`;
+    const promQuery = `(group by (k8s_cluster) (platform_cluster_monitor_status)) * on (k8s_cluster) group_left () ((max by (k8s_cluster) (k8s_cluster:app_sync:healthy)) * on (k8s_cluster) group_left () (group by (k8s_cluster) (platform_cluster_monitor_status{governance_zone!~"china|fedhigh"}))) < 1`;
+
+    expect(hashQuery(rulerExpr)).toBe(hashQuery(promQuery));
+  });
+
+  it('should not conflate an empty selector with a template string', () => {
+    expect(hashQuery(`label_format origin="{{.app_host}}"`)).not.toBe(hashQuery(`label_format origin="{}"`));
+  });
 });
 
 describe('stripPromQLComments', () => {

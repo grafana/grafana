@@ -27,7 +27,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql');
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: true });
     });
   });
 
@@ -38,7 +38,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'standardSql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: true });
     });
   });
 
@@ -49,7 +49,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'mySql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: MySQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: MySQL, upperCaseKeywords: true });
     });
   });
 
@@ -79,6 +79,33 @@ describe('loadLanguageExtension', () => {
 
       expect(standard).not.toBe(mySql);
       expect(standardAgain).toBe(standard);
+    });
+  });
+
+  it.each(['go', 'html', 'json', 'markdown', 'typescript', 'xml', 'yaml'] as const)(
+    'loads and memoizes the %s extension',
+    async (language) => {
+      await jest.isolateModulesAsync(async () => {
+        const { loadLanguageExtension } = await import('./languageLoader');
+        const { Language } = await import('@codemirror/language');
+
+        const extension = await loadLanguageExtension(language);
+        const again = await loadLanguageExtension(language);
+
+        expect(extension).toHaveProperty('language', expect.any(Language));
+        expect(again).toBe(extension);
+      });
+    }
+  );
+
+  it('configures the typescript loader for TypeScript syntax', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { typescriptLanguage } = await import('@codemirror/lang-javascript');
+
+      const extension = await loadLanguageExtension('typescript');
+
+      expect(extension).toHaveProperty('language', typescriptLanguage);
     });
   });
 });

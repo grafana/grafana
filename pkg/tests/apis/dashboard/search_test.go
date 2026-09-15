@@ -185,6 +185,24 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 				"explain":          "true",
 			},
 		},
+		{
+			// Queries below the ngram minimum are matched as prefix wildcards, so
+			// they find titles with a word starting with the query.
+			name: "short-query-word-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ze", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			// The same short query does not match inside a word: "ec" must not
+			// find "Zero Decimals Y Ticks" via "decimals".
+			name: "short-query-mid-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ec",
+			},
+		},
 	}
 	for i, tc := range testCases {
 		if testCase != "" && testCase != tc.name {
@@ -443,7 +461,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.NoError(t, err)
 
 			var statusCode int
-			body := []byte(fmt.Sprintf(`{"uid":"%s","title":"Permission Test Folder"}`, folderUID))
+			body := fmt.Appendf(nil, `{"uid":"%s","title":"Permission Test Folder"}`, folderUID)
 			result := restClient.Post().AbsPath("api", "folders").
 				Body(body).
 				SetHeader("Content-type", "application/json").

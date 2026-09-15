@@ -1,6 +1,6 @@
 import { type IconName, type RegistryItem } from '@grafana/data';
 
-import { type DashboardLayoutManager } from './DashboardLayoutManager';
+import { type AnyDashboardLayoutManager } from './DashboardLayoutManager';
 
 /**
  * The layout descriptor used when selecting / switching layouts
@@ -10,7 +10,7 @@ export interface LayoutRegistryItem extends RegistryItem {
    * When switching between layouts
    * @param currentLayout
    */
-  createFromLayout(currentLayout: DashboardLayoutManager): DashboardLayoutManager;
+  createFromLayout(currentLayout: AnyDashboardLayoutManager): AnyDashboardLayoutManager;
 
   /**
    * Is grid layout (that contains panels)

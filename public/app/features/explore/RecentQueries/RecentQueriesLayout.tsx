@@ -3,8 +3,8 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { Divider, EmptyState, useStyles2 } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
 
@@ -23,7 +23,8 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
   const styles = useStyles2(getStyles);
   const { queries, isLoading, isInitialLoad, error, filters, setFilters, starQuery } = useRecentQueriesData();
 
-  const availableDatasources = useMemo(() => createDatasourcesList().map((ds) => ds.name), []);
+  const { items: dataSourceItems } = useDataSourceInstanceList({ mixed: true });
+  const availableDatasources = useMemo(() => dataSourceItems.map((ds) => ds.name), [dataSourceItems]);
 
   const handleSelectQuery = useCallback(
     (query: RichHistoryQuery) => {

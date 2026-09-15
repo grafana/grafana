@@ -4,6 +4,7 @@ import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 import type {
   DescendantCounts,
   Folder,
+  FolderAccessInfo,
   FolderInfoList,
   FolderList,
   OwnerReference,
@@ -78,6 +79,55 @@ const getFolderHandler = () =>
 
     return HttpResponse.json(appPlatformFolder);
   });
+
+const fullAccess: FolderAccessInfo = {
+  ...baseResponse,
+  kind: 'FolderAccessInfo',
+  canAdmin: true,
+  canDelete: true,
+  canEdit: true,
+  canSave: true,
+  accessControl: {
+    'dashboards.permissions:write': true,
+    'dashboards:create': true,
+    'folders:write': true,
+  },
+};
+
+// The "shared with me" folder is a virtual aggregation view with nothing to act
+// on, so the backend reports no access for it.
+const noAccess: FolderAccessInfo = {
+  ...baseResponse,
+  kind: 'FolderAccessInfo',
+  canAdmin: false,
+  canDelete: false,
+  canEdit: false,
+  canSave: false,
+};
+
+const getFolderAccessHandler = () =>
+  http.get<{ folderUid: string; namespace: string }>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/access',
+    ({ params }) => {
+      const { folderUid } = params;
+
+      // Virtual folders have no stored resource: the root folder resolves real
+      // access against the "general" scope, while "shared with me" has none.
+      if (folderUid === 'general') {
+        return HttpResponse.json(fullAccess);
+      }
+      if (folderUid === 'sharedwithme') {
+        return HttpResponse.json(noAccess);
+      }
+
+      const folder = mockTree.find(({ item }) => item.uid === folderUid);
+      if (!folder) {
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
+      }
+
+      return HttpResponse.json(fullAccess);
+    }
+  );
 
 const getFolderParentsHandler = () =>
   http.get<{ folderUid: string; namespace: string }>(`${FOLDER_BY_NAME}/parents`, ({ params }) => {
@@ -308,7 +358,7 @@ export const customCreateFolderHandler = (resolver: HttpResponseResolver) => htt
 const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
   http.get('/apis/folder.grafana.app/:version/namespaces/:namespace/folders/:folderUid/counts', resolver);
 
-export const mockFolderCountsHandler = (panels: number, rules: number) =>
+export const mockFolderCountsHandler = (panels: number, rules: number, recordingRules = 0) =>
   customFolderCountsHandler(() =>
     HttpResponse.json({
       kind: 'DescendantCounts',
@@ -316,6 +366,7 @@ export const mockFolderCountsHandler = (panels: number, rules: number) =>
       counts: [
         { group: 'sql-fallback', resource: 'library_elements', count: panels },
         { group: 'sql-fallback', resource: 'alertrules', count: rules },
+        { group: 'sql-fallback', resource: 'recordingrules', count: recordingRules },
       ],
     })
   );
@@ -326,6 +377,7 @@ export const mockFolderCountsErrorHandler = (status = 500) =>
 export default [
   getFolderListHandler(),
   getFolderHandler(),
+  getFolderAccessHandler(),
   getFolderParentsHandler(),
   createFolderHandler(),
   replaceFolderHandler(),

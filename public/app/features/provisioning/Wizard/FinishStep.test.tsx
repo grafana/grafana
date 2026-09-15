@@ -25,7 +25,15 @@ const BRANCH_LABEL = 'Branch options';
 const COMMIT_LABEL = 'Commit options';
 const PR_LABEL = 'Pull request options';
 
-function FormWrapper({ children, type }: { children: ReactNode; type: RepoType }) {
+function FormWrapper({
+  children,
+  type,
+  defaultValues,
+}: {
+  children: ReactNode;
+  type: RepoType;
+  defaultValues?: Partial<WizardFormData>;
+}) {
   const methods = useForm<WizardFormData>({
     defaultValues: {
       repository: {
@@ -38,6 +46,7 @@ function FormWrapper({ children, type }: { children: ReactNode; type: RepoType }
         readOnly: false,
         prWorkflow: false,
       },
+      ...defaultValues,
     },
   });
 
@@ -48,9 +57,9 @@ function FormWrapper({ children, type }: { children: ReactNode; type: RepoType }
   );
 }
 
-function setup(type: RepoType) {
+function setup(type: RepoType, defaultValues?: Partial<WizardFormData>) {
   return render(
-    <FormWrapper type={type}>
+    <FormWrapper type={type} defaultValues={defaultValues}>
       <FinishStep />
     </FormWrapper>
   );
@@ -108,10 +117,37 @@ describe('FinishStep', () => {
       expect(await screen.findByText('Webhook options')).toBeInTheDocument();
     });
 
-    it('does not show the webhook section for a git provider without webhooks', async () => {
+    it('shows the webhook section for a Bitbucket repository', async () => {
       setup('bitbucket');
 
-      expect(await screen.findByText(PR_LABEL)).toBeInTheDocument();
+      expect(await screen.findByText('Webhook options')).toBeInTheDocument();
+    });
+
+    it('forces webhooks off for a PAT Bitbucket repository without an email', async () => {
+      const { user } = setup('bitbucket', { githubAuthType: 'pat' });
+
+      await user.click(await screen.findByText('Webhook options'));
+
+      const checkbox = screen.getByRole('checkbox', { name: /disable webhook integration/i });
+      expect(checkbox).toBeDisabled();
+      expect(checkbox).toBeChecked();
+      expect(screen.getByText(/atlassian account email is not set/i)).toBeInTheDocument();
+    });
+
+    it('keeps webhooks configurable for an OAuth Bitbucket repository without an email', async () => {
+      const { user } = setup('bitbucket', { githubAuthType: 'oauth-app' });
+
+      await user.click(await screen.findByText('Webhook options'));
+
+      const checkbox = screen.getByRole('checkbox', { name: /disable webhook integration/i });
+      expect(checkbox).toBeEnabled();
+      expect(checkbox).not.toBeChecked();
+    });
+
+    it('does not show the webhook section for a git provider without webhooks', async () => {
+      setup('git');
+
+      expect(await screen.findByText(BRANCH_LABEL)).toBeInTheDocument();
       expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
     });
   });

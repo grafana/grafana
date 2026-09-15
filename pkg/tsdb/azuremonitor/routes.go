@@ -14,12 +14,13 @@ import (
 
 // Azure cloud query types
 const (
-	azureMonitor       = "Azure Monitor"
-	azureLogAnalytics  = "Azure Log Analytics"
-	azureResourceGraph = "Azure Resource Graph"
-	azureTraces        = "Azure Traces"
-	azurePortal        = "Azure Portal"
-	traceExemplar      = "traceql"
+	azureMonitor             = types.RouteAzureMonitor
+	azureLogAnalytics        = types.RouteAzureLogAnalytics
+	azureResourceGraph       = types.RouteAzureResourceGraph
+	azureTraces              = types.RouteAzureTraces
+	azurePortal              = types.RouteAzurePortal
+	traceExemplar            = types.RouteTraceExemplar
+	azureMonitorBatchMetrics = types.RouteAzureMonitorBatchMetrics
 )
 
 func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
@@ -78,13 +79,38 @@ func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcre
 		URL: portalUrl,
 	}
 
+	// The Metrics Batch API uses a separate data-plane endpoint and audience.
+	// Defined for the public, China, and US Government clouds; other clouds must
+	// supply the URL via customizedRoutes or a metricsDataPlane property on a
+	// custom cloud.
+	metricsDataPlaneURL := "https://metrics.monitor.azure.com"
+	switch azureCloud {
+	case azsettings.AzureChina:
+		metricsDataPlaneURL = "https://metrics.monitor.azure.cn"
+	case azsettings.AzureUSGovernment:
+		metricsDataPlaneURL = "https://metrics.monitor.azure.us"
+	}
+	if v, ok := cloudSettings.Properties["metricsDataPlane"]; ok {
+		metricsDataPlaneURL = v
+	}
+	metricsDataPlaneScopes, err := audienceToScopes(metricsDataPlaneURL)
+	if err != nil {
+		return nil, err
+	}
+	metricsDataPlaneRoute := types.AzRoute{
+		URL:     metricsDataPlaneURL,
+		Scopes:  metricsDataPlaneScopes,
+		Headers: map[string]string{"x-ms-app": "Grafana"},
+	}
+
 	routes := map[string]types.AzRoute{
-		azureMonitor:       resourceManagerRoute,
-		azureLogAnalytics:  logAnalyticsRoute,
-		azureResourceGraph: resourceManagerRoute,
-		azureTraces:        logAnalyticsRoute,
-		traceExemplar:      logAnalyticsRoute,
-		azurePortal:        portalRoute,
+		azureMonitor:             resourceManagerRoute,
+		azureLogAnalytics:        logAnalyticsRoute,
+		azureResourceGraph:       resourceManagerRoute,
+		azureTraces:              logAnalyticsRoute,
+		traceExemplar:            logAnalyticsRoute,
+		azurePortal:              portalRoute,
+		azureMonitorBatchMetrics: metricsDataPlaneRoute,
 	}
 
 	return routes, nil

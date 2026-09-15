@@ -5,12 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// externalGroupMappingSearchFields are read from the generated IAM manifest,
-// where they are declared in apps/iam/kinds/externalgroupmapping.cue.
-var externalGroupMappingSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
-	iamv0.ExternalGroupMappingResourceInfo.GroupVersionResource(),
-)
-
-func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.ExternalGroupMappingResourceInfo, externalGroupMappingSearchFields)
+func GetExternalGroupMappingBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.ExternalGroupMappingResourceInfo)
 }

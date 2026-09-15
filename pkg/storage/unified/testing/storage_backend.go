@@ -107,7 +107,14 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 				t.Skip()
 			}
 
-			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+			backend := newBackend(context.Background())
+			// Stop background goroutines when the case ends so they don't keep
+			// writing to the (SQLite) DB and contend with later cases.
+			if s, ok := backend.(resource.ResourceServerStopper); ok {
+				t.Cleanup(func() { _ = s.Stop(context.Background()) })
+			}
+
+			tc.fn(t, backend, opts.NSPrefix)
 		})
 	}
 }
@@ -1037,7 +1044,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Name:      "paged-item",
 		}
 
-		var resourceVersions []int64
+		resourceVersions := make([]int64, 0, 10)
 
 		// First create the initial resource
 		initialRV, err := WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns2))
@@ -1046,7 +1053,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 
 		// Create 9 more versions with modifications
 		rv := initialRV
-		for i := 0; i < 9; i++ {
+		for range 9 {
 			rv, err = WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
@@ -1628,7 +1635,7 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 			require.Nil(t, res.Error)
 			expectedItemCount := len(tc.expectedVersions)
 			require.Len(t, res.Items, expectedItemCount)
-			for i := 0; i < expectedItemCount; i++ {
+			for i := range expectedItemCount {
 				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
 				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
 			}
@@ -1648,8 +1655,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	t.Run("no imported times by default", func(t *testing.T) {
-		res := collectLastImportedTimes(t, backend, ctx)
-		require.Empty(t, res)
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, resource.NamespacedResource{
+			Namespace: nsPrefix + "-not-imported",
+			Group:     "dashboards",
+			Resource:  "dashboard",
+		})
+		require.NoError(t, err)
+		require.True(t, lastImportTime.IsZero())
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1682,7 +1694,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Rejected)
 
-		result := collectLastImportedTimes(t, backend, ctx)
+		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
 
 		now := time.Now()
@@ -1723,7 +1735,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
-		result1 := collectLastImportedTimes(t, backend, ctx)
+		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
@@ -1755,7 +1767,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		secondImport := time.Now()
 
 		// Verify that last imported times are combination of both bulk imports
-		result2 := collectLastImportedTimes(t, backend, ctx)
+		allCollections := make([]*resourcepb.ResourceKey, 0, len(collections1)+len(collections2))
+		allCollections = append(allCollections, collections1...)
+		allCollections = append(allCollections, collections2...)
+		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1771,11 +1786,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	})
 }
 
-func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
-	result := map[resource.NamespacedResource]time.Time{}
-	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
+func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context, keys []*resourcepb.ResourceKey) map[resource.NamespacedResource]time.Time {
+	result := make(map[resource.NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		nsr := resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, nsr)
 		require.NoError(t, err)
-		result[lm.NamespacedResource] = lm.LastImportTime
+		result[nsr] = lastImportTime
 	}
 	return result
 }
@@ -1829,7 +1846,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(updateNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
@@ -1900,7 +1917,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(createNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
@@ -2113,10 +2130,10 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	kind := "ErrorResource"
 
 	makeValue := func(name string) []byte {
-		return []byte(fmt.Sprintf(
+		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
 			group, kind, name, ns, uuid.New().String(),
-		))
+		)
 	}
 
 	t.Run("read nonexistent resource returns 404", func(t *testing.T) {

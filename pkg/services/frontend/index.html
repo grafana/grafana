@@ -19,9 +19,9 @@
     ></script>
     [[end]]
 
-    <link rel="icon" id="grafana_favicon" type="image/png" href="[[.Assets.ContentDeliveryURL]]public/build/img/fav32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]]public/build/img/apple-touch-icon.png" />
-    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]]public/build/img/grafana_mask_icon.svg" color="#F05A28" />
+    <link rel="icon" id="grafana_favicon" type="image/png" href="[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]img/fav32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]img/apple-touch-icon.png" />
+    <link rel="mask-icon" href="[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]img/grafana_mask_icon.svg" color="#F05A28" />
 
     [[range $asset := .Assets.CSSFiles]]
       <link rel="stylesheet" href="[[$asset.FilePath]]" />
@@ -157,6 +157,34 @@
       </div>
   </div>
 
+    <noscript>
+      <style>
+        .preloader {
+          display: none;
+        }
+
+        .js-required-message {
+          margin: 48px auto;
+          max-width: 720px;
+          padding: 0 16px;
+          font-family: Sans-serif;
+          line-height: 1.5;
+          color: #52545c;
+        }
+
+        /* No theme-* body classes here without JS; follow system preference like the loader. */
+        @media (prefers-color-scheme: dark) {
+          .js-required-message {
+            color: #d8d9da;
+          }
+        }
+      </style>
+      <main class="js-required-message">
+        <h1>JavaScript is required to run Grafana</h1>
+        <p>Please enable JavaScript in your browser and reload the page.</p>
+      </main>
+    </noscript>
+
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
@@ -165,12 +193,16 @@
       [[end]]
 
       [[if .Assets.ContentDeliveryURL]]
-        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]';
       [[end]]
 
       [[if .RenderBindingSupported]]
         // For the image-renderer to check support for render binding calls
         window.__grafanaRenderBindingSupported = true;
+      [[end]]
+
+      [[if .UseLuxon]]
+        window.__grafanaUseLuxon = true;
       [[end]]
 
       [[if .AssetSriChecksEnabled]]
@@ -182,8 +214,13 @@
         window.__grafanaReduceBootdataAPI = true;
       [[end]]
 
-      [[if .NewPreferencesPage]]
-        window.__grafanaNewPreferencesPage = true;
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
+      [[end]]
+
+      [[if .PreviewAssetsFolder]]
+        // Set when the assets on this page come from a PR preview build
+        window.__grafanaPreviewAssets = '[[.PreviewAssetsFolder]]';
       [[end]]
 
       window.__grafanaLegacyAPIMode = [[.LegacyAPIMode]];
@@ -215,21 +252,19 @@
       [[.BootScript]]
     </script>
 
-    [[if .AssetSriChecksEnabled ]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
+    [[range $asset := .Assets.JSFiles]]
+      <script
         nonce="[[$.Nonce]]"
         src="[[$asset.FilePath]]"
+        type="[[if $.ESModuleAssetsEnabled]]module[[else]]text/javascript[[end]]"
+        [[- if $.AssetSriChecksEnabled]]
         integrity="[[$asset.Integrity]]"
+        [[- end]]
         crossorigin="anonymous"
-        type="text/javascript"
+        [[- if not $.ESModuleAssetsEnabled]]
         defer
+        [[- end]]
       ></script>
-      [[end]]
-    [[else]]
-      [[range $asset := .Assets.JSFiles]]
-      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
-      [[end]]
     [[end]]
 
      <script nonce="[[.Nonce]]">

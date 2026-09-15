@@ -1,6 +1,6 @@
 import { type ComponentProps, useMemo } from 'react';
 
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
@@ -20,10 +20,6 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 
 /**
  * Routing Tree Combobox which lists all available notification policy trees.
- *
- * When the `alertingMultiplePolicies` feature toggle is enabled on the backend,
- * this shows all available routing trees. Otherwise, it shows only the default
- * "user-defined" tree.
  *
  * The default routing tree (named "user-defined") is displayed as "Default policy"
  * and is always listed first.

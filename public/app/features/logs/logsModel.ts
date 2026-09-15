@@ -44,7 +44,7 @@ import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
+import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { type LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
@@ -58,7 +58,7 @@ export const LogLevelColor = {
   [LogLevel.error]: colors[4],
   [LogLevel.warning]: colors[1],
   [LogLevel.info]: colors[5],
-  [LogLevel.debug]: colors[5],
+  [LogLevel.debug]: getThemeColor('#9e9e9e', '#696969'),
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
   [LogLevel.unspecified]: getThemeColor('#8e8e8e', '#bdc4cd'),

@@ -67,6 +67,12 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 // Grant permissions to the created resource
 export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
+// Attribution of provisioning jobs to the identity that triggered them
+export const AnnoKeyProvisioningAuthor = 'provisioning.grafana.app/author';
+export const AnnoKeyProvisioningAuthorEmail = 'provisioning.grafana.app/authorEmail';
+export const AnnoKeyProvisioningAuthorId = 'provisioning.grafana.app/authorId';
+export const AnnoKeyProvisioningAuthorOrigin = 'provisioning.grafana.app/authorOrigin';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -85,6 +91,14 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 /** @experimental only provided by proxies for setup with reloadDashboardsOnParamsChange toggle on */
 /** Not intended to be used in production, we will be removing this in short-term future */
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
+
+/**
+ * JSON annotation selecting which cross-dashboard (global/folder) variables to inject.
+ * Value shape: `{"global":"all"|"none"|string[],"folder":"all"|"none"|string[]}`.
+ * Absent or invalid JSON → inject none (not opted in). `"all"` in a scope auto-includes new vars;
+ * a name array does not. Empty array is `"none"`. Both scopes `"none"` → omit this key.
+ */
+export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardVariables';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -124,6 +138,8 @@ type GrafanaClientAnnotations = {
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+
+  [AnnoKeyUseCrossDashboardVariables]?: string;
 };
 
 // Labels

@@ -16,17 +16,16 @@ import (
 // driver is woken by a live NATS notification, without depending on a
 // repository. The Job references a repository that does not exist, so the
 // driver fails it fast — but it can only act that quickly if the job-create
-// notification woke it: the driver's fallback poll is 10 minutes out
-// (WithNATS). Reaching a terminal state (or being archived away) within
-// liveDeliveryWait therefore proves live delivery.
+// notification woke it: the informer re-list, the driver's only other feed,
+// is 10 minutes out (WithNATS). Reaching a terminal state (or being archived
+// away) within liveDeliveryWait therefore proves live delivery.
 func TestIntegrationProvisioningNATS_JobProcessedOverNATS(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	job := helper.CreatePullJob(t, "nats-job-direct", "ghost-repo")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		got, err := helper.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
+		got, err := helper.Jobs.Resource.Get(t.Context(), job.GetName(), metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			// Archived to a historic job — it was picked up and processed.
 			return

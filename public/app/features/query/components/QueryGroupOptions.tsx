@@ -5,6 +5,7 @@ import { rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } fro
 import { Trans, t } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { trackQueryOptionsToggle } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 import { type QueryGroupOptions } from 'app/types/query';
 
 interface Props {
@@ -142,10 +143,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   );
 
   const onOpenOptions = useCallback(() => {
+    trackQueryOptionsToggle(true, { silent: true });
     setIsOpen(true);
   }, []);
 
   const onCloseOptions = useCallback(() => {
+    trackQueryOptionsToggle(false, { silent: true });
     setIsOpen(false);
   }, []);
 

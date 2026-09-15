@@ -1,0 +1,304 @@
+import { css } from '@emotion/css';
+import { useEffect, useRef } from 'react';
+import { useAsyncFn } from 'react-use';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { isFetchError, logError } from '@grafana/runtime';
+import {
+  sceneGraph,
+  type SceneComponentProps,
+  SceneDataTransformer,
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectRef,
+  SceneQueryRunner,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
+import {
+  capturePanelData,
+  capturePanelDataFailure,
+  type PanelDataPayload,
+} from 'app/features/query/diagnostics/capturePanelData';
+import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
+import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
+
+import { type DashboardScene } from '../scene/DashboardScene';
+
+import { type SceneShareTabState, type ShareView } from './types';
+
+export interface DownloadDiagnosticsState extends SceneShareTabState {
+  // The panel this diagnostics bundle is scoped to.
+  panelRef?: SceneObjectRef<VizPanel>;
+  // The panel's dashboard, so its save model (and this panel's JSON within it) can be bundled.
+  dashboardRef?: SceneObjectRef<DashboardScene>;
+}
+
+export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsState> implements ShareView {
+  static Component = DownloadDiagnosticsRenderer;
+
+  public getTabLabel() {
+    return t('dashboard.diagnostics.title', 'Download diagnostics');
+  }
+
+  public getSubtitle() {
+    return t(
+      'dashboard.diagnostics.subtitle-panel',
+      'Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.'
+    );
+  }
+}
+
+const SAVE_MODEL_FAILURE_MESSAGE = 'Download diagnostics: failed to build panel/dashboard JSON, bundling without it';
+const PANEL_DATA_FAILURE_MESSAGE =
+  'Download diagnostics: failed to serialize frontend panel data, recording the failure in paneldata.json';
+
+// Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
+// DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
+function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
+  }
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
+  }
+  return undefined;
+}
+
+// panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
+function panelIdFrom(panel: VizPanel): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+// Finds a panel in a v1 dashboard by id, recursing into collapsed rows (which carry their children
+// in a nested "panels" array).
+function findV1PanelSaveModel(panels: unknown, id: number): unknown {
+  if (!Array.isArray(panels)) {
+    return undefined;
+  }
+  for (const p of panels) {
+    if (!isRecord(p)) {
+      continue;
+    }
+    if (p.id === id) {
+      return p;
+    }
+    const nested = findV1PanelSaveModel(p.panels, id);
+    if (nested) {
+      return nested;
+    }
+  }
+  return undefined;
+}
+
+// V1 dashboards store panels in panels[], while v2 dashboards store them in elements keyed by the
+// serializer's element id. Kept dependency-free to avoid the serialization/utils import cycle the
+// rest of this file works around.
+//
+// The v2 branch depends on an ordering invariant: getSaveModel() (called just before this) keys every
+// element through the same serializer.getElementIdForPanel(id) that this lookup uses, so the id we
+// resolve here always matches a key serialization just produced. This is why library panels and
+// repeat clones both resolve even though initializeElementMapping seeds the map only from kind:'Panel'
+// elements: getSaveModel visits every panel first and, for any id not already mapped, getElementIdForPanel
+// generates and stores a "panel-<id>" key — which this lookup then finds. Keep getSaveModel ahead of
+// this call or the v2 mapping may be empty.
+function findPanelSaveModel(dashboardModel: unknown, panel: VizPanel, dashboard: DashboardScene): unknown {
+  if (!isRecord(dashboardModel)) {
+    return undefined;
+  }
+
+  const panelId = panelIdFrom(panel);
+  if (isRecord(dashboardModel.elements)) {
+    const elementId = dashboard.serializer.getElementIdForPanel(panelId);
+    return elementId ? dashboardModel.elements[elementId] : undefined;
+  }
+
+  return findV1PanelSaveModel(dashboardModel.panels, panelId);
+}
+
+// The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
+// (its data is a Blob and message is unset), so build a message from those rather than error.message
+// which would leave the alert body empty.
+function diagnosticsErrorMessage(error: Error): string {
+  if (isFetchError(error)) {
+    const parts = [error.status, error.statusText].filter(Boolean);
+    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
+  }
+  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
+}
+
+function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
+  const { onDismiss, panelRef, dashboardRef } = model.useState();
+  const styles = useStyles2(getStyles);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight request if the drawer unmounts.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const [{ loading: isGenerating, error }, onDownload] = useAsyncFn(async () => {
+    const panel = panelRef?.resolve();
+    if (!panel) {
+      return;
+    }
+    const runner = getQueryRunnerFor(panel);
+    // Classic panels keep the datasource on the query runner rather than on each target, and unlike
+    // the normal /api/ds/query path nothing fills that in here. Copy the runner-level datasource
+    // onto any query that lacks one so the diagnostics endpoint can still route them.
+    const runnerDatasource = runner?.state.datasource;
+    const rawQueries: DataQuery[] = (runner?.state.queries ?? []).map((query) =>
+      query.datasource ? query : { ...query, datasource: runnerDatasource }
+    );
+    if (rawQueries.filter((query) => !query.hide).length === 0) {
+      throw new Error(t('dashboard.diagnostics.no-queries', 'This panel has no active queries to capture.'));
+    }
+    // Create the controller before interpolating: interpolation awaits datasource round trips, so a
+    // cancel or drawer unmount during that phase must abort here rather than no-op against a null ref
+    // and let the download start after the UI is gone.
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Interpolate template and scoped variables so the captured request matches the request the
+    // panel actually ran; scopedVars carries the panel so scene variables (including a repeated
+    // panel's clone-local value) resolve correctly.
+    const queries = await interpolateDiagnosticsQueries(
+      rawQueries,
+      { __sceneObject: { value: panel } },
+      runner?.state.data?.request?.filters
+    );
+    if (controller.signal.aborted) {
+      return;
+    }
+    const timeRange = sceneGraph.getTimeRange(panel).state.value;
+
+    // Bundle this panel's JSON and the dashboard JSON for context. The panel's save model is resolved
+    // from the dashboard save model rather than serialized separately (avoids the serialization
+    // import cycle this view already works around); undefined models are simply not sent.
+    // getSaveModel() must run before findPanelSaveModel — it populates the v2 element mapping the
+    // lookup relies on (see findPanelSaveModel).
+    // getSaveModel() can throw (e.g. a v2 CUE validation failure). This JSON is optional context, so a
+    // failure to build it must not abort a download whose queries and time range are already valid:
+    // fall back to sending no panel/dashboard JSON rather than letting the whole request fail.
+    const dashboard = dashboardRef?.resolve();
+    let dashboardModel: unknown;
+    let panelModel: unknown;
+    try {
+      dashboardModel = dashboard?.getSaveModel();
+      panelModel = dashboard ? findPanelSaveModel(dashboardModel, panel, dashboard) : undefined;
+    } catch (error) {
+      console.warn(SAVE_MODEL_FAILURE_MESSAGE, error);
+      logError(error instanceof Error ? error : new Error(SAVE_MODEL_FAILURE_MESSAGE), {
+        panelKey: panel.state.key ?? '',
+        dashboardUid: dashboard?.state.uid ?? '',
+      });
+      dashboardModel = undefined;
+      panelModel = undefined;
+    }
+
+    // Serialize the frames the frontend is holding. Reads resolved scene state only -- no queries run and
+    // no transformations re-apply -- and it reuses the runner resolved above so the frames come from the
+    // same runner as the queries.
+    //
+    // dataFrameToJSON copies field config and values by reference rather than stringifying them, so an
+    // unserializable frame (a circular object in field.config.custom, a BigInt value) does not fail here:
+    // it fails later inside backendSrv's JSON.stringify, outside this guard, taking the whole bundle with
+    // it. Stringify once here so that failure is contained to this artifact -- one extra pass over the
+    // payload is worth not losing traffic.har and querydata.json to a single bad frame.
+    let panelData: PanelDataPayload | undefined;
+    try {
+      const captured = capturePanelData(panel, runner);
+      JSON.stringify(captured);
+      panelData = captured;
+    } catch (error) {
+      console.warn(PANEL_DATA_FAILURE_MESSAGE, error);
+      logError(error instanceof Error ? error : new Error(PANEL_DATA_FAILURE_MESSAGE), {
+        panelKey: panel.state.key ?? '',
+      });
+      // Record the failure rather than dropping it: an absent artifact would be indistinguishable from a
+      // panel that had no frames to give.
+      panelData = capturePanelDataFailure(panel, error);
+    }
+
+    await downloadDiagnosticsForQueries({
+      queries,
+      from: String(timeRange.from.valueOf()),
+      to: String(timeRange.to.valueOf()),
+      signal: controller.signal,
+      panel: panelModel,
+      dashboard: dashboardModel,
+      panelData,
+    });
+  }, [panelRef, dashboardRef]);
+
+  const handleDismiss = () => {
+    abortRef.current?.abort();
+    onDismiss?.();
+  };
+
+  return (
+    <div>
+      <p className={styles.info}>
+        <Trans i18nKey="dashboard.diagnostics.info-text-panel">
+          Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download
+          may take a moment while the bundle is generated.
+        </Trans>
+      </p>
+
+      {/* Seed warning. Additional warnings (e.g. sensitive-data redaction, large bundles) are added here later. */}
+      <Alert
+        severity="warning"
+        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
+      >
+        <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
+          The bundle can include request headers, query parameters, and server log lines. Review it before sharing
+          outside your organization.
+        </Trans>
+      </Alert>
+
+      {/* Diagnostic options (artifact selection, time range, redaction toggles) will be added here. */}
+
+      {error && (
+        <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
+          {diagnosticsErrorMessage(error)}
+        </Alert>
+      )}
+
+      <div
+        className={styles.buttonRow}
+        role="group"
+        aria-label={t('dashboard.diagnostics.actions', 'Diagnostics actions')}
+      >
+        <Button variant="primary" onClick={onDownload} disabled={isGenerating} icon="download-alt">
+          {isGenerating ? (
+            <Trans i18nKey="dashboard.diagnostics.generating-button">Generating…</Trans>
+          ) : (
+            <Trans i18nKey="dashboard.diagnostics.download-button">Download diagnostics</Trans>
+          )}
+        </Button>
+        <Button variant="secondary" onClick={handleDismiss} fill="outline">
+          <Trans i18nKey="dashboard.diagnostics.cancel-button">Cancel</Trans>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  info: css({
+    marginBottom: theme.spacing(2),
+  }),
+  buttonRow: css({
+    display: 'flex',
+    gap: theme.spacing(2),
+    marginTop: theme.spacing(2),
+  }),
+});

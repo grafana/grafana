@@ -1,7 +1,6 @@
 package foldermetadata
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -18,7 +17,6 @@ import (
 // already exists in a folder the caller can write to.
 func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const repoName = "cross-folder-auth-test"
 
@@ -37,18 +35,17 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 	writeToProvisioningPath(t, helper, "innerA/cross-folder-dash.json", dashboardBody)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repoName,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
 	})
 
 	helper.SyncAndWait(t, repoName, nil)
 
 	// Verify both folders exist in Grafana before setting permissions.
-	_, err := helper.Folders.Resource.Get(ctx, "inner-a-uid", metav1.GetOptions{})
+	_, err := helper.Folders.Resource.Get(t.Context(), "inner-a-uid", metav1.GetOptions{})
 	require.NoError(t, err, "innerA should exist after sync")
-	_, err = helper.Folders.Resource.Get(ctx, "inner-b-uid", metav1.GetOptions{})
+	_, err = helper.Folders.Resource.Get(t.Context(), "inner-b-uid", metav1.GetOptions{})
 	require.NoError(t, err, "innerB should exist after sync")
 
 	// Resolve the Viewer user's integer ID so we can set a user-specific folder ACL.
@@ -63,7 +60,7 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 		"/api/folders/inner-a-uid/permissions",
 		map[string]interface{}{
 			"items": []map[string]interface{}{
-				{"userId": viewerUserID, "permission": 2},
+				{"userId": viewerUserID, "permission": common.FolderPermissionEdit},
 			},
 		},
 		helper.Org1.Admin,
@@ -96,7 +93,6 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 // The flag-disabled counterpart lives in the core provisioning package.
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const (
 		repoName         = "folder-auth-metadata-enabled-repo"
@@ -104,10 +100,9 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 	)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repoName,
-		SyncTarget:             "instance",
-		Workflows:              []string{"write"},
-		SkipResourceAssertions: true,
+		Name:       repoName,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
 	})
 
 	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
@@ -136,7 +131,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		resp := adminFiles.Post(t, folderPathPrefix+"/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "Admin should be able to create parent folder")
 
-		parentUID := adminFiles.ReadFolderUID(t, ctx, folderPathPrefix+"/_folder.json")
+		parentUID := adminFiles.ReadFolderUID(t, folderPathPrefix+"/_folder.json")
 		require.NotEmpty(t, parentUID, "parent should have stable UID")
 
 		// Editor should be able to create a child folder.
@@ -144,13 +139,13 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		childResp := editorFiles.Post(t, folderPathPrefix+"/child/", nil)
 		require.Equal(t, http.StatusOK, childResp.StatusCode, "Editor should be able to create child folder")
 
-		childUID := adminFiles.ReadFolderUID(t, ctx, folderPathPrefix+"/child/_folder.json")
+		childUID := adminFiles.ReadFolderUID(t, folderPathPrefix+"/child/_folder.json")
 		require.NotEmpty(t, childUID, "child should have stable UID")
 
-		parentUID2 := adminFiles.ReadFolderUID(t, ctx, folderPathPrefix+"/_folder.json")
+		parentUID2 := adminFiles.ReadFolderUID(t, folderPathPrefix+"/_folder.json")
 		require.NotEqual(t, parentUID2, childUID, "parent and child should have different UIDs")
 
-		_, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		_, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child Grafana folder should exist with the stable UID")
 	})
 }

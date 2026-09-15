@@ -11,7 +11,6 @@
   "title_ngram": "with-login-and-email",
   "title_phrase": "with-login-and-email",
   "fields": {
-    "createdAt": 0,
     "disabled": false,
     "email": "user.one@test.com",
     "lastSeenAt": 0,

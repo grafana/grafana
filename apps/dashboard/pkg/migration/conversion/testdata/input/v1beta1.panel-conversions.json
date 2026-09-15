@@ -241,6 +241,7 @@
         ],
         "timeFrom": "1h",
         "timeShift": "1h",
+        "timeCompare": "1d",
         "title": "Complex Panel with All Features",
         "transformations": [
           {

@@ -45,6 +45,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		if len(r.Finalizers) == 0 {
 			r.Finalizers = []string{
 				RemoveOrphanResourcesFinalizer,
+				RemovePendingJobsFinalizer,
 				CleanFinalizer,
 			}
 		}
@@ -63,7 +64,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	// Extra mutators from factory
-	if err := m.factory.Mutate(ctx, r); err != nil {
+	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {
 		return fmt.Errorf("failed to mutate repository: %w", err)
 	}
 

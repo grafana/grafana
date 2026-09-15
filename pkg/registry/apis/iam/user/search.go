@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -29,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -65,17 +63,15 @@ type SearchHandler struct {
 	log          log.Logger
 	client       resourcepb.ResourceIndexClient
 	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
 	cfg          *setting.Cfg
 	accessClient authlib.AccessClient
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.users.search"),
 		tracer:       tracer,
-		features:     features,
 		cfg:          cfg,
 		accessClient: accessClient,
 	}
@@ -299,10 +295,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldCreated, legacyIDField},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
-		// QueryField to specify which fields to search in (Type and Boost
-		// are ignored for wildcard queries).
+		// QueryField to specify which fields to search in (Boost is ignored
+		// for wildcard queries).
 		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
 			{Name: fieldEmail},
@@ -343,20 +339,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				currField = sort[1:]
 				desc = true
 			}
-			if slices.Contains(builders.UserSortableExtraFields, currField) {
-				sort = resource.SEARCH_FIELD_PREFIX + currField
-			} else {
-				sort = currField
-			}
 			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sort,
+				Field: currField,
 				Desc:  desc,
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
 	} else {
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+			Field: builders.USER_LOGIN,
 		})
 	}
 
@@ -487,7 +478,7 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 		Email:   string(cell(builders.USER_EMAIL)),
 		Login:   string(cell(builders.USER_LOGIN)),
 		Role:    string(cell(builders.USER_ROLE)),
-		Created: asInt64(builders.USER_CREATED),
+		Created: asInt64(resource.SEARCH_FIELD_CREATED),
 	}
 
 	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
@@ -500,6 +491,12 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 	if b := cell(builders.USER_LAST_SEEN_AT); len(b) == 8 {
 		hit.LastSeenAt = int64(binary.BigEndian.Uint64(b))
 		hit.LastSeenAtAge = util.GetAgeString(time.Unix(hit.LastSeenAt, 0))
+	}
+	if b := cell(builders.USER_EXTERNAL_AUTH_MODULES); len(b) > 0 {
+		var modules []string
+		if err := json.Unmarshal(b, &modules); err == nil {
+			hit.ExternalAuthModules = modules
+		}
 	}
 
 	return hit

@@ -34,6 +34,7 @@ func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADa
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
 
+		server.WithExperimentals(cfg.OpenFgaServerSettings.Experimentals...),
 		// Cache settings
 		server.WithCheckCacheLimit(cfg.CacheSettings.CheckCacheLimit),
 		server.WithCacheControllerEnabled(cfg.CacheSettings.CacheControllerEnabled),

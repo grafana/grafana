@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -37,8 +38,8 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -146,8 +147,8 @@ func TestIntegrationLibraryElementGranularPermissions(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -268,8 +269,8 @@ func TestIntegrationLibraryElementNameRouteRequiresReadPermission(t *testing.T) 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	cfgProvider, err := configprovider.ProvideService(env.Cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), env.SQLStore, cfgProvider)
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(env.SQLStore), cfgProvider)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotaService)
 	require.NoError(t, err)
 
 	sharedOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "test org"})
@@ -439,11 +440,11 @@ func createUserInOrg(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUs
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(db), cfgProvider)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

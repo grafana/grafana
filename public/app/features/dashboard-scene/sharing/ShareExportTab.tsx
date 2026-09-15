@@ -229,10 +229,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     });
 
     const time = new Date().getTime();
-    let title = 'dashboard';
-    if ('title' in dashboard.json && dashboard.json.title) {
-      title = dashboard.json.title;
-    }
+    const title = getExportFileTitle(dashboard.json);
     const extension = isViewingYAML ? 'yaml' : 'json';
     saveAs(blob, `${title}-${time}.${extension}`);
 
@@ -261,6 +258,21 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 const FOLDER_EXPORT_ANNOTATIONS = [AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl] as const;
+
+// Classic export JSON has title at the root; v2 resource export nests it under spec.
+function getExportFileTitle(
+  json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown }
+): string {
+  if ('title' in json && json.title) {
+    return json.title;
+  }
+
+  if ('spec' in json && json.spec && 'title' in json.spec && json.spec.title) {
+    return json.spec.title;
+  }
+
+  return 'dashboard';
+}
 
 function stripFolderAnnotations(annotations: Record<string, string> | undefined) {
   if (!annotations) {

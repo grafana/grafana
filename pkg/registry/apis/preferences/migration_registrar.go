@@ -15,7 +15,11 @@ func PreferencesMigration(migrator legacy.PreferencesMigrator) migrations.Migrat
 		ID:          "preferences",
 		MigrationID: "preferences migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: preferencesGR, LockTables: []string{"preferences", "user", "team"}},
+			{
+				GroupResource: preferencesGR,
+				LockTables:    []string{"preferences", "user", "team"},
+				FloorVersion:  preferencesV1.APIVersion,
+			},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
 			preferencesGR: migrator.MigratePreferences,

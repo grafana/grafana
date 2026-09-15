@@ -3,7 +3,12 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { EMPTY_TABLE_RESPONSE, type ResourceList, type TableResponse } from 'app/features/apiserver/types';
+import {
+  EMPTY_TABLE_RESPONSE,
+  type Resource,
+  type ResourceList,
+  type TableResponse,
+} from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -466,6 +471,58 @@ describe('UnifiedDashboardAPI', () => {
 
       await expect(api.listDeletedDashboards({ limit: 10 })).rejects.toThrow('Network error');
       expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getDeletedDashboard', () => {
+    it('should return the v1 item without calling v2 when there is no conversion failure', async () => {
+      const v1Item = {
+        kind: 'Dashboard',
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z' },
+        spec: { title: 'v1', schemaVersion: 30 },
+        status: {},
+      };
+      v1Client.getDeletedDashboard.mockResolvedValue(v1Item as Resource<DashboardDataDTO>);
+
+      const result = await api.getDeletedDashboard('dash-1');
+
+      expect(result).toBe(v1Item);
+      expect(v1Client.getDeletedDashboard).toHaveBeenCalledWith('dash-1');
+      expect(v2Client.getDeletedDashboard).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to v2 when the v1 item failed conversion from v2', async () => {
+      const v1Item = {
+        kind: 'Dashboard',
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z' },
+        spec: { title: 'v1', schemaVersion: 30 },
+        status: { conversion: { failed: true, storedVersion: 'v2beta1' } },
+      };
+      const v2Item = {
+        kind: 'Dashboard',
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z' },
+        spec: { title: 'v2', elements: {} },
+        status: {},
+      };
+      v1Client.getDeletedDashboard.mockResolvedValue(v1Item as Resource<DashboardDataDTO>);
+      v2Client.getDeletedDashboard.mockResolvedValue(v2Item as unknown as Resource<DashboardV2Spec>);
+
+      const result = await api.getDeletedDashboard('dash-1');
+
+      expect(result).toBe(v2Item);
+      expect(v2Client.getDeletedDashboard).toHaveBeenCalledWith('dash-1');
+    });
+
+    it('should return undefined without trying v2 when v1 finds nothing', async () => {
+      v1Client.getDeletedDashboard.mockResolvedValue(undefined);
+
+      const result = await api.getDeletedDashboard('dash-1');
+
+      expect(result).toBeUndefined();
+      expect(v2Client.getDeletedDashboard).not.toHaveBeenCalled();
     });
   });
 

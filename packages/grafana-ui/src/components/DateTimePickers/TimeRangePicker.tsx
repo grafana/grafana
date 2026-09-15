@@ -11,7 +11,6 @@ import {
   type TimeOption,
   type TimeRange,
   dateMath,
-  getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -28,6 +27,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
+import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 import { type WeekStart } from './WeekStartPicker';
 import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
@@ -256,7 +256,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   const now = Date.now();
 
   // Get timezone info only if timeZone is provided
-  const timeZoneInfo = timeZone ? getTimeZoneInfo(timeZone, now) : undefined;
+  const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;
 
   return (
     <Stack alignItems="center" direction="column" gap={0}>

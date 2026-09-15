@@ -105,6 +105,14 @@ func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisio
 		)
 	}
 
+	// An OAuth connection's token comes from the authorization flow, not the
+	// spec: there is no token until the user authorizes, and a stale token must
+	// not block the updates needed to recover from it (e.g. new credentials or
+	// reauthorization). Health checks report token validity instead.
+	if _, ok := connection.(OAuthConnection); ok {
+		return nil
+	}
+
 	// Run runtime validation via Test() method
 	testResults, err := connection.Test(ctx)
 	if err != nil {

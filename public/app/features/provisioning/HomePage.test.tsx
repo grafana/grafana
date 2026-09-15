@@ -1,6 +1,6 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import HomePage from './HomePage';
 
@@ -69,19 +69,22 @@ function renderHomePage(initialEntry = '/admin/provisioning') {
 }
 
 describe('Provisioning HomePage', () => {
-  afterEach(() => {
-    config.featureToggles.provisioningExport = false;
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('hides the Migrate to GitOps tab when the feature flag is off', () => {
-    config.featureToggles.provisioningExport = false;
+    setTestFlags({ provisioningExport: false });
     renderHomePage();
 
     expect(screen.queryByRole('tab', { name: /migrate to gitops/i })).not.toBeInTheDocument();
   });
 
   it('shows the Migrate to GitOps tab and renders the placeholder when the flag is on', async () => {
-    config.featureToggles.provisioningExport = true;
+    setTestFlags({ provisioningExport: true });
     const { user } = renderHomePage();
 
     const migrateTab = screen.getByRole('tab', { name: /migrate to gitops/i });
@@ -94,14 +97,14 @@ describe('Provisioning HomePage', () => {
   });
 
   it('opens directly on the Migrate placeholder when the URL targets it and the flag is on', () => {
-    config.featureToggles.provisioningExport = true;
+    setTestFlags({ provisioningExport: true });
     renderHomePage('/admin/provisioning?tab=migrate');
 
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
   });
 
   it('falls back to the default tab when ?tab=migrate is set but the flag is off', () => {
-    config.featureToggles.provisioningExport = false;
+    setTestFlags({ provisioningExport: false });
     renderHomePage('/admin/provisioning?tab=migrate');
 
     // No repos/connections → default tab is Get started. The Migrate

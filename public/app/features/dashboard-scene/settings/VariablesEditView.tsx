@@ -9,6 +9,7 @@ import {
   SceneObjectBase,
   type SceneVariable,
   type SceneVariables,
+  SceneVariableSet,
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -21,7 +22,9 @@ import {
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { SidebarCategoryType } from '../sidebar/types';
 import { DashboardInteractions } from '../utils/interactions';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
@@ -38,6 +41,7 @@ import {
   getVariableDefault,
   getVariableScene,
   isVariableEditable,
+  restoreUnshadowedPredefinedVariables,
 } from './variables/utils';
 
 export interface VariablesEditViewState extends DashboardEditViewState {
@@ -98,7 +102,11 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
+    const variableSet = this.getVariableSet();
+    variableSet.setState({ variables: updatedVariables });
+    if (variableSet instanceof SceneVariableSet) {
+      restoreUnshadowedPredefinedVariables(variableSet);
+    }
     // Remove editIndex otherwise switches to next variable in list
     this.setState({ editIndex: undefined });
   };
@@ -165,17 +173,17 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onAdd = () => {
+  public onAdd = async () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
     //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
+    const defaultNewVariable = await getVariableDefault(variables);
 
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
   };
 
-  public onTypeChange = (type: EditableVariableType) => {
+  public onTypeChange = async (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -188,7 +196,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     const { name, label } = variable.state;
-    const newVariable = getVariableScene(type, { name, label });
+    const newVariable = await getVariableScene(type, { name, label });
     this.replaceEditVariable(newVariable);
   };
 
@@ -206,9 +214,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       errorText = 'Only word characters are allowed in variable names';
     }
 
-    const variable = this.getVariableSet().getByName(name)?.state;
+    const colliding = this.getVariableSet().getByName(name);
 
-    if (variable && variable.key !== key) {
+    if (colliding && colliding.state.key !== key && !isPredefinedOrigin(colliding.state.origin)) {
       errorText = 'Variable with the same name already exists';
     }
 
@@ -243,7 +251,10 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
-  const defaultVariables = useMemo(() => variables.filter((v) => !isVariableEditable(v)), [variables]);
+  const defaultVariables = useMemo(
+    () => variables.filter((v) => !isVariableEditable(v) && !isPredefinedOrigin(v.state.origin)),
+    [variables]
+  );
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();
@@ -254,11 +265,11 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const goToSidebar = () => {
     // close settings and open dashboard sidebar
     const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.selectObject(dashboard);
+    dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
-      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-variables',
-      [CATEGORY_PARAM_NAME]: 'dashboard-variables',
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
+      [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
     });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });

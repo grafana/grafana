@@ -122,8 +122,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			if err != nil {
 				// Note: special case for token rotation
 				// We don't want to fallthrough in this case
-				var tokenRotationErr authn.TokenNeedsRotationError
-				if errors.As(err, &tokenRotationErr) {
+				if _, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
 					return nil, err
 				}
 
@@ -395,16 +394,16 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 }
 
-func (s *Service) IsClientEnabled(name string) bool {
+func (s *Service) IsClientEnabled(ctx context.Context, name string) bool {
 	client, ok := s.clients[name]
 	if !ok {
 		return false
 	}
 
-	return client.IsEnabled()
+	return client.IsEnabled(ctx)
 }
 
-func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+func (s *Service) GetClientConfig(ctx context.Context, name string) (authn.SSOClientConfig, bool) {
 	client, ok := s.clients[name]
 	if !ok {
 		return nil, false
@@ -415,7 +414,12 @@ func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
 		return nil, false
 	}
 
-	return ssoSettingsAwareClient.GetConfig(), true
+	config := ssoSettingsAwareClient.GetConfig(ctx)
+	if config == nil {
+		return nil, false
+	}
+
+	return config, true
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
@@ -477,8 +481,7 @@ func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, 
 
 	l := s.log.FromContext(ctx)
 
-	var grfErr errutil.Error
-	if errors.As(err, &grfErr) {
+	if grfErr, ok := errors.AsType[errutil.Error](err); ok {
 		return grfErr.LogLevel.LogFunc(l)
 	}
 
@@ -547,19 +550,26 @@ func parseNamespace(path string) string {
 	return parts[0]
 }
 
-// name of query string used to target specific org for request
-const orgIDTargetQuery = "targetOrgId"
+const (
+	orgIDQuery       = "orgId"       // sent by Grafana frontend (preferred)
+	orgIDTargetQuery = "targetOrgId" // legacy API caller param
+)
 
 func orgIDFromQuery(req *http.Request) int64 {
 	params := req.URL.Query()
-	if !params.Has(orgIDTargetQuery) {
-		return 0
+	// Prefer orgId (frontend) over targetOrgId (legacy). Fall through on
+	// parse failure so a malformed value doesn't mask a valid one.
+	for _, key := range []string{orgIDQuery, orgIDTargetQuery} {
+		if !params.Has(key) {
+			continue
+		}
+		id, err := strconv.ParseInt(params.Get(key), 10, 64)
+		if err != nil {
+			continue
+		}
+		return id
 	}
-	id, err := strconv.ParseInt(params.Get(orgIDTargetQuery), 10, 64)
-	if err != nil {
-		return 0
-	}
-	return id
+	return 0
 }
 
 // name of header containing org id for request

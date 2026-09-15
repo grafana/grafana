@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	unifiedStorage := new(resource.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
@@ -58,7 +58,7 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 func TestIntegrationConcurrentUsersStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	unifiedStorage := new(resource.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},

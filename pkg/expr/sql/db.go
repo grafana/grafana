@@ -77,7 +77,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	session := mysql.NewBaseSession()
 
 	// Create a new context with the session and tracer
-	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer), mysql.WithDisableFileWrites(true), mysql.WithTraceRedaction(true))
+	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer), mysql.WithDisableFileWrites(true), mysql.WithDisableFileReads(true), mysql.WithTraceRedaction(true))
 
 	// Select the database in the context
 	mCtx.SetCurrentDatabase(dbName)

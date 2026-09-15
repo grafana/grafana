@@ -70,29 +70,46 @@ func V24(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		wasAngularTable := panelMap["type"] == "table"
-		wasReactTable := panelMap["table"] == "table2"
+		migrateTablePanelV24(panelMap)
 
-		if wasAngularTable && panelMap["styles"] == nil {
+		// Handle nested panels in collapsed rows
+		if !IsArray(panelMap["panels"]) {
 			continue
 		}
-
-		if !wasAngularTable || wasReactTable {
-			continue
-		}
-
-		var currentType string
-		if wasAngularTable {
-			currentType = "table-old"
-		} else {
-			currentType = "table"
-		}
-
-		if currentType == "table-old" {
-			panelMap["autoMigrateFrom"] = "table-old"
-			panelMap["type"] = "table"
+		for _, nestedPanel := range panelMap["panels"].([]interface{}) {
+			nestedPanelMap, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migrateTablePanelV24(nestedPanelMap)
 		}
 	}
 
 	return nil
+}
+
+// migrateTablePanelV24 applies the angular-table autoMigrate logic to a single panel.
+func migrateTablePanelV24(panelMap map[string]interface{}) {
+	wasAngularTable := panelMap["type"] == "table"
+	wasReactTable := panelMap["table"] == "table2"
+
+	if wasAngularTable && panelMap["styles"] == nil {
+		return
+	}
+
+	if !wasAngularTable || wasReactTable {
+		return
+	}
+
+	var currentType string
+	if wasAngularTable {
+		currentType = "table-old"
+	} else {
+		currentType = "table"
+	}
+
+	if currentType == "table-old" {
+		panelMap["autoMigrateFrom"] = "table-old"
+		panelMap["type"] = "table"
+	}
 }

@@ -5,15 +5,20 @@ package server
 
 // Notes about wiresets:
 //
-// wire.go contains wire sets used by both OSS and Enterprise builds. These are
-// generally base wiresets imported by the OSS- or Enterprise-specific sets.
+// bootstrap/wire contains edition-neutral core provider sets (Basic, Server, CLI,
+// Test) and OSS injectors. Grafana Enterprise will import bootstrap/wire for the
+// shared graph in later migration steps.
 //
-// wireexts_oss.go contains the "extensions" wiresets, used only by OSS builds.
+// wireext contains OSS edition bindings only. It is not imported by Enterprise.
+//
+// wire.go contains Enterprise Wire injectors and compatibility aliases for the
+// overlaid wireexts_enterprise.go extension sets.
+//
 // wireexts_enterprise.go contains wiresets used only by Enterprise builds. This
-// file is located in the grafana-enterprise repo.
+// file is located in the grafana-enterprise repo and synced via enterprise-to-oss.
 //
-// NOTE WELL: The extensions sets can import wiresets from wire.go, but sets in
-// wire.go cannot include a build-specific wireset. The extension set must be built in wire.go.
+// NOTE WELL: Extension sets can import sets from bootstrap/wire, but bootstrap/wire
+// cannot include edition-specific wiresets.
 //
 // We use go build tags during build to configure which wiresets are used in a
 // given build. We do not commit generated wire sets (wire_gen.go) into the

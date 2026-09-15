@@ -1,6 +1,6 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import {
   type GrafanaNotificationSettings,
@@ -189,6 +189,30 @@ describe('grafana-managed rules', () => {
       const { frontendFilter } = getGrafanaFilter(getFilter({ policy: USER_DEFINED_TREE_NAME }));
       expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
       expect(frontendFilter.ruleMatches(ruleWithExplicitUserDefinedPolicy)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
+    });
+
+    it('should match rules using the default policy when filtering by the default alias', () => {
+      const ruleWithNoSettings = mockGrafanaPromAlertingRule({
+        name: 'Rule with no notification settings',
+      });
+      const ruleWithContactPoint = mockGrafanaPromAlertingRule({
+        name: 'Rule with Contact Point',
+        notificationSettings: { receiver: 'slack' },
+      });
+      const ruleWithExplicitPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule with Explicit Policy',
+        notificationSettings: { policy: 'team-a-policy' },
+      });
+      const ruleWithExplicitDefaultAliasPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule explicitly set to the default alias policy',
+        notificationSettings: { policy: DEFAULT_ROUTING_TREE_NAME_ALIAS },
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: DEFAULT_ROUTING_TREE_NAME_ALIAS }));
+      expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitDefaultAliasPolicy)).toBe(true);
       expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
       expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
     });
@@ -971,6 +995,10 @@ describe('ruleUsesDefaultPolicy', () => {
 
   it('should return true when policy is explicitly set to USER_DEFINED_TREE_NAME', () => {
     expect(ruleUsesDefaultPolicy({ policy: USER_DEFINED_TREE_NAME })).toBe(true);
+  });
+
+  it('should return true when policy is set to the default alias', () => {
+    expect(ruleUsesDefaultPolicy({ policy: DEFAULT_ROUTING_TREE_NAME_ALIAS })).toBe(true);
   });
 
   it('should return false when a receiver is set', () => {

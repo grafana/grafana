@@ -77,6 +77,9 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		if r.builder.cfg.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
+		}
 
 		_, reqSpan := tracing.Start(ctx, "datasource.health.request",
 			attribute.String("namespace", namespace),

@@ -6,7 +6,16 @@ import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
 
-const languageOptions: CodeMirrorEditorLanguage[] = ['sql', 'json'];
+const languageOptions: CodeMirrorEditorLanguage[] = [
+  'go',
+  'html',
+  'json',
+  'markdown',
+  'sql',
+  'typescript',
+  'xml',
+  'yaml',
+];
 
 const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
@@ -36,7 +45,7 @@ const meta: Meta<typeof CodeEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'completionSources', 'extensions'],
+      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
     },
   },
   argTypes: {
@@ -79,6 +88,8 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
         setValue(nextValue);
         action('onChange')(nextValue);
       }}
+      onBlur={(currentValue) => action('onBlur')(currentValue)}
+      onSave={(currentValue) => action('onSave')(currentValue)}
     />
   );
 };

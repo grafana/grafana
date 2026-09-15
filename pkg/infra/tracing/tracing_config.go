@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -27,6 +28,18 @@ type TracingConfig struct {
 
 	ProfilingIntegration bool
 	Insecure             bool
+
+	// FilterOperationalEndpoints, when true, drops server spans for
+	// high-frequency operational endpoints (/metrics, /healthz, /readyz,
+	// /livez, /debug/pprof/*). Disabled by default to preserve existing
+	// behavior; opt in to keep those endpoints out of traces.
+	FilterOperationalEndpoints bool
+
+	// File exporter: captures spans to a local OTLP/JSON file for offline
+	// analysis (e.g. upload to Grafana via Explore) without a tracing backend.
+	FilePath            string
+	FileMaxSize         int64
+	FileCaptureDuration time.Duration
 }
 
 func ProvideTracingConfig(cfgProvider configprovider.ConfigProvider) (*TracingConfig, error) {
@@ -120,6 +133,8 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 		tc.SamplerRemoteURL = samplerRemoteURL
 	}
 
+	tc.FilterOperationalEndpoints = section.Key("filter_operational_endpoints").MustBool(false)
+
 	section = cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	tc.enabled = noopExporter
 
@@ -138,6 +153,25 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	}
 	tc.Propagation = section.Key("propagation").MustString("")
 	tc.Insecure = section.Key("insecure").MustBool(true)
+	if tc.enabled == otlpExporter {
+		return tc, nil
+	}
+
+	// File exporter (only when no collector endpoint is configured): capture
+	// spans to a local OTLP/JSON file for offline analysis without a backend.
+	section = cfg.Raw.Section("tracing.opentelemetry.file")
+	if path := section.Key("path").MustString(""); path != "" {
+		tc.enabled = fileExporter
+		tc.FilePath = path
+		tc.FileMaxSize = section.Key("max_file_size_bytes").MustInt64(defaultTraceFileMaxSize)
+		tc.FileCaptureDuration = section.Key("capture_duration").MustDuration(defaultTraceCaptureDuration)
+		// Capturing is an explicit, on-demand action; sample everything unless
+		// the operator narrowed it, otherwise the file may come out empty.
+		if tc.Sampler == "" {
+			tc.Sampler = "const"
+			tc.SamplerParam = 1
+		}
+	}
 	return tc, nil
 }
 

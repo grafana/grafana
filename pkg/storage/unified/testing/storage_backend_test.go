@@ -211,7 +211,7 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)
@@ -288,14 +288,10 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 	for i := range concurrency {
 		wg.Go(func() {
 			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
-			if err != nil {
-				results[i] = result{err: err}
-				return
-			}
-			if rsp.Error != nil {
+			if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 				results[i] = result{
-					err:           resource.GetError(rsp.Error),
-					alreadyExists: rsp.Error.Reason == string(metav1.StatusReasonAlreadyExists),
+					err:           err,
+					alreadyExists: resource.AsErrorResult(err).Reason == string(metav1.StatusReasonAlreadyExists),
 				}
 				return
 			}

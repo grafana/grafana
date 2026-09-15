@@ -7,15 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // noopExtraConfigAuthz permits all alertmanager import operations — for use in tests
@@ -101,7 +106,8 @@ receivers:
 
 		// Test that we can get the alertmanager config from raw storage
 		// We need to pass a decrypt function since the config is now encrypted
-		amConfig, err := gettableConfig.ExtraConfigs[0].GetAlertmanagerConfig()
+		stored := v1.ExtraConfigToModel(gettableConfig.ExtraConfigs[0])
+		amConfig, err := stored.GetAlertmanagerConfig()
 		require.NoError(t, err)
 		require.Equal(t, "test-receiver", amConfig.Route.Receiver)
 		require.Len(t, amConfig.Receivers, 1)
@@ -323,9 +329,7 @@ receivers:
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "initial-receiver",
-						},
+						Name: "initial-receiver",
 					},
 				},
 			},
@@ -509,5 +513,240 @@ receivers:
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
+	})
+}
+
+func TestMultiOrgAlertmanager_PromoteExtraConfiguration(t *testing.T) {
+	orgID := int64(1)
+	ctx := context.Background()
+
+	extraConfig := v1.ExtraConfiguration{
+		Identifier: "my-import",
+		AlertmanagerConfig: `route:
+  receiver: imported-receiver
+receivers:
+  - name: imported-receiver`,
+	}
+
+	t.Run("promotes staged config into main config", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+		require.NoError(t, err)
+
+		renamed, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig.Identifier)
+		require.NoError(t, err)
+		require.Empty(t, renamed.Receivers, "no renames expected")
+		require.Empty(t, renamed.TimeIntervals, "no renames expected")
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+
+		// ExtraConfigs must be empty after promotion.
+		require.Empty(t, gettableConfig.ExtraConfigs, "extra config must be removed after promotion")
+
+		// Imported receiver must now be in the main config.
+		receiverNames := make([]string, 0, len(gettableConfig.AlertmanagerConfig.Receivers))
+		for _, r := range gettableConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "imported-receiver")
+	})
+
+	t.Run("returns not-found error when identifier does not exist", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "nonexistent")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrAlertmanagerExtraConfigNotFound)
+	})
+
+	t.Run("returns error when org does not exist", func(t *testing.T) {
+		mam := setupMam(t, nil)
+
+		_, err := mam.PromoteExtraConfiguration(ctx, 999, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig.Identifier)
+		require.ErrorContains(t, err, "failed to get current configuration")
+	})
+
+	t.Run("renames receiver on name collision", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		// The default Grafana config already has a receiver named "grafana-default-email".
+		// Import a config whose receiver collides with it.
+		colliding := v1.ExtraConfiguration{
+			Identifier: "importer",
+			AlertmanagerConfig: `route:
+  receiver: grafana-default-email
+receivers:
+  - name: grafana-default-email`,
+		}
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, colliding, false, false, false)
+		require.NoError(t, err)
+
+		renamed, err := mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "importer")
+		require.NoError(t, err)
+		require.NotEmpty(t, renamed.Receivers, "collision must produce a rename")
+	})
+
+	t.Run("promoted templates have no converted_prometheus provenance in config blob", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		withTemplate := v1.ExtraConfiguration{
+			Identifier: "tmpl-import",
+			AlertmanagerConfig: `route:
+  receiver: tmpl-receiver
+receivers:
+  - name: tmpl-receiver`,
+			TemplateFiles: map[string]string{
+				"my-template": `{{ define "my-template" }}hello{{ end }}`,
+			},
+		}
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, withTemplate, false, false, false)
+		require.NoError(t, err)
+
+		_, err = mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, "tmpl-import")
+		require.NoError(t, err)
+
+		// Load the raw config and verify templates don't have converted_prometheus provenance.
+		raw, err := mam.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+		require.NoError(t, err)
+		cfg, err := Load([]byte(raw.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		for _, tmpl := range cfg.Templates {
+			require.NotEqual(t, definitions.Provenance(models.ProvenanceConvertedPrometheus), tmpl.Provenance,
+				"template %q must not have converted_prometheus provenance after promotion", tmpl.Title)
+		}
+	})
+}
+
+func TestMultiOrgAlertmanager_ExtraConfigManagedBy(t *testing.T) {
+	orgID := int64(1)
+
+	newStagedConfig := func(identifier string) v1.ExtraConfiguration {
+		return v1.ExtraConfiguration{
+			Identifier: identifier,
+			AlertmanagerConfig: `route:
+  receiver: staged-receiver
+receivers:
+  - name: staged-receiver`,
+		}
+	}
+	cfgWithSyncUID := func(t *testing.T, uid string) *setting.Cfg {
+		return &setting.Cfg{
+			DataPath: t.TempDir(),
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				AlertmanagerConfigPollInterval: 3 * time.Minute,
+				DefaultConfiguration:           defaultConfig,
+				ExternalAlertmanagerUID:        uid,
+			},
+		}
+	}
+	enableSyncFlag := func(t *testing.T) {
+		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAlertingSyncExternalAlertmanager: {DefaultVariant: "on", Variants: map[string]any{"on": true}},
+		})))
+		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+	}
+
+	t.Run("no staged config", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Empty(t, gettableConfig.ExtraConfigs)
+	})
+
+	t.Run("manual import with no active sync is manual", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("resolution error degrades to manual and does not fail the read", func(t *testing.T) {
+		// Flag on but setupMam's syncer has no clientGenerator, so resolution errors.
+		enableSyncFlag(t)
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err, "a sync-resolution error must not fail the config read")
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("identifier matching the ini-configured sync datasource is auto-sync", func(t *testing.T) {
+		enableSyncFlag(t)
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "auto-sync", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("manual import staged alongside an unrelated active sync is still manual", func(t *testing.T) {
+		enableSyncFlag(t)
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("matching identifier stays manual when the sync flag is off", func(t *testing.T) {
+		// Regression: a leftover config from before a flag rollback must not read as
+		// auto-sync-owned once the syncer has stopped touching it.
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("nil externalAMSyncer defaults to manual without panicking", func(t *testing.T) {
+		mam := &MultiOrgAlertmanager{logger: log.New("testlogger")}
+		extraConfigs := []definitions.ExtraConfiguration{{Identifier: "whatever"}}
+
+		require.NotPanics(t, func() {
+			mam.setExtraConfigOrigin(context.Background(), orgID, extraConfigs)
+		})
+		require.Equal(t, "manual", extraConfigs[0].ManagedBy)
 	})
 }

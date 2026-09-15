@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -30,15 +31,15 @@ const (
 )
 
 var (
-	_                resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
-	fieldLogin                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
-	fieldEmail                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
-	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
-	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
-	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
-	fieldCreated                                    = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_CREATED)
-	legacyIDField                                   = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
-	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
+	_                        resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+	fieldLogin                                              = builders.USER_LOGIN
+	fieldEmail                                              = builders.USER_EMAIL
+	fieldLastSeenAt                                         = builders.USER_LAST_SEEN_AT
+	fieldRole                                               = builders.USER_ROLE
+	fieldDisabled                                           = builders.USER_DISABLED
+	fieldExternalAuthModules                                = builders.USER_EXTERNAL_AUTH_MODULES
+	legacyIDField                                           = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
+	wildcardsMatcher                                        = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{
 		fieldLastSeenAt:             "lastSeenAtAge",
@@ -117,7 +118,7 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req *resourcepb.Res
 		if len(vals) != 1 {
 			logger.Warn("only single value fields are supported for legacy search, using first value", "field", field.Key, "values", vals)
 		}
-		switch field.Key {
+		switch publicFieldName(field.Key) {
 		case resource.SEARCH_FIELD_TITLE:
 			title = vals[0]
 		case fieldLogin:
@@ -199,25 +200,36 @@ func getResourceKey(item *org.OrgUserDTO, namespace string) *resourcepb.Resource
 	}
 }
 
+var userColumns = resource.TableColumnsByName(builders.UserSearchFields)
+
+// publicFieldName drops the fields. prefix a caller may still add to a
+// per-kind field name, so both spellings map to the same legacy column.
+func publicFieldName(name string) string {
+	return strings.TrimPrefix(name, resource.SEARCH_FIELD_PREFIX)
+}
+
 func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	standardSearchFields := resource.StandardSearchFields()
 	for _, field := range fields {
-		switch field {
+		switch publicFieldName(field) {
 		case resource.SEARCH_FIELD_TITLE:
 			cols = append(cols, standardSearchFields.Field(resource.SEARCH_FIELD_TITLE))
 		case fieldLastSeenAt:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LAST_SEEN_AT])
+			cols = append(cols, userColumns[builders.USER_LAST_SEEN_AT])
 		case fieldRole:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_ROLE])
+			cols = append(cols, userColumns[builders.USER_ROLE])
 		case fieldEmail:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_EMAIL])
+			cols = append(cols, userColumns[builders.USER_EMAIL])
 		case fieldLogin:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
+			cols = append(cols, userColumns[builders.USER_LOGIN])
 		case fieldDisabled:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_DISABLED])
-		case fieldCreated:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_CREATED])
+			cols = append(cols, userColumns[builders.USER_DISABLED])
+		case resource.SEARCH_FIELD_CREATED:
+			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
+				Name: resource.SEARCH_FIELD_CREATED,
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
+			})
 		case legacyIDField:
 			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
 				Name: legacyIDField,
@@ -231,7 +243,7 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 	cells := make([][]byte, 0, len(fields))
 	for _, field := range fields {
-		switch field {
+		switch publicFieldName(field) {
 		case resource.SEARCH_FIELD_TITLE:
 			cells = append(cells, []byte(u.Name))
 		case fieldEmail:
@@ -250,7 +262,7 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 			} else {
 				cells = append(cells, []byte{0})
 			}
-		case fieldCreated:
+		case resource.SEARCH_FIELD_CREATED:
 			b := make([]byte, 8)
 			binary.BigEndian.PutUint64(b, uint64(u.Created.UnixMilli()))
 			cells = append(cells, b)

@@ -3,7 +3,6 @@ import type React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   type SceneObjectState,
@@ -19,8 +18,8 @@ import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
@@ -43,7 +42,7 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { type LayoutParent } from '../types/LayoutParent';
 
-import { useEditOptions } from './TabItemEditor';
+import { useSidebarOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -100,7 +99,7 @@ export class TabItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
+      typeName: t('dashboard.sidebar.elements.tab', 'Tab'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'layers',
       isHidden,
@@ -116,16 +115,7 @@ export class TabItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    if (
-      isEditing &&
-      // OpenFeature is not initialized for anonymous users, so fall back to
-      // the static feature toggle to ensure section variables work without auth.
-      getFeatureFlagClient().getBooleanValue(
-        FlagKeys.DashboardSectionVariables,
-        Boolean(config.featureToggles.dashboardSectionVariables)
-      ) &&
-      this.state.$variables
-    ) {
+    if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,
@@ -149,16 +139,23 @@ export class TabItem
     return parentLayout.state.currentTabSlug === this.getSlug();
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
-    dashboardEditActions.edit({
+    const perform = () => {
+      this.setState({ layout });
+      this.publishEvent(new NewSceneObjectAddedEvent(this), true);
+    };
+
+    if (skipUndo) {
+      perform();
+      return;
+    }
+
+    edit({
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ layout });
-        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
-      },
+      perform,
       undo: () => {
         this.setState({ layout: currentLayout });
         this.publishEvent(new NewSceneObjectAddedEvent(this), true);
@@ -166,7 +163,7 @@ export class TabItem
     });
   }
 
-  public useEditPaneOptions = useEditOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();
@@ -324,7 +321,7 @@ export class TabItem
       } else {
         // Convert existing layout and add the dropped row
         // Use direct state update instead of addNewRow because the rowsLayout
-        // isn't connected to the scene yet, so dashboardEditActions won't work
+        // isn't connected to the scene yet, so the dashboard edit actions won't work
         rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
         rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
       }

@@ -151,7 +151,7 @@ func TestNewAlertmanager(t *testing.T) {
 func TestGetRemoteState(t *testing.T) {
 	const tenantID = "test"
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
@@ -293,7 +293,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c v1.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	encryptedReceivers, err := encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
@@ -430,7 +430,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	var gotCnt int
@@ -496,12 +496,11 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		config                v1.AMConfigDB
-		autogenConfig         map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
-		enabledMultipleRoutes bool
-		expCfg                *client.UserGrafanaConfig
-		expErrContains        []string
+		name           string
+		config         v1.AMConfigDB
+		autogenConfig  map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
+		expCfg         *client.UserGrafanaConfig
+		expErrContains []string
 	}{
 		{
 			name:           "invalid config",
@@ -620,26 +619,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			}(),
 		},
 		{
-			name:                  "no error, with managed routes",
-			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
-			enabledMultipleRoutes: true,
+			name:   "no error, with managed routes",
+			config: mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
 						c := policy_exports.Config()
 						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
-						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig)
+						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals())
 					}(),
-				},
-			},
-		},
-		{
-			name:                  "no error, with managed routes but flag disabled",
-			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
-			enabledMultipleRoutes: false,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
-					AlertmanagerConfig: notifier.PostableApiAlertingConfigToAPI(policy_exports.Config().AlertmanagerConfig),
 				},
 			},
 		},
@@ -649,11 +637,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			flags := []any{}
-			if test.enabledMultipleRoutes {
-				flags = append(flags, featuremgmt.FlagAlertingMultiplePolicies)
-			}
-			features := featuremgmt.WithFeatures(flags...)
+			features := featuremgmt.WithFeatures()
 			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
 
 			dbConfig := func() *ngmodels.AlertConfiguration {
@@ -714,7 +698,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 // managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -779,7 +763,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 			ctx := context.Background()
 			got = ""
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 			moa, _ := newRemoteMOA(t, cfg, nil, features, secretsService)
 
 			dbConfig := func() *ngmodels.AlertConfiguration {
@@ -813,7 +797,6 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 				}
 			}
 			require.NotNil(t, webhookRecv, "expected webhook receiver in merged config")
-			require.Empty(t, webhookRecv.WebhookConfigs, "Mimir webhook_configs should be cleared after conversion")
 			require.Len(t, webhookRecv.GrafanaManagedReceivers, 1)
 			gr := webhookRecv.GrafanaManagedReceivers[0]
 			require.Equal(t, "webhook", gr.Type)
@@ -857,13 +840,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "default configuration and FF enabled",
-			config:   mustLoad(defaultGrafanaConfig),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), // Flag shouldn't affect Default status if there aren't any ManagedRoutes.
-			expected: true,
-		},
-		{
-			name: "default config with ManagedRoutes and FF disabled",
+			name: "default config with ManagedRoutes",
 			config: func() *apimodels.PostableUserConfig {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedRoutes = map[string]*definition.Route{
@@ -871,22 +848,10 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: true,
-		},
-		{
-			name: "default config with ManagedRoutes and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				c := mustLoad(defaultGrafanaConfig)
-				c.ManagedRoutes = map[string]*definition.Route{
-					"imported": {Receiver: "empty"},
-				}
-				return c
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
-			name: "default config with ExtraConfig and FF disabled",
+			name: "default config with ExtraConfig",
 			config: func() *apimodels.PostableUserConfig {
 				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
 				require.NoError(t, err)
@@ -894,18 +859,6 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				require.NoError(t, err)
 				return cfgWithExtraUnmerged
 			}(),
-			expected: false, // Even disabled the ExtraConfig is merged into the Route.
-		},
-		{
-			name: "default config with ExtraConfig and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
-				require.NoError(t, err)
-				cfgWithExtraUnmerged, err := loadDBModel(cfgWithExtraUnmergedBytes)
-				require.NoError(t, err)
-				return cfgWithExtraUnmerged
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
@@ -945,7 +898,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "default config with ManagedInhibitionRules and FF disabled",
+			name: "default config with ManagedInhibitionRules",
 			config: func() *apimodels.PostableUserConfig {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
@@ -953,18 +906,6 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: false,
-		},
-		{
-			name: "default config with ManagedInhibitionRules and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				c := mustLoad(defaultGrafanaConfig)
-				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
-					"imported": {Name: "imported"},
-				}
-				return c
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
@@ -998,7 +939,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -1067,7 +1008,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1077,7 +1018,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := json.Marshal(cfg)
@@ -1101,7 +1042,6 @@ receivers:
 		}
 	}
 	require.NotNil(t, extraReceiver)
-	require.Empty(t, extraReceiver.EmailConfigs)
 	require.Len(t, extraReceiver.GrafanaManagedReceivers, 1)
 	require.Equal(t, "email", extraReceiver.GrafanaManagedReceivers[0].Type)
 	require.NotEmpty(t, configSent.Hash)
@@ -1140,14 +1080,12 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: apimodels.Receiver{Name: "grafana-default-email"},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								Name:     "email receiver",
-								Type:     "email",
-								Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
-							},
+					Name: "grafana-default-email",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							Name:     "email receiver",
+							Type:     "email",
+							Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 						},
 					},
 				},
@@ -1169,7 +1107,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1185,7 +1123,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := legacy_storage.SerializeAlertmanagerConfig(cfg)
@@ -1231,7 +1169,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)
@@ -1535,9 +1473,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	// Let's create two active alerts and one expired one.
 	// UTF-8 label names should be preserved.
 	utf8LabelName := "test utf-8 label 😳"
-	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
-	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
-	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
+	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
@@ -1555,12 +1493,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
 
-	// Labels with empty values and the namespace UID label should be removed.
+	// Labels with empty names, empty values, and the namespace UID label should be removed.
 	// UTF-8 label names should remain unchanged.
 	for _, a := range alertGroups {
 		require.Len(t, a.Alerts, 2)
 		for _, a := range a.Alerts {
 			require.NotContains(t, a.Labels, "empty")
+			require.NotContains(t, a.Labels, "")
 			require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
 			require.Contains(t, a.Labels, utf8LabelName)
 		}
