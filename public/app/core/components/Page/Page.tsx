@@ -125,7 +125,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     ),
     wrapperPrimary: css({
       label: 'page-wrapper-primary',
-      background: theme.colors.background.page,
+      background: theme.components.page.background,
     }),
     wrapperGradient: css({
       label: 'page-wrapper-gradient',
@@ -182,7 +182,7 @@ function getGradientBackgroundForTheme(theme: GrafanaTheme2) {
   // Use an inline SVG rather than a CSS gradient due to the complexity of the gradients being used
   return `
 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 3840 2160">
-  <rect width="3840" height="2160" fill="${theme.colors.background.page}" />
+  <rect width="3840" height="2160" fill="${theme.components.page.background}" />
   <rect width="3840" height="2160" fill="url(#fade)" fill-opacity="0.5"/>
   <rect width="3840" height="2160" fill="url(#highlight)" fill-opacity="0.25"/>
   <rect width="3840" height="2160" fill="url(#right)" fill-opacity="0.20"/>

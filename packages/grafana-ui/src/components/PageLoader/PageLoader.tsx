@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: '100%',
     },
     theme.flags.visualDesignRefresh && {
-      backgroundColor: theme.colors.background.page,
+      backgroundColor: theme.components.page.background,
       borderRadius: theme.shape.radius.lg,
       margin: theme.spacing(0, 0.5, 0.5, 0.5),
       border: `1px solid ${theme.colors.border.weak}`,

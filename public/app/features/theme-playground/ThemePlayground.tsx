@@ -189,7 +189,7 @@ export default function ThemePlayground() {
 
 const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined, visualRefreshEnabled: boolean) => ({
   left: css({
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.components.page.background : theme.colors.background.primary,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
