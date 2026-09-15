@@ -8,19 +8,14 @@ import { ALL_TEAMS, type TeamSelection, resolveTeamScope } from './teamFilter';
 const collator = new Intl.Collator();
 
 // '' is the default scope of TeamSelection, so the option value is the selection itself.
-const getDefaultOption = (userHasTeams: boolean): ComboboxOption<TeamSelection> => ({
-  label: userHasTeams
-    ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
-    : t('home.alerts-incidents.team-filter-all', 'All teams'),
+const getYourTeamsOption = (): ComboboxOption<TeamSelection> => ({
+  label: t('home.alerts-incidents.team-filter-your-teams', 'Your teams'),
   value: '',
 });
 
-// Explicit org-wide scope for users who do belong to teams; without it they'd have
-// no way back to unfiltered alerts. Users without teams don't need it — their
-// default option already reads "All teams".
-const getAllTeamsOption = (): ComboboxOption<TeamSelection> => ({
+const getAllTeamsOption = (value: TeamSelection): ComboboxOption<TeamSelection> => ({
   label: t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: ALL_TEAMS,
+  value,
 });
 
 interface Props {
@@ -28,11 +23,13 @@ interface Props {
   teamValues: string[] | undefined;
   selectedTeam: TeamSelection;
   onChange: (team: TeamSelection) => void;
-  /**
-   * Whether the default (unselected) scope is the user's own teams. Decides the default
-   * option's wording and whether the explicit "All teams" escape hatch is offered.
-   */
+  /** Whether the signed-in user belongs to any Grafana teams. */
   userHasTeams: boolean;
+  /**
+   * Whether this view can scope to the user's own teams (alerts can, incidents can't).
+   * With it, team members get a "Your teams" default plus an explicit "All teams" escape hatch.
+   */
+  hasOwnTeamsScope: boolean;
   ariaLabel: string;
 }
 
@@ -41,9 +38,23 @@ interface Props {
  * the option values (alert label values or incident field values), so both tabs can
  * share one selection while offering their own option lists.
  */
-export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHasTeams, ariaLabel }: Props) {
+export function TeamFilterCombobox({
+  teamValues,
+  selectedTeam,
+  onChange,
+  userHasTeams,
+  hasOwnTeamsScope,
+  ariaLabel,
+}: Props) {
   // Single sort site for both tabs, so neither data hook has to.
   const sortedValues = useMemo(() => [...(teamValues ?? [])].sort((a, b) => collator.compare(a, b)), [teamValues]);
+
+  const offersYourTeams = hasOwnTeamsScope && userHasTeams;
+  // For team members "All teams" must write the sentinel on every tab: the default scope
+  // means "your teams" on alerts, so writing '' here would silently re-scope that tab.
+  // Users without teams have no "your teams" scope anywhere, so '' already means all.
+  const allTeamsValue: TeamSelection = userHasTeams ? ALL_TEAMS : '';
+
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
@@ -51,15 +62,14 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHas
     const scope = resolveTeamScope(selectedTeam);
     switch (scope.kind) {
       case 'all':
-        // Render the label, never the raw sentinel. Without a "your teams" scope the
-        // default option already means "All teams", so highlight that one.
-        return userHasTeams ? getAllTeamsOption() : getDefaultOption(false);
+        return getAllTeamsOption(allTeamsValue);
       case 'team':
         return { label: scope.team, value: scope.team };
       case 'default':
-        return getDefaultOption(userHasTeams);
+        // Without a "your teams" scope the default already means "All teams", so show that.
+        return offersYourTeams ? getYourTeamsOption() : getAllTeamsOption(allTeamsValue);
     }
-  }, [selectedTeam, userHasTeams]);
+  }, [selectedTeam, offersYourTeams, allTeamsValue]);
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<TeamSelection>>> => {
@@ -67,13 +77,13 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, userHas
       const teamOptions = sortedValues
         .filter((team) => team.toLowerCase().includes(query))
         .map((team) => ({ label: team, value: team }));
-      // The scope sentinels only belong on the unfiltered default list. "All teams"
-      // is added only for team members — otherwise the default option already says it.
-      return inputValue
-        ? teamOptions
-        : [getDefaultOption(userHasTeams), ...(userHasTeams ? [getAllTeamsOption()] : []), ...teamOptions];
+      // The scope options only belong on the unfiltered default list.
+      const scopeOptions = offersYourTeams
+        ? [getYourTeamsOption(), getAllTeamsOption(allTeamsValue)]
+        : [getAllTeamsOption(allTeamsValue)];
+      return inputValue ? teamOptions : [...scopeOptions, ...teamOptions];
     },
-    [sortedValues, userHasTeams]
+    [sortedValues, offersYourTeams, allTeamsValue]
   );
 
   if (sortedValues.length === 0) {

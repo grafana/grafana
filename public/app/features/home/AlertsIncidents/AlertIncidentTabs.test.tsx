@@ -858,6 +858,40 @@ describe('AlertIncidentTabs', () => {
       expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
     });
 
+    it("keeps alerts org-wide when a team member picks 'All teams' on the Incidents tab after a team", async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
+      const alertRequests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team C']);
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      await waitFor(() => expect(alertRequests).toHaveLength(2));
+      expect(alertRequests[1]).toEqual(['team=~"Team C"']);
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
+      expect(incidentsCombobox).toHaveDisplayValue('Team C');
+      await waitFor(() => expect(queries).toContain(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team C"`));
+
+      await user.click(incidentsCombobox);
+      await user.click(await screen.findByRole('option', { name: 'All teams' }));
+      // The pick drops the field clause and shows every active incident.
+      await waitFor(() => expect(queries.at(-1)).toBe(ACTIVE_INCIDENTS_QUERY));
+
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+
+      // "All teams" means org-wide on both tabs: alerts must not fall back to "Your teams".
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('All teams');
+      await waitFor(() => expect(alertRequests).toHaveLength(3));
+      expect(alertRequests[2]).toEqual([]);
+    });
+
     it('shows a team-scoped empty message when the selected team has no incidents', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();

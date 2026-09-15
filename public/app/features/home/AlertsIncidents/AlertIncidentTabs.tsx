@@ -64,13 +64,13 @@ export function AlertIncidentTabs({
     activeTab === ALERTS_TAB_ID
       ? {
           teamValues: alertTeamValues,
-          userHasTeams: hasTeams,
+          hasOwnTeamsScope: true,
           ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
         }
       : {
           teamValues: incidentTeamValues,
           // Incidents have no "your teams" scope: the unfiltered default is every active incident.
-          userHasTeams: false,
+          hasOwnTeamsScope: false,
           ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
         };
 
@@ -137,7 +137,13 @@ export function AlertIncidentTabs({
           {title}
         </Text>
         {/* Keyed by tab so switching remounts the dropdown with the other tab's options. */}
-        <TeamFilterCombobox key={activeTab} {...teamFilter} selectedTeam={team} onChange={setTeam} />
+        <TeamFilterCombobox
+          key={activeTab}
+          {...teamFilter}
+          userHasTeams={hasTeams}
+          selectedTeam={team}
+          onChange={setTeam}
+        />
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
