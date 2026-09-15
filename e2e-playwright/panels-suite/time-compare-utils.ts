@@ -26,6 +26,19 @@ export interface QueryRecorder {
 const COMPARE_REF_ID_SUFFIX = '-compare';
 
 /**
+ * How a refId listed in `emptyRefIds` should report "no data". Datasources express this both ways
+ * and timeShiftAlignmentProcessor branches on the difference: with no frames at all it synthesizes
+ * placeholder series from the request targets, whereas a declared-but-empty frame is passed
+ * through as-is.
+ */
+export type EmptyResponseShape = 'no-frames' | 'empty-frame';
+
+export interface MockQueryApiOptions {
+  /** refIds that should return no data, mapped to the shape used to express it. */
+  emptyRefIds?: Record<string, EmptyResponseShape>;
+}
+
+/**
  * Intercepts the datasource query API and returns deterministic frames, recording the time range
  * and refIds of every request.
  *
@@ -35,8 +48,13 @@ const COMPARE_REF_ID_SUFFIX = '-compare';
  *
  * Must be installed before navigating to the dashboard.
  */
-export async function mockQueryApi(page: Page, selectors: E2ESelectorGroups): Promise<QueryRecorder> {
+export async function mockQueryApi(
+  page: Page,
+  selectors: E2ESelectorGroups,
+  options: MockQueryApiOptions = {}
+): Promise<QueryRecorder> {
   const requests: RecordedQueryRequest[] = [];
+  const emptyRefIds = options.emptyRefIds ?? {};
 
   await page.route(selectors.apis.DataSource.queryPattern, async (route) => {
     const body = route.request().postDataJSON();
@@ -45,20 +63,28 @@ export async function mockQueryApi(page: Page, selectors: E2ESelectorGroups): Pr
 
     // Only the testdata refIds this fixture owns are faked; anything else (e.g. annotations)
     // reaches the real backend so the mock stays as narrow as possible.
-    if (!refIds.length || !refIds.every((refId) => /^[ABCD](-compare)?$/.test(refId))) {
+    if (!refIds.length || !refIds.every((refId) => /^[A-F](-compare)?$/.test(refId))) {
       await route.continue();
       return;
     }
 
     const from = Number(body.from);
     const to = Number(body.to);
+    // Recorded even when the response is empty, so a test can tell "returned no data" apart from
+    // "was never queried".
     requests.push({ from, to, refIds });
 
     const results: Record<string, unknown> = {};
     for (const refId of refIds) {
+      const emptyShape = emptyRefIds[refId];
       results[refId] = {
         status: 200,
-        frames: [buildFrame(refId, from, to)],
+        frames:
+          emptyShape === 'no-frames'
+            ? []
+            : emptyShape === 'empty-frame'
+              ? [buildEmptyFrame(refId)]
+              : [buildFrame(refId, from, to)],
       };
     }
 
@@ -75,15 +101,28 @@ export async function mockQueryApi(page: Page, selectors: E2ESelectorGroups): Pr
       requests.length = 0;
     },
     waitForRequest: async (refIds: string[]) => {
+      // Reported as the polled value rather than in `message` so the failure names the requests
+      // seen by the final attempt, not the (empty) set at the time the matcher was built.
       await expect
-        .poll(() => requests.some((request) => arrayEquals(request.refIds, refIds)), {
-          message: `expected a query request for refIds [${refIds.join(', ')}], saw ${describe(requests)}`,
-        })
-        .toBe(true);
+        .poll(() =>
+          requests.some((request) => arrayEquals(request.refIds, refIds))
+            ? `saw [${refIds.join(', ')}]`
+            : `expected [${refIds.join(', ')}], saw ${describe(requests)}`
+        )
+        .toBe(`saw [${refIds.join(', ')}]`);
 
       return requests.find((request) => arrayEquals(request.refIds, refIds))!;
     },
   };
+}
+
+/**
+ * The series label a refId renders under. Kept stable across a refId and its `-compare` twin so
+ * the pair shares a legend name, and derived from a single label key with a `Value` field name so
+ * calculateFieldDisplayName resolves to just the label (plus the " (comparison)" suffix).
+ */
+export function seriesLabelFor(refId: string) {
+  return `${refId.replace(COMPARE_REF_ID_SUFFIX, '')}-series`;
 }
 
 /**
@@ -109,10 +148,39 @@ function buildFrame(refId: string, from: number, to: number) {
       meta: { type: 'timeseries-multi', typeVersion: [0, 1] },
       fields: [
         { name: 'time', type: 'time', typeInfo: { frame: 'time.Time' } },
-        { name: refId, type: 'number', typeInfo: { frame: 'float64' } },
+        {
+          name: 'Value',
+          type: 'number',
+          typeInfo: { frame: 'float64' },
+          labels: { series: seriesLabelFor(refId) },
+        },
       ],
     },
     data: { values: [times, values] },
+  };
+}
+
+/**
+ * A frame that declares its fields but carries no points — the other way a datasource reports an
+ * empty window, which takes a different branch through timeShiftAlignmentProcessor than omitting
+ * the frame entirely.
+ */
+function buildEmptyFrame(refId: string) {
+  return {
+    schema: {
+      refId,
+      meta: { type: 'timeseries-multi', typeVersion: [0, 1] },
+      fields: [
+        { name: 'time', type: 'time', typeInfo: { frame: 'time.Time' } },
+        {
+          name: 'Value',
+          type: 'number',
+          typeInfo: { frame: 'float64' },
+          labels: { series: seriesLabelFor(refId) },
+        },
+      ],
+    },
+    data: { values: [[], []] },
   };
 }
 
