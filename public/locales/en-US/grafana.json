@@ -5761,6 +5761,7 @@
       "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
+      "remove-multiple": "Remove {{typeName}} ({{num}})",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
       "switch-layout-row": "Switch layout",

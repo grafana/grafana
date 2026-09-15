@@ -13,6 +13,8 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -261,6 +263,95 @@ describe('DashboardSidebar', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  describe('batching', () => {
+    function fakeAction(calls: string[], name: string) {
+      return {
+        perform: jest.fn(() => calls.push(`perform-${name}`)),
+        undo: jest.fn(() => calls.push(`undo-${name}`)),
+      };
+    }
+
+    it('aggregates edit actions performed between startBatch/endBatch into a single undo/redo entry', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+      const action1 = fakeAction(calls, '1');
+      const action2 = fakeAction(calls, '2');
+
+      startBatch(scene, 'Remove things (2)');
+      edit({ source: scene, perform: action1.perform, undo: action1.undo });
+      edit({ source: scene, perform: action2.perform, undo: action2.undo });
+      endBatch(scene);
+
+      // Both actions are performed immediately as they're collected, in the order they came in.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      // But they're aggregated into a single undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].source).toBe(scene);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove things (2)');
+
+      calls.length = 0;
+      sidebar.undoAction();
+
+      // A single undo reverts both actions, last-performed first.
+      expect(calls).toEqual(['undo-2', 'undo-1']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      calls.length = 0;
+      sidebar.redoAction();
+
+      // A single redo replays both actions again, in their original order.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a batch starts, same as a regular action', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      startBatch(scene, 'A batch');
+      expect(sidebar.state.redoStack).toHaveLength(0);
+
+      endBatch(scene);
+    });
+
+    it('does not push an undo entry for a batch with no actions', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      startBatch(scene, 'Empty batch');
+      endBatch(scene);
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('routes a multi-row delete through RowItems and batches it into a single undo entry', () => {
+      const { sidebar, row1, row2 } = setupWithTwoRows();
+
+      row1.createMultiSelectedElement([row1, row2]).onDelete();
+
+      // Two row deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
+    });
+
+    it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {
+      const { sidebar, tab1, tab2 } = setupWithTwoTabs();
+
+      tab1.createMultiSelectedElement([tab1, tab2]).onDelete();
+
+      // Two tab deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
   });
 
   it('clone should preserve the outline collapsed state', () => {
