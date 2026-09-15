@@ -2,7 +2,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
-import { routeMatchers } from './unified/plugin-proxy/matchers';
+import { PROXIED_ROUTE_PATHS } from './unified/plugin-proxy/proxiedPaths';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -110,21 +110,21 @@ describe('data source managed route proxies', () => {
   it('every proxy points at a route that actually exists', () => {
     const routePaths = getAlertingRoutes().map((route) => route.path);
 
-    for (const { path } of routeMatchers) {
+    for (const path of PROXIED_ROUTE_PATHS) {
       expect(routePaths).toContain(path);
     }
   });
 
-  it('pairs every matcher with a handler', async () => {
-    // TypeScript already enforces this — `handlers` in proxies.ts is typed against the matcher
-    // list — but only as long as that typing survives a refactor, and losing it would show up as
-    // a route that quietly stops being proxied rather than as an error.
+  it('gives every proxied path both a matcher and a handler', async () => {
+    // TypeScript already enforces this — both records in proxies.ts are typed against
+    // PROXIED_ROUTE_PATHS — but only as long as that typing survives a refactor, and losing it
+    // would show up as a route that quietly stops being proxied rather than as an error.
     const { routeProxies } = await import('./unified/plugin-proxy/proxies');
 
-    expect(routeProxies.map(({ path }) => path)).toEqual(routeMatchers.map(({ path }) => path));
-    for (const { path, handler } of routeProxies) {
+    expect(routeProxies.map(({ path }) => path)).toEqual([...PROXIED_ROUTE_PATHS]);
+    for (const { matches, handler } of routeProxies) {
+      expect(typeof matches).toBe('function');
       expect(typeof handler).toBe('function');
-      expect(path).toBeTruthy();
     }
   });
 });

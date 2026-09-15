@@ -1,18 +1,24 @@
 /**
- * The handler half of the proxy table: given a URL the matchers have already accepted, work out
- * where in the `grafana-prometheusalerting-app` plugin it belongs.
+ * The proxy table: which alerting URLs belong to the `grafana-prometheusalerting-app` plugin, and
+ * where in it each one goes.
  *
- * This module is loaded on demand, so unlike `matchers.ts` it is free to import whatever it needs.
+ * Fetched on demand by `withRouteProxy.tsx`, so this module is free to import whatever it needs.
+ * Only the list of paths it covers is loaded up front, in `proxiedPaths.ts`.
  */
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { SupportedPlugin } from '../types/pluginBridges';
-import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
+import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { parseQueryParamMatchers } from '../utils/matchers';
-import { toPluginRuleIdentifier, tryDecodeUriComponent, unescapePathSeparators } from '../utils/rule-id';
+import {
+  isDataSourceManagedIdentifier,
+  toPluginRuleIdentifier,
+  tryDecodeUriComponent,
+  unescapePathSeparators,
+} from '../utils/rule-id';
 
-import { type ProxiedRoutePath, routeMatchers } from './matchers';
-import { type ProxyContext, type ProxyHandler, type RouteProxy } from './types';
+import { PROXIED_ROUTE_PATHS, type ProxiedRoutePath } from './proxiedPaths';
+import { type ProxyContext, type ProxyHandler, type ProxyMatcher, type RouteProxy } from './types';
 
 /**
  * The plugin's own pages. It does not mirror Grafana's paths, so every handler below translates
@@ -120,6 +126,82 @@ function groupPageHandler(action: 'view' | 'edit'): ProxyHandler {
  * a handler for a path that isn't matched — is a compile error, not a route that quietly stops
  * being proxied.
  */
+/** A rules source or Alertmanager is data source managed unless it is the built-in Grafana one. */
+function isDataSourceManaged(name: string | undefined): boolean {
+  if (!name) {
+    return false;
+  }
+  return name !== GRAFANA_RULES_SOURCE_NAME;
+}
+
+/**
+ * Which Alertmanager a page is showing comes from `?alertmanager=<name>`.
+ *
+ * We only look at the URL. The selection can also come from local storage (see
+ * `AlertmanagerContext`), but reading that here would mean copying the context's precedence rules,
+ * and a link without the param doesn't say anything about which Alertmanager the person sharing it
+ * meant.
+ */
+const matchesExternalAlertmanager: ProxyMatcher = ({ searchParams }) =>
+  isDataSourceManaged(tryDecodeUriComponent(searchParams.get(ALERTMANAGER_NAME_QUERY_KEY) ?? ''));
+
+const matchesDataSourceManagedRulesSource: ProxyMatcher = ({ params }) =>
+  isDataSourceManaged(tryDecodeUriComponent(params.sourceName ?? ''));
+
+const matchesGroupPage: ProxyMatcher = ({ params }: ProxyContext) =>
+  isDataSourceManaged(params.dataSourceUid) && Boolean(params.namespaceId) && Boolean(params.groupName);
+
+/**
+ * Whether a URL on each proxied route actually belongs to the plugin. Keyed by path so that a
+ * route listed in `proxiedPaths.ts` without a matcher here is a compile error.
+ */
+const matchers: Record<ProxiedRoutePath, ProxyMatcher> = {
+  // Both halves of the URL have to agree that the rule is data source managed. Every link Grafana
+  // builds for this route puts the full identifier in the path, so a bare UID here means the URL
+  // contradicts itself and the handler was never going to resolve it.
+  '/alerting/:sourceName/:id/view': (context) =>
+    matchesDataSourceManagedRulesSource(context) && isDataSourceManagedIdentifier(context.params.id),
+
+  // The "find a rule by name" page has no plugin equivalent, so the handler searches the rule list.
+  '/alerting/:sourceName/:name/find': (context) =>
+    matchesDataSourceManagedRulesSource(context) && Boolean(context.params.name),
+
+  '/alerting/:id/edit': ({ params }) => isDataSourceManagedIdentifier(params.id),
+
+  // `recording` is the data source managed recording rule form, and `?copyFrom=` carries a rule
+  // identifier which tells us who owns the rule being cloned. Plain `/alerting/new/alerting` is
+  // left alone: whether that rule ends up Grafana or data source managed is chosen in the form.
+  '/alerting/new/:type?': ({ params, searchParams }) =>
+    params.type === 'recording' || isDataSourceManagedIdentifier(searchParams.get('copyFrom') ?? undefined),
+
+  // Group routes line up field for field — Grafana already uses the data source UID and namespace
+  // name here.
+  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view': matchesGroupPage,
+  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit': matchesGroupPage,
+
+  // Alertmanager pages. All of these hinge on `?alertmanager=` naming something other than
+  // Grafana's own, plus whatever the individual page needs to identify what it was showing.
+  '/alerting/groups/': matchesExternalAlertmanager,
+  '/alerting/notifications': matchesExternalAlertmanager,
+  '/alerting/notifications/global-config': matchesExternalAlertmanager,
+  '/alerting/notifications/receivers/new': matchesExternalAlertmanager,
+  '/alerting/notifications/receivers/:name/edit': (context) =>
+    matchesExternalAlertmanager(context) && Boolean(context.params.name),
+  '/alerting/notifications/templates': matchesExternalAlertmanager,
+  '/alerting/notifications/templates/*': matchesExternalAlertmanager,
+  '/alerting/routes': matchesExternalAlertmanager,
+  '/alerting/routes/policy/:name/edit': (context) =>
+    matchesExternalAlertmanager(context) && Boolean(context.params.name),
+  '/alerting/routes/mute-timing': matchesExternalAlertmanager,
+  '/alerting/routes/mute-timing/new': matchesExternalAlertmanager,
+  '/alerting/routes/mute-timing/edit': (context) =>
+    matchesExternalAlertmanager(context) && context.searchParams.has('muteName'),
+  '/alerting/silences': matchesExternalAlertmanager,
+  '/alerting/silence/new': matchesExternalAlertmanager,
+  '/alerting/silence/:id/view': (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
+  '/alerting/silence/:id/edit': (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
+};
+
 const handlers: Record<ProxiedRoutePath, ProxyHandler> = {
   // /alerting/<source>/<identifier>/view -> /rules/<identifier>
   '/alerting/:sourceName/:id/view': async ({ params, searchParams }) => {
@@ -266,9 +348,9 @@ const handlers: Record<ProxiedRoutePath, ProxyHandler> = {
   }),
 };
 
-export const routeProxies: RouteProxy[] = routeMatchers.map(({ path, matches }) => ({
+export const routeProxies: RouteProxy[] = PROXIED_ROUTE_PATHS.map((path) => ({
   path,
-  matches,
+  matches: matchers[path],
   handler: handlers[path],
 }));
 

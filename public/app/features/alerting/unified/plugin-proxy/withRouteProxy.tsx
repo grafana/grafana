@@ -2,12 +2,12 @@
  * Hands data source managed alerting URLs over to the `grafana-prometheusalerting-app` plugin.
  *
  * The alerting route table imports this module while the app is starting up, so everything it
- * reaches ends up in the first bundle the browser downloads. Keep the imports here to things that
- * are already in that bundle; the actual redirecting lives in `ProxiedAlertingRoute.tsx`, which is
- * fetched only once a URL turns out to be one the plugin should serve.
+ * reaches ends up in the first bundle the browser downloads. The only thing it needs from the
+ * proxy up front is the list of paths to wrap; deciding whether a given URL belongs to the plugin,
+ * and where in it, lives in `proxies.ts` and is fetched the first time someone opens one of those
+ * pages.
  */
-import { Suspense, lazy, useMemo } from 'react';
-import { useLocation } from 'react-use';
+import { Suspense, lazy } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -20,9 +20,7 @@ import {
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
-import { findRouteMatcher } from './matchers';
-import { buildProxyContext, stripSubPath } from './resolve';
-import { type ProxyContext, type ProxyMatcher } from './types';
+import { isProxiedRoutePath } from './proxiedPaths';
 
 /**
  * What a proxied page shows while we work out where it belongs. Shared with
@@ -38,17 +36,6 @@ export function RedirectingPage() {
 }
 
 /**
- * Reads the browser's location instead of react-router's, because react-router hands back a
- * pathname that is neither properly encoded nor decoded, which mangles rule names and namespaces.
- * There's a longer explanation of that in `utils/rule-id.ts`.
- */
-export function useProxyContext(routePath: string): ProxyContext {
-  const { pathname = '', search = '' } = useLocation();
-
-  return useMemo(() => buildProxyContext(routePath, stripSubPath(pathname), search), [routePath, pathname, search]);
-}
-
-/**
  * One wrapper per route, kept for the life of the page.
  *
  * This is not an optimisation. `getAppRoutes()` runs in `AppWrapper`'s render body, so
@@ -58,7 +45,7 @@ export function useProxyContext(routePath: string): ProxyContext {
  */
 const proxiedComponents = new Map<string, GrafanaRouteComponent>();
 
-function proxiedComponent(route: RouteDescriptor, matches: ProxyMatcher): GrafanaRouteComponent {
+function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
   const cached = proxiedComponents.get(route.path);
   if (cached) {
     return cached;
@@ -84,15 +71,11 @@ function proxiedComponent(route: RouteDescriptor, matches: ProxyMatcher): Grafan
       })
   );
 
+  // Whether this particular URL needs the plugin is decided inside `ProxiedAlertingRoute`, once
+  // the table has loaded. Grafana-managed URLs therefore wait on that fetch too — the trade we
+  // accepted to keep the proxy out of the boot bundle entirely. The chunk is small and shared by
+  // every proxied route, so it costs one request per session.
   function MaybeProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
-    const context = useProxyContext(route.path);
-
-    // Not a data source managed URL, which is the common case — render the page straight away and
-    // don't fetch the proxy at all.
-    if (!matches(context)) {
-      return <RoutePage {...props} />;
-    }
-
     return (
       <Suspense fallback={<RedirectingPage />}>
         <LazyProxiedRoute {...props} />
@@ -119,11 +102,10 @@ export function applyRouteProxies(routes: RouteDescriptor[]): RouteDescriptor[] 
   }
 
   return routes.map((route) => {
-    const matches = findRouteMatcher(route.path);
-    if (!matches) {
+    if (!isProxiedRoutePath(route.path)) {
       return route;
     }
 
-    return { ...route, component: proxiedComponent(route, matches) };
+    return { ...route, component: proxiedComponent(route) };
   });
 }

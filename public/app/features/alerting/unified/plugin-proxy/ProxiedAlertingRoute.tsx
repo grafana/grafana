@@ -3,10 +3,10 @@
  * there, work out where in it the URL belongs, and send the browser on.
  *
  * Loaded on demand from `withRouteProxy.tsx`, so this module is free to import whatever it needs.
- * Anything the *decision* to proxy depends on belongs in `matchers.ts` instead.
  */
+import { useMemo } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
+import { useAsync, useLocation } from 'react-use';
 
 import { getLogger } from '@grafana/runtime/unstable';
 import { type GrafanaRouteComponent, type GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -16,8 +16,9 @@ import { SupportedPlugin } from '../types/pluginBridges';
 import { withTimeout } from '../utils/promise';
 
 import { findRouteProxy } from './proxies';
-import { type RouteProxy } from './types';
-import { RedirectingPage, useProxyContext } from './withRouteProxy';
+import { buildProxyContext, stripSubPath } from './resolve';
+import { type ProxyContext, type RouteProxy } from './types';
+import { RedirectingPage } from './withRouteProxy';
 
 const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
 /**
@@ -25,6 +26,17 @@ const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
  * ceiling of its own, a request that never comes back would leave the page loading forever.
  */
 const TARGET_RESOLUTION_TIMEOUT_MS = 5_000;
+
+/**
+ * Reads the browser's location instead of react-router's, because react-router hands back a
+ * pathname that is neither properly encoded nor decoded, which mangles rule names and namespaces.
+ * There's a longer explanation of that in `utils/rule-id.ts`.
+ */
+function useProxyContext(routePath: string): ProxyContext {
+  const { pathname = '', search = '' } = useLocation();
+
+  return useMemo(() => buildProxyContext(routePath, stripSubPath(pathname), search), [routePath, pathname, search]);
+}
 
 /**
  * Wraps an alerting page so that data source managed URLs are handed over to the

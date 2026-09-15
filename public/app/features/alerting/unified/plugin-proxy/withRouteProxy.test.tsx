@@ -5,8 +5,8 @@ import { applyRouteProxies } from './withRouteProxy';
 
 const CorePage = () => null;
 
-// One of the paths in matchers.ts, and one that isn't. Picked by hand rather than read off the
-// matcher list, so that renaming a route shows up here as well as in routes.test.tsx.
+// One of the paths in proxiedPaths.ts, and one that isn't. Picked by hand rather than read off
+// that list, so that renaming a route shows up here as well as in routes.test.tsx.
 const PROXIED_PATH = '/alerting/silences';
 const UNPROXIED_PATH = '/alerting/list';
 
