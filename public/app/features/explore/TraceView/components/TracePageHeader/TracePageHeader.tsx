@@ -129,9 +129,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const goToBannerSpan = useCallback(
     (spanId: string) => {
       const span = trace?.spans.find((candidate) => candidate.spanID === spanId);
-      if (span) {
-        revealSpan(span);
+      if (!span) {
+        return;
       }
+      revealSpan(span);
       if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanId)) {
         setSearch({ ...search, matchesOnly: false });
       }
