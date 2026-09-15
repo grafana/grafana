@@ -68,7 +68,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_toggle_log_clicked', { action });
     }
-  }, [logLineDisplayed, onClickHideField, onClickShowField]);
+  }, [logLineDisplayed, noInteractions, onClickHideField, onClickShowField]);
 
   const supportsFilters = onClickFilterString || onClickFilterOutString;
   const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
