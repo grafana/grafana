@@ -283,7 +283,7 @@ describe('useGetFolderQueryFacade', () => {
   it.each([true, false])(
     'stops reporting a folder once the uid is cleared (foldersAppPlatformAPI: %s)',
     async (foldersAppPlatformAPI) => {
-      config.featureToggles.foldersAppPlatformAPI = foldersAppPlatformAPI;
+      setTestFlags({ foldersAppPlatformAPI });
       const initialProps: { uid?: string } = { uid: folderA_folderA.item.uid };
       const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetFolderQueryFacade(uid), {
         wrapper: getWrapper({}),
