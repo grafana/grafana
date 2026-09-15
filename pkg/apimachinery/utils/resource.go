@@ -22,34 +22,26 @@ type ResourceInfo struct {
 }
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
-	newObjBasic func() runtime.Object, newListBasic func() runtime.Object, columns TableColumns) ResourceInfo {
+	newObj func() runtime.Object, newList func() runtime.Object, columns TableColumns) ResourceInfo {
 	shortName := ""        // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
 	clusterScoped := false // if true, this resource is cluster scoped, otherwise it is namespace scoped
-
-	gvkObj := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
-	gvkLst := schema.GroupVersionKind{Group: group, Version: version, Kind: kind + "List"}
-
-	newObj := func() runtime.Object {
-		v := newObjBasic()
-		v.GetObjectKind().SetGroupVersionKind(gvkObj)
-		return v
-	}
-
-	newList := func() runtime.Object {
-		v := newListBasic()
-		v.GetObjectKind().SetGroupVersionKind(gvkLst)
-		return v
-	}
-
 	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList, columns, clusterScoped}
 }
 
 func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) ResourceInfo {
-	copy := NewResourceInfo(group, info.version, info.resourceName, info.singularName, info.kind, info.newObj, info.newList, info.columns)
-	copy.shortName = shortName
-	return copy
+	return ResourceInfo{
+		group:         group,
+		version:       info.version,
+		resourceName:  info.resourceName,
+		singularName:  info.singularName,
+		kind:          info.kind,
+		shortName:     shortName,
+		newObj:        info.newObj,
+		newList:       info.newList,
+		columns:       info.columns,
+		clusterScoped: info.clusterScoped,
+	}
 }
-
 func (info *ResourceInfo) WithClusterScope() ResourceInfo {
 	info.clusterScoped = true
 	return *info
