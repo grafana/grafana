@@ -124,8 +124,8 @@ func FormatSQL(q string) string {
 // empty lines are typical when using text template formatting
 func RemoveEmptyLines(q string) string {
 	var b strings.Builder
-	lines := strings.Split(strings.ReplaceAll(q, "\r\n", "\n"), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(strings.ReplaceAll(q, "\r\n", "\n"), "\n")
+	for line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}

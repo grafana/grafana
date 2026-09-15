@@ -3308,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5742,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Verschieben von {{typeName}}",
-      "panel-background": "Panel-Hintergrund ändern",
-      "panel-description": "Panel-Beschreibung ändern",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Änderungen am Panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. Wiederholungen pro Zeile",
       "panel-preset": "Panel-Voreinstellung anwenden",
       "panel-repeat-direction": "Richtung wiederholen",
       "panel-repeat-variable": "Panel-Wiederholung durch",
-      "panel-title": "Panel-Titel ändern",
+      "panel-title": "",
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "row-title": "Zeilentitel ändern",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "Möchten Sie {{name}} löschen?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Suche löschen",
       "no-transformations-found": "Keine Transformationen gefunden",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Zurück zum Dashboard",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8646,6 +8658,16 @@
       "title-raw-prometheus": "Raw Prometheus",
       "title-table": "Tabelle",
       "title-traces": "Traces"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11417,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13124,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

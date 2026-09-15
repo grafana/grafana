@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
@@ -41,12 +42,21 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAppPluginSettings(t *testing.T) {
+	testIntegrationAppPluginSettings(t)
+}
+
+func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
+	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := setupHelper(t, mode)
+			helper := setupHelper(t, mode, features...)
 			ctx := context.Background()
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -354,9 +364,12 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
 
-	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
-	if withManifest {
-		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+	features := slices.Clone(extraFeatures)
+	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
+		features = append(features, featuremgmt.FlagApppluginsRegisterAPIServer)
+		if withManifest {
+			features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+		}
 	}
 
 	// The settings resource moves to the manifest group along with the rest of

@@ -113,8 +113,7 @@ func TestBroadcaster(t *testing.T) {
 }
 
 func TestBroadcasterUnsubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -158,8 +157,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 }
 
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 
@@ -196,8 +194,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 }
 
 func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -231,8 +228,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 }
 
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -283,8 +279,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 }
 
 func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -332,8 +327,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 }
 
 func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
