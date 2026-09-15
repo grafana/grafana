@@ -306,3 +306,106 @@ it.each([
   expect(grid.getVizPanels()[0]).toBe(movedExisting);
   expect(row.getRoot()).toBe(scene);
 });
+
+it.each(['row', 'tab'] as const)(
+  'preserves existing panels wrapped in a new %s when discarding a plan',
+  async (kind) => {
+    const { scene, client } = setup();
+    const existing = new VizPanel({ title: 'Existing panel', pluginId: 'text', key: 'panel-1' });
+    const originalLayout = DefaultGridLayoutManager.fromVizPanels([existing]);
+    scene.setState({ body: originalLayout });
+    await client.execute(start);
+    expect(
+      (
+        await client.execute({
+          type: kind === 'row' ? 'ADD_ROW' : 'ADD_TAB',
+          planId: 'plan-1',
+          payload: {
+            parentPath: '/',
+            [kind]: { kind: kind === 'row' ? 'RowsLayoutRow' : 'TabsLayoutTab', spec: { title: 'Plan wrapper' } },
+          },
+        })
+      ).success
+    ).toBe(true);
+    expect(
+      (
+        await client.execute({
+          type: 'ADD_PANEL',
+          planId: 'plan-1',
+          payload: { parentPath: `/${kind}s/0`, panel: { kind: 'Panel', spec: panel } },
+        })
+      ).success
+    ).toBe(true);
+    expect(scene.state.body.getVizPanels().map((panel) => panel.state.title)).toEqual(['Existing panel', 'CPU usage']);
+
+    expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+      true
+    );
+
+    expect(scene.state.body.getVizPanels().map((panel) => panel.state.title)).toEqual(['Existing panel']);
+    expect(scene.state.body.getVizPanels()[0]).toBe(existing);
+    expect(originalLayout.getRoot()).toBe(scene);
+    expect(scene.isPlanning()).toBe(false);
+  }
+);
+
+it('preserves an existing empty section and its variables inside a planning wrapper', async () => {
+  const { scene, client } = setup();
+  const variable = new CustomVariable({ name: 'service', query: 'production' });
+  const row = new RowItem({
+    title: 'Existing empty row',
+    layout: DefaultGridLayoutManager.fromVizPanels([]),
+    $variables: new SceneVariableSet({ variables: [variable] }),
+  });
+  scene.setState({ body: new RowsLayoutManager({ rows: [row] }) });
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_TAB',
+        planId: 'plan-1',
+        payload: { parentPath: '/', tab: { kind: 'TabsLayoutTab', spec: { title: 'Plan wrapper' } } },
+      })
+    ).success
+  ).toBe(true);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+    true
+  );
+
+  expect(row.getRoot() === scene).toBe(true);
+  expect(row.state.$variables?.state.variables[0]).toBe(variable);
+});
+
+it('removes empty planning sections before wrappers created after them', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_ROW',
+        planId: 'plan-1',
+        payload: { parentPath: '/', row: { kind: 'RowsLayoutRow', spec: { title: 'Plan row' } } },
+      })
+    ).success
+  ).toBe(true);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_TAB',
+        planId: 'plan-1',
+        payload: { parentPath: '/', tab: { kind: 'TabsLayoutTab', spec: { title: 'Plan wrapper' } } },
+      })
+    ).success
+  ).toBe(true);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+    true
+  );
+
+  const body = scene.state.body;
+  if (!(body instanceof TabsLayoutManager)) {
+    throw new Error('Expected tabs layout');
+  }
+  expect(body.state.tabs).toEqual([]);
+});

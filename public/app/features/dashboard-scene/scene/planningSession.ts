@@ -1,4 +1,4 @@
-import { type SceneVariable, type VizPanel } from '@grafana/scenes';
+import { type SceneObject, type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
 import type { DashboardScene } from './DashboardScene';
@@ -71,17 +71,6 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
   }
   const session = sessions.get(scene);
   if (discard && session) {
-    for (const section of session.sections) {
-      if (section.getRoot() !== scene) {
-        continue;
-      }
-      const parent = section.parent;
-      if (section instanceof RowItem && parent instanceof RowsLayoutManager) {
-        parent.setState({ rows: parent.state.rows.filter((row) => row !== section) });
-      } else if (section instanceof TabItem && parent instanceof TabsLayoutManager) {
-        parent.setState({ tabs: parent.state.tabs.filter((tab) => tab !== section) });
-      }
-    }
     for (const panel of session.panels) {
       if (panel.getRoot() === scene) {
         scene.removePanel(panel);
@@ -103,6 +92,27 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
         variables.setState({ variables: remaining });
       }
     }
+    for (const section of [...session.sections].sort((a, b) => sceneDepth(b) - sceneDepth(a))) {
+      if (section.getRoot() !== scene) {
+        continue;
+      }
+      // A new section may wrap existing content or receive it during preview edits.
+      // Remove only empty sections after the plan's own panels and variables are gone.
+      const layout = section.state.layout;
+      if (
+        layout.getVizPanels().length > 0 ||
+        (layout instanceof RowsLayoutManager && layout.state.rows.length > 0) ||
+        (layout instanceof TabsLayoutManager && layout.state.tabs.length > 0)
+      ) {
+        continue;
+      }
+      const parent = section.parent;
+      if (section instanceof RowItem && parent instanceof RowsLayoutManager) {
+        parent.setState({ rows: parent.state.rows.filter((row) => row !== section) });
+      } else if (section instanceof TabItem && parent instanceof TabsLayoutManager) {
+        parent.setState({ tabs: parent.state.tabs.filter((tab) => tab !== section) });
+      }
+    }
   }
   sessions.delete(scene);
   scene.setState({ planning: undefined });
@@ -116,4 +126,13 @@ export function deactivatePlanningSession(scene: DashboardScene) {
     scene.setState({ planning: undefined });
     appEvents.publish(new DashboardPlanningEvent({ planId, action: 'closed' }));
   }
+}
+
+/** Remove children before wrappers, including wrappers created after their children. */
+function sceneDepth(object: SceneObject): number {
+  let depth = 0;
+  for (let parent = object.parent; parent; parent = parent.parent) {
+    depth++;
+  }
+  return depth;
 }
