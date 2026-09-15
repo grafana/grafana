@@ -39,6 +39,17 @@ function hasPerformanceMemory(perf: Performance): perf is PerformanceWithMemory 
 }
 
 /**
+ * Measures time since the shared frontend boot mark without retaining the temporary measure.
+ */
+export function getTimeSinceBoot(): number {
+  try {
+    return performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration;
+  } finally {
+    performance.clearMeasures('time_since_boot');
+  }
+}
+
+/**
  * Safely get performance memory metrics (Chrome-specific, non-standard)
  * Returns zero values for browsers without performance.memory support
  */
@@ -105,7 +116,7 @@ export function writePerformanceGroupEnd(): void {
 }
 
 /**
- * Safely creates a performance mark, ignoring errors if the Performance API is not available.
+ * Safely publishes a performance mark without retaining it in the performance timeline.
  */
 export function createPerformanceMark(name: string, timestamp?: number): void {
   try {
@@ -118,22 +129,46 @@ export function createPerformanceMark(name: string, timestamp?: number): void {
     }
   } catch (error) {
     console.error(`❌ Failed to create performance mark: ${name}`, { timestamp, error });
+  } finally {
+    clearPerformanceMark(name);
+  }
+}
+
+function clearPerformanceMark(name: string): void {
+  try {
+    if (typeof performance !== 'undefined' && performance.clearMarks) {
+      performance.clearMarks(name);
+    }
+  } catch (error) {
+    console.error(`❌ Failed to clear performance mark: ${name}`, { error });
   }
 }
 
 /**
- * Safely creates a performance measure, ignoring errors if the Performance API is not available.
+ * Safely publishes a performance measure without retaining it in the performance timeline.
+ * Missing or invalid timing data is not published.
  */
-export function createPerformanceMeasure(name: string, startMark: string, endMark?: string): void {
+export function createPerformanceMeasure(name: string, endTime: number, duration: number | undefined): void {
   try {
-    if (typeof performance !== 'undefined' && performance.measure) {
-      if (endMark) {
-        performance.measure(name, startMark, endMark);
-      } else {
-        performance.measure(name, startMark);
-      }
+    if (
+      typeof performance !== 'undefined' &&
+      performance.measure &&
+      Number.isFinite(endTime) &&
+      duration !== undefined &&
+      Number.isFinite(duration) &&
+      duration >= 0
+    ) {
+      performance.measure(name, { end: endTime, duration });
     }
   } catch (error) {
-    console.error(`❌ Failed to create performance measure: ${name}`, { startMark, endMark, error });
+    console.error(`❌ Failed to create performance measure: ${name}`, { endTime, duration, error });
+  } finally {
+    try {
+      if (typeof performance !== 'undefined' && performance.clearMeasures) {
+        performance.clearMeasures(name);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to clear performance measure: ${name}`, { error });
+    }
   }
 }
