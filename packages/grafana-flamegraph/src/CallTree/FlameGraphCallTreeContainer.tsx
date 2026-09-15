@@ -36,6 +36,10 @@ type Props = {
   reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
 
+// react-table rebuilds its whole row model when this changes identity, so it must not be an inline
+// arrow in the useTable call: that rebuilds a row per node in the profile on every single render.
+const getSubRows = (row: CallTreeNode) => row.children ?? [];
+
 function findCallTreeNode(nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined {
   for (const node of nodes) {
     if (byLabel ? node.label === searchKey : node.id === searchKey) {
@@ -606,7 +610,7 @@ const FlameGraphCallTreeContainer = memo(
       {
         columns,
         data: tableNodes,
-        getSubRows: (row) => row.children || [],
+        getSubRows,
         initialState: {
           sortBy: [{ id: 'total', desc: true }],
           expanded: expandedState,

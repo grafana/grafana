@@ -180,6 +180,7 @@ const FlameGraphContainer = ({
   const onTableSortRef = useRef(onTableSort);
   const onFocusChangeRef = useRef(onFocusChange);
   const onVisibleTruncatedPathsChangeRef = useRef(onVisibleTruncatedPathsChange);
+  const getExtraContextMenuButtonsRef = useRef(getExtraContextMenuButtons);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
@@ -187,6 +188,7 @@ const FlameGraphContainer = ({
     onTableSortRef.current = onTableSort;
     onFocusChangeRef.current = onFocusChange;
     onVisibleTruncatedPathsChangeRef.current = onVisibleTruncatedPathsChange;
+    getExtraContextMenuButtonsRef.current = getExtraContextMenuButtons;
   });
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
@@ -200,6 +202,13 @@ const FlameGraphContainer = ({
   const stableOnTableSort = useCallback((sort: string) => {
     onTableSortRef.current?.(sort);
   }, []);
+
+  // The call tree feeds this into its react-table columns, where a new identity rebuilds a row per
+  // node in the profile, so hosts must not be able to invalidate it by passing a fresh closure.
+  const stableGetExtraContextMenuButtons = useCallback<GetExtraContextMenuButtonsFunction>(
+    (...args) => getExtraContextMenuButtonsRef.current?.(...args) ?? [],
+    []
+  );
 
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
@@ -325,7 +334,7 @@ const FlameGraphContainer = ({
     onTableSort: stableOnTableSort,
     showFlameGraphOnly,
     disableCollapsing,
-    getExtraContextMenuButtons,
+    getExtraContextMenuButtons: getExtraContextMenuButtons ? stableGetExtraContextMenuButtons : undefined,
     setSearch,
     resetKey,
     keepFocusOnDataChange,
