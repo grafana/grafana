@@ -17,7 +17,7 @@ require (
 	github.com/grafana/nanogit v1.6.0
 	github.com/migueleliasweb/go-github-mock v1.5.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/prometheus/client_model v0.6.2
+	github.com/prometheus/client_model v0.6.3
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/sdk v1.45.0

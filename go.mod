@@ -162,7 +162,7 @@ require (
 	github.com/pressly/goose/v3 v3.27.3 // @grafana/identity-access-team
 	github.com/prometheus/alertmanager v0.33.0 // @grafana/alerting-backend
 	github.com/prometheus/client_golang v1.24.1 // @grafana/alerting-backend
-	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
+	github.com/prometheus/client_model v0.6.3 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.70.1 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.313.0 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.4.1 // @grafana/alerting-backend
