@@ -403,7 +403,7 @@ describe('FolderReadmePanel', () => {
   });
 
   // The renderer itself is covered in core/utils/mermaid.test.ts and
-  // core/components/HtmlWithMermaid; this only checks the README is wired to it.
+  // core/hooks/useMermaidDiagrams.test.ts; this only checks the README is wired to it.
   it('renders a ```mermaid fenced block as a diagram', async () => {
     setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
 
