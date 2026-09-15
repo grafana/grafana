@@ -9193,6 +9193,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",

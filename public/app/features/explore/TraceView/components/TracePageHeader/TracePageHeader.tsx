@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -61,7 +61,7 @@ import {
   type ViewRange,
 } from '../TraceTimelineViewer/types';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
-import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
+import { type Trace, type TraceSpan, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
@@ -82,6 +82,7 @@ export type TracePageHeaderProps = {
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  revealSpan: (span: TraceSpan) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -105,6 +106,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    revealSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -123,6 +125,27 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      const span = trace?.spans.find((candidate) => candidate.spanID === spanId);
+      if (!span) {
+        return;
+      }
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
+      revealSpan(span);
+      if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanId)) {
+        setSearch({ ...search, matchesOnly: false });
+      }
+      setFocusedSpanIdForSearch(spanId);
+    },
+    [app, datasourceType, revealSpan, search, setFocusedSpanIdForSearch, setSearch, spanFilterMatches, trace]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -343,7 +366,9 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
