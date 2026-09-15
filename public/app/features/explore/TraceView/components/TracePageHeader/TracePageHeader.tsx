@@ -132,8 +132,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       if (span) {
         revealSpan(span);
       }
-      if (spanFilterMatches && !spanFilterMatches.has(spanId) && (search.matchesOnly || search.criticalPathOnly)) {
-        setSearch({ ...search, matchesOnly: false, criticalPathOnly: false });
+      if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanId)) {
+        setSearch({ ...search, matchesOnly: false });
       }
       // VirtualizedTraceView only scrolls when focusedSpanIdForSearch changes.
       // Clear first so a second click after the user scrolls away still re-scrolls.

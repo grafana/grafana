@@ -449,7 +449,7 @@ describe('TracePageHeader test', () => {
     };
 
     const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
-      search: { ...DEFAULT_SPAN_FILTERS, matchesOnly: true },
+      search: { ...DEFAULT_SPAN_FILTERS, matchesOnly: true, criticalPathOnly: true },
       spanFilterMatches: new Set(['root-error']),
     });
 
@@ -458,8 +458,50 @@ describe('TracePageHeader test', () => {
     expect(setSearch).toHaveBeenCalledWith({
       ...DEFAULT_SPAN_FILTERS,
       matchesOnly: false,
-      criticalPathOnly: false,
+      criticalPathOnly: true,
     });
+  });
+
+  it('does not change search when Go to span target is already visible', async () => {
+    const errorTraceId = 'go-to-span-visible-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
+      search: { ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true },
+      spanFilterMatches: new Set(['root-error']),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+    expect(setSearch).not.toHaveBeenCalled();
   });
 
   it('should render the trace-level logs link when provided', () => {
