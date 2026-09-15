@@ -12,5 +12,4 @@ export interface ValueMatcherUIProps<TOptions> {
 }
 export interface ValueMatcherEditorConfig {
   validator: (value: any) => boolean;
-  converter?: (value: any, field: Field) => any;
 }
