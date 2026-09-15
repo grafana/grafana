@@ -2,6 +2,12 @@
 
 # 13.2.2 (2026-09-15)
 
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
 ### Bug fixes
 
 - **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132089](https://github.com/grafana/grafana/pull/132089), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
