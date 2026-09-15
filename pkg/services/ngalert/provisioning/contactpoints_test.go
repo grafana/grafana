@@ -1138,7 +1138,7 @@ func createEncryptedConfig(t *testing.T,
 ) string {
 	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -1188,7 +1188,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1219,7 +1219,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1245,7 +1245,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "new-receiver",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1276,7 +1276,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1301,7 +1301,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1332,7 +1332,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1350,7 +1350,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1386,7 +1386,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
@@ -1408,7 +1408,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1444,7 +1444,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1462,7 +1462,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1508,7 +1508,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
@@ -1530,7 +1530,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1576,7 +1576,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1601,7 +1601,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1637,7 +1637,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1663,7 +1663,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1699,7 +1699,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1720,7 +1720,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1746,7 +1746,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "3",
@@ -1772,7 +1772,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1793,7 +1793,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 	}
@@ -1828,7 +1828,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1859,7 +1859,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 
@@ -1878,7 +1878,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1909,7 +1909,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 

@@ -232,7 +232,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	}
 
 	receiverFound := false
-	for _, receiver := range revision.Config.Receivers {
+	for uid, receiver := range revision.Config.Receivers {
 		// check if uid is already used in receiver
 		for _, rec := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == rec.UID {
@@ -241,6 +241,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		}
 		if receiver.Name == contactPoint.Name {
 			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers, grafanaReceiver)
+			revision.Config.Receivers[uid] = receiver
 			receiverFound = true
 			if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(receiver.Name)); err != nil {
 				return apimodels.EmbeddedContactPoint{}, err
@@ -252,10 +253,14 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		revision.Config.Receivers = append(revision.Config.Receivers, &v1.PostableApiReceiver{
+		newReceiver := v1.PostableApiReceiver{
 			Name:                    grafanaReceiver.Name,
 			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
-		})
+		}
+		if revision.Config.Receivers == nil {
+			revision.Config.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+		}
+		revision.Config.Receivers[v1.ReceiverUID(newReceiver.Name)] = newReceiver
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -435,7 +440,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	// full removal is done to check if it's referenced in any route.
 	name := ""
 	found := false
-	for i, receiver := range revision.Config.Receivers {
+	for receiverUID, receiver := range revision.Config.Receivers {
 		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == uid {
 				if !isV1IntegrationVersion(grafanaReceiver.Version) {
@@ -448,7 +453,9 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 				// if this was the last receiver we removed, we remove the whole receiver
 				if len(receiver.GrafanaManagedReceivers) == 0 {
 					fullRemoval = true
-					revision.Config.Receivers = append(revision.Config.Receivers[:i], revision.Config.Receivers[i+1:]...)
+					delete(revision.Config.Receivers, receiverUID)
+				} else {
+					revision.Config.Receivers[receiverUID] = receiver
 				}
 				break
 			}
@@ -597,7 +604,7 @@ func stitchReceiver(cfg *v1.AMConfigV1, target *v1.PostableGrafanaReceiver) (old
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 groupLoop:
-	for groupIdx, receiverGroup := range cfg.Receivers {
+	for groupUID, receiverGroup := range cfg.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
 		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == target.UID {
@@ -612,51 +619,50 @@ groupLoop:
 				// Our receiver group fixing logic below will handle it.
 				if grafanaReceiver.Name == target.Name && receiverGroup.Name == grafanaReceiver.Name {
 					receiverGroup.GrafanaManagedReceivers[i] = target
+					cfg.Receivers[groupUID] = receiverGroup
 					break groupLoop
 				}
-
-				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
-				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
-				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					fullRemoval = true
-				}
+				// Everything below is related to renaming since the target name didn't match the group name.
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
 				// Check to see whether a different group with the name we want already exists.
-				for _, candidateExistingGroup := range cfg.Receivers {
+				movedToExistingGroup := false
+				for candidateUID, candidateExistingGroup := range cfg.Receivers {
 					// If so, put our modified receiver into that group. Done!
 					if candidateExistingGroup.Name == target.Name {
-						// Drop it from the old group...
-						receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
 						// Add the modified receiver to the new group...
 						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
+						cfg.Receivers[candidateUID] = candidateExistingGroup
 
-						// if the old receiver group turns out to be empty. Remove it.
-						if len(receiverGroup.GrafanaManagedReceivers) == 0 {
-							cfg.Receivers = append(cfg.Receivers[:groupIdx], cfg.Receivers[groupIdx+1:]...)
-						}
-						break groupLoop
+						movedToExistingGroup = true
+						break
 					}
 				}
 
-				newReceiverCreated = true
-				if fullRemoval {
-					// Since we're going to remove the receiver group anyways, we reuse the old group to retain order.
-					receiverGroup.Name = target.Name
-					receiverGroup.GrafanaManagedReceivers[i] = target
+				// If this was the last one in the old group, we can remove the group entirely.
+				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					fullRemoval = true
+					delete(cfg.Receivers, groupUID)
+				} else {
+					// Drop it from the old group...
+					receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+					cfg.Receivers[groupUID] = receiverGroup
+				}
+
+				// If we moved the target to an existing group, we're done.
+				if movedToExistingGroup {
 					break groupLoop
 				}
 
-				// Doesn't exist? Create a new group just for the receiver.
-				newGroup := &v1.PostableApiReceiver{
+				// Target didn't match an existing group, so we create a new one.
+				newReceiverCreated = true
+				newGroup := v1.PostableApiReceiver{
 					Name: target.Name,
 					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 						target,
 					},
 				}
-				cfg.Receivers = append(cfg.Receivers, newGroup)
-				// Drop it from the old spot.
-				receiverGroup.GrafanaManagedReceivers = append(receiverGroup.GrafanaManagedReceivers[:i], receiverGroup.GrafanaManagedReceivers[i+1:]...)
+				cfg.Receivers[v1.ReceiverUID(target.Name)] = newGroup
 				break groupLoop
 			}
 		}

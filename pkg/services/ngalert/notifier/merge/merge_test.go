@@ -36,9 +36,9 @@ func TestReceivers(t *testing.T) {
 		name            string
 		existing        []*v1.PostableApiReceiver
 		incoming        []*v1.PostableApiReceiver
-		expected        []*v1.PostableApiReceiver
+		expected        map[v1.ResourceUID]v1.PostableApiReceiver
 		expectedRenames map[string]string
-		expectedAdded   []string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing",
@@ -49,13 +49,13 @@ func TestReceivers(t *testing.T) {
 				r1,
 				r3,
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r1,
 				r3,
-			},
+			}),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"r1", "r3"},
+			expectedAdded:   []v1.ResourceUID{v1.ReceiverUID("r1"), v1.ReceiverUID("r3")},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -65,14 +65,14 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r("r2" + suffix),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix,
 			},
-			expectedAdded: []string{"r2" + suffix},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix)},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -83,15 +83,15 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_01",
 			},
-			expectedAdded: []string{"r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 		{
 			name: "should keep names unique across both sets",
@@ -103,16 +103,16 @@ func TestReceivers(t *testing.T) {
 				r("r2"),
 				r("r2" + suffix + "_01"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_02"),
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_02",
 			},
-			expectedAdded: []string{"r2" + suffix + "_02", "r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_02"), v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 	}
 	for _, tc := range testCases {
@@ -125,19 +125,10 @@ func TestReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, identifier)
-			require.Len(t, actual, len(tc.expected))
+			actual, actualRenames, actualAdded := Receivers(v1.ReceiversFromSlice(tc.existing), tc.incoming, identifier)
+			assert.Equal(t, tc.expected, actual)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
-			for i := range tc.expected {
-				assert.EqualValues(t, tc.expected[i], actual[i])
-				if i < len(tc.existing) {
-					assert.Same(t, tc.existing[i], actual[i])
-				} else {
-					idx := i - len(tc.existing)
-					assert.NotSame(t, tc.incoming[idx], actual[i])
-				}
-			}
 
 			t.Run("items of the lists should not be changed", func(t *testing.T) {
 				var names []string
@@ -434,9 +425,11 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
 		grafana := load(t, fullGrafanaConfig, func(cfg *v1.AMConfigV1) {
-			cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
-				Name: "grafana-default-email" + getDedupSuffix(identifier),
-			})
+			name := "grafana-default-email" + getDedupSuffix(identifier)
+			if cfg.Receivers == nil {
+				cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+			}
+			cfg.Receivers[v1.ReceiverUID(name)] = v1.PostableApiReceiver{Name: name}
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
 		config, _, err := MergeExtraConfig(context.Background(), &input)

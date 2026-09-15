@@ -92,11 +92,11 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "default-receiver",
 			},
-		},
+		}),
 	}
 
 	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
@@ -160,12 +160,12 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			},
 		}
 	}
-	basicReceivers := func() []*v1.PostableApiReceiver {
-		return []*v1.PostableApiReceiver{
+	basicReceivers := func() map[v1.ResourceUID]v1.PostableApiReceiver {
+		return v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "default-receiver",
 			},
-		}
+		})
 	}
 
 	grafanaTmpl := v1.NewTemplateGroup("", "grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
@@ -279,7 +279,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 					Route: &v1.Route{Receiver: receivers[0]},
 				},
 			},
-			Receivers: postableReceivers,
+			Receivers: v1.ReceiversFromSlice(postableReceivers),
 		}
 	}
 
@@ -334,9 +334,10 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
-					Name: "new-receiver",
-				})
+				if cfg.Receivers == nil {
+					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+				}
+				cfg.Receivers[v1.ReceiverUID("new-receiver")] = v1.PostableApiReceiver{Name: "new-receiver"}
 			},
 		},
 		{

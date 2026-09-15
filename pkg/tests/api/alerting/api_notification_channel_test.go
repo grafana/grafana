@@ -1985,7 +1985,7 @@ func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, or
 	config, err := notifier.Load([]byte(rawConfig))
 	require.NoError(t, err)
 
-	err = notifier.EncryptReceiverConfigs(config.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(config.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
