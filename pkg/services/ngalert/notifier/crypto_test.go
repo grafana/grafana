@@ -185,34 +185,49 @@ func TestDecryptExtraConfigs(t *testing.T) {
 	}
 }
 
-func TestDecryptIntegrationSettingsResolvesSecretReferences(t *testing.T) {
-	t.Setenv("GRAFANA_CONTACT_POINT_SECRET", "resolved-secret")
-
+func TestDecryptIntegrationSettingsLeavesSecretReferencesUntouched(t *testing.T) {
 	value := base64.StdEncoding.EncodeToString([]byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
 	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
 
 	got, err := decrypt(value)
 	require.NoError(t, err)
-	require.Equal(t, "resolved-secret", got)
+	require.Equal(t, "$__env{GRAFANA_CONTACT_POINT_SECRET}", got)
 }
 
-func TestDecryptIntegrationSettingsResolvesFileReferences(t *testing.T) {
+func TestAlertmanagerCryptoDecryptResolvesSecretReferences(t *testing.T) {
+	t.Setenv("GRAFANA_CONTACT_POINT_SECRET", "resolved-secret")
+
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
+
+	got, err := c.Decrypt(context.Background(), []byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
+	require.NoError(t, err)
+	require.Equal(t, "resolved-secret", string(got))
+}
+
+func TestAlertmanagerCryptoDecryptResolvesFileReferences(t *testing.T) {
 	path := t.TempDir() + "/contact-point-secret"
 	require.NoError(t, os.WriteFile(path, []byte("file-secret"), 0600))
 
-	value := base64.StdEncoding.EncodeToString([]byte("$__file{" + path + "}"))
-	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
 
-	got, err := decrypt(value)
+	got, err := c.Decrypt(context.Background(), []byte("$__file{"+path+"}"))
 	require.NoError(t, err)
-	require.Equal(t, "file-secret", got)
+	require.Equal(t, "file-secret", string(got))
 }
 
-func TestDecryptIntegrationSettingsLeavesOrdinarySecretPatternsUntouched(t *testing.T) {
-	value := base64.StdEncoding.EncodeToString([]byte("password-${VAR}"))
-	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
+func TestAlertmanagerCryptoDecryptLeavesOrdinarySecretPatternsUntouched(t *testing.T) {
+	m := fakes.NewFakeSecretsService()
+	c := &alertmanagerCrypto{
+		ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+	}
 
-	got, err := decrypt(value)
+	got, err := c.Decrypt(context.Background(), []byte("password-${VAR}"))
 	require.NoError(t, err)
-	require.Equal(t, "password-${VAR}", got)
+	require.Equal(t, "password-${VAR}", string(got))
 }
