@@ -78,10 +78,10 @@ describe('TableDataGrid', () => {
 
   describe('table theme colors', () => {
     it.each([
-      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', '#4c4e56'],
-      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', '#d4d5d6'],
-      ['visual_refresh_dark', '#111419', '#090b0f', '#202429', 'rgb(46, 48, 53)', '#282d33'],
-      ['visual_refresh_light', '#ffffff', '#fafafa', '#f0f0ef', 'rgb(224, 224, 224)', '#d8d8d8'],
+      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', 'rgba(204, 204, 220, 0.2)'],
+      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', 'rgba(36, 41, 46, 0.12)'],
+      ['visual_refresh_dark', '#111419', '#090b0f', '#202429', '#282d33', '#282d33'],
+      ['visual_refresh_light', '#ffffff', '#fafafa', '#f0f0ef', '#e4e3e2', '#dddcdb'],
     ])('uses the %s table surfaces in opaque and transparent panels', (id, body, canvas, header, hover, divider) => {
       const theme = getThemeById(id);
       const props = makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] });
@@ -150,7 +150,7 @@ describe('TableDataGrid', () => {
       );
       const grid = window.getComputedStyle(screen.getByRole('grid'));
       expect(grid.getPropertyValue('--rdg-header-background-color')).toBe('#111419');
-      expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe('rgb(46, 48, 53)');
+      expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe('#282d33');
     });
   });
 

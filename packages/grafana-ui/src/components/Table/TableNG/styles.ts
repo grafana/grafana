@@ -249,7 +249,7 @@ export const getGridStyles = memoize(
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         ...(tableRefreshEnabled && {
-          '--rdg-border-color': colorManipulator.onBackground(table.headerBorder, headerBackgroundColor).toHexString(),
+          '--rdg-border-color': table.headerBorder,
           '& .rdg-cell-dragging': { backgroundColor: table.headerDraggingBackground },
           '& .rdg-cell-drag-over': { backgroundColor: table.headerDragTargetBackground },
         }),
