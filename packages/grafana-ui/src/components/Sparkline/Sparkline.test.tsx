@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import type uPlot from 'uplot';
 
 import { createTheme, dateTime, type FieldSparkline, FieldType, makeTimeRange } from '@grafana/data';
@@ -135,5 +135,47 @@ describe('Sparkline', () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  // The public payload is the trimmed { index, value, display }; the internal viewport
+  // coords stay inside the component. Unmounting while hovered must clear the consumer.
+  it('fans a trimmed hover event out to onHover and clears it on unmount', async () => {
+    const onHover = jest.fn();
+    const { unmount } = render(
+      <Sparkline width={WIDTH} height={HEIGHT} theme={createTheme()} sparkline={makeSparkline()} onHover={onHover} />
+    );
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
+
+    // hover props enable the cursor end-to-end
+    expect(prepareConfigSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      true,
+      expect.any(Function)
+    );
+
+    // The component passes its internal emit dispatcher as the onHover arg to prepareConfig.
+    const emit = prepareConfigSpy.mock.calls[0][5] as (hover: sparklineUtils.SparklineHoverInfo | null) => void;
+    act(() => emit({ index: 1, value: 20, display: '20', left: 5, top: 6 }));
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20' });
+
+    onHover.mockClear();
+    unmount();
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('leaves the cursor disabled when no hover props are passed', async () => {
+    await mountAndGetPlot(makeSparkline());
+
+    expect(prepareConfigSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      false,
+      expect.any(Function)
+    );
   });
 });
