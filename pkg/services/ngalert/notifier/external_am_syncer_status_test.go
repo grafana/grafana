@@ -20,7 +20,6 @@ func TestComputeSyncStatus(t *testing.T) {
 		earlRFC = earlier.UTC().Format(time.RFC3339)
 	)
 
-	strPtr := func(s string) *string { return &s }
 	originPtr := func(o externalSyncOrigin) *externalSyncOrigin { return &o }
 
 	syncErrFor := func(reason SyncReason, msg string) *SyncError {
@@ -48,7 +47,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		got := computeSyncStatus(nil, "uid-a", originAPI, nil, now)
 
 		es := externalSync(t, got)
-		assert.Equal(t, strPtr("uid-a"), es.DatasourceUid)
+		assert.Equal(t, new("uid-a"), es.DatasourceUid)
 		assert.Equal(t, originPtr(originAPI), es.Origin)
 
 		synced := findSynced(t, got)
@@ -62,12 +61,12 @@ func TestComputeSyncStatus(t *testing.T) {
 		got := computeSyncStatus(nil, "uid-a", originAPI, syncErrFor(ReasonMimirFetch, "connect: refused"), now)
 
 		es := externalSync(t, got)
-		assert.Equal(t, strPtr("uid-a"), es.DatasourceUid)
+		assert.Equal(t, new("uid-a"), es.DatasourceUid)
 
 		synced := findSynced(t, got)
 		assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusFalse, synced.Status)
 		assert.Equal(t, "MimirFetchFailed", synced.Reason)
-		assert.Equal(t, strPtr("connect: refused"), synced.Message)
+		assert.Equal(t, new("connect: refused"), synced.Message)
 		assert.Equal(t, nowRFC, synced.LastTransitionTime)
 	})
 
@@ -78,7 +77,7 @@ func TestComputeSyncStatus(t *testing.T) {
 				Status:             alertingnotifv1beta1.ConfigConditionStatusFalse,
 				LastTransitionTime: earlRFC,
 				Reason:             "MimirFetchFailed",
-				Message:            strPtr("first failure"),
+				Message:            new("first failure"),
 			}},
 		}
 
@@ -86,7 +85,7 @@ func TestComputeSyncStatus(t *testing.T) {
 
 		synced := findSynced(t, got)
 		assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusFalse, synced.Status)
-		assert.Equal(t, strPtr("second failure"), synced.Message)
+		assert.Equal(t, new("second failure"), synced.Message)
 		assert.Equal(t, earlRFC, synced.LastTransitionTime, "lastTransitionTime should mark when the streak began, not the latest failure")
 	})
 
@@ -106,7 +105,7 @@ func TestComputeSyncStatus(t *testing.T) {
 		assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusFalse, synced.Status)
 		assert.Equal(t, nowRFC, synced.LastTransitionTime, "lastTransitionTime advanced on flip True→False")
 		assert.Equal(t, "SaveFailed", synced.Reason)
-		assert.Equal(t, strPtr("save broke"), synced.Message)
+		assert.Equal(t, new("save broke"), synced.Message)
 	})
 
 	t.Run("success after a failure bumps lastTransitionTime and clears message", func(t *testing.T) {
@@ -116,7 +115,7 @@ func TestComputeSyncStatus(t *testing.T) {
 				Status:             alertingnotifv1beta1.ConfigConditionStatusFalse,
 				LastTransitionTime: earlRFC,
 				Reason:             "MimirFetchFailed",
-				Message:            strPtr("was broken"),
+				Message:            new("was broken"),
 			}},
 		}
 
@@ -140,13 +139,13 @@ func TestComputeSyncStatus(t *testing.T) {
 	t.Run("datasourceUid reflects the attempted UID, not any prior one", func(t *testing.T) {
 		prev := &alertingnotifv1beta1.ConfigStatus{
 			ExternalAlertmanagerSync: &alertingnotifv1beta1.ConfigV1beta1StatusExternalAlertmanagerSync{
-				DatasourceUid: strPtr("old-uid"),
+				DatasourceUid: new("old-uid"),
 			},
 		}
 
 		got := computeSyncStatus(prev, "new-uid", originAPI, nil, now)
 
-		assert.Equal(t, strPtr("new-uid"), externalSync(t, got).DatasourceUid)
+		assert.Equal(t, new("new-uid"), externalSync(t, got).DatasourceUid)
 	})
 
 	t.Run("other condition types in prev are preserved", func(t *testing.T) {
@@ -182,7 +181,7 @@ func TestComputeSyncStatus(t *testing.T) {
 
 		synced := findSynced(t, got)
 		assert.Equal(t, "SyncFailed", synced.Reason, "unclassified error → SyncFailed condition reason")
-		assert.Equal(t, strPtr("raw error"), synced.Message)
+		assert.Equal(t, new("raw error"), synced.Message)
 	})
 }
 
@@ -251,7 +250,6 @@ func TestComputeCommittedStatus(t *testing.T) {
 	earlier := time.Date(2026, 5, 19, 9, 0, 0, 0, time.UTC)
 	nowRFC := now.UTC().Format(time.RFC3339)
 	earlRFC := earlier.UTC().Format(time.RFC3339)
-	strPtr := func(s string) *string { return &s }
 
 	findSynced := func(t *testing.T, st alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigCondition {
 		t.Helper()
@@ -268,7 +266,7 @@ func TestComputeCommittedStatus(t *testing.T) {
 		got := computeCommittedStatus(nil, "ds-1", originAPI, now)
 
 		require.NotNil(t, got.ExternalAlertmanagerSync)
-		assert.Equal(t, strPtr("ds-1"), got.ExternalAlertmanagerSync.DatasourceUid)
+		assert.Equal(t, new("ds-1"), got.ExternalAlertmanagerSync.DatasourceUid)
 
 		c := findSynced(t, got)
 		assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, c.Status)
