@@ -245,7 +245,9 @@ export class K8sDashboardV2API
     ]);
     return await this.saveDashboard({
       dashboard: historicalVersion.spec,
+      // carry over the current metadata so custom labels/annotations are not wiped by the update
       k8s: {
+        ...currentDashboard.metadata,
         name: uid,
       },
       message: `Restored from version ${version}`,
