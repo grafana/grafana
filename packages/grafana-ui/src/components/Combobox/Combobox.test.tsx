@@ -863,13 +863,29 @@ describe('Combobox', () => {
   });
 
   describe('Escape key behavior in overlays', () => {
-    it('should not close a Modal when pressing Escape while the menu is open', async () => {
-      const onDismiss = jest.fn();
-      render(
-        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+    function ModalWithCombobox({ onDismiss }: { onDismiss: () => void }) {
+      const [open, setOpen] = React.useState(true);
+      if (!open) {
+        return null;
+      }
+
+      return (
+        <Modal
+          title="Test Modal"
+          isOpen
+          onDismiss={() => {
+            onDismiss();
+            setOpen(false);
+          }}
+        >
           <Combobox options={options} value={null} onChange={jest.fn()} />
         </Modal>
       );
+    }
+
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(<ModalWithCombobox onDismiss={onDismiss} />);
 
       // Modal auto-focuses the close button on open — wait for focus to settle
       await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
@@ -877,9 +893,39 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await user.click(input);
       expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-expanded', 'true');
 
       await user.keyboard('{Escape}');
+
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+      expect(input).toHaveAttribute('aria-expanded', 'false');
+      expect(input).toHaveFocus();
+      expect(screen.getByRole('dialog', { name: 'Test Modal' })).toBeInTheDocument();
       expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should close a Modal on a subsequent Escape after the menu closes', async () => {
+      const onDismiss = jest.fn();
+      render(<ModalWithCombobox onDismiss={onDismiss} />);
+
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+      expect(onDismiss).not.toHaveBeenCalled();
+      expect(input).toHaveFocus();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('dialog', { name: 'Test Modal' })).not.toBeInTheDocument();
     });
 
     it('should not close a Drawer when pressing Escape while the menu is open', async () => {
