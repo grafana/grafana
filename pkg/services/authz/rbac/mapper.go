@@ -730,6 +730,33 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			// Only datasources:admin carries the caching actions.
+			"datasources/caching": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "datasources.caching:read",
+					utils.VerbList:             "datasources.caching:read",
+					utils.VerbWatch:            "datasources.caching:read",
+					utils.VerbCreate:           "datasources.caching:write",
+					utils.VerbUpdate:           "datasources.caching:write",
+					utils.VerbPatch:            "datasources.caching:write",
+					utils.VerbDelete:           "datasources.caching:write",
+					utils.VerbDeleteCollection: "datasources.caching:write",
+				},
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:              {"datasources:admin"},
+					utils.VerbList:             {"datasources:admin"},
+					utils.VerbWatch:            {"datasources:admin"},
+					utils.VerbCreate:           {"datasources:admin"},
+					utils.VerbUpdate:           {"datasources:admin"},
+					utils.VerbPatch:            {"datasources:admin"},
+					utils.VerbDelete:           {"datasources:admin"},
+					utils.VerbDeleteCollection: {"datasources:admin"},
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
