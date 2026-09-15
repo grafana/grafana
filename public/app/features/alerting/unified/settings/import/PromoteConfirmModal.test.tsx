@@ -8,7 +8,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { setupAutoSyncConfigWriteError, setupStatefulAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
+import {
+  SYNC_SUCCEEDED_CONDITION,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { PromoteConfirmModal, getPreviewState } from './PromoteConfirmModal';
 
@@ -211,7 +215,7 @@ describe('PromoteConfirmModal', () => {
       specUid: 'mimir-uid',
       statusUid: 'mimir-uid',
       origin: 'ini',
-      syncedReason: 'SyncSucceeded',
+      condition: SYNC_SUCCEEDED_CONDITION,
     });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),

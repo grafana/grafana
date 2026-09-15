@@ -394,3 +394,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-03,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-09,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
 2026-08-12,alerting.folderHasRulesLabel,experimental,@grafana/alerting-squad,false,false,false
+2026-09-15,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true
