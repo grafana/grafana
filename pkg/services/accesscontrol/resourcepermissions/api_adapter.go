@@ -330,7 +330,10 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 		}
 	}
 
-	if len(serviceAccountUIDs) > 0 && a.service.serviceAccountRetriever != nil {
+	if len(serviceAccountUIDs) > 0 {
+		if a.service.serviceAccountRetriever == nil {
+			return nil, errors.New("service account retriever is not configured")
+		}
 		serviceAccounts, err := a.service.serviceAccountRetriever.RetrieveServiceAccountsByUIDs(ctx, orgID, serviceAccountUIDs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve %d service accounts for resource permissions: %w", len(serviceAccountUIDs), err)

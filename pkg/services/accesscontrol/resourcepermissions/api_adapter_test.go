@@ -774,6 +774,37 @@ func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedi
 	assert.Equal(t, int64(100), perms[0].ID)
 }
 
+func TestConvertK8sResourcePermissionToDTOFailsWithoutServiceAccountRetriever(t *testing.T) {
+	testApi := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			store:       &mockResourcePermissionStore{},
+			userService: usertest.NewUserServiceFake(),
+			teamService: teamtest.NewFakeService(),
+			options: Options{
+				Resource:             "folders",
+				ResourceAttribute:    "uid",
+				PermissionsToActions: map[string][]string{"View": {"folders:read"}},
+			},
+		},
+	}
+
+	_, err := testApi.convertK8sResourcePermissionToDTO(
+		context.Background(),
+		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
+				Name: "sa-uid-1",
+				Verb: "view",
+			}},
+		}},
+		"default",
+		false,
+	)
+	require.EqualError(t, err, "service account retriever is not configured")
+}
+
 // TestConvertK8sResourcePermissionToDTODropsStaleAssignments checks that an
 // assignment whose subject no longer exists is omitted rather than returned
 // with a blank subject, matching the INNER JOINs on the legacy read path.
