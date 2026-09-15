@@ -2689,11 +2689,11 @@ __metadata:
   linkType: hard
 
 "@grafana/lezer-logql@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@grafana/lezer-logql@npm:0.4.1"
+  version: 0.4.2
+  resolution: "@grafana/lezer-logql@npm:0.4.2"
   peerDependencies:
     "@lezer/lr": 1.4.10
-  checksum: 10/e31a36ce00217e7ce70da6299ebd34c9371372b1875db4a811a58292ab9f44c25fcd940e392a61f0da15e3b05cfd1e10f7ee81b4914de817046eb7b5b2a4ce56
+  checksum: 10/be67fb7464d80e62fa500f8554a7e3a7212a5e9b3e8b94ccb568d8de989c14afabfa7d58e3d332c938672db22033a379e97b939f5e6b6216e13e2e8577cac93e
   languageName: node
   linkType: hard
 
