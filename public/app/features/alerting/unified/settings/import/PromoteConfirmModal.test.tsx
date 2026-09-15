@@ -1,12 +1,14 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
+import { grantUserPermissions } from '../../mocks';
+import { setupAutoSyncConfigWriteError, setupStatefulAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { PromoteConfirmModal, getPreviewState } from './PromoteConfirmModal';
 
@@ -17,6 +19,11 @@ const notify = { success: jest.fn(), warning: jest.fn(), error: jest.fn() };
 jest.mock('app/core/copy/appNotification', () => ({
   useAppNotification: () => notify,
 }));
+
+// usePromoteStagedConfig reads the Config resource (for the ini-managed check) via the same
+// flag-and-permission-gated query as the settings page. The flag alone isn't enough to read it —
+// tests that need real data must also grantUserPermissions the config-read action themselves.
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 const stagedConfig = {
   identifier: 'config-min',
@@ -139,12 +146,11 @@ describe('PromoteConfirmModal', () => {
   });
 
   it('clears the configured auto-sync datasource after promoting a sync-managed config', async () => {
-    const adminConfig: AdminConfigPostState = { lastPayload: null };
+    const { getStored } = setupStatefulAutoSyncConfig(server, { specUid: 'mimir-uid' });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
       http.post(PROMOTE_URL, () => HttpResponse.json({}))
     );
-    setupAdminConfigPost(server, adminConfig, 201);
 
     const onDismiss = jest.fn();
     const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} isSyncManaged onDismiss={onDismiss} />);
@@ -152,20 +158,19 @@ describe('PromoteConfirmModal', () => {
     await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
     await user.click(ui.confirm.get());
 
-    // Empty UID is the backend's "clear it" convention; without it auto-sync stays reported as
-    // active and the convert API keeps rejecting notification imports.
-    await waitFor(() => expect(adminConfig.lastPayload).toEqual({ external_alertmanager_uid: '' }));
+    // Empty spec is the "clear it" convention; without it auto-sync stays reported as active and
+    // the convert API keeps rejecting notification imports.
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({}));
     expect(notify.success).toHaveBeenCalled();
     expect(onDismiss).toHaveBeenCalled();
   });
 
   it('leaves the auto-sync configuration alone when the staged config is not sync-managed', async () => {
-    const adminConfig: AdminConfigPostState = { lastPayload: null };
+    const { patchSpy } = setupStatefulAutoSyncConfig(server, { specUid: 'mimir-uid' });
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
       http.post(PROMOTE_URL, () => HttpResponse.json({}))
     );
-    setupAdminConfigPost(server, adminConfig, 201);
 
     const onDismiss = jest.fn();
     const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
@@ -174,17 +179,15 @@ describe('PromoteConfirmModal', () => {
     await user.click(ui.confirm.get());
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
-    expect(adminConfig.lastPayload).toBeNull();
+    expect(patchSpy).not.toHaveBeenCalled();
   });
 
   it('reports a promote that succeeded but could not clear auto-sync as a warning, not a failure', async () => {
-    const adminConfig: AdminConfigPostState = { lastPayload: null };
     server.use(
       http.post(CONVERT_URL, fullDryRunResponse),
       http.post(PROMOTE_URL, () => HttpResponse.json({}))
     );
-    // 409 is the operator-managed (grafana.ini) case: the UID can never be cleared through the API.
-    setupAdminConfigPost(server, adminConfig, 409, { message: 'managed by the operator' });
+    setupAutoSyncConfigWriteError(server, { code: 500, message: 'etcdserver: request timed out' });
 
     const onDismiss = jest.fn();
     const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} isSyncManaged onDismiss={onDismiss} />);
@@ -193,6 +196,38 @@ describe('PromoteConfirmModal', () => {
     await user.click(ui.confirm.get());
 
     await waitFor(() => expect(notify.warning).toHaveBeenCalled());
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it('reports auto-sync as still active, not off, when grafana.ini stays authoritative despite a successful clear', async () => {
+    // Needed for usePromoteStagedConfig's own read of the Config resource — without it the
+    // query is skipped and the ini check can never see a status to read.
+    grantUserPermissions([AccessControlAction.ActionAlertingNotificationsConfigRead]);
+    // Ini-managed: spec is dormant, so admission lets the clear through, but status keeps
+    // reporting the ini datasource as synced — clearing it never actually stops the sync.
+    const { getStored } = setupStatefulAutoSyncConfig(server, {
+      specUid: 'mimir-uid',
+      statusUid: 'mimir-uid',
+      origin: 'ini',
+      syncedReason: 'SyncSucceeded',
+    });
+    server.use(
+      http.post(CONVERT_URL, fullDryRunResponse),
+      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+    );
+
+    const onDismiss = jest.fn();
+    const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} isSyncManaged onDismiss={onDismiss} />);
+
+    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+    await user.click(ui.confirm.get());
+
+    // The clear itself succeeds (spec goes empty) — it's still-ini-authoritative status that
+    // makes this a warning, not the write failing.
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({}));
+    expect(notify.warning).toHaveBeenCalled();
     expect(notify.error).not.toHaveBeenCalled();
     expect(notify.success).not.toHaveBeenCalled();
     expect(onDismiss).toHaveBeenCalled();
