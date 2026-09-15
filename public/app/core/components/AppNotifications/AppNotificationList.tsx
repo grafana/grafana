@@ -92,7 +92,7 @@ export function AppNotificationList() {
     <Portal>
       <div className={styles.wrapper}>
         <div className="sr-only" role="log" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
-        <Stack direction="column">
+        <Stack direction="column" gap={2}>
           {appNotifications.map((appNotification, index) => {
             return (
               <AppNotificationItem
@@ -116,8 +116,8 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 400,
       maxWidth: 600,
       position: 'fixed',
-      right: 6,
-      top: 88,
+      right: theme.spacing(2),
+      bottom: theme.spacing(2),
     }),
   };
 }

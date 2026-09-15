@@ -29,6 +29,7 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
       title={appNotification.title}
       onRemove={() => onClearNotification(appNotification.id)}
       elevated
+      bottomSpacing={0}
     >
       {hasBody && (
         <div className={styles.wrapper}>
