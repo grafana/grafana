@@ -60,6 +60,7 @@ func validateRegexNode(expression *syntax.Regexp) error {
 		switch expression.Sub[0].Op {
 		case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
 			return errors.New("regular expression uses unsupported successive quantifiers")
+		default:
 		}
 	case syntax.OpNoMatch, syntax.OpEmptyMatch, syntax.OpLiteral, syntax.OpCharClass, syntax.OpAnyChar, syntax.OpAnyCharNotNL,
 		syntax.OpCapture, syntax.OpConcat, syntax.OpAlternate:
