@@ -449,6 +449,68 @@ describe('Combobox', () => {
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
 
+    it('loads async options when mounted with controlled isOpen', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(
+        <React.StrictMode>
+          <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />
+        </React.StrictMode>
+      );
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('loads async options once when opening a controlled Combobox', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      function ControlledCombobox() {
+        const [isOpen, setIsOpen] = React.useState(false);
+        return (
+          <Combobox
+            options={asyncOptions}
+            value={null}
+            onChange={onChangeHandler}
+            isOpen={isOpen}
+            onIsOpenChange={setIsOpen}
+          />
+        );
+      }
+
+      render(<ControlledCombobox />);
+      await user.click(screen.getByRole('combobox'));
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('preserves the search when opening a controlled Combobox is delayed', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        Promise.resolve(searchTerm === 'O' ? [{ value: 'Only match' }] : [{ value: 'Unfiltered option' }])
+      );
+
+      const { rerender } = render(
+        <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen={false} />
+      );
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'O');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      rerender(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(input).toHaveValue('O');
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('O');
+      expect(screen.getByRole('option', { name: 'Only match' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Unfiltered option' })).not.toBeInTheDocument();
+    });
+
     it('should allow async options', async () => {
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
