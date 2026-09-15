@@ -414,12 +414,12 @@ func TestStore_SetAuthInfo(t *testing.T) {
 			name: "falls back to update when the object already exists",
 			cmd:  &login.SetAuthInfoCommand{UserId: 42, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "new-id", ExternalUID: "new-external"},
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				switch {
-				case r.Method == http.MethodPost:
+				switch r.Method {
+				case http.MethodPost:
 					writeStatus(w, http.StatusConflict, metav1.StatusReasonAlreadyExists)
-				case r.Method == http.MethodGet:
+				case http.MethodGet:
 					writeJSON(t, w, authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "old-id", time.Now()))
-				case r.Method == http.MethodPut:
+				case http.MethodPut:
 					var obj iamv0alpha1.AuthInfo
 					require.NoError(t, json.NewDecoder(r.Body).Decode(&obj))
 					assert.Equal(t, "new-id", obj.Spec.AuthID)
