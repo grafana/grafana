@@ -8,12 +8,11 @@ describe('canEditNotebooks', () => {
     jest.restoreAllMocks();
   });
 
-  it('allows editing for a user with dashboards:write', () => {
+  it('allows editing for a user with notebooks:write', () => {
     const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     expect(canEditNotebooks()).toBe(true);
-    // Notebooks reuse the dashboard action rather than one of their own, so pin which is asked for.
-    expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.DashboardsWrite);
+    expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.NotebooksWrite);
   });
 
   it('refuses a user without it', () => {
@@ -28,13 +27,12 @@ describe('canDeleteNotebooks', () => {
     jest.restoreAllMocks();
   });
 
-  it('allows deleting for a user with dashboards:delete', () => {
+  it('allows deleting for a user with notebooks:write', () => {
     const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     expect(canDeleteNotebooks()).toBe(true);
-    // Delete is its own action, not write - pin which one is asked for, since both are truthy for
-    // most users and a mix-up would only show up as a missing menu item for the few where they differ.
-    expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.DashboardsDelete);
+    // There is no separate deleter role, only reader and writer, so this checks write too.
+    expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.NotebooksWrite);
   });
 
   it('refuses a user without it', () => {

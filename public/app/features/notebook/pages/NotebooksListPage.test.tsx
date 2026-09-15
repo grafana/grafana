@@ -257,11 +257,11 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1?edit=true');
   });
 
-  it('hides the Edit action from a user who cannot edit dashboards', async () => {
+  it('hides the Edit action from a user who cannot edit notebooks', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest
       .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
+      .mockImplementation((action) => action !== AccessControlAction.NotebooksWrite);
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
