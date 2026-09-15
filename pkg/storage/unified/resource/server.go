@@ -160,6 +160,10 @@ type BackendReadResponse struct {
 	Error *resourcepb.ErrorResult
 }
 
+// ErrBatchReadUnsupported signals the caller to fall back to per-resource reads.
+// On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
+var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
+
 type ResourceLastImportTime struct {
 	NamespacedResource
 	LastImportTime time.Time
@@ -176,6 +180,10 @@ type StorageBackend interface {
 
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
+
+	// BatchReadResource reads several resources at once, one response per request
+	// in order, or returns ErrBatchReadUnsupported.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -1462,27 +1470,34 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
 	}
 
-	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      "get",
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Namespace: req.Key.Namespace,
-		Name:      req.Key.Name,
-	}, rsp.Folder)
-	if err != nil {
-		return &resourcepb.ReadResponse{Error: AsErrorResult(err)}, nil
-	}
-	if !a.Allowed {
-		return &resourcepb.ReadResponse{
-			Error: &resourcepb.ErrorResult{
-				Code: http.StatusForbidden,
-			}}, nil
+	if errRes := s.authorizeRead(ctx, user, req.Key, rsp.Folder); errRes != nil {
+		return &resourcepb.ReadResponse{Error: errRes}, nil
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
 		Value:           rsp.Value,
 		Error:           rsp.Error,
 	}, nil
+}
+
+// authorizeRead applies the "get" access check for an already-read resource,
+// using the folder resolved by the read. It returns nil when access is allowed,
+// or the error result to surface otherwise (403, or the check failure).
+func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, folder string) *resourcepb.ErrorResult {
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      "get",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, folder)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
+	}
+	return nil
 }
 
 func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
