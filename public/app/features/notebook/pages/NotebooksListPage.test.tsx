@@ -842,6 +842,28 @@ describe('NotebooksListPage', () => {
       }
     });
 
+    // Everything else reads the committed search trimmed, so a space on its own moves no filter.
+    it('reports nothing when only whitespace changes', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.type(searchBox, ' ');
+      // A space changes nothing the page shows, on purpose, so there is no state to wait for.
+      // Waiting out the 300ms debounce is what reaches the point where a raw comparison fires.
+      // Inside act() because the debounce sets state when it lands.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
     it('reports an emptied search box as a zero-length query', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       setNotebooks(twoNotebooks());
