@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setDataSourceSrv, setPluginImportUtils, type DataSourceSrv } from '@grafana/runtime';
 import {
   VizPanel,
   ConstantVariable,
@@ -28,6 +28,8 @@ import {
   hasLibraryPanelsInV1Dashboard,
   getLayoutForObject,
   forceRenderChildren,
+  getDefaultVizPanel,
+  findDashboardSceneFor,
 } from './utils';
 
 setPluginImportUtils({
@@ -471,6 +473,60 @@ describe('utils', () => {
       };
 
       expect(hasLibraryPanelsInV1Dashboard(dashboard)).toBe(true);
+    });
+  });
+
+  describe('getDefaultVizPanel', () => {
+    it('attaches a query runner by default', async () => {
+      setDataSourceSrv({
+        getInstanceSettings: () => ({ uid: 'ds-1', type: 'prometheus' }),
+      } as unknown as DataSourceSrv);
+
+      const panel = await getDefaultVizPanel();
+
+      expect(panel.state.$data).toBeDefined();
+    });
+
+    it('omits the query runner when the scene is previewing a plan', async () => {
+      const scene = new DashboardScene({
+        title: 'plan',
+        meta: {},
+        body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 2,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
+      });
+
+      const panel = await getDefaultVizPanel(scene);
+
+      expect(panel.state.$data).toBeUndefined();
+    });
+
+    it('resolves the scene from any object inside it, so layout-level callers get the same behaviour', async () => {
+      const layout = new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) });
+      const scene = new DashboardScene({
+        title: 'plan',
+        meta: {},
+        body: layout,
+        planning: {
+          planId: 'plan-1',
+          planTitle: 'Kafka overview',
+          panelCount: 2,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
+      });
+
+      expect(findDashboardSceneFor(layout)).toBe(scene);
+      expect((await getDefaultVizPanel(layout)).state.$data).toBeUndefined();
+    });
+
+    it('returns undefined rather than throwing for an object outside a dashboard scene', () => {
+      expect(findDashboardSceneFor(new SceneFlexLayout({ children: [] }))).toBeUndefined();
     });
   });
 

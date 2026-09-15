@@ -188,11 +188,9 @@ export class TabsLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
-    const tab = this.getCurrentTab() ?? this.state.tabs[0];
-
-    if (tab) {
-      tab.getLayout().addPanel(vizPanel);
-    }
+    // Create a tab when the layout is empty so the panel has a destination.
+    const tab = this.getCurrentTab() ?? this.state.tabs[0] ?? this.addNewTab();
+    tab.getLayout().addPanel(vizPanel);
   }
 
   public getVizPanels(): VizPanel[] {
@@ -270,6 +268,9 @@ export class TabsLayoutManager
 
   public pasteTab() {
     const scene = getDashboardSceneFor(this);
+    if (!scene.isPlanningActionAllowed('paste-section')) {
+      return;
+    }
     const tab = getTabFromClipboard(scene);
     this.addNewTab(tab);
   }

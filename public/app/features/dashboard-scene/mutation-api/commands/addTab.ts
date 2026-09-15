@@ -15,7 +15,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
-import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
+import { isEmptySectionContainer, resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -70,11 +70,13 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
 
-        // Nest the existing layout inside the requested tab as-is,
-        // preserving its structure (rows, grid, etc.).
+        // Preserve the existing layout unless it is a section container with no sections.
+        // An empty grid can accept panels directly and should still be nested.
         targetLayout.clearParent();
+        const preservesContent = !isEmptySectionContainer(targetLayout);
+
         const newTab = new TabItem({
-          layout: targetLayout,
+          layout: preservesContent ? targetLayout : DefaultGridLayoutManager.fromVizPanels([]),
           title: tab.spec.title,
           repeatByVariable: tab.spec.repeat?.value,
           conditionalRendering: tab.spec.conditionalRendering

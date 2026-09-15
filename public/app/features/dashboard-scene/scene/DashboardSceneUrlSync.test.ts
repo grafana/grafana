@@ -289,6 +289,35 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.viewPanel).toBeUndefined();
     });
   });
+
+  describe('while planning', () => {
+    const planning = {
+      planId: 'plan-1',
+      planTitle: 'Kafka overview',
+      panelCount: 4,
+      onBuild: jest.fn(),
+      onDismiss: jest.fn(),
+    };
+
+    it('does not open the share drawer from a shareView url param', () => {
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ shareView: 'link' });
+
+      expect(scene.state.overlay).toBeUndefined();
+      expect(scene.state.shareView).toBeUndefined();
+    });
+
+    it('does not open dashboard settings from an editview url param', () => {
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+
+      expect(scene.state.editview).toBeUndefined();
+    });
+  });
 });
 
 function buildTestSceneWithRow(title: string, { collapse }: { collapse?: boolean } = {}) {

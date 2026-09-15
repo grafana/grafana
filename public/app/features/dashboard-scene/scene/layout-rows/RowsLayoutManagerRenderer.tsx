@@ -11,7 +11,7 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
+import { useDashboardState, getLayoutOrchestratorFor, getDashboardSceneFor } from '../../utils/utils';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -106,7 +106,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
                 </Button>
-                {hasCopiedRow && (
+                {hasCopiedRow && getDashboardSceneFor(model).isPlanningActionAllowed('paste-section') && (
                   <Button
                     icon="clipboard-alt"
                     variant="secondary"

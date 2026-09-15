@@ -473,6 +473,7 @@ export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
   type DashboardMutationAPI,
+  type DashboardMutationCapabilities,
   type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,

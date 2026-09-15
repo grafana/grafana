@@ -234,6 +234,46 @@ describe('<PanelEditActionsWrapper />', () => {
     );
   }
 
+  test('planning mode hides unsupported actions and restores them when planning ends', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    const scene = new DashboardScene({
+      isEditing: true,
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    });
+
+    renderPanelEditActionsWrapper(panel);
+    await hoverAndRest(screen.getByTestId('reference-child'));
+
+    expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Copy to clipboard' })).toBeEnabled();
+
+    act(() => {
+      scene.setState({
+        planning: {
+          planId: 'test-plan',
+          planTitle: 'Test plan',
+          panelCount: 1,
+          onBuild: jest.fn(),
+          onDismiss: jest.fn(),
+        },
+      });
+    });
+
+    expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy to clipboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Duplicate' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    expect(scene.state.sidebar.getSelectedObject()).toBe(panel);
+
+    act(() => scene.setState({ planning: undefined }));
+
+    expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Copy to clipboard' })).toBeEnabled();
+  });
+
   describe('when the user clicks Settings ', () => {
     test('the panel is selected via the sidebar', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
@@ -436,6 +476,10 @@ describe('<PanelEditActionsWrapper />', () => {
 
     test('resting the pointer shows the edit actions again', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+      new DashboardScene({
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
       const tree = (selectionEnabled: boolean) => (
         <ElementSelectionContext.Provider
           value={{ enabled: selectionEnabled, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}

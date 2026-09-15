@@ -39,6 +39,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -3523,6 +3524,120 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
     },
   };
 }
+
+describe('planning mode', () => {
+  const planning = {
+    planId: 'plan-1',
+    planTitle: 'Kafka overview',
+    panelCount: 4,
+    onBuild: jest.fn(),
+    onDismiss: jest.fn(),
+  };
+
+  it('reports planning only while the planning state is set', () => {
+    const scene = buildTestScene();
+    expect(scene.isPlanning()).toBe(false);
+
+    scene.setState({ planning });
+    expect(scene.isPlanning()).toBe(true);
+
+    scene.setState({ planning: undefined });
+    expect(scene.isPlanning()).toBe(false);
+  });
+
+  it('does not open the save drawer while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    scene.openSaveDrawer({});
+
+    expect(scene.state.overlay).toBeUndefined();
+  });
+
+  it('opens the save drawer again once the plan is built', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    scene.openSaveDrawer({});
+    expect(scene.state.overlay).toBeUndefined();
+
+    scene.setState({ planning: undefined });
+    scene.openSaveDrawer({});
+
+    expect(scene.state.overlay).toBeDefined();
+  });
+
+  it('does not navigate to settings while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const partial = jest.spyOn(locationService, 'partial');
+
+    scene.onOpenSettings();
+
+    expect(partial).not.toHaveBeenCalled();
+    partial.mockRestore();
+  });
+
+  it('does not open the library panel drawer while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    scene.onShowAddLibraryPanelDrawer();
+
+    expect(scene.state.overlay).toBeUndefined();
+  });
+
+  it('refuses to open the panel editor while planning, so a placeholder cannot be given a query', async () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const panel = scene.state.body.getVizPanels()[0];
+
+    await openPanelEditor(scene, panel);
+
+    expect(scene.state.editPanel).toBeUndefined();
+  });
+
+  it('opens the panel editor again once the plan is built', async () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const panel = scene.state.body.getVizPanels()[0];
+    await openPanelEditor(scene, panel);
+    expect(scene.state.editPanel).toBeUndefined();
+
+    scene.setState({ planning: undefined });
+    await openPanelEditor(scene, panel);
+
+    expect(scene.state.editPanel).toBeDefined();
+  });
+
+  it('answers the capability gate as always-allowed outside planning', () => {
+    const scene = buildTestScene();
+
+    expect(scene.isPlanningActionAllowed('edit-panel')).toBe(true);
+    expect(scene.isPlanningActionAllowed('save-dashboard')).toBe(true);
+
+    scene.setState({ planning });
+
+    expect(scene.isPlanningActionAllowed('edit-panel')).toBe(false);
+    expect(scene.isPlanningActionAllowed('save-dashboard')).toBe(false);
+    expect(scene.isPlanningActionAllowed('change-visualization')).toBe(true);
+  });
+
+  it('creates query-less panels while planning', async () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    const panel = await scene.onCreateNewPanel();
+
+    expect(panel.state.$data).toBeUndefined();
+  });
+});
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({

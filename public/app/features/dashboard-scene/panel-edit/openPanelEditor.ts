@@ -11,6 +11,12 @@ import { type DashboardScene } from '../scene/DashboardScene';
  * by the time this returns.
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
+  // Guard all editor entry points, including URLs and keyboard shortcuts. The editor
+  // adds a default query to empty panels, which is incompatible with plan placeholders.
+  if (!dashboard.isPlanningActionAllowed('edit-panel')) {
+    return;
+  }
+
   const { buildPanelEditScene } = await import(/* webpackChunkName: "panel-edit" */ './PanelEditor');
   dashboard.setState({ editPanel: buildPanelEditScene(panel, isNewPanel) });
 }

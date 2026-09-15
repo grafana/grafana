@@ -3,6 +3,7 @@ import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import * as appNotification from 'app/core/reducers/appNotification';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
@@ -510,6 +511,37 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p c')!.onTrigger();
 
         expect(mockScene.copyPanel).toHaveBeenCalledWith(panel);
+      });
+
+      it('withholds copying and its success toast while planning, then allows both after planning ends', () => {
+        const notify = jest.spyOn(appNotification, 'notifyApp');
+        panel.setState({ title: 'Request rate' });
+        mockScene.setState({
+          planning: {
+            planId: 'plan-1',
+            planTitle: 'Preview',
+            panelCount: 1,
+            onBuild: jest.fn(),
+            onDismiss: jest.fn(),
+          },
+        });
+        setupKeyboardShortcuts(mockScene);
+        focusPanel('panel-1');
+
+        getBinding('p c')!.onTrigger();
+
+        expect(notify).not.toHaveBeenCalled();
+        expect(mockScene.copyPanel).not.toHaveBeenCalled();
+        expect(DashboardInteractions.panelActionClicked).not.toHaveBeenCalled();
+
+        mockScene.setState({ planning: undefined });
+        getBinding('p c')!.onTrigger();
+
+        expect(mockScene.copyPanel).toHaveBeenCalledWith(panel);
+        expect(notify).toHaveBeenCalledWith(
+          expect.objectContaining({ title: 'Panel "Request rate" copied to clipboard' })
+        );
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', 1, 'keyboard');
       });
 
       it('reports the copy interaction as keyboard-sourced', () => {

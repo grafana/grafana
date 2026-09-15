@@ -10,6 +10,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
+import { isActionAllowedWhilePlanning } from '../planningPolicy';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -31,8 +32,8 @@ export function PanelEditActions({
   isRepeated,
 }: {
   onClickEdit: () => void;
-  onClickEditVisualization: () => void;
-  onClickCopy: () => void;
+  onClickEditVisualization?: () => void;
+  onClickCopy?: () => void;
   onClickDuplicate: () => void;
   onClickDelete: () => void;
   isRepeated: boolean;
@@ -43,17 +44,21 @@ export function PanelEditActions({
     <>
       <SettingsActionButton onClick={onClickEdit} />
       <div className={styles.actionsDivider} />
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.textAction)}
-        onClick={onClickEditVisualization}
-      >
-        {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
-      </Button>
-      <div className={styles.actionsDivider} />
-      <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />
+      {onClickEditVisualization && (
+        <>
+          <Button
+            fill="text"
+            variant="secondary"
+            size="sm"
+            className={cx(styles.action, styles.textAction)}
+            onClick={onClickEditVisualization}
+          >
+            {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
+          </Button>
+          <div className={styles.actionsDivider} />
+        </>
+      )}
+      {onClickCopy && <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />}
       <DuplicateActionButton onClick={onClickDuplicate} isRepeated={isRepeated} />
       <DeleteActionButton
         title={t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?')}
@@ -69,10 +74,10 @@ export function PanelEditActions({
   );
 }
 
-export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
-  const theme = useTheme2();
-  const isPopoverSupported = useHoverPopoverSupported();
-  const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
+function PanelEditActionsContent({ panel }: { panel: VizPanel }) {
+  const { planning } = getDashboardSceneLike(panel).useState();
+  const canEditVisualization = !planning || isActionAllowedWhilePlanning('edit-panel');
+  const canCopy = !planning || isActionAllowedWhilePlanning('copy-panel');
 
   const onClickEdit = useCallback(() => {
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
@@ -103,19 +108,23 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
     getLayoutManagerFor(panel).removePanel?.(panel);
   }, [panel]);
 
-  const editActions = useMemo(
-    () => (
-      <PanelEditActions
-        onClickEdit={onClickEdit}
-        onClickEditVisualization={onClickEditVisualization}
-        onClickCopy={onClickCopy}
-        onClickDuplicate={onClickDuplicate}
-        onClickDelete={onClickDelete}
-        isRepeated={isRepeatCloneOrChildOf(panel)}
-      />
-    ),
-    [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete, panel]
+  return (
+    <PanelEditActions
+      onClickEdit={onClickEdit}
+      onClickEditVisualization={canEditVisualization ? onClickEditVisualization : undefined}
+      onClickCopy={canCopy ? onClickCopy : undefined}
+      onClickDuplicate={onClickDuplicate}
+      onClickDelete={onClickDelete}
+      isRepeated={isRepeatCloneOrChildOf(panel)}
+    />
   );
+}
+
+export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
+  const theme = useTheme2();
+  const isPopoverSupported = useHoverPopoverSupported();
+  const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
+  const editActions = useMemo(() => <PanelEditActionsContent panel={panel} />, [panel]);
 
   return (
     <EditActionsPopover

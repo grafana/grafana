@@ -73,6 +73,34 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /**
+   * Enables plan mode on this scene: panels stay query-less and plan actions replace
+   * save/settings/share. Variables remain editable for review before the build.
+   */
+  planning?: DashboardPlanningState;
+}
+
+export interface DashboardPlanningState {
+  /**
+   * Opaque identity used to match a plan decision to the preview currently on screen.
+   */
+  planId: string;
+  /** Title of the plan being previewed, shown in the banner. */
+  planTitle: string;
+  /** How many panels the plan proposes, shown in the banner. */
+  panelCount: number;
+  /** Build the plan: attach real queries to the scaffolded panels. */
+  onBuild: () => void;
+  /** Discard the plan and remove its scaffolded panels. */
+  onDismiss: () => void;
+  /**
+   * A placeholder's visualization was changed by hand.
+   *
+   * Placeholder data is shaped for the visualization it was drawn for — a single value for a stat,
+   * a series for a time series, categories for a pie — so whoever supplied that data needs to know
+   * in order to re-shape it. Core does not know where the data came from, hence the callback.
+   */
+  onPanelVisualizationChanged?: (panelKey: string, pluginId: string) => void;
 }
 
 interface DashboardScenePreferences {
@@ -87,7 +115,7 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
-function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
+export function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
   return 'isDashboardScene' in obj;
 }
 

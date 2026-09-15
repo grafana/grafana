@@ -195,6 +195,27 @@ describe('RowsLayoutManager', () => {
     });
   });
 
+  describe('addPanel', () => {
+    it('puts the panel in the first row', () => {
+      const manager = buildRowsLayoutManager([new RowItem({ title: 'Overview' })]);
+      const panel = new VizPanel({ key: 'panel-1', title: 'Request rate', pluginId: 'timeseries' });
+
+      manager.addPanel(panel);
+
+      expect(manager.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate']);
+    });
+
+    it('makes a row for the panel when there are none, rather than dropping it', () => {
+      const manager = buildRowsLayoutManager([]);
+      const panel = new VizPanel({ key: 'panel-1', title: 'Request rate', pluginId: 'timeseries' });
+
+      manager.addPanel(panel);
+
+      expect(manager.state.rows).toHaveLength(1);
+      expect(manager.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate']);
+    });
+  });
+
   describe('removeRow', () => {
     beforeEach(() => {
       lastUndo = undefined;

@@ -12,6 +12,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
+import { isActionAllowedWhilePlanning } from '../../scene/planningPolicy';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
 import { DashboardInteractions } from '../../utils/interactions';
 import { DashboardSidebar } from '../DashboardSidebar';
@@ -38,6 +39,8 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneLike(model);
+  const { planning } = dashboardScene.useState();
+  const canPastePanel = !planning || isActionAllowedWhilePlanning('paste-panel');
   const orchestrator = dashboardScene.state.layoutOrchestrator;
   const selectedObj = sidebar.getSelectedObject();
 
@@ -91,7 +94,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
                       );
                     }}
                   </Draggable>
-                  {hasCopiedPanel && (
+                  {hasCopiedPanel && canPastePanel && (
                     <Draggable
                       draggableId="paste-panel-drag"
                       index={1}
