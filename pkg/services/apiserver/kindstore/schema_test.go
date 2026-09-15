@@ -205,6 +205,3 @@ func TestSchemaValidatorDropsCommonFields(t *testing.T) {
 	require.Len(t, kindSchema.Properties, 4, "the manifest schema is left alone")
 	require.Len(t, kindSchema.Required, 4)
 }
-
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }

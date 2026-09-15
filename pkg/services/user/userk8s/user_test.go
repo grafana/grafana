@@ -1244,9 +1244,6 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 	}
 }
 
-//go:fix inline
-func strPtr(s string) *string { return new(s) }
-
 func TestUserK8sService_Update(t *testing.T) {
 	trueVal := true
 	falseVal := false

@@ -160,6 +160,3 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 	require.NoError(t, err)
 	return index
 }
-
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }

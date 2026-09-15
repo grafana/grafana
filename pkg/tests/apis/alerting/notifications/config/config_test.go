@@ -67,9 +67,6 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 	})
 }
 
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }
-
 func newConfigClient(t *testing.T, user apis.User) *alertingnotifv1beta1.ConfigClient {
 	t.Helper()
 	client, err := alertingnotifv1beta1.NewConfigClientFromGenerator(user.GetClientRegistry())

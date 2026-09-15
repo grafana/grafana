@@ -669,9 +669,3 @@ func normalizeParityListPtr(l *parityListResult) *parityListResult {
 	out := normalizeParityList(*l)
 	return &out
 }
-
-//go:fix inline
-func parityStrPtr(s string) *string { return new(s) }
-
-//go:fix inline
-func parityBoolPtr(b bool) *bool { return new(b) }

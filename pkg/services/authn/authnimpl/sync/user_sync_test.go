@@ -18,6 +18,7 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -2442,9 +2443,6 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 		})
 	}
 }
-
-//go:fix inline
-func strPtr(s string) *string { return new(s) }
 
 func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 	tests := []struct {

@@ -134,6 +134,3 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	require.Equal(t, int32(400), statusErr.Status().Code)
 	require.Contains(t, statusErr.Status().Message, "missing annotations.summary")
 }
-
-//go:fix inline
-func boolPtr(b bool) *bool { return new(b) }
