@@ -7,6 +7,9 @@ import { MatcherOperator, type Silence } from 'app/plugins/datasource/alertmanag
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 
+// Tolerance for the browser clock running ahead of the Alertmanager server clock when creating a new silence.
+const CLOCK_SKEW_BUFFER_SECONDS = 60;
+
 /**
  * Parse query params and return default silence form values
  */
@@ -63,10 +66,11 @@ export const getFormFieldsForSilence = (silence: Silence): SilenceFormFields => 
 export const getDefaultSilenceFormValues = (partial?: Partial<SilenceFormFields>): SilenceFormFields => {
   const now = new Date();
 
-  const endsAt = addDurationToDate(now, { hours: 2 }); // Default time period is now + 2h
+  const startsAt = addDurationToDate(now, { seconds: -CLOCK_SKEW_BUFFER_SECONDS });
+  const endsAt = addDurationToDate(startsAt, { hours: 2 });
   return {
     id: '',
-    startsAt: now.toISOString(),
+    startsAt: startsAt.toISOString(),
     endsAt: endsAt.toISOString(),
     comment: `created ${dateTime().format('YYYY-MM-DD HH:mm')}`,
     createdBy: contextSrv.user.name,
