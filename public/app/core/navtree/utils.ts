@@ -26,6 +26,11 @@ export const buildEntries = (entries: NavEntryBuilder[]): NavModelItem[] =>
 // registered enterprise items, pruned when nothing attached
 const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, NavID.cfgAccess];
 
+// Top-level sections built unconditionally as attachment targets, pruned when
+// nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
+// RemoveEmptyDrilldownSection, plus Administration once its subsections go.
+const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
+
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
   for (const node of nodes) {
@@ -77,13 +82,17 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
 }
 
 /**
- * Removes attachment-target shells that ended up empty: the admin subsections
- * (PRUNABLE_ADMIN_SECTIONS) and the top-level Connections and Administration
- * sections, all built unconditionally so plugin pages and registered items
- * can attach, then dropped when nothing did. Returns a new tree.
+ * Removes attachment-target shells that ended up empty, in the server's order:
+ * the admin subsections first (PRUNABLE_ADMIN_SECTIONS), then the top-level
+ * sections (PRUNABLE_SECTIONS) — so Administration goes once its last
+ * subsection does. Mirrors RemoveEmptyAdminSections,
+ * RemoveEmptyConnectionsSection and RemoveEmptyDrilldownSection. Returns a new
+ * tree.
  */
 export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
   const isEmpty = (node: NavModelItem) => (node.children ?? []).length === 0;
+  const isPrunable = (ids: NavId[], node: NavModelItem) =>
+    Boolean(node.id) && ids.some((id) => id === node.id) && isEmpty(node);
 
   return tree
     .map((node) => {
@@ -92,10 +101,8 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
       }
       return {
         ...node,
-        children: node.children.filter(
-          (child) => !(child.id && PRUNABLE_ADMIN_SECTIONS.some((id) => id === child.id) && isEmpty(child))
-        ),
+        children: node.children.filter((child) => !isPrunable(PRUNABLE_ADMIN_SECTIONS, child)),
       };
     })
-    .filter((node) => !((node.id === NavID.cfg || node.id === NavID.connections) && isEmpty(node)));
+    .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }

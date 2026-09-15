@@ -33,14 +33,14 @@ import {
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
-import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
-import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
 import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
@@ -303,6 +303,7 @@ export class NotebookLayoutManager
       after,
       action: {
         label: t('notebooks.history.edit-block', 'Edit block'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishContentEdit(edit);
           this.applyCellContent(edit.elementName, edit.after);
@@ -399,6 +400,7 @@ export class NotebookLayoutManager
       after: queries,
       action: {
         label: t('notebooks.history.edit-query', 'Edit query'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           this.finishQueriesEdit(edit);
           setQueryRunnerQueries(edit.runner, edit.after);
@@ -444,6 +446,7 @@ export class NotebookLayoutManager
     const before = runner.state.queries;
     this.executeEdit({
       label,
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => setQueryRunnerQueries(runner, queries),
       undo: () => setQueryRunnerQueries(runner, before),
     });
@@ -501,6 +504,9 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      // Not ADD_CELL: this turns a cell that is already there into a panel, it inserts nothing. The
+      // label describes what undo does, which is to put the markdown back.
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => cell.setElementBody(panel, elementName),
       undo: () => cell.setState({ body: undefined, content: previousContent, elementName: previousElementName }),
     });
@@ -524,6 +530,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.move-block', 'Move block'),
+      kind: NOTEBOOK_EDIT_KIND.MOVE_CELL,
       perform: () => this.moveCellTo(cell, toIndex),
       undo: () => this.moveCellTo(cell, fromIndex),
     });
@@ -578,7 +585,7 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
+    // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
     // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
@@ -595,6 +602,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(built.cell, built.index),
       undo: () => this.removeCellInstance(built.cell),
     });
@@ -643,6 +651,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(copy, index + 1),
       undo: () => this.removeCellInstance(copy),
     });
@@ -672,6 +681,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.split-block', 'Split block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
       perform: () => this.insertCell(cell, index + 1),
       undo: () => this.removeCellInstance(cell),
     });
@@ -687,6 +697,7 @@ export class NotebookLayoutManager
 
     this.executeEdit({
       label: t('notebooks.history.delete-block', 'Delete block'),
+      kind: NOTEBOOK_EDIT_KIND.REMOVE_CELL,
       perform: () => this.removeCellInstance(cell),
       undo: () => this.insertCell(cell, index),
     });
@@ -896,8 +907,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       </header>
 
       <div className={styles.column}>
-        {isEditing && cells.length > 0 && <NotebookAddBlockDivider index={0} onAdd={onAdd} />}
-
         <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
           <Droppable droppableId={key!} direction="vertical">
             {(dropProvided) => (
@@ -907,13 +916,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                 {...dropProvided.droppableProps}
               >
                 {cells.map((cell, index) => (
-                  // Each frame is one Draggable and owns the divider below it, so a reorder moves a cell
-                  // together with its insertion point and nothing has to be re-indexed. The trailing
-                  // slot's own placeholder/"/" menu (see NotebookCellRenderer) key off whether a cell's
-                  // own content is empty, not its position — the invariant above just guarantees the
-                  // last cell always qualifies, with the same drag handle, hover actions, and
-                  // "Add block" divider spacing every other cell already has, since it's a real cell
-                  // rendered through the exact same path.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
@@ -929,8 +931,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    // Bound here rather than resolved inside the frame: the cells list belongs to the
-                    // manager, so the frame never needs to reach back up for its own position.
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
@@ -958,6 +958,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
             )}
           </Droppable>
         </DragDropContext>
+
+        {isEditing && <NotebookFooterAddCell onAdd={(type) => onAdd(type, cells.length)} />}
       </div>
     </div>
   );
@@ -1045,7 +1047,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
-  // Wraps the leading insertion point and the droppable list; the per-cell rhythm belongs to the list.
+  // Wraps the droppable cell list and the footer add-row; the per-cell rhythm belongs to the list.
   column: css({
     display: 'flex',
     flexDirection: 'column',

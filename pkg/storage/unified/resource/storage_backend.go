@@ -1054,6 +1054,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
+	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
@@ -1092,6 +1093,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
+		previousKey = latestKey
 	}
 
 	obj := event.Object
@@ -1297,6 +1299,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
+		PreviousAction:  previousKey.Action,
+		PreviousFolder:  previousKey.Folder,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -1483,7 +1487,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		// Only use token namespace for cross-namespace queries (when request namespace is empty)
+		if !continueTokenMatchesListRequest(token, req) {
+			return 0, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
+		}
+		// Only use token namespace for cross-namespace queries (when request namespace is empty).
 		if req.Options.Key.Namespace == "" {
 			listOptions.ContinueNamespace = token.Namespace
 		}
@@ -1506,7 +1513,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
 	defer it.stop()
 
 	if err := cb(it); err != nil {
@@ -1516,8 +1523,21 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListIterator {
 	objs := batchGetResourceKeys(ctx, ds, keys)
 	if keysOnly {
 		// The data key already carries namespace/name/rv/folder, so the value
@@ -1526,11 +1546,12 @@ func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKe
 	}
 	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: isCrossNamespace,
-		keysOnly:         keysOnly,
-		next:             next,
-		stopFn:           stopFn,
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
 	}
 }
 
@@ -1578,9 +1599,10 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 }
 
 type kvListIterator struct {
-	listRV           int64
-	isCrossNamespace bool
-	keysOnly         bool
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1637,9 +1659,12 @@ func (i *kvListIterator) ContinueToken() string {
 		Name:            i.nextDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
-	// Only store namespace in token for cross-namespace queries
-	if i.isCrossNamespace {
+	if i.includeTokenNamespace {
 		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	if i.keysOnly {
+		token.KeysOnly = true
+		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
 }
@@ -2436,6 +2461,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
+			PreviousAction:  event.PreviousAction,
+			PreviousFolder:  event.PreviousFolder,
 			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():

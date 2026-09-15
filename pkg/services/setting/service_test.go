@@ -1007,8 +1007,8 @@ func generateSettingListJSON(totalSettings, numSections int) string {
 
 	settingsPerSection := totalSettings / numSections
 	first := true
-	for section := 0; section < numSections; section++ {
-		for key := 0; key < settingsPerSection; key++ {
+	for section := range numSections {
+		for key := range settingsPerSection {
 			if !first {
 				sb.WriteString(",")
 			}

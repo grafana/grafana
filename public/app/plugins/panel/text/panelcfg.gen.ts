@@ -60,11 +60,11 @@ export interface Options {
    * Index of the selected frame, when the query returns more than one
    */
   frameIndex?: number;
-  /**
-   * How many rows of query data the content template may render. Unset renders every row.
-   */
-  maxRows?: number;
   mode: TextMode;
+  /**
+   * Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+   */
+  pageSize?: number;
   renderMode?: RenderMode;
 }
 

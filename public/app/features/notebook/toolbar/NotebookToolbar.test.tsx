@@ -21,9 +21,7 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // Stubbed because the notebook header reads its tag options from a facet on this module, which calls
 // injectEndpoints on the real client as it loads - and the mock above does not provide one. The list
 // page and the row menu stub it for the same reason.
-jest.mock('../list/notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(),
-}));
+jest.mock('../list/notebookSearchApi', () => ({}));
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 
@@ -139,7 +137,6 @@ describe('NotebookToolbar', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
   });
 
   describe('Delete', () => {

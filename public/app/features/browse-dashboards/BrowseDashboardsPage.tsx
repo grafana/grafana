@@ -21,7 +21,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
+import { getSourcePath, isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -54,6 +54,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -163,7 +164,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} enableRepositoryLink />
+        <FolderRepo
+          folder={folder}
+          enableRepositoryLink
+          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+        />
       </Stack>
     );
   };

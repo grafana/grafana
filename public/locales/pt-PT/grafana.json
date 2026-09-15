@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Veja um histórico de todos os eventos de alertas gerados pelas suas regras de alertas geridas pela Grafana. Todos os eventos de alertas são apresentados, independentemente de estarem definidos silenciamentos ou períodos de suspensão.",
         "notifications": "Veja um histórico de todas as notificações enviadas pelas suas regras de alertas geridas pela Grafana."
@@ -3305,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5739,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Mover {{typeName}}",
-      "panel-background": "Alterar fundo do painel",
-      "panel-description": "Alterar descrição do painel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Alterações do painel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Máx. de repetições por linha",
       "panel-preset": "Aplicar predefinição do painel",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
-      "panel-title": "Alterar título do painel",
+      "panel-title": "",
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "row-title": "Alterar título da linha",
@@ -6023,7 +6028,6 @@
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Bloco de notas",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Hora",
       "title-edit": "",
@@ -6703,6 +6707,10 @@
       },
       "title-delete": "Eliminar {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Limpar a pesquisa",
       "no-transformations-found": "Nenhuma transformação encontrada",
@@ -6753,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Voltar ao painel de controlo",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7091,6 +7105,12 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Erro ao carregar o painel de controlo"
     },
     "dashboard-scene": {
@@ -7638,6 +7658,10 @@
       "required": "Preenchimento obrigatório"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Alterações",
         "label-details": "Detalhes",
@@ -7750,6 +7774,9 @@
         "text-no-save": "Tem alterações não guardadas. Não tem permissão para guardar. Deseja rejeitar as alterações e partilhar o original?",
         "title": "Alterações não gravadas"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "Não é o que procura? Veja <2>outros painéis de controlo sugeridos</2> ou <6>crie um do zero</6>.",
@@ -8005,6 +8032,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Guardar alterações",
       "save-button-disabled-tooltip": "Corrigir erros de validação antes de guardar",
       "save-button-disabled-tooltip-yaml": "O documento contém erros de validação. Mude para JSON para ver os detalhes dos erros embutidos.",
@@ -8631,6 +8659,16 @@
       "title-table": "Tabela",
       "title-traces": "Traces"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8682,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Abrir valor em"
+      "open-value-in": "Abrir valor em",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9142,10 +9181,14 @@
       "share-export-json": "Exportar como JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Hora de início",
       "success-indicator": "",
       "target": "Destino",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID de rastreio",
       "url": "URL",
       "warning-indicator": ""
@@ -9162,6 +9205,10 @@
       "aria-label-copy": "Copiar para a área de transferência",
       "attribute-plugin-promo": {
         "learn-more": "Saiba mais"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "A observabilidade da base de dados revela planos de explicação visual, eventos de espera e amostras de consultas, ajudando a diagnosticar problemas para além dos intervalos de rastreio.",
@@ -10657,7 +10704,6 @@
       "ariaLabel-panel-loading": "Barra de carregamento do painel",
       "ariaLabel-panel-status": "Estado do painel",
       "errors-and-notices": "Erros e avisos",
-      "inspect-errors-notices": "Inspecionar",
       "tooltip-cancel": "Cancelar consulta",
       "tooltip-cancel-loading": "Cancelar consulta",
       "tooltip-stop-streaming": "Parar a transmissão",
@@ -10739,9 +10785,13 @@
       "cell-filter-out": "Retirar o filtro de valor",
       "cell-inspect": "Inspecionar valor",
       "cell-inspect-tooltip": "Inspecionar valor",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copiar para a área de transferência",
       "csv-counts": "Linhas:{{rows}}, Colunas:{{columns}}",
       "csv-placeholder": "Introduza o CSV aqui...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Adicionar todos os valores exibidos ao filtro",
         "blanks": "(Em branco)",
@@ -11389,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12564,6 +12612,7 @@
       "title": "Criar"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nova regra de alerta"
     },
     "create-dashboard": {
@@ -13056,7 +13105,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13124,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13097,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -13127,6 +13172,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13189,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13239,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Limpar definições"
+      "clear-tooltip": "Limpar definições",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Colorir séries por"
@@ -16606,6 +16655,7 @@
       "tooltip-bold": "Negrito",
       "tooltip-bullet-list": "Lista de pontos",
       "tooltip-checklist": "Lista de verificação",
+      "tooltip-diagram": "",
       "tooltip-heading": "Título",
       "tooltip-insert-variable": "Introduzir variável",
       "tooltip-italic": "Itálico",
@@ -16619,10 +16669,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16843,6 +16901,10 @@
       "bar-stacked": "Gráfico de barras - empilhado",
       "bar-stacked-percent": "Gráfico de barras - empilhado por percentagem",
       "line": "Gráfico de linhas"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Adicionar fuso horário",

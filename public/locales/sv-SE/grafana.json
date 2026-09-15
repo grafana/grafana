@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visa en historik över alla larmhändelser som genererats av dina Grafana-hanterade larmregler. Alla larmhändelser visas oavsett om tysta perioder eller tysta tidsintervall är inställda.",
         "notifications": "Visa en historik över alla aviseringar som skickats från dina Grafana-hanterade larmregler."
@@ -3305,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5739,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Flytta {{typeName}}",
-      "panel-background": "Ändra panelbakgrund",
-      "panel-description": "Ändra panelbeskrivning",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Paneländringar",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-preset": "Tillämpa panelförinställning",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
-      "panel-title": "Ändra paneltitel",
+      "panel-title": "",
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "row-title": "Ändra radtitel",
@@ -6023,7 +6028,6 @@
       "description": "En vertikal sekvens av paneler, text och kodceller",
       "name": "Anteckningsbok",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Tid",
       "title-edit": "",
@@ -6703,6 +6707,10 @@
       },
       "title-delete": "Radera {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Rensa sökningen",
       "no-transformations-found": "Inga omvandlingar hittades",
@@ -6753,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Tillbaka till instrumentpanelen",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7091,6 +7105,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
@@ -7638,6 +7658,10 @@
       "required": "Krävs"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Ändringar",
         "label-details": "Detaljer",
@@ -7750,6 +7774,9 @@
         "text-no-save": "Det finns ändringar som inte sparats. Du har inte behörighet att spara. Vill du ignorera ändringarna och dela originalet?",
         "title": "Ändringar som inte sparats"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "Är det inte det du letar efter? Visa <2>andra föreslagna instrumentpaneler</2> eller <6>skapa en från grunden</6>.",
@@ -8005,6 +8032,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Spara ändringarna",
       "save-button-disabled-tooltip": "Åtgärda valideringsfel innan du sparar",
       "save-button-disabled-tooltip-yaml": "Dokumentet innehåller valideringsfel. Byt till JSON för att se detaljerad felinformation i texten.",
@@ -8631,6 +8659,16 @@
       "title-table": "Tabell",
       "title-traces": "Spår"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8682,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Länk",
-      "open-value-in": "Öppna värde i"
+      "open-value-in": "Öppna värde i",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9142,10 +9181,14 @@
       "share-export-json": "Exportera som JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Starttid",
       "success-indicator": "",
       "target": "Mål",
       "tooltip-url": "{{route}} eller {{url}} eller {{target}} eller {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Spårnings-ID",
       "url": "URL",
       "warning-indicator": ""
@@ -9162,6 +9205,10 @@
       "aria-label-copy": "Kopiera till urklippet",
       "attribute-plugin-promo": {
         "learn-more": "Läs mer"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Observerbarhet för databaser visar visuella förklaringsplaner, väntningshändelser och frågeexempel – vilket hjälper dig att diagnostisera problem bortom spårningens intervall.",
@@ -10657,7 +10704,6 @@
       "ariaLabel-panel-loading": "Panelladdningsfält",
       "ariaLabel-panel-status": "Panelstatus",
       "errors-and-notices": "Fel och meddelanden",
-      "inspect-errors-notices": "Inspektera",
       "tooltip-cancel": "Avbryt fråga",
       "tooltip-cancel-loading": "Avbryt fråga",
       "tooltip-stop-streaming": "Avsluta streaming",
@@ -10739,9 +10785,13 @@
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
       "cell-inspect-tooltip": "Inspektera värde",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Kopiera till klippbordet",
       "csv-counts": "Rader:{{rows}}, Kolumner:{{columns}}",
       "csv-placeholder": "Ange CSV här…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Lägg till alla visade värden i filtret",
         "blanks": "(Tomma)",
@@ -11389,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12564,6 +12612,7 @@
       "title": "Skapa"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Ny varningsregel"
     },
     "create-dashboard": {
@@ -13056,7 +13105,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13076,7 +13124,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13097,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -13127,6 +13172,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13143,6 +13189,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13192,7 +13239,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Rensa inställningarna"
+      "clear-tooltip": "Rensa inställningarna",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Färga serier efter"
@@ -16606,6 +16655,7 @@
       "tooltip-bold": "Fet",
       "tooltip-bullet-list": "Punktlista",
       "tooltip-checklist": "Checklista",
+      "tooltip-diagram": "",
       "tooltip-heading": "Rubrik",
       "tooltip-insert-variable": "Infoga variabel",
       "tooltip-italic": "Kursiv",
@@ -16619,10 +16669,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16843,6 +16901,10 @@
       "bar-stacked": "Stapeldiagram – staplat",
       "bar-stacked-percent": "Stapeldiagram – staplat efter procent",
       "line": "Linjediagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Lägg till tidszon",
