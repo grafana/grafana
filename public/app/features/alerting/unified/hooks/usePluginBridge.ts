@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { OrgRole, type PluginMeta } from '@grafana/data';
@@ -7,12 +8,28 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
+import { withTimeout } from '../utils/promise';
 
 interface PluginBridgeHookResponse {
   loading: boolean;
   installed?: boolean;
   error?: Error;
   settings?: PluginMeta<{}>;
+}
+
+export interface PluginBridgeOptions {
+  timeoutMs?: number;
+  onTimeout?: (error: PluginBridgeTimeoutError) => void;
+}
+
+export class PluginBridgeTimeoutError extends Error {
+  constructor(
+    public readonly plugin: PluginID,
+    public readonly timeoutMs: number
+  ) {
+    super(`Timed out after ${timeoutMs}ms while checking plugin ${plugin}`);
+    this.name = 'PluginBridgeTimeoutError';
+  }
 }
 
 /**
@@ -67,9 +84,34 @@ function toBridgeResponse(probe: BridgeProbe | undefined, error: unknown): Plugi
   return { loading: false, installed: isPluginEnabled(probe.settings), settings: probe.settings };
 }
 
-export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
-  const { value, error } = useAsync(() => probePlugin(plugin), [plugin]);
+export function usePluginBridge(plugin: PluginID, options: PluginBridgeOptions = {}): PluginBridgeHookResponse {
+  const { timeoutMs, onTimeout } = options;
+  const onTimeoutRef = useRef(onTimeout);
+  onTimeoutRef.current = onTimeout;
+
+  const { value, error } = useAsync(
+    () => probePluginWithTimeout(plugin, timeoutMs, (error) => onTimeoutRef.current?.(error)),
+    [plugin, timeoutMs]
+  );
   return toBridgeResponse(value, error);
+}
+
+/** Times out this caller without aborting the plugin settings request, which may be shared from the promise cache. */
+async function probePluginWithTimeout(
+  plugin: PluginID,
+  timeoutMs: number | undefined,
+  onTimeout: (error: PluginBridgeTimeoutError) => void
+): Promise<BridgeProbe> {
+  const probe = probePlugin(plugin);
+  if (timeoutMs === undefined) {
+    return probe;
+  }
+
+  return withTimeout(probe, timeoutMs, () => {
+    const error = new PluginBridgeTimeoutError(plugin, timeoutMs);
+    onTimeout(error);
+    return error;
+  });
 }
 
 type FallbackPlugin = SupportedPlugin.OnCall | SupportedPlugin.Incident;
