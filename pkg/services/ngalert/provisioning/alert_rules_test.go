@@ -139,6 +139,68 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
 
+	t.Run("provenance delete failure during DeleteAlertRule rolls back rule deletion in database", func(t *testing.T) {
+		service := createAlertRuleService(t, nil)
+		rule := dummyRule("rollback-test", orgID)
+		rule.RuleGroup = "rollback-group"
+		created, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		require.NoError(t, err)
+
+		fetched, prov, err := service.GetAlertRule(context.Background(), u, created.UID)
+		require.NoError(t, err)
+		require.Equal(t, created.UID, fetched.UID)
+		require.Equal(t, models.ProvenanceAPI, models.ManagerPropertiesToProvenance(prov))
+
+		failingErr := errors.New("injected provenance store failure")
+		realStore := service.provenanceStore
+		service.provenanceStore = failingProvenanceStore{
+			ProvisioningStore: realStore,
+			deleteErr:         failingErr,
+		}
+
+		err = service.DeleteAlertRule(context.Background(), u, created.UID, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		require.Error(t, err)
+		require.ErrorIs(t, err, failingErr)
+
+		service.provenanceStore = realStore
+		fetchedAfterRollback, provAfterRollback, err := service.GetAlertRule(context.Background(), u, created.UID)
+		require.NoError(t, err, "rule should still exist in database because transaction was rolled back")
+		require.Equal(t, created.UID, fetchedAfterRollback.UID)
+		require.Equal(t, models.ProvenanceAPI, models.ManagerPropertiesToProvenance(provAfterRollback), "provenance record should still exist in database")
+	})
+
+	t.Run("provenance delete failure during DeleteRuleGroup rolls back all rule deletions in database", func(t *testing.T) {
+		service := createAlertRuleService(t, nil)
+		group := createDummyGroup("multi-rollback-group", orgID)
+		group.Rules = append(group.Rules, dummyRule("multi-rollback-group-rule-2", orgID))
+		require.Len(t, group.Rules, 2)
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
+		require.NoError(t, err)
+
+		readGroup, err := service.GetRuleGroup(context.Background(), u, "my-namespace", "multi-rollback-group")
+		require.NoError(t, err)
+		require.Len(t, readGroup.Rules, 2)
+
+		failedUID := readGroup.Rules[1].UID
+		failingErr := errors.New("injected provenance delete failure on second rule")
+		realStore := service.provenanceStore
+		service.provenanceStore = failingProvenanceStore{
+			ProvisioningStore: realStore,
+			failedUID:         failedUID,
+			deleteErr:         failingErr,
+		}
+
+		err = service.DeleteRuleGroup(context.Background(), u, "my-namespace", "multi-rollback-group", models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		require.Error(t, err)
+		require.ErrorIs(t, err, failingErr)
+		require.ErrorContains(t, err, failedUID)
+
+		service.provenanceStore = realStore
+		readGroupAfterRollback, err := service.GetRuleGroup(context.Background(), u, "my-namespace", "multi-rollback-group")
+		require.NoError(t, err, "rule group should still exist in database because transaction was rolled back")
+		require.Len(t, readGroupAfterRollback.Rules, 2, "both rules should still be present in database")
+	})
+
 	t.Run("updating a rule group's top level fields should bump the version number", func(t *testing.T) {
 		const (
 			orgID              = 123
@@ -1685,6 +1747,62 @@ func TestDeleteAlertRule(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	// Regression test for #124006: a failed provenance delete must propagate
+	// the error instead of being silently logged. The previous behaviour left
+	// stale rows in provenance_type accumulating over time and let the rule
+	// write and its provenance write become inconsistent on partial
+	// failure.
+	t.Run("provenance delete failure is propagated to the caller", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		wantErr := errors.New("simulated provenance delete failure")
+		provenanceStore.DeleteProvenanceFunc = func(ctx context.Context, o models.Provisionable, org int64) error {
+			return wantErr
+		}
+
+		rule := rules[0]
+		err := service.DeleteAlertRule(context.Background(), u, rule.UID, models.ProvenanceToManagerProperties(groupProvenance))
+		require.Error(t, err, "caller must see the provenance delete failure")
+		require.ErrorIs(t, err, wantErr, "underlying error must be wrapped, not swallowed")
+		require.ErrorContains(t, err, rule.UID, "error must identify which rule failed")
+
+		// The rule-store delete should have happened before the provenance
+		// delete, but the caller now sees the error and can roll back.
+		// (No transaction is open in this unit test, so the row stays
+		// deleted; the test asserts the error is surfaced, not the
+		// rollback semantics — those are covered by integration tests
+		// against a real DB.)
+		deletes := getDeleteQueries(ruleStore)
+		require.Len(t, deletes, 1)
+	})
+
+	t.Run("multi-rule provenance delete failure identifies failing rule and aborts", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		wantErr := errors.New("simulated provenance delete failure on second rule")
+		var deletedUIDs []string
+		provenanceStore.DeleteProvenanceFunc = func(ctx context.Context, o models.Provisionable, org int64) error {
+			deletedUIDs = append(deletedUIDs, o.ResourceID())
+			if len(deletedUIDs) == 2 {
+				return wantErr
+			}
+			return nil
+		}
+
+		err := service.DeleteRuleGroup(context.Background(), u, rules[0].NamespaceUID, rules[0].RuleGroup, models.ProvenanceToManagerProperties(groupProvenance))
+		require.Error(t, err, "caller must see the provenance delete failure")
+		require.ErrorIs(t, err, wantErr, "underlying error must be wrapped")
+		require.Len(t, deletedUIDs, 2, "execution must halt on failure and not attempt subsequent rules")
+		require.ErrorContains(t, err, deletedUIDs[1], "error must identify the specific failing rule UID")
+		require.Len(t, getDeleteQueries(ruleStore), 1)
 	})
 }
 
@@ -3334,6 +3452,19 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		authz:                  &fakeRuleAccessControlService{},
 		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
 	}
+}
+
+type failingProvenanceStore struct {
+	ProvisioningStore
+	failedUID string
+	deleteErr error
+}
+
+func (s failingProvenanceStore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
+	if s.deleteErr != nil && (s.failedUID == "" || s.failedUID == o.ResourceID()) {
+		return s.deleteErr
+	}
+	return s.ProvisioningStore.DeleteProvenance(ctx, o, org)
 }
 
 func dummyRule(title string, orgID int64) models.AlertRule {
