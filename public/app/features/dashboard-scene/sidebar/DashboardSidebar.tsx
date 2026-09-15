@@ -6,6 +6,8 @@ import {
   SceneObjectBase,
   SceneObjectRemovedEvent,
   sceneGraph,
+  StateTransactionCommittedEvent,
+  type StateTransactionCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
@@ -102,6 +104,17 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       })
     );
 
+    // Generic hook: any SceneObject can publish this after applying a discrete, user-driven
+    // change it wants to be undoable, without needing any bespoke wiring here or in the object's
+    // own layout manager. Unlike handleEditAction, the change has already been applied by the
+    // time this fires (replay/revert are the dispatcher's own closures, not ours to invoke here),
+    // so we record it on the stack without calling performAction.
+    this._subs.add(
+      dashboard.subscribeToEvent(StateTransactionCommittedEvent, ({ payload }) => {
+        this.handleStateTransactionCommitted(payload);
+      })
+    );
+
     if (this.panelEditAction) {
       this.performPanelEditAction(this.panelEditAction);
       this.panelEditAction = undefined;
@@ -139,6 +152,29 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     this.performAction(action);
+
+    this.setState({ undoStack: [...this.state.undoStack, action] });
+  }
+
+  /**
+   * Handles StateTransactionCommittedEvent - a generic signal any SceneObject can publish for a
+   * discrete, user-driven change it wants undoable, with its own bespoke replay/revert closures
+   * rather than a generic state snapshot. The change is already applied by the time this fires,
+   * so - unlike handleEditAction - we don't call performAction here; we just record it.
+   */
+  private handleStateTransactionCommitted(transaction: StateTransactionCommittedPayload) {
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
+    const action: DashboardEditActionEventPayload = {
+      source: transaction.source,
+      description: transaction.description,
+      perform: transaction.replay,
+      undo: transaction.revert,
+    };
+
+    transaction.source.publishEvent(new DashboardStateChangedEvent({ source: transaction.source }), true);
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
   }
