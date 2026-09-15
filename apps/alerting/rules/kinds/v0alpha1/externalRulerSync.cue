@@ -19,6 +19,16 @@ ConfigSpec: {
 		// datasource.
 		targetDatasourceUid?: string
 
+		// promote, when true, converts the rules already synced from datasourceUid
+		// into native Grafana rules the org owns (their management is cleared so
+		// they become freely editable) and stops syncing them. This is a one-way
+		// action scoped to that datasourceUid: once promoted, it cannot be
+		// reverted back to false for the same datasourceUid. Pointing
+		// datasourceUid at a different source resumes normal syncing for it,
+		// regardless of this flag. Ignored while the operator ini override
+		// `unified_alerting.external_ruler_uid` is set.
+		promote?: bool
+
 		// pollInterval sets how often this org's rules are re-synced from
 		// datasourceUid. Empty defaults to 1m. The worker checks orgs against a
 		// short internal baseline and only does real work for an org once its own
@@ -41,9 +51,10 @@ ConfigStatus: {
 		// (spec.externalRulerSync.datasourceUid).
 		origin?: "api" | "ini"
 
-		// lastAppliedHash is the upstream config hash from the last successful
-		// sync via this resource. The worker reads it back (API path only) to
-		// skip an unchanged re-apply across restarts and replicas, where an
+		// lastAppliedHash is the dedup key (upstream config hash combined with
+		// the resolved targetDatasourceUid) from the last successful sync via
+		// this resource. The worker reads it back (API path only) to skip an
+		// unchanged re-apply across restarts and replicas, where an
 		// in-memory-only dedup cache would otherwise start empty. Internal
 		// bookkeeping; not user-facing.
 		lastAppliedHash?: string

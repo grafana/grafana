@@ -1779,6 +1779,15 @@ export type ConfigSpec = {
         an org's actual sync can lag slightly past its configured interval. Has
         no effect on the operator ini path, which always uses the 1m default. */
     pollInterval?: string;
+    /** promote, when true, converts the rules already synced from datasourceUid
+        into native Grafana rules the org owns (their management is cleared so
+        they become freely editable) and stops syncing them. This is a one-way
+        action scoped to that datasourceUid: once promoted, it cannot be
+        reverted back to false for the same datasourceUid. Pointing
+        datasourceUid at a different source resumes normal syncing for it,
+        regardless of this flag. Ignored while the operator ini override
+        `unified_alerting.external_ruler_uid` is set. */
+    promote?: boolean;
     /** targetDatasourceUid is the UID of the datasource that converted recording
         rules write their results to. Empty defaults to datasourceUid (the query
         datasource). Only used when the upstream ruler contains recording rules.
@@ -1823,9 +1832,10 @@ export type ConfigStatus = {
     /** datasourceUid is the UID actually used on the last sync attempt; may lag
         spec until the next tick. When origin=ini, this is the ini override value. */
     datasourceUid?: string;
-    /** lastAppliedHash is the upstream config hash from the last successful
-        sync via this resource. The worker reads it back (API path only) to
-        skip an unchanged re-apply across restarts and replicas, where an
+    /** lastAppliedHash is the dedup key (upstream config hash combined with
+        the resolved targetDatasourceUid) from the last successful sync via
+        this resource. The worker reads it back (API path only) to skip an
+        unchanged re-apply across restarts and replicas, where an
         in-memory-only dedup cache would otherwise start empty. Internal
         bookkeeping; not user-facing. */
     lastAppliedHash?: string;

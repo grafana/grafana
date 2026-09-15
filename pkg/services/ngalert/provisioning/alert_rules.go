@@ -766,6 +766,43 @@ func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user ide
 	return err
 }
 
+// SetRuleGroupsManager rewrites the manager on every rule in groups, without
+// touching rule content. ReplaceRuleGroup(s) is unsuitable for a manager-only
+// change: its content-diff short-circuit (delta.IsEmpty()) treats "same rule
+// content, different manager" as no-op, so persistDelta and its
+// SetManagerProperties call never run. Idempotent: a rule already at
+// newManager is skipped, so repeated calls (e.g. a poller re-asserting a
+// terminal state) do no work after the first.
+func (service *AlertRuleService) SetRuleGroupsManager(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, newManager utils.ManagerProperties) error {
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		for _, group := range groups {
+			for i := range group.Rules {
+				rule := &group.Rules[i]
+				stored, err := service.provenanceStore.GetManagerProperties(ctx, rule, user.GetOrgID())
+				if err != nil {
+					return err
+				}
+				if stored.Kind == newManager.Kind {
+					continue
+				}
+				if !validation.CanUpdateManagerInRuleGroup(stored, newManager) {
+					return errProvenanceMismatch.Build(errutil.TemplateData{
+						Public: map[string]any{
+							"ProvidedProvenance": newManager.Kind,
+							"StoredProvenance":   stored.Kind,
+							"Operation":          "update",
+						},
+					})
+				}
+				if err := service.provenanceStore.SetManagerProperties(ctx, rule, user.GetOrgID(), newManager); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, manager utils.ManagerProperties) error {
 	return service.DeleteRuleGroups(ctx, user, manager, &FilterOptions{
 		NamespaceUIDs: []string{namespaceUID},
