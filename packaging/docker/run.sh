@@ -35,14 +35,14 @@ if [ ! -z ${GF_AWS_PROFILES+x} ]; then
         secret_key_varname="GF_AWS_${profile}_SECRET_ACCESS_KEY"
         region_varname="GF_AWS_${profile}_REGION"
 
-        eval access_key="\$$access_key_varname"
-        eval secret_key="\$$secret_key_varname"
+        access_key="$(printenv "$access_key_varname")" || access_key=""
+        secret_key="$(printenv "$secret_key_varname")" || secret_key=""
         if [ ! -z "${access_key}" -a ! -z "${secret_key}" ]; then
             echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_access_key_id = ${access_key}" >> "$GF_PATHS_HOME/.aws/credentials"
             echo "aws_secret_access_key = ${secret_key}" >> "$GF_PATHS_HOME/.aws/credentials"
 
-            eval region="\$$region_varname"
+            region="$(printenv "$region_varname")" || region=""
             if [ ! -z "${region}" ]; then
                 echo "region = ${region}" >> "$GF_PATHS_HOME/.aws/credentials"
             fi
@@ -57,12 +57,12 @@ fi
 # This can be used to carry in Docker secrets.
 for VAR_NAME in $(env | grep '^GF_[^=]\+__FILE=.\+' | sed -r "s/([^=]*)__FILE=.*/\1/g"); do
     VAR_NAME_FILE="$VAR_NAME"__FILE
-    eval VAR="\$$VAR_NAME"
+    VAR="$(printenv "$VAR_NAME")" || VAR=""
     if [ "${VAR}" ]; then
         echo >&2 "ERROR: Both $VAR_NAME and $VAR_NAME_FILE are set (but are exclusive)"
         exit 1
     fi
-    eval FILE="\$$VAR_NAME_FILE"
+    FILE="$(printenv "$VAR_NAME_FILE")" || FILE=""
     echo "Getting secret $VAR_NAME from ${FILE}"
     export "$VAR_NAME"="$(cat "${FILE}")"
     unset "$VAR_NAME_FILE"
