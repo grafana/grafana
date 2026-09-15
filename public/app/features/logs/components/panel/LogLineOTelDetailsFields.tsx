@@ -23,7 +23,6 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
-import { useLogDetailsContext } from './LogDetailsContext';
 import { filterFields, filterLabels } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
@@ -154,15 +153,8 @@ const LogLineOTelDetailsField = ({
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
   const { fontSize } = useLogListContext();
-  const {
-    app,
-    displayedFields,
-    isLabelFilterActive,
-    noInteractions,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    prettifyJSON,
-  } = useLogListContext();
+  const { app, isLabelFilterActive, noInteractions, onClickFilterLabel, onClickFilterOutLabel, prettifyJSON } =
+    useLogListContext();
 
   const styles = useStyles2(getFieldStyles, fontSize);
 
