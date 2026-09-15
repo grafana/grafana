@@ -2190,7 +2190,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.True(t, committer.Time.Before(after.Add(time.Second)))
 	})
 
-	t.Run("should set committer from spec while author stays default", func(t *testing.T) {
+	t.Run("should set author and committer from signer identity when configured", func(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -2205,13 +2205,13 @@ func TestGitRepository_createSignature(t *testing.T) {
 
 		author, committer := repo.createSignature(context.Background())
 
-		require.Equal(t, "Grafana", author.Name)
-		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.Equal(t, "Bot Signer", author.Name)
+		require.Equal(t, "signer@example.com", author.Email)
 		require.Equal(t, "Bot Signer", committer.Name)
 		require.Equal(t, "signer@example.com", committer.Email)
 	})
 
-	t.Run("should default committer email when only signer name is set", func(t *testing.T) {
+	t.Run("should default author and committer email when only signer name is set", func(t *testing.T) {
 		repo := &gitRepository{
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -2223,7 +2223,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 
 		author, committer := repo.createSignature(context.Background())
 
-		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "Bot Signer", author.Name)
 		require.Equal(t, "Bot Signer", committer.Name)
 		require.Equal(t, "noreply@grafana.com", committer.Email)
 	})
