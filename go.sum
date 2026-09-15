@@ -1733,8 +1733,8 @@ github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f h1:fTlIj5n
 github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f/go.mod h1:VBNcIhunCZsJ3/mcYx+j7uFf0P/108eiWa+8+Z9ll3o=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7EAJ0BHIethd+J6LqxFNw5mSiI2bM=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
-github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 h1:eE5H7yF7ajvPapPmTWQyQebd3OB3xp1xZqhX/7LNMfs=
-github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
+github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6 h1:0vKwR5tCpriVVMy1BCqYXISlJZLWhwTV55m7TkpjjZQ=
+github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
 github.com/grafana/sqlds/v5 v5.0.4 h1:Q4T4wXI5tolN1EUQtN81I4SGBFlBF4tD8XYh34/kk24=
 github.com/grafana/sqlds/v5 v5.0.4/go.mod h1:BvFzzPgc2bmr3R78s1TuZr2gOELpBM9tt6m1DKI8Ts4=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 h1:kE5kdMnyPJmlNUdWhahfzqPYB3vM8DtAxgWymbB8nOA=

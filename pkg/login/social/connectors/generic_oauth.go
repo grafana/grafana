@@ -423,13 +423,13 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
-		s.log.Debug("No id_token found", "token", fmt.Sprintf("%+v", token))
+		s.log.Debug("No id_token found")
 		return nil, nil
 	}
 
 	idTokenString, ok := idToken.(string)
 	if !ok {
-		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", token))
+		s.log.Warn("ID token is not a string")
 		return nil, nil
 	}
 
@@ -448,7 +448,7 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 		// Otherwise, just extract the payload without signature validation
 		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
 		if err != nil {
-			s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
+			s.log.Warn("Error retrieving id_token payload", "error", err)
 			return nil, nil
 		}
 	}
