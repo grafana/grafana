@@ -12,7 +12,8 @@ import (
 type namespaceAuthorizer struct {
 }
 
-func newNamespaceAuthorizer() *namespaceAuthorizer {
+// NewNamespaceAuthorizer restricts resource requests to the caller's namespace.
+func NewNamespaceAuthorizer() authorizer.Authorizer {
 	return &namespaceAuthorizer{}
 }
 
