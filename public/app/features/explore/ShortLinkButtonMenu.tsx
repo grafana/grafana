@@ -4,8 +4,7 @@ import { type IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, config } from '@grafana/runtime';
-import { Dropdown, Menu, MenuGroup, ButtonGroup, Button } from '@grafana/ui';
-import { copyStringToClipboard } from 'app/core/utils/explore';
+import { Dropdown, Menu, MenuGroup, ButtonGroup, Button, copyTextToClipboard } from '@grafana/ui';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { useSelector } from 'app/types/store';
 
@@ -44,7 +43,7 @@ export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
       createAndCopyShortLink(url || global.location.href);
       reportInteraction('grafana_explore_shortened_link_clicked', { isAbsoluteTime: absTime });
     } else {
-      copyStringToClipboard(
+      copyTextToClipboard(
         url !== undefined
           ? `${window.location.protocol}//${window.location.host}${config.appSubUrl}${url}`
           : global.location.href

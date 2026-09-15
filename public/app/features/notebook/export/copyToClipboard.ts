@@ -1,4 +1,4 @@
-import { copyStringToClipboard } from 'app/core/utils/explore';
+import { copyTextToClipboard } from '@grafana/ui';
 
 /**
  * Copies text that is not known yet.
@@ -28,5 +28,5 @@ export async function copyToClipboard(text: Promise<string>): Promise<void> {
   // Plain-http Grafana, where only document.execCommand is available. The shared helper discards
   // execCommand's result, so this is the one path that cannot tell success from failure. Reporting it
   // honestly means teaching copyStringToClipboard to return a result, which changes its other callers.
-  copyStringToClipboard(await text);
+  copyTextToClipboard(await text);
 }

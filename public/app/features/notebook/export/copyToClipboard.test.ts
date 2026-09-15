@@ -1,10 +1,10 @@
-import { copyStringToClipboard } from 'app/core/utils/explore';
+import { copyTextToClipboard } from '@grafana/ui';
 
 import { copyToClipboard } from './copyToClipboard';
 
-jest.mock('app/core/utils/explore', () => ({ copyStringToClipboard: jest.fn() }));
+jest.mock('@grafana/ui', () => ({ copyTextToClipboard: jest.fn() }));
 
-const mockCopyString = jest.mocked(copyStringToClipboard);
+const mockCopyString = jest.mocked(copyTextToClipboard);
 
 const originalClipboard = navigator.clipboard;
 const originalSecureContext = window.isSecureContext;

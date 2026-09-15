@@ -7,10 +7,9 @@ import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { TextArea, Button, IconButton, useStyles2, copyTextToClipboard } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from 'app/features/explore/state/datasource';
@@ -164,7 +163,7 @@ export function RichHistoryCard(props: Props) {
       })
       .join('\n');
 
-    copyStringToClipboard(queriesText);
+    copyTextToClipboard(queriesText);
     dispatch(
       notifyApp(
         createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))

@@ -14,14 +14,13 @@ import {
 import { setDataSourceSrv, setTemplateSrv, type DataSourceSrv, type TemplateSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
-import { RefreshPicker } from '@grafana/ui';
+import { copyTextToClipboard, RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 
 import {
   buildQueryTransaction,
-  copyStringToClipboard,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
   getExploreUrl,
@@ -468,7 +467,7 @@ describe('copyStringToClipboard', () => {
     const write = jest.fn().mockResolvedValue(undefined);
     setClipboard({ write, writeText: jest.fn() });
 
-    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+    copyTextToClipboard('https://grafana.example/explore?spanId=abc');
 
     expect(write).toHaveBeenCalledTimes(1);
     const [items] = write.mock.calls[0];
@@ -482,7 +481,7 @@ describe('copyStringToClipboard', () => {
     const writeText = jest.fn().mockResolvedValue(undefined);
     setClipboard({ write: jest.fn(), writeText });
 
-    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+    copyTextToClipboard('https://grafana.example/explore?spanId=abc');
 
     expect(writeText).toHaveBeenCalledWith('https://grafana.example/explore?spanId=abc');
     expect(navigator.clipboard.write).not.toHaveBeenCalled();
@@ -494,7 +493,7 @@ describe('copyStringToClipboard', () => {
     const execCommand = jest.fn().mockReturnValue(true);
     document.execCommand = execCommand;
 
-    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+    copyTextToClipboard('https://grafana.example/explore?spanId=abc');
 
     expect(execCommand).toHaveBeenCalledWith('copy');
   });

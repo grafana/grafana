@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
+import { copyTextToClipboard } from '@grafana/ui';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -16,7 +17,6 @@ import { extractErrorMessage } from '../../api/utils';
 import { type ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 import { notifyApp } from '../reducers/appNotification';
 
-import { copyStringToClipboard } from './explore';
 import { isOnPrem } from './isOnPrem';
 
 function buildHostUrl() {
@@ -108,7 +108,7 @@ export const createAndCopyShortLink = async (path: string) => {
       dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
     } else {
       const shortLink = await createShortLink(path);
-      copyStringToClipboard(shortLink);
+      copyTextToClipboard(shortLink);
       dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
     }
   } catch (error) {
@@ -126,7 +126,7 @@ export const createAndCopyShareDashboardLink = async (
   if (opts.useShortUrl) {
     return await createAndCopyShortLink(shareUrl);
   } else {
-    copyStringToClipboard(shareUrl);
+    copyTextToClipboard(shareUrl);
     dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
   }
 };
