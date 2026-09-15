@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 import Calendar from 'react-calendar';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { getLocale, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -61,7 +61,7 @@ const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
           onChange(ev);
         }
       }}
-      locale="en"
+      locale={getLocale()}
     />
   );
 });

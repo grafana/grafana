@@ -16,6 +16,7 @@ import {
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
+  getLocale,
   type TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
@@ -351,7 +352,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           prevLabel={<Icon name="angle-left" />}
           prevAriaLabel={t('grafana-ui.date-time-picker.previous-label', 'Previous month')}
           onChange={onChangeDate}
-          locale="en"
+          locale={getLocale()}
           className={calendarStyles.body}
           tileClassName={calendarStyles.title}
           maxDate={maxDate}

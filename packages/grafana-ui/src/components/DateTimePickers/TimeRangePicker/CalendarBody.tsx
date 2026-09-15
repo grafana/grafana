@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 import Calendar, { type CalendarType } from 'react-calendar';
 
-import { type GrafanaTheme2, dateTimeParse, type DateTime, type TimeZone } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeParse, type DateTime, getLocale, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -37,7 +37,7 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
       prevLabel={<Icon name="angle-left" />}
       prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
       onChange={onCalendarChange}
-      locale="en"
+      locale={getLocale()}
       calendarType={weekStartMap[weekStartValue]}
     />
   );
