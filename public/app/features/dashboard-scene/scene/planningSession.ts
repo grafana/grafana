@@ -42,8 +42,13 @@ export function trackPlanningSection(scene: DashboardScene, section: RowItem | T
 }
 
 export function trackPlanningPanel(scene: DashboardScene | undefined, panel: VizPanel) {
-  // Layout insertion also handles moved real panels; only planning placeholders belong to cleanup.
-  if (scene && panel.state.titleItems?.some((item) => item instanceof PlanPlaceholderBadge)) {
+  // Badges survive Build and query replacement. Only the creating plan may claim a panel.
+  const planId = scene?.state.planning?.planId;
+  if (
+    scene &&
+    planId &&
+    panel.state.titleItems?.some((item) => item instanceof PlanPlaceholderBadge && item.state.planId === planId)
+  ) {
     sessions.get(scene)?.panels.add(panel);
   }
 }

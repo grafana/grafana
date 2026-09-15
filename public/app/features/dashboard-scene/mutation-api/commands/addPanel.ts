@@ -56,6 +56,7 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const vizPanel = buildVizPanel(panelSpec as unknown as Parameters<typeof buildVizPanel>[0], panelId, {
         withoutQueries: scene.isPlanning(),
+        planningId: scene.state.planning?.planId,
       });
       vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
 

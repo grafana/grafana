@@ -63,6 +63,7 @@ export interface BuildVizPanelOptions {
    * receives the default datasource query during normal panel creation.
    */
   withoutQueries?: boolean;
+  planningId?: string;
 }
 
 export function buildVizPanelState(
@@ -88,7 +89,7 @@ export function buildVizPanelState(
   // A query-less panel is a plan placeholder, and its seeded data has to say so on the panel
   // itself — the planning banner scrolls out of view, the numbers do not.
   if (buildOptions.withoutQueries) {
-    titleItems.push(new PlanPlaceholderBadge());
+    titleItems.push(new PlanPlaceholderBadge({ planId: buildOptions.planningId }));
   }
 
   const queryOptions = panel.spec.data.spec.queryOptions;

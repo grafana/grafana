@@ -285,7 +285,8 @@ export function getDefaultPluginId(): string {
  * against the default datasource. Attaching real queries is the build step's job, not the preview's.
  */
 export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<VizPanel> {
-  const withQuery = !findDashboardSceneFor(sceneObject)?.isPlanning();
+  const planning = findDashboardSceneFor(sceneObject)?.state.planning;
+  const withQuery = !planning;
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
@@ -299,7 +300,7 @@ export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<Viz
     seriesLimit: config.panelSeriesLimit,
     titleItems: [
       new VizPanelLinks({ menu: new VizPanelLinksMenu({}) }),
-      ...(!withQuery ? [new PlanPlaceholderBadge()] : []),
+      ...(!withQuery ? [new PlanPlaceholderBadge({ planId: planning?.planId })] : []),
     ],
     hoverHeaderOffset: 0,
     $behaviors: [],

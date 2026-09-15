@@ -1,9 +1,10 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
-import { CustomVariable, sceneGraph, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { CustomVariable, sceneGraph, SceneVariableSet, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -409,3 +410,56 @@ it('removes empty planning sections before wrappers created after them', async (
   }
   expect(body.state.tabs).toEqual([]);
 });
+
+it.each([
+  { layout: 'grid', realQueries: false },
+  { layout: 'grid', realQueries: true },
+  { layout: 'auto-grid', realQueries: false },
+  { layout: 'auto-grid', realQueries: true },
+])(
+  'preserves a kept $layout placeholder during a later plan with realQueries=$realQueries',
+  async ({ layout, realQueries }) => {
+    const { scene, client } = setup();
+    const grid = layout === 'grid' ? DefaultGridLayoutManager.fromVizPanels([]) : new AutoGridLayoutManager({});
+    scene.setState({ body: grid });
+    await client.execute(start);
+    expect(
+      (
+        await client.execute({
+          type: 'ADD_PANEL',
+          planId: 'plan-1',
+          payload: { panel: { kind: 'Panel', spec: panel } },
+        })
+      ).success
+    ).toBe(true);
+    const kept = grid.getVizPanels()[0];
+    expect(
+      (await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: false } })).success
+    ).toBe(true);
+    if (realQueries) {
+      kept.setState({ $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }) });
+    }
+    expect(kept.state.titleItems?.some((item) => item instanceof PlanPlaceholderBadge)).toBe(true);
+
+    await client.execute({
+      type: 'START_PLANNING',
+      payload: { planId: 'plan-2', planTitle: 'Next plan', panelCount: 1 },
+    });
+    // MOVE_PANEL removes the original and adds a clone, retaining its title items.
+    const moved = kept.clone();
+    grid.removePanel(kept);
+    grid.addPanel(moved);
+    const newPlaceholder = await getDefaultVizPanel(scene);
+    grid.addPanel(newPlaceholder);
+    scene.duplicatePanel(newPlaceholder);
+    expect(grid.getVizPanels().map((panel) => panel.state.title)).toEqual(['CPU usage', 'New panel', 'New panel']);
+
+    expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-2', discard: true } })).success).toBe(
+      true
+    );
+
+    expect(grid.getVizPanels().map((panel) => panel.state.title)).toEqual(['CPU usage']);
+    expect(grid.getVizPanels()[0]).toBe(moved);
+    expect(Boolean(getQueryRunnerFor(moved))).toBe(realQueries);
+  }
+);
