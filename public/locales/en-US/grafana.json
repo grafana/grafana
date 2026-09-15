@@ -1784,7 +1784,8 @@
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
-        "yaml-file": "Alertmanager config YAML"
+        "yaml-file": "Alertmanager config YAML",
+        "yaml-parse-error": "Your YAML has a syntax error: {{message}}"
       },
       "step2": {
         "datasource": "Data source",

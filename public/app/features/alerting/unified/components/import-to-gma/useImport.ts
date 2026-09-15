@@ -42,8 +42,13 @@ function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
   let parsed: unknown;
   try {
     parsed = load(yamlContent);
-  } catch {
-    return { alertmanagerConfig: yamlContent, templateFiles: {} };
+  } catch (err) {
+    // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
+    throw new Error(
+      t('alerting.import-to-gma.step1.yaml-parse-error', 'Your YAML has a syntax error: {{message}}', {
+        message: err instanceof Error ? err.message : String(err),
+      })
+    );
   }
 
   if (!isRecord(parsed)) {
@@ -356,6 +361,12 @@ export function useDryRunNotifications() {
     convertToGMAApi.useDryRunAlertmanagerConfigMutation();
   const [preRunError, setPreRunError] = useState<string>();
 
+  // RTK recreates the mutation's `reset` on every trigger (its identity tracks the in-flight request),
+  // so keep the latest in a ref and expose a stable `reset`. Callers use it as an effect dependency
+  // (Step 1 trigger effect); an unstable identity would re-fire that effect and loop dry-runs forever.
+  const resetMutationRef = useRef(resetMutation);
+  resetMutationRef.current = resetMutation;
+
   const runDryRun = useCallback(
     async (params: NotificationsSourceParams): Promise<void> => {
       setPreRunError(undefined);
@@ -368,17 +379,15 @@ export function useDryRunNotifications() {
           promote: params.promote,
         });
       } catch (err) {
+        // Also clear the mutation's own state: a pre-run failure here means dryRunAlertmanagerConfig
+        // never ran, so a stale mutationError from an earlier attempt would otherwise keep winning
+        // the `error` precedence below over this fresh one.
+        resetMutationRef.current();
         setPreRunError(stringifyErrorLike(err));
       }
     },
     [dryRunAlertmanagerConfig]
   );
-
-  // RTK recreates the mutation's `reset` on every trigger (its identity tracks the in-flight request),
-  // so keep the latest in a ref and expose a stable `reset`. Callers use it as an effect dependency
-  // (Step 1 trigger effect); an unstable identity would re-fire that effect and loop dry-runs forever.
-  const resetMutationRef = useRef(resetMutation);
-  resetMutationRef.current = resetMutation;
 
   // Clear the cached response and any pre-run error so `result` returns to undefined. Called when the
   // step is no longer runnable (e.g. a duplicate template name) so a previously successful dry-run

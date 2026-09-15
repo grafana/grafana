@@ -235,6 +235,91 @@ describe('useDryRunNotifications reset', () => {
     expect(result.current.runDryRun).toBe(runDryRunBefore);
     expect(result.current.reset).toBe(resetBefore);
   });
+
+  // Regression: runDryRun only cleared its own preRunError at the start of each attempt, leaving a
+  // stale mutationError from an earlier failed attempt in RTK Query's cache. Since error prefers
+  // mutationError over preRunError, that stale backend error kept masking a fresh local one.
+  it('does not surface a stale backend error over a fresh local parse error', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ message: 'old backend conflict' }, { status: 400 })));
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
+    });
+    await waitFor(() => expect(result.current.result?.error).toMatch(/old backend conflict/i));
+
+    await act(async () => {
+      await result.current.runDryRun({
+        source: 'yaml',
+        yamlFile: new File(['route:\n  receiver: default\nfoo: bar: baz\n'], 'broken.yaml', {
+          type: 'application/yaml',
+        }),
+        configIdentifier: 'prod',
+      });
+    });
+    await waitFor(() => expect(result.current.result?.error).toMatch(/syntax error/i));
+  });
+});
+
+describe('malformed YAML handling', () => {
+  // Genuinely invalid per js-yaml: bad indentation of a mapping entry.
+  const INVALID_YAML = ['route:', '  receiver: default', 'foo: bar: baz', ''].join('\n');
+
+  function captureConvertAttempts(mockResponse: () => Response) {
+    const attempts: unknown[] = [];
+    server.use(
+      http.post(CONVERT_URL, () => {
+        attempts.push(undefined);
+        return mockResponse();
+      })
+    );
+    return attempts;
+  }
+
+  // Regression: parseAlertmanagerYaml used to swallow this and ship the raw YAML anyway.
+  it('does not send invalid YAML to the backend', async () => {
+    const attempts = captureConvertAttempts(() => new HttpResponse(null, { status: 400 }));
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current.runDryRun({
+        source: 'yaml',
+        yamlFile: new File([INVALID_YAML], 'broken.yaml', { type: 'application/yaml' }),
+        configIdentifier: 'prod',
+      });
+    });
+
+    await waitFor(() => expect(result.current.result?.valid).toBe(false));
+    expect(attempts).toHaveLength(0);
+  });
+
+  // Regression: round-tripping through the backend (as above) wrapped this in the generic
+  // "{{config}} failed with {{status}}: {{message}}" shape instead of a friendly local one.
+  it('surfaces a friendly local message instead of the generic backend-request-failed wrapper', async () => {
+    const attempts = captureConvertAttempts(() =>
+      HttpResponse.json(
+        {
+          message:
+            'Invalid Alertmanager configuration: failed to parse alertmanager config: yaml: line 3: mapping values are not allowed in this context',
+        },
+        { status: 400 }
+      )
+    );
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current.runDryRun({
+        source: 'yaml',
+        yamlFile: new File([INVALID_YAML], 'broken.yaml', { type: 'application/yaml' }),
+        configIdentifier: 'prod',
+      });
+    });
+
+    await waitFor(() => expect(result.current.result?.valid).toBe(false));
+    expect(result.current.result?.error).not.toMatch(/failed with \d/i);
+    expect(result.current.result?.error).toMatch(/syntax error/i);
+    expect(attempts).toHaveLength(0);
+  });
 });
 
 function templateFile(name: string, content: string) {
