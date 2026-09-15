@@ -50,20 +50,22 @@ describe('AttachToIncidentModal', () => {
   it('renders nothing at all when IRM is not installed', () => {
     setup({ installed: false });
 
-    expect(screen.queryByRole('button', { name: /Attach to incident/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(STUB_ATTACH_TESTID)).not.toBeInTheDocument();
   });
 
-  it('opens IRM’s form in a modal', async () => {
-    const { user } = setup();
+  // Wrapped in our own Modal, unlike the declare form, whose component brings its own.
+  it('renders IRM’s form inside a modal', () => {
+    setup();
 
-    expect(await screen.findByRole('dialog', { name: 'Attach to incident' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Attach to incident' })).toBeInTheDocument();
     expect(screen.getByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
   });
 
   // The caption is data IRM persists as the attachment's label, and t() escapes interpolated values
   // by default — so without escapeValue:false this reads `Checkout&#39;s errors&#x2F;sec`.
-  it('leaves punctuation in the caption alone', async () => {
-    const { user, props } = setup({ title: "Checkout's errors/sec" });
+  it('leaves punctuation in the caption alone', () => {
+    const { props } = setup({ title: "Checkout's errors/sec" });
 
     expect(props.at(-1)?.defaultCaption).toBe("Notebook: Checkout's errors/sec");
   });
@@ -78,8 +80,8 @@ describe('AttachToIncidentModal', () => {
   });
 
   // The caption is what labels the attachment; without one IRM unfurls the URL and gets "Grafana".
-  it('hands the form the notebook’s absolute url and a caption naming it', async () => {
-    const { user, props } = setup();
+  it('hands the form the notebook’s absolute url and a caption naming it', () => {
+    const { props } = setup();
 
     expect(props.at(-1)).toMatchObject({
       attachURL: 'https://grafana.example/notebooks/nb1',
