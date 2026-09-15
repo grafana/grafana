@@ -5653,9 +5653,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/maplibre-gl-style-spec@npm:^26.4.0":
-  version: 26.4.1
-  resolution: "@maplibre/maplibre-gl-style-spec@npm:26.4.1"
+"@maplibre/maplibre-gl-style-spec@npm:^26.4.1":
+  version: 26.4.2
+  resolution: "@maplibre/maplibre-gl-style-spec@npm:26.4.2"
   dependencies:
     "@mapbox/jsonlint-lines-primitives": "npm:^2.0.3"
     "@mapbox/unitbezier": "npm:^1.0.0"
@@ -5667,7 +5667,7 @@ __metadata:
     gl-style-format: dist/gl-style-format.mjs
     gl-style-migrate: dist/gl-style-migrate.mjs
     gl-style-validate: dist/gl-style-validate.mjs
-  checksum: 10/22ecb955dc50ad4844f76e722e127c9ce60904d1221e49a81292c23174a5265a48b977c18897038b90d7adfc16a4acd353f57de3e095827b7af792854b67cc19
+  checksum: 10/ea44ce6ea1f335bfa0a562656fcfad9acf1916b14fd53580d69bae9b72a91a448474aa9ff7f7e8c5371f21b6bd442ae05952ef66a873bd845abc03a36a9925f2
   languageName: node
   linkType: hard
 
@@ -27421,14 +27421,14 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^13.0.1":
-  version: 13.4.3
-  resolution: "ol-mapbox-style@npm:13.4.3"
+  version: 13.5.0
+  resolution: "ol-mapbox-style@npm:13.5.0"
   dependencies:
-    "@maplibre/maplibre-gl-style-spec": "npm:^26.4.0"
+    "@maplibre/maplibre-gl-style-spec": "npm:^26.4.1"
     mapbox-to-css-font: "npm:^3.2.0"
   peerDependencies:
     ol: "*"
-  checksum: 10/e05efcb8d10dda2b9ec33dfe3e11c45c301b035924636c6b0662015cf82992b384baaea23007531539a3ff03c324ae82e1ce0c6fd28ed3fe2bd363204b6823f9
+  checksum: 10/7928efb8028134c7a568b484e25675f4f5aa13cdec27dbce7922db91fee3c66a68a51f1a1ab3a9d936f24097fa23394e6110055cb0df04e9b32a30720a498406
   languageName: node
   linkType: hard
 
