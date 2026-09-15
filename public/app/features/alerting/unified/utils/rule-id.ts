@@ -31,6 +31,7 @@ import {
   prometheusRuleType,
   rulerRuleType,
 } from './rules';
+import { parsePrometheusDuration } from './time';
 
 const collator = new Intl.Collator();
 
@@ -330,16 +331,6 @@ export function stripPromQLComments(query: string): string {
     .join('\n');
 }
 
-const DURATION_UNIT_MS: Record<string, number> = {
-  ms: 1,
-  s: 1000,
-  m: 60 * 1000,
-  h: 60 * 60 * 1000,
-  d: 24 * 60 * 60 * 1000,
-  w: 7 * 24 * 60 * 60 * 1000,
-  y: 365 * 24 * 60 * 60 * 1000,
-};
-
 /**
  * Matches a PromQL duration literal – one or more `<number><unit>` parts, e.g. `5m`, `1h30m`, `500ms`.
  * The lookbehind and lookahead keep us from matching a duration-looking tail inside an identifier,
@@ -356,11 +347,13 @@ const PROMQL_DURATION_REGEX = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/g;
  */
 export function normalizePromQLDurations(query: string): string {
   return query.replace(PROMQL_DURATION_REGEX, (duration) => {
-    let totalMs = 0;
-    for (const [, amount, unit] of duration.matchAll(/(\d+)(ms|[smhdwy])/g)) {
-      totalMs += Number(amount) * DURATION_UNIT_MS[unit];
+    try {
+      return `${parsePrometheusDuration(duration)}ms`;
+    } catch {
+      // the two patterns could drift apart, so leave anything we can't parse exactly as we found it
+      // rather than collapsing it to a value that would make unrelated durations look identical
+      return duration;
     }
-    return `${totalMs}ms`;
   });
 }
 
