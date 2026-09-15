@@ -37,6 +37,7 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   HEADER_ICON_SPACE,
   getPaginationChromeHeight,
+  SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
 import { IS_SAFARI_26 } from './styles';
@@ -781,6 +782,72 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   }, [ref, height, updateScrollbarDimensions]);
 
   return scrollbarWidth;
+}
+
+/**
+ * Fades a shadow in at the top or bottom edge of the grid's scroll viewport while rows are scrolled
+ * out of view in that direction, the same cue `ScrollContainer`'s `showScrollIndicators` gives:
+ * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
+ * scrolls, so nothing otherwise tells them more rows exist.
+ *
+ * Both the visibility and the edge offsets are written straight to the overlay nodes rather than
+ * held in state, so scrolling never re-renders the grid.
+ */
+export function useScrollShadows(
+  ref: RefObject<DataGridHandle | null>,
+  enabled: boolean,
+  { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
+) {
+  const topRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const sync = useCallback(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
+    // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
+    // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
+    // so the difference between the two heights is the scrollbar alone.
+    const scrollbarHeight = offsetHeight - clientHeight;
+    const scrollBottom = scrollHeight - clientHeight - scrollTop;
+    if (topRef.current) {
+      topRef.current.style.top = `${topOffset}px`;
+      topRef.current.style.opacity = scrollTop > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
+    }
+    if (bottomRef.current) {
+      bottomRef.current.style.bottom = `${bottomOffset + scrollbarHeight}px`;
+      bottomRef.current.style.opacity = scrollBottom > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
+    }
+  }, [ref, enabled, topOffset, bottomOffset]);
+
+  // Anything that changes the content's height rather than the viewport's — a nested row expanding,
+  // a column resize re-wrapping text, a new page of rows — reaches the DOM through a render, so
+  // re-measuring on every commit covers all of them without watching each one. The reads are cheap,
+  // and only the refreshed table runs them.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(sync);
+
+  useEffect(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+
+    el.addEventListener('scroll', sync, { passive: true });
+    // the panel resizing changes what fits without moving the scroll position or re-rendering the
+    // grid when only the scrollbars come and go
+    const resizeObserver = new ResizeObserver(sync);
+    resizeObserver.observe(el);
+    return () => {
+      el.removeEventListener('scroll', sync);
+      resizeObserver.disconnect();
+    };
+  }, [ref, enabled, sync]);
+
+  return { topRef, bottomRef };
 }
 
 /**

@@ -81,6 +81,10 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
+    // deliberately not a theme color — this reads as a shadow cast on the rows, and it's the same
+    // value ScrollIndicators uses for the scroll cue on the dashboard lists
+    const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
+
     const headerBackgroundColor = tableRefreshEnabled
       ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
       : bgColor;
@@ -117,9 +121,7 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        blockSize: '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -231,6 +233,40 @@ export const getGridStyles = memoize(
             borderBlockEnd: 'none',
           },
         }),
+      }),
+      // Wraps the grid so the scroll shadows have something to position against. It carries the
+      // grid's own sizing, and the grid fills it, so the shadows span exactly the scroll viewport.
+      gridWrapper: css({
+        position: 'relative',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
+        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
+        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
+        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
+        // the grid's whole content height and it pushes everything below it out of the panel.
+        minBlockSize: 0,
+      }),
+      // A gradient over the top or bottom of the scroll viewport while rows are scrolled out of view
+      // that way (see useScrollShadows). The grid root sets `contain: content`, making it its own
+      // stacking context, so these paint above every cell without competing with the z-indexes
+      // inside it. Hidden by default: the hook reveals them.
+      scrollShadow: css({
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      }),
+      scrollShadowTop: css({
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      }),
+      scrollShadowBottom: css({
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
