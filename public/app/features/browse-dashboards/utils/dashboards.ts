@@ -110,19 +110,22 @@ export function parseOwnerRef(ref: string): { kind: string; uid: string } | unde
 
 export type SelectedItemRef = { kind: 'folder' | 'dashboard'; uid: string };
 
-/** Returns the selected folders and dashboards as (kind, uid) pairs, folders first. */
+/** UIDs of the selected items of one kind. */
+export function getSelectedUIDs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>,
+  kind: SelectedItemRef['kind']
+): string[] {
+  const selection = selectedItems[kind];
+  return Object.keys(selection).filter((uid) => selection[uid]);
+}
+
+/** Selected folders and dashboards as (kind, uid) pairs, folders first. */
 export function getSelectedItemRefs(
   selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>
 ): SelectedItemRef[] {
-  const refs: SelectedItemRef[] = [];
-  for (const kind of ['folder', 'dashboard'] as const) {
-    for (const [uid, selected] of Object.entries(selectedItems[kind] ?? {})) {
-      if (selected) {
-        refs.push({ kind, uid });
-      }
-    }
-  }
-  return refs;
+  return (['folder', 'dashboard'] as const).flatMap((kind) =>
+    getSelectedUIDs(selectedItems, kind).map((uid) => ({ kind, uid }))
+  );
 }
 
 const RESOURCE_REF = {
