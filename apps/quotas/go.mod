@@ -303,7 +303,7 @@ require (
 	github.com/olekukonko/errors v1.3.0 // indirect
 	github.com/olekukonko/ll v0.1.8 // indirect
 	github.com/olekukonko/tablewriter v1.1.4 // indirect
-	github.com/open-feature/go-sdk v1.17.2 // indirect
+	github.com/open-feature/go-sdk v1.18.0 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.1.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect

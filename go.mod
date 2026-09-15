@@ -151,7 +151,7 @@ require (
 	github.com/nats-io/nats.go v1.53.1 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
-	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-services-squad
+	github.com/open-feature/go-sdk v1.18.0 // @grafana/grafana-backend-services-squad
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-services-squad
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team

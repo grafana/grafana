@@ -6,7 +6,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/grafana/authlib v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4
-	github.com/open-feature/go-sdk v1.17.2
+	github.com/open-feature/go-sdk v1.18.0
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7
 	github.com/puzpuzpuz/xsync/v4 v4.5.0
 	github.com/stretchr/testify v1.12.1
