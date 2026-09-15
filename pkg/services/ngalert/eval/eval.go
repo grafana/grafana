@@ -453,6 +453,7 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 
 type NumberValueCapture struct {
 	Var              string // RefID
+	Metric           string
 	IsDatasourceNode bool
 	Labels           data.Labels
 	Type             string // Expression type (reduce, threshold, classic_conditions, etc.)
