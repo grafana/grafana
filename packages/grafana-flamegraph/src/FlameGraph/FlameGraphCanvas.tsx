@@ -1,4 +1,4 @@
-import { css, keyframes } from '@emotion/css';
+import { css } from '@emotion/css';
 import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
@@ -6,7 +6,9 @@ import { useMeasure } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { MUTE_THRESHOLD, PIXELS_PER_LEVEL } from '../constants';
+import { MUTE_THRESHOLD, PIXELS_PER_LEVEL, TRUNCATED_NODE_NAME } from '../constants';
+import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
+import { loadingShimmer } from '../loadingShimmer';
 import {
   type ClickedItemData,
   type ColorScheme,
@@ -19,7 +21,7 @@ import {
 import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
 import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
-import { getBarX, useFlameRender } from './rendering';
+import { getBarX, useFlameRender, walkTree } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -54,6 +56,7 @@ type Props = {
   paneView: PaneView;
   search: string;
   loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
 
 const FlameGraphCanvas = ({
@@ -83,6 +86,7 @@ const FlameGraphCanvas = ({
   paneView,
   search,
   loadingItems,
+  reportVisibleTruncatedPaths,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -173,6 +177,51 @@ const FlameGraphCanvas = ({
   const onGraphMouseLeave = useCallback(() => {
     setTooltipItem(undefined);
   }, []);
+
+  // Which truncated nodes the user can see is decided by the same walk that draws them: anything the renderer mutes is
+  // a sliver too narrow to read, and anything outside the current zoom is off the canvas altogether.
+  const visibleTruncatedPaths = useMemo(() => {
+    // A search greys out every non-matching bar, truncated ones included, so there is nothing on screen to report.
+    if (!reportVisibleTruncatedPaths || matchedLabels || direction !== 'children' || !wrapperWidth || !totalViewTicks) {
+      return [];
+    }
+
+    const paths: string[][] = [];
+
+    walkTree(
+      root,
+      direction,
+      data,
+      totalViewTicks,
+      rangeMin,
+      rangeMax,
+      wrapperWidth,
+      collapsedMap,
+      (item, x, y, width, height, label, muted) => {
+        if (!muted && label === TRUNCATED_NODE_NAME && x < wrapperWidth && x + width > 0) {
+          paths.push(data.getItemPath(item));
+        }
+      },
+      // A device pixel ratio of 1 keeps the walk's geometry in the CSS pixels the clipping above is in. It cancels out
+      // of the muting rule, so this changes nothing about which bars count as muted.
+      1
+    );
+
+    return paths;
+  }, [
+    reportVisibleTruncatedPaths,
+    matchedLabels,
+    direction,
+    wrapperWidth,
+    totalViewTicks,
+    root,
+    data,
+    rangeMin,
+    rangeMax,
+    collapsedMap,
+  ]);
+
+  useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
 
   const levelHeight = PIXELS_PER_LEVEL;
   const loadingMarkers = useMemo(() => {
@@ -297,11 +346,6 @@ const FlameGraphCanvas = ({
   );
 };
 
-const shimmer = keyframes({
-  '0%': { backgroundPosition: '200% 0' },
-  '100%': { backgroundPosition: '-200% 0' },
-});
-
 const getStyles = (theme: GrafanaTheme2) => ({
   graph: css({
     label: 'graph',
@@ -327,13 +371,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     outline: `1px dashed ${theme.colors.text.secondary}`,
     outlineOffset: '-1px',
-    backgroundImage: `linear-gradient(90deg, transparent 35%, ${
-      theme.isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.5)'
-    } 50%, transparent 65%)`,
-    backgroundSize: '200% 100%',
-    [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${shimmer} 1.2s linear infinite`,
-    },
+    ...loadingShimmer(theme),
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',

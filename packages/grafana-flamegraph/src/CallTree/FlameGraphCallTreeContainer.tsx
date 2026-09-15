@@ -7,7 +7,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
-import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';
+import { TRUNCATED_NODE_NAME } from '../constants';
+import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
 import { ColorScheme, ColorSchemeDiff, type PaneView, type ViewMode } from '../types';
 
 import { ActionsCell } from './ActionsCell';
@@ -30,6 +32,8 @@ type Props = {
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   viewMode?: ViewMode;
   paneView?: PaneView;
+  loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
 
 function findCallTreeNode(nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined {
@@ -60,6 +64,8 @@ const FlameGraphCallTreeContainer = memo(
     getExtraContextMenuButtons,
     viewMode,
     paneView,
+    loadingItems,
+    reportVisibleTruncatedPaths,
   }: Props) => {
     const [isCompact, setIsCompact] = useState(false);
     const styles = useStyles2(getStyles);
@@ -615,6 +621,22 @@ const FlameGraphCallTreeContainer = memo(
     tableInstanceRef.current = tableInstance;
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
 
+    // A truncated node the user can see here is one whose ancestors are all expanded, which is exactly the row model
+    // react-table hands back. Unlike a flame graph bar, such a row is legible however little time it holds, so how
+    // wide it would be drawn does not come into it.
+    const visibleTruncatedPaths = useMemo(() => {
+      // The callers tree is built from merged parent subtrees, so its rows have no call path to report.
+      if (!reportVisibleTruncatedPaths || callersNodeLabel) {
+        return [];
+      }
+
+      return rows
+        .filter((row) => row.original.label === TRUNCATED_NODE_NAME)
+        .map((row) => data.getItemPath(row.original.levelItem));
+    }, [reportVisibleTruncatedPaths, callersNodeLabel, rows, data]);
+
+    useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
+
     return (
       <div className={styles.container} data-testid="callTree">
         <div className={styles.toolbar}>
@@ -712,6 +734,7 @@ const FlameGraphCallTreeContainer = memo(
                 scrollContainerRef={scrollContainerRef}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
+                loadingItems={loadingItems}
               />
             )}
           </AutoSizer>

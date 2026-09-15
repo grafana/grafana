@@ -12,6 +12,9 @@ import {
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { type LevelItem } from '../FlameGraph/dataTransform';
+import { loadingShimmer } from '../loadingShimmer';
+
 import { type CallTreeNode } from './utils';
 
 type CallTreeTableProps = {
@@ -31,6 +34,7 @@ type CallTreeTableProps = {
   scrollContainerRef: { current: HTMLDivElement | null };
   focusedNodeId?: string;
   callersNodeLabel?: string;
+  loadingItems?: Set<LevelItem>;
 };
 
 export function CallTreeTable({
@@ -50,6 +54,7 @@ export function CallTreeTable({
   scrollContainerRef,
   focusedNodeId,
   callersNodeLabel,
+  loadingItems,
 }: CallTreeTableProps) {
   const styles = useStyles2(getStyles);
   const SCROLLBAR_WIDTH = 16;
@@ -122,19 +127,22 @@ export function CallTreeTable({
               const isFocusedRow = row.original.id === focusedNodeId;
               const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
               const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
+              const isLoadingRow = loadingItems?.has(row.original.levelItem);
 
               return (
                 <tr
                   key={key}
                   {...rowProps}
                   ref={isSearchMatchRow ? searchMatchRowRef : null}
+                  data-testid={isLoadingRow ? 'callTreeLoadingRow' : undefined}
                   className={cx(
                     styles.tr,
                     (isFocusedRow ||
                       (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) &&
                       styles.focusedRow,
                     isCallersTargetRow && styles.callersTargetRow,
-                    isSearchMatchRow && styles.searchMatchRow
+                    isSearchMatchRow && styles.searchMatchRow,
+                    isLoadingRow && styles.loadingRow
                   )}
                 >
                   {row.cells.map((cell) => {
@@ -232,6 +240,11 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
+    }),
+    loadingRow: css({
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+      ...loadingShimmer(theme),
     }),
     searchMatchRow: css({
       backgroundColor: theme.colors.warning.transparent,

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
-import { createDataFrame, createTheme } from '@grafana/data';
+import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
@@ -142,12 +142,16 @@ describe('FlameGraphContainer', () => {
 
   const FlameGraphContainerWithProps = ({
     onFocusChange,
+    onVisibleTruncatedPathsChange,
     loadingPaths,
+    data: frameData = data,
   }: {
     onFocusChange?: (path: string[] | undefined) => void;
+    onVisibleTruncatedPathsChange?: (paths: string[][]) => void;
     loadingPaths?: string[][];
+    data?: Parameters<typeof createDataFrame>[0];
   } = {}) => {
-    const flameGraphData = createDataFrame(data);
+    const flameGraphData = createDataFrame(frameData);
     flameGraphData.meta = {
       custom: {
         ProfileTypeID: 'cpu:foo:bar',
@@ -160,9 +164,24 @@ describe('FlameGraphContainer', () => {
         data={flameGraphData}
         getTheme={getTheme}
         onFocusChange={onFocusChange}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
         loadingPaths={loadingPaths}
       />
     );
+  };
+
+  // A truncated node under a bar wide enough to read, and another under a sliver the flame graph mutes.
+  const truncatedData = {
+    fields: [
+      { name: 'level', values: [0, 1, 2, 2, 1, 2, 2] },
+      {
+        name: 'label',
+        type: FieldType.string,
+        values: ['total', 'wide', 'w1', 'other', 'narrow', 'n1', 'other'],
+      },
+      { name: 'self', values: [398, 200, 200, 200, 0, 1, 1] },
+      { name: 'value', values: [1000, 600, 200, 200, 2, 1, 1] },
+    ],
   };
 
   it('should render without error', async () => {
@@ -199,6 +218,51 @@ describe('FlameGraphContainer', () => {
 
     rerender(<FlameGraphContainerWithProps loadingPaths={[['total', 'not.a.real.function']]} />);
     await waitFor(() => expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0));
+  });
+
+  it('reports the truncated nodes the flame graph draws as real bars', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    // The truncated node under 'narrow' is a sub-pixel sliver, so it is not something the user can see.
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+  });
+
+  it('reports nothing while a search is greying the flame graph out', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+
+    await userEvent.type(screen.getByPlaceholderText('Search...'), 'wide');
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenLastCalledWith([]));
+  });
+
+  it('does not report a sandwich view, whose paths are not call paths', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+
+    await userEvent.click((await screen.findAllByLabelText('Show in sandwich view'))[0]);
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenLastCalledWith([]));
   });
 
   it('should update search when row selected in top table', async () => {

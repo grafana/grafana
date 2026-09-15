@@ -9,7 +9,7 @@ import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraph
 import { type FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
-import { useColorScheme } from './hooks';
+import { type ReportVisibleTruncatedPaths, useColorScheme } from './hooks';
 import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
 
 type FlameGraphPaneProps = {
@@ -39,6 +39,7 @@ type FlameGraphPaneProps = {
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
   fillHeight?: boolean;
   loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
 
 const FlameGraphPane = ({
@@ -66,6 +67,7 @@ const FlameGraphPane = ({
   contentAwareWidthsEnabled,
   fillHeight,
   loadingItems,
+  reportVisibleTruncatedPaths,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
@@ -300,6 +302,7 @@ const FlameGraphPane = ({
           collapsedMap={collapsedMap}
           setCollapsedMap={setCollapsedMap}
           loadingItems={loadingItems}
+          reportVisibleTruncatedPaths={reportVisibleTruncatedPaths}
         />
       );
       break;
@@ -319,6 +322,8 @@ const FlameGraphPane = ({
             getExtraContextMenuButtons={getExtraContextMenuButtons}
             viewMode={viewMode}
             paneView={paneViewForContextMenu}
+            loadingItems={loadingItems}
+            reportVisibleTruncatedPaths={reportVisibleTruncatedPaths}
           />
         </div>
       );
