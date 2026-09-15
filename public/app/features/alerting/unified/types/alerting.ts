@@ -77,6 +77,7 @@ export type CloudNotifierType =
   | 'sns'
   | 'discord'
   | 'msteams'
+  | 'msteamsv2'
   | 'jira';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
