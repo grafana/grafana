@@ -7041,6 +7041,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageClient.requireCallerIdentity",
+        "resourceVersion": "1789393826327",
+        "creationTimestamp": "2026-09-14T13:50:26Z"
+      },
+      "spec": {
+        "description": "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageVectorStore",
         "resourceVersion": "1785880096317",
         "creationTimestamp": "2026-08-04T21:48:16Z",
