@@ -1,10 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { createTheme } from '@grafana/data';
+import { createTheme, FieldType } from '@grafana/data';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
+import { type TableColumn } from './types';
+
+const textColumn: TableColumn = {
+  key: 'A',
+  name: 'A',
+  field: { name: 'A', type: FieldType.string, values: [], config: {} },
+};
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
   return {
@@ -73,6 +80,28 @@ describe('TableDataGrid', () => {
       render(<TableDataGrid {...makeProps()} />);
       const classic = window.getComputedStyle(screen.getByRole('grid'));
       expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+    });
+  });
+
+  describe('hidden header', () => {
+    it('renders no resize handles, which only the header row could offer', () => {
+      const { container, unmount } = render(<TableDataGrid {...makeProps({ columns: [textColumn] })} />);
+      expect(container.querySelectorAll('.rdg-cell-resizable')).toHaveLength(1);
+
+      unmount();
+
+      const { container: headerless } = render(
+        <TableDataGrid {...makeProps({ columns: [textColumn], noHeader: true })} />
+      );
+      expect(headerless.querySelectorAll('.rdg-cell-resizable')).toHaveLength(0);
+    });
+
+    it('reserves no height for the header row it does not show', () => {
+      const { container } = render(
+        <TableDataGrid {...makeProps({ columns: [textColumn], noHeader: true, headerHeight: 36 })} />
+      );
+      const grid = container.querySelector<HTMLElement>('.rdg')!;
+      expect(grid.style.getPropertyValue('--rdg-header-row-height')).toBe('0px');
     });
   });
 

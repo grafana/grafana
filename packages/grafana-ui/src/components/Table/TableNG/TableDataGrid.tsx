@@ -143,7 +143,9 @@ export function TableDataGrid({
         enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && typeof rowHeight !== 'string',
         defaultColumnOptions: {
           minWidth: 50,
-          resizable: true,
+          // rdg's resize handle lives in the header cell, so a hidden header leaves nothing to grab.
+          // Don't render an affordance the user can't act on.
+          resizable: !noHeader,
           sortable: true,
         },
         onSortColumnsChange: (newSortColumns: SortColumn[]) => {
@@ -192,7 +194,6 @@ export function TableDataGrid({
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}
         headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
         onColumnResize={onColumnResize}
         onCellClick={onCellClick}
         onCellKeyDown={onCellKeyDown}
