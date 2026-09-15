@@ -20,7 +20,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
-import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, HEADER_ICON_SPACE, LAST_COLUMN_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
@@ -1886,6 +1886,32 @@ describe('TableNG utils', () => {
         })
         // 100 + chrome + the sort arrow reserved on every sortable column; the kerned 4 * 8 is unused
       ).toEqual([100 + CELL_CHROME + 22]);
+    });
+
+    it('sizes an unwrapped header by the single line the cell renders, newlines collapsed', () => {
+      // `nowrap` collapses a newline in the display name into a space, so the label is one long line.
+      // Sizing it the way a wrapped header is sized — its widest hard-broken segment — clips it.
+      const field: Field = {
+        name: 'Two\nLines',
+        type: FieldType.string,
+        values: ['x'],
+        config: { custom: { wrapHeaderText: false } },
+      };
+
+      // "Two Lines" (9) + chrome + the sort arrow, not "Lines" (5)
+      expect(compute([field], 0)).toEqual([9 * CHAR_W + CELL_CHROME + HEADER_ICON_SPACE]);
+    });
+
+    it('sizes a wrapped header by its widest hard-broken line', () => {
+      // `pre-line` keeps the newline as a break, so the column only has to fit the longer segment.
+      const field: Field = {
+        name: 'Two\nLines',
+        type: FieldType.string,
+        values: ['x'],
+        config: { custom: { wrapHeaderText: true } },
+      };
+
+      expect(compute([field], 0)).toEqual(['Lines'.length * CHAR_W + CELL_CHROME + HEADER_ICON_SPACE]);
     });
 
     it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
