@@ -586,16 +586,13 @@ const (
 // older search server answer with a bad request rather than drop the query.
 //
 // Regex operators match whole values on filterable, case-preserving keyword fields.
-// The shared search/regex validator accepts literals, ordinary character classes,
-// unnamed grouping, alternation, and greedy repetition. A leading (?i)
-// folds value case; dot matches newlines by default. Missing fields or labels
+// Supported operations are literals, character classes, grouping, alternation,
+// and greedy repetition. Equivalent spellings, including hex escapes and POSIX
+// classes, are accepted. Successive quantifiers are nested repetitions.
+// A leading (?i) folds value case; dot matches newlines. Missing fields or labels
 // are evaluated as empty values. Flattened labels split literal-key=value at the
 // first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.
 // Each dictionary expansion permits 10,000 inspected terms and 10,000 matches.
-// The subset is defined by parsed operations, not source spelling: hex escapes,
-// POSIX classes, and braces parsed as literals are accepted. Perl extensions
-// (including shorthand classes and embedded modes) and Unicode properties are disabled.
-// Successive quantifiers are nested repetitions, not lazy quantifiers.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"
