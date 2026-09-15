@@ -2,10 +2,9 @@
  * Hands data source managed alerting URLs over to the `grafana-prometheusalerting-app` plugin.
  *
  * The alerting route table imports this module while the app is starting up, so everything it
- * reaches ends up in the first bundle the browser downloads. The only thing it needs from the
- * proxy up front is the list of paths to wrap; deciding whether a given URL belongs to the plugin,
- * and where in it, lives in `proxies.ts` and is fetched the first time someone opens one of those
- * pages.
+ * reaches ends up in the first bundle the browser downloads — which is why it holds no opinion
+ * about which URLs the plugin serves. Routes name themselves by calling `proxied()`, and the table
+ * saying what to do with them lives in `proxies.ts`, fetched the first time someone opens one.
  */
 import { Suspense, lazy } from 'react';
 
@@ -19,8 +18,6 @@ import {
   type GrafanaRouteComponentProps,
   type RouteDescriptor,
 } from 'app/core/navigation/types';
-
-import { isProxiedRoutePath } from './proxiedPaths';
 
 /**
  * What a proxied page shows while we work out where it belongs. Shared with
@@ -39,9 +36,9 @@ export function RedirectingPage() {
  * One wrapper per route, kept for the life of the page.
  *
  * This is not an optimisation. `getAppRoutes()` runs in `AppWrapper`'s render body, so
- * `applyRouteProxies` runs again on every render. A fresh `lazy()` has no resolved promise on it,
- * so React would unmount the page, suspend again, and re-run the redirect work — every render,
- * forever.
+ * `getAlertingRoutes()` runs again on every render. A fresh `lazy()` has no resolved promise on
+ * it, so React would unmount the page, suspend again, and re-run the redirect work — every
+ * render, forever.
  */
 const proxiedComponents = new Map<string, GrafanaRouteComponent>();
 
@@ -88,24 +85,33 @@ function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
 }
 
 /**
- * Wraps every route that has a matching entry in the proxy table. Paths are matched exactly, so a
- * renamed route silently loses its proxy — `routes.test.tsx` guards against that.
+ * Every path that has asked to be proxied. Only here so `routes.test.tsx` can check it against the
+ * table in `proxies.ts` — a route that opts in without an entry, or an entry for a route that
+ * never opts in, is a proxy that quietly does nothing.
+ */
+export const optedInRoutePaths = new Set<string>();
+
+/**
+ * Marks an alerting route as one the `grafana-prometheusalerting-app` plugin might serve, so that
+ * data source managed URLs on it get handed over. Wrap the route descriptor where it is declared:
  *
- * Does nothing when unified alerting is switched off. Every alerting route serves the "alerting is
- * not enabled" page in that case, and someone who turned alerting off didn't ask us to find them
+ *     proxied({ path: '/alerting/silences', roles: …, component: … })
+ *
+ * Whether a given URL on that route actually belongs to the plugin is decided later, from the
+ * table in `proxies.ts`. Grafana-managed URLs end up back on the page below, so opting a route in
+ * is safe even when most of its traffic is Grafana's own.
+ *
+ * Does nothing when unified alerting is switched off — every alerting route serves the "alerting
+ * is not enabled" page then, and someone who turned alerting off didn't ask us to find them
  * another way in. Read per call rather than once at import, because `config` is filled in after
  * this module is evaluated.
  */
-export function applyRouteProxies(routes: RouteDescriptor[]): RouteDescriptor[] {
+export function proxied(route: RouteDescriptor): RouteDescriptor {
+  optedInRoutePaths.add(route.path);
+
   if (!config.unifiedAlertingEnabled) {
-    return routes;
+    return route;
   }
 
-  return routes.map((route) => {
-    if (!isProxiedRoutePath(route.path)) {
-      return route;
-    }
-
-    return { ...route, component: proxiedComponent(route) };
-  });
+  return { ...route, component: proxiedComponent(route) };
 }

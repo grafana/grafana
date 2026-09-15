@@ -17,7 +17,6 @@ import {
   unescapePathSeparators,
 } from '../utils/rule-id';
 
-import { PROXIED_ROUTE_PATHS, type ProxiedRoutePath } from './proxiedPaths';
 import { type ProxyContext, type ProxyHandler, type ProxyMatcher, type RouteProxy } from './types';
 
 /**
@@ -152,207 +151,240 @@ const matchesGroupPage: ProxyMatcher = ({ params }: ProxyContext) =>
   isDataSourceManaged(params.dataSourceUid) && Boolean(params.namespaceId) && Boolean(params.groupName);
 
 /**
- * Whether a URL on each proxied route actually belongs to the plugin. Keyed by path so that a
- * route listed in `proxiedPaths.ts` without a matcher here is a compile error.
+ * The proxy table. One entry per alerting route the plugin might serve: the route's path, how to
+ * tell from the URL whether that particular one belongs to the plugin, and where in the plugin it
+ * goes. All three sit together so an entry cannot half-exist.
+ *
+ * Routes opt in via `proxied()` in `routes.tsx`, and `routes.test.tsx` checks the two agree.
  */
-const matchers: Record<ProxiedRoutePath, ProxyMatcher> = {
-  // Both halves of the URL have to agree that the rule is data source managed. Every link Grafana
-  // builds for this route puts the full identifier in the path, so a bare UID here means the URL
-  // contradicts itself and the handler was never going to resolve it.
-  '/alerting/:sourceName/:id/view': (context) =>
-    matchesDataSourceManagedRulesSource(context) && isDataSourceManagedIdentifier(context.params.id),
-
-  // The "find a rule by name" page has no plugin equivalent, so the handler searches the rule list.
-  '/alerting/:sourceName/:name/find': (context) =>
-    matchesDataSourceManagedRulesSource(context) && Boolean(context.params.name),
-
-  '/alerting/:id/edit': ({ params }) => isDataSourceManagedIdentifier(params.id),
-
-  // `recording` is the data source managed recording rule form, and `?copyFrom=` carries a rule
-  // identifier which tells us who owns the rule being cloned. Plain `/alerting/new/alerting` is
-  // left alone: whether that rule ends up Grafana or data source managed is chosen in the form.
-  '/alerting/new/:type?': ({ params, searchParams }) =>
-    params.type === 'recording' || isDataSourceManagedIdentifier(searchParams.get('copyFrom') ?? undefined),
-
-  // Group routes line up field for field — Grafana already uses the data source UID and namespace
-  // name here.
-  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view': matchesGroupPage,
-  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit': matchesGroupPage,
-
-  // Alertmanager pages. All of these hinge on `?alertmanager=` naming something other than
-  // Grafana's own, plus whatever the individual page needs to identify what it was showing.
-  '/alerting/groups/': matchesExternalAlertmanager,
-  '/alerting/notifications': matchesExternalAlertmanager,
-  '/alerting/notifications/global-config': matchesExternalAlertmanager,
-  '/alerting/notifications/receivers/new': matchesExternalAlertmanager,
-  '/alerting/notifications/receivers/:name/edit': (context) =>
-    matchesExternalAlertmanager(context) && Boolean(context.params.name),
-  '/alerting/notifications/templates': matchesExternalAlertmanager,
-  '/alerting/notifications/templates/*': matchesExternalAlertmanager,
-  '/alerting/routes': matchesExternalAlertmanager,
-  '/alerting/routes/policy/:name/edit': (context) =>
-    matchesExternalAlertmanager(context) && Boolean(context.params.name),
-  '/alerting/routes/mute-timing': matchesExternalAlertmanager,
-  '/alerting/routes/mute-timing/new': matchesExternalAlertmanager,
-  '/alerting/routes/mute-timing/edit': (context) =>
-    matchesExternalAlertmanager(context) && context.searchParams.has('muteName'),
-  '/alerting/silences': matchesExternalAlertmanager,
-  '/alerting/silence/new': matchesExternalAlertmanager,
-  '/alerting/silence/:id/view': (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
-  '/alerting/silence/:id/edit': (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
-};
-
-const handlers: Record<ProxiedRoutePath, ProxyHandler> = {
-  // /alerting/<source>/<identifier>/view -> /rules/<identifier>
-  '/alerting/:sourceName/:id/view': async ({ params, searchParams }) => {
-    const identifier = await toPluginRuleIdentifier(params.id);
-    return identifier ? pluginUrl(`${PLUGIN_ROUTES.rules}/${identifier}`, searchParams) : undefined;
+export const routeProxies: RouteProxy[] = [
+  {
+    // Both halves of the URL have to agree that the rule is data source managed. Every link Grafana
+    // builds for this route puts the full identifier in the path, so a bare UID here means the URL
+    // contradicts itself and the handler was never going to resolve it.
+    // /alerting/<source>/<identifier>/view -> /rules/<identifier>
+    path: '/alerting/:sourceName/:id/view',
+    matches: (context) =>
+      matchesDataSourceManagedRulesSource(context) && isDataSourceManagedIdentifier(context.params.id),
+    handler: async ({ params, searchParams }) => {
+      const identifier = await toPluginRuleIdentifier(params.id);
+      return identifier ? pluginUrl(`${PLUGIN_ROUTES.rules}/${identifier}`, searchParams) : undefined;
+    },
   },
+  {
+    // The "find a rule by name" page has no plugin equivalent, so search the rule list for it
+    // instead. Both sides use the same search grammar.
+    path: '/alerting/:sourceName/:name/find',
+    matches: (context) => matchesDataSourceManagedRulesSource(context) && Boolean(context.params.name),
+    handler: async ({ params, searchParams }) => {
+      const terms = [
+        `datasource:"${tryDecodeUriComponent(params.sourceName ?? '')}"`,
+        `rule:"${decodeRuleName(params.name ?? '')}"`,
+      ];
 
-  // The "find a rule by name" page has no plugin equivalent, so search the rule list for it
-  // instead. Both sides use the same search grammar.
-  '/alerting/:sourceName/:name/find': async ({ params, searchParams }) => {
-    const terms = [
-      `datasource:"${tryDecodeUriComponent(params.sourceName ?? '')}"`,
-      `rule:"${decodeRuleName(params.name ?? '')}"`,
-    ];
-
-    const namespace = searchParams.get('namespace');
-    const group = searchParams.get('group');
-    if (namespace) {
-      terms.push(`namespace:"${namespace}"`);
-    }
-    if (group) {
-      terms.push(`group:"${group}"`);
-    }
-
-    return pluginUrl(PLUGIN_ROUTES.rules, new URLSearchParams({ search: terms.join(' ') }));
-  },
-
-  // /alerting/<identifier>/edit -> /rules/<identifier>/edit
-  '/alerting/:id/edit': async ({ params, searchParams }) => {
-    const identifier = await toPluginRuleIdentifier(params.id);
-    return identifier ? pluginUrl(`${PLUGIN_ROUTES.rules}/${identifier}/edit`, searchParams) : undefined;
-  },
-
-  '/alerting/new/:type?': async ({ params, searchParams }) => {
-    const copyFrom = searchParams.get('copyFrom');
-    const clonedIdentifier = copyFrom ? await toPluginRuleIdentifier(copyFrom) : undefined;
-    if (copyFrom && !clonedIdentifier) {
-      // We know the rule is data source managed but couldn't resolve its data source.
-      return undefined;
-    }
-
-    const pluginParams = new URLSearchParams(searchParams);
-    // The plugin reads the rule type from `?type=` rather than from the path.
-    if (params.type) {
-      pluginParams.set('type', params.type);
-    }
-    if (clonedIdentifier) {
-      pluginParams.set('copyFrom', tryDecodeUriComponent(clonedIdentifier));
-    }
-
-    return pluginUrl(PLUGIN_ROUTES.newRule, pluginParams);
-  },
-
-  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view': groupPageHandler('view'),
-  '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit': groupPageHandler('edit'),
-
-  // Grafana's grouped alert instances view
-  '/alerting/groups/': alertmanagerPageHandler(PLUGIN_ROUTES.alerts),
-  '/alerting/notifications/templates': alertmanagerPageHandler(PLUGIN_ROUTES.templates),
-  '/alerting/routes': alertmanagerPageHandler(PLUGIN_ROUTES.routes),
-  '/alerting/routes/mute-timing': alertmanagerPageHandler(PLUGIN_ROUTES.timeIntervals),
-  '/alerting/routes/mute-timing/new': alertmanagerPageHandler(PLUGIN_ROUTES.newTimeInterval),
-  '/alerting/silences': alertmanagerPageHandler(PLUGIN_ROUTES.silences),
-
-  // Contact points and notification templates share one tabbed page in Grafana; the plugin has
-  // two separate pages.
-  '/alerting/notifications': alertmanagerPage((params) => {
-    const tab = params.get('tab');
-    params.delete('tab');
-    return tab === 'templates' ? PLUGIN_ROUTES.templates : PLUGIN_ROUTES.receivers;
-  }),
-
-  '/alerting/notifications/receivers/new': alertmanagerPage((params) => {
-    params.set(DRAWER_PARAMS.create, 'true');
-    return PLUGIN_ROUTES.receivers;
-  }),
-
-  '/alerting/notifications/receivers/:name/edit': alertmanagerPage(
-    (_params, { params }) => `${PLUGIN_ROUTES.receivers}/${reencodePathParam(params.name)}`
-  ),
-
-  // Grafana's template sub-routes: `new`, `<name>/edit`, `<name>/duplicate`. The plugin does all
-  // three in a drawer on the templates page.
-  '/alerting/notifications/templates/*': alertmanagerPage((params, { params: routeParams }) => {
-    const [name, action] = (routeParams['*'] ?? '').split('/');
-
-    if (name === 'new') {
-      params.set(DRAWER_PARAMS.create, 'true');
-    } else if (name) {
-      params.set(DRAWER_PARAMS.template, tryDecodeUriComponent(name));
-      if (action === 'duplicate') {
-        params.set(DRAWER_PARAMS.create, 'true');
+      const namespace = searchParams.get('namespace');
+      const group = searchParams.get('group');
+      if (namespace) {
+        terms.push(`namespace:"${namespace}"`);
       }
-    }
+      if (group) {
+        terms.push(`group:"${group}"`);
+      }
 
-    return PLUGIN_ROUTES.templates;
-  }),
+      return pluginUrl(PLUGIN_ROUTES.rules, new URLSearchParams({ search: terms.join(' ') }));
+    },
+  },
+  {
+    // /alerting/<identifier>/edit -> /rules/<identifier>/edit
+    path: '/alerting/:id/edit',
+    matches: ({ params }) => isDataSourceManagedIdentifier(params.id),
+    handler: async ({ params, searchParams }) => {
+      const identifier = await toPluginRuleIdentifier(params.id);
+      return identifier ? pluginUrl(`${PLUGIN_ROUTES.rules}/${identifier}/edit`, searchParams) : undefined;
+    },
+  },
+  {
+    // `recording` is the data source managed recording rule form, and `?copyFrom=` carries a rule
+    // identifier which tells us who owns the rule being cloned. Plain `/alerting/new/alerting` is
+    // left alone: whether that rule ends up Grafana or data source managed is chosen in the form.
+    path: '/alerting/new/:type?',
+    matches: ({ params, searchParams }) =>
+      params.type === 'recording' || isDataSourceManagedIdentifier(searchParams.get('copyFrom') ?? undefined),
+    handler: async ({ params, searchParams }) => {
+      const copyFrom = searchParams.get('copyFrom');
+      const clonedIdentifier = copyFrom ? await toPluginRuleIdentifier(copyFrom) : undefined;
+      if (copyFrom && !clonedIdentifier) {
+        // We know the rule is data source managed but couldn't resolve its data source.
+        return undefined;
+      }
 
-  '/alerting/notifications/global-config': alertmanagerPage((params) => {
-    params.set(DRAWER_PARAMS.globalConfig, 'true');
-    return PLUGIN_ROUTES.receivers;
-  }),
+      const pluginParams = new URLSearchParams(searchParams);
+      // The plugin reads the rule type from `?type=` rather than from the path.
+      if (params.type) {
+        pluginParams.set('type', params.type);
+      }
+      if (clonedIdentifier) {
+        pluginParams.set('copyFrom', tryDecodeUriComponent(clonedIdentifier));
+      }
 
-  '/alerting/routes/policy/:name/edit': alertmanagerPage((params, { params: routeParams }) => {
-    params.set(DRAWER_PARAMS.route, tryDecodeUriComponent(routeParams.name ?? ''));
-    return PLUGIN_ROUTES.routes;
-  }),
+      return pluginUrl(PLUGIN_ROUTES.newRule, pluginParams);
+    },
+  },
+  {
+    // Group routes line up field for field — Grafana already uses the data source UID and namespace
+    // name here.
+    path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view',
+    matches: matchesGroupPage,
+    handler: groupPageHandler('view'),
+  },
+  {
+    path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit',
+    matches: matchesGroupPage,
+    handler: groupPageHandler('edit'),
+  },
+  {
+    // Alertmanager pages. All of these hinge on `?alertmanager=` naming something other than
+    // Grafana's own, plus whatever the individual page needs to identify what it was showing.
+    // Grafana's grouped alert instances view
+    path: '/alerting/groups/',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.alerts),
+  },
+  {
+    // Contact points and notification templates share one tabbed page in Grafana; the plugin has
+    // two separate pages.
+    path: '/alerting/notifications',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPage((params) => {
+      const tab = params.get('tab');
+      params.delete('tab');
+      return tab === 'templates' ? PLUGIN_ROUTES.templates : PLUGIN_ROUTES.receivers;
+    }),
+  },
+  {
+    path: '/alerting/notifications/global-config',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPage((params) => {
+      params.set(DRAWER_PARAMS.globalConfig, 'true');
+      return PLUGIN_ROUTES.receivers;
+    }),
+  },
+  {
+    path: '/alerting/notifications/receivers/new',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPage((params) => {
+      params.set(DRAWER_PARAMS.create, 'true');
+      return PLUGIN_ROUTES.receivers;
+    }),
+  },
+  {
+    path: '/alerting/notifications/receivers/:name/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
+    handler: alertmanagerPage((_params, { params }) => `${PLUGIN_ROUTES.receivers}/${reencodePathParam(params.name)}`),
+  },
+  {
+    path: '/alerting/notifications/templates',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.templates),
+  },
+  {
+    // Grafana's template sub-routes: `new`, `<name>/edit`, `<name>/duplicate`. The plugin does all
+    // three in a drawer on the templates page.
+    path: '/alerting/notifications/templates/*',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPage((params, { params: routeParams }) => {
+      const [name, action] = (routeParams['*'] ?? '').split('/');
 
-  // Grafana names the time interval with `?muteName=`, the plugin puts it in the path.
-  '/alerting/routes/mute-timing/edit': alertmanagerPage((params) => {
-    const muteName = params.get('muteName');
-    if (!muteName) {
-      return undefined;
-    }
+      if (name === 'new') {
+        params.set(DRAWER_PARAMS.create, 'true');
+      } else if (name) {
+        params.set(DRAWER_PARAMS.template, tryDecodeUriComponent(name));
+        if (action === 'duplicate') {
+          params.set(DRAWER_PARAMS.create, 'true');
+        }
+      }
 
-    params.delete('muteName');
-    return `${PLUGIN_ROUTES.timeIntervals}/${encodeURIComponent(muteName)}`;
-  }),
+      return PLUGIN_ROUTES.templates;
+    }),
+  },
+  {
+    path: '/alerting/routes',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.routes),
+  },
+  {
+    path: '/alerting/routes/policy/:name/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
+    handler: alertmanagerPage((params, { params: routeParams }) => {
+      params.set(DRAWER_PARAMS.route, tryDecodeUriComponent(routeParams.name ?? ''));
+      return PLUGIN_ROUTES.routes;
+    }),
+  },
+  {
+    path: '/alerting/routes/mute-timing',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.timeIntervals),
+  },
+  {
+    path: '/alerting/routes/mute-timing/new',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.newTimeInterval),
+  },
+  {
+    // Grafana names the time interval with `?muteName=`, the plugin puts it in the path.
+    path: '/alerting/routes/mute-timing/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && context.searchParams.has('muteName'),
+    handler: alertmanagerPage((params) => {
+      const muteName = params.get('muteName');
+      if (!muteName) {
+        return undefined;
+      }
 
-  // Grafana repeats `?matcher=key=value`; the plugin takes a single JSON `?matchers=`.
-  '/alerting/silence/new': alertmanagerPage((params) => {
-    // parseQueryParamMatchers is what Grafana's own silence form uses to read this param, so we
-    // accept exactly the same links. Its Matcher shape already matches what the plugin wants.
-    const matchers = parseQueryParamMatchers(params.getAll('matcher'));
+      params.delete('muteName');
+      return `${PLUGIN_ROUTES.timeIntervals}/${encodeURIComponent(muteName)}`;
+    }),
+  },
+  {
+    path: '/alerting/silences',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPageHandler(PLUGIN_ROUTES.silences),
+  },
+  {
+    // Grafana repeats `?matcher=key=value`; the plugin takes a single JSON `?matchers=`.
+    path: '/alerting/silence/new',
+    matches: matchesExternalAlertmanager,
+    handler: alertmanagerPage((params) => {
+      // parseQueryParamMatchers is what Grafana's own silence form uses to read this param, so we
+      // accept exactly the same links. Its Matcher shape already matches what the plugin wants.
+      const matchers = parseQueryParamMatchers(params.getAll('matcher'));
 
-    params.delete('matcher');
-    if (matchers.length) {
-      params.set('matchers', JSON.stringify(matchers));
-    }
+      params.delete('matcher');
+      if (matchers.length) {
+        params.set('matchers', JSON.stringify(matchers));
+      }
 
-    return PLUGIN_ROUTES.newSilence;
-  }),
-
-  // The plugin shows a single silence in a drawer on the list page.
-  '/alerting/silence/:id/view': alertmanagerPage((params, { params: routeParams }) => {
-    params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
-    return PLUGIN_ROUTES.silences;
-  }),
-
-  '/alerting/silence/:id/edit': alertmanagerPage((params, { params: routeParams }) => {
-    params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
-    params.set(DRAWER_PARAMS.edit, 'true');
-    return PLUGIN_ROUTES.silences;
-  }),
-};
-
-export const routeProxies: RouteProxy[] = PROXIED_ROUTE_PATHS.map((path) => ({
-  path,
-  matches: matchers[path],
-  handler: handlers[path],
-}));
+      return PLUGIN_ROUTES.newSilence;
+    }),
+  },
+  {
+    // The plugin shows a single silence in a drawer on the list page.
+    path: '/alerting/silence/:id/view',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
+    handler: alertmanagerPage((params, { params: routeParams }) => {
+      params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
+      return PLUGIN_ROUTES.silences;
+    }),
+  },
+  {
+    path: '/alerting/silence/:id/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
+    handler: alertmanagerPage((params, { params: routeParams }) => {
+      params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
+      params.set(DRAWER_PARAMS.edit, 'true');
+      return PLUGIN_ROUTES.silences;
+    }),
+  },
+];
 
 export function findRouteProxy(routePath: string): RouteProxy | undefined {
   return routeProxies.find(({ path }) => path === routePath);

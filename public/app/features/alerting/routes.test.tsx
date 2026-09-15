@@ -2,7 +2,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
-import { PROXIED_ROUTE_PATHS } from './unified/plugin-proxy/proxiedPaths';
+import { optedInRoutePaths } from './unified/plugin-proxy/withRouteProxy';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -107,21 +107,28 @@ describe('alerting route guards', () => {
 });
 
 describe('data source managed route proxies', () => {
-  it('every proxy points at a route that actually exists', () => {
-    const routePaths = getAlertingRoutes().map((route) => route.path);
+  it('gives every route that opted in an entry in the proxy table, and vice versa', async () => {
+    // A route calling proxied() without a table entry hands nothing over; an entry for a route
+    // that never opts in never runs. Both fail silently, which is why this is checked here.
+    getAlertingRoutes();
+    const { routeProxies } = await import('./unified/plugin-proxy/proxies');
 
-    for (const path of PROXIED_ROUTE_PATHS) {
+    expect([...optedInRoutePaths].sort()).toEqual(routeProxies.map(({ path }) => path).sort());
+  });
+
+  it('points every table entry at a route that actually exists', async () => {
+    const routePaths = getAlertingRoutes().map((route) => route.path);
+    const { routeProxies } = await import('./unified/plugin-proxy/proxies');
+
+    for (const { path } of routeProxies) {
       expect(routePaths).toContain(path);
     }
   });
 
-  it('gives every proxied path both a matcher and a handler', async () => {
-    // TypeScript already enforces this — both records in proxies.ts are typed against
-    // PROXIED_ROUTE_PATHS — but only as long as that typing survives a refactor, and losing it
-    // would show up as a route that quietly stops being proxied rather than as an error.
+  it('gives every table entry both a check and a handler', async () => {
     const { routeProxies } = await import('./unified/plugin-proxy/proxies');
 
-    expect(routeProxies.map(({ path }) => path)).toEqual([...PROXIED_ROUTE_PATHS]);
+    expect(routeProxies).not.toHaveLength(0);
     for (const { matches, handler } of routeProxies) {
       expect(typeof matches).toBe('function');
       expect(typeof handler).toBe('function');
