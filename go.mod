@@ -4,9 +4,9 @@ go 1.26.6
 
 // Direct requirements -- every entry needs an owner
 require (
-	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
+	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
-	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/kms v1.32.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.66.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.3.2 // @grafana/identity-access-team
@@ -90,7 +90,7 @@ require (
 	github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5 // @grafana/grafana-app-platform-squad
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
-	github.com/googleapis/gax-go/v2 v2.23.0 // @grafana/grafana-backend-group
+	github.com/googleapis/gax-go/v2 v2.24.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8 // @grafana/alerting-backend
@@ -147,7 +147,7 @@ require (
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/nats-io/nats-server/v2 v2.14.4 // @grafana/grafana-search-and-storage
+	github.com/nats-io/nats-server/v2 v2.14.6 // @grafana/grafana-search-and-storage
 	github.com/nats-io/nats.go v1.53.1 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
@@ -211,14 +211,14 @@ require (
 	gocloud.dev v0.46.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.45.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/net v0.58.0 // @grafana/data-sources-plugins
-	golang.org/x/oauth2 v0.36.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.37.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.23.0 // @grafana/alerting-backend
 	golang.org/x/text v0.41.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
-	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.296.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // @grafana/identity-access-team
 	google.golang.org/grpc v1.83.2 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
@@ -314,12 +314,12 @@ replace (
 require (
 	cel.dev/expr v0.25.3 // indirect
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.20.0 // indirect
+	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	cloud.google.com/go/iam v1.11.0 // indirect
+	cloud.google.com/go/iam v1.12.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
-	cloud.google.com/go/monitoring v1.29.0 // indirect
+	cloud.google.com/go/monitoring v1.30.0 // indirect
 	cuelang.org/go v0.17.1 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
@@ -477,7 +477,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.17 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grafana/nanogit v1.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
@@ -690,7 +690,7 @@ require (
 	golang.org/x/tools v0.49.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94 // indirect
+	google.golang.org/genproto v0.0.0-20260715232425-e75dac1f907d // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
