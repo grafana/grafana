@@ -104,7 +104,10 @@ describe('NotebooksListPage (integration)', () => {
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     __resetSearchAvailabilityForTests();
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
+    contextSrv.user.permissions = {
+      [AccessControlAction.NotebooksWrite]: true,
+      [AccessControlAction.NotebooksCreate]: true,
+    };
   });
 
   afterEach(async () => {

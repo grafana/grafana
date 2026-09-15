@@ -51,15 +51,15 @@ export function requiresNotebookEdit(): PermissionCheckResult {
 }
 
 /**
- * Says nothing about the open document: CREATE runs from anywhere. Checked against the write action,
- * same as requiresNotebookEdit — notebooks only have reader and writer fixed roles, no separate creator.
+ * Says nothing about the open document: CREATE runs from anywhere. Checked against
+ * `notebooks:create`, which is the action the apiserver authorizes the create verb with.
  */
 export function requiresNotebookCreate(): PermissionCheckResult {
   const enabled = requiresNotebooksEnabled();
   if (!enabled.allowed) {
     return enabled;
   }
-  if (!contextSrv.hasPermission(AccessControlAction.NotebooksWrite)) {
+  if (!contextSrv.hasPermission(AccessControlAction.NotebooksCreate)) {
     return { allowed: false, error: 'Cannot create notebook: insufficient permissions.' };
   }
   return { allowed: true };

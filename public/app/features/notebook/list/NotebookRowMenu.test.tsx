@@ -158,14 +158,14 @@ describe('NotebookRowMenu', () => {
     it('is hidden from a user who cannot delete notebooks', () => {
       const hasPermission = jest
         .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action !== AccessControlAction.NotebooksWrite);
+        .mockImplementation((action) => action !== AccessControlAction.NotebooksDelete);
 
       render(<NotebookRowMenu uid="nb1" onDelete={jest.fn()} />);
 
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
       expect(screen.getByRole('menuitem', { name: /Export/ })).toBeInTheDocument();
-      expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.NotebooksWrite);
+      expect(hasPermission).toHaveBeenCalledWith(AccessControlAction.NotebooksDelete);
     });
   });
 });

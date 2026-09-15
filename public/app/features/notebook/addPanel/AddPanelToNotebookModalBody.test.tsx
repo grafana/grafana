@@ -83,7 +83,7 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
   } as ReturnType<typeof useNotebookPicker>);
 }
 
-/** Granted unless told otherwise. */
+/** Both granted unless told otherwise — the two tabs are gated on different actions. */
 function grant(permissions: string[]) {
   mockContextSrv.hasPermission.mockImplementation((permission) => permissions.includes(permission));
 }
@@ -123,7 +123,7 @@ describe('AddPanelToNotebookModalBody', () => {
   beforeEach(() => {
     mockComboboxRect();
     setPicker();
-    grant([AccessControlAction.NotebooksWrite]);
+    grant([AccessControlAction.NotebooksWrite, AccessControlAction.NotebooksCreate]);
     addToExisting.mockResolvedValue({ uid: 'nb1', title: 'Q2 latency regression' });
     createWithPanel.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
   });
@@ -578,20 +578,49 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   describe('an empty library', () => {
-    it('suggests creating one when the writer could', async () => {
+    it('suggests creating one when the reader could', async () => {
       setPicker({ rows: [], isFiltered: false });
       const { user } = renderModal();
       await chooseExisting(user);
 
       expect(screen.getByText(/Create one instead/)).toBeInTheDocument();
     });
+
+    // notebooks:write opens this picker and notebooks:create is what the create tab needs, so a
+    // reader can arrive here with no way to make the notebook they are being told to make.
+    it('does not suggest it to a reader who cannot create', () => {
+      grant([AccessControlAction.NotebooksWrite]);
+      setPicker({ rows: [], isFiltered: false });
+      renderModal();
+
+      expect(screen.getByText(/no permission to create one/)).toBeInTheDocument();
+      expect(screen.queryByText(/Create one instead/)).not.toBeInTheDocument();
+    });
   });
 
   describe('permissions', () => {
-    // Both routes are gated on the same write action — notebooks only have reader and writer fixed
-    // roles, so there is no state where a user gets one route without the other. The chooser appears,
-    // and it opens on New the way the add-to-dashboard modal does.
-    it('opens on a new notebook for a writer', () => {
+    // With one route open there is nothing to choose, so the control is not offered at all rather
+    // than offered with a single option in it.
+    it('drops the chooser and goes straight to the picker for a user who can only add to existing', () => {
+      grant([AccessControlAction.NotebooksWrite]);
+      renderModal();
+
+      expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
+    });
+
+    it('drops it the other way for a user who can only create', () => {
+      grant([AccessControlAction.NotebooksCreate]);
+      renderModal();
+
+      expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Notebook name/ })).toBeInTheDocument();
+    });
+
+    // Both routes open: the chooser appears, and it opens on New the way the add-to-dashboard modal
+    // does rather than on the picker.
+    it('opens on a new notebook when both routes are available', () => {
       renderModal();
 
       expect(screen.getByRole('radio', { name: 'New notebook' })).toBeChecked();

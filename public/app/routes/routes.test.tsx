@@ -90,10 +90,18 @@ describe('notebooks route guards', () => {
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
   });
 
-  it('allows /notebooks/new with notebooks:write', () => {
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
+  // The route creates a notebook, which the apiserver authorizes with its own action — write alone
+  // would admit a user whose save is then denied.
+  it('allows /notebooks/new with notebooks:create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual([]);
+  });
+
+  it('rejects /notebooks/new for a writer who cannot create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
+
+    expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
   });
 
   /**

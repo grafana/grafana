@@ -79,7 +79,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       // precedence: routes are rendered by a v6 `<Routes>` (see AppWrapper), which ranks a static
       // segment above a dynamic one, so this wins over `:uid` wherever it is in the list.
       path: NOTEBOOK_NEW_URL,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksWrite]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: NotebookPageComponent,
