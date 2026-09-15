@@ -196,6 +196,23 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
+			// A non-resource file was never going to be synced regardless of
+			// which error IsPathSupported returns first (see HasResourceExtension).
+			// README.md/.keep/.gitignore fall out here; a delete of an unsafe
+			// path was never a synced resource either.
+			if change.Action != repository.FileActionDeleted &&
+				!errors.Is(err, safepath.ErrHiddenPath) && resources.HasResourceExtension(change.Path) {
+				// FileActionIgnored is explicitly excluded from error counting
+				// (see jobProgressRecorder.Record) -- using it here would make
+				// this failure invisible to the job's own pass/fail state.
+				progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+					WithAction(change.Action).
+					WithPreviousPath(change.PreviousPath).
+					WithError(&resources.UnsupportedPathError{Paths: []resources.UnsupportedPath{{Path: change.Path, Err: err}}}).
+					Build())
+				continue
+			}
+
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
