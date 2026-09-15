@@ -3,15 +3,8 @@ import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features
 import { type BrowseDashboardsState } from '../types';
 
 /**
- * Finds the item with the given kind and uid either in the root items or childrenByUID. This is just a convenience as
- * browse dashboards store all the items in two separate structures.
- *
- * UIDs are only unique per kind: a dashboard may share its UID with a folder, so matching on uid alone can return
- * the wrong item.
- * @param rootItems
- * @param childrenByUID
- * @param kind
- * @param uid
+ * Finds the item with the given kind and uid in either the root items or childrenByUID. UIDs are unique per kind
+ * only, so callers must say which kind they want.
  */
 export function findItem(
   rootItems: DashboardViewItem[],

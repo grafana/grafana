@@ -65,7 +65,7 @@ export function BrowseView({
 
   const [, stateManager] = useSearchStateManager();
 
-  const excludeUIDs = useMemo(() => {
+  const excludeFolderUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
@@ -238,7 +238,9 @@ export function BrowseView({
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
+      onAllSelectionChange={(newState) =>
+        dispatch(setAllSelection({ isSelected: newState, folderUID, excludeFolderUIDs }))
+      }
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -252,7 +254,7 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
-  // childrenByParentUID is keyed by folder UID, and a dashboard may share a UID with a folder
+  // Only folders have children
   if (item.kind !== 'folder') {
     return false;
   }

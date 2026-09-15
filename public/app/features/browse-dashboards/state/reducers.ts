@@ -139,9 +139,9 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeFolderUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeFolderUIDs } = action.payload;
 
   // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
@@ -178,8 +178,7 @@ export function setAllSelection(
           continue;
         }
 
-        // The exclude list holds repository root folder UIDs; a dashboard may share a UID with a folder
-        if (child.kind === 'folder' && excludeUIDs?.includes(child.uid)) {
+        if (child.kind === 'folder' && excludeFolderUIDs?.includes(child.uid)) {
           continue;
         }
 

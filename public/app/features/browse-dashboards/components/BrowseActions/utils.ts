@@ -7,6 +7,18 @@ export function getSelectedFolderUIDs(selectedItems: Pick<DashboardTreeSelection
   return Object.keys(selectedItems.folder || {}).filter((uid) => selectedItems.folder[uid]);
 }
 
+/** Returns the selected folders and dashboards as (kind, uid) pairs, folders first. */
+export function getSelectedItemRefs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>
+): Array<{ kind: 'folder' | 'dashboard'; uid: string }> {
+  return [
+    ...getSelectedFolderUIDs(selectedItems).map((uid) => ({ kind: 'folder' as const, uid })),
+    ...Object.keys(selectedItems.dashboard || {})
+      .filter((uid) => selectedItems.dashboard[uid])
+      .map((uid) => ({ kind: 'dashboard' as const, uid })),
+  ];
+}
+
 /**
  * Returns true when the selected folders have no remaining descendants once items the user explicitly selected
  * (folders/dashboards) are subtracted from the affected-items totals.

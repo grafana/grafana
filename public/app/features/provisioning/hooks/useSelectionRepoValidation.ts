@@ -2,11 +2,12 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { getSelectedItemRefs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
-import { type DashboardViewItemKind } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../browse-dashboards/state/hooks';
@@ -27,19 +28,12 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
     return settingsData.items.find((repo) => repo.name === repoUid);
   };
 
-  const getRepoUid = (kind: DashboardViewItemKind, uid: string) => {
-    const item = findItem(rootItems, childrenByParentUID, kind, uid);
-    return item ? getItemRepositoryUid(item, rootItems, childrenByParentUID) : 'non_provisioned';
-  };
+  const getItemRepoUid = (item: DashboardViewItem) => getItemRepositoryUid(item, rootItems, childrenByParentUID);
 
-  const repoUIDs = [
-    ...Object.keys(selectedItems.folder || {})
-      .filter((uid) => selectedItems.folder[uid])
-      .map((uid) => getRepoUid('folder', uid)),
-    ...Object.keys(selectedItems.dashboard || {})
-      .filter((uid) => selectedItems.dashboard[uid])
-      .map((uid) => getRepoUid('dashboard', uid)),
-  ];
+  const repoUIDs = getSelectedItemRefs(selectedItems).map(({ kind, uid }) => {
+    const item = findItem(rootItems, childrenByParentUID, kind, uid);
+    return item ? getItemRepoUid(item) : 'non_provisioned';
+  });
 
   // Skip 'non_provisioned' sentinel so downstream queries don't fire against a non-existent folder
   const selectedItemsRepoUID = repoUIDs.find((uid) => uid !== 'non_provisioned');
@@ -47,7 +41,7 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
 
   const hasSelection = repoUIDs.length > 0;
 
-  const isInLockedRepo = (kind: DashboardViewItemKind, uid: string) => {
+  const isInLockedRepo = (item: DashboardViewItem) => {
     // if whole instance is provisioned, all items are considered in the locked (same) repo
     if (isProvisionedInstance) {
       return true;
@@ -55,12 +49,12 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
     if (!selectedItemsRepoUID) {
       // No provisioned repo in selection — if nothing is selected allow any item,
       // otherwise lock to non-provisioned only so provisioned items can't be mixed in
-      return !hasSelection || getRepoUid(kind, uid) === 'non_provisioned';
+      return !hasSelection || getItemRepoUid(item) === 'non_provisioned';
     }
-    return getRepoUid(kind, uid) === selectedItemsRepoUID;
+    return getItemRepoUid(item) === selectedItemsRepoUID;
   };
-  const isUidInReadOnlyRepo = (kind: DashboardViewItemKind, uid: string) => {
-    const repo = getRepositoryByUid(getRepoUid(kind, uid));
+  const isItemInReadOnlyRepo = (item: DashboardViewItem) => {
+    const repo = getRepositoryByUid(getItemRepoUid(item));
     return repo ? getIsReadOnlyRepo(repo) : false;
   };
 
@@ -68,6 +62,6 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
     selectedItemsRepoUID,
     isInLockedRepo,
     isCrossRepo, // true if items are from different repositories
-    isUidInReadOnlyRepo,
+    isItemInReadOnlyRepo,
   };
 }

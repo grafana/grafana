@@ -7,7 +7,7 @@ import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/const
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
-  return baseId + item.uid;
+  return `${baseId}${item.kind}-${item.uid}`;
 }
 
 export function isSharedWithMe(uid: string) {

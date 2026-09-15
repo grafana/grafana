@@ -147,7 +147,7 @@ function createFlatTree(
   level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    // openFolders and childrenByUID are keyed by folder UID, and a dashboard may share a UID with a folder
+    // Only folders have children
     if (item.kind !== 'folder') {
       return [{ item, parentUID, level, isOpen: false }];
     }

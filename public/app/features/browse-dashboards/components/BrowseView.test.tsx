@@ -162,10 +162,10 @@ describe('browse-dashboards BrowseView', () => {
       },
     });
 
-    expect(await screen.findByText(folder.title)).toBeInTheDocument();
-    expect(screen.getByText(dashboard.title)).toBeInTheDocument();
-    // Both rows render a checkbox; both share the same selector because they share a UID
-    expect(screen.getAllByTestId(selectors.pages.BrowseDashboards.table.checkbox('same-uid'))).toHaveLength(2);
+    // Rendering each row's checkbox calls isSelected, which walks hasSelectedDescendants; the dashboard row must be a
+    // leaf even though childrenByParentUID has an entry under its UID. Each row is labelled by its own title.
+    expect(await screen.findByRole('row', { name: folder.title })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
   });
 
   describe('when there is no item in the folder', () => {
