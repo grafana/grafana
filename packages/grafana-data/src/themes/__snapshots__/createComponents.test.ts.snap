@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`table colors preserves the interaction colors for dark 1`] = `
+{
+  "border": "rgba(204, 204, 220, 0.12)",
+  "cellSelectionBorder": "#3d71d926",
+  "headerBorder": "rgba(204, 204, 220, 0.2)",
+  "headerDragTargetBackground": "rgb(54, 57, 63)",
+  "headerDraggingBackground": "rgb(65, 67, 73)",
+  "rowHoverBackground": "rgba(204, 204, 220, 0.16)",
+  "rowHoverBackgroundSolid": "#34363a",
+  "rowHoverOverlay": "rgba(255, 255, 255, 0.12)",
+  "rowSelected": "rgba(204, 204, 220, 0.12)",
+  "rowSelectedBackground": "#422800",
+  "rowSelectedHoverBackground": "rgb(75, 50, 12)",
+}
+`;
+
+exports[`table colors preserves the interaction colors for light 1`] = `
+{
+  "border": "rgba(36, 41, 46, 0.12)",
+  "cellSelectionBorder": "#3871dc26",
+  "headerBorder": "rgba(36, 41, 46, 0.12)",
+  "headerDragTargetBackground": "rgb(224, 224, 225)",
+  "headerDraggingBackground": "rgb(212, 212, 213)",
+  "rowHoverBackground": "rgba(36, 41, 46, 0.12)",
+  "rowHoverBackgroundSolid": "#e0e0e0",
+  "rowHoverOverlay": "rgba(0, 0, 0, 0.12)",
+  "rowSelected": "rgba(36, 41, 46, 0.08)",
+  "rowSelectedBackground": "#ffcc80",
+  "rowSelectedHoverBackground": "rgb(242, 193, 121)",
+}
+`;
+
+exports[`table colors preserves the interaction colors for visual_refresh_dark 1`] = `
+{
+  "border": "#202429",
+  "cellSelectionBorder": "hsl(from #3f76cf h s l / 0.15)",
+  "headerBorder": "#282d33",
+  "headerDragTargetBackground": "rgb(43, 46, 51)",
+  "headerDraggingBackground": "rgb(54, 57, 62)",
+  "rowHoverBackground": "hsl(from #dadee3 h s l / 0.07)",
+  "rowHoverBackgroundSolid": "rgb(46, 48, 53)",
+  "rowHoverOverlay": "rgba(255, 255, 255, 0.12)",
+  "rowSelected": "hsl(from #dadee3 h s l / 0.10)",
+  "rowSelectedBackground": "#000000",
+  "rowSelectedHoverBackground": "rgb(12, 12, 12)",
+}
+`;
+
+exports[`table colors preserves the interaction colors for visual_refresh_light 1`] = `
+{
+  "border": "rgba(36, 41, 46, 0.12)",
+  "cellSelectionBorder": "hsl(from #3f76cf h s l / 0.15)",
+  "headerBorder": "rgba(36, 41, 46, 0.12)",
+  "headerDragTargetBackground": "rgb(228, 228, 227)",
+  "headerDraggingBackground": "rgb(216, 216, 215)",
+  "rowHoverBackground": "hsl(from #1c1b1a h s l / 0.09)",
+  "rowHoverBackgroundSolid": "rgb(224, 224, 224)",
+  "rowHoverOverlay": "rgba(0, 0, 0, 0.12)",
+  "rowSelected": "hsl(from #1c1b1a h s l / 0.12)",
+  "rowSelectedBackground": "#ffc434",
+  "rowSelectedHoverBackground": "rgb(242, 186, 49)",
+}
+`;
