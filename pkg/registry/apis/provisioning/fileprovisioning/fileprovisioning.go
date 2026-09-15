@@ -4,7 +4,6 @@ package fileprovisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -61,27 +60,27 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 
 	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
 	for document := 1; ; document++ {
-		var raw map[string]any
-		if err := decoder.Decode(&raw); err != nil {
+		var node yaml.Node
+		if err := decoder.Decode(&node); err != nil {
 			if err == io.EOF {
 				return nil
 			}
 			return fmt.Errorf("decode YAML document %d: %w", document, err)
 		}
-		if len(raw) == 0 {
+		if node.Kind == 0 {
 			continue
 		}
 
 		// Expand environment variables after YAML parsing. Expanding the raw file
 		// first can inject newlines into block structure and corrupt multiline
 		// secrets such as PEM-encoded private keys.
-		expandEnvironment(raw)
+		expandEnvironmentNode(&node)
 
-		kind, _ := raw["kind"].(string)
+		kind := yamlNodeField(&node, "kind")
 		switch kind {
 		case "Repository":
 			var resource provisioning.Repository
-			if err := marshalInto(raw, &resource); err != nil {
+			if err := node.Decode(&resource); err != nil {
 				return fmt.Errorf("decode Repository in document %d: %w", document, err)
 			}
 			if err := applyRepository(ctx, client, &resource); err != nil {
@@ -89,7 +88,7 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 			}
 		case "Connection":
 			var resource provisioning.Connection
-			if err := marshalInto(raw, &resource); err != nil {
+			if err := node.Decode(&resource); err != nil {
 				return fmt.Errorf("decode Connection in document %d: %w", document, err)
 			}
 			if err := applyConnection(ctx, client, &resource); err != nil {
@@ -101,33 +100,32 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 	}
 }
 
-func expandEnvironment(value any) {
-	switch value := value.(type) {
-	case map[string]any:
-		for key, item := range value {
-			if text, ok := item.(string); ok {
-				value[key] = os.ExpandEnv(text)
-				continue
-			}
-			expandEnvironment(item)
-		}
-	case []any:
-		for i, item := range value {
-			if text, ok := item.(string); ok {
-				value[i] = os.ExpandEnv(text)
-				continue
-			}
-			expandEnvironment(item)
-		}
+func expandEnvironmentNode(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	if node.Kind == yaml.ScalarNode && node.Tag == "!!str" {
+		node.Value = os.ExpandEnv(node.Value)
+		return
+	}
+	for _, child := range node.Content {
+		expandEnvironmentNode(child)
 	}
 }
 
-func marshalInto(raw map[string]any, out any) error {
-	data, err := json.Marshal(raw)
-	if err != nil {
-		return err
+func yamlNodeField(node *yaml.Node, field string) string {
+	if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
+		node = node.Content[0]
 	}
-	return json.Unmarshal(data, out)
+	if node.Kind != yaml.MappingNode {
+		return ""
+	}
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		if node.Content[i].Value == field {
+			return node.Content[i+1].Value
+		}
+	}
+	return ""
 }
 
 func applyRepository(ctx context.Context, client client.ProvisioningV0alpha1Interface, desired *provisioning.Repository) error {
