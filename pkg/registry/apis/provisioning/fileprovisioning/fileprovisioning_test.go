@@ -47,8 +47,8 @@ spec:
   type: github
   url: https://github.com
   github:
-    appID: "123"
-    installationID: "456"
+    appID: 123
+    installationID: 456
 secure:
   privateKey:
     create: ${GITHUB_PRIVATE_KEY}
@@ -66,6 +66,8 @@ secure:
 	conn, err := client.Connections(DefaultNamespace).Get(context.Background(), "github-app", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "GitHub App", conn.Spec.Title)
+	require.Equal(t, "123", conn.Spec.GitHub.AppID)
+	require.Equal(t, "456", conn.Spec.GitHub.InstallationID)
 	require.Equal(t, "-----BEGIN PRIVATE KEY-----\nline-one\nline-two\n-----END PRIVATE KEY-----", string(conn.Secure.PrivateKey.Create))
 }
 
