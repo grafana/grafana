@@ -12,3 +12,8 @@ export const MIN_WIDTH_FOR_SPLIT_VIEW = 800;
 export const MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS = 1100;
 export const TOP_TABLE_COLUMN_WIDTH = 120;
 export const FLAMEGRAPH_CONTAINER_HEIGHT = 800;
+// Pyroscope names the node standing in for a subtree it truncated 'other' (model.truncatedNodeName).
+export const TRUNCATED_NODE_NAME = 'other';
+// A wide flame graph can show hundreds of truncated nodes, and a resize or a zoom changes the set on every frame, so
+// coalesce before telling the host about it.
+export const VISIBLE_TRUNCATED_DEBOUNCE_MS = 150;

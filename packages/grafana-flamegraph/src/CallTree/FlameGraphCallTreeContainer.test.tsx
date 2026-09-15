@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -274,5 +274,49 @@ describe('FlameGraphCallTreeContainer', () => {
     consoleError.mockRestore();
     // Restore fake timers for other tests
     jest.useFakeTimers();
+  });
+
+  describe('truncated nodes', () => {
+    // A truncated node directly under the root, and another one a level down under 'a'.
+    const truncatedContainer = () =>
+      new FlameGraphDataContainer(
+        createDataFrame({
+          fields: [
+            { name: 'level', values: [0, 1, 2, 2, 1] },
+            { name: 'label', type: FieldType.string, values: ['total', 'a', 'a1', 'other', 'other'] },
+            { name: 'self', values: [0, 100, 200, 100, 600] },
+            { name: 'value', values: [1000, 400, 200, 100, 600] },
+          ],
+        }),
+        { collapsing: true }
+      );
+
+    const reportedPaths = (report: jest.Mock) => report.mock.calls.at(-1)?.[1];
+
+    it('reports the truncated rows the tree has expanded, and no others', async () => {
+      const reportVisibleTruncatedPaths = jest.fn();
+      await setup({ data: truncatedContainer(), reportVisibleTruncatedPaths });
+
+      // Only the root starts expanded, so the truncated node under 'a' is not a row yet.
+      expect(reportedPaths(reportVisibleTruncatedPaths)).toEqual([['total', 'other']]);
+
+      await user.click(screen.getByRole('button', { name: 'a' }));
+
+      expect(reportedPaths(reportVisibleTruncatedPaths)).toEqual([
+        ['total', 'other'],
+        ['total', 'a', 'other'],
+      ]);
+    });
+
+    it('marks the rows given in loadingItems as loading', async () => {
+      const data = truncatedContainer();
+      const loadingItem = data.getItemByPath(['total', 'other'])!;
+
+      await setup({ data, loadingItems: new Set([loadingItem]) });
+
+      const loadingRows = screen.getAllByTestId('callTreeLoadingRow');
+      expect(loadingRows).toHaveLength(1);
+      expect(loadingRows[0]).toHaveTextContent('other');
+    });
   });
 });
