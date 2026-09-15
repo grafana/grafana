@@ -152,9 +152,10 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
       // The top table sorts by Self descending by default, so that header owns the arrow.
       const selfHeader = screen.getAllByRole('columnheader')[2];
       const label = selfHeader.querySelector('button');
+      const sortArrow = selfHeader.querySelector('[data-testid="icon-arrow-down"]');
 
-      expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
-      expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+      expect(sortArrow).not.toBeNull();
+      expect(label!.contains(sortArrow)).toBe(!tableRefreshEnabled);
     }
   );
 
