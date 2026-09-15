@@ -234,6 +234,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
+  * Handle datasource proxy requests through the datasource API group endpoint.
+  * @default false
+  */
+  datasourcesApiServerEnableProxyEndpoint?: boolean;
+  /**
   * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
