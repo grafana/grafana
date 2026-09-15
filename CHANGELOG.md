@@ -483,6 +483,15 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.9 START -->
+
+# 13.0.9 (2026-09-15)
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132088](https://github.com/grafana/grafana/pull/132088), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.0.9 END -->
 <!-- 13.0.8 START -->
 
 # 13.0.8 (2026-09-02)
