@@ -43,6 +43,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway guardrails */
+  DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -59,8 +61,6 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
-  /** Enables the new Flame Graph UI containing the Call Tree view */
-  FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables use of app platform API for folders */
   FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -205,6 +205,8 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
   TableRefresh: "table.refresh",
+  /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
+  TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
@@ -377,6 +379,17 @@ export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: Rea
 };
 
 /**
+ * Data source query gateway guardrails
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayGuardrails`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayGuardrails", false, options).value;
+};
+
+/**
  * Data source query service, use the new name
  *
  * **Details:**
@@ -462,17 +475,6 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraph.tableNg", false, options).value;
-};
-
-/**
- * Enables the new Flame Graph UI containing the Call Tree view
- *
- * **Details:**
- * - flag key: `flameGraphWithCallTree`
- * - default value: `false`
- */
-export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("flameGraphWithCallTree", false, options).value;
 };
 
 /**
@@ -898,10 +900,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
@@ -1265,6 +1267,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refresh", false, options).value;
+};
+
+/**
+ * Catch-all toggle for new features developed as part of the Q3 table panel refresh
+ *
+ * **Details:**
+ * - flag key: `table.refreshNewFeatures`
+ * - default value: `false`
+ */
+export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refreshNewFeatures", false, options).value;
 };
 
 /**

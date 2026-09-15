@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -259,6 +260,50 @@ func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
 		require.ErrorIs(t, err, ErrSecretNotFound)
 		require.NotErrorIs(t, err, ErrTokenNotFound)
 	})
+}
+
+func TestRepositorySecureValues_DecryptTimeout(t *testing.T) {
+	cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+
+	t.Run("bounds a deadline-less caller context", func(t *testing.T) {
+		svc := &ctxCapturingDecryptService{}
+		decrypter := ProvideDecrypter(svc, nil)
+
+		// context.Background() carries no deadline; get must impose one.
+		_, err := decrypter(cfg).Token(context.Background())
+		require.NoError(t, err)
+
+		deadline, ok := svc.ctx.Deadline()
+		require.True(t, ok, "decrypt must receive a bounded context")
+		require.WithinDuration(t, time.Now().Add(decryptTimeout), deadline, time.Minute)
+	})
+
+	t.Run("expired context surfaces as a transient decrypt failure", func(t *testing.T) {
+		svc := &ctxCapturingDecryptService{err: context.DeadlineExceeded}
+		decrypter := ProvideDecrypter(svc, nil)
+
+		_, err := decrypter(cfg).Token(context.Background())
+		require.Error(t, err)
+		// A timeout must never look like a missing secret, which would let the
+		// controller regenerate and overwrite the token.
+		require.NotErrorIs(t, err, ErrSecretNotFound)
+		require.NotErrorIs(t, err, ErrTokenNotFound)
+		require.ErrorIs(t, err, ErrSecretDecryptFailed)
+	})
+}
+
+type ctxCapturingDecryptService struct {
+	ctx context.Context
+	err error
+}
+
+func (d *ctxCapturingDecryptService) Decrypt(ctx context.Context, _ string, _ string, names ...string) (map[string]decrypt.DecryptResult, error) {
+	d.ctx = ctx
+	if d.err != nil {
+		return nil, d.err
+	}
+	val := secretv1beta1.NewExposedSecureValue(names[0])
+	return map[string]decrypt.DecryptResult{names[0]: decrypt.NewDecryptResultValue(&val)}, nil
 }
 
 type decryptFn = func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error)

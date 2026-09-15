@@ -22,19 +22,38 @@ describe('buildStaticNavTree', () => {
     });
 
     it('orders sections by sort weight', () => {
-      setup({ permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER] });
+      setup({
+        permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER, AccessControlAction.DataSourcesExplore],
+      });
 
       expect(ids(buildStaticNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
         NavID.dashboards,
+        NavID.explore,
+        NavID.drilldown,
         NavID.alerting,
         NavID.connections,
         NavID.cfg,
         NavID.profile,
         NavID.help,
       ]);
+    });
+
+    it('places notebooks after drilldown when the flag is on and the user can read dashboards', () => {
+      const dashboardReader = [AccessControlAction.DashboardsRead, AccessControlAction.DataSourcesExplore];
+      setup({ permissions: dashboardReader, openFeatureFlags: { 'dashboard.notebooks': true } });
+
+      const treeIds = ids(buildStaticNavTree());
+      expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
+
+      setup({ permissions: dashboardReader });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+
+      // Notebooks reuse dashboard RBAC; without dashboards:read there is no entry
+      setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
     it('omits signed-in-only sections for anonymous users', () => {
@@ -374,6 +393,19 @@ describe('pruneEmptyNavSections', () => {
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
     expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
+  });
+
+  // Drilldown's children are the drilldown apps, so with none attached the
+  // server drops the section (RemoveEmptyDrilldownSection) rather than leaving
+  // a top-level item that opens an empty landing page.
+  it('removes the drilldown shell when no drilldown apps attached', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore] });
+    const tree = pruneEmptyNavSections(buildStaticNavTree());
+
+    expect(findById(buildStaticNavTree(), NavID.drilldown)).toBeDefined();
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    // Explore is a leaf, not an attachment shell, so it survives
+    expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
   it('keeps sections that gained children', () => {

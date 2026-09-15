@@ -13,6 +13,8 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -690,6 +692,40 @@ func TestFieldValueSearchResults(t *testing.T) {
 	})
 }
 
+func TestSearchResultFormatMetric(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := resource.ProvideIndexMetrics(reg)
+	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
+
+	for _, tc := range []struct {
+		requestFormat resourcepb.ResourceSearchRequest_ResultFormat
+		resultFormat  resourcepb.ResourceSearchRequest_ResultFormat
+		label         string
+	}{
+		{requestFormat: resourcepb.ResourceSearchRequest_UNSPECIFIED, resultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE, label: "resource_table"},
+		{requestFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, resultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, label: "field_values"},
+	} {
+		req := newTestQuery("")
+		req.ResultFormat = tc.requestFormat
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, tc.resultFormat, res.ResultFormat)
+		require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues(tc.label)))
+	}
+
+	invalid := newTestQuery("")
+	invalid.Fields = []string{"does_not_exist"}
+	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	res, err := index.Search(t.Context(), nil, invalid, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
+
+	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "index_server_search_result_format_total"))
+}
+
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -1045,6 +1081,10 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
+	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
+}
+
+func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1057,7 +1097,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
-	}, nil)
+	}, metrics)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
@@ -3663,6 +3703,194 @@ func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, 
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
+}
+
+// Two resource versions one apart, both far above 2^53. As float64 they are the
+// same value, so a search returning them distinctly proves the index is not
+// storing them as numbers.
+const (
+	rvLower = int64(1958241239561142272)
+	rvUpper = int64(1958241239561142273)
+)
+
+func TestSearchReturnsExactResourceVersion(t *testing.T) {
+	// Guards the premise of this test: as float64 the two resource versions are
+	// one value, so any numeric round trip loses one of them.
+	require.NotEqual(t, rvLower, rvUpper)
+	require.Equal(t, float64(rvLower), float64(rvUpper))
+
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+	opts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+	}}
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+
+	t.Run("table format serves the rv column and the row resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options: opts,
+			Fields:  []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Limit:   10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Rows, len(want))
+
+		column := -1
+		for i, col := range res.Results.Columns {
+			if col.Name == resource.SEARCH_FIELD_RV {
+				column = i
+			}
+		}
+		require.GreaterOrEqual(t, column, 0, "rv column is missing from the response")
+
+		for _, row := range res.Results.Rows {
+			expected := want[row.Key.Name]
+			require.Equal(t, expected, row.ResourceVersion, "row resource version for %s", row.Key.Name)
+
+			cell := row.Cells[column]
+			if expected == 0 {
+				require.Empty(t, cell, "rv cell for a document without a resource version")
+				continue
+			}
+			require.Len(t, cell, 8, "rv cell for %s", row.Key.Name)
+			require.Equal(t, expected, int64(binary.BigEndian.Uint64(cell)), "rv cell for %s", row.Key.Name)
+		}
+	})
+
+	t.Run("field values format serves the row resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	// A caller naming no fields gets the curated column set, which takes a
+	// different path through the Bleve load list.
+	t.Run("a request naming no fields still carries the resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options: opts,
+			Limit:   10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Rows, len(want))
+
+		for _, row := range res.Results.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	// The resource version is not a field a caller can name, so asking for it is a
+	// bad request rather than a way to read the stored string.
+	t.Run("the stored field is not requestable", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV_STRING},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+	})
+}
+
+// The post-rank authz path runs its own bleve searches and builds results from
+// the hits those return, so it needs the stored field loaded too.
+func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, true)
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace})
+	res, err := index.Search(ctx, &countingAccessClient{allowAll: true}, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		Fields: []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+		Limit:  10,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+	require.Len(t, res.Results.Rows, len(want))
+	for _, row := range res.Results.Rows {
+		require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+	}
+}
+
+// Deleted documents carry a resource version too, and trash search reads it
+// through the same path.
+func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+
+	res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		IsDeleted: true,
+		Fields:    []string{resource.SEARCH_FIELD_DELETED_RV},
+		Limit:     10,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Len(t, res.Results.Rows, 1)
+	require.Equal(t, "deleted", res.Results.Rows[0].Key.Name)
+	require.Equal(t, rvUpper, res.Results.Rows[0].ResourceVersion)
+}
+
+// newResourceVersionIndex holds three live documents — two with resource versions
+// that collide as float64, one with none — and one deleted document.
+func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, postRankAuthz bool) resource.ResourceIndex {
+	t.Helper()
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold,
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  postRankAuthz,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	doc := func(name string, rv int64) *resource.IndexableDocument {
+		return &resource.IndexableDocument{
+			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			Name:  name,
+			Title: name,
+			RV:    rv,
+		}
+	}
+	deletedRV := strconv.FormatInt(rvUpper, 10)
+	deleted := doc("deleted", rvUpper)
+	deleted.IsDeleted = new(true)
+	deleted.DeletedRV = &deletedRV
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{Action: resource.ActionIndex, Doc: doc("lower", rvLower)},
+			{Action: resource.ActionIndex, Doc: doc("upper", rvUpper)},
+			{Action: resource.ActionIndex, Doc: doc("no-rv", 0)},
+			{Action: resource.ActionIndex, Doc: deleted},
+		}})
+	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }

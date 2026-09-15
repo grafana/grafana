@@ -133,6 +133,54 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 	})
 }
 
+// errWatchClient implements resourcepb.ResourceStore_WatchClient and always
+// fails Recv with the same error, like a terminated gRPC stream does.
+type errWatchClient struct {
+	grpc.ClientStream
+	ctx context.Context
+	err error
+}
+
+func (m *errWatchClient) Recv() (*resourcepb.WatchEvent, error) { return nil, m.err }
+func (m *errWatchClient) Context() context.Context              { return m.ctx }
+func (m *errWatchClient) Header() (metadata.MD, error)          { return nil, nil }
+func (m *errWatchClient) Trailer() metadata.MD                  { return nil }
+func (m *errWatchClient) CloseSend() error                      { return nil }
+func (m *errWatchClient) SendMsg(any) error                     { return nil }
+func (m *errWatchClient) RecvMsg(any) error                     { return nil }
+
+func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
+	for _, canceled := range []bool{false, true} {
+		name := "active context"
+		if canceled {
+			name = "already canceled context"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			t.Cleanup(cancel)
+			if canceled {
+				cancel()
+			}
+			client := &errWatchClient{ctx: ctx, err: resource.NewResourceVersionExpiredError(1234)}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			t.Cleanup(decoder.Close)
+
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Error, action)
+			s, ok := obj.(*metav1.Status)
+			require.True(t, ok, "expected a metav1.Status, got %T", obj)
+			require.Equal(t, int32(http.StatusGone), s.Code)
+			require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+			require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+			// The stream is done: the same error must not be reported again.
+			_, _, err = decoder.Decode()
+			require.ErrorIs(t, err, io.EOF)
+		})
+	}
+}
+
 type streamDecoderTestServer struct {
 	resourcepb.UnimplementedResourceStoreServer
 	watch func(resourcepb.ResourceStore_WatchServer) error
@@ -171,40 +219,17 @@ func newStreamDecoderGRPCClient(t *testing.T, handler func(resourcepb.ResourceSt
 	return client, cancel
 }
 
-func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
-	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
-	client, cancel := newStreamDecoderGRPCClient(t, func(resourcepb.ResourceStore_WatchServer) error {
-		return resource.NewResourceVersionExpiredError(1234)
-	})
-	decoder := newStreamDecoder(client, newFunc, storage.Everything, unstructuredCodec(), cancel, false)
-	t.Cleanup(decoder.Close)
-
-	// Real gRPC cancels the stream context when Recv returns a terminal error.
-	// That cancellation must not hide the 410 status from the watch client.
-	action, obj, err := decoder.Decode()
-	require.NoError(t, err)
-	require.Equal(t, watch.Error, action)
-	require.ErrorIs(t, client.Context().Err(), context.Canceled)
-	status, ok := obj.(*metav1.Status)
-	require.True(t, ok, "expected a metav1.Status, got %T", obj)
-	require.Equal(t, int32(http.StatusGone), status.Code)
-	require.Equal(t, metav1.StatusReasonExpired, status.Reason)
-	require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(status)))
-
-	_, _, err = decoder.Decode()
-	require.ErrorIs(t, err, io.EOF)
-}
-
 func TestStreamDecoderGRPCTermination(t *testing.T) {
 	for _, tc := range []struct {
-		name string
-		err  error
-		eof  bool
+		name    string
+		err     error
+		expired bool
 	}{
-		{name: "clean close", eof: true},
-		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled"), eof: true},
+		{name: "expired resource version", err: resource.NewResourceVersionExpiredError(1234), expired: true},
+		{name: "clean close"},
+		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled")},
+		{name: "max age disconnect", err: status.Error(codes.Unavailable, "transport is closing")},
 		{name: "deadline exceeded", err: status.Error(codes.DeadlineExceeded, "watch deadline exceeded")},
-		{name: "unavailable", err: status.Error(codes.Unavailable, "storage unavailable")},
 		{name: "permission denied", err: status.Error(codes.PermissionDenied, "watch denied")},
 		{name: "internal", err: status.Error(codes.Internal, "storage error")},
 		{name: "out of range without expiry details", err: status.Error(codes.OutOfRange, "invalid range")},
@@ -229,13 +254,20 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 
 			action, obj, err = decoder.Decode()
 			require.Equal(t, watch.Error, action)
-			require.Nil(t, obj)
 			require.ErrorIs(t, client.Context().Err(), context.Canceled)
-			if tc.eof {
-				require.ErrorIs(t, err, io.EOF)
-			} else {
-				require.EqualError(t, err, tc.err.Error())
+			if tc.expired {
+				require.NoError(t, err)
+				s, ok := obj.(*metav1.Status)
+				require.True(t, ok, "expected a metav1.Status, got %T", obj)
+				require.Equal(t, int32(http.StatusGone), s.Code)
+				require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+				require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+				action, obj, err = decoder.Decode()
+				require.Equal(t, watch.Error, action)
 			}
+			require.Nil(t, obj)
+			require.ErrorIs(t, err, io.EOF)
 		})
 	}
 }

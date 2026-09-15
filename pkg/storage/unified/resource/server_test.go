@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -764,8 +765,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
@@ -1623,6 +1623,399 @@ func TestPeriodicBookmarks(t *testing.T) {
 		require.NoError(t, eg.Wait())
 
 		require.Empty(t, bookmarks)
+	})
+}
+
+type bookmarkWatchServer struct {
+	*mockWatchServer
+	beforeSend func(*resourcepb.WatchEvent) error
+}
+
+func (s *bookmarkWatchServer) Send(event *resourcepb.WatchEvent) error {
+	if s.beforeSend != nil {
+		if err := s.beforeSend(event); err != nil {
+			return err
+		}
+	}
+	return s.mockWatchServer.Send(event)
+}
+
+// startBookmarkWatch uses the real broadcaster with controlled events and sends.
+// Call it inside synctest so ticker assertions do not depend on scheduling delays.
+func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure func(*server, *bookmarkWatchServer)) (chan<- *WrittenEvent, *bookmarkWatchServer, <-chan error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	events := make(chan *WrittenEvent, 10)
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:           &UnimplementedStorageBackend{},
+		BookmarkFrequency: time.Second,
+	})
+	require.NoError(t, err)
+	srv.log = log.NewNopLogger()
+	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	if configure != nil {
+		configure(srv, stream)
+	}
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(req, stream) }()
+	t.Cleanup(func() {
+		cancel()
+		srv.cancel()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			assert.NoError(t, err)
+		default: // An error-path test already consumed the result.
+		}
+	})
+	synctest.Wait()
+	return events, stream, done
+}
+
+func bookmarkWatchRequest() *resourcepb.WatchRequest {
+	return &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "playlist",
+		}},
+		Since:               100,
+		AllowWatchBookmarks: true,
+	}
+}
+
+func bookmarkWrittenEvent(rv int64) *WrittenEvent {
+	return &WrittenEvent{
+		Key:             bookmarkWatchRequest().Options.Key,
+		Type:            resourcepb.WatchEvent_ADDED,
+		ResourceVersion: rv,
+		Value:           []byte(`{"metadata":{"name":"playlist"}}`),
+	}
+}
+
+func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
+	t.Helper()
+	synctest.Wait()
+	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
+	event := <-stream.events
+	require.Equal(t, eventType, event.Type)
+	require.Equal(t, rv, event.Resource.Version)
+}
+
+func advanceBookmarkClock() time.Time {
+	// synctest's clock starts before the Snowflake epoch.
+	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
+	return time.Now()
+}
+
+func TestIncrementalBookmarksProgressLag(t *testing.T) {
+	for _, backend := range []string{"legacy_sql", "kv"} {
+		t.Run(backend, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				now := advanceBookmarkClock()
+				rvAt := func(at time.Time) int64 {
+					if backend == "kv" {
+						return snowflakeFromTime(at)
+					}
+					return at.UnixMicro()
+				}
+				req := bookmarkWatchRequest()
+				req.Since = rvAt(now.Add(-30 * time.Second))
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
+					if backend == "kv" {
+						srv.backend = &kvStorageBackend{}
+					}
+					srv.bookmarkFrequency = 10 * time.Second
+				})
+				filteredEvent := func(rv int64) *WrittenEvent {
+					event := bookmarkWrittenEvent(rv)
+					if backend == "kv" {
+						event.Key.Group = "other.grafana.app"
+					} else {
+						event.Key.Namespace = "other"
+					}
+					return event
+				}
+
+				time.Sleep(10 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "the clock alone must not establish progress")
+
+				events <- filteredEvent(rvAt(time.Now()) + 1)
+				synctest.Wait()
+				time.Sleep(20 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "lagged progress must not precede Since")
+				time.Sleep(10 * time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
+
+				// Continuous filtered traffic advances the safe cutoff rather than
+				// postponing all progress until the newest event is a minute old.
+				for range 2 {
+					events <- filteredEvent(rvAt(time.Now()) + 1)
+					synctest.Wait()
+					time.Sleep(10 * time.Second)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
+				}
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		now := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
+		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &kvStorageBackend{}
+			srv.bookmarkFrequency = 10 * time.Second
+		})
+
+		objectRV := snowflakeFromTime(now)
+		events <- bookmarkWrittenEvent(objectRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, objectRV)
+
+		filtered := bookmarkWrittenEvent(objectRV + 1)
+		filtered.Key.Name = "other"
+		events <- filtered
+		synctest.Wait()
+		time.Sleep(10 * time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, objectRV)
+
+		// A lower matching RV remains deliverable but cannot regress the bookmark.
+		olderRV := snowflakeFromTime(now.Add(-10 * time.Second))
+		events <- bookmarkWrittenEvent(olderRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, olderRV)
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events)
+	})
+}
+
+func TestIncrementalBookmarksLaggedResume(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		now := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
+		configure := func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &kvStorageBackend{}
+			srv.bookmarkFrequency = 10 * time.Second
+		}
+		events, stream, done := startBookmarkWatch(t, req, configure)
+		foreign := bookmarkWrittenEvent(snowflakeFromTime(now))
+		foreign.Key.Resource = "other"
+		events <- foreign
+		synctest.Wait()
+		time.Sleep(10 * time.Second)
+		resumeRV := snowflakeFromTime(time.Now().Add(-time.Minute))
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, resumeRV)
+		close(events)
+		synctest.Wait()
+		require.NoError(t, <-done)
+
+		// The lagged bookmark leaves a late lower-RV notification eligible.
+		req = bookmarkWatchRequest()
+		req.Since = resumeRV
+		events, stream, _ = startBookmarkWatch(t, req, configure)
+		lateRV := snowflakeFromTime(now.Add(-5 * time.Second))
+		require.Greater(t, lateRV, resumeRV)
+		require.Less(t, lateRV, foreign.ResourceVersion)
+		events <- bookmarkWrittenEvent(lateRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, lateRV)
+	})
+}
+
+func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
+	tests := []struct {
+		name      string
+		kv        bool
+		configure func(*server)
+		filter    func(*WrittenEvent)
+	}{
+		{
+			name: "legacy SQL namespace filter",
+			filter: func(event *WrittenEvent) {
+				event.Key.Namespace = "other"
+			},
+		},
+		{
+			name: "KV foreign collection",
+			kv:   true,
+			filter: func(event *WrittenEvent) {
+				event.Key.Resource = "other"
+			},
+		},
+		{
+			name: "authorization filter",
+			kv:   true,
+			configure: func(srv *server) {
+				srv.access = &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+					return deny()
+				}}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+					if tt.kv {
+						srv.backend = &kvStorageBackend{}
+					}
+					if tt.configure != nil {
+						tt.configure(srv)
+					}
+				})
+				event := bookmarkWrittenEvent(101)
+				if tt.filter != nil {
+					tt.filter(event)
+				}
+				events <- event
+				synctest.Wait()
+				require.Empty(t, stream.events, "filtered objects must not be sent")
+				time.Sleep(time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
+				time.Sleep(2 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "unchanged progress must not repeat")
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), nil)
+		foreign := bookmarkWrittenEvent(300)
+		foreign.Key.Resource = "other"
+		events <- foreign
+		synctest.Wait()
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events, "other collections cannot establish SQL progress")
+
+		events <- bookmarkWrittenEvent(110)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 110)
+		time.Sleep(time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 110)
+
+		// Bookmark progress is not a new live-delivery cutoff.
+		events <- bookmarkWrittenEvent(105)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 105)
+		time.Sleep(time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events, "bookmarks must not regress")
+	})
+}
+
+func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(fmt.Sprintf("send failure=%t", fail), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				entered, release := make(chan struct{}), make(chan struct{})
+				sendErr := errors.New("send failed")
+				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+					srv.backend = &kvStorageBackend{}
+					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
+						if event.Type == resourcepb.WatchEvent_ADDED {
+							close(entered)
+							select {
+							case <-release:
+							case <-stream.Context().Done():
+								return stream.Context().Err()
+							}
+							if fail {
+								return sendErr
+							}
+						}
+						return nil
+					}
+				})
+				events <- bookmarkWrittenEvent(101)
+				synctest.Wait()
+				select {
+				case <-entered:
+				default:
+					t.Fatal("matching send was not reached")
+				}
+				pending := bookmarkWrittenEvent(102)
+				pending.Key.Resource = "other"
+				events <- pending
+				time.Sleep(2 * time.Second)
+				synctest.Wait()
+				require.Empty(t, stream.events, "blocked events must not be covered")
+
+				close(release)
+				synctest.Wait()
+				if fail {
+					require.ErrorIs(t, <-done, sendErr)
+					require.Empty(t, stream.events)
+					return
+				}
+
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+				synctest.Wait()
+				require.NotEmpty(t, stream.events)
+				bookmark := <-stream.events
+				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
+				if bookmark.Resource.Version == 101 {
+					time.Sleep(time.Second)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+				} else {
+					require.Equal(t, int64(102), bookmark.Resource.Version)
+				}
+			})
+		})
+	}
+}
+
+type bookmarkKVListBackend struct {
+	KVBackend
+	list func(func(ListIterator) error) (int64, error)
+}
+
+func (b *bookmarkKVListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	return b.list(callback)
+}
+
+func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		initialRV := snowflakeFromTime(advanceBookmarkClock())
+		req := bookmarkWatchRequest()
+		req.SendInitialEvents = true
+		req.Options.Key.Name = ""
+		req.Options.Key.Namespace = ""
+		listed, release := make(chan struct{}), make(chan struct{})
+		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+			srv.backend = &bookmarkKVListBackend{list: func(callback func(ListIterator) error) (int64, error) {
+				if err := callback(&docListIterator{values: [][]byte{[]byte(`{"initial":1}`), []byte(`{"initial":2}`)}}); err != nil {
+					return 0, err
+				}
+				close(listed)
+				select {
+				case <-release:
+				case <-stream.Context().Done():
+					return 0, stream.Context().Err()
+				}
+				return initialRV, nil
+			}}
+		})
+		<-listed
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 1)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
+
+		events <- bookmarkWrittenEvent(initialRV + 1)
+		synctest.Wait()
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events, "live events must wait for backfill")
+
+		close(release)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, initialRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, initialRV+1)
+		time.Sleep(time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, initialRV+1)
 	})
 }
 
@@ -2873,6 +3266,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*ser
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      "*",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
@@ -2919,8 +3313,7 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	}
 
-	// keys_only lists are cluster-wide, so the request carries no namespace even
-	// though the seeded items live in one.
+	// An empty namespace preserves the existing cluster-wide keys-only behavior.
 	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
 
 	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
@@ -2965,9 +3358,8 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	})
 
-	// The cluster-wide endpoint is the real caller, so the cross-namespace scan
-	// needs its own coverage: each item must report the namespace it lives in,
-	// and paging must carry the namespace through the continue token.
+	// The cross-namespace scan must report each item's namespace, and paging must
+	// carry that namespace through the continue token.
 	t.Run("lists across namespaces", func(t *testing.T) {
 		srv, ctx := newKeysOnlyTestServer(t)
 		seedIn := func(itemNS, name string) {
@@ -3067,6 +3459,70 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	})
 
+	t.Run("namespaced pagination remains pinned during mutations", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "", "bbb": "", "ccc": "folder-old", "eee": "",
+		})
+		namespacedKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+
+		initial, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, initial.Error)
+		initialRVs := map[string]int64{}
+		for _, item := range initial.Items {
+			initialRVs[item.Name] = item.ResourceVersion
+		}
+
+		first, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+			Limit:    2,
+		})
+		require.NoError(t, err)
+		require.Nil(t, first.Error)
+		require.Len(t, first.Items, 2)
+		require.Equal(t, []string{"aaa", "bbb"}, []string{first.Items[0].Name, first.Items[1].Name})
+		require.NotEmpty(t, first.NextPageToken)
+		firstToken, err := GetContinueToken(first.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, ns, firstToken.Namespace)
+		require.True(t, firstToken.KeysOnly)
+		require.False(t, firstToken.ClusterWide)
+
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             newKey("ccc"),
+			ResourceVersion: initialRVs["ccc"],
+			Value:           rawPlaylist(t, "ccc", "folder-new"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+		deleted, err := srv.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: newKey("eee"), ResourceVersion: initialRVs["eee"],
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error)
+		seed(t, srv, ctx, map[string]string{"ddd": ""})
+
+		second, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: first.NextPageToken,
+		})
+		require.NoError(t, err)
+		require.Nil(t, second.Error)
+		require.Len(t, second.Items, 2)
+		require.Equal(t, first.ResourceVersion, second.ResourceVersion)
+		require.Equal(t, []string{"ccc", "eee"}, []string{second.Items[0].Name, second.Items[1].Name})
+		require.Equal(t, initialRVs["ccc"], second.Items[0].ResourceVersion)
+		require.Equal(t, "folder-old", second.Items[0].Folder)
+		require.Empty(t, second.NextPageToken)
+	})
+
 	// Selector handling lives in its own test; this covers the sources.
 	t.Run("refuses sources that need the object", func(t *testing.T) {
 		for name, source := range map[string]resourcepb.ListRequest_Source{
@@ -3113,10 +3569,11 @@ type namespaceRecordingAccessClient struct {
 	mu         sync.Mutex
 	namespaces []string
 	items      map[string]string // name -> namespace seen on the check
+	denied     map[string]bool
 }
 
 func newNamespaceRecordingAccessClient() *namespaceRecordingAccessClient {
-	return &namespaceRecordingAccessClient{items: map[string]string{}}
+	return &namespaceRecordingAccessClient{items: map[string]string{}, denied: map[string]bool{}}
 }
 
 func (c *namespaceRecordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
@@ -3133,7 +3590,7 @@ func (c *namespaceRecordingAccessClient) BatchCheck(_ context.Context, _ authlib
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
 		c.items[item.Name] = req.Namespace
-		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: true}
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: !c.denied[item.Name]}
 	}
 	c.mu.Unlock()
 	return authlib.BatchCheckResponse{Results: results}, nil
@@ -3174,10 +3631,9 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	return srv, authCtx(identityNamespace), authCtx("*")
 }
 
-// A keys-only list is cluster-wide, so the request key carries no namespace and
-// items are checked under their own. Only a wildcard identity can read across
-// namespaces: for anyone else the first foreign namespace batch fails
-// NamespaceMatches, and FilterAuthorized yields that error and stops.
+// A cross-namespace keys-only list checks items under their own namespace. Only
+// a wildcard identity can read across namespaces: for anyone else the first
+// foreign namespace batch fails NamespaceMatches and stops the list.
 func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 	const (
 		group    = "playlist.grafana.app"
@@ -3320,8 +3776,7 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 		ns       = "default"
 	)
 
-	// Cluster-wide, so these exercise the selector refusal rather than the
-	// namespace one.
+	// Keep these cluster-wide while verifying selector rejection remains unchanged.
 	field := func(key, op string, values ...string) *resourcepb.ListOptions {
 		return &resourcepb.ListOptions{
 			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
@@ -3371,53 +3826,123 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 	}
 }
 
-// keys_only is cluster-wide by contract, so a namespaced request is a caller bug
-// rather than something to serve narrowly. Refusing it is what lets listAuthorized
-// assume the request key has no namespace.
-func TestServerListKeysOnly_RefusesANamespacedRequest(t *testing.T) {
+func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
 	const (
-		group    = "playlist.grafana.app"
-		resource = "playlists"
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
 	)
 
-	for name, tc := range map[string]struct {
-		namespace string
-		keysOnly  bool
-		wantError string
-	}{
-		"keys-only with a namespace": {
-			namespace: "default",
-			keysOnly:  true,
-			wantError: "cluster-wide",
-		},
-		"keys-only without one": {
-			keysOnly: true,
-		},
-		// The contract is on keys_only alone; normal lists stay namespaced.
-		"normal list with a namespace": {
-			namespace: "default",
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			srv, ctx := newKeysOnlyTestServer(t)
+	inner := newNamespaceRecordingAccessClient()
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, "ns-one")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "bbb")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "ccc")
 
-			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Group: group, Resource: resource, Namespace: tc.namespace,
-				}},
-				KeysOnly: tc.keysOnly,
-			})
-			require.NoError(t, err)
+	list := func(namespace string) *resourcepb.ListResponse {
+		t.Helper()
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: namespace,
+			}},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		return rsp
+	}
 
-			if tc.wantError == "" {
-				require.Nil(t, rsp.Error)
-				return
-			}
-			require.NotNil(t, rsp.Error)
-			assert.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
-			assert.Contains(t, rsp.Error.Message, tc.wantError)
+	rsp := list("ns-one")
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 2)
+	require.Equal(t, []string{"aaa", "bbb"}, []string{rsp.Items[0].Name, rsp.Items[1].Name})
+	for _, item := range rsp.Items {
+		require.Equal(t, "ns-one", item.Namespace)
+		require.Empty(t, item.Value)
+	}
+	batches, items := inner.seen()
+	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
+	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
+
+	wrongScope, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			Namespace: "ns-two", KeysOnly: true, Name: "aaa", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, wrongScope.Error)
+	require.Equal(t, int32(http.StatusBadRequest), wrongScope.Error.Code)
+	require.Contains(t, wrongScope.Error.Message, "list scope does not match")
+
+	missingScope, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			KeysOnly: true, Name: "bbb", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, missingScope.Error)
+	require.Equal(t, int32(http.StatusBadRequest), missingScope.Error.Code)
+	require.Contains(t, missingScope.Error.Message, "list scope does not match")
+
+	for _, namespace := range []string{"ns-empty", "ns-two"} {
+		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
+			foreign := list(namespace)
+			require.NotNil(t, foreign.Error)
+			require.Equal(t, int32(http.StatusForbidden), foreign.Error.Code)
+			require.Contains(t, foreign.Error.Message, "namespace mismatch")
+			require.Empty(t, foreign.Items)
 		})
 	}
+}
+
+func TestServerListKeysOnly_NamespacedAuthorizationAcrossPages(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
+		ns       = "ns-one"
+	)
+
+	inner := newNamespaceRecordingAccessClient()
+	inner.denied["bbb"] = true
+	inner.denied["ddd"] = true
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, ns)
+	for _, name := range []string{"aaa", "bbb", "ccc", "ddd", "eee"} {
+		seedPlaylistIn(t, srv, seedCtx, group, resource, ns, name)
+	}
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "foreign")
+
+	var names []string
+	token := ""
+	for range 3 {
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: ns,
+			}},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: token,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		for _, item := range rsp.Items {
+			names = append(names, item.Name)
+			require.Equal(t, ns, item.Namespace)
+		}
+		token = rsp.NextPageToken
+		if token == "" {
+			break
+		}
+	}
+	require.Equal(t, []string{"aaa", "ccc", "eee"}, names)
 }
 
 // The proto documents that a list is bounded by response payload size as well as
@@ -3447,7 +3972,7 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 	}
 
 	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
-		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource}},
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}},
 		KeysOnly: true,
 		Limit:    50,
 	})
