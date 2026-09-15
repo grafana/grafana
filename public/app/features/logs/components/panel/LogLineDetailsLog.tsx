@@ -70,12 +70,13 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
 
   const supportsFilters = onClickFilterString || onClickFilterOutString;
   const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
+  const showActions = supportsFilters || showLogLineToggle;
 
   return (
     <div className={styles.logLineWrapper}>
       <div className={`${logStyles.logLine} ${fontSize === 'small' ? logStyles.fontSizeSmall : ''} ${styles.noHover}`}>
         <div className={logStyles.wrappedLogLine}>
-          {supportsFilters && (
+          {showActions && (
             <span className={styles.actions}>
               {onClickFilterString && (
                 <IconButton
