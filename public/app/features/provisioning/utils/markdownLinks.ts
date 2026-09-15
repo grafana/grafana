@@ -13,7 +13,7 @@ const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
 
 /**
  * Attribute stamped on links whose target could be viewed in-app: a Grafana
- * resource (JSON/YAML files or folder directories) or a markdown doc (which opens
+ * resource (JSON/YAML files or folder directories) or a `.md` doc (which opens
  * as a tab on its containing folder's page). It carries the resolved repo path;
  * the README click handler reads it to lazily resolve the link to the in-app page
  * — untagged links (images, other files, external) always open the host URL.
@@ -162,7 +162,7 @@ function stripLeadingSlashes(s: string): string {
 
 /**
  * Whether a resolved repo path could be viewed in-app: a JSON/YAML file
- * (dashboard, playlist, folder metadata, ...), a folder directory, or a markdown
+ * (dashboard, playlist, folder metadata, ...), a folder directory, or a `.md`
  * doc (which opens as a tab on its containing folder's page). Folders are matched
  * by their trailing slash — which the resolver preserves for directory links —
  * rather than by "no extension", so extensionless files (README, LICENSE,

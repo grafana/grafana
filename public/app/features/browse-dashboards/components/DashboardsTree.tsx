@@ -353,7 +353,7 @@ function ReadmeRow({ rowProps, folderUID, onHeightChange }: ReadmeRowProps) {
   return (
     <div {...rowProps} className={styles.readmeRow}>
       <div ref={contentRef}>
-        <FolderReadmePanel folderUID={folderUID} />
+        <FolderReadmePanel key={folderUID} folderUID={folderUID} />
       </div>
     </div>
   );

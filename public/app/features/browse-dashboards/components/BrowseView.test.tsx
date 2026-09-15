@@ -1,7 +1,7 @@
 import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -13,8 +13,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { BrowseView } from './BrowseView';
 
-const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
-  getFolderFixtures();
+const [
+  mockTree,
+  { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty, folderC },
+] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -197,7 +199,6 @@ describe('browse-dashboards BrowseView', () => {
         readmePath: 'README.md',
         status: 'ok',
         isLoading: false,
-        isFetching: false,
         markdownContent,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -212,7 +213,6 @@ describe('browse-dashboards BrowseView', () => {
         readmePath: 'README.md',
         status: 'missing',
         isLoading: false,
-        isFetching: false,
         markdownContent: undefined,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -323,6 +323,51 @@ describe('browse-dashboards BrowseView', () => {
 
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: /Add README/i })).toBeInTheDocument();
+    });
+
+    it('keeps a ?docTab= deep link when navigating from one folder to another', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockDocs([
+        { key: 'readme', path: 'README.md', fileName: 'README.md' },
+        { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' },
+      ]);
+      const readmeSpy = jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        repository: mockRepository,
+        folder: undefined,
+        readmePath: 'README.md',
+        status: 'ok',
+        isLoading: false,
+        markdownContent: '# README',
+        refetch: jest.fn(),
+        syncFinished: undefined,
+      });
+
+      // Two empty folders, so the panel is mounted at the same spot before and after.
+      const { rerender } = render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      expect(await screen.findByRole('tab', { name: 'README' })).toHaveAttribute('aria-selected', 'true');
+
+      // A markdown link to another folder's doc lands on that folder with the tab in the URL.
+      act(() => locationService.push(`/dashboards/f/${folderC.item.uid}?docTab=SECURITY.md`));
+      rerender(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderC.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByRole('tab', { name: 'Security' })).toHaveAttribute('aria-selected', 'true');
+      expect(readmeSpy).toHaveBeenLastCalledWith(folderC.item.uid, 'SECURITY.md');
     });
   });
 });

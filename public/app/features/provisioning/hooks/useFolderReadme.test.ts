@@ -73,7 +73,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('refetches and shows new README content when a newer pull sync completes', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme('test-folder', 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);
@@ -89,7 +89,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('does not refetch when the sync finished timestamp has not advanced', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme('test-folder', 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);
@@ -106,7 +106,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('does not refetch when a newer sync finished but did not write content', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme('test-folder', 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);

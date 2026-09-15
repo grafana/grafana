@@ -30,12 +30,20 @@ describe('listFolderDocs', () => {
     expect(docs[3].key).toBeUndefined();
   });
 
-  it('includes .markdown files and excludes non-markdown files', () => {
+  it('only lists .md files: .markdown, extensionless README and non-markdown files are skipped', () => {
+    // The provisioning files API only serves `.md`, so anything else would 404 as a tab.
     const docs = listFolderDocs(
-      ['dashboards/team-a/notes.markdown', 'dashboards/team-a/dash.json', 'dashboards/team-a/config.yaml'],
+      [
+        'dashboards/team-a/notes.md',
+        'dashboards/team-a/guide.markdown',
+        'dashboards/team-a/README',
+        'dashboards/team-a/SECURITY.markdown',
+        'dashboards/team-a/dash.json',
+        'dashboards/team-a/config.yaml',
+      ],
       'dashboards/team-a'
     );
-    expect(docs.map((d) => d.fileName)).toEqual(['notes.markdown']);
+    expect(docs).toEqual([{ path: 'dashboards/team-a/notes.md', fileName: 'notes.md' }]);
   });
 
   it('matches convention file names case-insensitively', () => {
@@ -43,22 +51,6 @@ describe('listFolderDocs', () => {
     expect(docs).toHaveLength(1);
     expect(docs[0].key).toBe('readme');
     expect(docs[0].fileName).toBe('readme.md');
-  });
-
-  it('recognizes alternative file names for a convention', () => {
-    // A README without the .md extension still maps to the README convention.
-    const docs = listFolderDocs(['dashboards/team-a/README'], 'dashboards/team-a');
-    expect(docs).toHaveLength(1);
-    expect(docs[0].key).toBe('readme');
-  });
-
-  it('recognizes the .markdown variant of Contributing and Security conventions', () => {
-    const docs = listFolderDocs(
-      ['dashboards/team-a/SECURITY.markdown', 'dashboards/team-a/CONTRIBUTING.markdown'],
-      'dashboards/team-a'
-    );
-    // They occupy their convention priority slots, not the alphabetical "other" tail.
-    expect(docs.map((d) => d.key)).toEqual(['contributing', 'security']);
   });
 
   it('ignores docs in sub-folders or parent folders', () => {
@@ -131,6 +123,10 @@ describe('getDocTabLabel', () => {
 
   it('uses the file name without extension for other markdown', () => {
     expect(getDocTabLabel({ path: 'a/CHANGELOG.md', fileName: 'CHANGELOG.md' })).toBe('CHANGELOG');
-    expect(getDocTabLabel({ path: 'a/notes.markdown', fileName: 'notes.markdown' })).toBe('notes');
+    expect(getDocTabLabel({ path: 'a/notes.MD', fileName: 'notes.MD' })).toBe('notes');
+  });
+
+  it('falls back to the raw file name when stripping the extension would leave it empty', () => {
+    expect(getDocTabLabel({ path: 'a/.md', fileName: '.md' })).toBe('.md');
   });
 });

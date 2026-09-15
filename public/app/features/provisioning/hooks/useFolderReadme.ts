@@ -3,7 +3,6 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 import { useRefetchOnRepoSync } from './useRefetchOnRepoSync';
@@ -13,18 +12,12 @@ export type FolderReadmeStatus = 'loading' | 'missing' | 'error' | 'ok';
 export interface UseFolderReadmeResult {
   repository?: RepositoryView;
   folder?: Folder;
-  /** Path of the README relative to the repository's configured root. */
+  /** Path of the doc relative to the repository's configured root. */
   readmePath: string;
   status: FolderReadmeStatus;
   /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
   isLoading: boolean;
-  /**
-   * True whenever a request is in flight, including when switching to another
-   * doc while the previous one's content is still shown (RTK keeps stale `data`
-   * and reports `isLoading: false` on arg changes). Drives the tab-switch spinner.
-   */
-  isFetching: boolean;
-  /** Markdown body of the README, or undefined when not loaded successfully. */
+  /** Markdown body of the doc, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
   /**
@@ -36,10 +29,9 @@ export interface UseFolderReadmeResult {
 }
 
 /**
- * Resolves a folder documentation file and fetches it through the provisioning
- * files API. Defaults to the folder's `README.md` (derived from the source-path
- * annotation); pass `docPath` to fetch a specific convention doc instead — the
- * fetch, live-refresh, and status machinery are identical for every doc.
+ * Fetches a folder documentation file (`docPath`, relative to the repository's
+ * configured root) through the provisioning files API. The fetch, live-refresh,
+ * and status machinery are identical for every doc.
  *
  * Callers must gate on the `provisioning.readmes` OpenFeature toggle before
  * mounting any component that invokes this hook.
@@ -47,12 +39,8 @@ export interface UseFolderReadmeResult {
  * Returns a tagged `status` instead of raw boolean flags so callers can
  * exhaustively switch on the four states without reconstructing the machine.
  */
-export function useFolderReadme(folderUID: string, docPath?: string): UseFolderReadmeResult {
+export function useFolderReadme(folderUID: string, docPath: string): UseFolderReadmeResult {
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
-
-  const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
-  const defaultReadmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
-  const readmePath = docPath || defaultReadmePath;
 
   const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
 
@@ -69,7 +57,7 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
     shouldFetch
       ? {
           name: repository.name,
-          path: readmePath,
+          path: docPath,
         }
       : skipToken
   );
@@ -111,10 +99,9 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
   return {
     repository,
     folder,
-    readmePath,
+    readmePath: docPath,
     status,
     isLoading,
-    isFetching: isFileFetching,
     markdownContent,
     refetch,
     syncFinished,

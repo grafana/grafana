@@ -5,7 +5,8 @@ import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { provisioningAPIv0alpha1, type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -25,8 +26,8 @@ function setResources(items: ResourceListItem[]) {
   server.use(http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items })));
 }
 
-const mockUseFolderDocs = useFolderDocs as jest.MockedFunction<typeof useFolderDocs>;
-const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
+const mockUseFolderDocs = jest.mocked(useFolderDocs);
+const mockUseFolderReadme = jest.mocked(useFolderReadme);
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
@@ -77,7 +78,6 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
     isLoading: false,
-    isFetching: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     syncFinished: undefined,
@@ -93,8 +93,6 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
-    // Stub prefetch so the panel doesn't fire real queries during unit tests.
-    jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(jest.fn());
     setDocs();
     setReadmeResult();
   });
@@ -140,6 +138,16 @@ describe('FolderReadmePanel', () => {
   });
 
   describe('documentation tabs', () => {
+    // Tabs are plain <a href> links; route their clicks through the SPA history the
+    // way the app does so they change the URL instead of triggering a jsdom navigation.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+    });
+
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+    });
+
     it('renders a tab per recognized convention doc, GitHub-style', () => {
       setDocs({
         docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md'), doc('security', 'SECURITY.md')],
@@ -161,13 +169,27 @@ describe('FolderReadmePanel', () => {
       expect(screen.getByRole('tab', { name: 'CHANGELOG' })).toBeInTheDocument();
     });
 
-    it('switches the active doc and reports an interaction when a tab is clicked', async () => {
+    it('links each tab to its ?docTab= URL, keeping other query params', () => {
+      setDocs({ docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md')] });
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/dashboards/f/test-folder?query=cpu'] },
+      });
+
+      expect(screen.getByRole('tab', { name: 'Contributing' })).toHaveAttribute(
+        'href',
+        '/dashboards/f/test-folder?query=cpu&docTab=CONTRIBUTING.md'
+      );
+    });
+
+    it('switches the active doc via the URL and reports an interaction when a tab is clicked', async () => {
       const contributing = doc('contributing', 'CONTRIBUTING.md');
       setDocs({ docs: [readmeDoc, contributing] });
       const { user } = setup();
 
       await user.click(screen.getByRole('tab', { name: 'Contributing' }));
 
+      expect(locationService.getSearchObject()).toEqual({ docTab: 'CONTRIBUTING.md' });
+      expect(screen.getByRole('tab', { name: 'Contributing' })).toHaveAttribute('aria-selected', 'true');
       expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'contributing' });
     });
@@ -181,13 +203,6 @@ describe('FolderReadmePanel', () => {
       });
 
       expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
-    });
-
-    it('shows a loading overlay while the newly selected doc is fetching', () => {
-      setReadmeResult({ status: 'ok', isFetching: true });
-      setup();
-
-      expect(screen.getByTestId('folder-doc-loading')).toBeInTheDocument();
     });
 
     it('reports "other" for a non-convention doc selection', async () => {
@@ -207,26 +222,6 @@ describe('FolderReadmePanel', () => {
 
       expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
-    });
-
-    it('prefetches the next couple of docs once the active doc has loaded', () => {
-      const prefetch = jest.fn();
-      jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(prefetch);
-      setDocs({
-        docs: [
-          readmeDoc,
-          doc('contributing', 'CONTRIBUTING.md'),
-          doc('security', 'SECURITY.md'),
-          doc(undefined, 'CHANGELOG.md'),
-        ],
-      });
-      setReadmeResult({ status: 'ok' });
-      setup();
-
-      // README is active (index 0), so the next two docs are warmed — not the third.
-      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CONTRIBUTING.md' });
-      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/SECURITY.md' });
-      expect(prefetch).not.toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CHANGELOG.md' });
     });
   });
 

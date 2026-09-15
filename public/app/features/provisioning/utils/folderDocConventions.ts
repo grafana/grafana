@@ -17,16 +17,15 @@ export const FOLDER_DOC_TAB_PARAM = 'docTab';
 
 interface FolderDocConvention {
   key: FolderDocKey;
-  /** Canonical file name, used when creating the file from the empty state. */
+  /** File name matched case-insensitively; also used when creating the file from the empty state. */
   fileName: string;
-  /** File names recognized for this convention, matched case-insensitively. */
-  matches: string[];
 }
 
+// Only `.md` is recognized: the provisioning files API serves no other doc extension.
 const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
-  { key: 'readme', fileName: 'README.md', matches: ['README.md', 'README.markdown', 'README'] },
-  { key: 'contributing', fileName: 'CONTRIBUTING.md', matches: ['CONTRIBUTING.md', 'CONTRIBUTING.markdown'] },
-  { key: 'security', fileName: 'SECURITY.md', matches: ['SECURITY.md', 'SECURITY.markdown'] },
+  { key: 'readme', fileName: 'README.md' },
+  { key: 'contributing', fileName: 'CONTRIBUTING.md' },
+  { key: 'security', fileName: 'SECURITY.md' },
 ];
 
 /** The README convention is the default tab and drives the empty state. */
@@ -65,8 +64,8 @@ export function getDocTabLabel(doc: FolderDoc): string {
 /**
  * Lists the markdown docs directly inside `sourceDir` (the folder's source path,
  * relative to the repository root) as tabs. The recognized conventions come
- * first in their defined order; any other `.md`/`.markdown` files follow,
- * sorted case-insensitively by file name. Only immediate children match — a
+ * first in their defined order; any other `.md` files follow, sorted
+ * case-insensitively by file name. Only immediate children match — a
  * `README.md` in a sub-folder belongs to that sub-folder, not this one.
  */
 export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDoc[] {
@@ -86,8 +85,7 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
   const usedPaths = new Set<string>();
 
   for (const convention of FOLDER_DOC_CONVENTIONS) {
-    const candidates = convention.matches.map((name) => name.toLowerCase());
-    const hit = inDir.find((file) => candidates.includes(file.fileName.toLowerCase()));
+    const hit = inDir.find((file) => file.fileName.toLowerCase() === convention.fileName.toLowerCase());
     if (hit) {
       docs.push({ key: convention.key, path: hit.path, fileName: hit.fileName });
       usedPaths.add(hit.path);
@@ -123,13 +121,14 @@ export function ensureReadmeTab(docs: FolderDoc[], sourceDir: string): FolderDoc
   return [{ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName }, ...docs];
 }
 
-/** Whether a file name is a markdown doc (`.md` / `.markdown`). */
+/** Whether a file name is a markdown doc (`.md`). */
 export function isMarkdownFile(fileName: string): boolean {
-  return /\.(md|markdown)$/i.test(fileName);
+  return /\.md$/i.test(fileName);
 }
 
 function stripMarkdownExtension(fileName: string): string {
-  return fileName.replace(/\.(md|markdown)$/i, '');
+  // A file literally named `.md` would strip to nothing; keep the raw name then.
+  return fileName.replace(/\.md$/i, '') || fileName;
 }
 
 function stripTrailingSlashes(value: string): string {

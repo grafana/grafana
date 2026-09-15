@@ -212,25 +212,22 @@ describe('rewriteRelativeMarkdownLinks', () => {
   });
 
   describe('isResourceLinkCandidate', () => {
-    it.each([
-      'a/dash.json',
-      'a/pl.yaml',
-      'a/pl.yml',
-      'a/DASH.JSON',
-      'a/notes.md',
-      'a/GUIDE.markdown',
-      'a/sub/',
-      'sub/',
-    ])('accepts %s', (path) => {
-      expect(isResourceLinkCandidate(path)).toBe(true);
-    });
+    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/notes.md', 'a/GUIDE.MD', 'a/sub/', 'sub/'])(
+      'accepts %s',
+      (path) => {
+        expect(isResourceLinkCandidate(path)).toBe(true);
+      }
+    );
 
-    // Non-resource files (images, archives) and extensionless paths (README,
-    // LICENSE, a folder link without a trailing slash) are not tagged, so they
-    // never trigger a lookup on click.
-    it.each(['a/logo.png', 'a/archive.tar.gz', 'a/README', 'a/sub', 'sub', ''])('rejects %s', (path) => {
-      expect(isResourceLinkCandidate(path)).toBe(false);
-    });
+    // Non-resource files (images, archives, `.markdown` which the files API
+    // doesn't serve) and extensionless paths (README, LICENSE, a folder link
+    // without a trailing slash) are not tagged, so they never trigger a lookup.
+    it.each(['a/logo.png', 'a/archive.tar.gz', 'a/GUIDE.markdown', 'a/README', 'a/sub', 'sub', ''])(
+      'rejects %s',
+      (path) => {
+        expect(isResourceLinkCandidate(path)).toBe(false);
+      }
+    );
   });
 
   describe('images', () => {
