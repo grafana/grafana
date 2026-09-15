@@ -27,6 +27,7 @@ import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -38,7 +39,8 @@ interface LogLineDetailsFieldsProps {
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
   const { onClickShowField, fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+  const styles = useStyles2(getFieldsStyles, fontSize, displayedFieldsControlEnabled ? onClickShowField : undefined);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -86,7 +88,8 @@ interface LogLineDetailsLabelFieldsProps {
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
   const { fontSize, onClickShowField } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+  const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+  const styles = useStyles2(getFieldsStyles, fontSize, displayedFieldsControlEnabled ? onClickShowField : undefined);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
@@ -313,6 +316,8 @@ const LogLineDetailsField = ({
     [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]
   );
 
+  const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
     [app, log.dataFrame?.refId]
@@ -352,7 +357,7 @@ const LogLineDetailsField = ({
                   onClick={filterOutLabel}
                 />
               )}
-              {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
+              {displayedFieldsControlEnabled && onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
                   variant="primary"
                   size={fontSize === 'small' ? 'sm' : undefined}
@@ -361,7 +366,7 @@ const LogLineDetailsField = ({
                   onClick={hideField}
                 />
               )}
-              {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
+              {displayedFieldsControlEnabled && onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',

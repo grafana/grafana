@@ -28,6 +28,7 @@ import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
 import { type LogListModel } from './processing';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;
@@ -190,6 +191,8 @@ export const LogLineDetailsComponent = memo(
         .catch(() => setDs(null));
     }, [log.datasourceUid]);
 
+    const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+
     // Wait for ds to be resolved to DataSourceApi or null on error
     if (ds === undefined) {
       return null;
@@ -224,7 +227,7 @@ export const LogLineDetailsComponent = memo(
             prettifyJSON={prettifyDetailsJSON}
           />
         </ControlledCollapse>
-        {displayedFields.length > 0 && setDisplayedFields && (
+        {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
             isOpen={displayedFieldsOpen}

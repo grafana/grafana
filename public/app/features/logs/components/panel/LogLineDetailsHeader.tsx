@@ -14,6 +14,7 @@ import { type LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { getLogAsJSON } from './export';
 import { type LogListModel } from './processing';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 
 interface Props {
   closeDetails: () => void;
@@ -113,7 +114,9 @@ export const LogLineDetailsHeader = ({
     [log, getRowContextQuery, reportInteractionWrapper, onOpenContext]
   );
 
-  const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
+  const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+  const showLogLineToggle =
+    displayedFieldsControlEnabled && onClickHideField && onClickShowField && displayedFields.length > 0;
   const logLineDisplayed = displayedFields.includes(LOG_LINE_BODY_FIELD_NAME);
 
   const toggleDetailsMode = useCallback(() => {
