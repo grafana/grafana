@@ -20,7 +20,7 @@ import (
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
-	wire.Build(Server, wireext.BasicSet, router.ProvideRoutesLoader)
+	wire.Build(Server, wireext.BasicSet, router.ProvidePluginLoaderDependencies, router.ProvideRoutesLoader)
 	return &server.Server{}, nil
 }
 
@@ -29,7 +29,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	Cleanup(func())
 }, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions,
 ) (*server.TestEnv, error) {
-	wire.Build(Test, wireext.BasicSet, router.ProvideRoutesLoader)
+	wire.Build(Test, wireext.BasicSet, router.ProvidePluginLoaderDependencies, router.ProvideRoutesLoader)
 	return &server.TestEnv{Server: &server.Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
@@ -54,7 +54,7 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the
 // app-plugin API registration.
 func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
-	wire.Build(CLI, wireext.BasicSet, provideRoutesLoaderContext, router.ProvideRoutesLoaderWithClients)
+	wire.Build(CLI, wireext.BasicSet, provideRoutesLoaderContext, router.ProvidePluginLoaderDependenciesWithClients, router.ProvideRoutesLoader)
 	return nil, nil
 }
 

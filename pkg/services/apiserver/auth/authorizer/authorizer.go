@@ -49,7 +49,7 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	authorizers := []union.NamedAuthorizer{ //nolint:prealloc
 		{AuthorizerName: "impersonation", Authorizer: NewImpersonationAuthorizer()},
 		{AuthorizerName: "privileged-groups", Authorizer: authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup)},
-		{AuthorizerName: "namespace", Authorizer: newNamespaceAuthorizer()},
+		{AuthorizerName: "namespace", Authorizer: NewNamespaceAuthorizer()},
 	}
 
 	// Individual services may have explicit implementations
