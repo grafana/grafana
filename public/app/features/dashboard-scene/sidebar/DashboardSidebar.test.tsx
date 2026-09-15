@@ -444,7 +444,7 @@ describe('DashboardSidebar', () => {
       source.publishEvent(new StateCommittedEvent({ source, description, replay, revert }), true);
     }
 
-    it('records the transaction on the undo stack without performing it again', () => {
+    it('records new entry on the undo stack without performing it again', () => {
       const { sidebar, source } = buildTestScene();
       const replay = jest.fn();
       const revert = jest.fn();
