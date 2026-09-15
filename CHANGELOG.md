@@ -1,3 +1,13 @@
+<!-- 13.1.6 START -->
+
+# 13.1.6 (2026-09-15)
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132090](https://github.com/grafana/grafana/pull/132090), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Fix folder rename UID collision during full sync [#132164](https://github.com/grafana/grafana/pull/132164), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.1.6 END -->
 <!-- 13.1.5 START -->
 
 # 13.1.5 (2026-09-02)
