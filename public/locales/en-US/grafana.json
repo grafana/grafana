@@ -9068,6 +9068,7 @@
       "label-stack-trace": "Stack trace",
       "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
+      "link-copied": "Link copied to clipboard",
       "no-attributes": "No attributes",
       "overview-items": {
         "label": {
@@ -9079,7 +9080,6 @@
         }
       },
       "resource-attributes-inherited": "(inherited from slowest span)",
-      "link-copied": "Link copied to clipboard",
       "share-span": "Share",
       "summary-count-aria_one": "{{count}} aggregated span",
       "summary-count-aria_other": "{{count}} aggregated spans",
