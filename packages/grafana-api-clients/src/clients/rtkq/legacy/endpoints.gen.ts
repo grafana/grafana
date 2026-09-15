@@ -3807,6 +3807,14 @@ export type AddDataSourceCommand = {
   user?: string;
   withCredentials?: boolean;
 };
+export type CorrelationRelativeTimeRange = {
+  from?: number;
+  to?: number;
+};
+export type CorrelationTimeRange = {
+  field?: string;
+  range?: CorrelationRelativeTimeRange;
+};
 export type Transformation = {
   expression?: string;
   field?: string;
@@ -3822,6 +3830,7 @@ export type CorrelationConfig = {
   target: {
     [key: string]: any;
   };
+  timeRange?: CorrelationTimeRange;
   transformations?: Transformations;
   type?: CorrelationType;
 };
@@ -3870,6 +3879,7 @@ export type CorrelationConfigUpdateDto = {
   target?: {
     [key: string]: any;
   };
+  timeRange?: CorrelationTimeRange;
   /** Source data transformations */
   transformations?: Transformation[];
 };

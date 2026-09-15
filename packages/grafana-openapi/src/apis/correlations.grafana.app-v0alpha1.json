@@ -777,6 +777,15 @@
           "target": {
             "$ref": "#/components/schemas/CorrelationTargetSpec"
           },
+          "timeRange": {
+            "description": "null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CorrelationTimeRangeSpec"
+              }
+            ]
+          },
           "transformations": {
             "type": "array",
             "items": {
@@ -879,6 +888,28 @@
       "CorrelationTargetSpec": {
         "type": "object",
         "additionalProperties": true
+      },
+      "CorrelationTimeRangeSpec": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "range": {
+            "type": "object",
+            "required": ["from", "to"],
+            "properties": {
+              "from": {
+                "type": "integer"
+              },
+              "to": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       },
       "CorrelationTransformationSpec": {
         "type": "object",
