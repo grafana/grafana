@@ -14,6 +14,40 @@ describe('generateLogGrammar', () => {
     return { log, grammar, tokens };
   }
 
+  test.each([
+    ['level=info', 'level', '=info'],
+    ['_field_2 = value', '_field_2', ' = value'],
+    ['123=value', '123', '=value'],
+    ['prefix.field=value', 'field', '=value'],
+    ['field\t=value', 'field', '\t=value'],
+  ])('Identifies the complete key in %s', (entry, key, suffix) => {
+    const { tokens } = generateScenario(entry);
+    const keyTokens = tokens.filter((token) => token instanceof Token && token.type === 'log-token-key');
+
+    expect(keyTokens).toMatchObject([{ type: 'log-token-key', content: key }]);
+    expect(tokens[tokens.length - 1]).toBe(suffix);
+  });
+
+  test('Leaves words without an assignment unhighlighted', () => {
+    const { tokens } = generateScenario('level info _field_2 123');
+
+    expect(tokens).toEqual(['level info _field_2 123']);
+  });
+
+  test('Tokenizes a batch of long unassigned words without blocking', () => {
+    const entry = 'x'.repeat(16_384);
+    const log = createLogLine({ entry, labels: {} });
+    const grammar = generateLogGrammar(log);
+    expect(logsSupportHighlighting([log])).toBe(true);
+
+    // Measure only tokenization, with ample headroom for CI, not module loading or log parsing.
+    const start = performance.now();
+    for (let i = 0; i < 16; i++) {
+      expect(Prism.tokenize(entry, grammar)).toEqual([entry]);
+    }
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
   test('Identifies uuid tokens', () => {
     const { tokens } = generateScenario('15f77b91-aedb-48d2-a551-ca4a7927cea4');
     if (tokens[0] instanceof Token) {
