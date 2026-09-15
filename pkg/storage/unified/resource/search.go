@@ -143,6 +143,13 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// IndexFeatureStoredResourceVersion means the index stores each document's resource
+// version; without it a search returns 0, which callers read as "unknown".
+//
+// Recorded but not required, because requiring it rebuilds every existing index at
+// once. Recording it now is what lets a later release require it.
+const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
+
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. Describes
 // what the index holds, not what it maps.
@@ -164,6 +171,7 @@ func TrashIndexFeatures() []IndexFeature {
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -173,6 +181,7 @@ var currentIndexFeatures = []IndexFeature{
 var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 	IndexFeatureHoldsDeletedDocuments,
 }
@@ -2303,16 +2312,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return nil, err
 	}
 
-	// Record the number of objects indexed for the kind/resource
-	// We don't pass searchStats to DocCount here, as it's not really user-initiated search. Time spent
-	// here will be recorded in the index build time instead.
-	docCount, err := index.DocCount(ctx, "", nil)
-	if err != nil {
-		logger.Warn("error getting doc count", "error", err)
-	}
-	s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
-
-	return index, err
+	// The indexed kinds metric is not recorded here: the search backend refreshes it
+	// from the open indexes, so it also follows incremental updates and it is not
+	// added up over repeated rebuilds.
+	return index, nil
 }
 
 // keepsDeletedDocuments reports whether deleted objects should stay in this

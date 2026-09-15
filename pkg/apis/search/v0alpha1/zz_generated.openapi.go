@@ -109,9 +109,8 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -321,8 +320,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
 									},
 								},
 							},
@@ -334,9 +332,8 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -348,9 +345,8 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -418,8 +414,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
 									},
 								},
 							},
@@ -437,8 +432,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm"),
+													Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm"),
 												},
 											},
 										},
@@ -503,9 +497,8 @@ func schema_pkg_apis_search_v0alpha1_TextPredicate(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -557,8 +550,7 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
 									},
 								},
 							},
@@ -570,9 +562,8 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -631,8 +622,7 @@ func schema_pkg_apis_search_v0alpha1_TrashResults(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
 									},
 								},
 							},
@@ -661,8 +651,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 									},
 								},
 							},
@@ -674,8 +663,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 									},
 								},
 							},

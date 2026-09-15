@@ -876,9 +876,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -2707,9 +2705,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -3476,9 +3472,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -4365,12 +4359,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4535,12 +4524,7 @@
             "description": "Conditions represent the latest available observations of the connection's state.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
-                }
-              ]
+              "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
             },
             "x-kubernetes-list-map-keys": [
               "type"
@@ -4553,12 +4537,7 @@
             "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4604,8 +4583,7 @@
             "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "ref": {
@@ -4616,12 +4594,7 @@
             "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           }
         }
@@ -4682,12 +4655,7 @@
             "description": "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           }
         }
@@ -4729,12 +4697,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExternalRepository"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExternalRepository"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4798,9 +4761,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -5008,8 +4969,7 @@
             "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }
@@ -5070,12 +5030,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJob"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJob"
             }
           },
           "kind": {
@@ -5110,9 +5065,7 @@
         "properties": {
           "authors": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "createdAt": {
@@ -5143,9 +5096,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -5215,12 +5166,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
             }
           },
           "kind": {
@@ -5264,8 +5210,7 @@
             "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "group": {
@@ -5300,8 +5245,7 @@
           "warnings": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "write": {
@@ -5414,8 +5358,7 @@
           "errors": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "finished": {
@@ -5468,8 +5411,7 @@
           "warnings": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -5528,12 +5470,7 @@
             "description": "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           },
           "skipResourceDeletion": {
@@ -5549,8 +5486,7 @@
             "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "ref": {
@@ -5561,12 +5497,7 @@
             "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           },
           "targetPath": {
@@ -5578,9 +5509,17 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions": {
         "type": "object",
         "properties": {
+          "forkURL": {
+            "description": "URL of the head repository for a pull request from a fork, when available.",
+            "type": "string"
+          },
           "hash": {
             "description": "The specific commit hash that triggered this notice",
             "type": "string"
+          },
+          "isFork": {
+            "description": "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+            "type": "boolean"
           },
           "pr": {
             "description": "Pull request number (when appropriate)",
@@ -5673,12 +5612,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5769,12 +5703,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5932,7 +5861,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "branch",
                 "write"
@@ -5955,12 +5883,7 @@
             "description": "Conditions represent the latest available observations of the repository's state.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
-                }
-              ]
+              "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
             },
             "x-kubernetes-list-map-keys": [
               "type"
@@ -5977,12 +5900,7 @@
             "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6014,12 +5932,7 @@
             "description": "The object count when sync last ran",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6156,7 +6069,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "branch",
                 "write"
@@ -6184,7 +6096,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "folder",
                 "folderless",
@@ -6201,7 +6112,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "bitbucketOAuth",
                 "github",
@@ -6217,7 +6127,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "bitbucket",
                 "git",
@@ -6299,12 +6208,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceListItem"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceListItem"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6583,8 +6487,7 @@
             "description": "If errors exist, show them here",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6773,8 +6676,7 @@
             "description": "Summary messages (will be shown to users)",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6843,12 +6745,7 @@
             "description": "Field related errors",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             }
           },
           "kind": {
@@ -6950,8 +6847,7 @@
           "subscribedEvents": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "url": {

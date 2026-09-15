@@ -956,7 +956,7 @@
         "jira": "'{{project}}' 프로젝트에 '{{issueType}}' 이슈 생성"
       },
       "telegram": {
-        "parse-mode-warning-body": "<3>없음(None)</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
+        "parse-mode-warning-body": "<3>None</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
         "parse-mode-warning-title": "Telegram 메시지는 UTF-8 문자 기준으로 4,096자까지 제한됩니다."
       },
       "used-by_other": "{{count}}개의 알림 정책에서 사용됨",
@@ -1278,7 +1278,7 @@
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
       "delete-modal-deleting": "삭제 중…",
-      "delete-modal-text": "{{folderName}}이 작업을 수행하면 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
+      "delete-modal-text": "이 작업을 수행하면 <1>{{folderName}}</1> 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
       "delete-modal-title": "삭제",
       "error": "{{error}} 폴더 작업 실행 실패:",
       "pause": {
@@ -3285,6 +3285,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5702,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "{{typeName}} 이동",
-      "panel-background": "패널 배경 변경",
-      "panel-description": "패널 설명 변경",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "패널 변경",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-preset": "패널 사전 설정 적용",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
-      "panel-title": "패널 제목 변경",
+      "panel-title": "",
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "row-title": "행 제목 변경",
@@ -5734,7 +5736,7 @@
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
+      "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "layout-default-hint": "선택한 레이아웃은 모든 새 탭과 행의 기본 레이아웃으로도 사용됩니다. 나중에 '대시보드 설정 > 일반'에서 이 설정을 변경할 수 있습니다.",
@@ -6662,6 +6664,10 @@
       },
       "title-delete": "{{name}}을(를) 삭제하시겠어요?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "검색 초기화",
       "no-transformations-found": "변환을 찾을 수 없음",
@@ -6711,6 +6717,12 @@
     "view-panel": {
       "back-to-dashboard": "대시보드로 돌아가기",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8598,6 +8610,16 @@
       "title-table": "표",
       "title-traces": "트레이스"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8649,7 +8671,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "링크",
-      "open-value-in": "값을 다음에서 열기"
+      "open-value-in": "값을 다음에서 열기",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9129,6 +9152,10 @@
       "aria-label-copy": "클립보드로 복사",
       "attribute-plugin-promo": {
         "learn-more": "자세히 알아보기"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability는 시각적 실행 계획, 대기 이벤트 및 쿼리 샘플을 제공하여 트레이스 스팬만으로는 파악하기 어려운 문제를 진단하는 데 도움을 줍니다.",
@@ -11341,8 +11368,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13028,9 +13054,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -15913,7 +15937,7 @@
     },
     "empty-state": {
       "message": "아직 생성된 공유 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <4>자세히 알아보기</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "액세스 권한 일시 중지"
@@ -15984,7 +16008,7 @@
   "snapshot": {
     "empty-state": {
       "message": "아직 생성된 스냅샷이 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <4>자세히 알아보기</4>"
     },
     "external-badge": "외부",
     "load-error": {
