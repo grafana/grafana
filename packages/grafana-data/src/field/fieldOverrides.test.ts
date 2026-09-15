@@ -815,6 +815,34 @@ describe('applyFieldOverrides', () => {
     expect(data.fields[0].config.displayName).toBe('env-match');
     expect(data.fields[1].config.displayName).toBeUndefined();
   });
+
+  it('does not interpolate byName matcher options', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: '$total', type: FieldType.number, values: [1] },
+        { name: '42', type: FieldType.number, values: [2] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: '$total' },
+            properties: [{ id: 'displayName', value: 'named' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('$total', '42'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[0].config.displayName).toBe('named');
+    expect(data.fields[1].config.displayName).toBeUndefined();
+  });
 });
 
 describe('setFieldConfigDefaults', () => {

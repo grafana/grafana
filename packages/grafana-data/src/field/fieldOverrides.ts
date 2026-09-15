@@ -12,6 +12,7 @@ import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 import { type ScopedVars, type DataContextScopedVar } from '../types/ScopedVars';
 import {
   type DataFrame,
@@ -154,8 +155,15 @@ export function applyFieldOverrides(
         continue;
       }
 
+      const isRegexpMatcher =
+        rule.matcher.id === FieldMatcherID.byRegexp || rule.matcher.id === FieldMatcherID.byRegexpOrNames;
+
       override.push({
-        match: info.get(interpolateMatcherOptions(rule.matcher.options, options.replaceVariables)),
+        match: info.get(
+          isRegexpMatcher
+            ? interpolateMatcherOptions(rule.matcher.options, options.replaceVariables)
+            : rule.matcher.options
+        ),
         properties: rule.properties,
       });
     }
