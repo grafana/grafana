@@ -37,8 +37,11 @@ func (pl remotePluginLoader) Load(context.Context) ([]Backend, error) {
 		return nil, err
 	}
 
-	plugins := make([]Backend, len(deployment.Plugins))
-	for i, d := range deployment.Plugins {
+	plugins := make([]Backend, 0, len(deployment.Plugins))
+	for _, d := range deployment.Plugins {
+		if d.Definition.Manifest == nil {
+			continue // skip?
+		}
 		g := metav1.APIGroup{
 			Name:     d.Definition.Manifest.Group,
 			Versions: make([]metav1.GroupVersionForDiscovery, len(d.Definition.Manifest.Versions)),
@@ -52,10 +55,10 @@ func (pl remotePluginLoader) Load(context.Context) ([]Backend, error) {
 				g.PreferredVersion = g.Versions[i]
 			}
 		}
-		plugins[i] = &dummyRemotePlugin{
+		plugins = append(plugins, &dummyRemotePlugin{
 			group:      g,
 			deployment: d,
-		}
+		})
 	}
 	return plugins, nil
 }
