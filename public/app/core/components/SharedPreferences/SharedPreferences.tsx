@@ -14,10 +14,10 @@ import {
   FeatureBadge,
   Field,
   FieldSet,
+  Heading,
   isWeekStart,
   Label,
   Stack,
-  Text,
   TimeZonePicker,
   useStyles2,
   type WeekStart,
@@ -187,9 +187,9 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
       )}
       <FieldSet
         label={
-          <Text element="h2" variant="h2">
+          <Heading variant="h2">
             <Trans i18nKey="shared-preferences.title">Preferences</Trans>
-          </Text>
+          </Heading>
         }
         disabled={props.disabled}
       >

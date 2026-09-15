@@ -6,12 +6,14 @@ import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv, setPluginComponentsHook, type usePluginComponents } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { HeadingRoot, HeadingSection } from '@grafana/ui';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
 import { getMockTeam } from '../teams/mocks/teamMocks';
 
 import { type Props, UserProfileEditPage } from './UserProfileEditPage';
+import { UserTeams } from './UserTeams';
 import { initialUserState } from './state/reducers';
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
@@ -179,7 +181,17 @@ async function getTestContext(overrides: Partial<Props & { components: Component
   setPluginComponentsHook(getter);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<UserProfileEditPage {...props} />);
+  const { rerender } = render(<UserProfileEditPage {...props} />, {
+    preloadedState: {
+      navIndex: {
+        'profile/settings': {
+          id: 'profile/settings',
+          text: 'Profile',
+          url: '/profile',
+        },
+      },
+    },
+  });
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
@@ -212,8 +224,21 @@ describe('UserProfileEditPage', () => {
     it('should show Preferences as a level-two heading in its group', async () => {
       await getTestContext();
 
+      expect(screen.getByRole('heading', { name: 'Profile', level: 1 })).toBeInTheDocument();
       const preferences = await screen.findByRole('group', { name: 'Preferences' });
       expect(within(preferences).getByRole('heading', { name: 'Preferences', level: 2 })).toBeInTheDocument();
+    });
+
+    it('uses an explicit section when a profile section is reused outside the profile page', () => {
+      render(
+        <HeadingRoot level={3}>
+          <HeadingSection>
+            <UserTeams isLoading={false} teams={defaultProps.teams} />
+          </HeadingSection>
+        </HeadingRoot>
+      );
+
+      expect(screen.getByRole('heading', { name: 'Teams', level: 4 })).toBeInTheDocument();
     });
 
     describe('and teams are loading', () => {
@@ -258,7 +283,7 @@ describe('UserProfileEditPage', () => {
         await getTestContext();
 
         const { orgsTable, orgsEditorRow, orgsViewerRow, orgsAdminRow } = getSelectors();
-        expect(screen.getByRole('heading', { name: /organizations/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /organizations/i, level: 2 })).toBeInTheDocument();
         expect(orgsTable()).toBeInTheDocument();
         expect(orgsEditorRow()).toBeInTheDocument();
         expect(orgsViewerRow()).toBeInTheDocument();
@@ -279,6 +304,7 @@ describe('UserProfileEditPage', () => {
         await getTestContext();
 
         const { sessionsTable, sessionsRow } = getSelectors();
+        expect(screen.getByRole('heading', { name: 'Sessions', level: 2 })).toBeInTheDocument();
         expect(sessionsTable()).toBeInTheDocument();
         expect(sessionsRow()).toBeInTheDocument();
       });

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { LoadingPlaceholder, ScrollContainer, Text } from '@grafana/ui';
+import { Heading, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
 import { type Team } from 'app/types/teams';
 
 export interface Props {
@@ -20,9 +20,9 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
 
   return (
     <div>
-      <Text element="h2" variant="h2">
+      <Heading variant="h2">
         <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
-      </Text>
+      </Heading>
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table

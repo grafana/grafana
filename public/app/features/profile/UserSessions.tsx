@@ -3,7 +3,7 @@ import { memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, LoadingPlaceholder, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, Heading, Icon, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { formatDate } from 'app/core/internationalization/dates';
 import { type UserSession } from 'app/types/user';
@@ -27,9 +27,9 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) =>
 
   return (
     <div className={styles.wrapper}>
-      <Text element="h2" variant="h2">
+      <Heading variant="h2">
         <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
-      </Text>
+      </Heading>
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
