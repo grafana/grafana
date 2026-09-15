@@ -65,6 +65,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
+| `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            |                    |
 | `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                            | Yes                |
 | `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
@@ -106,7 +107,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
-| `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |

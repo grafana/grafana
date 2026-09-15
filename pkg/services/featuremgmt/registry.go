@@ -2201,7 +2201,7 @@ var (
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
