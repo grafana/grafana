@@ -14,13 +14,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -61,8 +61,11 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
-	s := newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg)
+func NewGitHubProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) (*SocialGithub, error) {
+	s, err := newSocialBase(social.GitHubProviderName, ctx, orgRoleMapper, info, features, cfgProvider)
+	if err != nil {
+		return nil, err
+	}
 
 	teamIdsSplitted, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
@@ -85,9 +88,11 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		provider.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
 	}
 
-	ssoSettings.RegisterReloadable(social.GitHubProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.GitHubProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialGithub) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -148,7 +153,9 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.GitHubProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.GitHubProviderName, newInfo); err != nil {
+		return err
+	}
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = allowedOrganizations
@@ -354,7 +361,10 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

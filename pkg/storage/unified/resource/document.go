@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -73,6 +74,11 @@ type IndexableDocument struct {
 
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
+
+	// RV as a string, set by UpdateCopyFields. A resource version does not survive
+	// being stored as a number: bleve keeps numbers as float64, which cannot
+	// represent a value this large exactly (see SearchFieldTypeInt64).
+	RVString string `json:"_rv,omitempty"`
 
 	// The generic display name
 	Title string `json:"title,omitempty"`
@@ -172,6 +178,9 @@ type IndexableDocument struct {
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	m.TitleNgram = m.Title
 	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
+	if m.RV > 0 {
+		m.RVString = strconv.FormatInt(m.RV, 10)
+	}
 	if m.Manager != nil {
 		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
 	}
@@ -465,8 +474,8 @@ func apiVersionOf(tmp *unstructured.Unstructured) string {
 	// apiVersion is "<group>/<version>" for non-core resources and just
 	// "<version>" for core. The Group is authoritative from the key; we
 	// only need the version segment.
-	if i := strings.IndexByte(av, '/'); i >= 0 {
-		return av[i+1:]
+	if _, after, ok := strings.Cut(av, "/"); ok {
+		return after
 	}
 	return av
 }
@@ -572,12 +581,25 @@ const (
 	SEARCH_FIELD_IS_DELETED     = "_deleted"
 	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
 
+	// Stores the resource version as a string. Callers ask for it as SEARCH_FIELD_RV
+	// and receive a number, so this name is internal to the index.
+	SEARCH_FIELD_RV_STRING = "_rv"
+
 	// Fields only a deleted document carries, declared in
 	// TrashSearchFieldDefinitions rather than the standard set for the same reasons
 	// as the markers above.
 	SEARCH_FIELD_DELETED_BY    = "deleted_by"
 	SEARCH_FIELD_DELETION_TIME = "deletion_time"
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
+)
+
+// Range operators for Requirement.Operator, which otherwise carries a k8s
+// selection operator. That set names only gt and lt. Sending these as operator
+// strings is what makes an older search server answer with a bad request rather
+// than drop the bound.
+const (
+	OperatorGreaterThanOrEqual selection.Operator = "gte"
+	OperatorLessThanOrEqual    selection.Operator = "lte"
 )
 
 var standardSearchFieldsInit sync.Once

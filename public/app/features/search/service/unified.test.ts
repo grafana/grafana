@@ -1,7 +1,14 @@
+import { configureStore } from '@reduxjs/toolkit';
+import { http, HttpResponse } from 'msw';
+import { type Store } from 'redux';
+
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
 import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
@@ -131,6 +138,97 @@ describe('Unified Storage Searcher', () => {
     expect(response.view.length).toBe(1);
     expect(response.view.get(0).name).toBe('Team owned dashboard');
     expect(response.view.get(0).uid).toBe('team-owned-dashboard');
+  });
+
+  describe('starred', () => {
+    const starsHandler = (resources: Array<{ group: string; kind: string; names: string[] }>) =>
+      http.get(starsRoute, () =>
+        HttpResponse.json({
+          kind: 'StarsList',
+          apiVersion: 'collections.grafana.app/v1alpha1',
+          metadata: { resourceVersion: '1' },
+          items: [
+            {
+              metadata: { name: 'user-u000000001', namespace: 'default', resourceVersion: '1' },
+              spec: { resource: resources },
+            },
+          ],
+        })
+      );
+
+    const bothStarredResources = [
+      { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['d1'] },
+      { group: 'folder.grafana.app', kind: 'Folder', names: ['f1'] },
+    ];
+
+    // Root-level hits (no folder) so the searcher's folder-cache staleness check stays quiet.
+    const starredHits = [
+      { resource: 'dashboards', name: 'd1', title: 'Dashboard 1', field: {} },
+      { resource: 'folders', name: 'f1', title: 'Folder 1', field: {} },
+    ];
+
+    let searchRequests: URL[] = [];
+
+    // The searcher also hits the search endpoint for location info, so capture
+    // every request and let assertions pick out the one carrying name filters.
+    const captureSearchHandler = (hits: Array<Record<string, unknown>>) =>
+      http.get(searchRoute, ({ request }) => {
+        searchRequests.push(new URL(request.url));
+        return HttpResponse.json({ totalHits: hits.length, hits });
+      });
+
+    const findStarredSearchRequest = () => searchRequests.find((url) => url.searchParams.getAll('name').length > 0);
+
+    beforeEach(() => {
+      searchRequests = [];
+      config.featureToggles.foldersAppPlatformAPI = true;
+      setTestFlags({ 'grafana.starredFolders': true });
+      // starred() reads stars via an RTK Query dispatch on the global store, so wire one up.
+      const store = configureStore({
+        reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
+        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
+      });
+      setStore(store as unknown as Store);
+    });
+
+    afterEach(() => {
+      config.featureToggles.foldersAppPlatformAPI = false;
+      setTestFlags({});
+    });
+
+    it('searches for starred folders alongside dashboards when starred folders are enabled', async () => {
+      server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits));
+
+      const searcher = new UnifiedSearcher();
+      const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(findStarredSearchRequest()?.searchParams.getAll('name')).toEqual(['d1', 'f1']);
+
+      expect(response.totalRows).toBe(2);
+      const folderHit = response.view.get(1);
+      expect(folderHit.kind).toBe('folder');
+      expect(folderHit.url).toContain('/dashboards/f/f1');
+    });
+
+    it('keeps the search dashboards-only when the starred folders flag is off', async () => {
+      setTestFlags({});
+      server.use(starsHandler(bothStarredResources), captureSearchHandler(starredHits.slice(0, 1)));
+
+      const searcher = new UnifiedSearcher();
+      await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(findStarredSearchRequest()?.searchParams.getAll('name')).toEqual(['d1']);
+    });
+
+    it('returns an empty response without searching when nothing is starred', async () => {
+      server.use(starsHandler([]), captureSearchHandler([]));
+
+      const searcher = new UnifiedSearcher();
+      const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(response.totalRows).toBe(0);
+      expect(findStarredSearchRequest()).toBeUndefined();
+    });
   });
 });
 

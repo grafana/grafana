@@ -9,13 +9,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,13 +38,21 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
+func NewGrafanaComProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) (*SocialGrafanaCom, error) {
+	cfg, err := cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get configuration for OAuth provider %q: %w", social.GrafanaComProviderName, err)
+	}
+
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
+	s, err := newSocialBase(social.GrafanaComProviderName, ctx, orgRoleMapper, info, features, cfgProvider)
+	if err != nil {
+		return nil, err
+	}
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
@@ -57,9 +65,11 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 		allowedOrganizations: allowedOrganizations,
 	}
 
-	ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -94,18 +104,24 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	if err != nil {
 		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
 	}
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("get configuration for OAuth provider %q: %w", social.GrafanaComProviderName, err)
+	}
 
 	// Override necessary settings
-	newInfo.AuthUrl = s.cfg.GrafanaComURL + "/oauth2/authorize"
-	newInfo.TokenUrl = s.cfg.GrafanaComURL + "/api/oauth2/token"
+	newInfo.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
+	newInfo.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	newInfo.AuthStyle = "inheader"
 
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.GrafanaComProviderName, newInfo); err != nil {
+		return err
+	}
 
-	s.url = s.cfg.GrafanaComURL
+	s.url = cfg.GrafanaComURL
 	s.allowedOrganizations = allowedOrganizations
 
 	return nil
@@ -163,7 +179,10 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), nil, identity.RoleType(data.Role))
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), nil, identity.RoleType(data.Role))
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 	}
 
 	if !s.isOrganizationMember(data.Orgs) {

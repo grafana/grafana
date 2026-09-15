@@ -31,7 +31,10 @@ COPY public/img/icons public/img/icons
 
 ADD devenv/frontend-service/build/grafana bin/grafana
 
-COPY public/build/assets-manifest.json public/build/assets-manifest.json
-COPY public/build/boot.js public/build/boot.js
+# The rspack build writes to public/build/rspack. Tilt passes the directory the
+# backend will read from, so the container only carries one build's assets.
+ARG BUILD_DIR=build
+COPY public/${BUILD_DIR}/assets-manifest.json public/${BUILD_DIR}/assets-manifest.json
+COPY public/${BUILD_DIR}/boot.js public/${BUILD_DIR}/boot.js
 
 ENTRYPOINT ["bin/grafana", "server"]

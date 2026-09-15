@@ -12,13 +12,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -53,14 +53,21 @@ type userData struct {
 	raw           []byte
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGitlab {
-	provider := &SocialGitlab{
-		SocialBase: newSocialBaseWithCache(social.GitlabProviderName, orgRoleMapper, info, features, cfg, cache),
+func NewGitLabProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialGitlab, error) {
+	base, err := newSocialBaseWithCache(social.GitlabProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
 	}
 
-	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
+	provider := &SocialGitlab{
+		SocialBase: base,
+	}
 
-	return provider
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
+	}
+
+	return provider, nil
 }
 
 func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -100,7 +107,9 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.GitlabProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.GitlabProviderName, newInfo); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -226,7 +235,10 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
@@ -268,7 +280,7 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		raw:    response.Body,
 	}
 
-	if s.cfg.Env == setting.Dev {
+	if s.isDev(ctx) {
 		s.log.FromContext(ctx).Debug("Resolved ID", "data", fmt.Sprintf("%+v", idData))
 	}
 

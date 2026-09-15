@@ -76,14 +76,6 @@ func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
 	}
 }
 
-func ProvideStorageBackend(
-	cfg *setting.Cfg,
-) (resource.StorageBackend, error) {
-	// TODO: make this the central place to provide SQL backend
-	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
-	return nil, nil
-}
-
 type Backend interface {
 	resource.StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
@@ -166,6 +158,8 @@ func NewStorageBackend(
 		return NewFileBackend(cfg, kvStore)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
+	case options.StorageTypeUnifiedKVGrpc:
+		return newKVGrpcBackend(cfg, reg, disableStorageServices, kvStore, gcGate, opts...)
 	default: // fall back to SQL backend
 	}
 
@@ -229,6 +223,7 @@ func NewStorageBackend(
 			Dialect:                 dialect,
 			DB:                      dbConn,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			Reg:                     reg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -245,6 +240,35 @@ func NewStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
+	if kvStore == nil {
+		return nil, fmt.Errorf("storage_type=%s needs a kv client dialed by the wiring, and this build provides none (enterprise only)", options.StorageTypeUnifiedKVGrpc)
+	}
+	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, gcGate, opts...))
+}
+
+func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) resource.KVBackendOptions {
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.GCGate = gcGate
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
+
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
+	}
+
+	for _, opt := range opts {
+		opt(&kvBackendOpts)
+	}
+
+	return kvBackendOpts
 }
 
 func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, error) {
@@ -496,6 +520,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Dialect:                 b.dialect,
 		DB:                      b.db,
 		BatchTransactionTimeout: b.batchTxnTimeout,
+		Reg:                     b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -959,20 +984,17 @@ func IsRowAlreadyExistsError(err error) bool {
 		return true
 	}
 
-	var pg *pgconn.PgError
-	if errors.As(err, &pg) {
+	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pg.Code == "23505" // unique_violation
 	}
 
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
+	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pqerr.Code == "23505" // unique_violation
 	}
 
-	var mysqlerr *mysql.MySQLError
-	if errors.As(err, &mysqlerr) {
+	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
 		return mysqlerr.Number == 1062 // ER_DUP_ENTRY
 	}
@@ -1202,7 +1224,12 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{sortAsc: false}
+	iter := &listIter{
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -1314,17 +1341,39 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	return latestRv, seq
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listAtRevision")
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
+	iter := &listIter{
+		listRV:      req.ResourceVersion,
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
+		}
+		if !continueTokenMatchesListRequest(continueToken, req) {
+			return 0, apierrors.NewBadRequest("continue token scope does not match request")
 		}
 		iter.listRV = toMicrosecondRV(continueToken.ResourceVersion)
 		iter.offset = continueToken.StartOffset
@@ -1589,6 +1638,18 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	}
 
 	return b.db
+}
+
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
+		}
+	}
+	return time.Time{}, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

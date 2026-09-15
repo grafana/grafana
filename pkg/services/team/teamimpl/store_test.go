@@ -57,7 +57,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -509,7 +509,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
-					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+					legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 					quotaService, supportbundlestest.NewFakeBundleService(), nil,
 				)
 				require.NoError(t, err)
@@ -755,12 +755,12 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(store), orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			userCmd := user.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@example.org"),
 				Name:  fmt.Sprint("user", i),

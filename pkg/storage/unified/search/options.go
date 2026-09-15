@@ -86,7 +86,7 @@ func NewSearchOptions(
 		// MergeManifestsByKind is the single point a future live-manifest source will
 		// be added to; the built-in manifests are the only source today.
 		manifests := resource.MergeManifestsByKind(resource.AppManifests())
-		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
@@ -115,6 +115,8 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
+			IndexDeletedDocuments:          cfg.IndexDeletedDocuments,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
@@ -148,7 +150,6 @@ func NewSearchOptions(
 			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
-			IndexDeletedDocuments:     cfg.IndexDeletedDocuments,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 

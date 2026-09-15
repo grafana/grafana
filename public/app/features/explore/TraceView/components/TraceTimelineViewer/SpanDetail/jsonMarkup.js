@@ -92,6 +92,11 @@ export default function jsonMarkup(doc, styleFile) {
       return '';
     }
 
+    // Quote only nested JSON strings; top-level attribute values render as plain text
+    function wrapString(value) {
+      return indent ? '"' + value + '"' : value;
+    }
+
     switch (type(obj)) {
       case 'boolean':
         return '<span ' + style('json-markup-bool') + '>' + obj + '</span>';
@@ -100,17 +105,27 @@ export default function jsonMarkup(doc, styleFile) {
         return '<span ' + style('json-markup-number') + '>' + obj + '</span>';
 
       case 'date':
-        return '<span class="json-markup-string">"' + escape(obj.toISOString()) + '"</span>';
+        return '<span class="json-markup-string">' + wrapString(escape(obj.toISOString())) + '</span>';
 
       case 'null':
         return '<span ' + style('json-markup-null') + '>null</span>';
 
       case 'string':
-        return '<span ' + style('json-markup-string') + '>"' + escape(obj.replace(/\n/g, '\n' + indent)) + '"</span>';
+        return (
+          '<span ' +
+          style('json-markup-string') +
+          '>' +
+          wrapString(escape(obj.replace(/\n/g, '\n' + indent))) +
+          '</span>'
+        );
 
       case 'link':
         return (
-          '<span ' + style('json-markup-string') + '>"<a href="' + encodeURI(obj) + '">' + escape(obj) + '</a>"</span>'
+          '<span ' +
+          style('json-markup-string') +
+          '>' +
+          wrapString('<a href="' + encodeURI(obj) + '">' + escape(obj) + '</a>') +
+          '</span>'
         );
 
       case 'array':

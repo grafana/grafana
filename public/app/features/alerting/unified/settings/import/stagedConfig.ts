@@ -13,6 +13,7 @@ export interface StagedExtraConfig {
   /** The imported Alertmanager configuration, as a YAML string. */
   alertmanager_config?: string;
   template_files?: Record<string, string>;
+  managed_by?: 'manual' | 'auto-sync';
 }
 
 export function isStagedExtraConfig(value: unknown): value is StagedExtraConfig {

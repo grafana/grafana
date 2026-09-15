@@ -10,7 +10,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { AddButton } from './AddButton';
 
-export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
+export async function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
@@ -20,7 +20,7 @@ export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: S
 
   const type = 'adhoc';
   const name = getVariableNamePrefix(type);
-  const newVar = getVariableScene(type, {
+  const newVar = await getVariableScene(type, {
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 
@@ -30,7 +30,7 @@ export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: S
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {
   const onAddFiltersClick = useCallback(() => {
-    openAddFilterForm(dashboardScene, dashboardScene);
+    void openAddFilterForm(dashboardScene, dashboardScene);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboardScene]);
 

@@ -8,13 +8,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -32,10 +35,12 @@ const (
 	MaxFacetLimit     = 1000
 )
 
-// Trash-specific field names. title and folder reuse the standard field names.
+// Trash-specific field names. title, folder and tags reuse the standard field
+// names.
 const (
 	trashFieldTitle        = resource.SEARCH_FIELD_TITLE
 	trashFieldFolder       = resource.SEARCH_FIELD_FOLDER
+	trashFieldTags         = resource.SEARCH_FIELD_TAGS
 	trashFieldDeletedBy    = "deleted_by"
 	trashFieldDeletionTime = "deletion_time"
 	trashFieldDeletedRV    = "deleted_rv"
@@ -144,6 +149,11 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 // fieldSet so the shared validators enforce the trash rules. Capabilities
 // mirror the design: text on title; filter on folder/deleted_by; sort on
 // title/folder/deleted_by/deletion_time; all retrievable.
+//
+// tags is filterable and retrievable, as it is for live search, so a caller can
+// show the tags a deleted object had and narrow the list to one. Faceting is left
+// out because trash rejects facets outright, and sorting because ordering by a
+// list of values has no defined meaning.
 func trashFieldSet() *fieldSet {
 	def := func(name string, caps ...resource.SearchCapability) resource.SearchFieldDefinition {
 		return resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString, Capabilities: caps}
@@ -154,9 +164,21 @@ func trashFieldSet() *fieldSet {
 	for _, d := range resource.TrashSearchFieldDefinitions() {
 		trash[d.Name] = d
 	}
+	// tags is taken from the standard declarations for the same reason, so trash and
+	// live search agree it holds a list of strings, with faceting dropped.
+	var tags resource.SearchFieldDefinition
+	for _, d := range resource.StandardSearchFieldDefinitions() {
+		if d.Name == trashFieldTags {
+			tags = d
+			tags.Capabilities = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+			break
+		}
+	}
+
 	return &fieldSet{byName: map[string]resource.SearchFieldDefinition{
 		trashFieldTitle:        def(trashFieldTitle, resource.SearchCapabilityText, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
 		trashFieldFolder:       def(trashFieldFolder, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
+		trashFieldTags:         tags,
 		trashFieldDeletedBy:    trash[trashFieldDeletedBy],
 		trashFieldDeletionTime: trash[trashFieldDeletionTime],
 		trashFieldDeletedRV:    trash[trashFieldDeletedRV],
@@ -202,8 +224,8 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" {
-				errs = append(errs, field.Invalid(cp, ck, "only text and filter leaves are allowed inside and in v1"))
+			if ck != "text" && ck != "filter" && ck != "range" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter and range leaves are allowed inside and in v1"))
 				continue
 			}
 			// A second text leaf would overwrite the backend Query, so v1 rejects it.
@@ -218,10 +240,10 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter":
+	case "text", "filter", "range":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, fs, p)
 	default:
-		// or, not, range, exists: modelled for the future, rejected in v1.
+		// or, not, exists: modelled for the future, rejected in v1.
 		return nil, field.ErrorList{field.Invalid(p, key, fmt.Sprintf("%q is not supported in v1", key))}
 	}
 }
@@ -255,7 +277,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 1:
 		return set[0], nil
 	case 0:
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -293,16 +315,29 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 		} else {
 			capErrs := checkCapability(fs, f.Field, resource.SearchCapabilityFilter, fp.Child("field"))
 			errs = append(errs, capErrs...)
-			// v1 filters are string-only (scalar or string array); numeric/boolean
-			// filters need the future range leaf.
 			if len(capErrs) == 0 {
-				if def := fs.byName[f.Field]; def.Type != resource.SearchFieldTypeString {
-					errs = append(errs, field.Invalid(fp.Child("field"), f.Field, "v1 filters support string fields only"))
+				def := fs.byName[f.Field]
+				if !filterableFieldType(def.Type) {
+					errs = append(errs, field.Invalid(fp.Child("field"), f.Field, "v1 filters support string, numeric and boolean fields only"))
+				}
+				// Caught here so the caller gets a field path, instead of a 400 from the
+				// search server.
+				for i, v := range f.Values {
+					if err := checkFilterValue(def.Type, v); err != nil {
+						errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, err.Error()))
+					}
+				}
+				// A field holding one value cannot hold two, so this would always come
+				// back empty and the caller would have no way to tell that apart from
+				// nothing matching.
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
+						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
 				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn"}))
+		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
@@ -315,10 +350,130 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 				errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, "wildcard values are not allowed"))
 			}
 		}
+	case "range":
+		errs = append(errs, validateRangeLeaf(n.Range, fs, p.Child("range"))...)
 	}
 	return errs
 }
 
+func validateRangeLeaf(r *searchv0.RangePredicate, fs *fieldSet, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	bounds := rangeBounds(r)
+	if r.Field == "" {
+		errs = append(errs, field.Required(p.Child("field"), "range field is required"))
+	} else {
+		capErrs := checkCapability(fs, r.Field, resource.SearchCapabilityFilter, p.Child("field"))
+		errs = append(errs, capErrs...)
+		if len(capErrs) == 0 {
+			def := fs.byName[r.Field]
+			// Only numbers have the order a range asks about. A boolean carries the
+			// filter capability too, which is why this is checked separately.
+			if !numericFieldType(def.Type) {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "range supports numeric fields only"))
+			} else if def.Type == resource.SearchFieldTypeInt64 {
+				for _, b := range bounds {
+					if err := checkIntegerBound(b.value); err != nil {
+						errs = append(errs, field.Invalid(p.Child(b.jsonField), b.value, err.Error()))
+					}
+				}
+			}
+		}
+	}
+	if len(bounds) == 0 {
+		errs = append(errs, field.Required(p, "at least one of gt, gte, lt, lte is required"))
+	}
+	// Two bounds on the same side are either redundant or contradictory, and which
+	// one wins would not be obvious.
+	if r.GT != nil && r.GTE != nil {
+		errs = append(errs, field.Invalid(p, "gt, gte", "gt and gte cannot be combined"))
+	}
+	if r.LT != nil && r.LTE != nil {
+		errs = append(errs, field.Invalid(p, "lt, lte", "lt and lte cannot be combined"))
+	}
+	return errs
+}
+
+// rangeBound carries both the name the request used and the operator the backend
+// wants, so neither has to be derived from the other.
+type rangeBound struct {
+	jsonField string
+	operator  string
+	value     float64
+}
+
+// Fixed order, so both the errors and the translated request come out the same
+// way every time.
+func rangeBounds(r *searchv0.RangePredicate) []rangeBound {
+	var out []rangeBound
+	for _, b := range []struct {
+		jsonField string
+		operator  string
+		value     *float64
+	}{
+		{"gt", string(selection.GreaterThan), r.GT},
+		{"gte", string(resource.OperatorGreaterThanOrEqual), r.GTE},
+		{"lt", string(selection.LessThan), r.LT},
+		{"lte", string(resource.OperatorLessThanOrEqual), r.LTE},
+	} {
+		if b.value != nil {
+			out = append(out, rangeBound{jsonField: b.jsonField, operator: b.operator, value: *b.value})
+		}
+	}
+	return out
+}
+
+// date is absent because the backend has not settled on a value format for it.
+func filterableFieldType(t resource.SearchFieldType) bool {
+	return t == resource.SearchFieldTypeString || t == resource.SearchFieldTypeBoolean || numericFieldType(t)
+}
+
+func numericFieldType(t resource.SearchFieldType) bool {
+	return t == resource.SearchFieldTypeInt64 || t == resource.SearchFieldTypeDouble
+}
+
+// Values travel as strings whatever the field's type, so this is the only place
+// the two meet.
+func checkFilterValue(t resource.SearchFieldType, value string) error {
+	switch t {
+	case resource.SearchFieldTypeBoolean:
+		// Only the two canonical spellings, matching the backend.
+		if value != "true" && value != "false" {
+			return errors.New(`must be "true" or "false"`)
+		}
+	case resource.SearchFieldTypeInt64:
+		if _, err := strconv.ParseInt(value, 10, 64); err != nil {
+			return errors.New("must be an integer")
+		}
+	case resource.SearchFieldTypeDouble:
+		f, err := strconv.ParseFloat(value, 64)
+		if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
+			return errors.New("must be a finite number")
+		}
+	default:
+		// A string holds any value. The types with no filter support at all are
+		// refused by filterableFieldType before this runs.
+	}
+	return nil
+}
+
+// Bounds arrive as float64, so the limits are too. Both are powers of two and
+// exact, unlike math.MaxInt64, which rounds up to 2^63 and would let it through.
+const (
+	int64LowerBound float64 = -1 << 63 // inclusive, and a valid int64
+	int64UpperBound float64 = 1 << 63  // exclusive: one past the largest int64
+)
+
+// The schema types every bound as a number, so an integer field has to refuse the
+// fractional ones itself.
+func checkIntegerBound(bound float64) error {
+	if bound != math.Trunc(bound) {
+		return errors.New("must be a whole number on an integer field")
+	}
+	if bound < int64LowerBound || bound >= int64UpperBound {
+		return errors.New("is out of range for an integer field")
+	}
+	return nil
+}
 func validateSort(sorts []searchv0.SortField, fs *fieldSet, p *field.Path) field.ErrorList {
 	errs := field.ErrorList{}
 	for i, s := range sorts {
@@ -437,6 +592,8 @@ func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereN
 			applyText(req, n.Text)
 		case n.Filter != nil:
 			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter))
+		case n.Range != nil:
+			req.Options.Fields = append(req.Options.Fields, rangeRequirements(n.Range)...)
 		}
 	}
 }
@@ -450,7 +607,6 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 	for _, f := range fields {
 		req.QueryFields = append(req.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
 			Name: f,
-			Type: resourcepb.QueryFieldType_TEXT,
 			// The backend applies boost unconditionally, so a zero value would
 			// zero-score every hit. v1 has no per-leaf boost, so use a neutral 1.
 			Boost: 1,
@@ -460,17 +616,51 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
-	if f.Operator == "NotIn" {
+	switch f.Operator {
+	case "NotIn":
 		op = "notin"
+	case "All":
+		// The backend combines several values of "=" with AND, which is what All
+		// asks for. A single value stays on the "in" path so All and In agree on it,
+		// including on title, where only "in" matches exactly.
+		if len(f.Values) > 1 {
+			op = string(selection.Equals)
+		}
 	}
 	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
 }
 
-// applyLabelSelector lowers the selector onto Options.Labels. Exact-match label
-// semantics are a backend prerequisite: labels are indexed with the default
-// analyzer, so In/NotIn currently overmatch (env=foo matches env=foo-bar). This
-// endpoint does not re-apply the selector to full resources, so the backend
-// needs keyword label mapping/querying (or a post-filter) before /search wires.
+// Each bound becomes its own requirement, which the backend ANDs together like
+// any other pair of field filters.
+func rangeRequirements(r *searchv0.RangePredicate) []*resourcepb.Requirement {
+	bounds := rangeBounds(r)
+	out := make([]*resourcepb.Requirement, 0, len(bounds))
+	for _, b := range bounds {
+		out = append(out, &resourcepb.Requirement{
+			Key:      r.Field,
+			Operator: b.operator,
+			Values:   []string{formatBound(b.value)},
+		})
+	}
+	return out
+}
+
+// FormatFloat's shortest form is not the value it was given: the lowest int64
+// comes out as -9223372036854776000, which the backend cannot parse. A whole
+// bound is written exactly instead.
+func formatBound(bound float64) string {
+	if bound == math.Trunc(bound) && bound >= int64LowerBound && bound < int64UpperBound {
+		return strconv.FormatInt(int64(bound), 10)
+	}
+	return strconv.FormatFloat(bound, 'f', -1, 64)
+}
+
+// applyLabelSelector lowers the selector onto Options.Labels. The backend now
+// indexes label values whole, so In/NotIn match exactly and case-sensitively.
+// An index built before that change still holds analyzed values and keeps
+// overmatching (env=foo matches env=foo-bar) until it is rebuilt, and this
+// endpoint does not re-apply the selector to full resources, so its answers are
+// only as exact as the index it read.
 func applyLabelSelector(req *resourcepb.ResourceSearchRequest, sel *metav1.LabelSelector) {
 	if sel == nil {
 		return
@@ -526,7 +716,7 @@ func trashReturnFields(fields []string) []string {
 	if len(fields) == 0 {
 		fields = []string{trashFieldTitle, trashFieldFolder, trashFieldDeletedBy, trashFieldDeletionTime}
 	}
-	// deleted_rv is mandatory in the response; it drives restore.
+	// Always returned, so a client can restore from a trash hit without a second read.
 	if !slices.Contains(fields, trashFieldDeletedRV) {
 		fields = append(fields, trashFieldDeletedRV)
 	}

@@ -226,6 +226,7 @@ export enum PluginExtensionPoints {
   DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  UserProfileMenu = 'grafana/user/profile/menu/v1',
   TraceViewDetails = 'grafana/traceview/details',
   TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
@@ -264,6 +265,7 @@ export enum PluginExtensionExposedComponents {
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
+  NotebookViewV1 = 'grafana/notebook-view/v1',
 }
 
 export type PluginExtensionPanelContext = {
