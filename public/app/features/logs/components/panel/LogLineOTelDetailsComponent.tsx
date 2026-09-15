@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DataFrameType, store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -9,8 +9,7 @@ import { type FieldDef } from '../logParser';
 import { ServiceHexagonIcon } from '../otel/ServiceHexagonIcon';
 import {
   groupOTelAttributes,
-  OTelAttributeCategory,
-  OTHER_CATEGORY_ID,
+  type OTelAttributeCategory,
   SERVICE_HEXAGON_CATEGORY_ICON,
   type GroupedOTelAttributes,
 } from '../otel/details';
@@ -21,7 +20,6 @@ import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLi
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
-import { filter } from 'd3';
 
 interface LogLineDetailsOTelComponentProps {
   log: LogListModel;
@@ -32,10 +30,6 @@ interface LogLineDetailsOTelComponentProps {
   timeRange: TimeRange;
   timeZone: string;
 }
-
-type GroupedOTelDetails =
-  | { kind: 'fields'; groups: Array<GroupedOTelAttributes<FieldDef>> }
-  | { kind: 'labels'; groups: Array<GroupedOTelAttributes<LabelWithLinks>> };
 
 export const LogLineDetailsOTelComponent = ({
   log,
@@ -109,31 +103,35 @@ const LogLineDetailsOTelComponentBody = ({
           <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
         </Box>
       </div>
-    )
+    );
   }
 
   return (
     <div className={styles.componentWrapper}>
       <div className={styles.container}>
         <div className={styles.categories}>
-          {groupedFields.length &&
+          {groupedFields.length > 0 &&
             groupedFields.map(({ category, items }) => (
               <OTelCategory<FieldDef>
                 key={category.id}
                 category={category}
                 items={items}
                 filter={filterFields}
+                log={log}
+                logs={logs}
                 search={search}
                 RenderFields={LogLineOTelDetailsFields}
               />
             ))}
-          {groupedLabels.length &&
+          {groupedLabels.length > 0 &&
             groupedLabels.map(({ category, items }) => (
               <OTelCategory<LabelWithLinks>
                 key={category.id}
                 category={category}
                 items={items}
                 filter={filterLabels}
+                log={log}
+                logs={logs}
                 search={search}
                 RenderFields={LogLineOTelDetailsLabelFields}
               />
@@ -217,7 +215,7 @@ function OTelCategory<T>({
           {!filteredItems.length && (
             <div className={styles.componentWrapper}>
               <Box marginTop={1} paddingLeft={0.5}>
-                <Trans i18nKey="logs.log-line-details.search.no-results">No matching result.</Trans>
+                <Trans i18nKey="logs.log-line-details.search.no-results">No matching results.</Trans>
               </Box>
             </div>
           )}
