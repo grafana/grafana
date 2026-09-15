@@ -2159,7 +2159,7 @@
   },
   "public/app/features/dashboard-scene/sidebar/DashboardSidebarRenderer.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/sidebar/DashboardSidebarSplitter.tsx": {
