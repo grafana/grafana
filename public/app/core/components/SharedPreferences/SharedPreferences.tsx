@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useState, useEffect, type ReactNode } from 'react';
+import { memo, useState, useEffect } from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,6 +17,7 @@ import {
   isWeekStart,
   Label,
   Stack,
+  Text,
   TimeZonePicker,
   useStyles2,
   type WeekStart,
@@ -37,11 +38,10 @@ interface SharedPreferencesProps {
   disabled?: boolean;
   preferenceType: 'org' | 'team' | 'user';
   onConfirm?: () => Promise<boolean>;
-  legend: ReactNode;
 }
 
 export const SharedPreferences = memo((props: SharedPreferencesProps) => {
-  const { resourceUri, preferenceType, legend } = props;
+  const { resourceUri, preferenceType } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
@@ -185,7 +185,14 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
           title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
         />
       )}
-      <FieldSet label={legend} disabled={props.disabled}>
+      <FieldSet
+        label={
+          <Text element="h2" variant="h2">
+            <Trans i18nKey="shared-preferences.title">Preferences</Trans>
+          </Text>
+        }
+        disabled={props.disabled}
+      >
         <Stack direction="column" gap={2}>
           {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field
