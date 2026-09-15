@@ -65,7 +65,9 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
     } else {
       onClickShowField?.(LOG_LINE_BODY_FIELD_NAME);
     }
-    reportInteraction('logs_log_line_details_toggle_log_clicked', { action });
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_toggle_log_clicked', { action });
+    }
   }, [logLineDisplayed, onClickHideField, onClickShowField]);
 
   const supportsFilters = onClickFilterString || onClickFilterOutString;
