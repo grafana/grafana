@@ -147,7 +147,7 @@ require (
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/nats-io/nats-server/v2 v2.14.4 // @grafana/grafana-search-and-storage
+	github.com/nats-io/nats-server/v2 v2.14.6 // @grafana/grafana-search-and-storage
 	github.com/nats-io/nats.go v1.53.1 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
