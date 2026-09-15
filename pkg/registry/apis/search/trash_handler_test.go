@@ -38,9 +38,7 @@ func trashBody(inner string) string {
 
 func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
-	h := NewHandlerWithOptions(client, testProvider(), noop.NewTracerProvider().Tracer(""), HandlerOptions{
-		FieldValueResultsEnabled: func(context.Context) bool { return true },
-	})
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
 	w := doTrashRequest(t, h, trashBody(`, "limit": 25`))
 
@@ -52,7 +50,7 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	assert.Equal(t, testKind.group, client.got.Options.Key.Group)
 	assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
 	assert.Equal(t, int64(25), client.got.Limit)
-	assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, client.got.ResultFormat, "the live-search setting must not change trash")
+	assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, client.got.ResultFormat)
 
 	// Federating trash is refused by the backend, so the endpoint must not ask.
 	assert.Empty(t, client.got.Federated)
@@ -61,6 +59,31 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
 	assert.Equal(t, searchv0.KindTrashResults, out.Kind)
 	assert.Equal(t, searchv0.APIVERSION, out.APIVersion)
+}
+
+func TestTrashHandler_ResultFormatFollowsSelector(t *testing.T) {
+	for name, enabled := range map[string]bool{
+		"disabled": false,
+		"enabled":  true,
+	} {
+		t.Run(name, func(t *testing.T) {
+			// This table response also verifies that an enabled client remains
+			// compatible with an older server that does not support field values.
+			client := &fakeIndexClient{resp: emptyResponse()}
+			h := NewHandlerWithOptions(client, testProvider(), noop.NewTracerProvider().Tracer(""), HandlerOptions{
+				FieldValueResultsEnabled: func(context.Context) bool { return enabled },
+			})
+
+			w := doTrashRequest(t, h, trashBody(``))
+
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			want := resourcepb.ResourceSearchRequest_UNSPECIFIED
+			if enabled {
+				want = resourcepb.ResourceSearchRequest_FIELD_VALUES
+			}
+			assert.Equal(t, want, client.got.ResultFormat)
+		})
+	}
 }
 
 // So the default view reads as "most recently deleted first".

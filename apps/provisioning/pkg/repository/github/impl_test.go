@@ -2204,7 +2204,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 }
 
 func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
-	var rulesetCalls int32
+	var rulesetCalls atomic.Int32
 	mockHandler := mockhub.NewMockedHTTPClient(
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
@@ -2232,7 +2232,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				atomic.AddInt32(&rulesetCalls, 1)
+				rulesetCalls.Add(1)
 				w.WriteHeader(http.StatusOK)
 				require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
 					"id":                      1,
@@ -2250,7 +2250,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, got)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&rulesetCalls), "GetRuleset should be called once per unique RulesetID")
+	assert.Equal(t, int32(1), rulesetCalls.Load(), "GetRuleset should be called once per unique RulesetID")
 }
 
 func TestGithubClient_GetRepository(t *testing.T) {
