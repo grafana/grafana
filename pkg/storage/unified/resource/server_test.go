@@ -765,8 +765,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
@@ -2623,7 +2622,7 @@ func TestStatsAccessChecks(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{
@@ -2735,7 +2734,7 @@ func TestGetResourceDailyStats(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{

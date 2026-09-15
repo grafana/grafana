@@ -3285,6 +3285,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5702,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Pindahkan {{typeName}}",
-      "panel-background": "Ubah latar belakang panel",
-      "panel-description": "Ubah deskripsi panel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Perubahan panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-preset": "Terapkan preset panel",
       "panel-repeat-direction": "Ulangi arah",
       "panel-repeat-variable": "Panel diulang berdasarkan",
-      "panel-title": "Ubah judul panel",
+      "panel-title": "",
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
       "row-title": "Ubah judul baris",
@@ -6662,6 +6664,10 @@
       },
       "title-delete": "Hapus {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Hapus pencarian",
       "no-transformations-found": "Tidak ada transformasi yang ditemukan",
@@ -6711,6 +6717,12 @@
     "view-panel": {
       "back-to-dashboard": "Kembali ke dasbor",
       "not-found": "Panel tidak ditemukan"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8597,6 +8609,16 @@
       "title-raw-prometheus": "Prometheus Mentah",
       "title-table": "Tabel",
       "title-traces": "Pelacakan"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11346,8 +11368,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13033,9 +13054,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

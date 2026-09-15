@@ -331,6 +331,65 @@ const createNestedDataFrameWithFooter = (): DataFrame => {
   );
 };
 
+/**
+ * A nested frame whose first field carries a header label long enough to set that column's
+ * content-aware width on its own, with the nested frame's own header visibility
+ * (`meta.custom.noHeader`) under the caller's control. The outer table always keeps its header,
+ * so the nested `noHeader` is the only thing that varies.
+ */
+const LONG_NESTED_HEADER = 'Nested A, with a header label long enough to size this column on its own';
+
+const createNestedDataFrameWithLongNestedHeader = (nestedNoHeader: boolean): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedLongHeader',
+      length: 2,
+      meta: { custom: { noHeader: nestedNoHeader } },
+      fields: [
+        {
+          name: LONG_NESTED_HEADER,
+          type: FieldType.string,
+          values: ['N1', 'N2'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Nested B',
+          type: FieldType.string,
+          values: ['n1', 'n2'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 1,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+};
+
 const createSortingTestDataFrame = (length = 5): DataFrame =>
   withFieldOverrides(
     toDataFrame({
@@ -934,6 +993,95 @@ describe('TableNG', () => {
       // Cell values should still be visible
       expect(screen.getByText('A1')).toBeInTheDocument();
       expect(screen.getByText('1')).toBeInTheDocument();
+    });
+
+    it('leaves the hidden header label out of content-aware auto widths', () => {
+      // A header long enough that it, not the cell content, would set the column width. With the
+      // header hidden there is no label to fit, so the column should size to its content instead.
+      const longHeader = 'Category, with a header label long enough to size this column on its own';
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'AutoWidths',
+          length: 3,
+          fields: [
+            {
+              name: longHeader,
+              type: FieldType.string,
+              values: ['A', 'B', 'C'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Name',
+              type: FieldType.string,
+              values: ['x', 'y', 'z'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const renderWidths = (noHeader: boolean) => {
+        const { container, unmount } = render(
+          <TableNG
+            enableVirtualization={false}
+            contentAwareWidthsEnabled={true}
+            data={frame}
+            width={800}
+            height={600}
+            noHeader={noHeader}
+          />
+        );
+        // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
+        const widths = container
+          .querySelector<HTMLElement>('[role="grid"]')!
+          .style.gridTemplateColumns.split(' ')
+          .map(parseFloat);
+        unmount();
+        return widths;
+      };
+
+      const [withHeader] = renderWidths(false);
+      const [withoutHeader] = renderWidths(true);
+
+      expect(withHeader).toBeGreaterThan(0);
+      expect(withoutHeader).toBeLessThan(withHeader);
+    });
+
+    it("leaves a nested frame's hidden header label out of its content-aware auto widths", async () => {
+      // A nested frame carries its own header visibility in `meta.custom.noHeader`, so the nested
+      // columns can't inherit the outer table's `hasHeader`. The outer header stays visible in both
+      // renders; only the nested frame's own `noHeader` changes.
+      const renderNestedWidths = async (nestedNoHeader: boolean) => {
+        const { container, unmount } = render(
+          <TableNG
+            enableVirtualization={false}
+            contentAwareWidthsEnabled={true}
+            data={createNestedDataFrameWithLongNestedHeader(nestedNoHeader)}
+            width={800}
+            height={600}
+          />
+        );
+
+        await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+        // The outer grid is a treegrid; the nested DataGrid is the only plain grid in the tree.
+        const widths = container
+          .querySelector<HTMLElement>('[role="grid"]')!
+          .style.gridTemplateColumns.split(' ')
+          .map(parseFloat);
+        unmount();
+        return widths;
+      };
+
+      const [withNestedHeader] = await renderNestedWidths(false);
+      const [withoutNestedHeader] = await renderNestedWidths(true);
+
+      expect(withNestedHeader).toBeGreaterThan(0);
+      expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
     });
 
     it('shows full column name in title attribute for truncated headers', () => {

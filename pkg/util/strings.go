@@ -196,6 +196,18 @@ func TruncateUTF8(s string, n int) string {
 	return s[:n]
 }
 
+// SanitizeControlChars strips ASCII control characters (including CRLF) and
+// truncates to maxBytes via TruncateUTF8.
+func SanitizeControlChars(s string, maxBytes int) string {
+	s = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, s)
+	return TruncateUTF8(s, maxBytes)
+}
+
 // StripBOM removes Byte Order Mark (BOM) characters from a string.
 // BOM characters can cause issues in JSON/YAML parsing and storage.
 func StripBOM(s string) string {

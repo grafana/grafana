@@ -2689,11 +2689,11 @@ __metadata:
   linkType: hard
 
 "@grafana/lezer-logql@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@grafana/lezer-logql@npm:0.4.1"
+  version: 0.4.2
+  resolution: "@grafana/lezer-logql@npm:0.4.2"
   peerDependencies:
     "@lezer/lr": 1.4.10
-  checksum: 10/e31a36ce00217e7ce70da6299ebd34c9371372b1875db4a811a58292ab9f44c25fcd940e392a61f0da15e3b05cfd1e10f7ee81b4914de817046eb7b5b2a4ce56
+  checksum: 10/be67fb7464d80e62fa500f8554a7e3a7212a5e9b3e8b94ccb568d8de989c14afabfa7d58e3d332c938672db22033a379e97b939f5e6b6216e13e2e8577cac93e
   languageName: node
   linkType: hard
 
@@ -2881,8 +2881,8 @@ __metadata:
   linkType: hard
 
 "@grafana/plugin-ui@npm:^0.17.3":
-  version: 0.17.4
-  resolution: "@grafana/plugin-ui@npm:0.17.4"
+  version: 0.17.5
+  resolution: "@grafana/plugin-ui@npm:0.17.5"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@hello-pangea/dnd": "npm:17.0.0"
@@ -2913,7 +2913,7 @@ __metadata:
   peerDependenciesMeta:
     monaco-editor:
       optional: true
-  checksum: 10/3dc22694195b48e386cdb6bf338337951a5d2ad21f639c07a3b3318a5debd71bb79b62d39094a3796ea913bed888eba22528c0ba2c424983b4b4ee08a258f7c5
+  checksum: 10/26eb87ce74c706044a0f4c4911eab0f8a516cfff903f3c25dbdec94faf65dc1812098d383614a2177214e8010402421ae5e674d7e73816103e45a50da7acd9b3
   languageName: node
   linkType: hard
 
@@ -3056,7 +3056,6 @@ __metadata:
     esbuild: "npm:0.28.1"
     fast-json-patch: "npm:^3.1.1"
     history: "npm:^4.10.1"
-    immutable: "npm:^5.1.5"
     lodash: "npm:^4.17.23"
     lru-cache: "npm:^11.2.2"
     react: "npm:19.2.8"
