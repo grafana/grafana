@@ -350,8 +350,8 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 			UIDs:         chunk,
 			SignedInUser: requester,
 			Limit:        len(chunk),
-			// Page 1, not 0: the legacy store derives its offset from
-			// Limit*(Page-1), so page 0 would seek backwards past the start.
+			// SearchTeams uses one-based page numbers. Page 1 selects the first
+			// page in both the legacy and Kubernetes-backed implementations.
 			Page: 1,
 		})
 		if err != nil {
