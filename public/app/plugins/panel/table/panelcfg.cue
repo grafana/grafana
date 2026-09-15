@@ -48,6 +48,9 @@ composableKinds: PanelCfg: {
 					}
 					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 					disableKeyboardEvents?: bool
+					// Alternates the background color of every other row. Only applies when the
+					// `table.refreshNewFeatures` feature toggle is enabled.
+					zebraStriping?: bool | *false
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}
