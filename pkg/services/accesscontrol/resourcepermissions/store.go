@@ -167,6 +167,7 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, sc
 					SELECT p2.id
 					FROM permission p2
 					WHERE p2.role_id = r.id AND p2.scope = ?
+					ORDER BY p2.id
 					LIMIT 1
 				)
 				WHERE r.org_id = ? AND r.name IN (?`+strings.Repeat(",?", len(chunk)-1)+`)

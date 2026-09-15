@@ -569,9 +569,7 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 	cmd := func(resourceID string) SetResourcePermissionCommand {
 		return SetResourcePermissionCommand{
-			// A single action keeps one permission row per managed role. Both
-			// queries take an unordered LIMIT 1, so only then must they agree.
-			Actions:           []string{"folders:read"},
+			Actions:           []string{"folders:read", "folders:write"},
 			Resource:          "folders",
 			ResourceID:        resourceID,
 			ResourceAttribute: "uid",
@@ -603,15 +601,26 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 		for _, name := range seeded {
 			var permission accesscontrol.Permission
+			var lowestPermissionID int64
 			var found bool
 			err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 				var err error
 				found, err = sess.ID(ids[name]).Get(&permission)
+				if err != nil {
+					return err
+				}
+				_, err = sess.SQL(`
+					SELECT MIN(p.id)
+					FROM permission p
+					INNER JOIN role r ON r.id = p.role_id
+					WHERE r.org_id = ? AND r.name = ? AND p.scope = ?
+				`, orgID, name, scope).Get(&lowestPermissionID)
 				return err
 			})
 			require.NoError(t, err)
 			require.True(t, found)
 			assert.Equal(t, scope, permission.Scope, "permission ID must belong to the requested scope for %s", name)
+			assert.Equal(t, lowestPermissionID, ids[name], "lowest permission ID must be selected for %s", name)
 		}
 		assert.NotContains(t, ids, unknownRole)
 	})
