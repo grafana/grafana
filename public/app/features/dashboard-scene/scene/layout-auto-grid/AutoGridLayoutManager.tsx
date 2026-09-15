@@ -23,11 +23,12 @@ import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/A
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
+import { forceRenderChildren, getDashboardSceneFor, findDashboardSceneFor, useDashboard } from '../../utils/utils';
 import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { trackPlanningPanel } from '../planningSession';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
@@ -158,6 +159,7 @@ export class AutoGridLayoutManager
   }
 
   public addPanel(vizPanel: VizPanel) {
+    trackPlanningPanel(findDashboardSceneFor(this), vizPanel);
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
@@ -303,6 +305,8 @@ export class AutoGridLayoutManager
     const newPanel = panel.clone({
       key: getVizPanelKeyForPanelId(newPanelId),
     });
+
+    trackPlanningPanel(findDashboardSceneFor(this), newPanel);
 
     const newGridItem = gridItem.clone({
       key: getGridItemKeyForPanelId(newPanelId),

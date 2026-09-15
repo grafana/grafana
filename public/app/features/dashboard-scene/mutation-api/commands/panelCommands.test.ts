@@ -624,7 +624,8 @@ describe('Panel mutation commands', () => {
 
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as DefaultGridLayoutManager;
-      expect(body.getVizPanels()[0].state.$data).toBeUndefined();
+      expect(getQueryRunnerFor(body.getVizPanels()[0])).toBeUndefined();
+      expect(sceneGraph.getData(body.getVizPanels()[0]).state.data?.series[0].length).toBe(60);
     });
 
     it('returns element and layoutItem with element reference', async () => {

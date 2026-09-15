@@ -31,12 +31,14 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PlanPlaceholderBadge } from '../scene/PlanPlaceholderBadge';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { getPlanningPanelData } from '../scene/planningSampleData';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
@@ -283,7 +285,8 @@ export function getDefaultPluginId(): string {
  * against the default datasource. Attaching real queries is the build step's job, not the preview's.
  */
 export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<VizPanel> {
-  const withQuery = !findDashboardSceneFor(sceneObject)?.isPlanning();
+  const planning = findDashboardSceneFor(sceneObject)?.state.planning;
+  const withQuery = !planning;
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
@@ -295,7 +298,10 @@ export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<Viz
     title: newPanelTitle,
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,
-    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    titleItems: [
+      new VizPanelLinks({ menu: new VizPanelLinksMenu({}) }),
+      ...(!withQuery ? [new PlanPlaceholderBadge({ planId: planning?.planId })] : []),
+    ],
     hoverHeaderOffset: 0,
     $behaviors: [],
     subHeader: new VizPanelSubHeader({
@@ -318,6 +324,7 @@ export async function getDefaultVizPanel(sceneObject?: SceneObject): Promise<Viz
           transformations: [],
         })
       : undefined,
+    ...(!withQuery ? getPlanningPanelData(newPanelTitle, defaultPluginId) : {}),
   });
 }
 

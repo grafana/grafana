@@ -22,6 +22,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 
+import { getQueryRunnerFor } from './getQueryRunnerFor';
 import { activateFullSceneTree } from './test-utils';
 import {
   isValidLibraryPanelRef,
@@ -503,7 +504,7 @@ describe('utils', () => {
 
       const panel = await getDefaultVizPanel(scene);
 
-      expect(panel.state.$data).toBeUndefined();
+      expect(getQueryRunnerFor(panel)).toBeUndefined();
     });
 
     it('resolves the scene from any object inside it, so layout-level callers get the same behaviour', async () => {
@@ -522,7 +523,7 @@ describe('utils', () => {
       });
 
       expect(findDashboardSceneFor(layout)).toBe(scene);
-      expect((await getDefaultVizPanel(layout)).state.$data).toBeUndefined();
+      expect(getQueryRunnerFor(await getDefaultVizPanel(layout))).toBeUndefined();
     });
 
     it('returns undefined rather than throwing for an object outside a dashboard scene', () => {

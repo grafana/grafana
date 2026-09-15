@@ -47,15 +47,12 @@ export function setDashboardMutationClientForTests(client: MutationClient | null
 }
 
 export const dashboardMutationApi: DashboardMutationAPI = {
-  // Static, and readable with no document mounted: a plugin that ships on its own cadence has to be
-  // able to ask what this Grafana build supports before it navigates anywhere. `getAvailableCommands()`
-  // cannot answer that — it is empty until a scene activates, which says nothing about the build.
-  capabilities: {
-    planning: true,
-  },
   execute: (mutation: MutationRequest) => {
     if (!_client) {
       return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
+    }
+    if (mutation.planId !== undefined && !(_client instanceof DashboardMutationClient)) {
+      return Promise.reject(new Error('The preview dashboard is no longer open.'));
     }
     return _client.execute(mutation);
   },

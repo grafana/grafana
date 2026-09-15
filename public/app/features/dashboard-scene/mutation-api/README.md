@@ -35,6 +35,28 @@ open before creating one.
 
 ---
 
+## Planning previews
+
+`START_PLANNING` takes `{ planId, planTitle, panelCount }` and puts the dashboard in query-less
+preview mode. Use it before scaffolding; unsupported Grafana versions reject the unknown command.
+`END_PLANNING` takes `{ planId, discard }`. With `discard: false`, panels stay in place for building.
+With `discard: true`, core removes the sections, panels and variables created through the API during
+planning, tracking object identity so user reordering cannot redirect cleanup.
+
+Include `planId` at the request's top level on every subsequent preview read or mutation:
+
+```typescript
+api.execute({ type: 'GET_LAYOUT', planId: 'proposal-123', payload: {} });
+```
+
+A mismatched plan ID fails without operating on another dashboard. Core supplies sample data and
+visualization defaults for planning panels; sample frames are runtime-only and never part of the
+serialized dashboard spec. Read back the edited plan with `GET_LAYOUT` and `LIST_VARIABLES`.
+
+Core publishes `dashboard-planning` app events carrying `{ planId, action }` for `build`, `dismiss`,
+and `closed`. Subscribe before starting planning and release the subscription after finishing or
+receiving `closed`. Callbacks and scene objects never travel in mutation payloads.
+
 ## Layout
 
 ### `GET_LAYOUT`

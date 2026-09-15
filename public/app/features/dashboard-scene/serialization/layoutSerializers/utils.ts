@@ -40,6 +40,7 @@ import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getPlanningPanelData } from '../../scene/planningSampleData';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
@@ -62,6 +63,7 @@ export interface BuildVizPanelOptions {
    * receives the default datasource query during normal panel creation.
    */
   withoutQueries?: boolean;
+  planningId?: string;
 }
 
 export function buildVizPanelState(
@@ -87,7 +89,7 @@ export function buildVizPanelState(
   // A query-less panel is a plan placeholder, and its seeded data has to say so on the panel
   // itself — the planning banner scrolls out of view, the numbers do not.
   if (buildOptions.withoutQueries) {
-    titleItems.push(new PlanPlaceholderBadge());
+    titleItems.push(new PlanPlaceholderBadge({ planId: buildOptions.planningId }));
   }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
@@ -123,6 +125,7 @@ export function buildVizPanelState(
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
+    ...(buildOptions.withoutQueries ? getPlanningPanelData(panel.spec.title, panel.spec.vizConfig.group) : {}),
   };
 
   // Set up Angular migration handler if migration data is present

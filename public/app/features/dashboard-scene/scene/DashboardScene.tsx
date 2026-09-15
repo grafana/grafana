@@ -125,6 +125,8 @@ import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { isActionAllowedWhilePlanning, type PlanningAction } from './planningPolicy';
+import { getPlanningPanelData } from './planningSampleData';
+import { deactivatePlanningSession } from './planningSession';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -285,6 +287,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      deactivatePlanningSession(this);
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
@@ -1100,6 +1103,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newOptions?: Record<string, unknown>,
     newFieldConfig?: FieldConfigSource
   ) {
+    const planning = this.state.planning;
+    if (planning) {
+      const sample = getPlanningPanelData(panel.state.title, newPluginId);
+      await panel.changePluginType(newPluginId);
+      if (this.state.planning === planning) {
+        panel.setState({
+          ...sample,
+          options: newOptions ?? sample.options,
+          fieldConfig: newFieldConfig ?? sample.fieldConfig,
+        });
+      }
+      return;
+    }
+
     const { fieldConfig: prevFieldConfig } = panel.state;
 
     let cleanFieldConfig: FieldConfigSource = {

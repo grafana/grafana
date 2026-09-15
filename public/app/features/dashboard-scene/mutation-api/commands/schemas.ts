@@ -775,6 +775,10 @@ const updateDashboardSettingsPayloadSchema = z.object({
  * as the command description (flows into JSON Schema for LLM consumers).
  */
 export const payloads = {
+  startPlanning: z
+    .object({ planId: z.string().min(1), planTitle: z.string(), panelCount: z.number().int().nonnegative() })
+    .strict(),
+  endPlanning: z.object({ planId: z.string().min(1), discard: z.boolean() }).strict(),
   addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),

@@ -10,6 +10,7 @@ import { type LoadingState } from '@grafana/data';
 import type { AutoGridLayoutItemKind, Element, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 export interface MutationRequest {
+  planId?: string;
   type: string;
   payload: unknown;
 }

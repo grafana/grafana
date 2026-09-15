@@ -16,21 +16,9 @@ import { getDashboardSceneFor } from '../utils/utils';
  */
 export function PlanVisualizationPicker({ panel }: { panel: VizPanel }) {
   const [isPickerOpen, setPickerOpen] = useState(false);
-  const dashboard = getDashboardSceneFor(panel);
 
-  const onChange = (options: VizTypeChangeDetails) => {
-    panel.changePluginType(options.pluginId);
-
-    if (options.options) {
-      panel.onOptionsChange(options.options, true);
-    }
-    if (options.fieldConfig) {
-      panel.onFieldConfigChange(options.fieldConfig, true);
-    }
-
-    // The sample behind the panel was shaped for the old visualization; whoever supplied it decides
-    // what the new one should show.
-    dashboard.state.planning?.onPanelVisualizationChanged?.(panel.state.key ?? '', options.pluginId);
+  const onChange = async (options: VizTypeChangeDetails) => {
+    await getDashboardSceneFor(panel).changePanelPlugin(panel, options.pluginId, options.options, options.fieldConfig);
     setPickerOpen(false);
   };
 

@@ -1,20 +1,25 @@
 import { Trans, t } from '@grafana/i18n';
-import { type SceneComponentProps, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Badge } from '@grafana/ui';
 
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
 import { isDashboardSceneLike } from './types/dashboard';
 
+interface PlanPlaceholderBadgeState extends SceneObjectState {
+  /** Creation ownership survives cloning and does not change when the badge becomes hidden. */
+  planId?: string;
+}
+
 /**
  * Labels sample data on each panel, including after planning ends while the build
  * is still replacing placeholders. Use as a VizPanel titleItems entry.
  */
-export class PlanPlaceholderBadge extends SceneObjectBase {
+export class PlanPlaceholderBadge extends SceneObjectBase<PlanPlaceholderBadgeState> {
   static Component = PlanPlaceholderBadgeRenderer;
 
-  constructor() {
-    super({});
+  constructor(state: Partial<PlanPlaceholderBadgeState> = {}) {
+    super(state);
   }
 
   public getPanel(): VizPanel | null {
@@ -41,9 +46,7 @@ function PlanPlaceholderBadgeRenderer({ model }: SceneComponentProps<PlanPlaceho
 function PlanPlaceholderBadgeContent({ panel }: { panel: VizPanel }) {
   const { $data } = panel.useState();
 
-  // Use a structural check because the assistant bundles its own @grafana/scenes;
-  // its SceneDataNode constructor differs from core's. Panels without a data provider
-  // have no sample values to label.
+  // Sample data can remain after Build until real queries replace each placeholder.
   const showsDataFromNoQuery = Boolean($data) && !getQueryRunnerFor(panel);
 
   // Replacing the sample provider clears the badge per panel. Unbuilt panels keep it.

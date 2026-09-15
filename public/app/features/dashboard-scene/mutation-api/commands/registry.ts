@@ -21,6 +21,7 @@ import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { startPlanningCommand, endPlanningCommand } from './planning';
 import { removeAnnotationCommand } from './removeAnnotation';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
@@ -37,6 +38,8 @@ import { updateVariableCommand } from './updateVariable';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each command is typed internally; the array is heterogeneous
 export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
+  startPlanningCommand,
+  endPlanningCommand,
   addVariableCommand,
   removeVariableCommand,
   updateVariableCommand,
