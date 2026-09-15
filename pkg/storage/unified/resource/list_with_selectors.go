@@ -149,23 +149,6 @@ func filterSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	return req
 }
 
-func selectorsSupportedBySearch(req *resourcepb.ListRequest) bool {
-	if req == nil || req.Options == nil {
-		return false
-	}
-	for _, field := range req.Options.Fields {
-		if field == nil || (field.Operator != "=" && field.Operator != "==") || field.Key == "metadata.namespace" {
-			return false
-		}
-	}
-	for _, label := range req.Options.Labels {
-		if label == nil || !indexableSelectorOperator(label.Operator) {
-			return false
-		}
-	}
-	return true
-}
-
 // indexableSelectorOperator reports whether requirementQuery can turn the operator
 // into an index query. A label selector may also carry !=, key and !key.
 func indexableSelectorOperator(op string) bool {
