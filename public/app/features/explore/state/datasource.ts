@@ -13,7 +13,7 @@ import { createAsyncThunk } from 'app/types/store';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 import { saveCorrelationsAction } from './explorePane';
-import { importQueries, runQueries } from './query';
+import { alignQueriesToDatasource, importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
 import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
 
@@ -74,6 +74,11 @@ export const changeDatasource = createAsyncThunk(
     if (options?.importQueries) {
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
+
+    // runQueries prefers each query's embedded datasource over the pane instance.
+    // Always realign query-level UIDs after a pane datasource switch so requests
+    // (and the URL panes payload) cannot keep pointing at the previous datasource.
+    dispatch(alignQueriesToDatasource(exploreId, instance));
 
     if (getState().explore.panes[exploreId]!.isLive) {
       dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
