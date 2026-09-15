@@ -12,6 +12,8 @@ keywords:
   - jwt
   - gce
   - oauth
+  - workload identity federation
+  - wif
 labels:
   products:
     - cloud
@@ -40,12 +42,13 @@ Before you configure authentication, ensure you have the following:
 
 The Google Cloud Monitoring data source supports the following authentication methods:
 
-| Method                            | Use case                                                                                            |
-| --------------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Google JWT File**               | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.           |
-| **GCE Default Service Account**   | Use when Grafana runs on a Google Compute Engine VM with a configured service account.              |
-| **Forward OAuth Identity**        | Use when you sign in to Grafana with Google and want each query to run as the signed-in user.       |
-| **Service Account Impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with. |
+| Method                            | Use case                                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Google JWT File**               | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.                                |
+| **GCE Default Service Account**   | Use when Grafana runs on a Google Compute Engine VM with a configured service account.                                   |
+| **Forward OAuth Identity**        | Use when you sign in to Grafana with Google and want each query to run as the signed-in user.                            |
+| **Workload Identity Federation**  | Use on Grafana Cloud to let users authenticate with an external OIDC identity provider instead of a service account key. |
+| **Service Account Impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with.                      |
 
 ## Use a Google service account key file
 
@@ -157,6 +160,47 @@ After you change the scopes, existing user sessions still hold tokens issued und
 
 {{< admonition type="note" >}}
 Service account impersonation isn't compatible with Forward OAuth Identity. The data source authenticates as the signed-in user, so there's no service account to impersonate.
+{{< /admonition >}}
+
+## Use Workload Identity Federation
+
+Use [Google Cloud Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation) (WIF) to let Grafana users authenticate to Cloud Monitoring with an external identity provider (such as Okta or another OIDC provider) instead of a service account key.
+
+{{< admonition type="note" >}}
+This authentication method is available on **Grafana Cloud** only. Grafana Cloud exchanges the signed-in user's external OIDC token for a short-lived Google Cloud access token before the request reaches the plugin.
+{{< /admonition >}}
+
+Configuring Workload Identity Federation involves three systems: Google Cloud, your Grafana Cloud stack, and the data source itself.
+
+### Configure Google Cloud
+
+1. Create a [Workload Identity Pool and Provider](https://cloud.google.com/iam/docs/workload-identity-federation-with-other-providers) that trusts your OIDC identity provider. When configuring the provider, set up attribute mappings so that `google.subject` maps to the relevant claim from your identity provider (for example, `assertion.sub` — the exact mapping depends on your provider's claim format).
+1. Grant the Cloud Monitoring permissions needed to run queries. How you grant them depends on whether you use service account impersonation:
+   - **Without impersonation** — grant the WIF pool principal the **Monitoring Viewer** role (`roles/monitoring.viewer`) directly.
+   - **With impersonation** — create a service account, grant it the **Monitoring Viewer** role, then grant the WIF pool principal the **Service Account Token Creator** role (`roles/iam.serviceAccountTokenCreator`) on that service account.
+
+### Configure Grafana Cloud
+
+1. Configure your Grafana Cloud stack's SSO integration against the same OIDC provider, so the signed-in user's identity is available for Grafana Cloud to exchange for a Google Cloud access token before the request reaches the plugin. Refer to [Configure OAuth2 authentication](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/generic-oauth/) for setup details.
+
+### Configure the data source
+
+1. In Grafana, navigate to the Google Cloud Monitoring data source configuration page.
+1. Under **Authentication type**, select **Workload Identity Federation**.
+1. In the **Workload Identity Pool Provider** field, enter the full resource path of your provider:
+
+   `projects/<project-number>/locations/global/workloadIdentityPools/<pool-id>/providers/<provider-id>`
+
+   {{< admonition type="note" >}}
+   Use the **project number** (a numeric ID such as `123456789`), not the project ID (such as `my-project`). You can find the project number on the Google Cloud Console home page.
+   {{< /admonition >}}
+
+1. If you set up service account impersonation, enter the service account email in the **Service account email** field. If you granted permissions directly to the WIF pool, leave this blank.
+1. In **Default project**, enter the GCP project ID where your Cloud Monitoring queries run.
+1. Click **Save & test** to verify the connection.
+
+{{< admonition type="note" >}}
+Credentials from Workload Identity Federation are tied to the signed-in user's active session — there is no long-lived credential available to the Grafana backend. This means any feature that runs without a user present won't work, including alerting, scheduled reports, and public dashboards. If you rely on these features, use a service account key (JWT) instead.
 {{< /admonition >}}
 
 ## Configure service account impersonation
