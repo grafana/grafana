@@ -4,9 +4,11 @@ import {
   ConstantVariable,
   CustomVariable,
   type MultiValueVariable,
+  type SceneObject,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
+  StateCommittedEvent,
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
@@ -421,84 +423,70 @@ describe('DashboardSidebar', () => {
     expect(variableSet.state.variables).toEqual([predefined]);
   });
 
-  describe('StateTransactionCommittedEvent', () => {
-    function buildTestSceneWithGridPanel() {
+  describe('StateCommittedEvent', () => {
+    function buildTestScene() {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
-      const gridItem = new DashboardGridItem({ key: 'griditem-1', x: 0, y: 0, width: 1, height: 1, body: panel });
-      const layoutManager = new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({ children: [gridItem], isDraggable: true, isResizable: true }),
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutManager = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
       });
       const dashboard = new DashboardScene({
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         isEditing: true,
         body: layoutManager,
       });
-      config.featureToggles.dashboardNewLayouts = true;
       activateFullSceneTree(dashboard);
 
-      return { dashboard, sidebar: dashboard.state.sidebar, grid: layoutManager.state.grid };
+      return { dashboard, sidebar: dashboard.state.sidebar, source: panel };
     }
 
-    function resize(grid: SceneGridLayout, w: number, h: number) {
-      grid.onResizeStop(
-        [],
-        // @ts-expect-error partial ReactGridLayout.Layout, unused by onResizeStop
-        {},
-        { i: 'griditem-1', x: 0, y: 0, w, h },
-        {},
-        {},
-        {}
-      );
+    function stateCommited(source: SceneObject, description: string, replay: () => void, revert: () => void) {
+      source.publishEvent(new StateCommittedEvent({ source, description, replay, revert }), true);
     }
 
     it('records the transaction on the undo stack without performing it again', () => {
-      const { sidebar, grid } = buildTestSceneWithGridPanel();
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
 
-      resize(grid, 4, 4);
+      stateCommited(source, 'Some change', replay, revert);
 
       expect(sidebar.state.undoStack).toHaveLength(1);
-      expect(sidebar.state.undoStack[0].description).toEqual('Resize panel');
-      expect(grid.state.children[0].state.width).toEqual(4);
-      expect(grid.state.children[0].state.height).toEqual(4);
+      expect(sidebar.state.undoStack[0].description).toEqual('Some change');
+      expect(replay).not.toHaveBeenCalled();
+      expect(revert).not.toHaveBeenCalled();
     });
 
     it('undo reverts the change and redo re-applies it', () => {
-      const { sidebar, grid } = buildTestSceneWithGridPanel();
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
 
-      resize(grid, 4, 4);
+      stateCommited(source, 'Some change', replay, revert);
       sidebar.undoAction();
 
-      expect(grid.state.children[0].state.width).toEqual(1);
-      expect(grid.state.children[0].state.height).toEqual(1);
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(replay).not.toHaveBeenCalled();
       expect(sidebar.state.undoStack).toHaveLength(0);
       expect(sidebar.state.redoStack).toHaveLength(1);
 
       sidebar.redoAction();
 
-      expect(grid.state.children[0].state.width).toEqual(4);
-      expect(grid.state.children[0].state.height).toEqual(4);
+      expect(replay).toHaveBeenCalledTimes(1);
       expect(sidebar.state.undoStack).toHaveLength(1);
       expect(sidebar.state.redoStack).toHaveLength(0);
     });
 
     it('clears the redo stack when a new transaction is committed', () => {
-      const { sidebar, grid } = buildTestSceneWithGridPanel();
+      const { sidebar, source } = buildTestScene();
 
-      resize(grid, 4, 4);
+      stateCommited(source, 'Change 1', jest.fn(), jest.fn());
       sidebar.undoAction();
       expect(sidebar.state.redoStack).toHaveLength(1);
 
-      resize(grid, 6, 6);
+      stateCommited(source, 'Change 2', jest.fn(), jest.fn());
 
       expect(sidebar.state.redoStack).toHaveLength(0);
-    });
-
-    it('does not record a transaction for a resize that did not change anything', () => {
-      const { sidebar, grid } = buildTestSceneWithGridPanel();
-
-      resize(grid, 1, 1);
-
-      expect(sidebar.state.undoStack).toHaveLength(0);
     });
   });
 
