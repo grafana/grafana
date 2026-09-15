@@ -4382,6 +4382,14 @@
               "datasourceUid": {
                 "description": "datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to\nsync alert rules from. Empty means no sync is configured for the current\norg. The operator ini setting `unified_alerting.external_ruler_uid`\noverrides this when set; see status.externalRulerSync.origin.",
                 "type": "string"
+              },
+              "pollInterval": {
+                "description": "pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 1m. The worker checks orgs against a\nshort internal baseline and only does real work for an org once its own\npollInterval has elapsed, so this is a lower bound, not a guarantee —\nan org's actual sync can lag slightly past its configured interval. Has\nno effect on the operator ini path, which always uses the 1m default.",
+                "type": "string"
+              },
+              "targetDatasourceUid": {
+                "description": "targetDatasourceUid is the UID of the datasource that converted recording\nrules write their results to. Empty defaults to datasourceUid (the query\ndatasource). Only used when the upstream ruler contains recording rules.\nHas no effect on the operator ini path, which always targets the query\ndatasource.",
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -4409,6 +4417,10 @@
             "properties": {
               "datasourceUid": {
                 "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
+                "type": "string"
+              },
+              "lastAppliedHash": {
+                "description": "lastAppliedHash is the upstream config hash from the last successful\nsync via this resource. The worker reads it back (API path only) to\nskip an unchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.",
                 "type": "string"
               },
               "origin": {
