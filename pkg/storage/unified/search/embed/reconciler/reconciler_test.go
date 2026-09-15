@@ -1293,28 +1293,20 @@ func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
 	require.Len(t, vec.upserts, 1, "unlabeled (restored) resource embeds again")
 }
 
-// TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch
-// path: Subscribe is called, events pushed onto the channel reach the
-// queue, and the next cycle drains them.
-func TestReconciler_Run_BroadcasterDeliversWatchEvents(t *testing.T) {
+// TestReconciler_Run_LiveEvents pins the live event path: events pushed onto
+// the attached channel reach the queue, and the next cycle drains them.
+func TestReconciler_Run_LiveEvents(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newRunnable(t, &fakeStorage{}, vec)
-	bcast := newFakeBroadcaster()
-	s.UseBroadcaster(bcast)
+	events := make(chan *resource.WrittenEvent, 16)
+	s.UseWrittenEvents(events)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	done := make(chan error, 1)
 	go func() { done <- s.Run(ctx) }()
 
-	// Subscribe should happen as part of Run startup.
-	require.Eventually(t, func() bool {
-		bcast.mu.Lock()
-		defer bcast.mu.Unlock()
-		return bcast.subscribeCalls == 1
-	}, time.Second, time.Millisecond)
-
-	bcast.emit(&resource.WrittenEvent{
+	events <- &resource.WrittenEvent{
 		Type: resourcepb.WatchEvent_MODIFIED,
 		Key: &resourcepb.ResourceKey{
 			Group:     dashGroup,
@@ -1324,13 +1316,13 @@ func TestReconciler_Run_BroadcasterDeliversWatchEvents(t *testing.T) {
 		},
 		Value:           minimalDashboard("watched", "Watched"),
 		ResourceVersion: snowflakeRV(500),
-	})
+	}
 
 	require.Eventually(t, func() bool {
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
 		return len(vec.upserts) >= 1
-	}, time.Second, time.Millisecond, "watch event should reach the vector backend")
+	}, time.Second, time.Millisecond, "live event should reach the vector backend")
 
 	cancel()
 	select {
@@ -1339,38 +1331,21 @@ func TestReconciler_Run_BroadcasterDeliversWatchEvents(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Run did not exit after ctx cancel")
 	}
-
-	bcast.mu.Lock()
-	defer bcast.mu.Unlock()
-	assert.NotNil(t, bcast.unsubscribeCh, "Unsubscribe must run on Run exit")
 }
 
-// TestReconciler_Run_BroadcasterSubscribeErrorContinues asserts the
-// reconciler tolerates a broadcaster Subscribe failure: it logs and
-// proceeds in poll-only mode rather than aborting Run. This matters
-// for partial environments where the broadcaster isn't ready yet.
-func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
+func TestReconciler_RunWithoutLiveEvents(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newRunnable(t, &fakeStorage{}, vec)
-	bcast := newFakeBroadcaster()
-	bcast.subscribeErr = fmt.Errorf("broadcaster not ready")
-	s.UseBroadcaster(bcast)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- s.Run(ctx) }()
 
-	// Subscribe is attempted and lock is acquired even though Subscribe failed.
-	require.Eventually(t, func() bool {
-		bcast.mu.Lock()
-		defer bcast.mu.Unlock()
-		return bcast.subscribeCalls == 1
-	}, time.Second, time.Millisecond)
 	require.Eventually(t, func() bool {
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
 		return vec.lockReleases == 0 && vec.lockAttempts >= 1
-	}, time.Second, time.Millisecond, "lock acquired despite Subscribe error")
+	}, time.Second, time.Millisecond, "lock acquired without live events")
 
 	cancel()
 	select {

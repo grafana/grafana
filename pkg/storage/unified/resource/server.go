@@ -429,11 +429,10 @@ type ResourceServerOptions struct {
 	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
 	Reranker *rerank.Reranker
 
-	// VectorReconciler, when non-nil, is launched after Init; the server
-	// attaches its own broadcaster to it before starting Run so the
-	// reconciler's watch path lights up. The reconciler owns the
-	// backfiller and runs it. nil = reconciler feature off.
-	VectorReconciler BroadcasterConsumer
+	// VectorReconciler, when non-nil, is launched after Init. The server
+	// subscribes it to write events before starting Run. The reconciler owns
+	// the backfiller and runs it. nil = reconciler feature off.
+	VectorReconciler WrittenEventConsumer
 
 	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
 	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
@@ -449,12 +448,12 @@ type Runnable interface {
 	Run(ctx context.Context) error
 }
 
-// BroadcasterConsumer is a Runnable that wants the server's write-events
-// broadcaster attached before Run. The server sets this up once
-// initWatcher has populated its broadcaster.
-type BroadcasterConsumer interface {
+// WrittenEventConsumer is a Runnable that can consume a stream of storage
+// write events. The server owns the subscription and attaches the stream
+// before calling Run.
+type WrittenEventConsumer interface {
 	Runnable
-	UseBroadcaster(b Broadcaster[*WrittenEvent])
+	UseWrittenEvents(events <-chan *WrittenEvent)
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -715,7 +714,7 @@ type server struct {
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
-	vectorWriteReconciler BroadcasterConsumer
+	vectorWriteReconciler WrittenEventConsumer
 	indexersWG            sync.WaitGroup
 
 	// statsIngester buffers and flushes usage stats events. nil when the
@@ -760,20 +759,28 @@ func (s *server) Init(ctx context.Context) error {
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
-// the backfiller). Optional: nil = feature off. The reconciler gets the
-// server's broadcaster via UseBroadcaster before Run so its watch path
-// lights up.
+// the backfiller). Optional: nil = feature off. The server owns the write-event
+// subscription so the reconciler does not depend on broadcaster semantics.
 func (s *server) startVectorIndexers() {
-	if s.vectorWriteReconciler != nil {
-		if s.broadcaster != nil {
-			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
-		}
-		s.indexersWG.Go(func() {
-			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector reconciler stopped", "err", err)
-			}
-		})
+	if s.vectorWriteReconciler == nil {
+		return
 	}
+
+	s.indexersWG.Go(func() {
+		if s.broadcaster != nil {
+			ch, err := s.broadcaster.Subscribe(s.ctx, "embeddings-reconciler", "embeddings-reconciler")
+			if err != nil {
+				s.log.Error("subscribe vector reconciler to write events", "err", err)
+			} else if ch != nil {
+				s.vectorWriteReconciler.UseWrittenEvents(ch)
+				defer s.broadcaster.Unsubscribe(ch)
+			}
+		}
+
+		if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+			s.log.Error("vector reconciler stopped", "err", err)
+		}
+	})
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight

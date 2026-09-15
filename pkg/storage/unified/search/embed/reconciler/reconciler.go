@@ -129,8 +129,8 @@ type Reconciler struct {
 	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
 
-	// broadcaster is attached after construction by the resource server,
-	broadcaster resource.Broadcaster[*resource.WrittenEvent]
+	// writeEvents is attached after construction by the resource server.
+	writeEvents <-chan *resource.WrittenEvent
 
 	pendingMu sync.Mutex
 	pending   map[string]*pendingEvent
@@ -157,7 +157,7 @@ type Reconciler struct {
 }
 
 // New constructs the embedding reconciler.
-// The caller is expected to attach a broadcaster via Reconciler.UseBroadcaster
+// The caller may attach a live event stream via Reconciler.UseWrittenEvents
 // before calling Run. Without one the reconciler can only sweep, and a fleet
 // that has never checkpointed stays inert: the cursor is seeded from the first
 // delivered write, and the sweep does nothing until it is.
@@ -197,8 +197,9 @@ func New(opts Options) (*Reconciler, error) {
 	}, nil
 }
 
-func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEvent]) {
-	s.broadcaster = b
+// UseWrittenEvents attaches the live storage event stream consumed by Run.
+func (s *Reconciler) UseWrittenEvents(events <-chan *resource.WrittenEvent) {
+	s.writeEvents = events
 }
 
 // enqueue keeps the highest RV per resource so older replayed events
@@ -284,22 +285,18 @@ func (s *Reconciler) Run(ctx context.Context) error {
 
 	// Not load-bearing for correctness: the sweep lists everything past
 	// the cursor whether or not an event was delivered.
-	if s.broadcaster != nil {
-		ch, err := s.broadcaster.Subscribe(ctx, "embeddings-reconciler", "embeddings-reconciler")
-		if err != nil {
-			s.log.Error("reconciler: subscribe to write events", "err", err)
-		} else if ch != nil {
-			watchFinished := make(chan struct{})
-			defer func() {
-				<-watchFinished
-				s.broadcaster.Unsubscribe(ch)
-			}()
-			go func() {
-				defer close(watchFinished)
-				s.consumeWatchEvents(ctx, ch)
-			}()
-			s.log.Info("reconciler: subscribed to write events broadcaster")
-		}
+	if s.writeEvents != nil {
+		watchCtx, stopWatch := context.WithCancel(ctx)
+		watchFinished := make(chan struct{})
+		defer func() {
+			stopWatch()
+			<-watchFinished
+		}()
+		go func() {
+			defer close(watchFinished)
+			s.consumeWatchEvents(watchCtx, s.writeEvents)
+		}()
+		s.log.Info("reconciler: consuming live write events")
 	}
 
 	t := time.NewTicker(s.interval)
@@ -457,8 +454,8 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	}
 	if sinceRv == 0 {
 		// Seeded by the first live batch; ListModifiedSince rejects 0.
-		if s.broadcaster == nil {
-			s.log.Warn("reconciler: cursor at 0 and no write event broadcaster; nothing will be embedded")
+		if s.writeEvents == nil {
+			s.log.Warn("reconciler: cursor at 0 and no live write events; nothing will be embedded")
 			return
 		}
 		s.log.Debug("reconciler: sweep skipped; cursor at 0, nothing to process")
