@@ -239,7 +239,7 @@ Geomap has nine data layer types and five basemap layer types.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental, alpha layer types.
 
@@ -276,6 +276,15 @@ There are four options to map the data returned by the selected query:
 - **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
 - **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
+#### Text label
+
+When you configure a text label, the following additional options appear:
+
+- **Font size** - Sets the label's font size.
+- **X offset** and **Y offset** - Offset the label horizontally or vertically from the data point.
+- **Align** - Set the horizontal text alignment. Choose from **Left**, **Center**, or **Right**.
+- **Baseline** - Set the vertical text alignment. Choose from **Top**, **Middle**, or **Bottom**.
+
 #### Markers layer
 
 The markers layer allows you to display data points as different marker shapes such as circles, squares, triangles, stars, and more.
@@ -294,7 +303,7 @@ The markers layer allows you to display data points as different marker shapes s
 | Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each marker. |
 | Rotation angle | Configures the rotation angle of each marker in degrees. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
-| Text label | Configures a text label for each marker. |
+| [Text label](#text-label) | Configures a text label for each marker. |
 | Show legend | Allows you to toggle the legend for the layer. |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
@@ -390,7 +399,7 @@ The layer can also render a route with arrows.
 | Size | sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale. |
 | Color | sets the route color. Set to `Fixed color` by default. You can also tie the color to field data. |
 | Fill opacity | configures the opacity of the route. |
-| Text label | configures a text label for each route. |
+| [Text label](#text-label) | Configures a text label for each route. |
 | Arrow | sets the arrow styling to display along route, in order of data. Choose from: **None**, **Forward**, and **Reverse** |
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
@@ -449,7 +458,7 @@ You can convert node graph data to a network layer:
 | Color | Configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each node. |
 | Rotation angle | Configures the rotation angle of each node in degrees. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field. |
-| Text label | Configures a text label for each node. |
+| [Text label](#text-label) | Configures a text label for each node. |
 <!-- prettier-ignore-end -->
 
 ##### Edge styles options
@@ -460,7 +469,7 @@ You can convert node graph data to a network layer:
 | Size | Configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range. |
 | Color | Configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
 | Fill opacity | Configures the transparency of each edge. |
-| Text label | Configures a text label for each edge. |
+| [Text label](#text-label) | Configures a text label for each edge. |
 <!-- prettier-ignore-end -->
 
 #### OpenStreetMap layer
@@ -529,18 +538,21 @@ The XYZ Tile layer is a map from a generic tile layer.
 - **Min zoom** - Minimum zoom level. Tiles aren't loaded below this level.
 - **Max zoom** - Maximum zoom level provided by the server. Beyond this level, the map is rendered by scaling up existing tiles.
 - **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** - Allows you to toggle tooltips for the layer.
 
 ##### More information
 
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
 - **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+- **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** - Allows you to toggle tooltips for the layer.
 
 ### Basemap layer options
 
@@ -555,7 +567,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -732,7 +744,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
+Tooltips are supported for all data layers (**Markers**, **Heatmap**, **GeoJSON**, **Night / Day**, **Route**, **Photos**, and **Network**).
 For these layer types, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
