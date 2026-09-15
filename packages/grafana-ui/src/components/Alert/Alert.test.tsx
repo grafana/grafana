@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
 
 import { Alert } from './Alert';
 
@@ -71,10 +72,22 @@ describe('Alert', () => {
     });
   });
 
+  describe('buttonContent accessible name', () => {
+    it('uses the visible text as the accessible name when buttonContent is a string', () => {
+      render(<Alert title="Test" buttonContent="Go back to alert list" onRemove={jest.fn()} />);
+      expect(screen.getByRole('button', { name: 'Go back to alert list' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /close alert/i })).not.toBeInTheDocument();
+    });
+
+    it('falls back to the close label when buttonContent carries no text of its own', () => {
+      render(<Alert title="Test" buttonContent={<Icon name="question-circle" />} onRemove={jest.fn()} />);
+      expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
+    });
+  });
+
   describe('backward compatibility', () => {
     it('renders buttonContent with onRemove as before', () => {
       render(<Alert title="Test" buttonContent="Go back" onRemove={jest.fn()} />);
-      expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
       expect(screen.getByText('Go back')).toBeInTheDocument();
     });
 
