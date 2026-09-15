@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -395,15 +394,7 @@ func (s *SecretsService) GetDecryptedValue(ctx context.Context, sjd map[string][
 			return fallback
 		}
 
-		decryptedValue := string(decryptedData)
-		if strings.HasPrefix(decryptedValue, "$__env{") || strings.HasPrefix(decryptedValue, "$__file{") {
-			resolved, err := setting.ExpandVar(decryptedValue)
-			if err != nil {
-				return fallback
-			}
-			return resolved
-		}
-		return decryptedValue
+		return string(decryptedData)
 	}
 
 	return fallback
@@ -542,8 +533,10 @@ func (s *SecretsService) cacheDataKey(dataKey *secrets.DataKey, decrypted []byte
 
 	s.dataKeyCache.addById(entry)
 
-	// Then, we cache the data key by label, ONLY if data key's lifetime is longer than a certain "caution period",
-	// because cache "by label" is used (only) by encrypt operations, and we want to ensure that no data key is cached for encryption ops before being persisted.
+	// Then, we cache the data key by label, ONLY if data key's lifetime
+	// is longer than a certain "caution period", because cache "by label"
+	// is used (only) by encrypt operations, and we want to ensure that
+	// no data key is cached for encryption ops before being persisted.
 
 	const cautionPeriod = 10 * time.Minute
 	// We consider a "caution period" of 10m to be long enough for any database

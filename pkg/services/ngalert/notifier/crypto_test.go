@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -184,7 +185,7 @@ func TestDecryptExtraConfigs(t *testing.T) {
 	}
 }
 
-func TestDecryptIntegrationSettingsLeavesSecretReferencesUntouched(t *testing.T) {
+func TestDecryptIntegrationSettingsResolvesSecretReferences(t *testing.T) {
 	t.Setenv("GRAFANA_CONTACT_POINT_SECRET", "resolved-secret")
 
 	value := base64.StdEncoding.EncodeToString([]byte("$__env{GRAFANA_CONTACT_POINT_SECRET}"))
@@ -192,18 +193,19 @@ func TestDecryptIntegrationSettingsLeavesSecretReferencesUntouched(t *testing.T)
 
 	got, err := decrypt(value)
 	require.NoError(t, err)
-	require.Equal(t, "$__env{GRAFANA_CONTACT_POINT_SECRET}", got)
+	require.Equal(t, "resolved-secret", got)
 }
 
-func TestDecryptIntegrationSettingsLeavesFileReferencesUntouched(t *testing.T) {
+func TestDecryptIntegrationSettingsResolvesFileReferences(t *testing.T) {
 	path := t.TempDir() + "/contact-point-secret"
+	require.NoError(t, os.WriteFile(path, []byte("file-secret"), 0600))
 
 	value := base64.StdEncoding.EncodeToString([]byte("$__file{" + path + "}"))
 	decrypt := DecryptIntegrationSettings(context.Background(), fakes.NewFakeSecretsService())
 
 	got, err := decrypt(value)
 	require.NoError(t, err)
-	require.Equal(t, "$__file{"+path+"}", got)
+	require.Equal(t, "file-secret", got)
 }
 
 func TestDecryptIntegrationSettingsLeavesOrdinarySecretPatternsUntouched(t *testing.T) {
