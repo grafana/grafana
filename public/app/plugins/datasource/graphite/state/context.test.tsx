@@ -14,7 +14,7 @@ function StateProbe() {
 }
 
 describe('GraphiteQueryEditorContext', () => {
-  it('does not publish state before initialization completes', async () => {
+  it('preserves query updates while initialization is pending', async () => {
     let resolveInitialization!: () => void;
 
     const initialization = new Promise<void>((resolve) => {
@@ -69,8 +69,13 @@ describe('GraphiteQueryEditorContext', () => {
 
     expect(screen.queryByTestId('target')).not.toBeInTheDocument();
 
+    const updatedQuery = {
+      ...query,
+      target: 'updated.metric',
+    };
+
     rerender(
-      <GraphiteQueryEditorContext {...props} query={{ ...query }}>
+      <GraphiteQueryEditorContext {...props} query={updatedQuery}>
         <StateProbe />
       </GraphiteQueryEditorContext>
     );
@@ -80,11 +85,13 @@ describe('GraphiteQueryEditorContext', () => {
     });
 
     expect(screen.queryByTestId('target')).not.toBeInTheDocument();
+    expect(datasource.waitForFuncDefsLoaded).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       resolveInitialization();
     });
 
-    expect(await screen.findByTestId('target')).toHaveTextContent('initial.metric');
+    expect(await screen.findByTestId('target')).toHaveTextContent('updated.metric');
+    expect(datasource.waitForFuncDefsLoaded).toHaveBeenCalledTimes(1);
   });
 });

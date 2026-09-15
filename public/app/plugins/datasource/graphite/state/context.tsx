@@ -1,5 +1,14 @@
 import { type AnyAction } from '@reduxjs/toolkit';
-import { createContext, type Dispatch, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  type Dispatch,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { type QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -34,12 +43,35 @@ export const GraphiteQueryEditorContext = ({
 }: PropsWithChildren<GraphiteQueryEditorProps>) => {
   const [state, setState] = useState<GraphiteQueryEditorState>();
   const [needsRefresh, setNeedsRefresh] = useState<boolean>(false);
+  const initStarted = useRef(false);
+  const initialized = state !== undefined;
 
   const dispatch = useMemo(() => {
     return createStore((state) => {
       setState(state);
     });
   }, []);
+
+  useEffect(() => {
+    if (initStarted.current) {
+      return;
+    }
+
+    initStarted.current = true;
+
+    dispatch(
+      actions.init({
+        target: { ...query },
+        datasource,
+        range,
+        templateSrv: getTemplateSrv(),
+        queries: queries || [],
+        refresh: () => {
+          setNeedsRefresh(true);
+        },
+      })
+    );
+  }, [datasource, dispatch, queries, query, range]);
 
   // synchronise changes provided in props with editor's state
   useEffect(() => {
@@ -50,24 +82,23 @@ export const GraphiteQueryEditorContext = ({
 
   useEffect(
     () => {
-      if (state) {
+      if (initialized) {
         dispatch(actions.queriesChanged(queries));
       }
     },
-    // adding state to dependencies causes infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(queries)]
+    [dispatch, initialized, JSON.stringify(queries)]
   );
 
   useEffect(
     () => {
-      if (state && state.target?.target !== query.target) {
+      if (initialized && state?.target?.target !== query.target) {
         dispatch(actions.queryChanged(query));
       }
     },
-    // adding state to dependencies causes infinite loops
+    // Do not depend on the full state: internal editor updates must not resync from props.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, query]
+    [dispatch, initialized, query]
   );
 
   useEffect(
@@ -84,28 +115,12 @@ export const GraphiteQueryEditorContext = ({
   );
 
   if (!state) {
-    dispatch(
-      actions.init({
-        target: { ...query },
-        datasource: datasource,
-        range: range,
-        templateSrv: getTemplateSrv(),
-        // list of queries is passed only when the editor is in Dashboards or Alerting. This is to allow interpolation
-        // of sub-queries which are stored in "targetFull" property. This is used by alerting in the backend.
-        queries: queries || [],
-        refresh: () => {
-          // do not run onChange/onRunQuery straight away to ensure the internal state gets updated first
-          // to avoid race conditions (onChange could update props before the reducer action finishes)
-          setNeedsRefresh(true);
-        },
-      })
-    );
     return null;
-  } else {
-    return (
-      <GraphiteStateContext.Provider value={state}>
-        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
-      </GraphiteStateContext.Provider>
-    );
   }
+
+  return (
+    <GraphiteStateContext.Provider value={state}>
+      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+    </GraphiteStateContext.Provider>
+  );
 };
