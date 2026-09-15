@@ -3354,6 +3354,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5826,15 +5828,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Přesunout {{typeName}}",
-      "panel-background": "Změnit pozadí panelu",
-      "panel-description": "Změnit popis panelu",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Změny panelu",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-preset": "Použít předvolbu panelu",
       "panel-repeat-direction": "Opakovat směr",
       "panel-repeat-variable": "Opakování panelu podle",
-      "panel-title": "Změnit název panelu",
+      "panel-title": "",
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
       "row-title": "Změnit název řádku",
@@ -6791,6 +6793,10 @@
       },
       "title-delete": "Odstranit {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Vymazat vyhledávání",
       "no-transformations-found": "Nebyly nalezeny žádné transformace",
@@ -6843,6 +6849,12 @@
     "view-panel": {
       "back-to-dashboard": "Zpět na nástěnku",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8744,6 +8756,16 @@
       "title-raw-prometheus": "Prometheus – nezpracovaná data",
       "title-table": "Tabulka",
       "title-traces": "Stopy"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11559,11 +11581,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_few": "",
-        "stats-sources_many": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13306,9 +13324,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

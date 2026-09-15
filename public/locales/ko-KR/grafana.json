@@ -3285,6 +3285,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5702,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "{{typeName}} 이동",
-      "panel-background": "패널 배경 변경",
-      "panel-description": "패널 설명 변경",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "패널 변경",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-preset": "패널 사전 설정 적용",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
-      "panel-title": "패널 제목 변경",
+      "panel-title": "",
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "row-title": "행 제목 변경",
@@ -6662,6 +6664,10 @@
       },
       "title-delete": "{{name}}을(를) 삭제하시겠어요?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "검색 초기화",
       "no-transformations-found": "변환을 찾을 수 없음",
@@ -6711,6 +6717,12 @@
     "view-panel": {
       "back-to-dashboard": "대시보드로 돌아가기",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8597,6 +8609,16 @@
       "title-raw-prometheus": "원본 Prometheus",
       "title-table": "표",
       "title-traces": "트레이스"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11346,8 +11368,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13033,9 +13054,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
