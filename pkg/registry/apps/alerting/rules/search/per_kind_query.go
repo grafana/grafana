@@ -48,26 +48,27 @@ func perKindSortedKeys(m map[string]struct{}) []string {
 
 var perKindDefaultReturnFields = []string{fieldTitle, fieldFolder}
 
-type perKindTranslated struct {
+type perKindSearchRequest struct {
 	req    *resourcepb.ResourceSearchRequest
 	offset int64
 	fields []string
 }
 
-func translatePerKindQuery(q *searchv0.SearchQuery, leaves []searchv0.WhereNode, namespace string, k perKind) perKindTranslated {
+func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereNode, namespace string, k perKind) perKindSearchRequest {
 	offset, _ := decodeCursor(q.Continue)
+	fields := resolvePerKindReturnFields(q.Fields)
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{Key: resourceKey(namespace, k.groupResource())},
 		Limit:   resolvePerKindLimit(q.Limit),
 		Offset:  offset,
-		Fields:  append([]string{}, resultColumns...),
+		Fields:  append([]string{}, fields...),
 	}
 
 	applyPerKindLeaves(req, leaves)
 	applyPerKindLabelSelector(req, q.LabelSelector)
 	applyPerKindSort(req, q.Sort)
 
-	return perKindTranslated{req: req, offset: offset, fields: resolvePerKindReturnFields(q.Fields)}
+	return perKindSearchRequest{req: req, offset: offset, fields: fields}
 }
 
 func resolvePerKindLimit(limit int64) int64 {

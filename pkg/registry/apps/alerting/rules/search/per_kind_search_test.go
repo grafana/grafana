@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ import (
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -260,9 +262,27 @@ func TestPerKindSearch_responseEnvelope(t *testing.T) {
 	assert.Equal(t, "AlertRule", item.Resource.Kind)
 	assert.Equal(t, "alertrules", item.Resource.Resource)
 	assert.Equal(t, "rules.alerting.grafana.app", item.Resource.Group)
-	// The legacy backend computes no relevance, so no hit claims a score until
-	// both backends populate one.
 	assert.Nil(t, item.Score)
+}
+
+func TestPerKindSearch_omitsBackendScore(t *testing.T) {
+	for _, score := range []float64{0, 2.5} {
+		t.Run(fmt.Sprint(score), func(t *testing.T) {
+			table, err := unifiedresource.NewTableBuilder([]*resourcepb.ResourceTableColumnDefinition{
+				{Name: unifiedresource.SEARCH_FIELD_SCORE, Type: resourcepb.ResourceTableColumnDefinition_DOUBLE},
+			})
+			require.NoError(t, err)
+			require.NoError(t, table.AddRow(ruleKey("default", testAlertRule()), 0, map[string]any{unifiedresource.SEARCH_FIELD_SCORE: score}))
+			rec, index := callWithBody(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"SearchQuery","where":{"text":{"value":"cpu"}},"fields":["interval"]}`,
+				&resourcepb.ResourceSearchResponse{Results: &table.ResourceTable, TotalHits: 1, TotalHitsExact: true})
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.Equal(t, []string{fieldInterval}, index.got.Fields)
+			out := decodeResults(t, rec)
+			require.Len(t, out.Items, 1)
+			assert.Nil(t, out.Items[0].Score)
+			assert.Nil(t, out.Items[0].Fields)
+		})
+	}
 }
 
 // TestSearch_projection covers what a hit carries. Values are the decoded index
@@ -323,12 +343,10 @@ func TestPerKindSearch_projection(t *testing.T) {
 		assert.NotContains(t, values, "receiver")
 	})
 
-	// The backend is asked for every column whatever the projection, because
-	// bleve does not populate them all for a free-text query.
-	t.Run("asks the backend for every column", func(t *testing.T) {
+	t.Run("asks the backend only for projected fields", func(t *testing.T) {
 		_, index := callWithBody(t, projection("title"), resp)
 		require.NotNil(t, index.got)
-		assert.ElementsMatch(t, resultColumns, index.got.Fields)
+		assert.Equal(t, []string{fieldTitle}, index.got.Fields)
 	})
 }
 

@@ -113,7 +113,7 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 		return invalidQuery(ferrs)
 	}
 
-	t := translatePerKindQuery(query, leaves, namespace, k)
+	t := buildPerKindSearchRequest(query, leaves, namespace, k)
 	resp, err := k.client.Search(withPerKindSearch(ctx), t.req)
 	if err != nil {
 		h.logger.FromContext(ctx).Error("rule search backend request failed",
@@ -184,7 +184,7 @@ func decodePerKindSearchQuery(req *app.CustomRouteRequest) (*searchv0.SearchQuer
 }
 
 // results maps a backend response onto the public envelope.
-func (h *Handler) results(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, t perKindTranslated, k perKind) (*searchv0.SearchResults, error) {
+func (h *Handler) results(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, t perKindSearchRequest, k perKind) (*searchv0.SearchResults, error) {
 	items, err := h.resultItems(ctx, namespace, resp, t.fields, k)
 	if err != nil {
 		return nil, err
@@ -255,9 +255,7 @@ func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resou
 				Kind:     k.info.GroupVersionKind().Kind,
 				Name:     row.GetKey().GetName(),
 			},
-			// Score is intentionally left unset: the legacy backend does not compute
-			// relevance, and until both backends populate it consistently a score
-			// would be present for unified hits only.
+			// This compatibility API omits relevance scores; use generic search for scoring.
 		}
 		values := map[string]any{}
 		for i, col := range cols {

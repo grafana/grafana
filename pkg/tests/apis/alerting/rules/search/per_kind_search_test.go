@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -208,6 +210,38 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		}
 	})
 
+	t.Run("text matching and sorting do not require projected title or type", func(t *testing.T) {
+		for _, tc := range []struct {
+			resource string
+			text     string
+			titles   []string
+		}{
+			{alertRules, "usage", []string{"cpu usage high", "memory usage high"}},
+			{recordingRules, "recording", []string{"cpu recording", "disk recording"}},
+		} {
+			t.Run(tc.resource, func(t *testing.T) {
+				baseline := search(t, tc.resource, newPerKindQuery().text(tc.text).sort("title", "asc"))
+				require.Equal(t, tc.titles, perKindTitles(baseline))
+				for _, direction := range []string{"asc", "desc"} {
+					t.Run(direction, func(t *testing.T) {
+						resp := search(t, tc.resource, newPerKindQuery().text(tc.text).sort("title", direction).fields("interval"))
+						require.Len(t, resp.Items, len(baseline.Items))
+						for i, hit := range resp.Items {
+							wantIndex := i
+							if direction == "desc" {
+								wantIndex = len(baseline.Items) - 1 - i
+							}
+							require.Equal(t, baseline.Items[wantIndex].Resource, hit.Resource)
+							require.Equal(t, []string{"interval"}, perKindFieldNames(hit))
+							require.Equal(t, "10s", perKindStringField(t, hit, "interval"))
+							require.Nil(t, hit.Score)
+						}
+					})
+				}
+			})
+		}
+	})
+
 	t.Run("alert rules: filter by name (uid)", func(t *testing.T) {
 		all := searchAlerts(t, nil).Items
 		require.GreaterOrEqual(t, len(all), 2)
@@ -331,16 +365,23 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		})
 	})
 
-	// A field the other kind declares is not part of this kind's contract, so
-	// naming it is a rejected kindQuery rather than one that answers with nothing.
-	t.Run("rejects a perKindQuery naming another kind's field", func(t *testing.T) {
+	t.Run("rejects a query naming another kind's field", func(t *testing.T) {
 		payload, err := json.Marshal(newPerKindQuery().fields("metric").body)
 		require.NoError(t, err)
-		_, err = rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "search").
+		raw, err := rc.Post().
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "searchRules").
 			Body(payload).
 			DoRaw(ctx)
-		require.Error(t, err)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.EqualValues(t, http.StatusUnprocessableEntity, statusErr.ErrStatus.Code)
+		require.Equal(t, v1.StatusReasonInvalid, statusErr.ErrStatus.Reason)
+		var status v1.Status
+		require.NoError(t, json.Unmarshal(raw, &status))
+		require.NotNil(t, status.Details)
+		require.Len(t, status.Details.Causes, 1)
+		require.Equal(t, "fields[0]", status.Details.Causes[0].Field)
+		require.Contains(t, status.Details.Causes[0].Message, "metric")
 	})
 
 	t.Run("default perKindTitle order is case-insensitive", func(t *testing.T) {

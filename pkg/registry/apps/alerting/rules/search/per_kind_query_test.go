@@ -21,16 +21,16 @@ import (
 // translate validates and lowers a query for the alert rule kind, failing the
 // test if validation rejects it. Translation assumes a valid query, so a test
 // that means to exercise it must not smuggle in an invalid one.
-func translate(t *testing.T, q *searchv0.SearchQuery) perKindTranslated {
+func translate(t *testing.T, q *searchv0.SearchQuery) perKindSearchRequest {
 	t.Helper()
 	return translateFor(t, alertRuleKind(t), q)
 }
 
-func translateFor(t *testing.T, k perKind, q *searchv0.SearchQuery) perKindTranslated {
+func translateFor(t *testing.T, k perKind, q *searchv0.SearchQuery) perKindSearchRequest {
 	t.Helper()
 	leaves, errs := validatePerKindQuery(q, k)
 	require.Empty(t, errs, "query must be valid before translation")
-	return translatePerKindQuery(q, leaves, "default", k)
+	return buildPerKindSearchRequest(q, leaves, "default", k)
 }
 
 func TestPerKindParseLabelMatcher(t *testing.T) {
@@ -317,22 +317,17 @@ func TestPerKindTranslateQuery_sort(t *testing.T) {
 // endpoint takes over.
 func TestPerKindTranslateQuery_returnFields(t *testing.T) {
 	t.Run("defaults to title and folder", func(t *testing.T) {
-		assert.Equal(t, []string{fieldTitle, fieldFolder}, translate(t, query()).fields)
+		request := translate(t, query())
+		assert.Equal(t, []string{fieldTitle, fieldFolder}, request.fields)
+		assert.Equal(t, request.fields, request.req.Fields)
 	})
 
 	t.Run("honours an explicit projection", func(t *testing.T) {
 		q := query()
 		q.Fields = []string{fieldPaused, fieldLabels}
-		assert.Equal(t, []string{fieldPaused, fieldLabels}, translate(t, q).fields)
-	})
-
-	// The backend is asked for every column whatever the projection, because
-	// bleve does not populate them all for a free-text query. Narrowing happens
-	// when the response is built.
-	t.Run("still asks the backend for every column", func(t *testing.T) {
-		q := query()
-		q.Fields = []string{fieldTitle}
-		assert.ElementsMatch(t, resultColumns, translate(t, q).req.Fields)
+		request := translate(t, q)
+		assert.Equal(t, []string{fieldPaused, fieldLabels}, request.fields)
+		assert.Equal(t, request.fields, request.req.Fields)
 	})
 }
 
