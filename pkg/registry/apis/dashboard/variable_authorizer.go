@@ -18,16 +18,16 @@ import (
 // storage is registered, enablement is enforced here). Service identity may
 // get/list/watch/delete leftovers after a flag flip so folder cleanup still
 // works; create/update/patch stay denied. Users are denied while the flag is
-// off. When enabled, it maps k8s verbs to variables:* RBAC actions. A nil
-// accessControl denies cleanly (standalone NewAPIService does not wire
-// classic RBAC).
+// off. When enabled and accessControl is wired (embedded Grafana), it maps k8s
+// verbs to variables:* RBAC actions. Standalone NewAPIService leaves
+// accessControl nil; enablement then defers to fallback (ServiceAuthorizer).
+// User variables:* checks run in admission (mutations) and the unified-storage
+// checker (list/get; variables is on rbacAllowlist).
 //
 // Create/update/delete/list/watch use a coarse (any-scope) check. Admission
-// narrows mutations to the target folder. List/watch per-item filtering is
-// the unified-storage checker (variables is on rbacAllowlist; the RBAC mapper
-// has folder support). Named get evaluates against variables:uid:<name>,
-// which the scope resolver expands to folder scopes.
-func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
+// narrows mutations to the target folder. Named get evaluates against
+// variables:uid:<name>, which the scope resolver expands to folder scopes.
+func newVariableAuthorizer(accessControl ac.AccessControl, fallback authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
@@ -48,9 +48,13 @@ func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 				return authorizer.DecisionDeny, "global dashboard variables feature is not enabled", nil
 			}
 
-			// NewAPIService (standalone) never wires accessControl. Deny instead of
-			// calling Evaluate on a nil interface (per-request panic).
+			// Standalone NewAPIService never wires classic RBAC. ServiceAuthorizer
+			// checks the calling service token; user variables:* is enforced
+			// downstream (admission + UniStore).
 			if accessControl == nil {
+				if fallback != nil {
+					return fallback.Authorize(ctx, attr)
+				}
 				return authorizer.DecisionDeny, "access control is not configured", nil
 			}
 
