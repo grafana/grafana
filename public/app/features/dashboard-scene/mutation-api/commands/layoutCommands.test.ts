@@ -8,6 +8,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import * as layoutsSharedUtils from '../../scene/layouts-shared/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
@@ -782,6 +783,59 @@ describe('Layout mutation commands', () => {
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
       expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('does not steal keyboard focus from a sibling panel when moving a panel to another row', async () => {
+      // Row 1 has two panels (elem-a, elem-c); moving elem-a away leaves elem-c behind.
+      // Without the fix, removePanel's delete-focus behavior fires as a side effect of the
+      // move and would try to shift focus onto elem-c even though nothing was deleted.
+      const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
+      const panelC = new VizPanel({ key: 'panel-3', title: 'Panel C', pluginId: 'timeseries' });
+      const panelB = new VizPanel({ key: 'panel-2', title: 'Panel B', pluginId: 'timeseries' });
+
+      const row1 = new RowItem({
+        title: 'Row 1',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelA, panelC]),
+      });
+      const row2 = new RowItem({
+        title: 'Row 2',
+        layout: DefaultGridLayoutManager.fromVizPanels([panelB]),
+      });
+
+      const body = new RowsLayoutManager({ rows: [row1, row2] });
+      const state: Record<string, unknown> = { uid: 'test-dash', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer({ 'elem-a': 1, 'elem-b': 2, 'elem-c': 3 }),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        activateSidebar: jest.fn(),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      } as unknown as DashboardScene;
+      currentTestScene = scene;
+
+      const focusSpy = jest.spyOn(layoutsSharedUtils, 'focusVizPanel');
+
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'MOVE_PANEL',
+        payload: {
+          element: { name: 'elem-a' },
+          toParent: '/rows/1',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(focusSpy).not.toHaveBeenCalled();
+
+      focusSpy.mockRestore();
     });
 
     it('preserves panel ids and keeps grid item keys unique when moving panels', async () => {
