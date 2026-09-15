@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
-import { AttachToIncidentButton } from './AttachToIncidentButton';
+import { AttachToIncidentModal } from './AttachToIncidentModal';
 import { STUB_ATTACH_TESTID, notebookIncidents, stubAttachForm } from './testHelpers';
 import { useNotebookIncidents } from './useNotebookIncidents';
 
@@ -25,17 +25,18 @@ function setup({ installed = true, title = 'PromQL query (4)', incidentTitle }: 
   const { Stub, props } = stubAttachForm(incidentTitle);
   mockUseNotebookIncidents.mockReturnValue(notebookIncidents(installed ? { AttachToIncidentForm: Stub } : {}));
 
+  const onDismiss = jest.fn();
   const rendered = render(
     <>
       <AppNotificationList />
-      <AttachToIncidentButton uid="nb1" title={title} />
+      <AttachToIncidentModal uid="nb1" title={title} onDismiss={onDismiss} />
     </>
   );
 
-  return { ...rendered, props };
+  return { ...rendered, props, onDismiss };
 }
 
-describe('AttachToIncidentButton', () => {
+describe('AttachToIncidentModal', () => {
   const originalAppUrl = config.appUrl;
 
   beforeEach(() => {
@@ -55,8 +56,6 @@ describe('AttachToIncidentButton', () => {
   it('opens IRM’s form in a modal', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
-
     expect(await screen.findByRole('dialog', { name: 'Attach to incident' })).toBeInTheDocument();
     expect(screen.getByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
   });
@@ -66,8 +65,6 @@ describe('AttachToIncidentButton', () => {
   it('leaves punctuation in the caption alone', async () => {
     const { user, props } = setup({ title: "Checkout's errors/sec" });
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
-
     expect(props.at(-1)?.defaultCaption).toBe("Notebook: Checkout's errors/sec");
   });
 
@@ -75,7 +72,6 @@ describe('AttachToIncidentButton', () => {
   it('leaves punctuation in the toast alone', async () => {
     const { user } = setup({ incidentTitle: "Checkout's 5xx/spike" });
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
     await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
 
     expect(await screen.findByText(`Notebook attached to "Checkout's 5xx/spike"`)).toBeInTheDocument();
@@ -85,28 +81,24 @@ describe('AttachToIncidentButton', () => {
   it('hands the form the notebook’s absolute url and a caption naming it', async () => {
     const { user, props } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
-
     expect(props.at(-1)).toMatchObject({
       attachURL: 'https://grafana.example/notebooks/nb1',
       defaultCaption: 'Notebook: PromQL query (4)',
     });
   });
 
-  it('closes the modal once attached', async () => {
-    const { user } = setup();
+  it('reports the dismissal once attached, so the toolbar closes it', async () => {
+    const { user, onDismiss } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
     await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onDismiss).toHaveBeenCalled();
   });
 
   // Quoting an empty title would read `Notebook attached to ""`.
   it('says so plainly when the incident has no title', async () => {
     const { user } = setup({ incidentTitle: '  ' });
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
     await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
 
     expect(await screen.findByText('Notebook attached to the incident')).toBeInTheDocument();
@@ -116,7 +108,6 @@ describe('AttachToIncidentButton', () => {
   it('raises a toast linking to the incident once attached', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Attach to incident/ }));
     await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
 
     expect(await screen.findByText(/Notebook attached to "Checkout 5xx spike"/)).toBeInTheDocument();

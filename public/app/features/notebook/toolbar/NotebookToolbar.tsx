@@ -11,9 +11,9 @@ import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOUR
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
-import { AttachToIncidentButton } from '../incidents/AttachToIncidentButton';
-import { DeclareIncidentMenuItem } from '../incidents/DeclareIncidentMenuItem';
+import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
+import { IrmMenuItem } from '../incidents/IrmMenuItem';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
@@ -40,15 +40,13 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
-  // Declare comes and goes with IRM, so delete alone no longer decides whether there is a menu.
-  // Gated on declare specifically, not on `available`: that also counts the attach component, which
-  // is a toolbar button rather than a menu item, and would open an empty menu on a stack exposing
-  // only attach to a user who cannot delete.
-  const { DeclareIncidentForm } = useNotebookIncidents();
-  const hasMoreActions = Boolean(DeclareIncidentForm) || canDeleteNotebooks();
-  // Owned here, not by the menu item: that item is inside the Dropdown overlay, which unmounts as
-  // the menu closes. Same as the delete confirmation below.
+  // Both incident actions live in this menu now, so either one is reason enough to open it.
+  const { available: hasIncidents } = useNotebookIncidents();
+  const hasMoreActions = hasIncidents || canDeleteNotebooks();
+  // Owned here, not by the menu items: those are inside the Dropdown overlay, which unmounts as the
+  // menu closes. Same as the delete confirmation below.
   const [isDeclaring, setIsDeclaring] = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -85,7 +83,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   const moreMenu = () => (
     <Menu>
-      <DeclareIncidentMenuItem onSelect={() => setIsDeclaring(true)} />
+      <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
       {canDeleteNotebooks() && (
         <Menu.Item
           destructive
@@ -99,7 +97,6 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   return (
     <>
-      <AttachToIncidentButton uid={uid} title={scene.state.title} />
       <ClipboardButton
         variant="secondary"
         size="sm"
@@ -131,6 +128,9 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       )}
       {isDeclaring && (
         <DeclareIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsDeclaring(false)} />
+      )}
+      {isAttaching && (
+        <AttachToIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsAttaching(false)} />
       )}
       {isConfirmingDelete && (
         <DeleteNotebookModal

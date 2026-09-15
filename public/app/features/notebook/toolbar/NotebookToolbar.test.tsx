@@ -320,54 +320,54 @@ describe('NotebookToolbar', () => {
   });
 
   describe('incident actions', () => {
-    it('offers neither of them on a stack without IRM', () => {
-      setIrmAvailable(false);
+    // Grouped into a submenu rather than sitting in the toolbar: most notebooks are not
+    // incident-related, and this is how a dashboard files the same two actions.
+    it('groups them behind an IRM submenu rather than a toolbar button', async () => {
+      setIrmAvailable(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
-      setup();
+      const { user } = setup();
 
       expect(screen.queryByRole('button', { name: /Attach to incident/ })).not.toBeInTheDocument();
-      expect(screen.queryByText('Declare incident')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
     });
 
-    it('offers attaching from the toolbar once IRM is there', () => {
-      setIrmAvailable(true);
-
-      setup();
-
-      expect(screen.getByRole('button', { name: /Attach to incident/ })).toBeInTheDocument();
-    });
-
-    it('offers declaring from the overflow menu', async () => {
-      setIrmAvailable(true);
+    it('offers nothing incident-related on a stack without IRM', async () => {
+      setIrmAvailable(false);
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       const { user } = setup();
       await user.click(screen.getByRole('button', { name: 'More actions' }));
 
-      expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
     });
 
-    // The menu holds declare and delete. With neither, the trigger would open an empty box.
-    it('opens no overflow menu when only attach is exposed and the user cannot delete', () => {
+    // Both actions live in the menu now, so either one is reason enough to open it — this is the
+    // case that had no way in when the menu was gated on declare alone.
+    it('opens the overflow menu for a stack exposing only attach, without delete permission', async () => {
       setAttachOnly();
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-
-      setup();
-
-      expect(screen.getByRole('button', { name: /Attach to incident/ })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-    });
-
-    // Delete used to decide on its own whether there was a menu, which left declare unreachable.
-    it('opens the overflow menu for declare even when the user cannot delete', async () => {
-      setIrmAvailable(true);
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       const { user } = setup();
       await user.click(screen.getByRole('button', { name: 'More actions' }));
 
-      expect(await screen.findByRole('menuitem', { name: 'Declare incident' })).toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+
+    // The case the old attach-only test was really protecting: nothing to show, so no trigger.
+    it('offers no overflow menu at all without IRM and without delete permission', () => {
+      setIrmAvailable(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      setup();
+
+      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
     });
   });
 
