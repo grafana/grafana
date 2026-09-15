@@ -5,9 +5,9 @@
     "mode": "dark",
     "background": {
       "canvas": "palette.ink950",
-      "page": "palette.ink900",
-      "primary": "palette.ink850",
-      "secondary": "palette.ink750",
+      "primary": "palette.ink900",
+      "secondary": "palette.ink850",
+      "tertiary": "palette.ink750",
       "elevated": "palette.ink750"
     },
     "primary": {
