@@ -61,7 +61,7 @@ jobs:
 
       - name: "Get Socket API token from Vault"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@e46fe1e9a2bf9e618bcf8d8d32f3a7381b45c06d # get-vault-secrets/v2.0.0
+        uses: grafana/shared-workflows/actions/get-vault-secrets@2e3743a1f8abfd3e921e53a7726ec0744c11bb01 # get-vault-secrets/v2.0.1
         with:
           common_secrets: |
             SOCKET_API_TOKEN=socket:SOCKET_API_KEY
