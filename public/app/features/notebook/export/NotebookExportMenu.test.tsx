@@ -7,17 +7,11 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
 
 import { NotebookExportMenu } from './NotebookExportMenu';
-import { openCursorPromptDeeplink } from './cursor';
 import { downloadMarkdown } from './downloadMarkdown';
 
 jest.mock('./downloadMarkdown', () => ({ downloadMarkdown: jest.fn() }));
-jest.mock('./cursor', () => ({
-  ...jest.requireActual('./cursor'),
-  openCursorPromptDeeplink: jest.fn(),
-}));
 
 const mockDownloadMarkdown = jest.mocked(downloadMarkdown);
-const mockOpenCursor = jest.mocked(openCursorPromptDeeplink);
 
 function buildSpec(): NotebookSpec {
   return {
@@ -71,12 +65,11 @@ describe('NotebookExportMenu', () => {
     config.appUrl = originalAppUrl;
   });
 
-  it('offers the three export actions', () => {
+  it('offers the export actions', () => {
     setup(async () => buildSpec());
 
     expect(screen.getByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
   });
 
   it('copies the notebook as markdown', async () => {
@@ -98,17 +91,6 @@ describe('NotebookExportMenu', () => {
     await waitFor(() => {
       expect(mockDownloadMarkdown).toHaveBeenCalledWith(expect.stringContaining('Findings'), 'Q2 latency regression');
     });
-  });
-
-  it('hands Cursor the notebook without its link line', async () => {
-    const { user } = setup(async () => buildSpec());
-
-    await user.click(screen.getByRole('menuitem', { name: 'Open in Cursor' }));
-
-    await waitFor(() => {
-      expect(mockOpenCursor).toHaveBeenCalledTimes(1);
-    });
-    expect(mockOpenCursor.mock.calls[0][0]).not.toContain('Open in Grafana');
   });
 
   it('reports a failed copy instead of claiming success', async () => {

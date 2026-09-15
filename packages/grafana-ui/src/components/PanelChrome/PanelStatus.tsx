@@ -128,6 +128,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
         size="sm"
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
+        onClick={onInspect}
       />
     </Tooltip>
   );
