@@ -193,12 +193,13 @@ func (b *bleveIndex) hitsToFieldValues(
 		if schema.includeResourceVersion {
 			value, ok, err := searchHitFieldValue(match, resource.SEARCH_FIELD_RV)
 			if err != nil {
-				return nil, nil, fmt.Errorf("row %d resource version: %w", rowIndex, err)
-			}
-			if ok && value != nil {
+				b.logger.Debug("ignoring invalid resource version in search result", "resource", match.ID, "error", err)
+			} else if ok && value != nil {
 				row.ResourceVersion, err = searchResultInt64(value)
 				if err != nil {
-					return nil, nil, fmt.Errorf("row %d resource version: %w", rowIndex, err)
+					// Zero already means the index did not provide a resource version.
+					row.ResourceVersion = 0
+					b.logger.Debug("ignoring invalid resource version in search result", "resource", match.ID, "error", err)
 				}
 			}
 		}
@@ -206,7 +207,11 @@ func (b *bleveIndex) hitsToFieldValues(
 		for fieldIndex, definition := range schema.definitions {
 			value, ok, err := searchHitFieldValue(match, definition.Name)
 			if err != nil {
-				return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
+				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
+					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
+				}
+				// Table results ignore legacy ID conversion errors, so keep that compatibility.
+				b.logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
 			}
 			if !ok || value == nil {
 				continue
