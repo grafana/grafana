@@ -332,6 +332,26 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.state.undoStack).toHaveLength(0);
     });
+
+    it('routes a multi-row delete through RowItems and batches it into a single undo entry', () => {
+      const { sidebar, row1, row2 } = setupWithTwoRows();
+
+      row1.createMultiSelectedElement([row1, row2]).onDelete();
+
+      // Two row deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
+    });
+
+    it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {
+      const { sidebar, tab1, tab2 } = setupWithTwoTabs();
+
+      tab1.createMultiSelectedElement([tab1, tab2]).onDelete();
+
+      // Two tab deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
   });
 
   it('clone should preserve the outline collapsed state', () => {
