@@ -7,12 +7,12 @@ import { reportInteraction } from '@grafana/runtime';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../LogMessageAnsi';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { HighlightedLogRenderer } from './HighlightedLogRenderer';
 import { getStyles } from './LogLine';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
-import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 interface Props {
   log: LogListModel;

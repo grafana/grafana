@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
@@ -28,7 +29,6 @@ import { useLogListContext } from './LogListContext';
 import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
 import { type LogListModel } from './processing';
-import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;
