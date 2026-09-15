@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type evalAppliedInfo struct {
@@ -861,6 +863,26 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 								grafana_alerting_plugin_origin_rules{org="%[1]d",origin="plugin/grafana-slo-app"} 2
 								grafana_alerting_plugin_origin_rules{org="%[2]d",origin="plugin/other-app"} 1
 				`, firstOrgID, secondOrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("it should sanitize control characters and truncate an overlong origin value", func(t *testing.T) {
+			dirtyOrigin := "plugin/\x00\x1fweird\tname" + strings.Repeat("x", maxPluginOriginLabelLen)
+			alertRuleDirty := models.RuleGen.With(
+				models.RuleGen.WithOrgID(firstOrgID),
+				models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, dirtyOrigin),
+			).GenerateRef()
+
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleDirty})
+
+			expectedOrigin := util.TruncateUTF8("plugin/weirdname"+strings.Repeat("x", maxPluginOriginLabelLen), maxPluginOriginLabelLen)
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_plugin_origin_rules The number of alert rules created by a plugin, by origin.
+								# TYPE grafana_alerting_plugin_origin_rules gauge
+								grafana_alerting_plugin_origin_rules{org="%[1]d",origin="%[2]s"} 1
+				`, alertRuleDirty.OrgID, expectedOrigin)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
 			require.NoError(t, err)

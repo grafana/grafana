@@ -4,10 +4,28 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
+	"strings"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+// maxPluginOriginLabelLen is an arbitrary cap, not a Prometheus limit (label values
+// have none). Real values are short (e.g. "plugin/grafana-slo-app"); this just keeps
+// an unvalidated user-set label from growing unbounded.
+const maxPluginOriginLabelLen = 64
+
+func sanitizePluginOriginLabel(origin string) string {
+	origin = strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, origin)
+	return util.TruncateUTF8(origin, maxPluginOriginLabelLen)
+}
 
 // hashUIDs returns a fnv64 hash of the UIDs for all alert rules.
 // The order of the alert rules does not matter as hashUIDs sorts
@@ -101,7 +119,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			orgsRulesPrometheusImported[rule.OrgID][state]++
 		}
 
-		if origin := rule.Labels[models.PluginGrafanaOriginLabel]; origin != "" {
+		if origin := sanitizePluginOriginLabel(rule.Labels[models.PluginGrafanaOriginLabel]); origin != "" {
 			if orgsRulesByOrigin[rule.OrgID] == nil {
 				orgsRulesByOrigin[rule.OrgID] = make(map[string]int64)
 			}
