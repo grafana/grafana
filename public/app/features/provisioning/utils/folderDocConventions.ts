@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { joinPath, splitPath } from '../components/utils/path';
+
 /**
  * Recognized folder documentation conventions, ordered the way GitHub surfaces
  * them as tabs above a repository's README: README, Contributing, Security.
@@ -73,17 +75,11 @@ export function getDocTabLabel(doc: FolderDoc): string {
  * affordance and the other tabs stay reachable together.
  */
 export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDoc[] {
-  const dir = stripTrailingSlashes(sourceDir);
+  const dir = sourceDir.replace(/\/+$/, '');
   const inDir = filePaths
-    .map((path) => {
-      const slash = path.lastIndexOf('/');
-      return {
-        path,
-        dir: slash >= 0 ? path.slice(0, slash) : '',
-        fileName: slash >= 0 ? path.slice(slash + 1) : path,
-      };
-    })
-    .filter((file) => file.dir === dir);
+    .map((path) => ({ path, ...splitPath(path) }))
+    .filter((file) => file.directory === dir)
+    .map(({ path, filename }) => ({ path, fileName: filename }));
 
   const docs: FolderDoc[] = [];
   const usedPaths = new Set<string>();
@@ -108,8 +104,11 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
   }
 
   if (!docs.some((doc) => doc.key === README_CONVENTION.key)) {
-    const path = dir ? `${dir}/${README_CONVENTION.fileName}` : README_CONVENTION.fileName;
-    docs.unshift({ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName });
+    docs.unshift({
+      key: README_CONVENTION.key,
+      path: joinPath(dir, README_CONVENTION.fileName),
+      fileName: README_CONVENTION.fileName,
+    });
   }
 
   return docs;
@@ -123,8 +122,4 @@ export function isMarkdownFile(fileName: string): boolean {
 function stripMarkdownExtension(fileName: string): string {
   // A file literally named `.md` would strip to nothing; keep the raw name then.
   return fileName.replace(/\.md$/i, '') || fileName;
-}
-
-function stripTrailingSlashes(value: string): string {
-  return value.replace(/\/+$/, '');
 }

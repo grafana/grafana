@@ -20,6 +20,7 @@ import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../util
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
+import { splitPath } from '../utils/path';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -100,30 +101,16 @@ function FolderReadmePanelContent({ folderUID }: Props) {
     }
   };
 
-  // The empty "Add README" state only makes sense for the README itself; another
-  // doc that fails to load is a load error, not a missing README.
-  const isReadmeContext = activeDoc.key === 'readme';
-
-  const editUrl = repository
-    ? getRepoEditFileUrl({
-        repoType: repository.type,
-        url: repository.url,
-        branch: repository.branch,
-        filePath: activeDoc.path,
-        pathPrefix: repository.path,
-      })
-    : undefined;
-
-  const newFileUrl = repository
-    ? getRepoNewFileUrl({
-        repoType: repository.type,
-        url: repository.url,
-        branch: repository.branch,
-        filePath: activeDoc.path,
-        pathPrefix: repository.path,
-        template: buildReadmeTemplate(folder?.spec?.title ?? ''),
-      })
-    : undefined;
+  const hostFile = repository && {
+    repoType: repository.type,
+    url: repository.url,
+    branch: repository.branch,
+    filePath: activeDoc.path,
+    pathPrefix: repository.path,
+  };
+  const editUrl = hostFile && getRepoEditFileUrl(hostFile);
+  const newFileUrl =
+    hostFile && getRepoNewFileUrl({ ...hostFile, template: buildReadmeTemplate(folder?.spec?.title ?? '') });
 
   return (
     <section
@@ -166,9 +153,8 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           status={isDiscovering ? 'loading' : status}
           markdownContent={markdownContent}
           repository={repository}
-          readmePath={activeDoc.path}
+          doc={activeDoc}
           newFileUrl={newFileUrl}
-          isReadmeContext={isReadmeContext}
           refetch={refetch}
           syncFinished={syncFinished}
         />
@@ -181,23 +167,13 @@ interface ReadmeBodyProps {
   status: FolderReadmeStatus;
   markdownContent: string | undefined;
   repository: RepositoryView | undefined;
-  readmePath: string;
+  doc: FolderDoc;
   newFileUrl: string | undefined;
-  isReadmeContext: boolean;
   refetch: () => void;
   syncFinished: number | undefined;
 }
 
-function ReadmeBody({
-  status,
-  markdownContent,
-  repository,
-  readmePath,
-  newFileUrl,
-  isReadmeContext,
-  refetch,
-  syncFinished,
-}: ReadmeBodyProps) {
+function ReadmeBody({ status, markdownContent, repository, doc, newFileUrl, refetch, syncFinished }: ReadmeBodyProps) {
   if (status === 'loading' || !repository) {
     return (
       <Stack justifyContent="center">
@@ -215,7 +191,7 @@ function ReadmeBody({
           key={repository.name}
           markdown={markdownContent}
           repository={repository}
-          baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
+          baseDirInRepo={getDocBaseDir(repository.path, doc.path)}
           repositoryType={repository.type}
           syncFinished={syncFinished}
         />
@@ -225,8 +201,9 @@ function ReadmeBody({
         </Text>
       );
     case 'missing':
-      // A recognized doc that 404s is a load failure, not a missing README.
-      return isReadmeContext ? (
+      // The "Add README" prompt only makes sense for the README itself; any other
+      // doc came from the file listing, so a 404 is a load failure.
+      return doc.key === 'readme' ? (
         <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />
       ) : (
         <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />
@@ -370,13 +347,11 @@ function RenderedMarkdown({
 
 /**
  * The doc's containing directory inside the host repo:
- *   `{repository.path}/{dirname(readmePath)}` with all empty segments dropped.
+ *   `{repository.path}/{dirname(docPath)}` with all empty segments dropped.
  * Used as the base for resolving relative links inside the markdown.
  */
-function getReadmeBaseDir(repositoryPath: string | undefined, readmePath: string): string {
-  const lastSlash = readmePath.lastIndexOf('/');
-  const readmeDir = lastSlash >= 0 ? readmePath.slice(0, lastSlash) : '';
-  return [repositoryPath ?? '', readmeDir].filter(Boolean).join('/');
+function getDocBaseDir(repositoryPath: string | undefined, docPath: string): string {
+  return [repositoryPath ?? '', splitPath(docPath).directory].filter(Boolean).join('/');
 }
 
 function AddReadmeEmptyState({

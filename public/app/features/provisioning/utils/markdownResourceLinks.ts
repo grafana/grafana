@@ -1,5 +1,6 @@
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
+import { splitPath } from '../components/utils/path';
 import { FOLDER_METADATA_FILE } from '../constants';
 
 import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
@@ -69,16 +70,14 @@ export function createGrafanaLinkResolver(
  * the caller falls back to the host link.
  */
 function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: string): string | undefined {
-  const lastSlash = path.lastIndexOf('/');
-  const dir = lastSlash >= 0 ? path.slice(0, lastSlash) : '';
-  const fileName = path.slice(lastSlash + 1);
+  const { directory, filename } = splitPath(path);
 
-  const folder = byPath.get(dir);
+  const folder = byPath.get(directory);
   if (folder?.resource !== resourceKindInfos.folder.resource || !folder.name) {
     return undefined;
   }
 
-  return `${resourceKindInfos.folder.getRoute(folder.name)}?${FOLDER_DOC_TAB_PARAM}=${encodeURIComponent(fileName)}`;
+  return `${resourceKindInfos.folder.getRoute(folder.name)}?${FOLDER_DOC_TAB_PARAM}=${encodeURIComponent(filename)}`;
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {
