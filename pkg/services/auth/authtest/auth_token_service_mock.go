@@ -285,6 +285,36 @@ func (_m *MockUserAuthTokenService) LookupToken(ctx context.Context, unhashedTok
 	return r0, r1
 }
 
+// LookupTokenForOAuth provides a mock function with given fields: ctx, unhashedToken
+func (_m *MockUserAuthTokenService) LookupTokenForOAuth(ctx context.Context, unhashedToken string) (*auth.SessionTokenOAuthInfo, error) {
+	ret := _m.Called(ctx, unhashedToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LookupTokenForOAuth")
+	}
+
+	var r0 *auth.SessionTokenOAuthInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*auth.SessionTokenOAuthInfo, error)); ok {
+		return rf(ctx, unhashedToken)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *auth.SessionTokenOAuthInfo); ok {
+		r0 = rf(ctx, unhashedToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*auth.SessionTokenOAuthInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, unhashedToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RevokeAllUserTokens provides a mock function with given fields: ctx, userID
 func (_m *MockUserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userID int64) error {
 	ret := _m.Called(ctx, userID)
