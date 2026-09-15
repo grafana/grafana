@@ -149,6 +149,23 @@ func filterSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	return req
 }
 
+func selectorsSupportedBySearch(req *resourcepb.ListRequest) bool {
+	if req == nil || req.Options == nil {
+		return false
+	}
+	for _, field := range req.Options.Fields {
+		if field == nil || (field.Operator != "=" && field.Operator != "==") || field.Key == "metadata.namespace" {
+			return false
+		}
+	}
+	for _, label := range req.Options.Labels {
+		if label == nil || !indexableSelectorOperator(label.Operator) {
+			return false
+		}
+	}
+	return true
+}
+
 // indexableSelectorOperator reports whether requirementQuery can turn the operator
 // into an index query. A label selector may also carry !=, key and !key.
 func indexableSelectorOperator(op string) bool {
@@ -160,8 +177,19 @@ func indexableSelectorOperator(op string) bool {
 	}
 }
 
+type SearchBackedListConfig struct {
+	AllowedResources map[string]bool
+}
+
+func (c SearchBackedListConfig) Allowed(group, resource string) bool {
+	return c.AllowedResources[group+"/"+resource]
+}
+
 func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
+		return false
+	}
+	if req.KeysOnly {
 		return false
 	}
 	// An index covers one namespace, so a cross-namespace list stays on the store
@@ -169,7 +197,8 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	if req.Options.Key.Namespace == "" {
 		return false
 	}
-	if len(req.Options.Fields) == 0 && len(req.Options.Labels) == 0 {
+	hasSelectors := len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0
+	if !hasSelectors && !s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) {
 		return false
 	}
 

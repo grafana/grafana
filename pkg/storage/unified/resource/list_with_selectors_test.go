@@ -20,6 +20,7 @@ import (
 func TestUseSelectorSearch(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
+		allowlist       []string
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -49,6 +50,36 @@ func TestUseSelectorSearch(t *testing.T) {
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when no selectors and resource is allowlisted": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when no selectors and resource is not allowlisted": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when keys only": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:   resourcepb.ListRequest_STORE,
+				KeysOnly: true,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -124,6 +155,11 @@ func TestUseSelectorSearch(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
+			allowed := make(map[string]bool, len(tc.allowlist))
+			for _, resource := range tc.allowlist {
+				allowed[resource] = true
+			}
+			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 
 			require.Equal(t, tc.expectedAllowed, s.useSelectorSearch(tc.req))
 		})
@@ -496,6 +532,30 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, []string{"s1"}, parsedToken.SearchAfter)
 		require.Equal(t, searchServerRv, parsedToken.ResourceVersion)
 	})
+}
+
+func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
+	s := createTestServer(searchClient, 1024)
+	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
+		"advisor.grafana.app/advisors": true,
+	}}
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: "nsx",
+			Group:     "advisor.grafana.app",
+			Resource:  "advisors",
+		}},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.NotNil(t, searchClient.last)
+	require.Empty(t, searchClient.last.Options.Fields)
+	require.Empty(t, searchClient.last.Options.Labels)
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
