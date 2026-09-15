@@ -120,6 +120,10 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "height": {
+      "md": 3.5,
+      "lg": 4.5
+    },
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"
