@@ -87,6 +87,42 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * Controls whether this option is offered in the "Add override property" picker, based on the
+   * override editor context. Distinct from `showIf`, which is evaluated against the *default*
+   * field config and so cannot decide what a per-field override may set.
+   *
+   * Return `false` to hide the option, `true` to offer it. The return type deliberately excludes
+   * `undefined`, unlike `showIf`, so a predicate cannot fall off the end and hide the option by
+   * accident. At runtime only an explicit `false` hides, so an untyped plugin that returns nothing
+   * still has the option offered.
+   *
+   * Condition on `context.options`. The context also carries `fieldConfig` for editors that need
+   * it, but reading the defaults here reintroduces the problem `showIf` has: an override rule can
+   * change the value you read, so the answer would not hold for the fields the rule matches.
+   * `context.data` is scoped to the rule's matcher, so two rules on one panel can be offered
+   * different properties.
+   *
+   * @example
+   * `context.options` is typed from the second generic of `SetFieldConfigOptionsArgs`, which
+   * `useFieldConfig` fills in from the panel's own options type. A field config built in a helper
+   * has to pass that generic through, or `context.options` stays `unknown`:
+   * ```ts
+   * function getMyFieldConfig(): SetFieldConfigOptionsArgs<MyFieldConfig, MyPanelOptions> {
+   *   return {
+   *     useCustomConfig: (builder) => {
+   *       builder.addSliderInput({
+   *         path: 'lineWidth',
+   *         name: 'Line width',
+   *         showIfOverride: (context) => context.options?.layout !== 'bars',
+   *       });
+   *     },
+   *   };
+   * }
+   * ```
+   */
+  showIfOverride?(context: StandardEditorContext<TContextOptions>): boolean;
 }
 
 export interface FieldConfigPropertyItem<
@@ -106,6 +142,13 @@ export interface FieldConfigPropertyItem<
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * Controls whether this option is offered in the "Add override property" picker, based on the
+   * override editor context. Returning `false` only removes it from the picker - a rule that
+   * already sets the property still renders and keeps its value. Only an explicit `false` hides.
+   */
+  showIfOverride?(context: StandardEditorContext<TContextOptions>): boolean;
 
   /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
