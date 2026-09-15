@@ -107,4 +107,16 @@ describe('V2 Transformers', () => {
 
     expect(dashV2).toEqual(defaultDashboard.spec);
   });
+
+  it('round-trips an explicit stickyControls: false through the scene', () => {
+    const dash = {
+      ...defaultDashboard,
+      spec: { ...defaultDashboard.spec, stickyControls: false },
+    };
+
+    const scene = transformSaveModelSchemaV2ToScene(dash);
+    expect(scene.state.stickyControls).toBe(false);
+
+    expect(transformSceneToSaveModelSchemaV2(scene).stickyControls).toBe(false);
+  });
 });

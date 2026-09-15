@@ -1329,6 +1329,11 @@ export interface Dashboard {
     userId: number;
   };
   /**
+   * When set to false, the dashboard controls (variables, time picker, links) scroll
+   * away with the dashboard instead of staying pinned below the header.
+   */
+  stickyControls?: boolean;
+  /**
    * Tags associated with dashboard.
    */
   tags?: Array<string>;

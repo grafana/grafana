@@ -1709,6 +1709,9 @@ export interface Spec {
 	liveNow?: boolean;
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: boolean;
+	// When set to false, the dashboard controls (variables, time picker, links) scroll
+	// away with the dashboard instead of staying pinned below the header.
+	stickyControls?: boolean;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -1729,6 +1732,7 @@ export const defaultSpec = (): Spec => ({
 	layout: defaultGridLayoutKind(),
 	links: [],
 	preload: false,
+	stickyControls: true,
 	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
 	title: "",

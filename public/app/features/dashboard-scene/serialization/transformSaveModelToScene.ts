@@ -413,6 +413,8 @@ export function createDashboardSceneFromDashboardModel(
       // persist an explicit `false` on the next save, pinning a dashboard that never expressed a
       // preference. New dashboards get a concrete value seeded at creation instead.
       preload: dto.preload,
+      // Same rule: absence must stay undefined (= sticky), not become an explicit value.
+      stickyControls: dto.stickyControls,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,
