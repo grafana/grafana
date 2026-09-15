@@ -10,8 +10,7 @@ import { type PostableRuleDTO, type PostableRulerRuleGroupDTO } from 'app/types/
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
-import { isCloudRuleIdentifier } from '../../utils/rule-identifier';
-import { isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 
 // rule-scoped actions
 // TOOD The interval field only make sense when adding a rule to a new rule group.

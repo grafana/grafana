@@ -10,7 +10,7 @@ import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { formValuesFromExistingRule } from '../../rule-editor/formDefaults';
 import { stringifyErrorLike } from '../../utils/misc';
-import { tryParse } from '../../utils/rule-identifier';
+import { tryParse } from '../../utils/rule-id';
 import { rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';

@@ -9,8 +9,7 @@ import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRu
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
-import { getRuleIdFromPathname } from '../utils/rule-id';
-import { tryParse } from '../utils/rule-identifier';
+import { getRuleIdFromPathname, tryParse } from '../utils/rule-id';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';

@@ -17,8 +17,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getDataSourceByName } from '../utils/datasource';
 import { groupIdentifier } from '../utils/groupIdentifier';
 import * as ruleId from '../utils/rule-id';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule-identifier';
-import { isGrafanaRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 import { attachRulerRulesToCombinedRules, combineRulesNamespace } from './useCombinedRuleNamespaces';
 import { stringifyFolder, useFolder } from './useFolder';

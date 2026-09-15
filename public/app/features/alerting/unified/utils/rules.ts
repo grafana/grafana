@@ -5,11 +5,13 @@ import { AlertState } from '@grafana/data';
 import {
   type Alert,
   type AlertingRule,
+  type CloudRuleIdentifier,
   type CombinedRule,
   type CombinedRuleGroup,
   type CombinedRuleWithLocation,
   type EditableRuleIdentifier,
   type GrafanaRuleIdentifier,
+  type PrometheusRuleIdentifier,
   type RecordingRule,
   type Rule,
   type RuleGroupIdentifier,
@@ -49,7 +51,6 @@ import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG }
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { type AsyncRequestState } from './redux';
-import { isCloudRuleIdentifier } from './rule-identifier';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
@@ -152,6 +153,20 @@ export function alertInstanceKey(alert: Alert): string {
 
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
+}
+
+/**
+ * A Ruler identifier carries the hash of the rule as the Ruler API returned it. Kept here rather
+ * than with the other rule type guards in `utils/rules.ts`, so that telling two identifiers apart
+ * doesn't pull in everything that module reaches.
+ */
+export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is CloudRuleIdentifier {
+  return 'rulerRuleHash' in identifier;
+}
+
+/** As above, for identifiers built from the Prometheus API rather than the Ruler one. */
+export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
+  return 'ruleHash' in identifier;
 }
 
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
