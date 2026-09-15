@@ -123,6 +123,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 // ensureSearchFields makes bleve load every stored field when the caller did not
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
+//
+// It also adds the resource version, which every result carries regardless of the
+// requested fields. Both happen here rather than in toBleveSearchRequest because
+// Search snapshots the response field list before calling this, so what is added
+// is loaded without becoming a response column.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -130,6 +135,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 			return err
 		}
 		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+		return nil
+	}
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
 	}
 	return nil
 }
@@ -310,7 +319,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -496,7 +505,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 
 	var firstRes *bleve.SearchResult
 	for {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}

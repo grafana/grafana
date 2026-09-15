@@ -532,7 +532,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 				Values:   []string{name},
 			}},
 		},
-		Limit: 1,
+		Fields:       []string{resource.SEARCH_FIELD_NAME}, // Avoid default fields; only TotalHits is used.
+		Limit:        1,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err != nil {
 		return fmt.Errorf("check library panel connections: %w", err)

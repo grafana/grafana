@@ -3354,6 +3354,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5826,15 +5828,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Переместить {{typeName}}",
-      "panel-background": "Изменить фон панели",
-      "panel-description": "Изменить описание панели",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Изменения в панели",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Макс. повторений на строку",
       "panel-preset": "Применить предустановку панели",
       "panel-repeat-direction": "Повторение направления",
       "panel-repeat-variable": "Повторение панели по",
-      "panel-title": "Изменить заголовок панели",
+      "panel-title": "",
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "row-title": "Измените заголовок строки",
@@ -5860,7 +5862,7 @@
       "custom-grid": "Пользовательская сетка",
       "custom-grid-description": "Задайте расположение и размер каждой отдельной панели",
       "description": "Добавьте панель для визуализации данных",
-      "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <2>grafana.com</2>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "layout-default-hint": "Выбранный макет также будет использоваться по умолчанию для всех новых вкладок и строк. Вы можете изменить этот выбор позже в разделе «Настройки дашборда > Общие».",
@@ -6791,6 +6793,10 @@
       },
       "title-delete": "Удалить {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Очистить поиск",
       "no-transformations-found": "Преобразования не найдены",
@@ -6843,6 +6849,12 @@
     "view-panel": {
       "back-to-dashboard": "Назад в дашборд",
       "not-found": "Панель не найдена"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8745,6 +8757,16 @@
       "title-table": "Таблица",
       "title-traces": "Трассировки"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8796,7 +8818,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Ссылка",
-      "open-value-in": "Открыть значение в"
+      "open-value-in": "Открыть значение в",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9288,6 +9311,10 @@
       "aria-label-copy": "Копировать в буфер обмена",
       "attribute-plugin-promo": {
         "learn-more": "Подробнее"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability отображает визуальные планы выполнения, события ожидания и примеры запросов, помогая вам диагностировать проблемы за пределами трассировочных спанов.",
@@ -11554,11 +11581,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_few": "",
-        "stats-sources_many": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13301,9 +13324,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -16074,7 +16095,7 @@
       "confirmText-delete": "Удалить",
       "confirmText-disable-service-account": "Отключить служебную учетную запись",
       "placeholder-search-service-account-by-name": "Поиск служебной учетной записи по имени",
-      "sub-title": "Служебные учетные записи и их токены можно использовать для аутентификации в API Grafana Подробнее см. в нашей <2>документации</2></2>",
+      "sub-title": "Служебные учетные записи и их токены можно использовать для аутентификации в API Grafana Подробнее см. в нашей <2>документации</2>",
       "title-delete-service-account": "Удалить служебную учетную запись",
       "title-disable-service-account": "Отключение служебной учетной записи",
       "body-delete_one": "Действительно удалить {{serviceAccountName}} и {{count}} сопутствующий токен?",

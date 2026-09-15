@@ -46,6 +46,11 @@ const cloudRouterSection = "cloud_router"
 func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
+	pluginsURL := section.Key("plugins_url").MustString("")
+	if pluginsURL != "" {
+		return &remotePluginLoader{url: pluginsURL}, nil
+	}
+
 	apiserverURL := section.Key("apiserver_url").MustString("")
 	if apiserverURL == "" {
 		return nil, nil

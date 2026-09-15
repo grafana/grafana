@@ -12,6 +12,7 @@ import (
 	"maps"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -103,16 +104,12 @@ type kvStorageBackend struct {
 
 	rvManager *rvmanager.ResourceVersionManager
 
-	// leaseManager, when non-nil, is used to serialize writes to the same
-	// resource via per-resource leases. Ignored when using `rvManager`.
+	// leaseManager serializes writes to the same resource via per-resource leases.
 	leaseManager *lease.Manager
 
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
 	// lease package default.
 	leaseTTL time.Duration
-
-	// leaseAutoRenew enables background auto-renewal of write leases.
-	leaseAutoRenew bool
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	dbKeepAlive any
@@ -223,9 +220,9 @@ type KVBackend interface {
 	// opening a second connection.
 	KV() KV
 
-	// LeaseManager returns the lease manager used by this backend, or nil
-	// if leases are disabled. Exposed so other subsystems can share the
-	// same manager and avoid running a second heartbeat loop.
+	// LeaseManager returns the lease manager used by this backend. It is never nil.
+	// Exposed so other subsystems can share the same manager and avoid running a
+	// second heartbeat loop.
 	LeaseManager() *lease.Manager
 }
 
@@ -299,21 +296,13 @@ type KVBackendOptions struct {
 
 	DashboardVersionsToKeep int
 
-	// EnableKVLeases enables per-resource leases for serializing writes.
-	EnableKVLeases bool
-
-	// Holder identifies this process for lease ownership. Required when
-	// EnableKVLeases is true.
+	// Holder identifies this process for lease ownership. When empty, the
+	// backend generates a process-specific holder.
 	Holder string
 
 	// LeaseTTL overrides the per-resource write lease TTL. Zero uses the lease
-	// package default (10s). Only effective when EnableKVLeases is true.
+	// package default (10s).
 	LeaseTTL time.Duration
-
-	// LeaseAutoRenew enables background auto-renewal of the write lease so it
-	// is not lost while a slow write is still in flight. Only effective when
-	// EnableKVLeases is true.
-	LeaseAutoRenew bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -323,6 +312,8 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
+		Holder:                  newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                cfg.KVLeaseTTL,
 		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 		EventRetentionPeriod:    cfg.EventRetentionPeriod,
 		EventPruningInterval:    cfg.EventPruningInterval,
@@ -344,6 +335,17 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
 	}
+}
+
+func newLeaseHolder(instanceID string) string {
+	if instanceID == "" {
+		hostname, err := os.Hostname()
+		if err != nil || hostname == "" {
+			hostname = "unknown"
+		}
+		instanceID = hostname
+	}
+	return fmt.Sprintf("%s-%s", instanceID, uuid.NewString())
 }
 
 var (
@@ -402,14 +404,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	metrics := newKVBackendMetrics(opts.Reg)
 
-	var leaseManager *lease.Manager
-	if opts.EnableKVLeases {
-		if opts.Holder == "" {
-			cancel()
-			return nil, errors.New("holder is required when enable_kv_leases is true")
-		}
-		leaseManager = lease.NewManager(kv, opts.Holder, "storage", opts.Reg)
+	holder := opts.Holder
+	if holder == "" {
+		holder = newLeaseHolder("")
 	}
+	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -432,7 +431,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		rvManager:               opts.RvManager,
 		leaseManager:            leaseManager,
 		leaseTTL:                opts.LeaseTTL,
-		leaseAutoRenew:          opts.LeaseAutoRenew,
 		dbKeepAlive:             opts.DBKeepAlive,
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
@@ -446,6 +444,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
+		leaseManager.Stop()
 		cancel()
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -456,6 +455,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
 		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			// The pruner is already running, so it has to be stopped here.
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
@@ -467,6 +467,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to start tenant watcher: %w", err)
 		}
@@ -518,9 +519,7 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
-	if k.leaseManager != nil {
-		k.leaseManager.Stop()
-	}
+	k.leaseManager.Stop()
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
 	return nil
@@ -663,8 +662,7 @@ func (b *kvStorageBackend) KV() KV {
 	return b.kv
 }
 
-// LeaseManager returns the lease manager owned by this backend, or nil
-// if leases are disabled. See KVBackend.LeaseManager.
+// LeaseManager returns the lease manager owned by this backend. See KVBackend.LeaseManager.
 func (b *kvStorageBackend) LeaseManager() *lease.Manager {
 	return b.leaseManager
 }
@@ -922,21 +920,14 @@ func conflictError(event WriteEvent, message string) error {
 }
 
 // maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
-// for this resource if leases are enabled. It returns:
+// for this resource. It returns:
 //
 //   - a context derived from ctx that is cancelled if the lease is lost
 //     (e.g. its TTL expires while the write is in flight);
-//   - a boolean indicating whether a lease was acquired;
+//   - a boolean indicating that a lease was acquired;
 //   - a release closure to be deferred — it stops the watcher goroutine and
 //     releases the lease.
-//
-// When leases are not active, it returns ctx unchanged and a no-op release.
 func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
-	leasesActive := k.leaseManager != nil
-	if !leasesActive {
-		return ctx, false, func() {}, nil
-	}
-
 	name := event.Key.Group + "/" + event.Key.Resource + "/" +
 		event.Key.Namespace + "/" + event.Key.Name
 	if event.Key.Namespace == "" {
@@ -947,10 +938,6 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 	if k.leaseTTL > 0 {
 		acquireOpts = append(acquireOpts, lease.WithTTL(k.leaseTTL))
 	}
-	if k.leaseAutoRenew {
-		acquireOpts = append(acquireOpts, lease.WithAutoRenew())
-	}
-
 	l, err := k.leaseManager.Acquire(ctx, name, acquireOpts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
@@ -1487,7 +1474,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		// Only use token namespace for cross-namespace queries (when request namespace is empty)
+		if !continueTokenMatchesListRequest(token, req) {
+			return 0, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
+		}
+		// Only use token namespace for cross-namespace queries (when request namespace is empty).
 		if req.Options.Key.Namespace == "" {
 			listOptions.ContinueNamespace = token.Namespace
 		}
@@ -1510,7 +1500,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
 	defer it.stop()
 
 	if err := cb(it); err != nil {
@@ -1520,8 +1510,21 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListIterator {
 	objs := batchGetResourceKeys(ctx, ds, keys)
 	if keysOnly {
 		// The data key already carries namespace/name/rv/folder, so the value
@@ -1530,11 +1533,12 @@ func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKe
 	}
 	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: isCrossNamespace,
-		keysOnly:         keysOnly,
-		next:             next,
-		stopFn:           stopFn,
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
 	}
 }
 
@@ -1582,9 +1586,10 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 }
 
 type kvListIterator struct {
-	listRV           int64
-	isCrossNamespace bool
-	keysOnly         bool
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1641,9 +1646,12 @@ func (i *kvListIterator) ContinueToken() string {
 		Name:            i.nextDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
-	// Only store namespace in token for cross-namespace queries
-	if i.isCrossNamespace {
+	if i.includeTokenNamespace {
 		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	if i.keysOnly {
+		token.KeysOnly = true
+		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
 }

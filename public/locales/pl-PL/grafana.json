@@ -3354,6 +3354,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5826,15 +5828,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Przenieś {{typeName}}",
-      "panel-background": "Zmień tło panelu",
-      "panel-description": "Zmień opis panelu",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Zmiany panelu",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Maks. liczba powtórzeń na wiersz",
       "panel-preset": "Zastosuj ustawienia wstępne panelu",
       "panel-repeat-direction": "Powtórz kierunek",
       "panel-repeat-variable": "Powtórz panel wg",
-      "panel-title": "Zmień tytuł panelu",
+      "panel-title": "",
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "row-title": "Zmień tytuł wiersza",
@@ -6791,6 +6793,10 @@
       },
       "title-delete": "Usunąć: {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Wyczyść wyszukiwanie",
       "no-transformations-found": "Nie znaleziono transformacji",
@@ -6843,6 +6849,12 @@
     "view-panel": {
       "back-to-dashboard": "Wróć do pulpitu",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8745,6 +8757,16 @@
       "title-table": "Tabela",
       "title-traces": "Ślady"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8796,7 +8818,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Otwórz wartość w:"
+      "open-value-in": "Otwórz wartość w:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9288,6 +9311,10 @@
       "aria-label-copy": "Kopiuj do schowka",
       "attribute-plugin-promo": {
         "learn-more": "Dowiedz się więcej"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Obserwowalność bazy danych ujawnia wizualne plany wyjaśnień, zdarzenia oczekiwania i próbki zapytań, pomagając w diagnozowaniu problemów wykraczających poza zakresy śledzenia.",
@@ -11554,11 +11581,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_few": "",
-        "stats-sources_many": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13301,9 +13324,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
