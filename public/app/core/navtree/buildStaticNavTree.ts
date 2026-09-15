@@ -5,7 +5,6 @@ import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
-import { NavID } from './constants';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -17,13 +16,12 @@ import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
 import {
+  appendIntoSection,
   applyAppSubUrl,
   buildEntries,
-  findNavById,
   type NavEntryBuilder,
   pruneEmptyNavSections,
   sortNavTree,
-  updateNavById,
 } from './utils';
 
 /**
@@ -109,16 +107,13 @@ function applyRegisteredNavEntries(tree: NavModelItem[]): NavModelItem[] {
     if (built.length === 0) {
       return current;
     }
-    if (parentId === NavID.root) {
-      return [...current, ...built];
-    }
-    if (!findNavById(current, parentId)) {
+    const next = appendIntoSection(current, parentId, built);
+    if (!next) {
+      // A registered item naming a section that isn't there is a bug in the
+      // registering bundle, so say so rather than dropping it silently
       console.warn('[navtree] registered nav entry parent not found', parentId);
       return current;
     }
-    return updateNavById(current, parentId, (parent) => ({
-      ...parent,
-      children: [...(parent.children ?? []), ...built],
-    }));
+    return next;
   }, tree);
 }

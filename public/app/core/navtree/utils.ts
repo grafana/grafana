@@ -60,6 +60,29 @@ export function updateNavById(
 }
 
 /**
+ * Appends items into the children of the section with this id, or at the top
+ * level for NavID.root. Returns undefined when no such section exists, so the
+ * caller decides what that means — the registry skips the item, while the
+ * plugin nav builds the section from its shell. Returns a new tree.
+ */
+export function appendIntoSection(
+  tree: NavModelItem[],
+  parentId: string,
+  items: NavModelItem[]
+): NavModelItem[] | undefined {
+  if (parentId === NavID.root) {
+    return [...tree, ...items];
+  }
+  if (!findNavById(tree, parentId)) {
+    return undefined;
+  }
+  return updateNavById(tree, parentId, (parent) => ({
+    ...parent,
+    children: [...(parent.children ?? []), ...items],
+  }));
+}
+
+/**
  * Prefixes every absolute url in the tree with the app sub url, so individual
  * items are declared sub-url agnostic. Anchor-only and relative urls (Help's
  * `#`) are left alone. Keying off the leading slash is safe because the
