@@ -183,7 +183,7 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 
 // validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
 func validateManagedRouteName(name string) error {
-	if name = strings.TrimSpace(name); name == "" {
+	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("route name is required")
 	}
 	// Colon in names confuses RBAC. Make sure we do not allow that.

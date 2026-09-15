@@ -198,10 +198,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	// Iterate backwards to get the latest applied configs.
 	var configs []*models.HistoricAlertConfiguration
 	start := len(configsByOrg) - 1
-	end := start - limit
-	if end < 0 {
-		end = 0
-	}
+	end := max(start-limit, 0)
 
 	for i := start; i >= end; i-- {
 		if configsByOrg[i].LastApplied > 0 {

@@ -3285,6 +3285,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5702,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Pindahkan {{typeName}}",
-      "panel-background": "Ubah latar belakang panel",
-      "panel-description": "Ubah deskripsi panel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Perubahan panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-preset": "Terapkan preset panel",
       "panel-repeat-direction": "Ulangi arah",
       "panel-repeat-variable": "Panel diulang berdasarkan",
-      "panel-title": "Ubah judul panel",
+      "panel-title": "",
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
       "row-title": "Ubah judul baris",
@@ -6662,6 +6664,10 @@
       },
       "title-delete": "Hapus {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Hapus pencarian",
       "no-transformations-found": "Tidak ada transformasi yang ditemukan",
@@ -6711,6 +6717,12 @@
     "view-panel": {
       "back-to-dashboard": "Kembali ke dasbor",
       "not-found": "Panel tidak ditemukan"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7008,7 +7020,7 @@
     },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
-      "json-values-tooltip": "Berikan JSON dalam bentuk array objek, dengan setiap objek dapat memiliki sejumlah properti.<br/>Lihat < 4>dokumen kami</4> untuk informasi selengkapnya.",
+      "json-values-tooltip": "Berikan JSON dalam bentuk array objek, dengan setiap objek dapat memiliki sejumlah properti.<br/>Lihat <4>dokumen kami</4> untuk informasi selengkapnya.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Opsi pemilihan"
@@ -8598,6 +8610,16 @@
       "title-table": "Tabel",
       "title-traces": "Pelacakan"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8649,7 +8671,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Tautan",
-      "open-value-in": "Buka nilai di"
+      "open-value-in": "Buka nilai di",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9129,6 +9152,10 @@
       "aria-label-copy": "Salin ke papan klip",
       "attribute-plugin-promo": {
         "learn-more": "Pelajari lebih lanjut"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Observabilitas Database menampilkan rencana penjelasan visual, peristiwa tunggu, dan sampel kueri — membantu Anda mendiagnosis masalah di luar trace span.",
@@ -11341,8 +11368,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13028,9 +13054,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

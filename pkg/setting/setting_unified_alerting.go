@@ -396,7 +396,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
-		for _, peer := range strings.Split(peers, ",") {
+		for peer := range strings.SplitSeq(peers, ",") {
 			peer = strings.TrimSpace(peer)
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
@@ -509,10 +509,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MinInterval = uaMinInterval
 
-	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
-	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
-		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
-	}
+	uaCfg.DefaultRuleEvaluationInterval = max(uaMinInterval, DefaultRuleEvaluationInterval)
 
 	quotas := iniFile.Section("quota")
 	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
