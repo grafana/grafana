@@ -120,6 +120,21 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "table": {
+      "background": "palette.white",
+      "backgroundOnCanvas": "palette.neutral50",
+      "headerBackground": "palette.neutral150",
+      "headerBorder": "rgba(36, 41, 46, 0.12)",
+      "border": "rgba(36, 41, 46, 0.12)",
+      "rowStripedBackground": "palette.neutral100",
+      "rowHoverBackgroundSolid": "rgb(224, 224, 224)",
+      "rowHoverOverlay": "rgba(0, 0, 0, 0.12)",
+      "rowSelectedBackground": "#ffc434",
+      "rowSelectedHoverBackground": "rgb(242, 186, 49)",
+      "headerDraggingBackground": "rgb(216, 216, 215)",
+      "headerDragTargetBackground": "rgb(228, 228, 227)",
+      "cellSelectionBorder": "hsl(from palette.blue500 h s l / 0.15)"
+    },
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"
