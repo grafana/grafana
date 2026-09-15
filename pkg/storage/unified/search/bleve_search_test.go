@@ -3879,7 +3879,7 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	}
 	deletedRV := strconv.FormatInt(rvUpper, 10)
 	deleted := doc("deleted", rvUpper)
-	deleted.IsDeleted = ptr(true)
+	deleted.IsDeleted = new(true)
 	deleted.DeletedRV = &deletedRV
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
