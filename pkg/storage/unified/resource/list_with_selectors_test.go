@@ -64,12 +64,32 @@ func TestUseSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"true when store, labels only, and search client": {
+		"true when store, labels only, and enrolled resource": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
-					Labels: []*resourcepb.Requirement{{Key: "alerting.grafana.app/has-rules", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "dashboard.grafana.app", Resource: "dashboards"},
+					Labels: []*resourcepb.Requirement{{Key: "grafana.app/folder", Operator: "=", Values: []string{"fold1"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false for a resource not enrolled in search (variables)": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "dashboard.grafana.app", Resource: "variables"},
+					Labels: []*resourcepb.Requirement{{Key: "grafana.app/folder", Operator: "=", Values: []string{"bdczjitt91c00e"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true for a resource enrolled without search fields (folders)": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "folder.grafana.app", Resource: "folders"},
+					Labels: []*resourcepb.Requirement{{Key: "grafana.app/folder", Operator: "=", Values: []string{"fold1"}}},
 				},
 			},
 			expectedAllowed: true,
@@ -96,11 +116,11 @@ func TestUseSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"true when store, fields, and search client": {
+		"true when store, fields, and enrolled resource": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "dashboard.grafana.app", Resource: "dashboards"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},

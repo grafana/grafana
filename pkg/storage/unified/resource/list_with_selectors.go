@@ -3,9 +3,7 @@ package resource
 import (
 	"context"
 	"net/http"
-	"slices"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -177,9 +175,8 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
+	// A resource not enrolled in search has no populated index, so it must stay
+	// on the store scan rather than get an empty search-backed result.
 	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests()...)
-	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
-		return m.Group == req.Options.Key.Group
-	})
+	return ResourceEnrolledInSearch(req.Options.Key.Group, req.Options.Key.Resource)
 }
