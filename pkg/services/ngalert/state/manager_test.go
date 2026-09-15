@@ -2243,6 +2243,51 @@ func TestStaleResults(t *testing.T) {
 	})
 }
 
+func TestNoDataKeepLastDoesNotBlockMissingSeriesEviction(t *testing.T) {
+	ctx := context.Background()
+	clk := clock.NewMock()
+
+	cfg := state.ManagerCfg{
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: &state.FakeInstanceStore{},
+		Images:        &state.NoopImageService{},
+		Clock:         clk,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           log.New("ngalert.state.manager"),
+	}
+	st := state.NewManager(cfg, state.NewNoopPersister())
+
+	gen := models.RuleGen
+	rule := gen.With(
+		gen.WithFor(0),
+		gen.WithMissingSeriesEvalsToResolve(2),
+		gen.WithNoDataExecAs(models.KeepLast),
+	).GenerateRef()
+
+	const iterations = 8
+	for i := 0; i < iterations; i++ {
+		dataResult := eval.ResultGen(
+			eval.WithState(eval.Normal),
+			eval.WithEvaluatedAt(clk.Now()),
+			eval.WithLabels(data.Labels{"token": fmt.Sprintf("iteration-%d", i)}),
+		)()
+		_, err := st.ProcessEvalResults(ctx, clk.Now(), rule, eval.Results{dataResult}, nil, nil)
+		require.NoError(t, err)
+		clk.Add(time.Duration(rule.IntervalSeconds) * time.Second)
+
+		_, err = st.ProcessEvalResults(ctx, clk.Now(), rule, eval.Results{}, nil, nil)
+		require.NoError(t, err)
+		clk.Add(time.Duration(rule.IntervalSeconds) * time.Second)
+	}
+
+	currentStates := st.GetStatesForRuleUID(ctx, rule.OrgID, rule.UID)
+	require.Lenf(t, currentStates, 1,
+		"expected only the latest iteration's instance to remain, but cache kept growing: %d states for %d iterations",
+		len(currentStates), iterations)
+}
+
 func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
