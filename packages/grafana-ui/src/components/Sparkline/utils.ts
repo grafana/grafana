@@ -170,16 +170,31 @@ export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
   theme: GrafanaTheme2,
-  showHighlights?: boolean
+  showHighlights?: boolean,
+  enableHover?: boolean
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
 
-  builder.setCursor({
-    show: false,
-    x: false, // no crosshairs
-    y: false,
-  });
+  if (enableHover) {
+    // Interactive cursor: a vertical crosshair plus a focused point drawn on the
+    // line at the hovered index. No drag/zoom/select. focus.prox Infinity keeps the
+    // single series always focused so the tooltip shows across the full width.
+    builder.setCursor({
+      show: true,
+      x: true,
+      y: false,
+      drag: { x: false, y: false, setScale: false },
+      focus: { prox: Infinity },
+      points: { size: HIGHLIGHT_IDX_POINT_SIZE },
+    });
+  } else {
+    builder.setCursor({
+      show: false,
+      x: false, // no crosshairs
+      y: false,
+    });
+  }
 
   // X is the first field in the aligned frame
   const xField = dataFrame.fields[0];
@@ -238,7 +253,7 @@ export const prepareConfig = (
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
-    if (hasHighlightIndex) {
+    if (hasHighlightIndex || enableHover) {
       builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
     }
 
