@@ -1088,16 +1088,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		_, err = k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			if latestKey.Action != kv.DataActionDeleted {
-				return 0, ErrResourceAlreadyExists
-			}
+			return 0, ErrResourceAlreadyExists
 		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
 			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
 			// In compat mode the legacy `resource` table is the source of truth
