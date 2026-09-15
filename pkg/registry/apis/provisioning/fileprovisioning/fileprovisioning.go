@@ -4,6 +4,7 @@ package fileprovisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -58,10 +59,6 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 		return err
 	}
 
-	// Match Grafana's existing provisioning convention: environment variables
-	// can be embedded as $VAR or ${VAR}, including in secure values.
-	data = []byte(os.ExpandEnv(string(data)))
-
 	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
 	for document := 1; ; document++ {
 		var raw map[string]any
@@ -74,6 +71,11 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 		if len(raw) == 0 {
 			continue
 		}
+
+		// Expand environment variables after YAML parsing. Expanding the raw file
+		// first can inject newlines into block structure and corrupt multiline
+		// secrets such as PEM-encoded private keys.
+		expandEnvironment(raw)
 
 		kind, _ := raw["kind"].(string)
 		switch kind {
@@ -99,12 +101,33 @@ func provisionFile(ctx context.Context, filename string, client client.Provision
 	}
 }
 
+func expandEnvironment(value any) {
+	switch value := value.(type) {
+	case map[string]any:
+		for key, item := range value {
+			if text, ok := item.(string); ok {
+				value[key] = os.ExpandEnv(text)
+				continue
+			}
+			expandEnvironment(item)
+		}
+	case []any:
+		for i, item := range value {
+			if text, ok := item.(string); ok {
+				value[i] = os.ExpandEnv(text)
+				continue
+			}
+			expandEnvironment(item)
+		}
+	}
+}
+
 func marshalInto(raw map[string]any, out any) error {
-	data, err := yaml.Marshal(raw)
+	data, err := json.Marshal(raw)
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(data, out)
+	return json.Unmarshal(data, out)
 }
 
 func applyRepository(ctx context.Context, client client.ProvisioningV0alpha1Interface, desired *provisioning.Repository) error {
@@ -124,8 +147,8 @@ func applyRepository(ctx context.Context, client client.ProvisioningV0alpha1Inte
 	if err != nil {
 		return err
 	}
-	desired.ResourceVersion = existing.ResourceVersion
-	desired.UID = existing.UID
+	desired.ObjectMeta = *existing.ObjectMeta.DeepCopy()
+	desired.Namespace = namespace
 	_, err = client.Repositories(namespace).Update(ctx, desired, metav1.UpdateOptions{})
 	return err
 }
@@ -147,8 +170,8 @@ func applyConnection(ctx context.Context, client client.ProvisioningV0alpha1Inte
 	if err != nil {
 		return err
 	}
-	desired.ResourceVersion = existing.ResourceVersion
-	desired.UID = existing.UID
+	desired.ObjectMeta = *existing.ObjectMeta.DeepCopy()
+	desired.Namespace = namespace
 	_, err = client.Connections(namespace).Update(ctx, desired, metav1.UpdateOptions{})
 	return err
 }
