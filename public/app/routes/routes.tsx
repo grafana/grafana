@@ -92,9 +92,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: NotebookPageComponent,
     },
     {
-      // notebooks:read to read one, notebooks:write for the blank route above — notebooks only have
-      // reader and writer fixed roles. The feature flag is enforced inside the pages instead, since
-      // getAppRoutes cannot use hooks.
+      // notebooks:read to read one, notebooks:create for the blank route above. The feature flag is
+      // enforced inside the pages instead, since getAppRoutes cannot use hooks.
       path: NOTEBOOKS_BASE_URL,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
       component: SafeDynamicImport(
