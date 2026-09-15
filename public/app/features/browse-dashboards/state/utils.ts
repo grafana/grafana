@@ -34,6 +34,25 @@ export function findItem(
   return undefined;
 }
 
+/**
+ * Yields an item's loaded ancestor folders, nearest first, stopping at the first one not in state.
+ */
+export function* ancestorsOf(
+  item: Pick<DashboardViewItem, 'parentUID'>,
+  rootItems: DashboardViewItem[],
+  childrenByUID: BrowseDashboardsState['childrenByParentUID']
+): Generator<DashboardViewItem> {
+  let parentUID = item.parentUID;
+  while (parentUID) {
+    const parent = findItem(rootItems, childrenByUID, 'folder', parentUID);
+    if (!parent) {
+      return;
+    }
+    yield parent;
+    parentUID = parent.parentUID;
+  }
+}
+
 export function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
   return new Array(amount).fill(null).map((_, index) => {
     return {

@@ -3,18 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
-import { getSelectedItemRefs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
+import { type SelectedItemRef, getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { type DashboardViewItemKind } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
 import { findItem } from '../../browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from '../../browse-dashboards/types';
 
-// It is used to determine if the selected items are provisioned or not, which is currently missing from the search API
+// Search results don't carry provisioning status yet, so resolve it per selected item.
 export function useSelectionProvisioningStatus(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
   isParentProvisioned: boolean
@@ -41,7 +40,7 @@ export function useSelectionProvisioningStatus(
   );
 
   const findItemInState = useCallback(
-    (kind: DashboardViewItemKind, uid: string) => {
+    (kind: SelectedItemRef['kind'], uid: string) => {
       const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, kind, uid);
       return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
     },
@@ -84,7 +83,7 @@ export function useSelectionProvisioningStatus(
   );
 
   const checkItemProvisioning = useCallback(
-    async (kind: 'folder' | 'dashboard', uid: string): Promise<boolean> => {
+    async (kind: SelectedItemRef['kind'], uid: string): Promise<boolean> => {
       if (isSearching) {
         return kind === 'folder' ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }

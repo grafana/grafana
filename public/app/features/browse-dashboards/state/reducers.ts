@@ -7,7 +7,7 @@ import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
 import { type fetchNextChildrenPage, type refetchChildren } from './actions';
-import { findItem } from './utils';
+import { ancestorsOf } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
@@ -113,23 +113,10 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting a child, we also need to unselect all ancestors.
+  // A folder cannot stay selected once one of its descendants is unselected
   if (!isSelected) {
-    let nextParentUID = item.parentUID;
-
-    while (nextParentUID) {
-      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, 'folder', nextParentUID);
-
-      // This case should not happen, but a find can theortically return undefined, and it
-      // helps limit infinite loops
-      if (!parent) {
-        break;
-      }
-
-      // A folder cannot be selected if any of it's children are unselected
-      state.selectedItems[parent.kind][parent.uid] = false;
-
-      nextParentUID = parent.parentUID;
+    for (const parent of ancestorsOf(item, state.rootItems?.items ?? [], state.childrenByParentUID)) {
+      state.selectedItems.folder[parent.uid] = false;
     }
   }
 

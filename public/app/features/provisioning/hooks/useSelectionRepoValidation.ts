@@ -2,9 +2,9 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { getSelectedItemRefs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
 import { type DashboardViewItem } from 'app/features/search/types';

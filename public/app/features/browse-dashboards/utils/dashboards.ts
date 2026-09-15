@@ -108,24 +108,29 @@ export function parseOwnerRef(ref: string): { kind: string; uid: string } | unde
   return { kind: parts[1], uid: parts[2] };
 }
 
-// Collect selected dashboard and folder from the DashboardTreeSelection
-// This is used to prepare the items for bulk delete operation.
-export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
-  const resources: ResourceRef[] = [];
+export type SelectedItemRef = { kind: 'folder' | 'dashboard'; uid: string };
 
-  // folders
-  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'folder.grafana.app', kind: 'Folder' });
+/** Returns the selected folders and dashboards as (kind, uid) pairs, folders first. */
+export function getSelectedItemRefs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>
+): SelectedItemRef[] {
+  const refs: SelectedItemRef[] = [];
+  for (const kind of ['folder', 'dashboard'] as const) {
+    for (const [uid, selected] of Object.entries(selectedItems[kind] ?? {})) {
+      if (selected) {
+        refs.push({ kind, uid });
+      }
     }
   }
+  return refs;
+}
 
-  // dashboards
-  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'dashboard.grafana.app', kind: 'Dashboard' });
-    }
-  }
+const RESOURCE_REF = {
+  folder: { group: 'folder.grafana.app', kind: 'Folder' },
+  dashboard: { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+} as const;
 
-  return resources;
+/** Selected folders and dashboards as k8s resource refs for bulk provisioning jobs. */
+export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>): ResourceRef[] {
+  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => ({ name: uid, ...RESOURCE_REF[kind] }));
 }

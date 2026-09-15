@@ -69,17 +69,12 @@ export function BrowseView({
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
-    if (provisioningEnabled) {
-      // if only one repo folder and no local folders, then don't exclude it from selection
-      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
-        return [];
-      }
-      // loop through settingsData to find all available repo name, and exclude them from select all action
-      // repo root folder is not actionable on browse dashboards page
-      return settingsData?.items.map((repo) => repo.name);
+    // A lone repo folder with no local folders stays selectable
+    if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+      return [];
     }
-
-    return [];
+    // Repo root folders are not actionable from the browse page
+    return settingsData?.items.map((repo) => repo.name) ?? [];
   }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
