@@ -664,4 +664,40 @@ max by (environment, namespace, service) (service_condition{environment!="produc
     expect(result.matches.get(rulerRule2)).toBe(promRule2);
     expect(result.promOnlyRules).toHaveLength(0);
   });
+
+  it('should match rules where Prometheus rewrote the durations in the expression', () => {
+    // Mimir prints the expression back out using the largest unit that fits, so a hand-written
+    // `[60m:]` in the ruler YAML is returned as `[1h:]` in Prometheus state.
+    // Both rules share the same name and have no labels, so the matcher falls back to the query.
+    const rulerRule1 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `sum_over_time((service_signal{sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{sensitivity="low"} < bool 100)[60m:]) >= bool 60`,
+    });
+    const rulerRule2 = alertingFactory.ruler.recordingRule.build({
+      record: 'service_condition',
+      labels: {},
+      expr: `sum_over_time((service_signal{sensitivity="high"} > bool 9000)[5m:]) >= bool 5 or sum_over_time((service_signal{sensitivity="low"} > bool 9000)[90m:]) >= bool 90`,
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule1, rulerRule2] });
+
+    const promRule1 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `sum_over_time((service_signal{sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{sensitivity="low"} < bool 100)[1h:]) >= bool 60`,
+    });
+    const promRule2 = mockPromRecordingRule({
+      name: 'service_condition',
+      labels: {},
+      query: `sum_over_time((service_signal{sensitivity="high"} > bool 9000)[5m:]) >= bool 5 or sum_over_time((service_signal{sensitivity="low"} > bool 9000)[1h30m:]) >= bool 90`,
+    });
+    const promGroup = alertingFactory.prometheus.group.build({ rules: [promRule1, promRule2] });
+
+    const result = matchRulesGroup(rulerGroup, promGroup);
+
+    expect(result.matches.size).toBe(2);
+    expect(result.matches.get(rulerRule1)).toBe(promRule1);
+    expect(result.matches.get(rulerRule2)).toBe(promRule2);
+    expect(result.promOnlyRules).toHaveLength(0);
+  });
 });
