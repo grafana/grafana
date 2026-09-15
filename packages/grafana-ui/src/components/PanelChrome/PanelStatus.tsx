@@ -90,19 +90,14 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
           <span className={styles.popoverTitle}>
             {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
           </span>
-          {onInvestigateErrors && (
-            <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
-              {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
-                  host asks the assistant to explain in that case. */}
-              {topSeverity === 'error'
-                ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
-                : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
-            </Button>
-          )}
         </Stack>
-        {onInspect && (
-          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+        {onInvestigateErrors && (
+          <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
+            {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
+                          host asks the assistant to explain in that case. */}
+            {topSeverity === 'error'
+              ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
+              : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
           </Button>
         )}
       </div>
