@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
 import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -13,7 +14,6 @@ import {
   Divider,
   Field,
   FileDropzone,
-  FileUpload,
   Icon,
   IconButton,
   InlineField,
@@ -39,6 +39,15 @@ import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/ste
 import { type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
+
+const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
+
+// FileDropzone has no prop to suppress its built-in "Accepted file types" caption, shown via Field description instead.
+const hideAcceptedFileTypesCaption = css({
+  small: {
+    display: 'none',
+  },
+});
 
 /** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
 function isAutoSyncSegmentEnabled(): boolean {
@@ -237,26 +246,49 @@ export function Step1Content({
               <Stack direction="column" gap={2}>
                 <Field
                   label={t('alerting.import-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
+                  description={t('alerting.import-to-gma.step1.yaml-desc', 'Accepted file types: {{extensions}}', {
+                    extensions: YAML_FILE_EXTENSIONS.join(', '),
+                  })}
                   invalid={Boolean(errors.notificationsYamlFile)}
                   error={errors.notificationsYamlFile?.message}
                   noMargin
                 >
                   <Controller
-                    render={({ field: { ref, onChange, value, ...field } }) => (
-                      <FileUpload
-                        {...field}
-                        accept=".yaml,.yml"
-                        onFileUpload={(event) => {
-                          const file = event.currentTarget.files?.[0];
-                          if (file) {
-                            onChange(file);
-                          }
-                        }}
-                      >
-                        {notificationsYamlFile
-                          ? notificationsYamlFile.name
-                          : t('alerting.import-to-gma.step1.upload', 'Upload YAML file')}
-                      </FileUpload>
+                    render={({ field: { onChange } }) => (
+                      <Stack direction="column" gap={1}>
+                        <div className={hideAcceptedFileTypesCaption}>
+                          <FileDropzone
+                            options={{
+                              multiple: false,
+                              accept: YAML_FILE_EXTENSIONS,
+                              onDrop: (acceptedFiles) => {
+                                const file = acceptedFiles[0];
+                                if (file) {
+                                  onChange(file);
+                                }
+                              },
+                            }}
+                            fileListRenderer={() => null}
+                          >
+                            <Text color="secondary">
+                              {t('alerting.import-to-gma.step1.upload', 'Drop YAML file here or click to upload')}
+                            </Text>
+                          </FileDropzone>
+                        </div>
+
+                        {notificationsYamlFile && (
+                          <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Text>{notificationsYamlFile.name}</Text>
+                            <IconButton
+                              name="trash-alt"
+                              tooltip={t('alerting.import-to-gma.step1.yaml-remove', 'Remove {{name}}', {
+                                name: notificationsYamlFile.name,
+                              })}
+                              onClick={() => onChange(null)}
+                            />
+                          </Stack>
+                        )}
+                      </Stack>
                     )}
                     control={control}
                     name="notificationsYamlFile"
