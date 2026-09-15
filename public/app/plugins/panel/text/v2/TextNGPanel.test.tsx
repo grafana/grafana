@@ -743,7 +743,7 @@ describe('TextNGPanel', () => {
 
       const content = screen.getByTestId('TextNGPanel-converted-content');
       await screen.findByText('A');
-      expect(content.querySelector('.textng-mermaid svg')).not.toBeNull();
+      expect(content.querySelector('.mermaid-diagram svg')).not.toBeNull();
       expect(content.querySelector('code.language-mermaid')).toBeNull();
     });
 

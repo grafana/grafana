@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
@@ -12,7 +13,7 @@ import {
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { HtmlWithMermaid } from 'app/core/components/HtmlWithMermaid/HtmlWithMermaid';
+import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
 import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS } from 'app/core/utils/mermaid';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -327,10 +328,12 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
+  useMermaidDiagrams(containerRef, safe);
+
   return (
-    // The wrapper owns the link-click delegation above; HtmlWithMermaid owns the diagrams.
     <div ref={containerRef} className={styles.markdownBody}>
-      <HtmlWithMermaid html={safe} className="markdown-html" />
+      {/* An empty README is valid, but DangerouslySetHtmlContent rejects empty html. */}
+      {safe && <DangerouslySetHtmlContent allowRerender html={safe} className="markdown-html" />}
     </div>
   );
 }
@@ -432,7 +435,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     padding: theme.spacing(2),
   }),
-  // On top of HtmlWithMermaid's own styles: README diagrams are centered like on GitHub.
+  // On top of the renderer's own styles: README diagrams are centered like on GitHub.
   markdownBody: css({
     [`.${DIAGRAM_CLASS}`]: {
       display: 'flex',
