@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -25,20 +24,13 @@ import (
 const benchNamespace = "default"
 
 // benchDB counts every simulated database round trip made while converting a
-// ResourcePermission to the legacy DTO, and optionally charges each one a fixed
-// latency. Round-trip count is the metric that matters: in production each is a
-// separate serial DB session, so a free fake DB makes the batching look like a
-// pure regression when it is the opposite.
+// ResourcePermission to the legacy DTO.
 type benchDB struct {
 	queries atomic.Int64
-	latency time.Duration
 }
 
 func (d *benchDB) hit() {
 	d.queries.Add(1)
-	if d.latency > 0 {
-		time.Sleep(d.latency)
-	}
 }
 
 type benchUserService struct {
@@ -155,8 +147,8 @@ type benchFixture struct {
 
 // newBenchFixture builds an entry mix weighted like a large real folder ACL:
 // mostly individual users, some teams and service accounts, and a couple of basic roles.
-func newBenchFixture(n int, latency time.Duration) *benchFixture {
-	db := &benchDB{latency: latency}
+func newBenchFixture(n int) *benchFixture {
+	db := &benchDB{}
 
 	users := make(map[string]*user.User, n)
 	serviceAccounts := make(map[string]*serviceaccounts.ServiceAccountProfileDTO, n)
@@ -282,8 +274,8 @@ func newBenchFixture(n int, latency time.Duration) *benchFixture {
 	}
 }
 
-func benchConvert(b *testing.B, n int, latency time.Duration) {
-	f := newBenchFixture(n, latency)
+func benchConvert(b *testing.B, n int) {
+	f := newBenchFixture(n)
 	ctx := context.Background()
 
 	// Fail fast if the fixture cannot resolve its own subjects.
@@ -311,20 +303,7 @@ func benchConvert(b *testing.B, n int, latency time.Duration) {
 func BenchmarkConvertK8sResourcePermissionToDTO(b *testing.B) {
 	for _, n := range []int{10, 100, 600} {
 		b.Run(fmt.Sprintf("entries=%d", n), func(b *testing.B) {
-			benchConvert(b, n, 0)
-		})
-	}
-}
-
-// BenchmarkConvertK8sResourcePermissionToDTOWithDBLatency charges every round
-// trip a latency in the range a same-region Grafana-to-database hop costs. The
-// lookups are serial, so this is where the round-trip count shows up as
-// request latency.
-func BenchmarkConvertK8sResourcePermissionToDTOWithDBLatency(b *testing.B) {
-	const latency = 200 * time.Microsecond
-	for _, n := range []int{100, 600} {
-		b.Run(fmt.Sprintf("entries=%d", n), func(b *testing.B) {
-			benchConvert(b, n, latency)
+			benchConvert(b, n)
 		})
 	}
 }
