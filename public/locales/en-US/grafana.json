@@ -13170,6 +13170,15 @@
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
     },
+    "incidents": {
+      "attach-title": "Attach to incident",
+      "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
+      "caption": "Notebook: {{title}}",
+      "declare": "Declare incident",
+      "menu": "IRM",
+      "view-incident": "View incident"
+    },
     "list": {
       "count_one": "{{count}} notebook",
       "count_other": "{{count}} notebooks",
