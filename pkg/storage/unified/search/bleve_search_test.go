@@ -3706,3 +3706,191 @@ func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, 
 	require.NoError(t, err)
 	return index
 }
+
+// Two resource versions one apart, both far above 2^53. As float64 they are the
+// same value, so a search returning them distinctly proves the index is not
+// storing them as numbers.
+const (
+	rvLower = int64(1958241239561142272)
+	rvUpper = int64(1958241239561142273)
+)
+
+func TestSearchReturnsExactResourceVersion(t *testing.T) {
+	// Guards the premise of this test: as float64 the two resource versions are
+	// one value, so any numeric round trip loses one of them.
+	require.NotEqual(t, rvLower, rvUpper)
+	require.Equal(t, float64(rvLower), float64(rvUpper))
+
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+	opts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+	}}
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+
+	t.Run("table format serves the rv column and the row resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options: opts,
+			Fields:  []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Limit:   10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Rows, len(want))
+
+		column := -1
+		for i, col := range res.Results.Columns {
+			if col.Name == resource.SEARCH_FIELD_RV {
+				column = i
+			}
+		}
+		require.GreaterOrEqual(t, column, 0, "rv column is missing from the response")
+
+		for _, row := range res.Results.Rows {
+			expected := want[row.Key.Name]
+			require.Equal(t, expected, row.ResourceVersion, "row resource version for %s", row.Key.Name)
+
+			cell := row.Cells[column]
+			if expected == 0 {
+				require.Empty(t, cell, "rv cell for a document without a resource version")
+				continue
+			}
+			require.Len(t, cell, 8, "rv cell for %s", row.Key.Name)
+			require.Equal(t, expected, int64(binary.BigEndian.Uint64(cell)), "rv cell for %s", row.Key.Name)
+		}
+	})
+
+	t.Run("field values format serves the row resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	// A caller naming no fields gets the curated column set, which takes a
+	// different path through the Bleve load list.
+	t.Run("a request naming no fields still carries the resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options: opts,
+			Limit:   10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Rows, len(want))
+
+		for _, row := range res.Results.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	// The resource version is not a field a caller can name, so asking for it is a
+	// bad request rather than a way to read the stored string.
+	t.Run("the stored field is not requestable", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV_STRING},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+	})
+}
+
+// The post-rank authz path runs its own bleve searches and builds results from
+// the hits those return, so it needs the stored field loaded too.
+func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, true)
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace})
+	res, err := index.Search(ctx, &countingAccessClient{allowAll: true}, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		Fields: []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+		Limit:  10,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+	require.Len(t, res.Results.Rows, len(want))
+	for _, row := range res.Results.Rows {
+		require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+	}
+}
+
+// Deleted documents carry a resource version too, and trash search reads it
+// through the same path.
+func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+
+	res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		IsDeleted: true,
+		Fields:    []string{resource.SEARCH_FIELD_DELETED_RV},
+		Limit:     10,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Len(t, res.Results.Rows, 1)
+	require.Equal(t, "deleted", res.Results.Rows[0].Key.Name)
+	require.Equal(t, rvUpper, res.Results.Rows[0].ResourceVersion)
+}
+
+// newResourceVersionIndex holds three live documents — two with resource versions
+// that collide as float64, one with none — and one deleted document.
+func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, postRankAuthz bool) resource.ResourceIndex {
+	t.Helper()
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold,
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  postRankAuthz,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	doc := func(name string, rv int64) *resource.IndexableDocument {
+		return &resource.IndexableDocument{
+			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			Name:  name,
+			Title: name,
+			RV:    rv,
+		}
+	}
+	deletedRV := strconv.FormatInt(rvUpper, 10)
+	deleted := doc("deleted", rvUpper)
+	deleted.IsDeleted = new(true)
+	deleted.DeletedRV = &deletedRV
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{Action: resource.ActionIndex, Doc: doc("lower", rvLower)},
+			{Action: resource.ActionIndex, Doc: doc("upper", rvUpper)},
+			{Action: resource.ActionIndex, Doc: doc("no-rv", 0)},
+			{Action: resource.ActionIndex, Doc: deleted},
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
+}

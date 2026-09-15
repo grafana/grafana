@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
 import { useLazyGetNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 
+import { NOTEBOOK_EXPORT_SOURCE } from '../analytics/types';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { canDeleteNotebooks } from '../permissions';
 import { type Spec as NotebookSpec } from '../types';
@@ -31,7 +32,9 @@ export function NotebookRowMenu({ uid, onDelete }: { uid: string; onDelete: () =
         icon="download-alt"
         // The table's rows are flattened and carry no spec, so it is fetched when an action runs
         // rather than for every row on screen.
-        childItems={[<NotebookExportMenu key="export" uid={uid} getSpec={getSpec} />]}
+        childItems={[
+          <NotebookExportMenu key="export" uid={uid} getSpec={getSpec} source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_LIST} />,
+        ]}
       />
       {/* Omitted rather than disabled for a user who cannot delete, as the Edit action beside it is. */}
       {canDeleteNotebooks() && (

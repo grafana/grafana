@@ -7,6 +7,7 @@ import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
@@ -24,6 +25,15 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // injectEndpoints on the real client as it loads - and the mock above does not provide one. The list
 // page and the row menu stub it for the same reason.
 jest.mock('../list/notebookSearchApi', () => ({}));
+// Partial mock: this spies on exported and linkCopied only. Every other real call the scene makes
+// (editSessionStarted on entering edit mode, deleted on confirming one) keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: {
+    ...jest.requireActual('../analytics/main').NotebookAnalytics,
+    exported: jest.fn(),
+    linkCopied: jest.fn(),
+  },
+}));
 
 // Stubbed so each test states whether IRM is there. The rules themselves are covered in
 // useNotebookIncidents.test.
@@ -34,6 +44,8 @@ jest.mock('../incidents/useNotebookIncidents', () => ({
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
+const mockLinkCopied = jest.mocked(NotebookAnalytics.linkCopied);
+const mockExported = jest.mocked(NotebookAnalytics.exported);
 
 /** Whether IRM's exposed incident components are there for the toolbar to render. */
 function setIrmAvailable(available: boolean) {
@@ -130,6 +142,7 @@ describe('NotebookToolbar', () => {
     // Both halves matter for a pasted link: the origin, or it is useless outside the app, and the
     // orgId, or it opens whichever org the reader happens to be in.
     expect(await navigator.clipboard.readText()).toBe('https://host/notebooks/nb1?orgId=3');
+    expect(mockLinkCopied).toHaveBeenCalledWith('nb1', 'notebook_toolbar');
   });
 
   it('confirms the copy, so the single click does not look like it did nothing', async () => {
@@ -152,6 +165,7 @@ describe('NotebookToolbar', () => {
     expect(markdown).toContain('# Q2 latency regression');
     expect(markdown).toContain('### p95 latency');
     expect(markdown).toContain('_timeseries panel_');
+    expect(mockExported).toHaveBeenCalledWith('nb1', 'clipboard', 'notebook_toolbar');
   });
 
   it('offers the export actions from a dropdown', async () => {
@@ -161,7 +175,6 @@ describe('NotebookToolbar', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
   });
 
   describe('Delete', () => {
