@@ -414,4 +414,19 @@ describe('FolderReadmePanel', () => {
     // The source code block is replaced by the rendered diagram.
     expect(screen.queryByText('graph TD; A-->B;')).not.toBeInTheDocument();
   });
+
+  it('keeps the diagram and does not draw again when the panel re-renders with the same README', async () => {
+    setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
+
+    const { rerender } = setup();
+    await screen.findByTestId('mermaid-svg');
+    const drawCalls = mockMermaidRender.mock.calls.length;
+
+    rerender(<FolderReadmePanel folderUID="test-folder" />);
+    // Let any effect the re-render might have queued settle before asserting.
+    await act(async () => {});
+
+    expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
+    expect(mockMermaidRender).toHaveBeenCalledTimes(drawCalls);
+  });
 });

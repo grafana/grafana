@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
@@ -14,7 +13,7 @@ import {
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
-import { DIAGRAM_CLASS, DIAGRAM_ERROR_CLASS } from 'app/core/utils/mermaid';
+import { DIAGRAM_CLASS } from 'app/core/utils/mermaid';
 
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
@@ -328,13 +327,13 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
+  // React resets innerHTML whenever this object's identity changes, which would
+  // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
+  const innerHtml = useMemo(() => ({ __html: safe }), [safe]);
   useMermaidDiagrams(containerRef, safe);
 
   return (
-    <div ref={containerRef} className={styles.markdownBody}>
-      {/* An empty README is valid, but DangerouslySetHtmlContent rejects empty html. */}
-      {safe && <DangerouslySetHtmlContent allowRerender html={safe} className="markdown-html" />}
-    </div>
+    <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} dangerouslySetInnerHTML={innerHtml} />
   );
 }
 
@@ -435,15 +434,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     padding: theme.spacing(2),
   }),
-  // On top of the renderer's own styles: README diagrams are centered like on GitHub.
+  // README diagrams are centered like on GitHub; the text panel keeps them left-aligned.
   markdownBody: css({
     [`.${DIAGRAM_CLASS}`]: {
       display: 'flex',
       justifyContent: 'center',
-      margin: theme.spacing(2, 0),
-    },
-    [`.${DIAGRAM_ERROR_CLASS}`]: {
-      fontSize: theme.typography.bodySmall.fontSize,
     },
   }),
 });

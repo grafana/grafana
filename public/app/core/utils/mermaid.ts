@@ -120,6 +120,8 @@ type Styles = ReturnType<typeof getStyles>;
 function getStyles(theme: GrafanaTheme2) {
   return {
     diagram: css({
+      // The diagram stands in for a <pre>, which had block margins of its own.
+      margin: theme.spacing(2, 0),
       svg: {
         maxWidth: '100%',
         height: 'auto',
@@ -127,6 +129,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     error: css({
       color: theme.colors.error.text,
+      fontSize: theme.typography.bodySmall.fontSize,
       marginBottom: theme.spacing(0.5),
     }),
   };
