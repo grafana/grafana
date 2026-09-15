@@ -3,7 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -136,9 +135,6 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
 
-		if tokenRotationErr, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
-			userId = tokenRotationErr.UserID
-		}
 	} else {
 		reqContext.SignedInUser = id.SignedInUser()
 		reqContext.UserToken = id.SessionToken

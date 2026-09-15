@@ -145,15 +145,6 @@ func unauthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
-		if !c.UseSessionStorageRedirect {
-			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
-			return
-		}
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
-		return
-	}
-
 	if !c.UseSessionStorageRedirect {
 		c.Redirect(setting.AppSubUrl + "/login")
 		return

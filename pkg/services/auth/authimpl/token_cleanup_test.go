@@ -25,8 +25,8 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 		return ctx
 	}
 
-	insertToken := func(ctx *testContext, token string, prev string, createdAt, rotatedAt int64) {
-		ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
+	insertToken := func(ctx *testContext, token string, createdAt, seenAt int64) {
+		ut := userAuthToken{AuthToken: token, CreatedAt: createdAt, SeenAt: seenAt, UserAgent: "", ClientIp: ""}
 		err := ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(&ut)
 			require.Nil(t, err)
@@ -37,20 +37,21 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 
 	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 	getTime = func() time.Time { return now }
+	t.Cleanup(func() { getTime = time.Now })
 
-	t.Run("should delete tokens where token rotation age is older than or equal 7 days", func(t *testing.T) {
+	t.Run("should delete tokens where last activity is older than or equal 7 days", func(t *testing.T) {
 		ctx := setup()
 		from := now.Add(-168 * time.Hour)
 
 		// insert three old tokens that should be deleted
 		for i := range 3 {
-			insertToken(ctx, fmt.Sprintf("oldA%d", i), fmt.Sprintf("oldB%d", i), from.Unix(), from.Unix())
+			insertToken(ctx, fmt.Sprintf("oldA%d", i), from.Unix(), from.Unix())
 		}
 
 		// insert three active tokens that should not be deleted
 		for i := range 3 {
 			from = from.Add(time.Second)
-			insertToken(ctx, fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), from.Unix())
+			insertToken(ctx, fmt.Sprintf("newA%d", i), from.Unix(), from.Unix())
 		}
 
 		affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 168*time.Hour, 30*24*time.Hour)
@@ -61,17 +62,17 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 	t.Run("should delete tokens where token age is older than or equal 30 days", func(t *testing.T) {
 		ctx := setup()
 		from := now.Add(-30 * 24 * time.Hour)
-		fromRotate := now.Add(-time.Second)
+		lastActivity := now.Add(-time.Second)
 
 		// insert three old tokens that should be deleted
 		for i := range 3 {
-			insertToken(ctx, fmt.Sprintf("oldA%d", i), fmt.Sprintf("oldB%d", i), from.Unix(), fromRotate.Unix())
+			insertToken(ctx, fmt.Sprintf("oldA%d", i), from.Unix(), lastActivity.Unix())
 		}
 
 		// insert three active tokens that should not be deleted
 		for i := range 3 {
 			from = from.Add(time.Second)
-			insertToken(ctx, fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), fromRotate.Unix())
+			insertToken(ctx, fmt.Sprintf("newA%d", i), from.Unix(), lastActivity.Unix())
 		}
 
 		affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
@@ -99,7 +100,7 @@ func TestIntegrationOrphanedExternalSessionsCleanup(t *testing.T) {
 	}
 
 	insertAuthToken := func(ctx *testContext, token string, externalSessionId int64) {
-		ut := userAuthToken{AuthToken: token, PrevAuthToken: fmt.Sprintf("old%s", token), ExternalSessionId: externalSessionId}
+		ut := userAuthToken{AuthToken: token, ExternalSessionId: externalSessionId}
 		err := ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(&ut)
 			require.Nil(t, err)

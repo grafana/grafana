@@ -342,7 +342,6 @@ type Cfg struct {
 	LoginCookieName                   string
 	LoginMaxInactiveLifetime          time.Duration
 	LoginMaxLifetime                  time.Duration
-	TokenRotationIntervalMinutes      int
 	SigV4AuthEnabled                  bool
 	SigV4VerboseLogging               bool
 	AzureAuthEnabled                  bool

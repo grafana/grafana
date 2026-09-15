@@ -239,6 +239,9 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 
 	// [TODO] Restore namespace in the frontend service from baggage or context
 
+	if reqCtx.IsSignedIn && reqCtx.UserToken != nil {
+		frontendSettings.SessionHeartbeatInterval = max(time.Second, min(5*time.Minute, cfg.LoginMaxInactiveLifetime/3)).Milliseconds()
+	}
 	return frontendSettings, nil
 }
 

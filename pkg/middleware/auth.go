@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -47,16 +46,6 @@ func notAuthorized(c *contextmodel.ReqContext) {
 
 	if !c.UseSessionStorageRedirect {
 		writeRedirectCookie(c)
-	}
-
-	if _, ok := errors.AsType[authn.TokenNeedsRotationError](c.LookupTokenErr); ok {
-		if !c.UseSessionStorageRedirect {
-			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
-			return
-		}
-
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
-		return
 	}
 
 	if !c.UseSessionStorageRedirect {

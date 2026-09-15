@@ -974,10 +974,6 @@ const (
 	// Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
 	FlagDatetimeUseLuxon = "datetime.useLuxon"
 
-	// FlagAuthTokenRotationGracePeriod
-	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
-	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
-
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"

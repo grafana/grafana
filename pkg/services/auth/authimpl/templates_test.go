@@ -18,21 +18,6 @@ func TestTemplates(t *testing.T) {
 		},
 	}
 
-	getRotateToken := func() sqltemplate.SQLTemplate {
-		v := rotateTokenQuery{
-			SQLTemplate:   sqltemplate.New(nodb.DialectForDriver()),
-			TokenTable:    nodb.Table("user_auth_token"),
-			UserAgent:     "some-user-agent",
-			ClientIP:      "10.0.0.1",
-			AuthToken:     "hashed-token",
-			AuthTokenSeen: false,
-			RotatedAt:     1700000000,
-			TokenID:       42,
-		}
-		v.SQLTemplate = mocks.NewTestingSQLTemplate()
-		return &v
-	}
-
 	getRevokeAllUserTokens := func() sqltemplate.SQLTemplate {
 		v := revokeAllUserTokensQuery{
 			SQLTemplate: sqltemplate.New(nodb.DialectForDriver()),
@@ -58,7 +43,7 @@ func TestTemplates(t *testing.T) {
 			SQLTemplate:  sqltemplate.New(nodb.DialectForDriver()),
 			TokenTable:   nodb.Table("user_auth_token"),
 			CreatedAfter: 1600000000,
-			RotatedAfter: 1650000000,
+			SeenAfter:    1650000000,
 		}
 		if filterByUser {
 			v.FilterByUser = true
@@ -84,7 +69,7 @@ func TestTemplates(t *testing.T) {
 			SQLTemplate:   sqltemplate.New(nodb.DialectForDriver()),
 			TokenTable:    nodb.Table("user_auth_token"),
 			CreatedBefore: 1600000000,
-			RotatedBefore: 1650000000,
+			SeenBefore:    1650000000,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -104,12 +89,6 @@ func TestTemplates(t *testing.T) {
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			rotateTokenTemplate: {
-				{
-					Name: "rotate_token",
-					Data: getRotateToken(),
-				},
-			},
 			revokeAllUserTokensTemplate: {
 				{
 					Name: "revoke_all_user_tokens",

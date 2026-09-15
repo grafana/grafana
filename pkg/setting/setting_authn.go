@@ -13,12 +13,11 @@ import (
 )
 
 const (
-	defaultLoginCookieName              = "grafana_session"
-	defaultLoginMaxInactiveLifetime     = "7d"
-	defaultLoginMaxLifetime             = "30d"
-	defaultTokenRotationIntervalMinutes = 10
-	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
-	defaultUserLastSeenUpdateInterval   = "15m"
+	defaultLoginCookieName            = "grafana_session"
+	defaultLoginMaxInactiveLifetime   = "7d"
+	defaultLoginMaxLifetime           = "30d"
+	defaultOAuthRefreshLockMinWaitMs  = int64(1000)
+	defaultUserLastSeenUpdateInterval = "15m"
 )
 
 // ApplyAuthnSettings applies the side-effect-free subset of Grafana settings
@@ -68,8 +67,6 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	if err != nil {
 		return fmt.Errorf("auth.login_maximum_lifetime_duration: %w", err)
 	}
-
-	cfg.TokenRotationIntervalMinutes = max(auth.Key("token_rotation_interval_minutes").MustInt(defaultTokenRotationIntervalMinutes), 2)
 	return nil
 }
 

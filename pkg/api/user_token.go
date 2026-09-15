@@ -11,9 +11,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -73,80 +71,6 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 	}
 
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
-}
-
-func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
-	if err := hs.rotateToken(c); err != nil {
-		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		if errors.Is(err, auth.ErrInvalidSessionToken) {
-			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
-			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
-		}
-		return response.Redirect(hs.Cfg.AppSubURL + "/login")
-	}
-
-	if !c.UseSessionStorageRedirect {
-		return response.Redirect(hs.GetRedirectURL(c))
-	}
-
-	redirectTo := hs.Cfg.AppSubURL + c.Query("redirectTo")
-	if sanitized, err := hs.ValidateRedirectTo(redirectTo); err == nil {
-		return response.Redirect(sanitized)
-	}
-	return response.Redirect(hs.Cfg.AppSubURL + "/")
-}
-
-// swagger:route POST /user/auth-tokens/rotate
-//
-// # Rotate the auth token of the caller
-//
-// Rotate the token of caller, if successful send a new session cookie.
-//
-// Responses:
-// 200: okResponse
-// 401: unauthorisedError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
-	if err := hs.rotateToken(c); err != nil {
-		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		if errors.Is(err, auth.ErrInvalidSessionToken) {
-			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
-			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
-			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
-		}
-
-		if errors.Is(err, auth.ErrUserTokenNotFound) {
-			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
-		}
-
-		return response.ErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
-	}
-
-	return response.JSON(http.StatusOK, map[string]any{})
-}
-
-func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
-	token := c.GetCookie(hs.Cfg.LoginCookieName)
-	ip, err := network.GetIPFromAddress(c.RemoteAddr())
-	if err != nil {
-		hs.log.Debug("Failed to get IP from client address", "addr", c.RemoteAddr())
-	}
-
-	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
-		UnHashedToken: token,
-		IP:            ip,
-		UserAgent:     c.Req.UserAgent(),
-	})
-	if err != nil {
-		return err
-	}
-
-	if res.UnhashedToken != token {
-		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
-	}
-
-	return nil
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
