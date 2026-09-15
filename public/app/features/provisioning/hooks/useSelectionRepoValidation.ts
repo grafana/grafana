@@ -6,6 +6,7 @@ import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getIsReadOnlyRepo, getItemRepositoryUid } from 'app/features/provisioning/utils/repository';
+import { type DashboardViewItemKind } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../browse-dashboards/state/hooks';
@@ -26,17 +27,19 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
     return settingsData.items.find((repo) => repo.name === repoUid);
   };
 
-  const getRepoUid = (uid: string) => {
-    const item = findItem(rootItems, childrenByParentUID, uid);
+  const getRepoUid = (kind: DashboardViewItemKind, uid: string) => {
+    const item = findItem(rootItems, childrenByParentUID, kind, uid);
     return item ? getItemRepositoryUid(item, rootItems, childrenByParentUID) : 'non_provisioned';
   };
 
-  const selectedUIDs = [
-    ...Object.keys(selectedItems.folder || {}).filter((id) => selectedItems.folder[id]),
-    ...Object.keys(selectedItems.dashboard || {}).filter((id) => selectedItems.dashboard[id]),
+  const repoUIDs = [
+    ...Object.keys(selectedItems.folder || {})
+      .filter((uid) => selectedItems.folder[uid])
+      .map((uid) => getRepoUid('folder', uid)),
+    ...Object.keys(selectedItems.dashboard || {})
+      .filter((uid) => selectedItems.dashboard[uid])
+      .map((uid) => getRepoUid('dashboard', uid)),
   ];
-
-  const repoUIDs = selectedUIDs.map(getRepoUid).filter((repoId): repoId is string => !!repoId);
 
   // Skip 'non_provisioned' sentinel so downstream queries don't fire against a non-existent folder
   const selectedItemsRepoUID = repoUIDs.find((uid) => uid !== 'non_provisioned');
@@ -44,7 +47,7 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
 
   const hasSelection = repoUIDs.length > 0;
 
-  const isInLockedRepo = (uid: string) => {
+  const isInLockedRepo = (kind: DashboardViewItemKind, uid: string) => {
     // if whole instance is provisioned, all items are considered in the locked (same) repo
     if (isProvisionedInstance) {
       return true;
@@ -52,12 +55,12 @@ export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSele
     if (!selectedItemsRepoUID) {
       // No provisioned repo in selection — if nothing is selected allow any item,
       // otherwise lock to non-provisioned only so provisioned items can't be mixed in
-      return !hasSelection || getRepoUid(uid) === 'non_provisioned';
+      return !hasSelection || getRepoUid(kind, uid) === 'non_provisioned';
     }
-    return getRepoUid(uid) === selectedItemsRepoUID;
+    return getRepoUid(kind, uid) === selectedItemsRepoUID;
   };
-  const isUidInReadOnlyRepo = (uid: string) => {
-    const repo = getRepositoryByUid(getRepoUid(uid));
+  const isUidInReadOnlyRepo = (kind: DashboardViewItemKind, uid: string) => {
+    const repo = getRepositoryByUid(getRepoUid(kind, uid));
     return repo ? getIsReadOnlyRepo(repo) : false;
   };
 

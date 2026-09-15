@@ -118,7 +118,7 @@ export function setItemSelectionState(
     let nextParentUID = item.parentUID;
 
     while (nextParentUID) {
-      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
+      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, 'folder', nextParentUID);
 
       // This case should not happen, but a find can theortically return undefined, and it
       // helps limit infinite loops
@@ -178,8 +178,8 @@ export function setAllSelection(
           continue;
         }
 
-        // Skip items in the exclude list
-        if (excludeUIDs?.includes(child.uid)) {
+        // The exclude list holds repository root folder UIDs; a dashboard may share a UID with a folder
+        if (child.kind === 'folder' && excludeUIDs?.includes(child.uid)) {
           continue;
         }
 

@@ -1,21 +1,26 @@
-import { type DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 import { type BrowseDashboardsState } from '../types';
 
 /**
- * Finds item with the specific uid either in the root items or childrenByUID. This is just a convenience as browse
- * dashboards store all the items in two separate structures.
+ * Finds the item with the given kind and uid either in the root items or childrenByUID. This is just a convenience as
+ * browse dashboards store all the items in two separate structures.
+ *
+ * UIDs are only unique per kind: a dashboard may share its UID with a folder, so matching on uid alone can return
+ * the wrong item.
  * @param rootItems
  * @param childrenByUID
+ * @param kind
  * @param uid
  */
 export function findItem(
   rootItems: DashboardViewItem[],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
+  kind: DashboardViewItemKind,
   uid: string
 ): DashboardViewItem | undefined {
   for (const item of rootItems) {
-    if (item.uid === uid) {
+    if (item.kind === kind && item.uid === uid) {
       return item;
     }
   }
@@ -27,7 +32,7 @@ export function findItem(
     }
 
     for (const child of children.items) {
-      if (child.uid === uid) {
+      if (child.kind === kind && child.uid === uid) {
         return child;
       }
     }

@@ -50,7 +50,7 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
-  if ((permissions && permissions.isReadOnlyRepo) || isUidInReadOnlyRepo(item.uid)) {
+  if ((permissions && permissions.isReadOnlyRepo) || isUidInReadOnlyRepo(item.kind, item.uid)) {
     // When the folder is read-only (inherited from repository), disable checkbox with tooltip
     return (
       <Tooltip content={getReadOnlyTooltipText({})}>
@@ -67,7 +67,7 @@ export default function CheckboxCell({
   }
 
   // check if current item uid has different repo uid than selected items
-  if (!isInLockedRepo(item.uid)) {
+  if (!isInLockedRepo(item.kind, item.uid)) {
     return (
       <Tooltip
         content={t(

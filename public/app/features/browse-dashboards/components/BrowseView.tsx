@@ -252,6 +252,11 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
+  // childrenByParentUID is keyed by folder UID, and a dashboard may share a UID with a folder
+  if (item.kind !== 'folder') {
+    return false;
+  }
+
   const collection = childrenByParentUID[item.uid];
   if (!collection) {
     return false;

@@ -37,7 +37,7 @@ export function getItemRepositoryUid(
   // Traverse up the tree to find the root provisioned folder
   let currentItem = item;
   while (currentItem.parentUID) {
-    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
+    const parent = findItem(rootItems, childrenByParentUID, 'folder', currentItem.parentUID);
     if (!parent) {
       break;
     }

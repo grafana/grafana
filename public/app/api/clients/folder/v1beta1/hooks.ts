@@ -535,7 +535,7 @@ function useRefreshFolders() {
 
   return (options: { parentsOf?: string[]; childrenOf?: string }) => {
     if (options.parentsOf) {
-      dispatch(refreshParents(options.parentsOf));
+      dispatch(refreshParents({ kind: 'folder', uids: options.parentsOf }));
     }
     // Refetch children even if we passed in `childrenOf: undefined`, as this corresponds to the root folder
     if (options.childrenOf || 'childrenOf' in options) {

@@ -7,6 +7,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { type DashboardViewItemKind } from 'app/features/search/types';
 import { useSelector } from 'app/types/store';
 
 import { findItem } from '../../browse-dashboards/state/utils';
@@ -40,8 +41,8 @@ export function useSelectionProvisioningStatus(
   );
 
   const findItemInState = useCallback(
-    (uid: string) => {
-      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+    (kind: DashboardViewItemKind, uid: string) => {
+      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, kind, uid);
       return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
     },
     [browseState]
@@ -88,13 +89,13 @@ export function useSelectionProvisioningStatus(
         return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }
 
-      const item = findItemInState(uid);
+      const item = findItemInState(isFolder ? 'folder' : 'dashboard', uid);
       if (isFolder) {
         return isItemManagedByRepository(item);
       }
 
       // Check parent folder first for dashboards
-      const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
+      const parent = item?.parentUID ? findItemInState('folder', item.parentUID) : undefined;
       if (isItemManagedByRepository(parent)) {
         return true;
       }
