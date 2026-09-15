@@ -19,6 +19,9 @@ import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '..
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
+  type DashboardBatchEditActionEventPayload,
+  DashboardBatchEditActionEndEvent,
+  DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
@@ -50,6 +53,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   private panelEditAction?: DashboardEditActionEvent;
 
+  /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
+  private _activeBatch?: {
+    source: SceneObject;
+    description?: string;
+    actions: DashboardEditActionEventPayload[];
+  };
+
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
     this.panelEditAction = editAction;
   }
@@ -69,6 +79,18 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         this.handleEditAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionStartEvent, ({ payload }) => {
+        this.startBatchAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionEndEvent, () => {
+        this.endBatchAction();
       })
     );
 
@@ -126,12 +148,48 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
+  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
+    this._activeBatch = { source, description, actions: [] };
+  }
+
+  private endBatchAction() {
+    const batch = this._activeBatch;
+    this._activeBatch = undefined;
+
+    if (!batch || batch.actions.length === 0) {
+      return;
+    }
+
+    const action: DashboardEditActionEventPayload = {
+      source: batch.source,
+      description: batch.description,
+      perform: () => {
+        batch.actions.forEach((childAction) => this.performAction(childAction));
+      },
+      undo: () => {
+        [...batch.actions].reverse().forEach((childAction) => this.undoSingleAction(childAction));
+      },
+    };
+
+    this.setState({ undoStack: [...this.state.undoStack, action] });
+  }
+
   /**
    * Handles all edit actions
    * Adds to undo history and selects new object
    * @param payload
    */
   private handleEditAction(action: DashboardEditActionEventPayload) {
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      this.performAction(action);
+      return;
+    }
+
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
@@ -153,6 +211,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       return;
     }
 
+    this.undoSingleAction(action);
+
+    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+  }
+
+  private undoSingleAction(action: DashboardEditActionEventPayload) {
     action.undo();
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
@@ -167,8 +231,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (action.removedObject) {
       this.newObjectAddedToCanvas(action.removedObject);
     }
-
-    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
   }
 
   /**
