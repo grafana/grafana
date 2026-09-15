@@ -567,6 +567,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "datasourcesApiServerEnableProxyEndpoint",
+			Description:     "Handle datasource proxy requests through the datasource API group endpoint.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
 			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
@@ -1276,14 +1285,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingQueryAndExpressionsStepMode",
-			Description: "Enables step mode for alerting queries and expressions",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
@@ -3070,6 +3071,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.refreshNewFeatures",
+			Description:  "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "table.inspectDataTableNG",
 			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
 			Stage:        FeatureStageExperimental,
@@ -3386,6 +3396,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.pluginExtensionReactElementProps",
+			Description:  "Pass React elements in plugin extension props by reference",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

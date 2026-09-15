@@ -234,6 +234,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
+  * Handle datasource proxy requests through the datasource API group endpoint.
+  * @default false
+  */
+  datasourcesApiServerEnableProxyEndpoint?: boolean;
+  /**
   * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
@@ -615,11 +620,6 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
-  /**
-  * Enables step mode for alerting queries and expressions
-  * @default true
-  */
-  alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Use session storage for handling the redirection after login
   * @default true
