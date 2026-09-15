@@ -63,6 +63,34 @@ func NewMetaStorage(
 	}
 }
 
+// wrapStorageError classifies err for the apiserver's HTTP response.
+func wrapStorageError(err error, verb string, gr schema.GroupResource, name string) error {
+	switch {
+	case errors.Is(err, context.Canceled):
+		message := err.Error()
+		var details *metav1.StatusDetails
+		if !gr.Empty() {
+			details = &metav1.StatusDetails{Group: gr.Group, Kind: gr.Resource, Name: name}
+			if name != "" {
+				message = fmt.Sprintf("%s (%s %s %s)", message, strings.ToLower(verb), gr.String(), name)
+			} else {
+				message = fmt.Sprintf("%s (%s %s)", message, strings.ToLower(verb), gr.String())
+			}
+		}
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    499,
+			Reason:  metav1.StatusReasonUnknown,
+			Message: message,
+			Details: details,
+		}}
+	case errors.Is(err, context.DeadlineExceeded):
+		return apierrors.NewTimeoutError(err.Error(), 0)
+	default:
+		return apierrors.NewInternalError(err)
+	}
+}
+
 func (s *MetaStorage) getClient(ctx context.Context) (*pluginsv0alpha1.PluginClient, error) {
 	s.clientOnce.Do(func() {
 		client, err := s.clientFactory(ctx)
@@ -110,6 +138,7 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
+		logger.Error("Failed to get plugin client", "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
@@ -117,8 +146,12 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	plugins, err := pluginClient.ListAll(ctx, ns.Value, resource.ListOptions{})
 	listDuration := time.Since(listStart)
 	if err != nil {
-		logger.Error("Failed to list plugins", "error", err)
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to list plugins: %w", err))
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			logger.Warn("List plugins request ended before completion", "error", err)
+		} else {
+			logger.Error("Failed to list plugins", "error", err)
+		}
+		return nil, wrapStorageError(fmt.Errorf("failed to list plugins: %w", err), "list", s.gr, "")
 	}
 	logger.Debug("Listed plugins from storage", "count", len(plugins.Items), "duration", listDuration.Milliseconds())
 
@@ -206,6 +239,7 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
+		logger.Error("Failed to get plugin client", "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to get plugin client: %w", err))
 	}
 
@@ -231,8 +265,12 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 			return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
 		}
 
-		logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
-		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			logger.Warn("Fetch plugin metadata request ended before completion", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+		} else {
+			logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+		}
+		return nil, wrapStorageError(fmt.Errorf("failed to fetch plugin metadata: %w", err), "get", s.gr, name)
 	}
 
 	pluginMeta := &pluginsv0alpha1.Meta{
