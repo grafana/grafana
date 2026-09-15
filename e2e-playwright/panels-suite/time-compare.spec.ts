@@ -20,12 +20,11 @@ const SHIFTED_RANGE_TO = 1756921600000;
 const pinnedRange = (from: number, to: number) =>
   new URLSearchParams({ from: String(from), to: String(to), timezone: 'utc' });
 
+// Both flags are LegacyFrontend in the feature registry
 test.use({
-  openFeature: {
-    flags: {
-      panelTimeSettings: true,
-      timeComparison: true,
-    },
+  featureToggles: {
+    panelTimeSettings: true,
+    timeComparison: true,
   },
 });
 
