@@ -32,6 +32,16 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { type SparklineHoverEvent } from './Sparkline';
 
+/**
+ * Internal hover record produced by `prepareConfig`. Extends the public
+ * `SparklineHoverEvent` with the cursor's viewport pixel coordinates so the
+ * component can position the built-in tooltip. Not part of the public API.
+ */
+export interface SparklineHoverInfo extends SparklineHoverEvent {
+  left: number;
+  top: number;
+}
+
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set
  **/
@@ -176,7 +186,7 @@ export const prepareConfig = (
   theme: GrafanaTheme2,
   showHighlights?: boolean,
   enableHover?: boolean,
-  onHover?: (hover: SparklineHoverEvent | null) => void
+  onHover?: (hover: SparklineHoverInfo | null) => void
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
@@ -320,6 +330,9 @@ export const prepareConfig = (
         index: idx,
         value,
         display: formattedValueToString(display(value)),
+        // Viewport coords of the cursor, for positioning the built-in tooltip.
+        left: u.rect.left + (u.cursor.left ?? 0),
+        top: u.rect.top + (u.cursor.top ?? 0),
       });
     });
   }

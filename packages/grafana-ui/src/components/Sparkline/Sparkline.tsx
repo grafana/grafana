@@ -1,13 +1,15 @@
-import React, { memo, useMemo, useRef } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 
 import { type FieldConfig, type FieldSparkline } from '@grafana/data';
 import { type GraphFieldConfig } from '@grafana/schema';
 
 import { type Themeable2 } from '../../types/theme';
+import { Portal } from '../Portal/Portal';
+import { VizTooltipContainer } from '../VizTooltip/VizTooltipContainer';
 import { UPlotChart } from '../uPlot/Plot';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
 
-import { prepareSeries, prepareConfig } from './utils';
+import { prepareSeries, prepareConfig, type SparklineHoverInfo } from './utils';
 
 /**
  * Payload emitted by `Sparkline`'s `onHover` when hover support is enabled
@@ -38,11 +40,26 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   const { sparkline, config: fieldConfig, theme, width, height, showHighlights, showTooltip, onHover } = props;
   const hoverEnabled = Boolean(showTooltip || onHover);
 
-  // Keep the latest onHover reachable from the (stable, memoized) uPlot hook so an
-  // inline callback identity change never rebuilds the config / re-inits the plot.
+  const [tooltip, setTooltip] = useState<SparklineHoverInfo | null>(null);
+
+  // Keep the latest onHover / showTooltip reachable from the (stable, memoized) uPlot
+  // hook so an inline callback identity change never rebuilds the config / re-inits the plot.
   const onHoverRef = useRef(onHover);
   onHoverRef.current = onHover;
-  const emitHover = useMemo(() => (hover: SparklineHoverEvent | null) => onHoverRef.current?.(hover), []);
+  const showTooltipRef = useRef(showTooltip);
+  showTooltipRef.current = showTooltip;
+
+  // Single source of truth: the config hook emits a rich hover record; we fan it out to
+  // the public (trimmed) onHover and to the built-in tooltip state.
+  const emitHover = useMemo(
+    () => (hover: SparklineHoverInfo | null) => {
+      onHoverRef.current?.(hover ? { index: hover.index, value: hover.value, display: hover.display } : null);
+      if (showTooltipRef.current) {
+        setTooltip(hover);
+      }
+    },
+    []
+  );
 
   const { configBuilder, data, warning } = useMemo(() => {
     const { frame, warning: seriesWarning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
@@ -59,7 +76,18 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
     return null;
   }
 
-  return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
+  return (
+    <>
+      <UPlotChart data={data} config={configBuilder} width={width} height={height} />
+      {showTooltip && tooltip && (
+        <Portal>
+          <VizTooltipContainer position={{ x: tooltip.left, y: tooltip.top }} offset={{ x: 10, y: 10 }}>
+            {tooltip.display}
+          </VizTooltipContainer>
+        </Portal>
+      )}
+    </>
+  );
 });
 
 Sparkline.displayName = 'Sparkline';
