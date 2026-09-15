@@ -316,7 +316,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, nil, actionSets, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			)
 			require.NoError(t, err)
 
@@ -580,7 +580,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			service, err := New(
 				cfg, tt.opts, features, routing.NewRouteRegister(), license,
-				ac, acService, sql, nil, nil, NewActionSetService(),
+				ac, acService, sql, nil, nil, nil, NewActionSetService(),
 			)
 
 			if tt.expectErr {
@@ -715,7 +715,7 @@ func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
 
 			_, err := New(
 				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
-				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, NewActionSetService(),
+				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, nil, NewActionSetService(),
 			)
 
 			if tt.expectErr {
@@ -877,7 +877,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
+		ac, acService, sql, teamSvc, userSvc, nil, NewActionSetService(),
 	)
 	require.NoError(t, err)
 
