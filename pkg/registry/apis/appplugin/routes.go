@@ -122,7 +122,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
 
 	for _, kind := range version.Kinds {
-		plural := strings.ToLower(kind.Plural)
+		resource := kind.Resource()
 
 		// Cluster kinds have no namespace segment to mount under.
 		dst := &routes.Namespace
@@ -147,10 +147,10 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 				continue
 			}
 			*dst = append(*dst, builder.APIRouteHandler{
-				Path:    plural + "/{" + nameParameter + "}/" + path,
+				Path:    resource + "/{" + nameParameter + "}/" + path,
 				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
 				Schemas: version.Routes.Schemas,
-				Handler: b.routeHandler(gv, plural, path),
+				Handler: b.routeHandler(gv, resource, path),
 			})
 		}
 	}
@@ -265,9 +265,7 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 func reservedResourceNames(version app.ManifestVersion) map[string]bool {
 	reserved := map[string]bool{apppluginV0.APP_RESOURCE_NAME: true}
 	for _, kind := range version.Kinds {
-		if kind.Plural != "" {
-			reserved[strings.ToLower(kind.Plural)] = true
-		}
+		reserved[kind.Resource()] = true
 	}
 	return reserved
 }
