@@ -71,7 +71,7 @@ func TestExtractValues(t *testing.T) {
 			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
 		}, util.Pointer(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
+			"A0": {Var: "A", Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
 		},
 	}, {
 		desc: "Classic condition frame with multiple matches",
@@ -80,8 +80,8 @@ func TestExtractValues(t *testing.T) {
 			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0)},
 		}, util.Pointer(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
-			"A1": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0), Type: "classic_conditions"},
+			"A0": {Var: "A", Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0), Type: "classic_conditions"},
+			"A1": {Var: "A", Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0), Type: "classic_conditions"},
 		},
 	}, {
 		desc: "Nil value",

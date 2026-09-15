@@ -7,6 +7,8 @@ import (
 	"maps"
 	"math"
 	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +24,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
+
+// EvaluationMatch identifies a series matched by a classic condition evaluation.
+// RefID is the explicit evaluation value key (for example, B0 or B1).
+type EvaluationMatch struct {
+	RefID  string      `json:"refId"`
+	Metric string      `json:"metric"`
+	Labels data.Labels `json:"labels"`
+	Value  *float64    `json:"value,string"`
+}
 
 type State struct {
 	OrgID        int64
@@ -63,6 +74,9 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
+	// EvalMatches contains the series that matched classic conditions in the latest evaluation.
+	EvalMatches []EvaluationMatch
+
 	// FiredAt is the time the state first transitions to Alerting.
 	FiredAt *time.Time
 
@@ -99,6 +113,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		Annotations:          annotations,
 		Labels:               lbs,
 		Values:               nil,
+		EvalMatches:          nil,
 		StartsAt:             result.EvaluatedAt,
 		EndsAt:               result.EvaluatedAt,
 		ResolvedAt:           nil,
@@ -130,6 +145,7 @@ func (a *State) Copy() *State {
 		Annotations:          annotationsCopy,
 		Labels:               labelsCopy,
 		Values:               a.Values,
+		EvalMatches:          cloneEvalMatches(a.EvalMatches),
 		StartsAt:             a.StartsAt,
 		EndsAt:               a.EndsAt,
 		FiredAt:              a.FiredAt,
@@ -260,6 +276,7 @@ func datasourceErrorInfo(err error, rule *models.AlertRule) (string, string) {
 
 func (a *State) SetNextValues(result eval.Result) {
 	const sentinel = float64(-1)
+	a.EvalMatches = classicEvalMatches(result.Values)
 
 	// We try to provide a reasonable object for Values in the event of nodata/error.
 	// In order to not break templates that might refer to refIDs,
@@ -282,6 +299,73 @@ func (a *State) SetNextValues(result eval.Result) {
 		}
 	}
 	a.Values = newValues
+}
+
+func classicEvalMatches(values map[string]eval.NumberValueCapture) []EvaluationMatch {
+	matches := make([]EvaluationMatch, 0)
+	for refID, value := range values {
+		if value.Type != "classic_conditions" {
+			continue
+		}
+		matches = append(matches, EvaluationMatch{
+			RefID:  refID,
+			Metric: value.Metric,
+			Labels: value.Labels,
+			Value:  value.Value,
+		})
+	}
+	if len(matches) == 0 {
+		return nil
+	}
+	sort.Slice(matches, func(i, j int) bool {
+		return naturalRefIDLess(matches[i].RefID, matches[j].RefID)
+	})
+	return matches
+}
+
+func naturalRefIDLess(a, b string) bool {
+	aPrefix, aNumber, aHasNumber := refIDParts(a)
+	bPrefix, bNumber, bHasNumber := refIDParts(b)
+	if aPrefix != bPrefix {
+		return aPrefix < bPrefix
+	}
+	if aHasNumber != bHasNumber {
+		return aHasNumber
+	}
+	if aHasNumber && aNumber != bNumber {
+		return aNumber < bNumber
+	}
+	return a < b
+}
+
+func refIDParts(refID string) (string, uint64, bool) {
+	index := len(refID)
+	for index > 0 && refID[index-1] >= '0' && refID[index-1] <= '9' {
+		index--
+	}
+	if index == len(refID) {
+		return refID, 0, false
+	}
+	number, err := strconv.ParseUint(refID[index:], 10, 64)
+	if err != nil {
+		return refID, 0, false
+	}
+	return refID[:index], number, true
+}
+
+func cloneEvalMatches(matches []EvaluationMatch) []EvaluationMatch {
+	if matches == nil {
+		return nil
+	}
+
+	cloned := make([]EvaluationMatch, len(matches))
+	for i, match := range matches {
+		cloned[i] = match
+		if match.Labels != nil {
+			cloned[i].Labels = match.Labels.Copy()
+		}
+	}
+	return cloned
 }
 
 // StateTransition describes the transition from one state to another.
@@ -805,6 +889,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.LatestResult = existingState.LatestResult
 	newState.Error = existingState.Error
 	newState.Values = existingState.Values
+	newState.EvalMatches = cloneEvalMatches(existingState.EvalMatches)
 	newState.LastEvaluationString = existingState.LastEvaluationString
 	newState.StartsAt = existingState.StartsAt
 	newState.EndsAt = existingState.EndsAt
