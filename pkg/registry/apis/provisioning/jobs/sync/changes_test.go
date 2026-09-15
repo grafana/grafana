@@ -305,6 +305,20 @@ func TestChanges(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("non-resource file with an unsafe character is not reported as unsupported", func(t *testing.T) {
+		// validatePathBasics runs before the extension check inside
+		// IsPathSupported, so a non-resource file with an unsafe character
+		// fails with a path-basics error, not ErrUnsupportedFileExtension --
+		// it must still be excluded by extension, not by which error came first.
+		source := []repository.FileTreeEntry{
+			{Path: "folder/screenshot & notes.png", Hash: "xyz", Blob: true},
+			{Path: "folder/dashboard.json", Hash: "abc", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		_, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+	})
+
 	t.Run("unhidden path from hidden file", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "folder/.hidden/dashboard.json", Hash: "xyz", Blob: true},

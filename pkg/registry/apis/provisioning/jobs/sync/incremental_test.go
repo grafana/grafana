@@ -651,6 +651,40 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
+			name:         "non-resource file with an unsafe character is not reported as unsupported",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// validatePathBasics runs before the extension check inside
+				// IsPathSupported, so this fails with a path-basics error, not
+				// ErrUnsupportedFileExtension -- must still be excluded by
+				// extension, not by which error came first.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/screenshot & notes.png",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/screenshot & notes.png").Return(false)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder/", "new-ref").
+					Return("folder-uid", nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Error() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
 			name:         "error writing resource",
 			quotaTracker: permissiveQt,
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {

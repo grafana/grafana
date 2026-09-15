@@ -96,6 +96,23 @@ func IsReadablePath(filePath string) error {
 	return nil
 }
 
+// HasResourceExtension reports whether filePath's extension is one of the
+// resource types (yml, yaml, json) that can be parsed into a k8s resource --
+// independent of whether the rest of the path is safe. Callers that need to
+// tell "this was never a resource" apart from "this unsafe path would have
+// been a resource" (e.g. deciding whether an unsafe path is a hard sync
+// failure) should check this before inspecting the error IsPathSupported
+// returns: validatePathBasics runs before the extension check, so an unsafe
+// non-resource file (e.g. a stray image with a `#` in its name) fails with a
+// path-basics error, not ErrUnsupportedFileExtension.
+func HasResourceExtension(filePath string) bool {
+	if safepath.IsDir(filePath) {
+		return false
+	}
+	ext := strings.ToLower(path.Ext(filePath))
+	return resourceExtensions[ext]
+}
+
 // IsRawFile reports whether the file path points at a read-only raw file (not a k8s resource).
 func IsRawFile(filePath string) bool {
 	if safepath.IsDir(filePath) {

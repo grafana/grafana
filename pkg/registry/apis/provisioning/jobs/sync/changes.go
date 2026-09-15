@@ -199,9 +199,14 @@ func Changes(
 			continue
 		}
 
-		// README.md and .keep/.gitignore are normal, not unsupported.
+		// A non-resource file (wrong extension) was never going to be synced,
+		// regardless of which error IsPathSupported returns first -- checking
+		// the extension directly avoids depending on validatePathBasics running
+		// after the extension check. README.md, .keep and .gitignore fall out
+		// here; a hidden resource file (e.g. .dashboard.yaml) is still normal,
+		// not unsupported.
 		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
-			!errors.Is(pathErr, resources.ErrUnsupportedFileExtension) && !errors.Is(pathErr, safepath.ErrHiddenPath) {
+			!errors.Is(pathErr, safepath.ErrHiddenPath) && resources.HasResourceExtension(file.Path) {
 			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
 		}
 
