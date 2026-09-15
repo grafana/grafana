@@ -94,8 +94,7 @@ func schema_pkg_apis_alertrulequality_v0alpha1_AlertRuleQualityPolicyList(ref co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(AlertRuleQualityPolicy{}.OpenAPIModelName()),
+										Ref: ref(AlertRuleQualityPolicy{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -131,8 +130,7 @@ func schema_pkg_apis_alertrulequality_v0alpha1_AlertRuleQualityPolicySpec(ref co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FieldRequirement{}.OpenAPIModelName()),
+										Ref: ref(FieldRequirement{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -153,8 +151,7 @@ func schema_pkg_apis_alertrulequality_v0alpha1_AlertRuleQualityPolicySpec(ref co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FieldRequirement{}.OpenAPIModelName()),
+										Ref: ref(FieldRequirement{}.OpenAPIModelName()),
 									},
 								},
 							},
