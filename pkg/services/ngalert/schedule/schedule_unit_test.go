@@ -809,6 +809,72 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		})
 	})
 
+	t.Run("plugin_origin_rules metric should reflect the current state", func(t *testing.T) {
+		// Without any plugin-originated rules there are no metrics
+		t.Run("it should not show metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
+			require.NoError(t, err)
+		})
+
+		// The metric only counts rules carrying the __grafana_origin label.
+		alertRule1 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		).GenerateRef()
+
+		alertRule2 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		).GenerateRef()
+
+		alertRuleNoOrigin := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+		).GenerateRef()
+
+		t.Run("it should show two rules for a single origin in a single org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRuleNoOrigin})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_plugin_origin_rules The number of alert rules created by a plugin, by origin.
+								# TYPE grafana_alerting_plugin_origin_rules gauge
+								grafana_alerting_plugin_origin_rules{org="%[1]d",origin="plugin/grafana-slo-app"} 2
+				`, alertRule1.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
+			require.NoError(t, err)
+		})
+
+		alertRule3 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/other-app"),
+		).GenerateRef()
+
+		t.Run("it should show rules split by origin across two orgs", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2, alertRule3, alertRuleNoOrigin})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_plugin_origin_rules The number of alert rules created by a plugin, by origin.
+								# TYPE grafana_alerting_plugin_origin_rules gauge
+								grafana_alerting_plugin_origin_rules{org="%[1]d",origin="plugin/grafana-slo-app"} 2
+								grafana_alerting_plugin_origin_rules{org="%[2]d",origin="plugin/other-app"} 1
+				`, firstOrgID, secondOrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing all rules it should not show any metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_plugin_origin_rules")
+			require.NoError(t, err)
+		})
+	})
+
 	t.Run("rule_groups metric should reflect the current state", func(t *testing.T) {
 		const firstOrgID int64 = 1
 		const secondOrgID int64 = 2
