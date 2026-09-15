@@ -72,6 +72,20 @@ function reencodePathParam(value: string | undefined): string {
   return encodeURIComponent(tryDecodeUriComponent(value ?? ''));
 }
 
+/**
+ * Splits a template sub-route into the template's name and what to do with it.
+ *
+ * Reads from the end rather than the start, because `matchPath` turns '%2F' into a real '/' (see
+ * `reencodePathParam` above) and template names often contain one — external Alertmanagers key
+ * their templates by file name. Splitting front to back would cut 'team/a.tmpl' down to 'team'.
+ *
+ * The last segment is always one of Grafana's own actions, so anything before it is the name.
+ */
+function splitTemplateRoute(remainder: string): { name: string; action?: string } {
+  const match = /^(.*)\/(edit|duplicate)$/.exec(remainder);
+  return match ? { name: match[1], action: match[2] } : { name: remainder };
+}
+
 /** Grafana's URLs name a data source, the plugin's want its UID. */
 async function getDataSourceUid(name: string): Promise<string | undefined> {
   return (await getDataSourceInstanceSettings(name))?.uid;
@@ -293,9 +307,11 @@ export const routeProxies: RouteProxy[] = [
     path: '/alerting/notifications/templates/*',
     matches: matchesExternalAlertmanager,
     handler: alertmanagerPage((params, { params: routeParams }) => {
-      const [name, action] = (routeParams['*'] ?? '').split('/');
+      const { name, action } = splitTemplateRoute(routeParams['*'] ?? '');
 
-      if (name === 'new') {
+      // Only a create when there's no action after it — someone can name a template 'new', and
+      // '<name>/edit' means edit whatever the name is.
+      if (!action && name === 'new') {
         params.set(DRAWER_PARAMS.create, 'true');
       } else if (name) {
         params.set(DRAWER_PARAMS.template, tryDecodeUriComponent(name));

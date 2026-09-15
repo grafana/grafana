@@ -302,6 +302,14 @@ describe('pages the plugin has no URL for', () => {
     ['new', `${uidParam}&create=true`],
     ['my-template/edit', `${uidParam}&templateName=my-template`],
     ['my-template/duplicate', `${uidParam}&templateName=my-template&create=true`],
+    // matchPath turns '%2F' into a real '/', so the name can't be read as everything up to the
+    // first slash. External Alertmanagers key templates by file name, which often has a path in it.
+    [`${encodeURIComponent('team/a.tmpl')}/edit`, `${uidParam}&templateName=team%2Fa.tmpl`],
+    [`${encodeURIComponent('team/a.tmpl')}/duplicate`, `${uidParam}&templateName=team%2Fa.tmpl&create=true`],
+    // A template someone called 'new'. There's an action on the end, so this is an edit.
+    ['new/edit', `${uidParam}&templateName=new`],
+    // Everything other than '%2F' arrives still encoded, so it has to be decoded exactly once.
+    [`${encodeURIComponent('my template')}/edit`, `${uidParam}&templateName=my+template`],
   ])('maps the %s template route onto the templates page', async (remainder, expectedParams) => {
     expect(
       await resolve('/alerting/notifications/templates/*', `/alerting/notifications/templates/${remainder}${am}`)
