@@ -41,17 +41,17 @@ describe('buildStaticNavTree', () => {
       ]);
     });
 
-    it('places notebooks after drilldown when the flag is on and the user can read dashboards', () => {
-      const dashboardReader = [AccessControlAction.DashboardsRead, AccessControlAction.DataSourcesExplore];
-      setup({ permissions: dashboardReader, openFeatureFlags: { 'dashboard.notebooks': true } });
+    it('places notebooks after drilldown when the flag is on and the user can read notebooks', () => {
+      const notebookReader = [AccessControlAction.NotebooksRead, AccessControlAction.DataSourcesExplore];
+      setup({ permissions: notebookReader, openFeatureFlags: { 'dashboard.notebooks': true } });
 
       const treeIds = ids(buildStaticNavTree());
       expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
 
-      setup({ permissions: dashboardReader });
+      setup({ permissions: notebookReader });
       expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
 
-      // Notebooks reuse dashboard RBAC; without dashboards:read there is no entry
+      // Without notebooks:read there is no entry
       setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
       expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
     });
