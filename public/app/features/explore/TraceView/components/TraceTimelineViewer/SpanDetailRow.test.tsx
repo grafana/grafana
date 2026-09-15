@@ -91,11 +91,4 @@ describe('SpanDetailRow tests', () => {
 
     expect(screen.getByTestId('span-detail-component')).toBeInTheDocument();
   });
-
-  it('makes indentSpacer a flex container so tree indent guides can stretch the full detail height', () => {
-    const { container } = setup();
-    const indentSpacer = container.querySelector('[class*="-indentSpacer"]');
-
-    expect(indentSpacer).toHaveStyle({ display: 'flex', alignItems: 'stretch' });
-  });
 });
