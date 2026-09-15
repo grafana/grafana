@@ -414,13 +414,13 @@ func (s *ExternalAlertmanager) clampLabelSet(lbls models.LabelSet, kind, alertNa
 		if len(k) > maxSize {
 			s.logger.Warn("Dropping label/annotation with name exceeding size cap",
 				"kind", kind, "namePrefix", util.TruncateUTF8(k, 64), "size", len(k), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
-			s.manager.metrics.clampedStrings.WithLabelValues(kind, "name_dropped").Inc()
+			s.manager.metrics.truncatedStrings.WithLabelValues(kind, "name_dropped").Inc()
 			continue
 		}
 		if len(v) > maxSize {
 			s.logger.Warn("Truncating label/annotation value exceeding size cap",
 				"kind", kind, "name", k, "size", len(v), "cap", maxSize, "alertname", alertName, "rule_uid", ruleUID)
-			s.manager.metrics.clampedStrings.WithLabelValues(kind, "value_truncated").Inc()
+			s.manager.metrics.truncatedStrings.WithLabelValues(kind, "value_truncated").Inc()
 			v = util.TruncateUTF8(v, maxSize)
 		}
 		clamped[k] = v

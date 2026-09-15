@@ -63,7 +63,8 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getLibraryPanelBehavior, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
@@ -353,6 +354,11 @@ export function vizPanelToSchemaV2(
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.description)
       : (vizPanel.state.description ?? '');
 
+  const subtitle =
+    bakeRepeatValues && vizPanel.state.subtitle
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
+      : undefined;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -361,6 +367,7 @@ export function vizPanelToSchemaV2(
         : getPanelIdForVizPanel(vizPanel),
       title,
       description,
+      subtitle,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {

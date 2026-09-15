@@ -124,15 +124,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (isReadOnlyRepo) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ReadOnlyBadge repoType={repoType} />;
-      },
-    });
-  }
+  // Only users who could otherwise edit need to know why they can't.
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
+    render: () => {
+      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
+    },
+  });
 
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.
@@ -173,8 +172,8 @@ export function ToolbarActions({ dashboard }: Props) {
               key="add-visualization"
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
+              onClick={async () => {
+                const vizPanel = await dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
                 openPanelEditor(dashboard, vizPanel, true);
               }}

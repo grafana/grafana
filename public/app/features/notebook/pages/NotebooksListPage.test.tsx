@@ -1,5 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import userEvent from '@testing-library/user-event';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
@@ -9,8 +10,10 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { ROWS_PER_PAGE } from '../list/NotebooksTable';
 import {
+  useLazyNotebookFieldFacetQuery,
   type NotebookSearchQuery,
   type ResultItem,
   type WhereNode,
@@ -37,11 +40,21 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 
 jest.mock('../list/notebookSearchApi', () => ({
   useSearchNotebooksInfiniteQuery: jest.fn(),
+  // The tag filter loads its options from a facet on this module when it is focused. Left empty by
+  // default, so the picker is present but offers nothing for the cases that are not about tags.
+  useLazyNotebookFieldFacetQuery: jest.fn(),
+}));
+
+// Partial mock: this spies on listFiltered only. Any other real call this page makes keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { ...jest.requireActual('../analytics/main').NotebookAnalytics, listFiltered: jest.fn() },
 }));
 
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
+const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacetQuery);
 const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
+const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
 function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
   return {
@@ -131,11 +144,18 @@ function setNotebooks(
     const leaves = leavesOf(query.where);
     const needle = leaves.find((leaf) => leaf.text)?.text?.value.toLowerCase();
     const authors = leaves.find((leaf) => leaf.filter?.field === 'createdBy')?.filter?.values;
+    // A leaf per tag, so every one of them has to match — the same narrowing the endpoint does.
+    const tags = leaves.filter((leaf) => leaf.filter?.field === 'tags').flatMap((leaf) => leaf.filter?.values ?? []);
 
     const matched = items.filter((item) => {
       const title = String(item.fields?.title ?? '').toLowerCase();
       const createdBy = String(item.fields?.createdBy ?? '');
-      return (!needle || title.includes(needle)) && (!authors || authors.includes(createdBy));
+      const itemTags = Array.isArray(item.fields?.tags) ? item.fields.tags : [];
+      return (
+        (!needle || title.includes(needle)) &&
+        (!authors || authors.includes(createdBy)) &&
+        tags.every((tag) => itemTags.includes(tag))
+      );
     });
 
     // One page: what the walk looks like once it has finished, which is every case here bar the
@@ -169,6 +189,20 @@ function setNotebooks(
   });
 }
 
+/**
+ * The tags the facet offers the filter's dropdown. The facet is aggregated over the whole library
+ * rather than over the rows returned, so it is set independently of them.
+ */
+function setTags(tags: string[]) {
+  const trigger = jest.fn().mockResolvedValue({
+    data: { items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } },
+  });
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the picker reads only the trigger
+  mockUseLazyNotebookFieldFacetQuery.mockReturnValue([trigger] as unknown as ReturnType<
+    typeof useLazyNotebookFieldFacetQuery
+  >);
+}
+
 describe('NotebooksListPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -181,6 +215,7 @@ describe('NotebooksListPage', () => {
         display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }],
       },
     } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+    setTags([]);
     setNotebooks([]);
   });
 
@@ -286,6 +321,87 @@ describe('NotebooksListPage', () => {
     } finally {
       contextSrv.user = originalUser;
     }
+  });
+
+  it('filters the list by tag through the endpoint', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setTags(['errors', 'latency']);
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    // The options are loaded when the picker is focused, so they are awaited before being picked.
+    // Scoped to the menu because the rows carry tag pills of their own with the same text.
+    await userEvent.click(await screen.findByLabelText('Tag filter'));
+    await within(await screen.findByRole('listbox')).findByText('latency');
+    await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    // The narrowing came from the request rather than from filtering the rows on screen.
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
+    );
+  });
+
+  // The other route to the same filter: the rows' tags are clickable, as dashboard search's are.
+  it('filters by a tag clicked in a row', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
+    );
+  });
+
+  // With no facet the picker had nothing to offer and no way to type into it, which on a deployment
+  // that does not serve the search route left the filter unusable. The rows carry their own tags.
+  it("offers the loaded notebooks' tags when the facet cannot answer", async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setTags([]);
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByLabelText('Tag filter'));
+    const listbox = await screen.findByRole('listbox');
+    await userEvent.click(await within(listbox).findByText('latency'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+  });
+
+  // The tags are only known once the picker is opened, so the control is offered either way — an
+  // untagged library just has nothing in its dropdown.
+  it('offers the tag filter before any tags are known', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tag filter')).toBeInTheDocument();
   });
 
   it('shows the not-found empty state when filters match nothing', async () => {
@@ -577,6 +693,236 @@ describe('NotebooksListPage', () => {
     await waitFor(() => {
       expect(locationService.getLocation().pathname).toBe('/notebooks/new');
       expect(locationService.getLocation().search).toBe('?edit=true');
+    });
+  });
+
+  describe('list_filtered', () => {
+    function twoNotebooks() {
+      return [makeHit('nb1', 'Checkout error spike', ['errors']), makeHit('nb2', 'Q2 latency regression', ['latency'])];
+    }
+
+    // One event for a search somebody finished, not one per keystroke. Seven characters going out
+    // as seven events is the failure this guards.
+    it('reports a committed search once', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag chosen in the picker', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setTags(['errors', 'latency']);
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      // The picker loads its options on focus, so this waits for them before picking one. Scoped
+      // to the menu because the rows show pills with the same text.
+      await userEvent.click(await screen.findByLabelText('Tag filter'));
+      await within(await screen.findByRole('listbox')).findByText('latency');
+      await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag clicked in a row as a tag filter', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+    });
+
+    // Clicking a tag already in the filter narrows nothing, so there is nothing to report. The hook
+    // hands the same array back for that click, which is what the identity check in the page reads.
+    it('reports nothing when a tag clicked in a row is already filtered', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      // A change that does report, so the silence above has something arriving to measure it
+      // against rather than a wait that was already over.
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', {
+          queryLength: 7,
+          tagCount: 1,
+          createdByMe: false,
+        })
+      );
+      expect(mockListFiltered.mock.calls).toEqual([
+        ['tag', { queryLength: 0, tagCount: 1, createdByMe: false }],
+        // The tag is still on, which is the point of sending the whole set rather than the change.
+        ['search', { queryLength: 7, tagCount: 1, createdByMe: false }],
+      ]);
+    });
+
+    it('reports the created-by-me checkbox', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Theirs', [], 'user:other')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        await userEvent.click(await screen.findByLabelText('Created by me'));
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Both directions report. The state is what separates them, so turning a filter on and then off
+    // again sends two events that read differently.
+    it('reports the box going off as well as going on', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Also mine', [], 'user:me')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        const checkbox = await screen.findByLabelText('Created by me');
+        await userEvent.click(checkbox);
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+
+        await userEvent.click(checkbox);
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: false,
+          })
+        );
+        expect(mockListFiltered.mock.calls).toEqual([
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: true }],
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: false }],
+        ]);
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Everything else reads the committed search trimmed, so a space on its own moves no filter.
+    it('reports nothing when only whitespace changes', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.type(searchBox, ' ');
+      // A space changes nothing the page shows, on purpose, so there is no state to wait for.
+      // Waiting out the 300ms debounce is what reaches the point where a raw comparison fires.
+      // Inside act() because the debounce sets state when it lands.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports an emptied search box as a zero-length query', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+
+      await userEvent.clear(searchBox);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 0, tagCount: 0, createdByMe: false })
+      );
+    });
+
+    // The event says somebody searched, so it goes out with the search rather than waiting for the
+    // results. Holding it until the results land would lose any search the reader filters again on
+    // top of before that happens.
+    it('reports as the filter commits, without waiting for the results', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+      expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+
+      // Nothing lands for the new filters from here on.
+      setNotebooks(twoNotebooks(), { isReloading: true });
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      // The request carrying the new text is what says the debounce committed. The skeleton alone
+      // would not: it appears on the first keystroke, before the debounce fires.
+      await waitFor(() =>
+        expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+          expect.objectContaining({ where: { text: { value: 'latency' } } })
+        )
+      );
+
+      // Nothing has landed for that request, and the event has already gone out.
+      expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    // The reader searched. A request that then failed does not make that less true, and the event
+    // carries nothing about the outcome that the failure could contradict.
+    it('reports a search whose request failed', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks(), { errorWhenFiltered: { status: 500, data: { message: 'search exploded' } } });
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
     });
   });
 });

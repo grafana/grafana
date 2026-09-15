@@ -161,7 +161,7 @@ func ProvideMappersRegistry() *MappersRegistry {
 // The scope prefix is derived from mapper.ScopePattern() — no separate parameter is needed.
 // enabled may be nil, which means the mapper is always enabled.
 func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled func() bool) {
-	prefix := strings.SplitN(mapper.ScopePattern(), ":", 2)[0]
+	prefix, _, _ := strings.Cut(mapper.ScopePattern(), ":")
 	m.entries[gr] = mapperEntry{mapper: mapper, enabled: enabled}
 	m.reverse[prefix] = gr
 }

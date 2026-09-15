@@ -15,6 +15,7 @@ const dummyOutliers: OutlierOutput = {
 
 export class OutlierDetector implements AugursOutlierDetector {
   free(): void {}
+  [Symbol.dispose](): void {}
   detect(): OutlierOutput {
     return dummyOutliers;
   }
@@ -28,5 +29,6 @@ export class LoadedOutlierDetector implements AugursLoadedOutlierDetector {
     return dummyOutliers;
   }
   free(): void {}
+  [Symbol.dispose](): void {}
   updateDetector(options: OutlierDetectorOptions): void {}
 }

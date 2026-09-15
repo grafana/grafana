@@ -8,9 +8,9 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
+import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
-import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 beforeAll(() => {
@@ -20,6 +20,19 @@ beforeAll(() => {
 afterAll(() => {
   setTestFlags({});
 });
+
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
+}));
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -557,8 +570,8 @@ describe('TextNGEditor render mode preview', () => {
   // Reports the row context it was handed, so these assert the preview wiring
   // rather than re-testing macro resolution (covered in renderContent.test.ts).
   const reportRowContext: InterpolateFunction = (target, scopedVars) => {
-    const context = scopedVars?.__dataContext?.value;
-    return context ? `row-${context.rowIndex}` : target;
+    const rowIndex = scopedVars?.__dataContext?.value.rowIndex;
+    return rowIndex === undefined ? target : `row-${rowIndex}`;
   };
 
   const previewFor = (renderMode?: RenderMode) => (
