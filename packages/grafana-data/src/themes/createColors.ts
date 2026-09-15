@@ -368,6 +368,15 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.borderEmphasis = emphasize(color.border, tonalOffset);
     }
 
+    // Falls back to matching background/border so themes that don't define these render identically
+    // to before subtleBackground/subtleBorder existed.
+    if (!color.subtleBackground) {
+      color.subtleBackground = color.background;
+    }
+    if (!color.subtleBorder) {
+      color.subtleBorder = color.border;
+    }
+
     // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);

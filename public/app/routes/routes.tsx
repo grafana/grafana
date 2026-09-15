@@ -653,6 +653,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/buttons-alerts-playground',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ButtonsAlertsPlayground"*/ 'app/features/theme-playground/ButtonsAlertsPlayground'
+          )
+      ),
+    },
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')

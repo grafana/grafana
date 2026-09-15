@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Drawer, useStyles2, useTheme2 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
 
+import { ButtonAlertColorToggle } from '../../../features/visual-refresh/components/ButtonAlertColorToggle/ButtonAlertColorToggle';
 import { VisualRefreshInfo } from '../../../features/visual-refresh/components/VisualRefreshInfo/VisualRefreshInfo';
 
 import { ThemeCard } from './ThemeCard';
@@ -33,7 +34,12 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
       title={t('profile.change-theme', 'Change theme')}
       onClose={onClose}
       size="md"
-      subtitle={<VisualRefreshInfo />}
+      subtitle={
+        <>
+          <VisualRefreshInfo />
+          <ButtonAlertColorToggle />
+        </>
+      }
     >
       <div className={styles.grid} role="radiogroup">
         {themes.map((themeOption) => (

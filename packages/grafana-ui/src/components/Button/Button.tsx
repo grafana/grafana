@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type AnchorHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, textUtil, type ThemeRichColor } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, textUtil, type ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -328,11 +328,43 @@ export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, v
   };
 }
 
+// These colors' background/border tokens are repointed to a saturated solid for their Button/Alert
+// use, so outline and text fills can't use `color.background` for a subtle hover tint like other
+// colors do - it would just match the solid fill. They fall back to the alpha-blended `transparent`.
+const SEMANTIC_SOLID_COLOR_NAMES = ['error', 'success', 'warning', 'info'];
+
+// Accent and secondary have no semantic alert counterpart, but their outline fill should still join
+// the outlineMatchesAlertStyle experiment below - their background/border tokens were never repointed
+// to a solid, so subtleBackground/subtleBorder already fall back to the same dark, two-tone look.
+const OUTLINE_MATCHES_ALERT_STYLE_COLOR_NAMES = [...SEMANTIC_SOLID_COLOR_NAMES, 'accent', 'secondary'];
+
+// Hover should always read as darker than the resting state, in both light and dark mode. The
+// theme's backgroundEmphasis/borderEmphasis tokens don't guarantee that direction consistently
+// across modes (they're mirrored per-mode, not defined relative to our repointed solid colors), so
+// we compute it instead of looking up a token.
+const HOVER_DARKEN_COEFFICIENT = 0.15;
+// A gentler darken for the already-subtle outlineMatchesAlertStyle look - the full coefficient above,
+// applied to a near-white/near-black subtle shade, darkens past the point of looking like a mere
+// hover state and can end up reading as darker than an actual solid button (e.g. secondary's fill).
+const SUBTLE_HOVER_DARKEN_COEFFICIENT = 0.06;
+const darkenForHover = (color: string, coefficient = HOVER_DARKEN_COEFFICIENT) =>
+  colorManipulator.darken(color, coefficient);
+
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const isSemanticSolidColor = SEMANTIC_SOLID_COLOR_NAMES.includes(color.name);
+  // Design experiment: outline buttons take on the alert's subtle background+border instead of a
+  // transparent background with a solid-color border. See `theme.flags.outlineMatchesAlertStyle`.
+  const outlineMatchesAlertStyle = Boolean(
+    visualRefreshEnabled &&
+      theme.flags.outlineMatchesAlertStyle &&
+      OUTLINE_MATCHES_ALERT_STYLE_COLOR_NAMES.includes(color.name)
+  );
+
   let outlineBorderColor = color.border;
   let borderColor = visualRefreshEnabled ? color.border : 'transparent';
   let hoverBorderColor = 'transparent';
+  const subtleHoverBackground = visualRefreshEnabled && isSemanticSolidColor ? color.transparent : color.background;
 
   // Secondary button has some special rules as we lack the color token to
   // specify border color for normal button vs border color for outline button
@@ -343,17 +375,33 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   }
 
   if (fill === 'outline') {
-    if (visualRefreshEnabled) {
-      outlineBorderColor = color.text;
-    }
+    const restBorderColor = outlineMatchesAlertStyle ? color.subtleBorder : outlineBorderColor;
+    // Darken background and border independently from their own resting shade (rather than
+    // collapsing to one shared, much-darker value) so hover stays a subtle step up, not a jump
+    // into territory as dark as an actual solid button's fill.
+    const outlineMatchesAlertStyleHoverBackground = outlineMatchesAlertStyle
+      ? darkenForHover(color.subtleBackground, SUBTLE_HOVER_DARKEN_COEFFICIENT)
+      : undefined;
+    const outlineMatchesAlertStyleHoverBorder = outlineMatchesAlertStyle
+      ? darkenForHover(color.subtleBorder, SUBTLE_HOVER_DARKEN_COEFFICIENT)
+      : undefined;
+
     return {
-      background: 'transparent',
+      background: outlineMatchesAlertStyle ? color.subtleBackground : 'transparent',
       color: color.text,
-      border: `1px solid ${outlineBorderColor}`,
+      border: `1px solid ${restBorderColor}`,
 
       '&:hover, &:focus': {
-        background: visualRefreshEnabled ? color.background : color.transparent,
-        borderColor: visualRefreshEnabled ? color.textEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
+        background: outlineMatchesAlertStyleHoverBackground
+          ? outlineMatchesAlertStyleHoverBackground
+          : visualRefreshEnabled
+            ? subtleHoverBackground
+            : color.transparent,
+        borderColor: outlineMatchesAlertStyleHoverBorder
+          ? outlineMatchesAlertStyleHoverBorder
+          : visualRefreshEnabled
+            ? outlineBorderColor
+            : theme.colors.emphasize(outlineBorderColor, 0.25),
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
 
@@ -370,7 +418,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       border: '1px solid transparent',
 
       '&:hover, &:focus': {
-        background: visualRefreshEnabled ? color.background : color.transparent,
+        background: visualRefreshEnabled ? subtleHoverBackground : color.transparent,
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
         textDecoration: 'none',
         outline: 'none',
@@ -393,6 +441,9 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     backgroundColor = color.background;
     hoverBackgroundColor = color.backgroundEmphasis;
 
+    // Primary is a brand color used broadly beyond buttons (menus, badges, focus rings, etc.),
+    // so its solid fill uses main/contrastText directly instead of the shared background/border/text
+    // tokens the other semantic colors below repoint for their solid fill.
     if (color.name === 'primary' && fill === 'solid') {
       backgroundColor = color.main;
       hoverBackgroundColor = color.mainEmphasis;
@@ -400,6 +451,33 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       hoverBorderColor = 'transparent';
       textColor = color.contrastText;
       hoverTextColor = color.contrastText;
+    }
+
+    // Accent is also used broadly beyond buttons, so rather than repoint its shared background/border
+    // tokens, we borrow its existing border/backgroundEmphasis/textEmphasis values (already a darker
+    // solid orange, with a lighter tint for contrast) to give its solid fill the same look as the
+    // semantic colors below, scoped to just this button.
+    if (color.name === 'accent' && fill === 'solid') {
+      backgroundColor = color.border;
+      hoverBackgroundColor = darkenForHover(backgroundColor);
+      textColor = color.textEmphasis;
+      hoverTextColor = color.textEmphasis;
+    }
+
+    // Secondary's solid fill shouldn't show a border either, matching primary/accent above.
+    // Its backgroundEmphasis token is lighter than background in dark mode, so darken instead.
+    if (color.name === 'secondary' && fill === 'solid') {
+      borderColor = 'transparent';
+      hoverBorderColor = 'transparent';
+      hoverBackgroundColor = darkenForHover(backgroundColor);
+    }
+
+    // Semantic colors' solid fill has a saturated background, so it needs the lighter
+    // textEmphasis shade for contrast instead of the base text color used elsewhere.
+    if (fill === 'solid' && SEMANTIC_SOLID_COLOR_NAMES.includes(color.name)) {
+      textColor = color.textEmphasis;
+      hoverTextColor = color.textEmphasis;
+      hoverBackgroundColor = darkenForHover(backgroundColor);
     }
   }
 
@@ -418,6 +496,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     '&:focus': {
       background: hoverBackgroundColor,
       color: hoverTextColor,
+      borderColor: hoverBorderColor,
     },
 
     '&:active': {

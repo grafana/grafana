@@ -23,7 +23,9 @@
       "border": "palette.neutral300",
       "borderEmphasis": "palette.neutral350",
       "text": "palette.neutral800",
-      "contrastText": "palette.neutral800"
+      "contrastText": "palette.neutral800",
+      "subtleBackground": "palette.neutral300",
+      "subtleBorder": "palette.neutral350"
     },
     "tertiary": {
       "main": "palette.violet500",
@@ -41,50 +43,58 @@
       "text": "palette.orange700",
       "textEmphasis": "palette.orange800",
       "background": "palette.orange50",
-      "backgroundEmphasis": "palette.orange100",
+      "backgroundEmphasis": "palette.orange300",
       "border": "palette.orange200",
       "borderEmphasis": "palette.orange300",
       "contrastText": "palette.white"
     },
     "error": {
       "main": "palette.red500",
-      "mainEmphasis": "palette.red600",
+      "mainEmphasis": "palette.red900",
       "text": "palette.red700",
       "textEmphasis": "palette.red800",
-      "background": "palette.red50",
+      "background": "palette.red200",
       "backgroundEmphasis": "palette.red100",
       "border": "palette.red200",
-      "borderEmphasis": "palette.red300"
+      "borderEmphasis": "palette.red300",
+      "subtleBackground": "palette.red50",
+      "subtleBorder": "palette.red100"
     },
     "warning": {
       "main": "palette.amber500",
-      "mainEmphasis": "palette.amber600",
+      "mainEmphasis": "palette.amber900",
       "text": "palette.amber700",
       "textEmphasis": "palette.amber800",
-      "background": "palette.amber50",
+      "background": "palette.amber200",
       "backgroundEmphasis": "palette.amber100",
       "border": "palette.amber200",
-      "borderEmphasis": "palette.amber300"
+      "borderEmphasis": "palette.amber300",
+      "subtleBackground": "palette.amber50",
+      "subtleBorder": "palette.amber100"
     },
     "success": {
       "main": "palette.sage500",
-      "mainEmphasis": "palette.sage600",
+      "mainEmphasis": "palette.sage900",
       "text": "palette.sage700",
       "textEmphasis": "palette.sage800",
-      "background": "palette.sage50",
+      "background": "palette.sage200",
       "backgroundEmphasis": "palette.sage100",
       "border": "palette.sage200",
-      "borderEmphasis": "palette.sage300"
+      "borderEmphasis": "palette.sage300",
+      "subtleBackground": "palette.sage50",
+      "subtleBorder": "palette.sage100"
     },
     "info": {
       "main": "palette.blue500",
-      "mainEmphasis": "palette.blue600",
+      "mainEmphasis": "palette.blue900",
       "text": "palette.blue700",
       "textEmphasis": "palette.blue800",
-      "background": "palette.blue50",
+      "background": "palette.blue200",
       "backgroundEmphasis": "palette.blue100",
       "border": "palette.blue200",
-      "borderEmphasis": "palette.blue300"
+      "borderEmphasis": "palette.blue300",
+      "subtleBackground": "palette.blue50",
+      "subtleBorder": "palette.blue100"
     },
     "text": {
       "primary": "palette.neutral800",

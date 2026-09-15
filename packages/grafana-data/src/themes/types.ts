@@ -39,6 +39,19 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
+    /**
+     * Design experiment: when true (the default), solid buttons and alerts of the same severity
+     * use the same background/border. When false, alerts use `subtleBackground`/`subtleBorder` instead.
+     * @internal
+     */
+    sameButtonAlertColors?: boolean;
+    /**
+     * Design experiment: when true, outline buttons also use `subtleBackground`/`subtleBorder`
+     * (matching alerts) instead of a transparent background with a solid-color border. Only
+     * meaningful alongside `sameButtonAlertColors: false`.
+     * @internal
+     */
+    outlineMatchesAlertStyle?: boolean;
   } & Record<string, boolean | undefined>;
 }
 
@@ -64,6 +77,10 @@ export const ThemeRichColorInputSchema = z.object({
   borderEmphasis: z.string().optional(),
   /** Text color for text ontop of main */
   contrastText: z.string().optional(),
+  /** A darker, more subtle alternative to `background`, for surfaces that shouldn't match a solid-fill button */
+  subtleBackground: z.string().optional(),
+  /** A darker, more subtle alternative to `border`, for surfaces that shouldn't match a solid-fill button */
+  subtleBorder: z.string().optional(),
 
   /**
    * Used for hover

@@ -67,18 +67,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <Box
-          data-testid={selectors.components.Alert.alertV2(severity)}
-          display="flex"
-          backgroundColor={severity}
-          borderRadius="lg"
-          paddingY={1}
-          paddingX={2}
-          borderStyle="solid"
-          borderColor={severity}
-          alignItems="stretch"
-          boxShadow={elevated ? 'z3' : undefined}
-        >
+        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.surface}>
           <Box paddingTop={1} paddingRight={2}>
             <div className={styles.icon}>
               <Icon size="xl" name={getIconFromSeverity(severity)} />
@@ -114,7 +103,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </Box>
+        </div>
       </div>
     );
   }
@@ -144,6 +133,20 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  // Design experiment: when disabled, alerts use a more subtle, darker background/border than the
+  // matching solid button instead of the same one. See `theme.flags.sameButtonAlertColors`.
+  const sameButtonAlertColors = theme.flags.sameButtonAlertColors ?? true;
+  const surfaceBackground = visualRefreshEnabled
+    ? sameButtonAlertColors
+      ? color.background
+      : color.subtleBackground
+    : color.transparent;
+  const surfaceBorder = visualRefreshEnabled
+    ? sameButtonAlertColors
+      ? color.border
+      : color.subtleBorder
+    : color.borderTransparent;
 
   return {
     wrapper: css({
@@ -164,13 +167,22 @@ const getStyles = (
         zIndex: -1,
       },
     }),
+    surface: css({
+      display: 'flex',
+      alignItems: 'stretch',
+      borderRadius: theme.shape.radius.lg,
+      padding: theme.spacing(1, 2),
+      border: `1px solid ${surfaceBorder}`,
+      backgroundColor: surfaceBackground,
+      boxShadow: elevated ? theme.shadows.z3 : undefined,
+    }),
     icon: css({
-      color: color.text,
+      color: color.textEmphasis,
       position: 'relative',
       top: '-1px',
     }),
     content: css({
-      color: theme.colors.text.primary,
+      color: color.mainEmphasis,
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
