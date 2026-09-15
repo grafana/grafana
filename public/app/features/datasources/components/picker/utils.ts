@@ -45,6 +45,25 @@ export function dataSourceLabel(
   return undefined;
 }
 
+export function getDataSourcePickerPlaceholder(
+  currentValue: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
+  current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined,
+  isCurrentCompatible: boolean,
+  placeholder: string,
+  hideTextValue?: boolean
+): string {
+  if (hideTextValue) {
+    return '';
+  }
+  if (currentValue) {
+    return dataSourceLabel(currentValue) || placeholder;
+  }
+  if (!isCurrentCompatible) {
+    return dataSourceLabel(current) || placeholder;
+  }
+  return placeholder;
+}
+
 export function getDataSourceCompareFn(
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
   recentlyUsedDataSources: string[],
