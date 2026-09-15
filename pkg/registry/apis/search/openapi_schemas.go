@@ -1,6 +1,7 @@
 package search
 
 import (
+	"maps"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -46,9 +47,7 @@ func schemaRef(goName string) spec.Ref {
 // owns, and through them metav1.LabelSelector.
 func envelopeSchemas(roots ...string) map[string]spec.Schema {
 	defs := searchv0.GetOpenAPIDefinitions(schemaRef)
-	for name, def := range commonv0.GetOpenAPIDefinitions(schemaRef) {
-		defs[name] = def
-	}
+	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(schemaRef))
 
 	out := map[string]spec.Schema{}
 	queue := append([]string{}, roots...)
@@ -71,13 +70,14 @@ func envelopeSchemas(roots ...string) map[string]spec.Schema {
 }
 
 // jsonContent describes a JSON body carrying the named Go type.
-func jsonContent(goName string) map[string]*spec3.MediaType {
+func jsonContent(goName string, example any) map[string]*spec3.MediaType {
 	return map[string]*spec3.MediaType{
 		"application/json": {
 			MediaTypeProps: spec3.MediaTypeProps{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
 				},
+				Example: example,
 			},
 		},
 	}

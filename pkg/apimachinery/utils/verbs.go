@@ -24,3 +24,23 @@ const (
 	// VerbSetPermissions is used when setting resource specific permissions
 	VerbSetPermissions = "set_permissions"
 )
+
+// validVerbs is the set of Kubernetes request verbs Grafana recognizes.
+var validVerbs = map[string]struct{}{
+	VerbGet:              {},
+	VerbList:             {},
+	VerbWatch:            {},
+	VerbCreate:           {},
+	VerbUpdate:           {},
+	VerbPatch:            {},
+	VerbDelete:           {},
+	VerbDeleteCollection: {},
+	VerbGetPermissions:   {},
+	VerbSetPermissions:   {},
+}
+
+// IsValidVerb reports whether verb is a recognized Kubernetes request verb.
+func IsValidVerb(verb string) bool {
+	_, ok := validVerbs[verb]
+	return ok
+}

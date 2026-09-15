@@ -44,3 +44,13 @@ func TestPermittedHostEnvVars_PLUGIN_UNIX_SOCKET_DIR_Unset(t *testing.T) {
 		}
 	}
 }
+
+func TestPermittedHostEnvVars_forwardsSSLCertVars(t *testing.T) {
+	t.Setenv("SSL_CERT_FILE", "/etc/ssl/custom-bundle.pem")
+	t.Setenv("SSL_CERT_DIR", "/etc/ssl/custom-certs")
+
+	vars := PermittedHostEnvVars()
+
+	require.Contains(t, vars, "SSL_CERT_FILE=/etc/ssl/custom-bundle.pem")
+	require.Contains(t, vars, "SSL_CERT_DIR=/etc/ssl/custom-certs")
+}

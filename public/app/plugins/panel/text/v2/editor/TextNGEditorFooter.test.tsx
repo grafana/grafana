@@ -5,7 +5,13 @@ import { TextNGEditorFooter } from './TextNGEditorFooter';
 
 const setup = (showLineNumbers: boolean) => {
   const onShowLineNumbersChange = jest.fn();
-  render(<TextNGEditorFooter showLineNumbers={showLineNumbers} onShowLineNumbersChange={onShowLineNumbersChange} />);
+  render(
+    <TextNGEditorFooter
+      showLineNumbersSwitch
+      showLineNumbers={showLineNumbers}
+      onShowLineNumbersChange={onShowLineNumbersChange}
+    />
+  );
   return { onShowLineNumbersChange, toggle: screen.getByRole('switch', { name: 'Line numbers' }) };
 };
 
@@ -24,5 +30,33 @@ describe('TextNGEditorFooter', () => {
     await userEvent.click(toggle);
 
     expect(onShowLineNumbersChange).toHaveBeenCalledWith(!showLineNumbers);
+  });
+
+  it('holds the pagination control alongside the line numbers switch', () => {
+    render(
+      <TextNGEditorFooter
+        showLineNumbersSwitch
+        showLineNumbers={false}
+        onShowLineNumbersChange={jest.fn()}
+        pagination={<button>page 2</button>}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'page 2' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Line numbers' })).toBeInTheDocument();
+  });
+
+  it('leaves out the line numbers switch outside code mode', () => {
+    render(
+      <TextNGEditorFooter
+        showLineNumbersSwitch={false}
+        showLineNumbers={false}
+        onShowLineNumbersChange={jest.fn()}
+        pagination={<button>page 2</button>}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'page 2' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 });

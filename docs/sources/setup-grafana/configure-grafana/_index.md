@@ -216,6 +216,14 @@ Directory where Grafana automatically scans and looks for plugins. For informati
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
+#### `bundled_plugins`
+
+Directory where Grafana looks for the plugins that ship with the Grafana distribution, such as the Prometheus and PostgreSQL data sources. Defaults to `data/plugins-bundled`, relative to the Grafana home path.
+
+The Debian and RPM packages install these plugins under `/var/lib/grafana/plugins-bundled` so that Grafana can update them, and the `grafana-server` systemd unit passes a matching `cfg:default.paths.bundled_plugins` argument. If you override this option, or you edit the systemd unit, keep the two values in step. When they disagree, Grafana finds no bundled plugins and the data sources they provide stop working.
+
+Grafana downloads any missing bundled plugin from `grafana.com` on startup, so a mismatch is easy to miss on a host with internet access. On an air-gapped host, this directory decides whether the bundled data sources work at all. For information about installing plugins yourself, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
+
 #### `provisioning`
 
 Directory that contains [provisioning](../../administration/provisioning/) configuration files that Grafana applies on startup.
@@ -778,6 +786,12 @@ If you want to use OAuth/SAML for login, it is necessary to configure this attri
 When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP responses which instructs browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`.
 The main goal is to mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking).
 Default is `false`.
+
+#### `asset_sri_checks_enabled`
+
+Set to `true` to enable [Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) checks on Grafana's own JavaScript assets. This helps protect against tampered or poisoned JavaScript assets being served to your users. Default is `false`.
+
+Don't enable this setting if a reverse proxy, CDN, or other network intermediary rewrites the contents of JavaScript responses, because doing so causes the integrity checks to fail and Grafana to stop loading.
 
 #### `strict_transport_security`
 
@@ -2823,7 +2837,7 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 <hr>
 
-### `[marketplace]`
+### `[plugins_marketplace]`
 
 #### `license_directory`
 

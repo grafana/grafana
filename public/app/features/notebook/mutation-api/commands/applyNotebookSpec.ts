@@ -5,6 +5,7 @@ import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/
 
 import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
+import { isEmptyMarkdown } from '../../scene/layout-notebook/isEmptyMarkdown';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';
@@ -15,13 +16,24 @@ const UNKNOWN_SURVIVORS_WARNING =
   'The notebook could not be checked after the write, so it is unknown which cells survived it.';
 
 function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec): string[] {
-  const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
-  const survived = new Set(cellNames(applied));
-  const dropped = [...new Set(cellNames(requested))].filter((name) => !survived.has(name));
+  const survived = new Set(applied.layout.spec.cells.map((cell) => cell.spec.element.name));
+  const dropped = [...new Set(requestedCellNames(requested))].filter((name) => !survived.has(name));
 
   return dropped.length > 0
     ? [`These cells were not applied and are missing from the notebook: ${dropped.join(', ')}.`]
     : [];
+}
+
+// The trailing empty block is excluded because the save model leaves it out too (see
+// NotebookLayoutManager.contentCells), so counting it would report a cell as lost when none was.
+// `cells` is guarded because the spec comes from the caller, and Go marshals an empty slice as null.
+function requestedCellNames(spec: NotebookSpec): string[] {
+  const cells = spec.layout.spec.cells ?? [];
+  const last = cells[cells.length - 1];
+  const lastElement = last ? spec.elements?.[last.spec.element.name] : undefined;
+  const endsWithEmptyBlock = lastElement?.kind === 'Cell' && isEmptyMarkdown(lastElement.spec.content);
+
+  return (endsWithEmptyBlock ? cells.slice(0, -1) : cells).map((cell) => cell.spec.element.name);
 }
 
 const applyNotebookSpecPayloadSchema = z

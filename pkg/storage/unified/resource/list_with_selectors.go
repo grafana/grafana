@@ -178,8 +178,8 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	}
 
 	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests())
-	return slices.ContainsFunc(manifests, func(m app.Manifest) bool {
-		return m.ManifestData.Group == req.Options.Key.Group
+	manifests := AppManifestsWithKinds(AppManifests()...)
+	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
+		return m.Group == req.Options.Key.Group
 	})
 }

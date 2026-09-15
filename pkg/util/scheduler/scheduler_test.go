@@ -147,7 +147,7 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
-		for i := 0; i < itemCount; i++ {
+		for i := range itemCount {
 			itemID := i
 			tenantIndex := itemID % 10
 			tenantID := fmt.Sprintf("tenant-%d", tenantIndex)
@@ -198,7 +198,7 @@ func TestScheduler(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
 
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
 				processed.Add(1)
 			}))

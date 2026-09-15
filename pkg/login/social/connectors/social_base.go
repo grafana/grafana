@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -247,10 +248,8 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	}
 
 	for _, allowedGroup := range s.info.AllowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
+		if slices.Contains(groups, allowedGroup) {
+			return true
 		}
 	}
 

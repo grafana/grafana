@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,19 +52,32 @@ func newFakeSettings(seed []*settingsvc.Setting) *fakeSettings {
 }
 
 func (f *fakeSettings) List(_ context.Context, sel metav1.LabelSelector) ([]*settingsvc.Setting, error) {
-	section := sel.MatchLabels["section"]
 	var out []*settingsvc.Setting
 	for _, r := range f.seeded {
-		if r.Section == section {
+		if sectionMatches(sel, r.Section) {
 			out = append(out, r)
 		}
 	}
 	for _, r := range f.us {
-		if r.Section == section {
+		if sectionMatches(sel, r.Section) {
 			out = append(out, r)
 		}
 	}
 	return out, nil
+}
+
+// sectionMatches supports the two selector shapes the store issues: an exact
+// MatchLabels section (Get) and a section-In expression (List).
+func sectionMatches(sel metav1.LabelSelector, section string) bool {
+	if want, ok := sel.MatchLabels["section"]; ok {
+		return section == want
+	}
+	for _, req := range sel.MatchExpressions {
+		if req.Key == "section" && req.Operator == metav1.LabelSelectorOpIn {
+			return slices.Contains(req.Values, section)
+		}
+	}
+	return false
 }
 
 func (f *fakeSettings) Upsert(_ context.Context, s *settingsvc.Setting) error {
@@ -338,21 +352,6 @@ func TestMTSettingsStore(t *testing.T) {
 				assert.Equal(t, "abc", f.upserts["client_id"])
 			},
 		},
-		{
-			name: "List is not implemented",
-			rows: nil,
-			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
-				o, e := s.List(nsCtx(), nil)
-				return o, false, e
-			},
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
-				require.Error(t, err)
-				status, ok := err.(apierrors.APIStatus)
-				require.True(t, ok)
-				assert.Equal(t, int32(http.StatusNotImplemented), status.Status().Code)
-				assert.Nil(t, sso)
-			},
-		},
 	}
 
 	for _, tc := range tests {
@@ -363,6 +362,55 @@ func TestMTSettingsStore(t *testing.T) {
 			tc.assert(t, sso, ok, err, f)
 		})
 	}
+}
+
+func TestMTSettingsStore_List(t *testing.T) {
+	t.Run("one item per configured provider, canonical order, redacted", func(t *testing.T) {
+		f := newFakeSettings([]*settingsvc.Setting{
+			usRow("auth.github", "enabled", "true"),
+			usRow("auth.github", "client_secret", "supersecret"),
+			defaultRow("auth.saml", "name", "SAML"),
+			// ldap (no MT representation) and non-auth sections are never listed
+			usRow("auth.ldap", "enabled", "true"),
+			usRow("smtp", "host", "localhost"),
+		})
+
+		obj, err := NewMTSettingsStore(f, f).List(nsCtx(), nil)
+		require.NoError(t, err)
+		list, ok := obj.(*iamv0.SSOSettingList)
+		require.True(t, ok)
+
+		require.Len(t, list.Items, 2)
+		// OAuth providers precede SAML; ldap/smtp are excluded.
+		assert.Equal(t, "github", list.Items[0].Name)
+		assert.Equal(t, "saml", list.Items[1].Name)
+		assert.Equal(t, "stacks-11", list.Items[0].Namespace)
+
+		// github carries a us override -> source db; the secret is redacted.
+		assert.Equal(t, iamv0.SourceDB, list.Items[0].Spec.Source)
+		assert.Equal(t, setting.RedactedPassword, list.Items[0].Spec.Settings.Object["client_secret"])
+		assert.Equal(t, "true", list.Items[0].Spec.Settings.Object["enabled"])
+
+		// saml has only a default-layer row -> source system.
+		assert.Equal(t, iamv0.SourceSystem, list.Items[1].Spec.Source)
+	})
+
+	t.Run("empty list when no provider has rows", func(t *testing.T) {
+		f := newFakeSettings(nil)
+		obj, err := NewMTSettingsStore(f, f).List(nsCtx(), nil)
+		require.NoError(t, err)
+		list, ok := obj.(*iamv0.SSOSettingList)
+		require.True(t, ok)
+		assert.Empty(t, list.Items)
+	})
+
+	t.Run("without a reader, list is not implemented", func(t *testing.T) {
+		_, err := NewMTSettingsStore(nil, nil).List(nsCtx(), nil)
+		require.Error(t, err)
+		status, ok := err.(apierrors.APIStatus)
+		require.True(t, ok)
+		assert.Equal(t, int32(http.StatusNotImplemented), status.Status().Code)
+	})
 }
 
 // TestRedactSecretsNestedLDAP covers LDAP's nested servers config, whose secrets

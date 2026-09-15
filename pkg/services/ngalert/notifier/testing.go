@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"testing"
 	"time"
 
@@ -197,10 +198,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	// Iterate backwards to get the latest applied configs.
 	var configs []*models.HistoricAlertConfiguration
 	start := len(configsByOrg) - 1
-	end := start - limit
-	if end < 0 {
-		end = 0
-	}
+	end := max(start-limit, 0)
 
 	for i := start; i >= end; i-- {
 		if configsByOrg[i].LastApplied > 0 {
@@ -656,9 +654,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 	require.NoError(t, err)
 
 	if options.alertmanagers != nil {
-		for orgID, am := range options.alertmanagers {
-			moa.alertmanagers[orgID] = am
-		}
+		maps.Copy(moa.alertmanagers, options.alertmanagers)
 	}
 
 	if !options.skipLoad {

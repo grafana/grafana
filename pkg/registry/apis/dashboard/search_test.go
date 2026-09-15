@@ -32,20 +32,40 @@ import (
 )
 
 func TestSearch(t *testing.T) {
+	doSearch := func(t *testing.T, handler *SearchHandler, path string) *MockClient {
+		t.Helper()
+		client := handler.client.(*MockClient)
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", path, nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoSearch(rr, req)
+		return client
+	}
+
 	t.Run("should hit unified storage search handler", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		doSearch(t, searchHandler, "/search")
 
-		searchHandler.DoSearch(rr, req)
+		require.NotNil(t, mockClient.LastSearchRequest)
+	})
 
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
+	t.Run("requests field-value results when enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+	})
+
+	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search?explain=true")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
 	})
 }
 

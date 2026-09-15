@@ -845,10 +845,6 @@ type searchOrgUsersQuery struct {
 
 func (q searchOrgUsersQuery) Validate() error { return nil }
 
-func accessControlQueryFields(filter accesscontrol.SQLFilter) (bool, []any) {
-	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
-}
-
 func filteredHiddenUsers(requester identity.Requester, hiddenUsersMap map[string]struct{}) []string {
 	if requester != nil && requester.GetIsGrafanaAdmin() {
 		return nil
@@ -915,7 +911,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			if err != nil {
 				return err
 			}
-			accessAll, accessUserIDs = accessControlQueryFields(acFilter)
+			accessAll, accessUserIDs = acFilter.AllowsAllRecords(), acFilter.Args
 		}
 
 		var hiddenUserLogins []string

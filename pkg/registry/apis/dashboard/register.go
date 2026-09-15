@@ -772,7 +772,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := b.validateVariableMutationPermissions(ctx, folderUID, ActionVariablesCreate, false); err != nil {
+	if err := b.validateVariableMutationPermissions(ctx, folderUID, ActionVariablesCreate); err != nil {
 		return err
 	}
 
@@ -823,9 +823,7 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	// allowMissingFolder: users with stack-wide (root) variable write can still update
-	// variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite, true)
+	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite)
 }
 
 func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
@@ -843,17 +841,12 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	// allowMissingFolder: users with stack-wide (root) variable delete can still delete
-	// variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete, true)
+	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete)
 }
 
 // validateVariableMutationPermissions authorizes variable create/update/delete via
 // variables:* RBAC actions scoped to the target folder (general/root when empty).
-// When allowMissingFolder is true (update/delete) and the folder no longer exists,
-// users who have the action at stack-wide/root scope (folders:uid:general, or
-// folders:* which matches it) may still mutate so orphaned variables can be cleaned up.
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string, allowMissingFolder bool) error {
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("valid user is required"))
@@ -866,11 +859,8 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	folderScope := variableFolderScope(folderUID)
 	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
 	if err != nil {
-		// FolderUIDScopeResolver errors with folder-not-found when the parent is
-		// gone. Treat that as a failed scope check so allowMissingFolder can run
-		// (root writers with folders:uid:general only never match the missing
-		// folder scope before resolution, and returning the resolver error would
-		// incorrectly deny orphan cleanup).
+		// FolderUIDScopeResolver errors when the parent is gone. Treat that as
+		// a failed scope check rather than leaking a resolver error.
 		if !isFolderNotFound(err) {
 			return err
 		}
@@ -878,25 +868,6 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	}
 	if ok {
 		return nil
-	}
-
-	if allowMissingFolder && folderUID != "" {
-		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); ferr != nil {
-			if !apierrors.IsNotFound(ferr) {
-				// Transient / infra failures must not be reported as access denied.
-				return ferr
-			}
-			// Folder gone: allow cleanup only for stack-wide/root writers.
-			// Unscoped EvalPermission(action) would let any folder-scoped writer
-			// mutate orphans from a different deleted folder.
-			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, variableFolderScope("")))
-			if err != nil {
-				return err
-			}
-			if ok {
-				return nil
-			}
-		}
 	}
 
 	return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access denied to %s variables", action))

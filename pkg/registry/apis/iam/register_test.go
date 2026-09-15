@@ -16,6 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	authlib "github.com/grafana/authlib/types"
@@ -25,8 +27,10 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -100,6 +104,20 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	)
 
 	require.NotNil(t, b.legacyTeamStore)
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		tracing:              tracing.InitializeTracerForTest(),
+	}
+	storage := map[string]rest.Storage{
+		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
+	}
+
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
 }
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {

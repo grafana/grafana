@@ -37,7 +37,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   redoAction(): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
-  addNewPanel(target: SceneObject | undefined): void;
+  addNewPanel(target: SceneObject | undefined): void | Promise<void>;
   pastePanel(target: SceneObject | undefined): void;
   setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }

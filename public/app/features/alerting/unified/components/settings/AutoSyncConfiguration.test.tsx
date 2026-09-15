@@ -5,19 +5,21 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
-  AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserRole, mockDataSource } from '../../mocks';
-import {
-  type AdminConfigPostState,
-  setupAdminConfigGet,
-  setupAdminConfigPost,
-  setupAlertmanagersStatus,
-  setupStatefulAdminConfig,
-} from '../../mocks/server/configure/admin_config';
+import { grantUserPermissions, grantUserRole, mockDataSource } from '../../mocks';
+import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import {
+  CONFIG_READ_FAILURE_MESSAGE,
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigReadError,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
@@ -50,6 +52,12 @@ const SECOND_MIMIR_DS_PAYLOAD = {
   name: SECOND_MIMIR_DS_NAME,
 };
 
+/** A Config whose status reports the configured UID as the last sync target. */
+const SYNCED = {
+  specUid: MIMIR_DS_UID,
+  statusUid: MIMIR_DS_UID,
+};
+
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
   // DataSourcePicker reads from getDataSourceSrv(), so we register the datasources in the
   // in-memory srv in addition to mocking the HTTP list used by RTK Query.
@@ -71,15 +79,15 @@ function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = 
   );
 }
 
-const postState: AdminConfigPostState = { lastPayload: null };
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 // The underlying hook now gates its queries on this toggle + Org Admin (it's only ever mounted here,
 // behind both — see ImportSettingsPage.tsx), so these tests need it on to exercise the real path.
 testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 beforeEach(() => {
-  postState.lastPayload = null;
   grantUserRole('Admin');
+  grantUserPermissions([AccessControlAction.ActionAlertingNotificationsConfigRead]);
   setupAlertmanagersStatus(server);
 });
 
@@ -89,11 +97,14 @@ const ui = {
   saveButton: byRole('button', { name: /^save$/i }),
   disableSyncButton: byRole('button', { name: /^disable sync$/i }),
   picker: byLabelText(/^datasource$/i),
+  // Anchored so it cannot also match the save-disabled tooltip, which shares its opening words.
+  pickerPlaceholder: byText(/^Select a Mimir or Cortex Alertmanager datasource…$/),
   confirmDialog: byRole('dialog', { name: /disable mimir alertmanager auto-sync/i }),
   confirmDialogDisableButton: byRole('button', { name: /^disable sync$/i }),
 };
 
 const edgeUi = {
+  initializingTooltip: byText(/Grafana has not finished setting up auto-sync/i),
   operatorManagedCallout: byText(/key in grafana\.ini and cannot be changed from the UI/i),
   orphanWarning: byText(/is not available\. Disable sync or restore the datasource to continue/i),
   noDatasourcesMessage: byText(/no mimir or cortex datasources available/i),
@@ -104,7 +115,7 @@ const edgeUi = {
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
   it('case 1: unconfigured — renders "Not configured" badge and disables Save until a selection is made', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -116,8 +127,8 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     expect(ui.disableSyncButton.query()).not.toBeInTheDocument();
   });
 
-  it('case 2: save success — sends correct payload and badge flips to Active once the config refetches', async () => {
-    setupStatefulAdminConfig(server, postState);
+  it('case 2: save success — writes the UID to spec and the badge flips to Active once the Config refetches', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -131,17 +142,13 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
     await user.click(ui.saveButton.get());
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: MIMIR_DS_UID }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: MIMIR_DS_UID }));
     expect(await ui.activeBadge.find()).toBeInTheDocument();
   });
 
-  it('case 3: configured — Disable sync opens a confirm modal and POSTs an empty string only after confirmation', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+  it('case 3: configured — Disable sync opens a confirm modal and clears the UID only after confirmation', async () => {
+    const { patchSpy, getStored } = setupStatefulAutoSyncConfig(server, SYNCED);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 200);
     registerMimirDataSources();
 
     const { user } = render(<AutoSyncConfiguration />);
@@ -152,45 +159,52 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
 
     await user.click(ui.disableSyncButton.get());
 
-    // Confirm modal must appear; nothing has been POSTed yet.
+    // Confirm modal must appear; nothing has been written yet.
     const dialog = await ui.confirmDialog.find();
     expect(dialog).toBeInTheDocument();
-    expect(postState.lastPayload).toBeNull();
+    expect(patchSpy).not.toHaveBeenCalled();
 
     await user.click(ui.confirmDialogDisableButton.get(dialog));
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: '' }));
+    // Cleared, not deleted: delete is unconditionally denied on the singleton.
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({}));
   });
 });
 
-describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
-  it('case 5: when POST returns 409, UI transitions to operator-managed (badge + info callout)', async () => {
-    // The 409 transition needs configuredUid !== '' so the operator-managed marker matches.
-    // Save is hidden once configured, so trigger the POST via Disable sync instead.
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+describe('AutoSyncConfiguration — edge-case states', () => {
+  it('case 5: operator-managed is detected on load from status origin=ini (badge + info callout)', async () => {
+    // Previously this state was only reachable after a save failed with 409. Reading it from status
+    // means the picker is correctly locked before the user attempts anything.
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini' });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 409, { message: 'managed by operator' });
     registerMimirDataSources();
 
-    const { user } = render(<AutoSyncConfiguration />);
-
-    expect(await ui.activeBadge.find()).toBeInTheDocument();
-
-    await user.click(ui.disableSyncButton.get());
-    const dialog = await ui.confirmDialog.find();
-    await user.click(ui.confirmDialogDisableButton.get(dialog));
+    render(<AutoSyncConfiguration />);
 
     expect(await edgeUi.operatorManagedCallout.find()).toBeInTheDocument();
     expect(ui.activeBadge.query()).not.toBeInTheDocument();
+    expect(await ui.picker.find()).toBeDisabled();
   });
 
-  it('case 6: POST 400 — error toast shown, state does not change', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  it('case 5b: a removed ini key releases the lock, which is what the callout tells the admin to do', async () => {
+    // origin stays 'ini' after the key is removed, so trusting it alone left the admin with a locked
+    // picker, no Save and no Disable — permanently.
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', syncedReason: 'NotConfigured' });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 400, { message: 'invalid datasource' });
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(edgeUi.operatorManagedCallout.query()).not.toBeInTheDocument();
+    expect(ui.picker.get()).toBeEnabled();
+    expect(ui.saveButton.get()).toBeInTheDocument();
+  });
+
+  it('case 6: rejected write — state does not change and operator-managed is not inferred', async () => {
+    setupStatefulAutoSyncConfig(server);
+    setupAutoSyncConfigWriteError(server, { code: 403, message: 'datasource must be of type alertmanager' });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
     const { user } = render(<AutoSyncConfiguration />);
@@ -202,14 +216,12 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
     await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
     await user.click(ui.saveButton.get());
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: MIMIR_DS_UID }));
-
-    expect(ui.notConfiguredBadge.get()).toBeInTheDocument();
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
     expect(edgeUi.operatorManagedCallout.query()).not.toBeInTheDocument();
   });
 
   it('case 7: no Mimir/Cortex datasources — empty message and "Add Mimir datasource" link rendered', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, []);
     setupDataSources();
 
@@ -221,10 +233,7 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
   });
 
   it('case 8: orphan UID — warning callout + Disable sync action visible, Save remains available for recovery', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: ORPHAN_DS_UID,
-    });
+    setupAutoSyncConfig(server, { specUid: ORPHAN_DS_UID });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -235,11 +244,70 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
     // Save stays visible in orphan-uid so the admin can recover by picking a real datasource.
     expect(ui.saveButton.get()).toBeInTheDocument();
   });
+
+  it('case 10: unseeded singleton — reads as unconfigured and keeps Save disabled even once a datasource is picked', async () => {
+    // The sync worker seeds the singleton on its first tick; humans cannot create it. Save must stay
+    // disabled until then, otherwise the click fails with a "still initializing" toast.
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(ui.pickerPlaceholder.get()).toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(MIMIR_DS_NAME));
+
+    // Prove the selection landed before checking the disabled state, so this cannot pass for the
+    // wrong reason: the placeholder is only replaced once the picker holds a value.
+    expect(ui.pickerPlaceholder.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeDisabled();
+  });
+
+  it('case 11: unseeded singleton — the Save tooltip tells the admin the wait is temporary', async () => {
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    // Absent until hovered, so the assertion below cannot pass on always-rendered copy.
+    expect(edgeUi.initializingTooltip.query()).not.toBeInTheDocument();
+
+    await user.hover(ui.saveButton.get());
+
+    expect(await edgeUi.initializingTooltip.find()).toBeInTheDocument();
+  });
+
+  it('case 12: failed Config read — the Save tooltip carries the reason instead of promising a wait', async () => {
+    // Waiting fixes a 404, not a 500, and nothing else surfaces this one: the k8s base query raises no
+    // error alert of its own. Asserting the whole string also proves the quoted resource name survived
+    // i18n interpolation instead of arriving as `&quot;default&quot;`.
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeDisabled();
+    expect(screen.queryByText(/could not load the auto-sync configuration/i)).not.toBeInTheDocument();
+
+    await user.hover(ui.saveButton.get());
+
+    expect(
+      await screen.findByText(`Could not load the auto-sync configuration: ${CONFIG_READ_FAILURE_MESSAGE}`)
+    ).toBeInTheDocument();
+    expect(edgeUi.initializingTooltip.query()).not.toBeInTheDocument();
+  });
 });
 
 describe('AutoSyncConfiguration — staged configuration conflict', () => {
   it('blocks enabling sync and explains why while a manual import is staged', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -251,10 +319,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
   });
 
   it('reports that sync is not running when a foreign import outlives an enabled sync', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+    setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -268,7 +333,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
   // Disabling sync leaves the staged config behind, so re-enabling the same datasource must not be blocked
   // by the config the syncer itself wrote — it will simply overwrite its own entry.
   it('allows re-enabling the datasource whose UID matches the staged identifier', async () => {
-    setupStatefulAdminConfig(server, postState);
+    setupStatefulAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -286,10 +351,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
   // Recovering from orphan-uid means repointing at a live datasource, but the syncer's own leftover still
   // occupies the slot under the deleted UID, so every tick after the save would fail server-side.
   it('blocks repointing an orphaned sync while its leftover staged config occupies the slot', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: ORPHAN_DS_UID,
-    });
+    setupAutoSyncConfig(server, { specUid: ORPHAN_DS_UID });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -307,10 +369,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
 
   // The alert describes what the syncer writes today, not what the picker happens to show.
   it('keeps reporting a broken sync when the picker moves to the staged identifier', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+    setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
     registerMimirDataSources([MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
 
