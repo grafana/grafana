@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -186,6 +187,37 @@ func (f *finalizer) processResourceItems(ctx context.Context, items []*provision
 // preserving the order within each group.
 var splitItems = resources.SplitItems
 
+type nonEmptyFoldersError struct {
+	folders []*provisioning.ResourceListItem
+}
+
+func (e *nonEmptyFoldersError) Error() string {
+	labels := make([]string, 0, len(e.folders))
+	for _, folder := range e.folders {
+		label := folder.Name
+		if folder.Title != "" && folder.Title != folder.Name {
+			label = fmt.Sprintf("%q (UID: %s)", folder.Title, folder.Name)
+		}
+		labels = append(labels, label)
+	}
+	slices.Sort(labels)
+
+	const limit = 10
+	more := len(labels) - limit
+	if more > 0 {
+		labels = labels[:limit]
+	}
+
+	message := fmt.Sprintf(
+		"Repository deletion is blocked because these folders contain resources not managed by this repository:\n\n- %s",
+		strings.Join(labels, "\n- "),
+	)
+	if more > 0 {
+		message += fmt.Sprintf("\n(+ %d more)", more)
+	}
+	return message + "\n\nRemove or move the remaining resources from these folders. Grafana will retry automatically."
+}
+
 // deleteExistingItems removes all resources managed by the repository.
 // Non-folder resources are deleted concurrently first, then folders are
 // deleted sequentially deepest-first so they are empty before removal.
@@ -214,10 +246,20 @@ func (f *finalizer) deleteExistingItems(
 		return count, err
 	}
 
-	n, err := f.processFolderItems(ctx, folderItems, process)
-	count += n
-	if err != nil {
-		return count, err
+	blockedFolders := make([]*provisioning.ResourceListItem, 0)
+	for _, folder := range folderItems {
+		err := process(ctx, folder)
+		if resources.IsFolderNotEmptyAPIError(err) {
+			blockedFolders = append(blockedFolders, folder)
+			continue
+		}
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+	if len(blockedFolders) > 0 {
+		return count, &nonEmptyFoldersError{folders: blockedFolders}
 	}
 
 	logger.Info("deleted items", "items", count)

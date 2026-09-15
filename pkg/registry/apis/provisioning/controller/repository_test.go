@@ -644,6 +644,20 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFoldersError(t *testing.T) {
+	folderErr := &nonEmptyFoldersError{
+		folders: []*provisioning.ResourceListItem{{Name: "folder-1", Title: "Folder one"}},
+	}
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
+		return op["value"] == folderErr.Error()
+	})).Once().Return(nil)
+
+	c := &RepositoryController{statusPatcher: patcher}
+	err := c.updateDeleteStatus(context.Background(), &provisioning.Repository{}, fmt.Errorf("remove finalizers: %w", folderErr))
+	require.NoError(t, err)
+}
+
 func TestShouldUseIncrementalSync(t *testing.T) {
 	versioned := repository.NewMockVersioned(t)
 	obj := &provisioning.Repository{
@@ -1635,9 +1649,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
-	assert.Contains(t, health.Message[0], "permission denied")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
@@ -1706,8 +1718,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
