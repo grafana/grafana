@@ -29,7 +29,7 @@ type FakeService struct {
 	DeleteFn                            func(ctx context.Context, provider string) error
 	PatchFn                             func(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error
 	RegisterReloadableFn                func(provider string, reloadable ssosettings.Reloadable)
-	ReloadFn                            func(ctx context.Context, provider string)
+	ReloadFn                            func(ctx context.Context, provider string) error
 }
 
 func NewFakeService() *FakeService {
@@ -118,11 +118,11 @@ func (f *FakeService) RegisterReloadable(provider string, reloadable ssosettings
 	f.ExpectedReloadablesRegistry[provider] = reloadable
 }
 
-func (f *FakeService) Reload(ctx context.Context, provider string) {
+func (f *FakeService) Reload(ctx context.Context, provider string) error {
 	if f.ReloadFn != nil {
-		f.ReloadFn(ctx, provider)
-		return
+		return f.ReloadFn(ctx, provider)
 	}
 
 	f.ActualProvider = provider
+	return f.ExpectedError
 }
