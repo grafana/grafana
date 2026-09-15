@@ -2,6 +2,13 @@
 
 # 12.4.11 (2026-09-15)
 
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
 <!-- 12.4.11 END -->
 <!-- 12.4.10 START -->
 
