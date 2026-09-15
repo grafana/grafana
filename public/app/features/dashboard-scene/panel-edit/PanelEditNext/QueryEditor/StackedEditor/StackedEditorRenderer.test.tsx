@@ -59,12 +59,16 @@ const transformations: Transformation[] = [
   { transformId: 'organize-0', transformConfig: { id: 'organize', options: {} }, registryItem },
 ];
 
-function renderStackedEditor(uiStateOverrides: Partial<QueryEditorUIState> = {}) {
+function renderStackedEditor(
+  uiStateOverrides: Partial<QueryEditorUIState> = {},
+  dsState: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['dsState'] = {}
+) {
   return renderWithQueryEditorProvider(<StackedEditorRenderer />, {
     queries,
     transformations,
     selectedQuery: queries[0],
     uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }), ...uiStateOverrides },
+    dsState,
   });
 }
 
@@ -88,6 +92,13 @@ describe('StackedEditorRenderer', () => {
     renderStackedEditor();
 
     expect(screen.getByText('Showing 3 items')).toBeInTheDocument();
+  });
+
+  it('shows datasource errors in stacked mode', () => {
+    renderStackedEditor({}, { dsError: new Error('Failed to load datasource: Prometheus') });
+
+    expect(screen.getByText('Datasource error')).toBeInTheDocument();
+    expect(screen.getByText(/failed to load datasource: prometheus/i)).toBeInTheDocument();
   });
 
   it('marks the selected query as the current section', () => {
