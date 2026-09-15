@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -23,51 +23,41 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
-import { filterFields, filterLabels } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
-  disableActions?: boolean;
   fields: FieldDef[];
   log: LogListModel;
   logs: LogListModel[];
-  search?: string;
 }
 
-export const LogLineOTelDetailsFields = memo(
-  ({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-    const { fontSize } = useLogListContext();
-    const styles = useStyles2(getFieldsStyles, fontSize);
-    const getLogs = useCallback(() => logs, [logs]);
-    const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
+export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFieldsProps) => {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
+  const getLogs = useCallback(() => logs, [logs]);
 
-    if (!fields.length) {
-      return null;
-    } else if (filteredFields.length === 0) {
-      return t('logs.log-line-details.search.no-results', 'No results to display.');
-    }
-
-    return (
-      <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
-        {filteredFields.map((field, i) => (
-          <LogLineOTelDetailsField
-            key={`${field.keys[0]}=${field.values[0]}-${i}`}
-            disableActions={disableActions}
-            getLogs={getLogs}
-            fieldIndex={field.fieldIndex}
-            keys={field.keys}
-            links={field.links}
-            log={log}
-            values={field.values}
-          />
-        ))}
-      </div>
-    );
+  if (!fields.length) {
+    return null;
   }
-);
-LogLineOTelDetailsFields.displayName = 'LogLineOTelDetailsFields';
+
+  return (
+    <div className={styles.fieldsTable}>
+      {fields.map((field, i) => (
+        <LogLineOTelDetailsField
+          key={`${field.keys[0]}=${field.values[0]}-${i}`}
+          getLogs={getLogs}
+          fieldIndex={field.fieldIndex}
+          keys={field.keys}
+          links={field.links}
+          log={log}
+          values={field.values}
+        />
+      ))}
+    </div>
+  );
+};
 
 interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;
@@ -83,24 +73,20 @@ interface LogLineDetailsLabelFieldsProps {
   fields: LabelWithLinks[];
   log: LogListModel;
   logs: LogListModel[];
-  search?: string;
 }
 
-export const LogLineOTelDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
+export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDetailsLabelFieldsProps) => {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
-  const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
   if (!fields.length) {
     return null;
-  } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
   }
 
   return (
     <div className={styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
+      {fields.map((field, i) => (
         <LogLineOTelDetailsField
           key={`${field.key}=${field.value}-${i}`}
           getLogs={getLogs}
@@ -120,11 +106,6 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `fit-content(30%) 1fr`,
-  }),
-  fieldsTableNoActions: css({
-    display: 'grid',
-    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `auto 1fr`,
   }),
 });
 
