@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -13,6 +13,7 @@ import {
   FieldColorModeId,
   FieldType,
   type LinkModel,
+  ThemeContext,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
@@ -24,7 +25,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -124,6 +125,40 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           values,
           config: { ...stdCellConfig, displayName },
           display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createThreeColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+        {
+          name: 'Column C',
+          type: FieldType.number,
+          values: [4, 5, 6],
+          config: stdCellConfig,
+          display: displayNumber,
           ...stdField,
         },
       ],
@@ -735,6 +770,106 @@ describe('TableNG', () => {
       }
     });
 
+    it.each([
+      [true, '12px'],
+      [false, '6px'],
+    ])('sets only the outer final-column padding with table.refresh=%s', async (tableRefreshEnabled, expected) => {
+      const { container } = render(
+        <TableNG data={createNestedDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const outerGrid = screen.getByRole('treegrid');
+      const innerGrid = screen.getByRole('grid');
+      for (const rowSelector of ['.rdg-header-row', '.rdg-row']) {
+        const outerCell = outerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const innerCell = innerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const outerStyle = window.getComputedStyle(outerCell);
+        const innerStyle = window.getComputedStyle(innerCell);
+        expect(outerStyle.paddingInlineEnd || outerStyle.paddingRight).toBe(expected);
+        expect(innerStyle.paddingInlineEnd || innerStyle.paddingRight).toBe('6px');
+      }
+    });
+
+    it.each([
+      ['dark', false, 'medium'],
+      ['dark', true, 'table'],
+      ['light', false, 'table'],
+    ] as const)(
+      'uses the %s theme border for nested tables when transparent=%s and table.refresh is enabled',
+      async (mode, transparent, borderToken) => {
+        const theme = createTheme({ colors: { mode }, components: { table: { border: '#123456' } } });
+        const { container } = render(
+          <ThemeContext.Provider value={theme}>
+            <TableNG
+              data={createNestedDataFrame()}
+              width={800}
+              height={600}
+              tableRefreshEnabled
+              transparent={transparent}
+            />
+          </ThemeContext.Provider>
+        );
+
+        await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+        const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+        const nestedGridClasses = Array.from(nestedGrid?.classList ?? []);
+        const nestedGridRule = Array.from(document.styleSheets)
+          .flatMap((sheet) => Array.from(sheet.cssRules))
+          .find(
+            (rule): rule is CSSStyleRule =>
+              rule instanceof CSSStyleRule &&
+              nestedGridClasses.some((className) => rule.selectorText === `.${className}`) &&
+              rule.style.getPropertyValue('scrollbar-color') === `${theme.colors.scrollbar} transparent`
+          );
+        expect(nestedGridRule).toBeDefined();
+        expect(nestedGridRule?.style.getPropertyValue('border-inline')).toBe(
+          `1px solid ${borderToken === 'medium' ? theme.colors.border.medium : theme.components.table.border}`
+        );
+        expect(nestedGridRule?.style.getPropertyValue('overflow-x')).toBe('auto');
+        expect(nestedGridRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
+
+        const finalRow = nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`);
+        expect(finalRow).toBeInTheDocument();
+        expect(finalRow?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndStartRadius: theme.shape.radius.default,
+        });
+        expect(finalRow?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndEndRadius: theme.shape.radius.default,
+        });
+      }
+    );
+
+    it('does not add the refreshed nested border when table.refresh is disabled', async () => {
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      expect(window.getComputedStyle(screen.getByRole('grid')).borderInlineStartStyle).toBe('');
+    });
+
+    it('rounds the nested footer instead of the final data row when table.refresh is enabled', async () => {
+      const theme = createTheme();
+      const { container } = render(
+        <ThemeContext.Provider value={theme}>
+          <TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} tableRefreshEnabled />
+        </ThemeContext.Provider>
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+      const footer = nestedGrid?.querySelector('.rdg-bottom-summary-row');
+      expect(nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`)).not.toBeInTheDocument();
+      expect(footer?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndStartRadius: theme.shape.radius.default,
+      });
+      expect(footer?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndEndRadius: theme.shape.radius.default,
+      });
+    });
+
     it('colors each expanded nested row from its own nested apply-to-row field value (10 -> red, 20 -> blue)', async () => {
       // Regression: apply-to-row coloring configured on a field *inside* the nested frame must
       // resolve each nested row's background from that nested field's own value at the nested
@@ -1201,6 +1336,114 @@ describe('TableNG', () => {
       // The header shows the cached (frame-substituted) name — the important thing is that it's
       // consistent with the cells above, not blank or mismatched.
       expect(columnHeaders[1].querySelector('button')).toHaveAttribute('title', 'SortingValueTest');
+    });
+  });
+
+  describe('Column reordering', () => {
+    // jsdom has no native DataTransfer; react-data-grid's column drag only reads/writes a few
+    // members of it, so a minimal stub is enough to drive the drag/drop event sequence.
+    function createDataTransfer() {
+      return {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+    }
+
+    it('reorders columns by dragging one header cell onto another', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText()).toEqual(['Column B', 'Column A']);
+    });
+
+    it('does not make columns draggable when the flag is off', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      headers.forEach((header) => expect(header).not.toHaveAttribute('draggable', 'true'));
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      // no reorder took place, since these columns were never made draggable
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+    });
+  });
+
+  describe('table.refresh column hide/pin', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    it('hides a column from the column menu, disabling hide once only one column remains', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+    });
+
+    it('pins a column from the column menu, moving it to the front and freezing it', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Pin column left'));
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveClass('rdg-cell-frozen');
+      expect(headers[1]).not.toHaveClass('rdg-cell-frozen');
     });
   });
 
@@ -3097,6 +3340,98 @@ describe('TableNG', () => {
         .split(' ')
         .map((w) => parseFloat(w));
       expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
+    });
+  });
+
+  describe('table.refresh columns sidebar option', () => {
+    const sidebarLabel = 'Column visibility';
+
+    it('starts closed by default and open when showColumnsSidebar is set', () => {
+      const { unmount } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+    });
+
+    it('follows the option when it changes, so editing the panel option opens and closes it', () => {
+      const data = createBasicDataFrame();
+      const { rerender } = render(
+        <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar={false}
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+    });
+
+    it('lets the table close the sidebar locally without the unchanged option reopening it', async () => {
+      const data = createBasicDataFrame();
+      const { rerender } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      // a re-render that doesn't change the option must not reassert it
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={601}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
     });
   });
 });

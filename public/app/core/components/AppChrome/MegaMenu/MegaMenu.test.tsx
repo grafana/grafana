@@ -603,7 +603,7 @@ describe('MegaMenu', () => {
       // The real sync replaces the placeholder Starred child with both starred items.
       const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
       await waitFor(() => {
-        expect(starredSection().getAllByRole('link', { name: 'Shared Name' })).toHaveLength(2);
+        expect(starredSection().getAllByRole('link', { name: /Shared Name/ })).toHaveLength(2);
       });
 
       // Same name, but the per-kind icons make the two rows distinguishable.
@@ -612,8 +612,10 @@ describe('MegaMenu', () => {
 
       // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
       // so screen readers don't hear the two rows as identical links.
-      expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
-      expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
+      expect(starredSection().getByTitle('Dashboard').closest('svg')).toBe(starredSection().getByTestId('icon-apps'));
+      expect(starredSection().getByTitle('Folder').closest('svg')).toBe(starredSection().getByTestId('icon-folder'));
+      expect(starredSection().getByRole('link', { name: 'Dashboard Shared Name' })).toBeInTheDocument();
+      expect(starredSection().getByRole('link', { name: 'Folder Shared Name' })).toBeInTheDocument();
     });
   });
 });

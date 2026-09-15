@@ -1,8 +1,18 @@
-import { render, type RenderResult } from '@testing-library/react';
+import { render, screen, type RenderResult } from '@testing-library/react';
 
-import { type Field, FieldType, MappingType, createTheme } from '@grafana/data';
+import {
+  type Field,
+  FieldType,
+  MappingType,
+  ThemeContext,
+  createTheme,
+  fieldColorModeRegistry,
+  getColorByStringHash,
+} from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
+import { getTagColorsFromName } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
 
@@ -191,6 +201,100 @@ describe('PillCell', () => {
     });
   });
 
+  describe('Visual refresh', () => {
+    // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
+    // table the prop and the context theme are the same object.
+    const refreshTheme = createTheme();
+    refreshTheme.flags.visualDesignRefresh = true;
+
+    const renderRefreshed = (field: Field) =>
+      render(
+        <ThemeContext.Provider value={refreshTheme}>
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={field}
+            rowIdx={0}
+            theme={refreshTheme}
+          />
+        </ThemeContext.Provider>
+      );
+
+    it('renders refreshed tags rather than bare pill spans', () => {
+      renderRefreshed(fieldWithValues(['value1,value2']));
+      for (const text of ['value1', 'value2']) {
+        const pill = screen.getByText(text);
+        // the refreshed Tag shape, which the legacy pill does not have
+        expect(getComputedStyle(pill).borderRadius).toBe(refreshTheme.shape.radius.pill);
+      }
+    });
+
+    it('takes its colors from the theme tag palette when the field configures none', () => {
+      renderRefreshed(fieldWithValues(['value1,value2']));
+      for (const text of ['value1', 'value2']) {
+        // the same background/text pair every other refreshed tag with this name gets, rather than
+        // a classic-palette hash with near-white text over it
+        const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
+        expect(screen.getByText(text)).toHaveStyle({ backgroundColor: background, color: textColor });
+      }
+    });
+
+    it('takes tag colors under the thresholds mode every table field is given by default', () => {
+      const mockField = fieldWithValues(['value1']);
+      const field = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Thresholds } },
+      } satisfies Field;
+
+      // thresholds carries no categorical palette, so the pill color is still ours to pick
+      const { background, text } = getTagColorsFromName('value1', refreshTheme);
+      renderRefreshed(field);
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+    });
+
+    it('still honours an explicitly configured palette over the tag colors', () => {
+      const mockField = fieldWithValues(['value1']);
+      const fixed = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+      } satisfies Field;
+      const classic = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
+      } satisfies Field;
+
+      const { unmount } = renderRefreshed(fixed);
+      expect(screen.getByText('value1')).toHaveStyle({
+        backgroundColor: refreshTheme.visualization.getColorByName('red'),
+      });
+      unmount();
+
+      renderRefreshed(classic);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
+      expect(screen.getByText('value1')).toHaveStyle({
+        backgroundColor: getColorByStringHash(palette, 'value1'),
+      });
+    });
+
+    it('keeps the data-driven colors when a value mapping sets them', () => {
+      const mockField = fieldWithValues(['error']);
+      const field = {
+        ...mockField,
+        config: {
+          ...mockField.config,
+          mappings: [{ type: MappingType.ValueToText, options: { error: { color: '#FF0000' } } }],
+        },
+        display: () => ({ text: 'error', color: '#FF0000', numeric: 0 }),
+      } satisfies Field;
+
+      renderRefreshed(field);
+      // inline, so the mapped color wins over whatever Tag's own styles paint
+      expect(screen.getByText('error')).toHaveStyle({
+        backgroundColor: 'rgb(255, 0, 0)',
+        color: 'rgb(247, 248, 250)',
+      });
+    });
+  });
+
   describe('Color by value mappings', () => {
     it('CSV values', () => {
       const mockField = fieldWithValues(['success,error,warning,unknown']);
@@ -232,6 +336,38 @@ describe('PillCell', () => {
         <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
         <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
         <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
+        `
+      );
+    });
+
+    it('looks the mapped color up by the raw value, not by the text the mapping renders', () => {
+      const mockField = fieldWithValues(['success,error']);
+      // a mapping that rewrites the text as well as the color. `display` resolves against the raw
+      // value, as the real one does, and has no answer for the text it produced — so looking the
+      // color up by that text loses the mapping.
+      const mapped: Record<string, { text: string; color: string }> = {
+        success: { text: 'OK', color: '#00FF00' },
+        error: { text: 'Bad', color: '#FF0000' },
+      };
+      const field = {
+        ...mockField,
+        config: {
+          ...mockField.config,
+          mappings: [{ type: MappingType.ValueToText, options: mapped }],
+        },
+        display: (value: unknown) => ({
+          ...(mapped[String(value)] ?? { text: String(value), color: '#FF780A' }),
+          numeric: 0,
+        }),
+      } satisfies Field;
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">OK</span>
+        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">Bad</span>
         `
       );
     });

@@ -152,9 +152,10 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
       // The top table sorts by Self descending by default, so that header owns the arrow.
       const selfHeader = screen.getAllByRole('columnheader')[2];
       const label = selfHeader.querySelector('button');
+      const sortArrow = selfHeader.querySelector('[data-testid="icon-arrow-down"]');
 
-      expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
-      expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+      expect(sortArrow).not.toBeNull();
+      expect(label!.contains(sortArrow)).toBe(!tableRefreshEnabled);
     }
   );
 
@@ -373,36 +374,63 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
     }
   };
 
+  // jsdom's canvas mock measures every string as zero-width, so content-aware widths would size the
+  // symbol column as if it were empty and never overflow the pane. Give text a width proportional to
+  // its length so the long Go symbols in the fixture stretch the column the way they do in a browser.
+  const CHAR_WIDTH = 8;
+  const mockTextMeasurement = () => {
+    jest.spyOn(CanvasRenderingContext2D.prototype, 'measureText').mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      ((text: string) => ({
+        width: String(text).length * CHAR_WIDTH,
+      })) as typeof CanvasRenderingContext2D.prototype.measureText
+    );
+  };
+
   afterEach(() => {
+    jest.restoreAllMocks();
     for (const { property, target, descriptor } of originalDescriptors) {
       Object.defineProperty(target, property, descriptor);
     }
   });
 
-  it('fits the columns in the space the scrollbar leaves rather than the full width', async () => {
-    mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
-    mockGridScrollbar();
+  // Symbol is the one column left unsized, so whichever way TableNG sizes its auto columns it must
+  // land inside the space the scrollbar leaves — the pane has no room for a horizontal scrollbar.
+  it.each([{ contentAwareWidthsEnabled: undefined }, { contentAwareWidthsEnabled: true }])(
+    'fits the columns in the space the scrollbar leaves with contentAwareWidthsEnabled=$contentAwareWidthsEnabled',
+    async ({ contentAwareWidthsEnabled }) => {
+      mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
+      mockGridScrollbar();
+      mockTextMeasurement();
 
-    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
-    render(
-      <FlameGraphTopTableContainer
-        data={container}
-        onSymbolClick={jest.fn()}
-        onSearch={jest.fn()}
-        onSandwich={jest.fn()}
-        colorScheme={ColorScheme.ValueBased}
-        useTableNG={true}
-      />
-    );
+      const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+      render(
+        <FlameGraphTopTableContainer
+          data={container}
+          onSymbolClick={jest.fn()}
+          onSearch={jest.fn()}
+          onSandwich={jest.fn()}
+          colorScheme={ColorScheme.ValueBased}
+          useTableNG={true}
+          contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+        />
+      );
 
-    await waitFor(() => {
-      const grid = document.querySelector<HTMLElement>('.rdg')!;
-      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
-      const handedWidth = parseFloat(grid.parentElement!.style.width);
-      const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
+      await waitFor(() => {
+        const grid = document.querySelector<HTMLElement>('.rdg')!;
+        // The wrapper the TableNG branch sizes, i.e. the width the table was handed. The table puts
+        // its own positioning wrapper between that div and the grid, so walk up to the sized one
+        // rather than assuming it is the grid's parent.
+        let sizedWrapper = grid.parentElement;
+        while (sizedWrapper && !sizedWrapper.style.width) {
+          sizedWrapper = sizedWrapper.parentElement;
+        }
+        const handedWidth = parseFloat(sizedWrapper!.style.width);
+        const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
 
-      expect(columnWidths).toHaveLength(4);
-      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
-    });
-  });
+        expect(columnWidths).toHaveLength(4);
+        expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
+      });
+    }
+  );
 });

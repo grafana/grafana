@@ -1,7 +1,7 @@
 /** Column width and sizing configuration */
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
-  EXPANDER_WIDTH: 50,
+  EXPANDER_WIDTH: 36,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
   // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
@@ -53,6 +53,12 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
 
+// Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
+// a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.
+export const STRIPED_ROW_CLASS = 'table-ng-row-striped';
+export const NESTED_ROW_CLASS = 'table-ng-row-nested';
+export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
+
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
 // container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).
 const PANEL_TITLE_INSET = 12;
@@ -89,6 +95,9 @@ export const PAGINATION_MARGIN = 8;
 export const getPaginationChromeHeight = (noPanelPadding = false): number =>
   PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
 
+// `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
+export const COLUMN_SETTLE_MS = 280;
+
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.
@@ -111,3 +120,16 @@ export const HEADER_MENU_SPACE = HEADER_ICON_BUTTON_SPACE;
 // The info button a column with `headerTooltip` set renders next to its label. Always in flow, and
 // in both the classic and refreshed headers.
 export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
+
+// Space the `table.refresh` reorder drag handle reserves before the label. It's a bare `Icon` at
+// default size="md" (16px) rather than an IconButton, so unlike the menu button it has no
+// component-level trailing margin of its own — just the header's own flex gap. The handle only
+// expands to this width on hover, but the space is reserved whenever reorder is enabled: otherwise
+// the title would start ellipsizing the moment the handle slides in.
+export const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;
+
+// How far the grid has to be scrollable in a direction before that edge's scroll shadow appears
+// (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
+// — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
+export const SCROLL_SHADOW_THRESHOLD = 1;

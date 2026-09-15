@@ -2,15 +2,19 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
+  COLUMN_SETTLE_MS,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  NESTED_LAST_ROW_CLASS,
+  NESTED_ROW_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -50,14 +54,18 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-// How far the `table.refresh` header background steps away from the background the rows sit on.
-// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
-// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
-// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
+// Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
+// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself, and
+// `::after` is free — rdg only takes `::before`, on the grid root, for its Firefox scrollbar fix.
+const headerCornerMask = (radius: string) =>
+  ({
+    content: '""',
+    position: 'absolute',
+    insetBlockStart: 0,
+    inlineSize: radius,
+    blockSize: radius,
+    pointerEvents: 'none',
+  }) as const;
 
 export const getGridStyles = memoize(
   (
@@ -65,61 +73,46 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    zebraStriping?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-    }
-    // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
-    // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
-    const selectedRowColor = theme.isDark
-      ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
-      : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
+    const table = theme.components.table;
+    const bgColor = transparent ? table.backgroundOnCanvas : table.background;
+    const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
+    const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
+    // sizes both the masks' boxes and the arc they cut, so the two can't drift
+    const cornerRadius = theme.shape.radius.default;
 
-    const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
+    // Preserve each row's underlying surface when the stripe hover overlay is active.
+    const rowHoverBackgroundColor = zebraStriping ? 'var(--rdg-row-background-color)' : table.rowHoverBackgroundSolid;
+    const selectedRowHoverColor = zebraStriping
+      ? 'var(--rdg-row-selected-background-color)'
+      : table.rowSelectedHoverBackground;
 
-    const headerBackgroundColor = tableRefreshEnabled
-      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
-      : bgColor;
-
-    // The expander column is the outer table's first column (see markEdgeColumns), so under
-    // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
-    // other first column — `gridNested` below has to know about it to stay flush with that column.
-    const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
+    // deliberately not a theme color — this reads as a shadow cast on the rows, and it's the same
+    // value ScrollIndicators uses for the scroll cue on the dashboard lists
+    const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
 
     return {
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': borderColor,
+        '--rdg-border-color': table.border,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
-        '--rdg-selection-color': theme.colors.info.transparent,
+        '--rdg-selection-color': table.cellSelectionBorder,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
-        // background" means one thing across the table. The old pair had the same blind spot the
-        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
-        // light theme is white on near-white.
-        '--rdg-row-hover-background-color': tableRefreshEnabled
-          ? headerBackgroundColor
-          : transparent
-            ? theme.colors.background.primary
-            : theme.colors.background.secondary,
-        '--rdg-row-selected-background-color': selectedRowColor,
+        '--rdg-row-hover-background-color': rowHoverBackgroundColor,
+        '--rdg-row-selected-background-color': table.rowSelectedBackground,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        blockSize: '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -136,9 +129,8 @@ export const getGridStyles = memoize(
           },
         },
 
-        // add a box shadow on hover and selection for all body cells
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-          [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
+          [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
           // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
           // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
           // same specificity, so the hover rule has to come last for a cell that is both to land on
@@ -169,6 +161,33 @@ export const getGridStyles = memoize(
           },
         },
 
+        // Which rows carry a stripe is decided in `makeStripedRowClass`, not by react-data-grid's
+        // own `rdg-row-odd` — see that function for why. Selection still wins over the stripe, and
+        // has to be excluded by hand rather than left to win on specificity: react-data-grid paints
+        // it inside its own `@layer rdg.Row`, and an unlayered rule — which everything in here is —
+        // beats a layered one whatever its specificity.
+        ...(zebraStriping && {
+          [`.${STRIPED_ROW_CLASS}:not([aria-selected='true'])`]: {
+            backgroundColor: table.rowStripedBackground,
+            // A `.rdg-cell` inherits its background from the row, which is how the row rule reaches
+            // the cells at all (rows are `display: contents`, so they paint no box of their own).
+            // Frozen cells are the exception: they set an opaque background so they can occlude the
+            // cells scrolling behind them, so the stripe has to be repeated here or a striped row's
+            // frozen column falls back to the plain row background.
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: table.rowStripedBackground,
+            },
+          },
+        }),
+
+        // Overlay cells so hover preserves plain, striped and selected row backgrounds, including
+        // frozen cells. Nested containers must be excluded: hovering their children also hovers them.
+        ...(zebraStriping && {
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}):hover > .rdg-cell`]: {
+            backgroundImage: `linear-gradient(${table.rowHoverOverlay}, ${table.rowHoverOverlay})`,
+          },
+        }),
+
         '.rdg-header-row, .rdg-summary-row': {
           '.rdg-cell': {
             zIndex: theme.zIndex.tooltip - 5,
@@ -187,7 +206,7 @@ export const getGridStyles = memoize(
             height: '100%',
             minHeight: 'fit-content',
             overflowY: 'visible',
-            boxShadow: theme.shadows.z2,
+            boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2,
           },
         },
 
@@ -208,6 +227,17 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            // Backs the settle highlight (see getColumnSettleStyles): a plain transition rather than
+            // a @keyframes animation, so a background-color change mid-transition (the settle class
+            // toggling off, or a theme switch changing the color itself) blends smoothly from
+            // whatever's currently rendered instead of a keyframe animation restarting from a fixed
+            // "from" color computed under the old theme.
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -216,13 +246,23 @@ export const getGridStyles = memoize(
           '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
             backgroundColor: 'var(--rdg-header-background-color)',
           },
-          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            borderStartStartRadius: theme.shape.radius.default,
-            overflow: 'hidden',
+          // The header's corners are painted rather than clipped. A corner made by transparency needs
+          // an ancestor clipping at that exact offset: the grid's own radius above is that ancestor
+          // only while the columns reach the panel edge. When every column has a configured width
+          // they can stop short of it (nothing stretches to fill), and the table's real trailing
+          // corner then sits mid-panel with a body cell scrolling under the sticky header behind it.
+          // Filling everything outside the arc with the table's own background — the same colour as
+          // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
+          // there is nothing left to show through wherever it lands.
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineStart: 0,
+            background: `radial-gradient(circle at 100% 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
-          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
-            borderStartEndRadius: theme.shape.radius.default,
-            overflow: 'hidden',
+          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineEnd: 0,
+            background: `radial-gradient(circle at 0 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
           // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
           // draws a hairline along the table's own bottom edge with nothing below it to divide.
@@ -231,6 +271,40 @@ export const getGridStyles = memoize(
             borderBlockEnd: 'none',
           },
         }),
+      }),
+      // Wraps the grid so the scroll shadows have something to position against. It carries the
+      // grid's own sizing, and the grid fills it, so the shadows span exactly the scroll viewport.
+      gridWrapper: css({
+        position: 'relative',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
+        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
+        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
+        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
+        // the grid's whole content height and it pushes everything below it out of the panel.
+        minBlockSize: 0,
+      }),
+      // A gradient over the top or bottom of the scroll viewport while rows are scrolled out of view
+      // that way (see useScrollShadows). The grid root sets `contain: content`, making it its own
+      // stacking context, so these paint above every cell without competing with the z-indexes
+      // inside it. Hidden by default: the hook reveals them.
+      scrollShadow: css({
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      }),
+      scrollShadowTop: css({
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      }),
+      scrollShadowBottom: css({
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
@@ -241,20 +315,39 @@ export const getGridStyles = memoize(
           paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
         },
       }),
+      lastColumnInset: css({
+        [`& > * > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+          paddingInlineEnd: TABLE.CELL_PADDING * 2,
+        },
+      }),
+      lastRow: css({
+        '& > .rdg-cell': { borderBlockEnd: 'none' },
+      }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
         // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
         // intersects the viewport, never becomes relevant, and stays collapsed forever.
         contentVisibility: 'visible',
         height: '100%',
-        // The expander column is tagged `FIRST_COLUMN_CLASS` (see markEdgeColumns), so under
-        // `noPanelPadding` its own paddingInlineStart grows by `FIRST_COLUMN_EXTRA_PADDING` too —
-        // subtract it back out here so this nested grid still starts flush with the expander
-        // column's edge instead of drifting right by that same amount.
-        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - nestedGridExpanderPaddingOffset - 1}px)`,
-        overflowX: 'scroll',
+        overflowX: tableRefreshEnabled ? 'auto' : 'scroll',
         overflowY: 'hidden',
-        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - nestedGridExpanderPaddingOffset - 1,
+        scrollbarColor: `${theme.colors.scrollbar} transparent`,
+        ...(tableRefreshEnabled && {
+          borderInline: `1px solid ${nestedBorderColor}`,
+          borderEndStartRadius: theme.shape.radius.default,
+          borderEndEndRadius: theme.shape.radius.default,
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${FIRST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]:
+            {
+              borderEndStartRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${LAST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${LAST_COLUMN_CLASS}`]:
+            {
+              borderEndEndRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+        }),
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
         marginBlock: TABLE.CELL_PADDING,
         // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
         '&[aria-expanded="false"]': {
@@ -277,6 +370,18 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        ...(tableRefreshEnabled && {
+          '--rdg-border-color': table.headerBorder,
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: table.headerDraggingBackground,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: table.headerDragTargetBackground,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
@@ -311,6 +416,17 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// The brief highlight a column carries after it lands from a reorder or a pin. Same color the drop
+// target uses, so the settle reads as the tail end of the drag rather than a new signal; the
+// transition it fades over lives on the header cell itself (see getGridStyles).
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: tableRefreshEnabled
+      ? theme.components.table.headerDragTargetBackground
+      : theme.components.table.background,
   })
 );
 

@@ -1,6 +1,7 @@
 import { mergeWith } from 'lodash';
 import * as z from 'zod';
 
+import { emphasize, onBackground } from './colorManipulator';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
@@ -16,6 +17,43 @@ interface TagColors {
   background: string;
   text: string;
 }
+
+const ThemeTableColorsInputSchema = z.object({
+  rowHoverBackground: z
+    .string()
+    .describe('Existing hover background for TableRT and other table consumers.')
+    .optional(),
+  rowSelected: z.string().describe('Existing selection background for TableRT.').optional(),
+  background: z.string().describe('Opaque background for body rows and frozen cells.').optional(),
+  backgroundOnCanvas: z
+    .string()
+    .describe('Opaque backing surface when the surrounding panel has no background.')
+    .optional(),
+  headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
+  headerBorder: z.string().describe('Opaque header cell dividers.').optional(),
+  border: z.string().describe('Opaque body and footer dividers.').optional(),
+  rowStripedBackground: z
+    .string()
+    .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
+    .optional(),
+  rowHoverBackgroundSolid: z.string().describe('Opaque hover surface for an unstriped row.').optional(),
+  rowHoverOverlay: z
+    .string()
+    .describe(
+      'Translucent hover tint to composite over plain, striped or selected rows instead of replacing their background.'
+    )
+    .optional(),
+  rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
+  rowSelectedHoverBackground: z
+    .string()
+    .describe('Opaque background for a hovered selected row when not using the hover overlay.')
+    .optional(),
+  headerDraggingBackground: z.string().describe('Opaque background of a header being dragged.').optional(),
+  headerDragTargetBackground: z.string().describe('Opaque background of a header that is a drop target.').optional(),
+  cellSelectionBorder: z.string().describe('Outline of the focused cell.').optional(),
+});
+
+type ThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
 
 const badgeColorTokens = z.object({
   text: z.string().optional(),
@@ -143,10 +181,7 @@ export const ThemeComponentsInputSchema = z
     horizontalDrawer: z.object({
       defaultHeight: z.number().optional(),
     }),
-    table: z.object({
-      rowHoverBackground: z.string().optional(),
-      rowSelected: z.string().optional(),
-    }),
+    table: ThemeTableColorsInputSchema,
     menu: z.object({
       borderRadius: z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle']).optional(),
       padding: z.number().optional(),
@@ -274,10 +309,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     horizontalDrawer: {
       defaultHeight: 400,
     },
-    table: {
-      rowHoverBackground: colors.action.hover,
-      rowSelected: colors.action.selected,
-    },
+    table: createTableColors(colors),
     menu: {
       borderRadius: 'lg',
       padding: 0.5,
@@ -347,3 +379,34 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
     },
   };
 };
+
+function createTableColors(colors: ThemeColors): ThemeTableColors {
+  const background = colors.background.primary;
+  const headerBackground = colors.secondary.main;
+  const rowSelectedBackground =
+    colors.mode === 'dark'
+      ? onBackground(colors.warning.main, background).darken(37).toHexString()
+      : onBackground(colors.warning.main, background).lighten(25).toHexString();
+  const rowHoverOverlay = colors.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+
+  return {
+    rowHoverBackground: colors.action.hover,
+    rowSelected: colors.action.selected,
+    background,
+    backgroundOnCanvas: colors.background.canvas,
+    headerBackground,
+    headerBorder: onBackground(
+      colors.mode === 'dark' ? colors.border.medium : colors.border.weak,
+      headerBackground
+    ).toHexString(),
+    border: onBackground(colors.border.weak, background).toHexString(),
+    rowStripedBackground: colors.background.secondary,
+    rowHoverBackgroundSolid: onBackground(rowHoverOverlay, background).toHexString(),
+    rowHoverOverlay,
+    rowSelectedBackground,
+    rowSelectedHoverBackground: emphasize(rowSelectedBackground, 0.05),
+    headerDraggingBackground: emphasize(headerBackground, 0.1),
+    headerDragTargetBackground: emphasize(headerBackground, 0.05),
+    cellSelectionBorder: colors.info.transparent,
+  };
+}

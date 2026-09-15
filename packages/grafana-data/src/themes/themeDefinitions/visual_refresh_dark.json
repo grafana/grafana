@@ -120,6 +120,21 @@
     "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
   },
   "components": {
+    "table": {
+      "background": "palette.ink850",
+      "backgroundOnCanvas": "palette.ink900",
+      "headerBackground": "palette.ink700",
+      "headerBorder": "palette.ink650",
+      "border": "palette.ink700",
+      "rowStripedBackground": "palette.ink750",
+      "rowHoverBackgroundSolid": "palette.ink650",
+      "rowHoverOverlay": "hsl(from palette.white h s l / 0.12)",
+      "rowSelectedBackground": "palette.black",
+      "rowSelectedHoverBackground": "palette.ink900",
+      "headerDraggingBackground": "palette.ink600",
+      "headerDragTargetBackground": "palette.ink650",
+      "cellSelectionBorder": "hsl(from palette.blue500 h s l / 0.15)"
+    },
     "card": {
       "background": "palette.ink850",
       "borderColor": "palette.ink700"

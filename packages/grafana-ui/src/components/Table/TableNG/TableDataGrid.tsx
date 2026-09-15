@@ -13,6 +13,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
+import { useScrollShadows } from './hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -29,7 +30,6 @@ type RenderRowFn = NonNullable<NonNullable<DataGridProps<TableRow, TableSummaryR
 
 // Props that TableDataGrid manages internally — consumers must not override these.
 type OmittedDataGridProps =
-  | 'className'
   | 'role'
   | 'rowKeyGetter'
   | 'selectedRows'
@@ -67,6 +67,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   headerHeight: number;
   transparent?: boolean;
   tableRefreshEnabled?: boolean;
+  zebraStriping?: boolean;
   noPanelPadding?: boolean;
   initialRowIndex?: number;
   sortedRows: TableRow[];
@@ -89,6 +90,7 @@ export function TableDataGrid({
   gridRef,
   columns,
   rows,
+  rowClass,
   noValue,
   renderers,
   onColumnResize,
@@ -105,6 +107,7 @@ export function TableDataGrid({
   headerHeight,
   transparent,
   tableRefreshEnabled,
+  zebraStriping,
   noPanelPadding,
   initialRowIndex,
   sortedRows,
@@ -120,6 +123,7 @@ export function TableDataGrid({
   onTooltipClose,
   inspectCell,
   onInspectCellDismiss,
+  className,
   ...dataGridOverrides
 }: TableDataGridProps) {
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
@@ -135,7 +139,14 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
+  const styles = useStyles2(
+    getGridStyles,
+    showPagination,
+    transparent,
+    tableRefreshEnabled,
+    noPanelPadding,
+    zebraStriping
+  );
 
   const commonDataGridProps = useMemo(
     () =>
@@ -174,34 +185,62 @@ export function TableDataGrid({
     ]
   );
 
+  // Only the refreshed table gets the scroll cue, alongside the rest of its chrome changes.
+  const { topRef: topShadowRef, bottomRef: bottomShadowRef } = useScrollShadows(
+    gridRef,
+    Boolean(tableRefreshEnabled),
+    // the sticky header and footer rows are part of the grid, so the shadows start and end where the
+    // scrolling rows do rather than at the grid's own edges
+    { topOffset: noHeader ? 0 : headerHeight, bottomOffset: hasFooter ? footerHeight : 0 }
+  );
+
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
 
   return (
     <>
-      <DataGrid<TableRow, TableSummaryRow, string>
-        {...dataGridOverrides}
-        {...commonDataGridProps}
-        role={role}
-        ref={gridRef}
-        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset)}
-        columns={columns}
-        rows={rows}
-        rowKeyGetter={rowKeyGetter}
-        isRowSelectionDisabled={() => initialRowIndex !== undefined}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
-        onColumnResize={onColumnResize}
-        onCellClick={onCellClick}
-        onCellKeyDown={onCellKeyDown}
-        renderers={{
-          renderRow: renderers.renderRow,
-          renderCell: renderers.renderCell,
-          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-        }}
-      />
+      <div className={styles.gridWrapper}>
+        <DataGrid<TableRow, TableSummaryRow, string>
+          {...dataGridOverrides}
+          {...commonDataGridProps}
+          role={role}
+          ref={gridRef}
+          className={clsx(styles.grid, className)}
+          columns={columns}
+          rows={rows}
+          rowClass={(row, rowIdx) =>
+            clsx(
+              rowClass?.(row, rowIdx),
+              tableRefreshEnabled && role === 'grid' && !hasFooter && rowIdx === rows.length - 1 && styles.lastRow
+            )
+          }
+          rowKeyGetter={rowKeyGetter}
+          isRowSelectionDisabled={() => initialRowIndex !== undefined}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={setSelectedRows}
+          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+          headerRowHeight={headerHeight}
+          onColumnResize={onColumnResize}
+          onCellClick={onCellClick}
+          onCellKeyDown={onCellKeyDown}
+          renderers={{
+            renderRow: renderers.renderRow,
+            renderCell: renderers.renderCell,
+            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+          }}
+        />
+
+        {tableRefreshEnabled && (
+          <>
+            <div ref={topShadowRef} className={clsx(styles.scrollShadow, styles.scrollShadowTop)} role="presentation" />
+            <div
+              ref={bottomShadowRef}
+              className={clsx(styles.scrollShadow, styles.scrollShadowBottom)}
+              role="presentation"
+            />
+          </>
+        )}
+      </div>
 
       {showPagination && (
         <div className={styles.paginationContainer}>
