@@ -149,21 +149,16 @@ function createFlatTree(
   excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
+    const isFolder = item.kind === 'folder';
     if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
       return [];
     }
 
-    const mappedChildren = createFlatTree(
-      item.uid,
-      rootCollection,
-      childrenByUID,
-      openFolders,
-      level + 1,
-      excludeKinds,
-      excludeUIDs
-    );
+    const mappedChildren = isFolder
+      ? createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1, excludeKinds, excludeUIDs)
+      : [];
 
-    const isOpen = Boolean(openFolders[item.uid]);
+    const isOpen = isFolder && Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
     if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
       mappedChildren.push({
