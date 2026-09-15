@@ -89,7 +89,7 @@ type API struct {
 	SilenceLimitsProvider notifier.LimitsProvider
 	// ExternalRulerSync gates manual convert-API rule imports when external
 	// ruler sync owns the org's rules. Always set in RegisterAPIEndpoints.
-	ExternalRulerSync ExternalRulerSyncChecker
+	ExternalRulerSync externalRulerSyncChecker
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
