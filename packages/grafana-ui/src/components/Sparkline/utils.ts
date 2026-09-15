@@ -7,6 +7,8 @@ import {
   type FieldConfig,
   type FieldSparkline,
   FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
   type GrafanaTheme2,
   guessDecimals,
@@ -27,6 +29,8 @@ import {
 } from '@grafana/schema';
 
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+
+import { type SparklineHoverEvent } from './Sparkline';
 
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set
@@ -171,10 +175,13 @@ export const prepareConfig = (
   dataFrame: DataFrame,
   theme: GrafanaTheme2,
   showHighlights?: boolean,
-  enableHover?: boolean
+  enableHover?: boolean,
+  onHover?: (hover: SparklineHoverEvent | null) => void
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
+  // uPlot series/data index of the single y series (0 is the x field).
+  let yFieldIndex = -1;
 
   if (enableHover) {
     // Interactive cursor: a vertical crosshair plus a focused point drawn on the
@@ -235,6 +242,7 @@ export const prepareConfig = (
     }
 
     const scaleKey = config.unit || '__fixed';
+    yFieldIndex = i;
     builder.addScale({
       scaleKey,
       orientation: ScaleOrientation.Vertical,
@@ -280,6 +288,39 @@ export const prepareConfig = (
       lineStyle: customConfig.lineStyle,
       gradientMode: customConfig.gradientMode,
       spanNulls: customConfig.spanNulls,
+    });
+  }
+
+  if (enableHover && onHover && yFieldIndex >= 0) {
+    const seriesIdx = yFieldIndex;
+    const yField = dataFrame.fields[seriesIdx];
+    const display = yField.display ?? getDisplayProcessor({ field: yField, theme });
+    // Only emit when the focused index changes, and emit null once when leaving a
+    // previously-hovered point.
+    let prevIdx: number | null | undefined;
+
+    builder.addHook('setCursor', (u) => {
+      const idx = u.cursor.idxs?.[seriesIdx] ?? null;
+      const value = idx != null ? u.data[seriesIdx]?.[idx] : null;
+
+      if (idx == null || value == null || !Number.isFinite(value)) {
+        if (typeof prevIdx === 'number') {
+          prevIdx = null;
+          onHover(null);
+        }
+        return;
+      }
+
+      if (idx === prevIdx) {
+        return;
+      }
+      prevIdx = idx;
+
+      onHover({
+        index: idx,
+        value,
+        display: formattedValueToString(display(value)),
+      });
     });
   }
 
