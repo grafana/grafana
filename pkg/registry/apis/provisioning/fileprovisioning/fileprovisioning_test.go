@@ -1,0 +1,104 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+package fileprovisioning
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	fake "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+)
+
+func TestProvision(t *testing.T) {
+	t.Setenv("GIT_PAT", "secret-token")
+
+	dir := t.TempDir()
+	contents := `apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: dashboards
+spec:
+  title: Dashboards
+  type: git
+  git:
+    url: https://example.com/dashboards.git
+    branch: main
+  sync:
+    enabled: true
+    intervalSeconds: 60
+    target: folder
+secure:
+  token:
+    create: ${GIT_PAT}
+---
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: github-app
+spec:
+  title: GitHub App
+  type: github
+  url: https://github.com
+  github:
+    appID: "123"
+    installationID: "456"
+secure:
+  privateKey:
+    create: ${GIT_PAT}
+`
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "git-sync.yaml"), []byte(contents), 0o600))
+
+	client := fake.NewSimpleClientset().ProvisioningV0alpha1()
+	require.NoError(t, Provision(context.Background(), dir, client))
+
+	repo, err := client.Repositories(DefaultNamespace).Get(context.Background(), "dashboards", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "Dashboards", repo.Spec.Title)
+	require.Equal(t, "secret-token", string(repo.Secure.Token.Create))
+
+	conn, err := client.Connections(DefaultNamespace).Get(context.Background(), "github-app", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "GitHub App", conn.Spec.Title)
+	require.Equal(t, "secret-token", string(conn.Secure.PrivateKey.Create))
+}
+
+func TestProvisionUpdatesExistingResource(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "repository.yaml")
+	write := func(title string) {
+		require.NoError(t, os.WriteFile(path, []byte(`apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: dashboards
+spec:
+  title: `+title+`
+  type: local
+  local:
+    path: /var/lib/grafana/dashboards
+  sync:
+    enabled: true
+    target: folder
+`), 0o600))
+	}
+
+	write("First")
+	client := fake.NewSimpleClientset().ProvisioningV0alpha1()
+	require.NoError(t, Provision(context.Background(), dir, client))
+
+	first, err := client.Repositories(DefaultNamespace).Get(context.Background(), "dashboards", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "First", first.Spec.Title)
+
+	write("Second")
+	require.NoError(t, Provision(context.Background(), dir, client))
+
+	second, err := client.Repositories(DefaultNamespace).Get(context.Background(), "dashboards", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "Second", second.Spec.Title)
+	require.Equal(t, first.UID, second.UID)
+}
