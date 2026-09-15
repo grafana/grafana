@@ -235,6 +235,30 @@ describe('useDryRunNotifications reset', () => {
     expect(result.current.runDryRun).toBe(runDryRunBefore);
     expect(result.current.reset).toBe(resetBefore);
   });
+
+  // Regression: runDryRun only cleared its own preRunError at the start of each attempt, leaving a
+  // stale mutationError from an earlier failed attempt in RTK Query's cache. Since error prefers
+  // mutationError over preRunError, that stale backend error kept masking a fresh local one.
+  it('does not surface a stale backend error over a fresh local parse error', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ message: 'old backend conflict' }, { status: 400 })));
+    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
+
+    await act(async () => {
+      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
+    });
+    await waitFor(() => expect(result.current.result?.error).toMatch(/old backend conflict/i));
+
+    await act(async () => {
+      await result.current.runDryRun({
+        source: 'yaml',
+        yamlFile: new File(['route:\n  receiver: default\nfoo: bar: baz\n'], 'broken.yaml', {
+          type: 'application/yaml',
+        }),
+        configIdentifier: 'prod',
+      });
+    });
+    await waitFor(() => expect(result.current.result?.error).toMatch(/syntax error/i));
+  });
 });
 
 describe('malformed YAML handling', () => {
