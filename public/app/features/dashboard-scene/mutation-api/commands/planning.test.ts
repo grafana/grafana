@@ -221,3 +221,46 @@ it('reshapes samples when visualization changes through UPDATE_PANEL', async () 
   expect(getQueryRunnerFor(viz)).toBeUndefined();
   expect(sceneGraph.getData(viz).state.data?.series[0].fields.map((field) => field.type)).toEqual(['string', 'number']);
 });
+
+it.each(['row', 'tab'] as const)(
+  'discards planning variables in an existing %s without removing same-named dashboard variables',
+  async (kind) => {
+    const { scene, client } = setup();
+    const dashboardVariable = new CustomVariable({ name: 'service', query: 'production' });
+    scene.setState({ $variables: new SceneVariableSet({ variables: [dashboardVariable] }) });
+    const section =
+      kind === 'row'
+        ? new RowItem({ title: 'Existing', layout: DefaultGridLayoutManager.fromVizPanels([]) })
+        : new TabItem({ title: 'Existing', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+    scene.setState({
+      body:
+        section instanceof RowItem
+          ? new RowsLayoutManager({ rows: [section] })
+          : new TabsLayoutManager({ tabs: [section] }),
+    });
+    await client.execute(start);
+
+    expect(
+      (
+        await client.execute({
+          type: 'ADD_VARIABLE',
+          planId: 'plan-1',
+          payload: {
+            parentPath: `/${kind}s/0`,
+            variable: { kind: 'CustomVariable', spec: { name: 'service', query: 'preview' } },
+          },
+        })
+      ).success
+    ).toBe(true);
+    expect(section.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['service']);
+
+    expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+      true
+    );
+
+    expect(scene.state.$variables?.state.variables.map((variable) => variable.state.name)).toEqual(['service']);
+    expect(scene.state.$variables?.state.variables[0]).toBe(dashboardVariable);
+    expect(section.getRoot()).toBe(scene);
+    expect(section.state.$variables).toBeUndefined();
+  }
+);

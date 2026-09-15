@@ -1,4 +1,4 @@
-import { sceneGraph, type SceneVariable, type VizPanel } from '@grafana/scenes';
+import { type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
 import type { DashboardScene } from './DashboardScene';
@@ -11,7 +11,7 @@ import { DashboardPlanningEvent } from './planningEvents';
 interface PlanningSession {
   sections: Set<RowItem | TabItem>;
   panels: Set<VizPanel>;
-  variables: Set<SceneVariable>;
+  variables: Map<DashboardScene | RowItem | TabItem, Set<SceneVariable>>;
 }
 
 // Ephemeral ownership follows each scene without retaining deactivated dashboards.
@@ -27,7 +27,7 @@ export function startPlanningSession(
     throw new Error('A dashboard plan is already being previewed. End it before starting another.');
   }
   lastPlanIds.set(scene, plan.planId);
-  sessions.set(scene, { sections: new Set(), panels: new Set(), variables: new Set() });
+  sessions.set(scene, { sections: new Set(), panels: new Set(), variables: new Map() });
   const notify = (action: 'build' | 'dismiss') => {
     if (scene.state.planning?.planId === plan.planId) {
       appEvents.publish(new DashboardPlanningEvent({ planId: plan.planId, action }));
@@ -44,14 +44,21 @@ export function trackPlanningPanel(scene: DashboardScene, panel: VizPanel) {
   sessions.get(scene)?.panels.add(panel);
 }
 
-export function trackPlanningVariable(scene: DashboardScene, name: string) {
-  if (!sessions.has(scene)) {
+export function trackPlanningVariable(
+  scene: DashboardScene,
+  scopeOwner: DashboardScene | RowItem | TabItem,
+  variable: SceneVariable
+) {
+  const session = sessions.get(scene);
+  if (!session) {
     return;
   }
-  const variable = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === name);
-  if (variable) {
-    sessions.get(scene)?.variables.add(variable);
+  let variables = session.variables.get(scopeOwner);
+  if (!variables) {
+    variables = new Set();
+    session.variables.set(scopeOwner, variables);
   }
+  variables.add(variable);
 }
 
 export function endPlanningSession(scene: DashboardScene, planId: string, discard: boolean) {
@@ -76,8 +83,22 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
         scene.removePanel(panel);
       }
     }
-    const variables = sceneGraph.getVariables(scene);
-    variables.setState({ variables: variables.state.variables.filter((v) => !session.variables.has(v)) });
+    for (const [scopeOwner, trackedVariables] of session.variables) {
+      if (scopeOwner.getRoot() !== scene) {
+        continue;
+      }
+      // Variable commands replace the set, so read the owner's current set and match by identity.
+      const variables = scopeOwner.state.$variables;
+      if (!variables) {
+        continue;
+      }
+      const remaining = variables.state.variables.filter((variable) => !trackedVariables.has(variable));
+      if (remaining.length === 0 && (scopeOwner instanceof RowItem || scopeOwner instanceof TabItem)) {
+        scopeOwner.setState({ $variables: undefined });
+      } else {
+        variables.setState({ variables: remaining });
+      }
+    }
   }
   sessions.delete(scene);
   scene.setState({ planning: undefined });

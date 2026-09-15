@@ -62,7 +62,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
-      trackPlanningVariable(scene, payload.variable.spec.name);
+      trackPlanningVariable(scene, scopeOwner, sceneVariable);
       return {
         success: true,
         data: { variable: variableKind },
