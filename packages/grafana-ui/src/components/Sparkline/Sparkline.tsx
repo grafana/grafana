@@ -39,7 +39,8 @@ export interface SparklineProps extends Themeable2 {
 }
 
 export const Sparkline: React.FC<SparklineProps> = memo((props) => {
-  const { sparkline, config: fieldConfig, theme, width, height, showHighlights } = props;
+  const { sparkline, config: fieldConfig, theme, width, height, showHighlights, showTooltip, onHover } = props;
+  const hoverEnabled = Boolean(showTooltip || onHover);
 
   const { frame: alignedDataFrame, warning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
   if (warning) {
@@ -47,7 +48,7 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   }
 
   const data = preparePlotData2(alignedDataFrame, getStackingGroups(alignedDataFrame));
-  const configBuilder = prepareConfig(sparkline, alignedDataFrame, theme, showHighlights);
+  const configBuilder = prepareConfig(sparkline, alignedDataFrame, theme, showHighlights, hoverEnabled);
 
   return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
 });
