@@ -36,7 +36,6 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/concurrency"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -105,11 +104,9 @@ type StorageOptions struct {
 	VersionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
-// Storage implements storage.Interface
-// A new instance is created for each exposed Group+Resource+Version
+// Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	gr           schema.GroupResource
-	gvk          schema.GroupVersionKind // derived from newFunc
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
 	newFunc      func() runtime.Object
@@ -161,7 +158,6 @@ func NewStorage(
 	s := &Storage{
 		store:          store,
 		gr:             config.GroupResource,
-		gvk:            newFunc().GetObjectKind().GroupVersionKind(),
 		codec:          config.Codec,
 		keyFunc:        keyFunc,
 		newFunc:        newFunc,
@@ -176,17 +172,6 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
-	}
-
-	if s.gvk.Version == "" || s.gvk.Kind == "" {
-
-		tmp := newFunc()
-		fmt.Printf("xxx: %T\n", tmp)
-
-		return nil, nil, fmt.Errorf("storage newFunc must return an object version and kind configured (%+v // %+v)", s.gr, s.gvk)
-	}
-	if s.gvk.Group != s.gr.Group {
-		return nil, nil, fmt.Errorf("storage newFunc must return an object version and kind configured (%+v // %+v)", s.gr, s.gvk)
 	}
 
 	if opts.EnableFolderSupport && configProvider != nil {
