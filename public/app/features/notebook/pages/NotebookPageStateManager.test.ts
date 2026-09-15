@@ -119,6 +119,10 @@ describe('NotebookPageStateManager', () => {
     testStore = createTestStore();
     requested = [];
     jest.mocked(NotebookAnalytics.loaded).mockClear();
+    // The scene cache is module state, shared by every manager so that one notebook on screen twice
+    // is one scene and therefore one autosave. That makes it outlive a `new` manager, so each case
+    // has to start from empty or it inherits the previous one's scenes and reads as a cache hit.
+    new NotebookPageStateManager({ isLoading: false }).clearSceneCache();
   });
 
   it('fetches the notebook and builds a NotebookScene', async () => {

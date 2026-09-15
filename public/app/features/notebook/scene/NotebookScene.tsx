@@ -12,6 +12,7 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
+  SceneObjectStateChangedEvent,
   type SceneRefreshPicker,
   type SceneTimePicker,
   type SceneTimeRange,
@@ -26,13 +27,21 @@ import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookEditSession } from '../analytics/editSession';
+import { NotebookAnalytics } from '../analytics/main';
+import {
+  NOTEBOOK_EDIT_SESSION_END_REASON,
+  NOTEBOOK_EDIT_SESSION_SOURCE,
+  type NotebookEditSessionSource,
+} from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { NotebookAutosave } from './NotebookAutosave';
+import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -55,11 +64,65 @@ export interface NotebookSceneState extends SceneObjectState {
    * the cells gain no real editing UI beyond becoming writable.
    */
   isEditing?: boolean;
+  /**
+   * A document with no Notebook resource behind it, and none to be created for it until its host
+   * says so.
+   *
+   * Autosave is not started for one. Its ordinary behaviour with no uid is to `createNotebook` on
+   * the first edit and adopt the uid, which is right for /notebooks/new — where the notebook is
+   * meant to come into existence as soon as it has content — and wrong for a host holding a draft
+   * nobody has chosen to save: the assistant's canvas, where a notebook is authored and edited
+   * against the conversation and only becomes a resource when someone publishes it.
+   *
+   * Editing, undo/redo, panels and queries are unaffected; none of them need the resource to exist.
+   * Only the writing is suppressed, so the host is the sole route to persistence.
+   */
+  isDraft?: boolean;
+}
+
+/**
+ * Notebooks currently holding the global scene context, most recently activated last, and whatever
+ * held it before the first of them.
+ *
+ * A stack rather than each activation remembering its own predecessor, because deactivation order is
+ * not activation order: more than one notebook can be mounted at a time — an embedded one over
+ * whatever else is open — and the naive version got both ends wrong. An older notebook closing used
+ * to hand the context back while a newer one was still live, and the last one closing handed it to
+ * an already-deactivated sibling, leaving panel interpolation and TimeSrv resolving against a dead
+ * scene. Splicing by identity is correct for any order.
+ *
+ * Only notebooks are tracked. A dashboard deactivating still restores unconditionally and can take
+ * the context from a live notebook; that is a pre-existing behaviour of DashboardScene and is
+ * deliberately left alone here.
+ */
+const sceneContextStack: NotebookScene[] = [];
+let beforeFirstSceneContext: SceneObject | undefined;
+
+function claimSceneContext(scene: NotebookScene): void {
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = window.__grafanaSceneContext;
+  }
+  sceneContextStack.push(scene);
+  window.__grafanaSceneContext = scene;
+}
+
+function releaseSceneContext(scene: NotebookScene): void {
+  const index = sceneContextStack.lastIndexOf(scene);
+  if (index !== -1) {
+    sceneContextStack.splice(index, 1);
+  }
+  // The newest notebook still mounted, or whatever held it before any of them.
+  window.__grafanaSceneContext = sceneContextStack[sceneContextStack.length - 1] ?? beforeFirstSceneContext;
+  if (sceneContextStack.length === 0) {
+    beforeFirstSceneContext = undefined;
+  }
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
-  public readonly editHistory = new NotebookEditHistory();
+  // Declared before `editHistory`, which is handed it: class fields initialise in order.
+  public readonly editSession = new NotebookEditSession();
+  public readonly editHistory = new NotebookEditHistory(this.editSession);
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
@@ -85,8 +148,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     this.addActivationHandler(() => {
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
-      const prevSceneContext = window.__grafanaSceneContext;
-      window.__grafanaSceneContext = this;
+      claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
       // plain state, so they are activated by their renderers. With the controls row hidden nothing
@@ -135,15 +197,38 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         }
       });
 
+      // Only while editing. A reader moving the time range is theirs to move, and the notebook
+      // deliberately does not keep it, so it is not something this session did. `start()` clears the
+      // flag on the way into a session as well, but without this the flag would mean "moved since the
+      // last start" rather than "moved during this session".
+      const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+          this.editSession.onTimeRangeChanged();
+        }
+      });
+
       const destroyMutationClient = createMutationClient(this, 'notebook');
-      const stopAutosave = this.autosave.start();
+      // Read once, at activation: a document does not become a draft, or stop being one, while it is
+      // mounted. Its host decides that before handing it over.
+      const stopAutosave = this.state.isDraft ? undefined : this.autosave.start();
 
       return () => {
-        stopAutosave();
+        // A toggle-off already ended the session and turned isEditing back off; this only catches
+        // the case where the page itself goes away while a session was still open.
+        if (this.state.isEditing) {
+          NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.NAVIGATION);
+          // Edit mode has to come off with the session. The page caches this scene and hands it back
+          // on the next visit, so a scene left mid-session would report a second end when someone
+          // opens the notebook just to read it, and no start when they open it to edit.
+          this.setState({ isEditing: false });
+          this.state.body.editModeChanged?.(false);
+        }
+        stopAutosave?.();
         destroyMutationClient();
+        timeRangeSub.unsubscribe();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
-        window.__grafanaSceneContext = prevSceneContext;
+        releaseSceneContext(this);
       };
     });
   }
@@ -167,7 +252,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * Permission is checked here rather than only where the toggle renders, so no caller — including
    * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
    */
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
       return;
     }
@@ -175,20 +260,31 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // Asked before editing begins, so not answering leaves the notebook where it already was.
     const changed = this.autosave.viewOnlyVizChanges();
     if (changed.length > 0) {
-      this.askAboutViewOnlyChanges(changed);
+      this.askAboutViewOnlyChanges(changed, source);
       return;
     }
 
-    this.startEditing();
+    this.startEditing(source);
   };
 
-  private startEditing(): void {
+  private startEditing(source: NotebookEditSessionSource): void {
+    const wasEditing = this.state.isEditing;
+
     // Before the state change, because entering edit mode is itself a state change and autosave decides
     // what to write the moment it sees one.
     this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
+
+    // Only when a session is actually starting. A second event would read as two sessions. And
+    // start() zeroes the counters, so it would throw away the edits counted so far.
+    if (!wasEditing) {
+      this.editSession.start();
+      // No uid means the notebook does not exist yet. That matters more than which control the person clicked.
+      const uid = this.state.uid;
+      NotebookAnalytics.editSessionStarted(uid ?? '', uid ? source : NOTEBOOK_EDIT_SESSION_SOURCE.NEW);
+    }
   }
 
   /**
@@ -201,7 +297,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * Both answers start editing first, because `notifyEditingStarted` clears what counted as edited and
    * a kept colour has to survive that.
    */
-  private askAboutViewOnlyChanges(changed: string[]): void {
+  private askAboutViewOnlyChanges(changed: string[], source: NotebookEditSessionSource): void {
     // Refusing produces no state change, so nothing would rewrite the url and `?edit=true` would sit
     // there claiming a mode the notebook is not in. NotebookSceneUrlSync cleans it up for the same reason.
     locationService.partial({ [NOTEBOOK_EDIT_PARAM]: null }, true);
@@ -216,12 +312,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
         yesButtonVariant: 'destructive',
         onConfirm: () => {
-          this.startEditing();
+          this.startEditing(source);
           this.autosave.discardVizChanges();
         },
         altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
         onAltAction: () => {
-          this.startEditing();
+          this.startEditing(source);
           this.autosave.keepVizChanges(changed);
         },
         noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
@@ -230,12 +326,21 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   }
 
   public onExitEditMode = () => {
+    // Read before the state change below, which is itself what turns this false.
+    const wasEditing = this.state.isEditing;
+
     this.state.body.commitPendingEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
     // save still waiting on the debounce would sit there until the page unmounts.
     this.autosave.flush();
+
+    // Only when a session was actually open. Otherwise a call that turns out to be a no-op (already
+    // in view mode) would still end a session that never started.
+    if (wasEditing) {
+      NotebookAnalytics.editSessionEnded(this, NOTEBOOK_EDIT_SESSION_END_REASON.TOGGLE);
+    }
   };
 
   /**
@@ -287,8 +392,16 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  /**
+   * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
+   * no app header at the same time, and those two share one scene object — so the answer has to come
+   * from where it is being drawn rather than from what is being drawn.
+   */
+  const embedded = useIsNotebookEmbedded();
+  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
+  // there is no app header for it to describe.
+  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
 
   return (
     <div className={styles.container}>

@@ -49,7 +49,7 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{ //nolint:prealloc
 		NewImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-		newNamespaceAuthorizer(),
+		NewNamespaceAuthorizer(),
 	}
 
 	// Individual services may have explicit implementations

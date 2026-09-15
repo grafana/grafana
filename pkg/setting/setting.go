@@ -259,6 +259,7 @@ type Cfg struct {
 	AllowEmbedding                       bool
 	XSSProtectionHeader                  bool
 	ContentTypeProtectionHeader          bool
+	AssetSriChecksEnabled                bool
 	StrictTransportSecurity              bool
 	StrictTransportSecurityMaxAge        int
 	StrictTransportSecurityPreload       bool
@@ -503,7 +504,6 @@ type Cfg struct {
 	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
-	IntercomSecret                      string
 	PostHogToken                        string
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
@@ -1686,7 +1686,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
-	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 	cfg.PostHogToken = analytics.Key("posthog_token").String()
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
@@ -2070,6 +2069,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	copyCookieSecuritySettingsToGlobals(cfg)
 
 	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	cfg.AssetSriChecksEnabled = security.Key("asset_sri_checks_enabled").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)

@@ -227,8 +227,7 @@ func TestGetManagedRoute(t *testing.T) {
 			},
 		}
 		provStore := fakes.NewFakeProvisioningStore()
-		// Import is not enabled, so the fallback to imported route is not triggered.
-		features := featuremgmt.WithFeatures()
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
