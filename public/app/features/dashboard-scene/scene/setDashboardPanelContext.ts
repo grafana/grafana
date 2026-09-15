@@ -16,6 +16,7 @@ import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
+import { getAdHocTransformations } from './AdHocTransformations';
 import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
@@ -27,6 +28,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     enumerable: true,
     configurable: true,
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
+  });
+
+  // Also read on access: a library panel acquires its $data after this runs, so whether it can have
+  // an ad-hoc stage is not yet known here.
+  Object.defineProperty(context, 'adHocTransformations', {
+    enumerable: true,
+    configurable: true,
+    get: () => getAdHocTransformations(vizPanel),
   });
 
   context.canAddAnnotations = () => {

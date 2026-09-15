@@ -41,6 +41,7 @@ import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
@@ -59,7 +60,6 @@ import type {
   FilterType,
   GetActionsFunctionLocal,
   TableColumn,
-  FromFieldsResult,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -1188,6 +1188,67 @@ export function getVisibleFields(fields: Field[]): Field[] {
 
 /**
  * @internal
+ * `table.refresh`: reorders `fields` to match `order`, a list of display names captured from a
+ * drag-and-drop column reorder. Fields not present in `order` — new columns since the order was
+ * captured — are appended at the end, preserving their original relative order. A no-op when
+ * `order` is undefined or empty, so this is safe to call unconditionally with ephemeral state that
+ * starts out unset.
+ */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
+/**
+ * @internal
+ * `table.refresh`: removes fields hidden via the ad hoc column menu/sidebar (as opposed to
+ * `getVisibleFields`'s config-driven `hideFrom.viz`). A no-op when `hiddenColumns` is undefined or
+ * empty.
+ */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns || hiddenColumns.size === 0) {
+    return fields;
+  }
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
+/**
+ * @internal
+ * `table.refresh`: moves pinned fields to the front of `fields`, preserving the original relative
+ * order within the pinned group and within the remaining, unpinned group. Maps directly onto
+ * react-data-grid's frozen-column-count model, which only supports freezing a leading run of
+ * columns. A no-op when `pinnedColumns` is undefined or empty.
+ */
+export function orderFieldsByPinnedColumns(fields: Field[], pinnedColumns?: ReadonlySet<string>): Field[] {
+  if (!pinnedColumns || pinnedColumns.size === 0) {
+    return fields;
+  }
+  const pinned: Field[] = [];
+  const unpinned: Field[] = [];
+  for (const field of fields) {
+    (pinnedColumns.has(getDisplayName(field)) ? pinned : unpinned).push(field);
+  }
+  return [...pinned, ...unpinned];
+}
+
+/**
+ * @internal
  * returns a map of column types by display name
  */
 export function getColumnTypes(fields: Field[]): ColumnTypes {
@@ -1284,6 +1345,11 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
+  /**
+   * `table.refresh`: the column sidebar's "Manage columns" entry is in the menu of every column, so
+   * the menu reserves space even on a column that is neither filterable nor hideable.
+   */
+  hasColumnSidebar?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
@@ -1382,6 +1448,45 @@ function measureInlineRunWidth(
 }
 
 /**
+ * `table.refresh`: whether the header column menu renders for a column. It offers whichever of
+ * filter/hide/pin/reorder apply — reorder via the "Manage columns" item that opens the sidebar, the
+ * others directly — so it shows as soon as any one of them is available. Shared by the menu's own
+ * render gate and the header width estimate, so the two can't drift out of sync.
+ */
+/**
+ * @internal
+ * What a column lets the user do from the table itself. Each is off unless the consumer opts in, so
+ * a caller decides per column what its table offers — the table panel turns all three on for every
+ * column, while the inspector's preview and the logs table leave them as configured.
+ */
+export function isFieldFilterable(field: Field): boolean {
+  return field.config.custom?.filterable ?? false;
+}
+
+/** @internal */
+export function isFieldReorderable(field: Field): boolean {
+  return field.config.custom?.reorderable ?? false;
+}
+
+/** @internal */
+export function isFieldHideable(field: Field): boolean {
+  return field.config.custom?.hideable ?? false;
+}
+
+/**
+ * @internal
+ * Whether the column-management sidebar has anything to offer: at least one column has to be
+ * reorderable or hideable, or it would open onto a list that cannot do anything.
+ */
+export function canManageColumns(fields: Field[]): boolean {
+  return fields.some((field) => isFieldReorderable(field) || isFieldHideable(field));
+}
+
+export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
+  return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;
+}
+
+/**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
@@ -1399,9 +1504,10 @@ function measureHeaderWidth(
   showTypeIcons: boolean,
   isSortable: boolean,
   tableRefreshEnabled: boolean,
-  isFiltered: boolean
+  isFiltered: boolean,
+  hasColumnSidebar: boolean
 ): number {
-  const isFilterable = field.config.custom?.filterable ?? false;
+  const isFilterable = isFieldFilterable(field);
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
@@ -1409,13 +1515,15 @@ function measureHeaderWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  // the drag handle is always in flow on a reorderable column, unlike the sort arrow/filter icons
+  // which only reserve space while that state is active.
+  headerWidth += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
-    // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
-    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
-    // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
-    // only exists while the filter holds, so its space is reserved only then (the widths recompute
-    // when the filter changes).
+    // stays in flow (opacity-faded, not unmounted) whenever the menu itself would render.
+    headerWidth += isColumnMenuVisible(field, hasColumnSidebar) ? HEADER_MENU_SPACE : 0;
+    // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
+    // the arrow, it only exists while that state holds, so its space is reserved only then (the
+    // widths recompute when the filter changes).
     headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
   } else {
     // the classic header renders its filter icon inline whenever the column is filterable, whether
@@ -1615,6 +1723,7 @@ export function computeContentAwareColWidths(
     tableRefreshEnabled = false,
     filter,
     sampleSize,
+    hasColumnSidebar = false,
     noPanelPadding = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
@@ -1659,7 +1768,8 @@ export function computeContentAwareColWidths(
       showTypeIcons,
       isSortableField(field),
       tableRefreshEnabled,
-      filteredKeys.has(getDisplayName(field))
+      filteredKeys.has(getDisplayName(field)),
+      hasColumnSidebar
     );
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds
@@ -1720,37 +1830,28 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-// react-data-grid types these fields `readonly` for callers building a column once; here we're
-// intentionally mutating an already-built one in place, so we cast that guard away locally.
-type MutableColumnClasses = {
-  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
-};
-
-const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
-  const mutable: MutableColumnClasses = column;
-  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
-  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
-  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
-};
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
 
 /**
  * @internal
  * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
- *
- * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
- * freshly built by the caller right before this call, so there's nothing else holding a reference
- * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
- * already makes elsewhere for the nested expander column.
  */
-export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
-  const { columns } = fromFieldsResult;
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
   if (columns.length === 0) {
-    return;
+    return columns;
   }
-  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
-  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

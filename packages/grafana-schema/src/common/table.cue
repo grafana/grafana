@@ -134,6 +134,9 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether the column management sidebar starts open. Only applies when the
+	// `table.refresh` feature toggle is enabled, which is what introduces the sidebar.
+	showColumnsSidebar?: bool
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
@@ -149,6 +152,10 @@ TableFieldOptions: {
 	filterable?:  bool
 	// Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
 	sortable?: bool
+	// Controls whether the column can be reordered from the table itself. Off unless set, so a consumer opts in per column.
+	reorderable?: bool
+	// Controls whether the column can be hidden from the table itself. Off unless set, so a consumer opts in per column.
+	hideable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
 	// if true, wrap the text content of the cell

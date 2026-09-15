@@ -5,7 +5,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled'
+  'tableRefreshEnabled' | 'tableRefreshNewFeaturesEnabled' | 'contentAwareWidthsEnabled'
 >;
 
 /**
@@ -18,6 +18,9 @@ export function CommonTableNG(props: CommonTableNGProps) {
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
+  // Deliberately not `tableRefreshNewFeaturesEnabled`: that is the table panel's refreshed feature
+  // set, and a caller with no panel options behind it has nowhere to put the state those features
+  // produce. The refreshed header is a look rather than a feature, so it does apply here.
   return (
     <TableNG
       {...props}

@@ -19,6 +19,10 @@ function makeField(overrides: Partial<Field> = {}): Field {
   };
 }
 
+// What a column lets the user do comes from its own config, the way the table panel sets it.
+const reorderableField = () => makeField({ config: { custom: { reorderable: true } } });
+const hideableField = () => makeField({ config: { custom: { hideable: true } } });
+
 const column = { key: 'Field1' } as Column<TableRow, TableSummaryRow>;
 
 const baseProps = {
@@ -89,6 +93,16 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
       theme.colors.text.secondary
     );
+  });
+
+  it('collapses the reorder drag handle until the header cell is hovered', () => {
+    const { container } = render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+    const handle = container.querySelector('button[aria-hidden="true"]')!;
+    const styles = window.getComputedStyle(handle);
+    // collapsed rather than unmounted, so the label's shift can be animated in and out
+    expect(styles.width).toBe('0px');
+    expect(styles.opacity).toBe('0');
+    expect(handle.querySelector('svg')).toBeInTheDocument();
   });
 
   it('keeps the refreshed label colour when Wrap header text is toggled', () => {
@@ -254,9 +268,118 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
-    it('renders no column menu for a non-filterable column', () => {
+    it('renders no column menu for a non-filterable column with no pin/hide handlers', () => {
       render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('renders a column menu for a non-filterable column once it is hideable', () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onHideColumn={jest.fn()} />);
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('renders no column menu for a reorderable column with no sidebar to manage it from', () => {
+      // Reordering is done by dragging the header itself, so it puts nothing in the menu.
+      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('renders a column menu for a non-filterable column once the table has a column sidebar', () => {
+      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled hasColumnSidebar />);
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('opens the column-visibility sidebar from the "Manage columns" item', async () => {
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={reorderableField()}
+          tableRefreshEnabled
+          hasColumnSidebar
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await userEvent.click(await screen.findByText('Manage columns'));
+      expect(onOpenColumnPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it('omits "Manage columns" when reorder/hide/pin are unavailable, even with a handler passed', async () => {
+      // Filterable alone shows the menu, but there's nothing for "Manage columns" to open a sidebar
+      // onto — the item should stay out rather than open an empty panel.
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={filterableField()}
+          tableRefreshEnabled
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Filter values');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
+    it('omits "Manage columns" when no handler is passed, even with reorder/hide/pin available', async () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onTogglePin={jest.fn()} />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Pin column left');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
+    it('pins and unpins a column from the column menu', async () => {
+      const onTogglePin = jest.fn();
+      const { rerender } = render(
+        <HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onTogglePin={onTogglePin} />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await userEvent.click(await screen.findByText('Pin column left'));
+      expect(onTogglePin).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onTogglePin={onTogglePin} isPinned />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect(await screen.findByText('Unpin column')).toBeInTheDocument();
+    });
+
+    it('hides a column from the column menu, disabled when it is the last visible column', async () => {
+      const onHideColumn = jest.fn();
+      const { rerender } = render(
+        <HeaderCell
+          {...baseProps}
+          field={hideableField()}
+          tableRefreshEnabled
+          onHideColumn={onHideColumn}
+          canHideColumn
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const hideItem = await screen.findByText('Hide column');
+      expect(hideItem.closest('button')).toBeEnabled();
+      await userEvent.click(hideItem);
+      expect(onHideColumn).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <HeaderCell
+          {...baseProps}
+          field={hideableField()}
+          tableRefreshEnabled
+          onHideColumn={onHideColumn}
+          canHideColumn={false}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
     });
 
     it('gives the header cell root a stable class the menu scopes its hover reveal to', () => {

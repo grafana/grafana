@@ -17,8 +17,16 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
+import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isSortableField } from '../utils';
+import {
+  getDisplayName,
+  isColumnMenuVisible,
+  isFieldFilterable,
+  isFieldHideable,
+  isFieldReorderable,
+  isSortableField,
+} from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -37,6 +45,21 @@ interface HeaderCellProps {
   crossFilterTailRows: TableRow[];
   /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
   tableRefreshEnabled?: boolean;
+  /** `table.refresh`: whether the column-management sidebar is available for this table. */
+  hasColumnSidebar?: boolean;
+  /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
+  onHideColumn?: () => void;
+  /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
+  canHideColumn?: boolean;
+  /** `table.refresh`: whether this column is currently pinned. */
+  isPinned?: boolean;
+  /** `table.refresh`: pins/unpins this column via the column menu. Omitted when pinning isn't available. */
+  onTogglePin?: () => void;
+  /**
+   * `table.refresh`: opens the column-visibility sidebar via the column menu. Omitted when none of
+   * reorder/hide/pin are available for this table.
+   */
+  onOpenColumnPanel?: () => void;
 }
 
 // Everything the header cell can put in the tab order: buttons, plus anything opting in with a
@@ -57,18 +80,29 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
+  hasColumnSidebar,
+  onHideColumn,
+  canHideColumn,
+  isPinned,
+  onTogglePin,
+  onOpenColumnPanel,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
   const displayName = getDisplayName(field);
-  const filterable = field.config.custom?.filterable ?? false;
+  const filterable = isFieldFilterable(field);
+  const hideable = isFieldHideable(field);
+  const reorderable = isFieldReorderable(field);
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
+  // The sidebar's entry is offered in every column's menu, not only in the menus of columns that can
+  // themselves be hidden or reordered — it manages the whole table.
+  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && Boolean(hasColumnSidebar);
 
   // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
   // item and the filter icon that marks an already-filtered column — so it lives here rather than in
@@ -215,15 +249,31 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
       // unique per column, regardless of how deep it sits in a nested table.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
+        {reorderable && (
+          // Chrome only recognizes a mousedown as the start of a native drag when it lands on an
+          // interactive element (a <button> works, a bare <svg>/<div> doesn't, even though
+          // `column.draggable` sits on the whole header cell and both have real painted content).
+          // This button gives the gesture a dependable anchor instead of relying on wherever the
+          // label text happens to be. It's not independently focusable or operable — reordering is
+          // drag-only — so it's out of the tab order and hidden from assistive tech.
+          <button type="button" tabIndex={-1} aria-hidden="true" className={styles.headerCellDragHandle}>
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {filterable && (
+        {isColumnMenuVisible(field, Boolean(hasColumnSidebar)) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
+              onHideColumn={hideable ? onHideColumn : undefined}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
+              onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
             />
           </div>
         )}
@@ -279,6 +329,47 @@ const getStyles = memoize(
       // fill the header cell so the actions can sit against its trailing edge
       flex: 1,
       minWidth: 0,
+      // `headerCellLabel`'s `all: 'unset'` clears the label button's implicit non-selectability
+      // along with everything else. Left selectable, a drag starting on the label text is
+      // ambiguous between "select this text" and "drag this column" — browsers resolve that by
+      // starting a text selection (and, moving further, an OS-level text/link drag) instead of the
+      // column-reorder drag `column.draggable` is there for. This column reorder needs the mouse
+      // gesture to be unambiguous.
+      userSelect: 'none',
+    }),
+    // Collapsed to nothing rather than unmounted when the cell isn't hovered, so the label's shift can
+    // be animated in and out: `width` is what the label reacts to, and the negative inline-end margin
+    // cancels the root's flex gap so a collapsed handle occupies no space at all. Stays the muted
+    // secondary colour — it's an affordance, not part of the column's label.
+    headerCellDragHandle: css({
+      label: 'headerCellDragHandle',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      color: theme.colors.text.secondary,
+      cursor: 'grab',
+      width: 0,
+      opacity: 0,
+      overflow: 'hidden',
+      marginInlineEnd: theme.spacing(-0.5),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+      },
+      // Hover only, and scoped to `.table-ng-header-cell` rather than the bare `.rdg-cell`, for the
+      // same two reasons HeaderCellMenu's button is: `:focus-within` would also match react-data-grid
+      // moving focus into the header cell when it becomes the grid's active cell, and in a nested
+      // table every column's header cell is a descendant of the outer grid's nested-frame cell, so
+      // `:hover` there would reveal all of them at once.
+      '.table-ng-header-cell:hover &': {
+        width: HEADER_DRAG_HANDLE_WIDTH,
+        opacity: 1,
+        marginInlineEnd: 0,
+      },
     }),
     headerCellLabelGroup: css({
       label: 'headerCellLabelGroup',

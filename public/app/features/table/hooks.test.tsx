@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
@@ -15,7 +15,13 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
-import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableRefreshNewFeatures,
+  useTableSharedCrosshair,
+} from './hooks';
 import { getCellActions } from './utils';
 
 jest.mock('@grafana/data', () => {
@@ -165,6 +171,45 @@ describe('useTableSharedCrosshair', () => {
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Crosshair })),
     });
+
+    expect(result.current).toBe(true);
+  });
+});
+
+// The table panel's refreshed feature set is deliberately not part of `useCommonTableProps`: that
+// hook is shared with the logs table, which keeps opting in per field.
+describe('useTableRefreshNewFeatures', () => {
+  // setTestFlags publishes an OpenFeature change event, and the hook under test is still mounted
+  // when this runs — so the reset is a React state update like any other.
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('is off with neither flag', () => {
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off with only its own flag, since the interactions live in the refreshed header', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off with only table.refresh', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is on with both', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
 
     expect(result.current).toBe(true);
   });

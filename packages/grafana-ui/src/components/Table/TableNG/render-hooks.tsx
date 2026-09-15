@@ -47,6 +47,7 @@ import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME } from './constants';
 import {
   getCellActionStyles,
+  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
   getLinkStyles,
@@ -84,6 +85,7 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
+  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -150,6 +152,9 @@ export function useDataGridRows(
 export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
+  /** `table.refresh`: lets columns be reordered by dragging their header cell. */
+  /** `table.refresh`: whether the column-management sidebar is available for this table. */
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -167,11 +172,22 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  /** `table.refresh`: hides a column via the header column menu. */
+  onHideColumn?: (displayName: string) => void;
+  /** `table.refresh`: pins/unpins a column via the header column menu. */
+  onTogglePin?: (displayName: string) => void;
+  /** `table.refresh`: opens the column-visibility sidebar via the header column menu. */
+  onOpenColumnPanel?: () => void;
+  /** `table.refresh`: display names of currently pinned columns. */
+  pinnedColumns?: ReadonlySet<string>;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  /** `table.refresh`: column keys currently animating into their post-reorder/pin position. */
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
+  /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
   tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -254,11 +270,17 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    onTogglePin,
+    onOpenColumnPanel,
+    pinnedColumns,
     frozenColumns,
     numFrozenColsFullyInView,
     maxRowHeight,
     disableKeyboardEvents,
     disableSanitizeHtml,
+    hasColumnSidebar,
+    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     timeRange,
@@ -329,7 +351,12 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
+    // the refreshed header always left-aligns its label, independent of how the body cells align,
+    // so the column menu has a stable trailing edge to sit against
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
+    );
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
@@ -557,6 +584,7 @@ function buildColumnsFromFields(
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       sortable: isSortableField(field),
+      draggable: isFieldReorderable(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
@@ -572,6 +600,12 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={fields.length > 1}
+          isPinned={pinnedColumns?.has(displayName)}
+          onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+          onOpenColumnPanel={onOpenColumnPanel}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

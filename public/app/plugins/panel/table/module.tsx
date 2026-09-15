@@ -44,6 +44,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
         filters: true,
+        // Under `table.refreshNewFeatures` every column is filterable, so there is nothing to opt
+        // into. Gated with `showIf` rather than by not registering it, so the decision is made per
+        // render — the flag may resolve after this module is evaluated.
+        filtersShowIf: () => !getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
         wrapHeaderText: true,
         hideFields: true,
       });

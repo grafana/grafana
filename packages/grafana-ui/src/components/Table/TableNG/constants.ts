@@ -83,6 +83,9 @@ export const PAGINATION_MARGIN = 8;
 export const getPaginationChromeHeight = (noPanelPadding = false): number =>
   PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
 
+// `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
+export const COLUMN_SETTLE_MS = 280;
+
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.
@@ -105,3 +108,11 @@ export const HEADER_MENU_SPACE = HEADER_ICON_BUTTON_SPACE;
 // The info button a column with `headerTooltip` set renders next to its label. Always in flow, and
 // in both the classic and refreshed headers.
 export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
+
+// Space the `table.refresh` reorder drag handle reserves before the label. It's a bare `Icon` at
+// default size="md" (16px) rather than an IconButton, so unlike the menu button it has no
+// component-level trailing margin of its own — just the header's own flex gap. The handle only
+// expands to this width on hover, but the space is reserved whenever reorder is enabled: otherwise
+// the title would start ellipsizing the moment the handle slides in.
+export const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;
