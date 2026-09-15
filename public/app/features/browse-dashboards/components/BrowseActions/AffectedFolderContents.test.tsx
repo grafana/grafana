@@ -52,7 +52,14 @@ describe('AffectedFolderContents', () => {
   it('renders the empty success alert when the selected folder has no descendants', async () => {
     server.use(
       customFolderCountsHandler(() =>
-        HttpResponse.json({ folders: 0, dashboards: 0, library_elements: 0, alertrules: 0, recordingrules: 0 })
+        HttpResponse.json({
+          folders: 0,
+          dashboards: 0,
+          library_elements: 0,
+          alertrules: 0,
+          recordingrules: 0,
+          variables: 0,
+        })
       )
     );
 
@@ -64,7 +71,33 @@ describe('AffectedFolderContents', () => {
   it('renders the non-empty warning alert when the selected folder only has recording rules', async () => {
     server.use(
       customFolderCountsHandler(() =>
-        HttpResponse.json({ folders: 0, dashboards: 0, library_elements: 0, alertrules: 0, recordingrules: 3 })
+        HttpResponse.json({
+          folders: 0,
+          dashboards: 0,
+          library_elements: 0,
+          alertrules: 0,
+          recordingrules: 3,
+          variables: 0,
+        })
+      )
+    );
+
+    render(<AffectedFolderContents selectedItems={folderASelection} nonEmptyMessage="Folder has other resources" />);
+
+    expect(await screen.findByRole('alert', { name: 'Folder has other resources' })).toBeInTheDocument();
+  });
+
+  it('renders the non-empty warning alert when the selected folder only has variables', async () => {
+    server.use(
+      customFolderCountsHandler(() =>
+        HttpResponse.json({
+          folders: 0,
+          dashboards: 0,
+          library_elements: 0,
+          alertrules: 0,
+          recordingrules: 0,
+          variables: 3,
+        })
       )
     );
 
