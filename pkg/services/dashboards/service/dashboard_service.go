@@ -77,7 +77,6 @@ var (
 const (
 	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
-	provisioningConcurrencyLimit         = 10
 	listAllDashboardsLimit               = 100000
 )
 
