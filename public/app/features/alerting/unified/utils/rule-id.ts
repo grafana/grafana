@@ -333,8 +333,13 @@ export function stripPromQLComments(query: string): string {
 
 /**
  * Matches a PromQL duration literal – one or more `<number><unit>` parts, e.g. `5m`, `1h30m`, `500ms`.
+ *
  * The lookbehind and lookahead keep us from matching a duration-looking tail inside an identifier,
- * so a recording rule named `job:latency:rate5m` is left alone.
+ * so a recording rule named `job:latency:rate5m` is left alone. They also have to exclude a dot:
+ * plain `\b` would find a boundary in the middle of `1.5h` and match just the `5h`.
+ *
+ * The interval patterns elsewhere in Grafana can't stand in for this one – they either anchor to the
+ * whole string, or they accept the units of a Grafana interval rather than a PromQL duration.
  */
 const PROMQL_DURATION_REGEX = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/g;
 

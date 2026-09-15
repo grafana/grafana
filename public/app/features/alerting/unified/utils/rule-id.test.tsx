@@ -468,6 +468,13 @@ describe('normalizePromQLDurations', () => {
     expect(normalizePromQLDurations('requests_5m_total')).toBe('requests_5m_total');
   });
 
+  it('should not match part way into a decimal number', () => {
+    expect(normalizePromQLDurations('rate(up[1.5h])')).toBe('rate(up[1.5h])');
+    expect(normalizePromQLDurations('histogram_quantile(0.99, rate(up[5m]))')).toBe(
+      'histogram_quantile(0.99, rate(up[300000ms]))'
+    );
+  });
+
   it('should leave plain numbers alone', () => {
     expect(normalizePromQLDurations('up > bool 100')).toBe('up > bool 100');
   });
