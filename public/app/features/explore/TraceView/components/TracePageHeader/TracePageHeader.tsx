@@ -15,7 +15,6 @@
 import { css, cx } from '@emotion/css';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { flushSync } from 'react-dom';
 
 import {
   type CoreApp,
@@ -132,18 +131,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       if (!span) {
         return;
       }
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
       revealSpan(span);
       if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanId)) {
         setSearch({ ...search, matchesOnly: false });
       }
-      // VirtualizedTraceView only scrolls when focusedSpanIdForSearch changes.
-      // Clear first so a second click after the user scrolls away still re-scrolls.
-      flushSync(() => {
-        setFocusedSpanIdForSearch('');
-      });
       setFocusedSpanIdForSearch(spanId);
     },
-    [revealSpan, search, setFocusedSpanIdForSearch, setSearch, spanFilterMatches, trace]
+    [app, datasourceType, revealSpan, search, setFocusedSpanIdForSearch, setSearch, spanFilterMatches, trace]
   );
 
   // Create controller for adhoc filters

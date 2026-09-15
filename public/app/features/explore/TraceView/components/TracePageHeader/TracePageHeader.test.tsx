@@ -26,7 +26,7 @@ import {
   type TraceSearchProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config, reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
@@ -413,7 +413,14 @@ describe('TracePageHeader test', () => {
     await userEvent.click(goToSpan);
 
     expect(revealSpan).toHaveBeenCalledWith(errorTrace.spans[1]);
-    expect(setFocusedSpanIdForSearch.mock.calls).toEqual([[''], ['payment-error'], [''], ['payment-error']]);
+    expect(setFocusedSpanIdForSearch).toHaveBeenCalledWith('payment-error');
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith('grafana_traces_trace_view_go_to_span_clicked', {
+      app: CoreApp.Unknown,
+      datasourceType: 'tempo',
+      grafana_version: config.buildInfo.version,
+      location: 'trace-banner',
+    });
   });
 
   it('turns off matches-only when Go to span targets a hidden filtered span', async () => {
