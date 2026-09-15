@@ -2127,7 +2127,7 @@ func (dr *DashboardServiceImpl) searchAllDashboardsThroughK8sRaw(ctx context.Con
 		return dashboardv0.SearchResults{}, err
 	}
 	request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	// These table-only fields do not have typed response definitions.
+	// Internal callers do not use these table-only fields, which have no typed definitions.
 	request.Fields = slices.DeleteFunc(slices.Clone(request.Fields), func(field string) bool {
 		return field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY
 	})
