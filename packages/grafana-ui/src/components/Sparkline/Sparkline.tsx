@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo, useRef } from 'react';
 
 import { type FieldConfig, type FieldSparkline } from '@grafana/data';
 import { type GraphFieldConfig } from '@grafana/schema';
@@ -12,17 +12,13 @@ import { prepareSeries, prepareConfig } from './utils';
 /**
  * Payload emitted by `Sparkline`'s `onHover` when hover support is enabled
  * (`showTooltip` or `onHover` set). `null` is emitted on mouse leave and on unmount.
- *
- * `left`/`top` are the focused point's pixel coordinates relative to the plot-area
- * origin (uPlot's `over` element), from `u.valToPos(...)`. To paint a marker outside
- * the sparkline, combine them with the chart element's bounding rect.
  */
 export interface SparklineHoverEvent {
+  /** Data index of the hovered point. */
   index: number;
+  /** Raw y value at the hovered point. */
   value: number | null;
-  xValue: number | null;
-  left: number;
-  top: number;
+  /** Formatted value (via the y-field display processor). */
   display: string;
 }
 
@@ -42,13 +38,26 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   const { sparkline, config: fieldConfig, theme, width, height, showHighlights, showTooltip, onHover } = props;
   const hoverEnabled = Boolean(showTooltip || onHover);
 
-  const { frame: alignedDataFrame, warning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
-  if (warning) {
+  // Keep the latest onHover reachable from the (stable, memoized) uPlot hook so an
+  // inline callback identity change never rebuilds the config / re-inits the plot.
+  const onHoverRef = useRef(onHover);
+  onHoverRef.current = onHover;
+  const emitHover = useMemo(() => (hover: SparklineHoverEvent | null) => onHoverRef.current?.(hover), []);
+
+  const { configBuilder, data, warning } = useMemo(() => {
+    const { frame, warning: seriesWarning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
+    if (seriesWarning) {
+      return { warning: seriesWarning };
+    }
+    return {
+      data: preparePlotData2(frame, getStackingGroups(frame)),
+      configBuilder: prepareConfig(sparkline, frame, theme, showHighlights, hoverEnabled, emitHover),
+    };
+  }, [sparkline, fieldConfig, theme, showHighlights, hoverEnabled, emitHover]);
+
+  if (warning || !configBuilder || !data) {
     return null;
   }
-
-  const data = preparePlotData2(alignedDataFrame, getStackingGroups(alignedDataFrame));
-  const configBuilder = prepareConfig(sparkline, alignedDataFrame, theme, showHighlights, hoverEnabled);
 
   return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
 });
