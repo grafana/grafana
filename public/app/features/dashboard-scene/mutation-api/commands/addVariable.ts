@@ -8,6 +8,7 @@ import type * as z from 'zod';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { trackPlanningVariable } from '../../scene/planningSession';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
@@ -61,6 +62,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
+      trackPlanningVariable(scene, payload.variable.spec.name);
       return {
         success: true,
         data: { variable: variableKind },

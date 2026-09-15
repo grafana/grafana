@@ -12,6 +12,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
+import { trackPlanningSection } from '../../scene/planningSession';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
@@ -105,6 +106,11 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
         warnings.push(
           'Root layout converted to RowsLayout. Previous paths are invalidated; call GET_LAYOUT to refresh.'
         );
+      }
+
+      const section = resolveLayoutPath(scene.state.body, newPath).item;
+      if (section instanceof RowItem) {
+        trackPlanningSection(scene, section);
       }
 
       return {

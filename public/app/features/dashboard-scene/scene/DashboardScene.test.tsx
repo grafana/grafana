@@ -44,6 +44,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
@@ -3631,7 +3632,7 @@ describe('planning mode', () => {
 
     const panel = await scene.onCreateNewPanel();
 
-    expect(panel.state.$data).toBeUndefined();
+    expect(getQueryRunnerFor(panel)).toBeUndefined();
   });
 });
 

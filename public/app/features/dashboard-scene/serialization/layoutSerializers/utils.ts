@@ -40,6 +40,7 @@ import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getPlanningPanelData } from '../../scene/planningSampleData';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
@@ -123,6 +124,7 @@ export function buildVizPanelState(
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
+    ...(buildOptions.withoutQueries ? getPlanningPanelData(panel.spec.title, panel.spec.vizConfig.group) : {}),
   };
 
   // Set up Angular migration handler if migration data is present

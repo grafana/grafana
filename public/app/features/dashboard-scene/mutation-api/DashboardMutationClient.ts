@@ -12,9 +12,10 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { DASHBOARD_COMMANDS } from './commands/registry';
+import type { MutationRequest, MutationResult } from './types';
 
 export class DashboardMutationClient extends SceneMutationClient<DashboardScene> {
-  constructor(scene: DashboardScene) {
+  constructor(private dashboard: DashboardScene) {
     // CREATE_NOTEBOOK_SPEC reads nothing off the scene and there is no blank notebook to open first, so
     // it has to be reachable from wherever the user already is. Registered at this seam rather than in
     // DASHBOARD_COMMANDS so the dashboard registry stays a list of dashboard commands.
@@ -27,6 +28,12 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
       ? [createNotebookSpecCommand]
       : [];
 
-    super(scene, [...DASHBOARD_COMMANDS, ...notebookCommands]);
+    super(dashboard, [...DASHBOARD_COMMANDS, ...notebookCommands]);
+  }
+  async execute(mutation: MutationRequest): Promise<MutationResult> {
+    if (mutation.planId !== undefined && this.dashboard.state.planning?.planId !== mutation.planId) {
+      return { success: false, changes: [], error: 'The preview dashboard is no longer open.' };
+    }
+    return super.execute(mutation);
   }
 }

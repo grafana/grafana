@@ -41,9 +41,7 @@ function PlanPlaceholderBadgeRenderer({ model }: SceneComponentProps<PlanPlaceho
 function PlanPlaceholderBadgeContent({ panel }: { panel: VizPanel }) {
   const { $data } = panel.useState();
 
-  // Use a structural check because the assistant bundles its own @grafana/scenes;
-  // its SceneDataNode constructor differs from core's. Panels without a data provider
-  // have no sample values to label.
+  // Sample data can remain after Build until real queries replace each placeholder.
   const showsDataFromNoQuery = Boolean($data) && !getQueryRunnerFor(panel);
 
   // Replacing the sample provider clears the badge per panel. Unbuilt panels keep it.

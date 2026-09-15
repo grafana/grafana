@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, sceneGraph, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -24,9 +24,8 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
 });
 
-function setup(planning?: Partial<{ onPanelVisualizationChanged: jest.Mock }>) {
+function setup() {
   const panel = new VizPanel({ title: 'Brokers up', key: 'panel-1', pluginId: 'timeseries' });
-  const onPanelVisualizationChanged = planning?.onPanelVisualizationChanged ?? jest.fn();
   const scene = new DashboardScene({
     title: 'plan',
     meta: {},
@@ -37,14 +36,13 @@ function setup(planning?: Partial<{ onPanelVisualizationChanged: jest.Mock }>) {
       panelCount: 1,
       onBuild: jest.fn(),
       onDismiss: jest.fn(),
-      onPanelVisualizationChanged,
     },
   });
   // Parent the panel so getDashboardSceneFor can resolve the scene from it.
   scene.state.body.addPanel(panel);
 
   render(<PlanVisualizationPicker panel={panel} />);
-  return { panel, onPanelVisualizationChanged };
+  return { panel };
 }
 
 describe('PlanVisualizationPicker', () => {
@@ -63,14 +61,17 @@ describe('PlanVisualizationPicker', () => {
     expect(panel.state.pluginId).toBe('piechart');
   });
 
-  it('tells the plan its sample data now has the wrong shape', async () => {
-    const onPanelVisualizationChanged = jest.fn();
-    setup({ onPanelVisualizationChanged });
+  it('reshapes sample data in core when the visualization changes', async () => {
+    const { panel } = setup();
 
     await userEvent.click(screen.getByTestId(selectors.components.Sidebar.changePlanVisualizationButton));
     await userEvent.click(screen.getByText('pick piechart'));
 
-    expect(onPanelVisualizationChanged).toHaveBeenCalledWith('panel-1', 'piechart');
+    expect(sceneGraph.getData(panel).state.data?.series[0].fields.map((field) => field.type)).toEqual([
+      'string',
+      'number',
+    ]);
+    expect(panel.state.options).toMatchObject({ pieType: 'donut' });
   });
 
   it('closes the picker once a type is chosen', async () => {

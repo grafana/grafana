@@ -12,6 +12,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { trackPlanningSection } from '../../scene/planningSession';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
@@ -99,6 +100,11 @@ export const addTabCommand: MutationCommand<AddTabPayload> = {
         warnings.push(
           'Root layout converted to TabsLayout. Previous paths are invalidated; call GET_LAYOUT to refresh.'
         );
+      }
+
+      const section = resolveLayoutPath(scene.state.body, newPath).item;
+      if (section instanceof TabItem) {
+        trackPlanningSection(scene, section);
       }
 
       return {
