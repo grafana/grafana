@@ -26,7 +26,7 @@ export interface ApplyDashboardSpecProps {
  */
 function closeCodePane(scene: DashboardScene) {
   const { sidebar } = scene.state;
-  if (sidebar.state.openPane?.getId() === 'code') {
+  if (sidebar.state?.openPane?.getId() === 'code') {
     sidebar.closePane();
   }
 }
