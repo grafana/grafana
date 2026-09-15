@@ -226,6 +226,18 @@ describe('FolderReadmePanel', () => {
       expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', contributing.path);
     });
 
+    it('falls back to the README when ?docTab= names a doc that is not in the folder', () => {
+      // Typo, or the file was removed by a later pull.
+      setDocs({ docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md')] });
+
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/?docTab=DELETED.md'] },
+      });
+
+      expect(screen.getByRole('tab', { name: 'README' })).toHaveAttribute('aria-selected', 'true');
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', readmeDoc.path);
+    });
+
     it('reports "other" for a non-convention doc selection', async () => {
       const changelog = doc(undefined, 'CHANGELOG.md');
       setDocs({ docs: [readmeDoc, changelog] });
@@ -426,6 +438,19 @@ describe('FolderReadmePanel', () => {
     it('hides the Edit icon when no README exists', () => {
       setup();
       expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
+    });
+
+    it('shows a load error, not the Add README prompt, when a non-README doc is missing', () => {
+      // The tab came from the file listing, so a 404 is a load failure rather than an absent README.
+      setDocs({ docs: [readmeDoc, doc('security', 'SECURITY.md')] });
+
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/?docTab=SECURITY.md'] },
+      });
+
+      expect(screen.getByText(/Couldn't load this document/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
     });
   });
 

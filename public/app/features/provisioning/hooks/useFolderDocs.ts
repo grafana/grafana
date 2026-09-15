@@ -45,7 +45,8 @@ export function useFolderDocs(folderUID: string): UseFolderDocsResult {
   } = useGetRepositoryFilesQuery(shouldFetch ? { name: repository.name } : skipToken);
 
   // Keep the tab set fresh: a completed pull can add/remove/rename markdown files.
-  useRefetchOnRepoSync(repository?.name, refetch);
+  // Gate on the same condition as the query so we never refetch one that hasn't started.
+  useRefetchOnRepoSync(shouldFetch ? repository.name : undefined, refetch);
 
   const docs = useMemo(() => {
     const paths = (data?.items ?? []).filter(isFileItem).map((item) => item.path);
