@@ -10865,6 +10865,9 @@
     "toolbar-button-row": {
       "show-more": "Show more items"
     },
+    "tooltip": {
+      "dismiss": "Dismiss"
+    },
     "u-plot": {
       "config": {
         "get-graph-field-options": {

@@ -151,5 +151,15 @@ describe('Tooltip', () => {
       await userEvent.tab();
       expect(screen.getByText('Next focusable element on the page')).toHaveFocus();
     });
+
+    it('renders a visually-hidden dismiss control, for touch screen reader users who have no Escape key', async () => {
+      renderInteractiveTooltip(true);
+
+      await userEvent.tab();
+      await screen.findByText('Action inside tooltip');
+
+      // Rendered at both the start and end of the trapped content, per floating-ui's own pattern.
+      expect(await screen.findAllByRole('button', { name: 'Dismiss' })).not.toHaveLength(0);
+    });
   });
 });

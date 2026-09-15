@@ -15,6 +15,7 @@ import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, u
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
@@ -37,7 +38,8 @@ export interface TooltipProps {
    * Traps focus inside the tooltip content and lets keyboard users Tab from the trigger into it,
    * with Escape returning focus to the trigger. Opt into this for content with its own focusable
    * elements (buttons, links) — without it, Tab from the trigger skips over the content entirely,
-   * since it's portaled and isn't part of the trigger's natural tab order.
+   * since it's portaled and isn't part of the trigger's natural tab order. A visually-hidden
+   * dismiss control is also rendered, for touch screen reader users who have no Escape key.
    */
   trapFocus?: boolean;
 }
@@ -121,6 +123,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
               disabled={!trapFocus}
               order={['reference', 'content']}
               initialFocus={-1}
+              visuallyHiddenDismiss={trapFocus ? t('grafana-ui.tooltip.dismiss', 'Dismiss') : undefined}
             >
               <div
                 ref={refs.setFloating}
