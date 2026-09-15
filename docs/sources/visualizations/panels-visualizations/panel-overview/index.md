@@ -145,8 +145,6 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 ## Panel time settings
 
-{{< docs/public-preview product="Panel time settings" >}}
-
 You can configure the following settings to control the time range for a panel:
 
 | Option                         | Description                                                                                                                                                                                                                                                     |
