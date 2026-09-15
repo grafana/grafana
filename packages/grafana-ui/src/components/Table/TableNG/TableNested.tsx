@@ -527,6 +527,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
             <DataGrid<TableRow, TableSummaryRow>
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
+              // a nested frame hides its own header, so the handle it would be resized by is its own too
+              defaultColumnOptions={{ ...commonDataGridProps.defaultColumnOptions, resizable: hasNestedHeaders }}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
               bottomSummaryRows={hasNestedFooter ? [{}] : undefined}
