@@ -355,6 +355,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
+	if a.GetSubresource() != "" {
+		return nil // status (and other subresource) patches don't change spec and shouldn't re-run spec validation
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
