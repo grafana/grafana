@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type FieldConfig, type FieldSparkline } from '@grafana/data';
 import { type GraphFieldConfig } from '@grafana/schema';
@@ -48,14 +48,28 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   onHoverRef.current = onHover;
   const showTooltipRef = useRef(showTooltip);
   showTooltipRef.current = showTooltip;
+  // Tracks whether the consumer currently sees a non-null hover, so unmount can clear it.
+  const hoverActiveRef = useRef(false);
 
   // Single source of truth: the config hook emits a rich hover record; we fan it out to
   // the public (trimmed) onHover and to the built-in tooltip state.
   const emitHover = useMemo(
     () => (hover: SparklineHoverInfo | null) => {
+      hoverActiveRef.current = hover != null;
       onHoverRef.current?.(hover ? { index: hover.index, value: hover.value, display: hover.display } : null);
       if (showTooltipRef.current) {
         setTooltip(hover);
+      }
+    },
+    []
+  );
+
+  // Virtualized cells (e.g. tables) can unmount while hovered without a mouseleave, so
+  // clear the consumer's hover state on unmount if it is still active.
+  useEffect(
+    () => () => {
+      if (hoverActiveRef.current) {
+        onHoverRef.current?.(null);
       }
     },
     []
