@@ -127,12 +127,12 @@
       "headerBorder": "palette.ink650",
       "border": "palette.ink700",
       "rowStripedBackground": "palette.ink750",
-      "rowHoverBackgroundSolid": "rgb(46, 48, 53)",
-      "rowHoverOverlay": "rgba(255, 255, 255, 0.12)",
+      "rowHoverBackgroundSolid": "palette.ink650",
+      "rowHoverOverlay": "hsl(from palette.white h s l / 0.12)",
       "rowSelectedBackground": "palette.black",
-      "rowSelectedHoverBackground": "rgb(12, 12, 12)",
-      "headerDraggingBackground": "rgb(54, 57, 62)",
-      "headerDragTargetBackground": "rgb(43, 46, 51)",
+      "rowSelectedHoverBackground": "palette.ink900",
+      "headerDraggingBackground": "palette.ink600",
+      "headerDragTargetBackground": "palette.ink650",
       "cellSelectionBorder": "hsl(from palette.blue500 h s l / 0.15)"
     },
     "card": {

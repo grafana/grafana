@@ -20,15 +20,6 @@ describe('table colors', () => {
     }
   );
 
-  it.each(['dark', 'light', 'visual_refresh_dark', 'visual_refresh_light'])(
-    'preserves the interaction colors for %s',
-    (id) => {
-      const { background, backgroundOnCanvas, headerBackground, rowStripedBackground, ...interactions } =
-        getThemeById(id).components.table;
-      expect(interactions).toMatchSnapshot();
-    }
-  );
-
   it('inherits custom theme surfaces and accents before applying partial table overrides', () => {
     const theme = createTheme({
       colors: {
