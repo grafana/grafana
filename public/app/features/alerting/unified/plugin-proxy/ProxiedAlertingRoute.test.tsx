@@ -89,6 +89,31 @@ function renderProxiedRoute(pathname: string, search = '', override?: Partial<Ro
   return render(<ProxiedPage {...props} />, { historyOptions: { initialEntries: [pathname] } });
 }
 
+/**
+ * One proxy component that stays mounted while the URL under it changes, which a remount would
+ * hide — the state left over from the previous URL is the whole point of the tests using this.
+ */
+function mountedProxy(override?: (proxy: RouteProxy) => Partial<RouteProxy>) {
+  const proxy = routeProxies.find(({ path }) => path === ROUTE_PATH);
+  if (!proxy) {
+    throw new Error(`No proxy registered for ${ROUTE_PATH}`);
+  }
+
+  const ProxiedPage = withRouteProxy({ ...proxy, ...override?.(proxy) }, CorePage);
+
+  /** Points both the browser location and the route props at `pathname`. */
+  const at = (pathname: string): GrafanaRouteComponentProps => {
+    jest.mocked(useLocation).mockReturnValue({ pathname, search: '', trigger: '' });
+    return {
+      route: { path: ROUTE_PATH, component: CorePage },
+      queryParams: {},
+      location: { pathname, search: '', hash: '', state: null, key: 'test' },
+    };
+  };
+
+  return { ProxiedPage, at };
+}
+
 describe('withRouteProxy', () => {
   it('renders the Grafana page for a Grafana-managed URL', async () => {
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
@@ -153,26 +178,12 @@ describe('withRouteProxy', () => {
   it('does not hand out the last URL’s target when the URL changes under it', async () => {
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
 
-    // Built out here so both renders get the same component and React keeps its state, which is
-    // the whole point — a remount would throw away the stale result we're guarding against.
-    const proxy = routeProxies.find(({ path }) => path === ROUTE_PATH);
-    if (!proxy) {
-      throw new Error(`No proxy registered for ${ROUTE_PATH}`);
-    }
-    const ProxiedPage = withRouteProxy(proxy, CorePage);
+    const { ProxiedPage, at } = mountedProxy();
 
-    const propsFor = (pathname: string): GrafanaRouteComponentProps => ({
-      route: { path: ROUTE_PATH, component: CorePage },
-      queryParams: {},
-      location: { pathname, search: '', hash: '', state: null, key: 'test' },
-    });
-
-    jest.mocked(useLocation).mockReturnValue({ pathname: DATA_SOURCE_URL, search: '', trigger: '' });
-    const { rerender } = render(<ProxiedPage {...propsFor(DATA_SOURCE_URL)} />);
+    const { rerender } = render(<ProxiedPage {...at(DATA_SOURCE_URL)} />);
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
 
-    jest.mocked(useLocation).mockReturnValue({ pathname: OTHER_DATA_SOURCE_URL, search: '', trigger: '' });
-    rerender(<ProxiedPage {...propsFor(OTHER_DATA_SOURCE_URL)} />);
+    rerender(<ProxiedPage {...at(OTHER_DATA_SOURCE_URL)} />);
 
     // Sending someone to the rule they were looking at a moment ago would be worse than waiting.
     expect(screen.queryByText(`Redirected to ${PLUGIN_TARGET}`)).not.toBeInTheDocument();
@@ -190,6 +201,35 @@ describe('withRouteProxy', () => {
     expect(screen.queryByText('core alerting page')).not.toBeInTheDocument();
 
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
+  });
+
+  it('keeps waiting when the URL moves on after a timeout', async () => {
+    jest
+      .spyOn(pluginBridgeHooks, 'probePlugin')
+      .mockResolvedValue({ settings: pluginMeta[SupportedPlugin.PrometheusAlerting] });
+    jest.useFakeTimers();
+
+    // Never settles for the first URL, works normally for anything else.
+    const { ProxiedPage, at } = mountedProxy((proxy) => ({
+      handler: (context) => (context.pathname === DATA_SOURCE_URL ? new Promise(() => {}) : proxy.handler(context)),
+    }));
+
+    const { rerender } = render(<ProxiedPage {...at(DATA_SOURCE_URL)} />);
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5_000);
+    });
+
+    // Giving up and showing the Grafana page for this URL is right.
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+    corePageRendered.mockClear();
+
+    // A different data source managed URL, same mounted component. The last URL timing out says
+    // nothing about this one, so we should be working it out, not showing the page we're leaving.
+    rerender(<ProxiedPage {...at(OTHER_DATA_SOURCE_URL)} />);
+
+    expect(await screen.findByText(`Redirected to ${OTHER_PLUGIN_TARGET}`)).toBeInTheDocument();
+    expect(corePageRendered).not.toHaveBeenCalled();
   });
 
   it('falls back to Grafana and logs when the handler takes too long to resolve a URL', async () => {

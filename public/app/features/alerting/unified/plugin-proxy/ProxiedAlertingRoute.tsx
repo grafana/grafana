@@ -34,8 +34,11 @@ const TARGET_RESOLUTION_TIMEOUT_MS = 5_000;
  *
  * It's an object rather than a bare string so that `undefined` can only mean one thing: we haven't
  * worked it out yet. `url` being unset means we looked and there's nowhere in the plugin to send
- * this URL. It carries the location it was worked out for, so a result left over from a moment ago
- * can't be mistaken for an answer about the location we're looking at now.
+ * this URL — either because there's no plugin, or because it has no page for this URL, or because
+ * working it out failed. All three land on the Grafana page, so there's nothing to tell apart.
+ *
+ * It carries the location it was worked out for, so a result left over from a moment ago can't be
+ * mistaken for an answer about the location we're looking at now.
  */
 interface ResolvedTarget {
   context: ProxyContext;
@@ -109,12 +112,17 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
     const context = useProxyContext(proxy.path);
     const belongsToPlugin = proxy.matches(context);
 
-    const { value: resolved, error: resolveError } = useAsync(async (): Promise<ResolvedTarget | undefined> => {
+    const { value: resolved } = useAsync(async (): Promise<ResolvedTarget> => {
       if (!belongsToPlugin) {
-        return undefined;
+        return { context, url: undefined };
       }
 
-      return { context, url: await resolveTarget(proxy, context) };
+      // Swallowed rather than left to reject, because useAsync keeps hold of a rejection until the
+      // next run settles — so a timeout on one URL would still be sitting there when the next one
+      // is being worked out, and we'd read it as an answer about that one. A failure and "nowhere
+      // to go" mean the same thing here anyway: serve the Grafana page. Timeouts log themselves on
+      // the way through.
+      return { context, url: await resolveTarget(proxy, context).catch(() => undefined) };
     }, [belongsToPlugin, context]);
 
     // The URL can change while the page is mounted, and `useAsync` keeps the answer it worked out
@@ -122,10 +130,7 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
     // effect, which runs after this render. So ask which location the answer is about rather than
     // whether there is one. Sending someone to the rule they were looking at a moment ago would be
     // worse than making them wait.
-    //
-    // A failed run (either step timing out) clears the value, so check that separately, or we'd
-    // sit here waiting for a result that is never coming.
-    const workingOutTarget = resolved?.context !== context && !resolveError;
+    const workingOutTarget = resolved?.context !== context;
 
     // The matcher already said yes before this module was fetched, but again — the URL can change.
     if (!belongsToPlugin) {
