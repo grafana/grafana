@@ -16,7 +16,7 @@ export interface PageFallbackLoaderProps {
 }
 
 const DEFAULT_STEPS: PageFallbackLoaderStep[] = [
-  { id: 'app', label: 'Loading application', done: true },
+  { id: 'app', label: 'Loading ST pod', done: true },
   { id: 'data', label: 'Fetching data', done: false },
   { id: 'render', label: 'Rendering page', done: false },
 ];
