@@ -24,15 +24,13 @@ import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { parseDataSourceManagedIdentifier, stringifyDataSourceIdentifier } from './rule-identifier';
 import {
-  getRuleName,
   isCloudRuleIdentifier,
-  isGrafanaRuleIdentifier,
   isPrometheusRuleIdentifier,
-  prometheusRuleType,
-  rulerRuleType,
-} from './rules';
+  parseDataSourceManagedIdentifier,
+  stringifyDataSourceIdentifier,
+} from './rule-identifier';
+import { getRuleName, isGrafanaRuleIdentifier, prometheusRuleType, rulerRuleType } from './rules';
 
 // Re-exported for backward compatibility. Moved to rule-identifier.ts so the alerting route table
 // can take identifiers apart during app startup without reaching this module, which pulls in the
@@ -40,9 +38,7 @@ import {
 /* eslint-disable no-barrel-files/no-barrel-files */
 export {
   escapePathSeparators,
-  isCloudRuleIdentifier,
   isDataSourceManagedIdentifier,
-  isPrometheusRuleIdentifier,
   parse,
   stringifyDataSourceIdentifier,
   tryDecodeUriComponent,

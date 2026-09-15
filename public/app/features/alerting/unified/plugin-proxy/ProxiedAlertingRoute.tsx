@@ -8,7 +8,10 @@ import { useMemo } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 import { useAsync, useLocation } from 'react-use';
 
+import { t } from '@grafana/i18n';
 import { getLogger } from '@grafana/runtime/unstable';
+import { LoadingPlaceholder } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponent, type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { usePluginBridge } from '../hooks/usePluginBridge';
@@ -18,7 +21,6 @@ import { withTimeout } from '../utils/promise';
 import { findRouteProxy } from './proxies';
 import { buildProxyContext, stripSubPath } from './resolve';
 import { type ProxyContext, type RouteProxy } from './types';
-import { RedirectingPage } from './withRouteProxy';
 
 const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
 /**
@@ -26,6 +28,15 @@ const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
  * ceiling of its own, a request that never comes back would leave the page loading forever.
  */
 const TARGET_RESOLUTION_TIMEOUT_MS = 5_000;
+
+/** Shown once we know a redirect is coming. Up to that point the route shows the usual loader. */
+function RedirectingPage() {
+  return (
+    <Page navId="alerting">
+      <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
+    </Page>
+  );
+}
 
 /**
  * Reads the browser's location instead of react-router's, because react-router hands back a
@@ -89,9 +100,10 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
       return <RoutePage {...props} />;
     }
 
-    // The same notice the Suspense fallback showed while this module was loading, so the wait looks
-    // like one continuous thing. The page we might redirect away from is deliberately not rendered
-    // here — mounting it would fire off all of its requests for nothing.
+    // Now that we know this URL is the plugin's, say so — the wait before this point showed the
+    // ordinary page loader, because up to here a redirect was only a possibility. The page we
+    // might redirect away from is deliberately not rendered here: mounting it would fire off all
+    // of its requests for nothing.
     //
     // We say we're redirecting before we're certain of it: by this point the URL is data source
     // managed, so a redirect is what happens unless the plugin turns out to be missing or we can't
@@ -114,8 +126,8 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
  * Same as `withRouteProxy`, for callers that only have the route path. The proxy objects live in
  * this chunk, so the eager side can't look one up itself.
  *
- * Returns the page unwrapped if there's no proxy for the path, which can only happen if the matcher
- * list and the handler list have drifted apart — `routes.test.tsx` guards against that.
+ * Returns the page unwrapped if the table has no entry for the path, which means a route opted in
+ * without one — `routes.test.tsx` guards against that.
  */
 export function withRouteProxyForPath(routePath: string, RoutePage: GrafanaRouteComponent): GrafanaRouteComponent {
   const proxy = findRouteProxy(routePath);

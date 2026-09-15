@@ -1,12 +1,34 @@
+import { lazy } from 'react';
+import { render, screen } from 'test/test-utils';
+
 import { config } from '@grafana/runtime';
-import { type RouteDescriptor } from 'app/core/navigation/types';
+import {
+  type GrafanaRouteComponent,
+  type GrafanaRouteComponentProps,
+  type RouteDescriptor,
+} from 'app/core/navigation/types';
 
 import { proxied } from './withRouteProxy';
+
+// Stands in for the real proxy chunk. The real one, for a URL Grafana keeps, renders the route's
+// own page — which is itself lazy and so suspends inside the proxy's boundary. That second wait is
+// what the last test here is about.
+jest.mock('./ProxiedAlertingRoute', () => ({
+  withRouteProxyForPath: (_path: string, RoutePage: GrafanaRouteComponent) => RoutePage,
+}));
 
 const CorePage = () => null;
 
 function route(path: string): RouteDescriptor {
   return { path, component: CorePage };
+}
+
+function routeProps(path: string): GrafanaRouteComponentProps {
+  return {
+    route: route(path),
+    queryParams: {},
+    location: { pathname: path, search: '', hash: '', state: null, key: 'test' },
+  };
 }
 
 describe('proxied', () => {
@@ -49,5 +71,22 @@ describe('proxied', () => {
     const second = proxied(route('/alerting/silences')).component;
 
     expect(first).toBe(second);
+  });
+
+  it('shows the ordinary page loader, not a redirect notice, while a Grafana page loads', async () => {
+    config.unifiedAlertingEnabled = true;
+
+    // Most URLs on a proxied route are Grafana's own and are not going anywhere, so this wait must
+    // not claim a redirect is happening. Every other route shows PageLoader here.
+    const StillLoading = lazy<GrafanaRouteComponent>(() => new Promise(() => {}));
+    // A path of its own, because the wrapper is cached per path and the tests above have already
+    // registered one for /alerting/silences.
+    const PATH = '/alerting/silence/new';
+    const ProxiedPage = proxied({ path: PATH, component: StillLoading }).component;
+
+    render(<ProxiedPage {...routeProps(PATH)} />);
+
+    expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument();
+    expect(screen.queryByText('Redirecting…')).not.toBeInTheDocument();
   });
 });

@@ -8,29 +8,14 @@
  */
 import { Suspense, lazy } from 'react';
 
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
-import { LoadingPlaceholder } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
+import { PageLoader } from '@grafana/ui';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
   type RouteDescriptor,
 } from 'app/core/navigation/types';
-
-/**
- * What a proxied page shows while we work out where it belongs. Shared with
- * `ProxiedAlertingRoute.tsx` so that fetching that module and then checking on the plugin look
- * like one continuous wait rather than two different ones.
- */
-export function RedirectingPage() {
-  return (
-    <Page navId="alerting">
-      <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
-    </Page>
-  );
-}
 
 /**
  * One wrapper per route, kept for the life of the page.
@@ -72,9 +57,15 @@ function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
   // the table has loaded. Grafana-managed URLs therefore wait on that fetch too — the trade we
   // accepted to keep the proxy out of the boot bundle entirely. The chunk is small and shared by
   // every proxied route, so it costs one request per session.
+  //
+  // The fallback is the same loader every other route shows, on purpose. This boundary covers two
+  // waits: fetching the table, and then the page's own chunk if the URL turns out to be one
+  // Grafana keeps. Most URLs on these routes are Grafana's own, so a "Redirecting…" notice here
+  // would tell the majority of people something that isn't happening to them. Once we know a
+  // redirect is coming, `ProxiedAlertingRoute` says so itself.
   function MaybeProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
     return (
-      <Suspense fallback={<RedirectingPage />}>
+      <Suspense fallback={<PageLoader />}>
         <LazyProxiedRoute {...props} />
       </Suspense>
     );
