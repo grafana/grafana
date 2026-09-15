@@ -280,10 +280,13 @@ export interface SilenceFilterState {
   silenceState?: string;
 }
 
-interface EvalMatch {
+export interface EvalMatch {
+  refId?: string;
   metric: string;
+  labels?: Record<string, string>;
   tags?: Record<string, string>;
-  value: number;
+  // Historian records serialize values as strings, while existing Grafana paths provide numbers.
+  value?: number | string;
 }
 
 export interface StateHistoryItemData {

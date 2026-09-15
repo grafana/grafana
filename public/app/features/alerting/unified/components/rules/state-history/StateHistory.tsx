@@ -10,9 +10,10 @@ import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerti
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useManagedAlertStateHistory } from '../../../hooks/useManagedAlertStateHistory';
-import { AlertLabel } from '../../AlertLabel';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../../DynamicTable';
 import { AlertStateTag } from '../AlertStateTag';
+
+import { EvaluationMatches } from './EvaluationMatches';
 
 type StateHistoryRowItem = {
   id: string;
@@ -193,9 +194,7 @@ function renderValueCell(item: StateHistoryRow) {
     <>
       {item.data.text}
       <LabelsWrapper>
-        {matches.map((match) => (
-          <AlertLabel key={match.metric} labelKey={match.metric} value={String(match.value)} />
-        ))}
+        <EvaluationMatches matches={matches} />
       </LabelsWrapper>
     </>
   );
