@@ -137,7 +137,6 @@ describe('NotebookToolbar', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
   });
 
   describe('Delete', () => {

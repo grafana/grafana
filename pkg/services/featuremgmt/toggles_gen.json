@@ -736,7 +736,8 @@
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-09-26T06:33:14Z"
+        "creationTimestamp": "2024-09-26T06:33:14Z",
+        "deletionTimestamp": "2026-09-14T16:09:59Z"
       },
       "spec": {
         "description": "Enables step mode for alerting queries and expressions",
@@ -2306,6 +2307,22 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableProxyEndpoint",
+        "resourceVersion": "1789036052191",
+        "creationTimestamp": "2026-09-10T10:19:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-10 10:27:32.19132 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Handle datasource proxy requests through the datasource API group endpoint.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3012,6 +3029,7 @@
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1782832293915",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-26T10:54:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
         }
@@ -6747,6 +6765,21 @@
       },
       "spec": {
         "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refreshNewFeatures",
+        "resourceVersion": "1789154182177",
+        "creationTimestamp": "2026-09-11T19:16:22Z"
+      },
+      "spec": {
+        "description": "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

@@ -3308,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5742,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Mover {{typeName}}",
-      "panel-background": "Alterar plano de fundo do painel",
-      "panel-description": "Alterar descrição do painel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Alterações no painel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Máximo de repetições por linha",
       "panel-preset": "Aplicar predefinição de painel",
       "panel-repeat-direction": "Repetir direção",
       "panel-repeat-variable": "Repetição do painel por",
-      "panel-title": "Alterar título do painel",
+      "panel-title": "",
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "row-title": "Alterar título da linha",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "Excluir {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Limpar busca",
       "no-transformations-found": "Nenhuma transformação encontrada",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Voltar para o painel de controle",
       "not-found": "Painel não encontrado"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8647,6 +8659,16 @@
       "title-table": "Tabela",
       "title-traces": "Rastros"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8698,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Abrir valor em"
+      "open-value-in": "Abrir valor em",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9205,10 @@
       "aria-label-copy": "Copiar para a área de transferência",
       "attribute-plugin-promo": {
         "learn-more": "Saiba mais"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "A observabilidade do banco de dados revela planos de explicação visuais, eventos de espera e amostras de consulta, ajudando você a diagnosticar problemas além dos intervalos de rastreamento.",
@@ -11412,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13119,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
