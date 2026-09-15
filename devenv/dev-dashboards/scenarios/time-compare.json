@@ -7,7 +7,7 @@
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "description": "Time comparison request fan-out fixture. Backed by gdev-testdata so panel queries traverse /api/ds/query and the comparison query is observable. The e2e spec pins an absolute time range via URL and intercepts the query API.",
+    "description": "Time comparison fixture. Backed by gdev-testdata so panel queries traverse /api/ds/query and the comparison query is observable. See e2e-playwright/panels-suite/time-compare.spec.ts.",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -15,7 +15,7 @@
         "spec": {
           "id": 1,
           "title": "Compare enabled",
-          "description": "Queries refId A with a 1d comparison. Expect two requests: A and A-compare.",
+          "description": "Comparison enabled on refId A.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -28,9 +28,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -76,7 +73,7 @@
         "spec": {
           "id": 2,
           "title": "Compare disabled",
-          "description": "Control panel. Queries refId B with no comparison. Expect a single request: B.",
+          "description": "Control panel: refId B with no comparison.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -89,9 +86,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -135,7 +129,7 @@
         "spec": {
           "id": 3,
           "title": "Compare with per-query opt-out",
-          "description": "Queries refId C and refId D, where D opts out via timeRangeCompare. Expect the compare request to carry C-compare only.",
+          "description": "refIds C and D, where D opts out of comparison via timeRangeCompare.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -148,9 +142,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -166,9 +157,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk",
                         "timeRangeCompare": false
@@ -215,7 +203,7 @@
         "spec": {
           "id": 4,
           "title": "Comparison only",
-          "description": "Regression fixture for #132370. The primary query returns no data while the comparison query does. The comparison series must be shifted onto the visible range instead of reporting data outside the time range.",
+          "description": "Comparison-only data (#132370). Needs the e2e mock to return no primary data.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -228,9 +216,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
@@ -276,7 +261,7 @@
         "spec": {
           "id": 5,
           "title": "Empty comparison",
-          "description": "Regression fixture for #126825. The primary query returns data while the comparison query returns none, which surfaces an info notice on the panel header.",
+          "description": "Empty comparison (#126825). Needs the e2e mock to return no comparison data.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -289,9 +274,6 @@
                       "kind": "DataQuery",
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
-                      "datasource": {
-                        "name": "PD8C576611E62080A"
-                      },
                       "spec": {
                         "scenarioId": "random_walk"
                       }
