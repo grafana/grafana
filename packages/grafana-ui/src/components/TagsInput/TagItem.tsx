@@ -40,11 +40,14 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
     <li
       className={cx(styles.itemStyle, !tagColors && styles.defaultTagColor)}
       style={
-        tagColors
-          ? visualRefreshEnabled
-            ? { backgroundColor: tagColors.background, color: tagColors.text }
-            : { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
-          : undefined
+        visualRefreshEnabled
+          ? {
+              backgroundColor: tagColors?.background,
+              color: disabled ? theme.colors.text.disabled : tagColors?.text,
+            }
+          : tagColors
+            ? { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
+            : undefined
       }
     >
       <span className={styles.nameStyle}>{name}</span>
@@ -65,22 +68,29 @@ const getStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   return {
-    itemStyle: css({
-      display: 'flex',
-      gap: '3px',
-      alignItems: 'center',
-      height: `${height}px`,
-      lineHeight: `${height - 2}px`,
-      borderWidth: visualRefreshEnabled ? 0 : '1px',
-      borderStyle: 'solid',
-      borderRadius: theme.shape.radius.default,
-      padding: `0 ${theme.spacing(0.5)}`,
-      whiteSpace: 'nowrap',
-      textShadow: 'none',
-      fontWeight: 500,
-      fontSize: theme.typography.size.sm,
-      color: '#fff',
-    }),
+    itemStyle: css(
+      {
+        display: 'flex',
+        gap: '3px',
+        alignItems: 'center',
+        height: `${height}px`,
+        lineHeight: `${height - 2}px`,
+        borderWidth: visualRefreshEnabled ? 0 : '1px',
+        borderStyle: 'solid',
+        borderRadius: theme.shape.radius.default,
+        padding: `0 ${theme.spacing(0.5)}`,
+        whiteSpace: 'nowrap',
+        textShadow: 'none',
+        fontWeight: 500,
+        fontSize: theme.typography.size.sm,
+        color: '#fff',
+      },
+      visualRefreshEnabled && {
+        borderRadius: theme.shape.radius.pill,
+        padding: `0 ${theme.spacing.x1}`,
+        fontSize: theme.typography.size.xs,
+      }
+    ),
     defaultTagColor: css({
       backgroundColor: theme.colors.background.secondary,
       borderColor: theme.components.input.borderColor,
@@ -91,11 +101,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
     }),
-    buttonStyles: css({
-      margin: 0,
-      '&:hover::before': {
-        display: 'none',
+    buttonStyles: css(
+      {
+        margin: 0,
+        '&:hover::before': {
+          display: 'none',
+        },
       },
-    }),
+      // Lets the close icon pick up the tag's own text color instead of IconButton's default variant color.
+      visualRefreshEnabled && {
+        color: 'inherit',
+      }
+    ),
   };
 };
