@@ -35,6 +35,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return nil
 	}
 
+	if a.GetSubresource() != "" {
+		return nil // status (and other subresource) patches don't touch spec and shouldn't re-run spec mutations/extras
+	}
+
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return fmt.Errorf("expected repository configuration, got %T", obj)

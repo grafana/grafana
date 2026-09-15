@@ -19,6 +19,10 @@ import (
 )
 
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
+	return newMutatorTestAttributesWithSubresource(obj, old, op, "")
+}
+
+func newMutatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, subresource string) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
 		old,
@@ -26,7 +30,7 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 		"default",
 		"test",
 		provisioning.RepositoryResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		false,
@@ -339,6 +343,28 @@ func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
 	attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
 
 	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+}
+
+func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
+	factory := NewMockFactory(t)
+	// No EXPECT() set up for Mutate: the mock will fail the test if it's called,
+	// confirming extras (e.g. the GitLab RepoID lookup) never run for status patches.
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{IntervalSeconds: 0}},
+	}
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributesWithSubresource(repo, nil, admission.Update, "status")
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+
+	// Defaulting logic (finalizers, sync interval, workflows) must not run either -
+	// spec fields shouldn't be touched by a status-only patch.
+	assert.Empty(t, repo.Finalizers)
+	assert.Equal(t, int64(0), repo.Spec.Sync.IntervalSeconds)
+	assert.Nil(t, repo.Spec.Workflows)
 }
 
 func TestCopySecureValues(t *testing.T) {
