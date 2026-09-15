@@ -29,6 +29,7 @@ const (
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
 	minimumKVLeaseTTL        = 10 * time.Second
+	maximumKVLeaseTTL        = 10 * time.Minute
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -293,6 +294,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {
 		cfg.Logger.Warn("kv_lease_ttl is below the minimum, overriding", "configured", cfg.KVLeaseTTL, "minimum", minimumKVLeaseTTL)
 		cfg.KVLeaseTTL = minimumKVLeaseTTL
+	} else if cfg.KVLeaseTTL > maximumKVLeaseTTL {
+		cfg.Logger.Warn("kv_lease_ttl is above the maximum, overriding", "configured", cfg.KVLeaseTTL, "maximum", maximumKVLeaseTTL)
+		cfg.KVLeaseTTL = maximumKVLeaseTTL
 	}
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)

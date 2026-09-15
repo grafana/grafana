@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestKVLeaseTTLMinimum(t *testing.T) {
+func TestKVLeaseTTLBounds(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		configured time.Duration
@@ -19,6 +19,8 @@ func TestKVLeaseTTLMinimum(t *testing.T) {
 		{name: "below minimum", configured: 9 * time.Second, expected: 10 * time.Second},
 		{name: "at minimum", configured: 10 * time.Second, expected: 10 * time.Second},
 		{name: "above minimum", configured: 11 * time.Second, expected: 11 * time.Second},
+		{name: "at maximum", configured: 10 * time.Minute, expected: 10 * time.Minute},
+		{name: "above maximum", configured: 11 * time.Minute, expected: 10 * time.Minute},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewCfg()
