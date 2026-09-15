@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -16,24 +15,11 @@ import (
 // an unvalidated user-set label from growing unbounded.
 const maxPluginOriginLabelLen = 64
 
-// pluginOriginReplacementChar replaces any character sanitizePluginOriginLabel rejects, so a removed character stays visible instead of silently vanishing.
-const pluginOriginReplacementChar = '*'
-
-// sanitizePluginOriginLabel keeps only the characters known plugin origins actually
-// use (plugin/grafana-slo-app): ASCII letters, digits, underscore, hyphen, slash.
-// Everything else, including unicode, is replaced with pluginOriginReplacementChar.
+// sanitizePluginOriginLabel applies the same policy as eval.sanitizeHeaderValue,
+// since it comes from the same rule label: strip control characters and cap the
+// length.
 func sanitizePluginOriginLabel(origin string) string {
-	origin = strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
-			return r
-		case r == '_' || r == '-' || r == '/':
-			return r
-		default:
-			return pluginOriginReplacementChar
-		}
-	}, origin)
-	return util.TruncateUTF8(origin, maxPluginOriginLabelLen)
+	return util.SanitizeControlChars(origin, maxPluginOriginLabelLen)
 }
 
 // hashUIDs returns a fnv64 hash of the UIDs for all alert rules.

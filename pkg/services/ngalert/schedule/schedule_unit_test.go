@@ -868,7 +868,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run("it should replace unsupported characters and truncate an overlong origin value", func(t *testing.T) {
+		t.Run("it should strip control characters and truncate an overlong origin value", func(t *testing.T) {
 			dirtyOrigin := "plugin/😀weird!name_1-x\x00" + strings.Repeat("y", maxPluginOriginLabelLen)
 			alertRuleDirty := models.RuleGen.With(
 				models.RuleGen.WithOrgID(firstOrgID),
@@ -877,7 +877,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			sch.updateRulesMetrics([]*models.AlertRule{alertRuleDirty})
 
-			expectedOrigin := util.TruncateUTF8("plugin/*weird*name_1-x*"+strings.Repeat("y", maxPluginOriginLabelLen), maxPluginOriginLabelLen)
+			expectedOrigin := util.TruncateUTF8("plugin/😀weird!name_1-x"+strings.Repeat("y", maxPluginOriginLabelLen), maxPluginOriginLabelLen)
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_plugin_origin_rules The number of alert rules created by a plugin, by origin.
 								# TYPE grafana_alerting_plugin_origin_rules gauge
