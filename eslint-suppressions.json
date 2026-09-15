@@ -33,11 +33,6 @@
       "count": 4
     }
   },
-  "packages/grafana-data/src/datetime/moment_wrapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/events/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3

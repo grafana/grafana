@@ -4037,9 +4037,10 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 	for rowID, match := range hits {
 		row := &resourcepb.ResourceTableRow{
-			Key:        &resourcepb.ResourceKey{},
-			Cells:      make([][]byte, len(fields)),
-			SortFields: hitSortFields(match, sort),
+			Key:             &resourcepb.ResourceKey{},
+			ResourceVersion: b.hitResourceVersion(match),
+			Cells:           make([][]byte, len(fields)),
+			SortFields:      hitSortFields(match, sort),
 		}
 		table.Rows[rowID] = row
 
@@ -4065,6 +4066,13 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				v, ok, _ := searchHitLegacyID(match)
 				if ok {
 					row.Cells[i], err = encoders[i](v)
+				}
+
+			// Served from the row rather than the stored field, which holds a string
+			// the INT64 column encoder would reject.
+			case resource.SEARCH_FIELD_RV:
+				if row.ResourceVersion > 0 {
+					row.Cells[i], err = encoders[i](row.ResourceVersion)
 				}
 			default:
 				fieldName := f.Name

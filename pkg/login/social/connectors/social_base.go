@@ -370,8 +370,8 @@ func getCacheExpiration(header string) time.Duration {
 	}
 
 	// Cache-Control: public, max-age=14400 (or "max-age = 14400" with spaces)
-	cacheControl := strings.Split(header, ",")
-	for _, v := range cacheControl {
+	cacheControl := strings.SplitSeq(header, ",")
+	for v := range cacheControl {
 		if strings.Contains(v, "max-age") {
 			parts := strings.Split(v, "=")
 			if len(parts) == 2 {
