@@ -13,6 +13,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -61,6 +62,31 @@ func (s *benchUserService) ListByIdOrUID(_ context.Context, uids []string, _ []i
 	for _, uid := range uids {
 		if u, ok := s.users[uid]; ok {
 			out = append(out, u)
+		}
+	}
+	return out, nil
+}
+
+type benchServiceAccountRetriever struct {
+	db              *benchDB
+	serviceAccounts map[string]*serviceaccounts.ServiceAccountProfileDTO
+}
+
+func (s *benchServiceAccountRetriever) RetrieveServiceAccount(_ context.Context, q *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	s.db.hit()
+	serviceAccount, ok := s.serviceAccounts[q.UID]
+	if !ok {
+		return nil, serviceaccounts.ErrServiceAccountNotFound.Errorf("service account not found")
+	}
+	return serviceAccount, nil
+}
+
+func (s *benchServiceAccountRetriever) RetrieveServiceAccountsByUIDs(_ context.Context, _ int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	s.db.hit()
+	out := make([]*serviceaccounts.ServiceAccountProfileDTO, 0, len(uids))
+	for _, uid := range uids {
+		if serviceAccount, ok := s.serviceAccounts[uid]; ok {
+			out = append(out, serviceAccount)
 		}
 	}
 	return out, nil
@@ -128,19 +154,21 @@ type benchFixture struct {
 }
 
 // newBenchFixture builds an entry mix weighted like a large real folder ACL:
-// mostly individual users, some teams, a couple of basic roles.
+// mostly individual users, some teams and service accounts, and a couple of basic roles.
 func newBenchFixture(n int, latency time.Duration) *benchFixture {
 	db := &benchDB{latency: latency}
 
 	users := make(map[string]*user.User, n)
+	serviceAccounts := make(map[string]*serviceaccounts.ServiceAccountProfileDTO, n)
 	teams := make(map[string]*team.TeamDTO, n)
 	ids := make(map[string]int64, n)
 	perms := make([]iamv0.ResourcePermissionspecPermission, 0, n)
 
 	verbs := []string{"view", "edit", "admin"}
 	numTeams := n / 5
+	numServiceAccounts := n / 10
 	numBasic := 2
-	numUsers := n - numTeams - numBasic
+	numUsers := n - numTeams - numServiceAccounts - numBasic
 	if numUsers < 0 {
 		numUsers = 0
 	}
@@ -156,6 +184,22 @@ func newBenchFixture(n int, latency time.Duration) *benchFixture {
 		ids[fmt.Sprintf("managed:users:%d:permissions", i+1)] = int64(1000 + i)
 		perms = append(perms, iamv0.ResourcePermissionspecPermission{
 			Kind: iamv0.ResourcePermissionSpecPermissionKindUser,
+			Name: uid,
+			Verb: verbs[i%len(verbs)],
+		})
+	}
+
+	for i := 0; i < numServiceAccounts; i++ {
+		uid := fmt.Sprintf("service-account-uid-%d", i)
+		id := int64(10000 + i)
+		serviceAccounts[uid] = &serviceaccounts.ServiceAccountProfileDTO{
+			Id:    id,
+			UID:   uid,
+			Login: fmt.Sprintf("service-account-%d", i),
+		}
+		ids[userManagedRoleName(id)] = int64(4000 + i)
+		perms = append(perms, iamv0.ResourcePermissionspecPermission{
+			Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount,
 			Name: uid,
 			Verb: verbs[i%len(verbs)],
 		})
@@ -199,6 +243,10 @@ func newBenchFixture(n int, latency time.Duration) *benchFixture {
 				FakeUserService: usertest.NewUserServiceFake(),
 				db:              db,
 				users:           users,
+			},
+			serviceAccountRetriever: &benchServiceAccountRetriever{
+				db:              db,
+				serviceAccounts: serviceAccounts,
 			},
 			teamService: &benchTeamService{
 				FakeService: teamtest.NewFakeService(),
