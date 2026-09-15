@@ -498,7 +498,7 @@ func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
 		},
 	}
 
-	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stack-123-org-1", true)
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(context.Background(), folderPermission, "stacks-123", true)
 
 	require.NoError(t, err)
 	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")
@@ -689,7 +689,7 @@ func TestConvertK8sResourcePermissionToDTOChunksTeamLookupsAtUIDFilterLimit(t *t
 	perms, err := testApi.convertK8sResourcePermissionToDTO(
 		context.Background(),
 		&iamv0.ResourcePermission{Spec: iamv0.ResourcePermissionSpec{Permissions: permissions}},
-		"stack-123-org-1",
+		"stacks-123",
 		false,
 	)
 	require.NoError(t, err)
@@ -759,7 +759,7 @@ func TestConvertK8sResourcePermissionToDTOResolvesServiceAccountsOutsideUserRedi
 				Verb: "view",
 			}},
 		}},
-		"stack-123-org-1",
+		"stacks-123",
 		false,
 	)
 	require.NoError(t, err)
@@ -841,9 +841,10 @@ func TestConvertK8sResourcePermissionToDTODropsStaleAssignments(t *testing.T) {
 		cfg:    &setting.Cfg{},
 		logger: log.New("test"),
 		service: &Service{
-			store:       &mockResourcePermissionStore{},
-			userService: userSvc,
-			teamService: teamSvc,
+			store:                   &mockResourcePermissionStore{},
+			userService:             userSvc,
+			teamService:             teamSvc,
+			serviceAccountRetriever: &fakeServiceAccountRetriever{serviceAccounts: map[string]*serviceaccounts.ServiceAccountProfileDTO{}},
 			options: Options{
 				Resource:             "folders",
 				ResourceAttribute:    "uid",
@@ -852,7 +853,7 @@ func TestConvertK8sResourcePermissionToDTODropsStaleAssignments(t *testing.T) {
 		},
 	}
 
-	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+	perms, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stacks-123", false)
 	require.NoError(t, err)
 
 	require.Len(t, perms, 3, "the deleted user, service account and team should all be dropped")
@@ -953,7 +954,7 @@ func TestConvertK8sResourcePermissionToDTOBatchLookupFailure(t *testing.T) {
 
 			testApi := &api{cfg: &setting.Cfg{}, logger: log.New("test"), service: svc}
 
-			_, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stack-123-org-1", false)
+			_, err := testApi.convertK8sResourcePermissionToDTO(context.Background(), resourcePerm, "stacks-123", false)
 
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.expectedMsg)
@@ -1091,7 +1092,7 @@ func TestGetFolderHierarchyPermissions(t *testing.T) {
 			}
 
 			fakeClient, fakeResourceInterface := setupFakeDynamicClient(t, tt.folderUID, tt.folderInfoList, tt.folderPermissions)
-			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stack-123-org-1", tt.folderUID, fakeClient, tt.skipSelf)
+			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stacks-123", tt.folderUID, fakeClient, tt.skipSelf)
 
 			require.NoError(t, err)
 			assert.Len(t, perms, tt.expectedCount, "expected %d permissions", tt.expectedCount)
@@ -1284,7 +1285,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.NoError(t, err)
 		require.Len(t, provisionedPerms, 2, "should return only provisioned permissions")
@@ -1354,7 +1355,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.NoError(t, err)
 		require.Len(t, provisionedPerms, 2, "should return both inherited and direct provisioned permissions")
@@ -1416,7 +1417,7 @@ func TestGetProvisionedPermissions(t *testing.T) {
 			},
 		}
 
-		_, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+		_, err := api.getProvisionedPermissions(context.Background(), "stacks-123", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, expectedError, "should return error from InheritedScopesSolver")
@@ -1467,7 +1468,7 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			SignedInUser: &user.SignedInUser{},
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stacks-123", "dashboard-123")
 
 		// Should fail to get K8s permissions but still add Admin role
 		require.Error(t, err)
@@ -1516,7 +1517,7 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			SignedInUser: &user.SignedInUser{},
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stacks-123", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)
@@ -1683,7 +1684,7 @@ func TestListTeamMemberPermissions(t *testing.T) {
 				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
 				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1"},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123"},
 			Spec:       iamv0.TeamSpec{Members: members},
 		}
 	}
@@ -1899,7 +1900,7 @@ func TestListTeamMemberPermissions(t *testing.T) {
 				},
 			}
 
-			perms, err := testApi.listTeamMemberPermissions(makeReqCtx(), fakeClient, "stacks-123-org-1", tt.resourceID)
+			perms, err := testApi.listTeamMemberPermissions(makeReqCtx(), fakeClient, "stacks-123", tt.resourceID)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -1928,7 +1929,7 @@ func TestSetTeamMember(t *testing.T) {
 				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
 				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1", ResourceVersion: "42"},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
 			Spec:       iamv0.TeamSpec{Members: members},
 		}
 		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
@@ -2350,7 +2351,7 @@ func TestSetTeamMember(t *testing.T) {
 				options:     Options{Resource: "teams"},
 			}
 
-			removed, err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.userID, tt.permission, tt.external)
+			removed, err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123", "10", tt.userID, tt.permission, tt.external)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -2392,7 +2393,7 @@ func TestSetTeamMembers(t *testing.T) {
 				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
 				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
 			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123-org-1", ResourceVersion: "42"},
+			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
 			Spec:       iamv0.TeamSpec{Members: members},
 		}
 		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
@@ -2519,7 +2520,7 @@ func TestSetTeamMembers(t *testing.T) {
 				options:     Options{Resource: "teams"},
 			}
 
-			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.commands, false)
+			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123", "10", tt.commands, false)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -2555,7 +2556,7 @@ func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
 		{
 			name: "getTeamPermissionsFromMembers",
 			call: func(a *api) error {
-				_, err := a.getTeamPermissionsFromMembers(makeReqCtx(), "stacks-123-org-1", "10")
+				_, err := a.getTeamPermissionsFromMembers(makeReqCtx(), "stacks-123", "10")
 				return err
 			},
 		},
