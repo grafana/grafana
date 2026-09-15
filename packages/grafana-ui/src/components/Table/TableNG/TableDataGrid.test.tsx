@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { createTheme, getThemeById, ThemeContext } from '@grafana/data';
-import { type DataGridHandle } from '@grafana/react-data-grid';
+import { Cell, type DataGridHandle, Row } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 
@@ -73,6 +73,73 @@ describe('TableDataGrid', () => {
       render(<TableDataGrid {...makeProps()} />);
       const classic = window.getComputedStyle(screen.getByRole('grid'));
       expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+    });
+
+    it.each([
+      { tableRefreshEnabled: true, hasFooter: false, role: 'grid' as const, omitLastBorder: true },
+      { tableRefreshEnabled: true, hasFooter: true, role: 'grid' as const, omitLastBorder: false },
+      { tableRefreshEnabled: false, hasFooter: false, role: 'grid' as const, omitLastBorder: false },
+      { tableRefreshEnabled: true, hasFooter: false, role: 'treegrid' as const, omitLastBorder: false },
+    ])(
+      'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, role=$role',
+      ({ tableRefreshEnabled, hasFooter, role, omitLastBorder }) => {
+        const { container } = render(
+          <TableDataGrid
+            {...makeProps({
+              tableRefreshEnabled,
+              hasFooter,
+              role,
+              enableVirtualization: false,
+              columns: [{ key: 'value', name: 'Value', renderSummaryCell: () => 'Total' }],
+              rows: [
+                { __index: 12, __depth: 0, value: 'First' },
+                { __index: 3, __depth: 0, value: 'Last' },
+              ],
+              rowClass: () => 'custom-row',
+              renderers: {
+                renderRow: (key, props) => <Row key={key} {...props} />,
+                renderCell: (key, props) => <Cell key={key} {...props} />,
+              },
+            })}
+          />
+        );
+        const rows = container.querySelectorAll('.rdg-row:not(.rdg-summary-row)');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toHaveClass('custom-row');
+        expect(rows[1]).toHaveClass('custom-row');
+        const firstCell = screen.getByRole('gridcell', { name: 'First' });
+        const lastCell = screen.getByRole('gridcell', { name: 'Last' });
+        expect(window.getComputedStyle(firstCell).borderBlockEnd).not.toBe('none');
+        expect(window.getComputedStyle(lastCell).borderBlockEnd === 'none').toBe(omitLastBorder);
+        if (hasFooter) {
+          expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
+        }
+      }
+    );
+
+    it.each([
+      [true, 'none'],
+      [false, '0 2px 4px red'],
+    ])('sets active-cell shadows with table.refresh=%s', (tableRefreshEnabled, expected) => {
+      const theme = createTheme({ shadows: { z2: '0 2px 4px red' } });
+      render(
+        <ThemeContext.Provider value={theme}>
+          <TableDataGrid {...makeProps({ tableRefreshEnabled })} />
+        </ThemeContext.Provider>
+      );
+      const gridClasses = Array.from(screen.getByRole('grid').classList);
+      const activeCellRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            gridClasses.some((className) => rule.selectorText.startsWith(`.${className}`)) &&
+            rule.selectorText.includes('[aria-selected=true]:focus-within') &&
+            rule.selectorText.includes(':hover') &&
+            rule.style.getPropertyValue('box-shadow') !== ''
+        );
+
+      expect(activeCellRules.map((rule) => rule.style.getPropertyValue('box-shadow'))).toEqual([expected, expected]);
     });
   });
 

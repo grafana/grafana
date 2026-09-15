@@ -10,6 +10,7 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  NESTED_LAST_ROW_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
   TABLE,
@@ -64,11 +65,7 @@ export const getGridStyles = memoize(
     // Flatten alpha so field-configured cell backgrounds do not change the divider color.
     const borderColor = colorManipulator.onBackground(table.border, bgColor).toHexString();
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
-
-    // The expander column is the outer table's first column (see markEdgeColumns), so under
-    // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
-    // other first column — `gridNested` below has to know about it to stay flush with that column.
-    const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
+    const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
 
     return {
       grid: css({
@@ -108,9 +105,8 @@ export const getGridStyles = memoize(
           },
         },
 
-        // add a box shadow on hover and selection for all body cells
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-          [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
+          [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
           // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
           // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
           // same specificity, so the hover rule has to come last for a cell that is both to land on
@@ -159,7 +155,7 @@ export const getGridStyles = memoize(
             height: '100%',
             minHeight: 'fit-content',
             overflowY: 'visible',
-            boxShadow: theme.shadows.z2,
+            boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2,
           },
         },
 
@@ -224,20 +220,39 @@ export const getGridStyles = memoize(
           paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
         },
       }),
+      lastColumnInset: css({
+        [`& > * > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+          paddingInlineEnd: TABLE.CELL_PADDING * 2,
+        },
+      }),
+      lastRow: css({
+        '& > .rdg-cell': { borderBlockEnd: 'none' },
+      }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
         // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
         // intersects the viewport, never becomes relevant, and stays collapsed forever.
         contentVisibility: 'visible',
         height: '100%',
-        // The expander column is tagged `FIRST_COLUMN_CLASS` (see markEdgeColumns), so under
-        // `noPanelPadding` its own paddingInlineStart grows by `FIRST_COLUMN_EXTRA_PADDING` too —
-        // subtract it back out here so this nested grid still starts flush with the expander
-        // column's edge instead of drifting right by that same amount.
-        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - nestedGridExpanderPaddingOffset - 1}px)`,
-        overflowX: 'scroll',
+        overflowX: tableRefreshEnabled ? 'auto' : 'scroll',
         overflowY: 'hidden',
-        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - nestedGridExpanderPaddingOffset - 1,
+        scrollbarColor: `${theme.colors.scrollbar} transparent`,
+        ...(tableRefreshEnabled && {
+          borderInline: `1px solid ${nestedBorderColor}`,
+          borderEndStartRadius: theme.shape.radius.default,
+          borderEndEndRadius: theme.shape.radius.default,
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${FIRST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]:
+            {
+              borderEndStartRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${LAST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${LAST_COLUMN_CLASS}`]:
+            {
+              borderEndEndRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+        }),
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
         marginBlock: TABLE.CELL_PADDING,
         // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
         '&[aria-expanded="false"]': {

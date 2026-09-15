@@ -1,7 +1,7 @@
 /** Column width and sizing configuration */
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
-  EXPANDER_WIDTH: 50,
+  EXPANDER_WIDTH: 36,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
   // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
@@ -52,6 +52,7 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
  */
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
 
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
 // container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).

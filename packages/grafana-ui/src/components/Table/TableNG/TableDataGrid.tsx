@@ -82,6 +82,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onTooltipClose: () => void;
   inspectCell?: InspectCellProps | null;
   onInspectCellDismiss: () => void;
+  className?: string;
 }
 
 export function TableDataGrid({
@@ -89,6 +90,7 @@ export function TableDataGrid({
   gridRef,
   columns,
   rows,
+  rowClass,
   noValue,
   renderers,
   onColumnResize,
@@ -120,6 +122,7 @@ export function TableDataGrid({
   onTooltipClose,
   inspectCell,
   onInspectCellDismiss,
+  className,
   ...dataGridOverrides
 }: TableDataGridProps) {
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
@@ -184,9 +187,15 @@ export function TableDataGrid({
         {...commonDataGridProps}
         role={role}
         ref={gridRef}
-        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset)}
+        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset, className)}
         columns={columns}
         rows={rows}
+        rowClass={(row, rowIdx) =>
+          clsx(
+            rowClass?.(row, rowIdx),
+            tableRefreshEnabled && role === 'grid' && !hasFooter && rowIdx === rows.length - 1 && styles.lastRow
+          )
+        }
         rowKeyGetter={rowKeyGetter}
         isRowSelectionDisabled={() => initialRowIndex !== undefined}
         selectedRows={selectedRows}
