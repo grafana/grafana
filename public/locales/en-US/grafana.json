@@ -2651,6 +2651,9 @@
         "text-provisioned": "Provisioned"
       }
     },
+    "proxied-alerting-route": {
+      "text-redirecting": "Redirecting…"
+    },
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
