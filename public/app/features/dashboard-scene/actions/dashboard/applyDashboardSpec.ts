@@ -35,8 +35,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
 
-  // Reuse the live key so existing references (incl. the mutation client's
-  // `scene`) survive the swap.
+  // Keep sidebar alive - otherwise undo/redo stack would be wiped out
   const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
