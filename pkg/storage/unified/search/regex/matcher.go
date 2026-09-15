@@ -4,15 +4,14 @@ package regex
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"regexp/syntax"
 	"strings"
 )
 
-// Matcher is a whole-value regex with a read-only, normalized AST.
-// Search engines should normalize expressions with Parse.
+// Matcher describes whole-value matching using a validated parsed representation.
+// Backends must translate its operations without changing their matching semantics.
 type Matcher struct {
-	// Expression is a read-only regex expression with the normalized AST.
+	// Expression is read-only; backend adapters must not mutate it.
 	Expression *syntax.Regexp
 	// CaseInsensitive enables whole-value case folding.
 	CaseInsensitive bool
@@ -25,11 +24,8 @@ func Parse(expression string) (Matcher, error) {
 	if caseInsensitive {
 		expression = strings.TrimPrefix(expression, "(?i)")
 	}
-	if err := validateSource(expression); err != nil {
-		return Matcher{}, err
-	}
-	// Perl parses greedy repetition and shorthand classes; DotNL includes newlines.
-	parsed, err := syntax.Parse(expression, (syntax.Perl|syntax.DotNL)&^syntax.UnicodeGroups)
+	// Excluding PerlX rejects embedded modes before parsing can erase them.
+	parsed, err := syntax.Parse(expression, syntax.ClassNL|syntax.OneLine|syntax.DotNL)
 	if err != nil {
 		return Matcher{}, fmt.Errorf("invalid regular expression: %w", err)
 	}
@@ -47,52 +43,6 @@ func MatchAll() Matcher {
 		Op: syntax.OpStar, Sub: []*syntax.Regexp{{Op: syntax.OpAnyChar}},
 	}}
 }
-
-// Reject syntax that Go may simplify or treat as literals before validating the AST.
-func validateSource(expression string) error {
-	classStart := -1
-	for i := 0; i < len(expression); i++ {
-		c := expression[i]
-		if c == '\\' {
-			i++
-			if i == len(expression) || !strings.ContainsRune("\\.*+?()|[]{}^$-nrtdDwW", rune(expression[i])) {
-				return errors.New("regular expression uses an unsupported escape")
-			}
-			continue
-		}
-		if classStart >= 0 {
-			if c == '[' && i+1 < len(expression) && expression[i+1] == ':' {
-				return errors.New("regular expression uses an unsupported POSIX class")
-			}
-			if c == ']' && i > classStart {
-				classStart = -1
-			}
-			continue
-		}
-		switch c {
-		case '[':
-			classStart = i + 1
-			if classStart < len(expression) && expression[classStart] == '^' {
-				classStart++
-			}
-		case '(':
-			if i+1 < len(expression) && expression[i+1] == '?' {
-				return errors.New("regular expression uses an unsupported group or flag")
-			}
-		case '{':
-			repetition := boundedRepetition.FindString(expression[i:])
-			if repetition == "" {
-				return errors.New("regular expression uses an invalid bounded repetition")
-			}
-			i += len(repetition) - 1
-		case '}':
-			return errors.New("regular expression requires escaping literal braces")
-		}
-	}
-	return nil
-}
-
-var boundedRepetition = regexp.MustCompile(`^\{(0|[1-9][0-9]*)(,(0|[1-9][0-9]*)?)?\}`)
 
 func validateRegexNode(expression *syntax.Regexp) error {
 	if expression.Flags&syntax.FoldCase != 0 {

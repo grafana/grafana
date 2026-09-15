@@ -592,8 +592,10 @@ const (
 // are evaluated as empty values. Flattened labels split literal-key=value at the
 // first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.
 // Each dictionary expansion permits 10,000 inspected terms and 10,000 matches.
-// Other flags, special groups, quoted literals, and malformed repetitions are
-// rejected. Escapes are limited to regex punctuation, \n, \r, \t, \d, \D, \w, and \W.
+// The subset is defined by parsed operations, not source spelling: hex escapes,
+// POSIX classes, and braces parsed as literals are accepted. Perl extensions
+// (including shorthand classes and embedded modes) and Unicode properties are disabled.
+// Successive quantifiers are nested repetitions, not lazy quantifiers.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"

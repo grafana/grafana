@@ -2,6 +2,7 @@ package regex
 
 import (
 	"regexp"
+	"regexp/syntax"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -115,25 +116,25 @@ func TestParseMatching(t *testing.T) {
 		},
 		{
 			name:       "ASCII digits",
-			expression: `\d+`,
+			expression: `[0-9]+`,
 			matches:    []string{"0123"},
 			rejects:    []string{"é", "１２"},
 		},
 		{
 			name:       "non-ASCII digits and other characters",
-			expression: `\D+`,
+			expression: `[^0-9]+`,
 			matches:    []string{"é", "１２"},
 			rejects:    []string{"0123"},
 		},
 		{
 			name:       "ASCII word characters",
-			expression: `\w+`,
+			expression: `[0-9A-Za-z_]+`,
 			matches:    []string{"aB_09"},
 			rejects:    []string{"é", "-"},
 		},
 		{
 			name:       "non-word characters",
-			expression: `\W+`,
+			expression: `[^0-9A-Za-z_]+`,
 			matches:    []string{"é", "-"},
 			rejects:    []string{"aB_09"},
 		},
@@ -156,12 +157,16 @@ func TestParseMatching(t *testing.T) {
 	}
 }
 
-func TestRegexCanonicalCharacterClasses(t *testing.T) {
+func TestParseEquivalentSpellings(t *testing.T) {
 	for _, tc := range []struct{ shorthand, canonical string }{
-		{`\d`, `[0-9]`},
-		{`\D`, `[^0-9]`},
-		{`\w`, `[0-9A-Za-z_]`},
-		{`\W`, `[^0-9A-Za-z_]`},
+		{`\x61`, `a`},
+		{`[[:digit:]]`, `[0-9]`},
+		{`[[:word:]]`, `[0-9A-Za-z_]`},
+		{`a{01}`, `a\{01\}`},
+		{`a{1,02}`, `a\{1,02\}`},
+		{`a{`, `a\{`},
+		{`a}?`, `a\}?`},
+		{`a{01}?`, `a\{01\}?`},
 	} {
 		t.Run(tc.shorthand, func(t *testing.T) {
 			shorthand, err := Parse(tc.shorthand)
@@ -178,11 +183,6 @@ func TestParseRejectsUnsupportedSyntax(t *testing.T) {
 		name       string
 		expression string
 	}{
-		{name: "leading zero in repetition", expression: "a{01}"},
-		{name: "leading zero in repetition maximum", expression: "a{1,02}"},
-		{name: "unclosed repetition", expression: "a{"},
-		{name: "unescaped closing brace", expression: "a}?"},
-		{name: "malformed lazy repetition", expression: "a{01}?"},
 		{name: "unclosed group", expression: "foo("},
 
 		{name: "dotall flag", expression: "(?s)foo"},
@@ -204,17 +204,14 @@ func TestParseRejectsUnsupportedSyntax(t *testing.T) {
 		{name: "scoped dotall", expression: "(?s:.)"},
 		{name: "flag in zero repetition", expression: "(?s:.){0}"},
 
-		{name: "lazy star", expression: "a*?"},
-		{name: "lazy plus", expression: "a+?"},
-		{name: "lazy optional", expression: "a??"},
-		{name: "lazy zero repetition", expression: "a{0}?"},
-		{name: "lazy bounded repetition", expression: "a{2,4}?"},
-
-		{name: "hex escape", expression: `\x61`},
+		{name: "digit shorthand", expression: `\d`},
+		{name: "negated digit shorthand", expression: `\D`},
+		{name: "word shorthand", expression: `\w`},
+		{name: "negated word shorthand", expression: `\W`},
+		{name: "nested anchor", expression: `a^b`},
+		{name: "reversed repetition bounds", expression: `a{3,2}`},
 		{name: "whitespace shorthand", expression: `\s`},
 		{name: "negated whitespace shorthand", expression: `\S`},
-		{name: "POSIX class", expression: "[[:alpha:]?]+"},
-		{name: "case-insensitive POSIX class", expression: "(?i)[[:alpha:]]"},
 		{name: "Unicode property", expression: `\p{L}`},
 		{name: "negated Unicode property in zero repetition", expression: `\P{L}{0}`},
 		{name: "quoted property escape", expression: `\Q(?i)\p{L}\E`},
@@ -236,7 +233,6 @@ func TestParseRejectsUnsupportedSyntax(t *testing.T) {
 	}
 }
 
-// Escapes and class contents must not be mistaken for flags or repetition syntax.
 func TestParseLiteralSyntax(t *testing.T) {
 	for _, tc := range []regexMatchCase{
 		{
@@ -301,6 +297,40 @@ func TestParseLiteralSyntax(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assertRegexMatches(t, tc)
 		})
+	}
+}
+
+func TestParsePreservesCountedRepetition(t *testing.T) {
+	matcher, err := Parse("x{2,5}")
+	require.NoError(t, err)
+	assert.Equal(t, syntax.OpRepeat, matcher.Expression.Op)
+	assert.Equal(t, 2, matcher.Expression.Min)
+	assert.Equal(t, 5, matcher.Expression.Max)
+}
+
+func TestParseRepeatedQuantifiers(t *testing.T) {
+	// Without PerlX, a second quantifier repeats the preceding expression.
+	for _, tc := range []regexMatchCase{
+		{
+			name:       "optional star",
+			expression: "a*?",
+			matches:    []string{"", "a", "aa"},
+			rejects:    []string{"b"},
+		},
+		{
+			name:       "optional plus",
+			expression: "a+?",
+			matches:    []string{"", "a", "aa"},
+			rejects:    []string{"b"},
+		},
+		{
+			name:       "optional bounded repetition",
+			expression: "a{2,4}?",
+			matches:    []string{"", "aa", "aaaa"},
+			rejects:    []string{"a", "aaaaa"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) { assertRegexMatches(t, tc) })
 	}
 }
 

@@ -32,7 +32,7 @@ func TestFilterDictionaryPrefix(t *testing.T) {
 		})
 	}
 	_, err := parseRegexFilter("labels", "severity=(?i)(?-i)foo", true)
-	assert.EqualError(t, err, "invalid regex for field labels: regular expression uses an unsupported group or flag")
+	assert.ErrorContains(t, err, "invalid regex for field labels: invalid regular expression:")
 }
 
 func TestLabelMatcher(t *testing.T) {
