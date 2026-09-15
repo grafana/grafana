@@ -3,8 +3,17 @@ import * as React from 'react';
 
 import { type PluginMeta, PluginType, PluginContext } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
+import { faro } from '@grafana/faro-web-sdk';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
+
+jest.mock('@grafana/faro-web-sdk', () => ({
+  faro: {
+    api: {
+      pushError: jest.fn(),
+    },
+  },
+}));
 
 const ThrowingComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
   if (shouldThrow) {
@@ -52,6 +61,7 @@ describe('PluginErrorBoundary', () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    jest.mocked(faro.api.pushError).mockClear();
   });
 
   it('should render children normally when no error occurs', () => {
@@ -102,7 +112,43 @@ describe('PluginErrorBoundary', () => {
     );
   });
 
-  it('should handle error when plugin context is not available', () => {
+  it('should report the error to Faro with the plugin id as the boundary source', () => {
+    const mockPluginMeta = getMockPlugin({ id: 'my-test-plugin', type: PluginType.datasource });
+
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, pluginMeta: mockPluginMeta });
+
+    expect(faro.api.pushError).toHaveBeenCalledTimes(1);
+    expect(faro.api.pushError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Test error message' }),
+      {
+        context: expect.objectContaining({
+          type: 'boundary',
+          source: 'my-test-plugin',
+          componentStack: expect.any(String),
+        }),
+      }
+    );
+  });
+
+  it('should still report to Faro when an onError callback is provided', () => {
+    const onErrorMock = jest.fn();
+
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, onError: onErrorMock });
+
+    expect(onErrorMock).toHaveBeenCalledTimes(1);
+    expect(faro.api.pushError).toHaveBeenCalledTimes(1);
+    expect(faro.api.pushError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Test error message' }),
+      {
+        context: expect.objectContaining({
+          type: 'boundary',
+          source: 'test-plugin',
+        }),
+      }
+    );
+  });
+
+  it('should report to Faro with source unknown when plugin context is not available', () => {
     render(
       <PluginErrorBoundary>
         <ThrowingComponent shouldThrow={true} />
@@ -115,6 +161,15 @@ describe('PluginErrorBoundary', () => {
       expect.objectContaining({
         componentStack: expect.any(String),
       })
+    );
+    expect(faro.api.pushError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Test error message' }),
+      {
+        context: expect.objectContaining({
+          type: 'boundary',
+          source: 'unknown',
+        }),
+      }
     );
   });
 
