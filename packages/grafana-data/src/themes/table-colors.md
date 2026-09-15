@@ -24,8 +24,8 @@ palette.
 | `cellSelectionBorder`        | Focused cell outline                                                        |
 
 Background surfaces must be opaque where they hide scrolling or overflowing
-content. Divider tokens may have alpha; TableNG composites them against the table
-surface before painting them over cells with custom backgrounds.
+content. Divider tokens must also be opaque so field-configured cell backgrounds
+do not change their appearance.
 
 Use either the solid hover color or the hover overlay. Applying both would tint a
 row twice. An overlay retains the distinction between striped and plain rows; it
