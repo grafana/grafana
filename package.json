@@ -313,7 +313,7 @@
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "8.17.1--canary.1645.34968594965.0",
-    "@grafana/scenes-react": "8.17.0",
+    "@grafana/scenes-react": "8.17.1--canary.1645.34968594965.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
