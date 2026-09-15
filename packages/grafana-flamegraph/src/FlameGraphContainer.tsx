@@ -8,10 +8,11 @@ import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
-import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
+import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT, VISIBLE_TRUNCATED_DEBOUNCE_MS } from './constants';
+import { type ReportVisibleTruncatedPaths } from './hooks';
 import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
@@ -79,6 +80,27 @@ export type Props = {
   keepFocusOnDataChange?: boolean;
 
   /**
+   * Called when the user focuses a node or resets the focus, with the call path of the focused node from the root
+   * (undefined when the focus is reset). Lets a host react to what the user is looking at, for example to load more
+   * detail for that part of the profile.
+   */
+  onFocusChange?: (path: string[] | undefined) => void;
+
+  /**
+   * Called with the call paths of the truncated ('other') nodes the user can currently see, as the active view defines
+   * visible: wide enough to be drawn as a real bar in the flame graph, expanded into a row in the call tree. Lets a
+   * host fetch the data behind them. Sandwich views report nothing, because their paths are not call paths.
+   */
+  onVisibleTruncatedPathsChange?: (paths: string[][]) => void;
+
+  /**
+   * Call paths of the nodes whose data is currently being loaded, as returned by onVisibleTruncatedPathsChange or
+   * onFocusChange. Those nodes are marked as loading in the flame graph and the call tree. Useful when the profile is
+   * refined progressively and parts of it are still coming in.
+   */
+  loadingPaths?: string[][];
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -128,6 +150,9 @@ const FlameGraphContainer = ({
   showFlameGraphOnly,
   disableCollapsing,
   keepFocusOnDataChange,
+  onFocusChange,
+  onVisibleTruncatedPathsChange,
+  loadingPaths,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   fillHeight,
@@ -153,11 +178,17 @@ const FlameGraphContainer = ({
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
+  const onFocusChangeRef = useRef(onFocusChange);
+  const onVisibleTruncatedPathsChangeRef = useRef(onVisibleTruncatedPathsChange);
+  const getExtraContextMenuButtonsRef = useRef(getExtraContextMenuButtons);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
+    onFocusChangeRef.current = onFocusChange;
+    onVisibleTruncatedPathsChangeRef.current = onVisibleTruncatedPathsChange;
+    getExtraContextMenuButtonsRef.current = getExtraContextMenuButtons;
   });
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
@@ -172,6 +203,13 @@ const FlameGraphContainer = ({
     onTableSortRef.current?.(sort);
   }, []);
 
+  // The call tree feeds this into its react-table columns, where a new identity rebuilds a row per
+  // node in the profile, so hosts must not be able to invalidate it by passing a fresh closure.
+  const stableGetExtraContextMenuButtons = useCallback<GetExtraContextMenuButtonsFunction>(
+    (...args) => getExtraContextMenuButtonsRef.current?.(...args) ?? [],
+    []
+  );
+
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
       return;
@@ -179,6 +217,58 @@ const FlameGraphContainer = ({
 
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
+
+  const loadingItems = useMemo(() => {
+    if (!dataContainer || !loadingPaths?.length) {
+      return undefined;
+    }
+
+    const items = new Set<LevelItem>();
+
+    for (const path of loadingPaths) {
+      const item = dataContainer.getItemByPath(path);
+
+      if (item) {
+        items.add(item);
+      }
+    }
+
+    return items.size ? items : undefined;
+  }, [dataContainer, loadingPaths]);
+
+  const pathsByViewRef = useRef(new Map<string, string[][]>());
+  const emittedRef = useRef<{ data?: FlameGraphDataContainer; key?: string }>({});
+  const emitTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const dataContainerRef = useRef(dataContainer);
+  dataContainerRef.current = dataContainer;
+
+  const stableReportVisibleTruncatedPaths = useCallback<ReportVisibleTruncatedPaths>((viewId, paths) => {
+    pathsByViewRef.current.set(viewId, paths);
+
+    clearTimeout(emitTimerRef.current);
+    emitTimerRef.current = setTimeout(() => {
+      const byKey = new Map<string, string[]>();
+
+      for (const viewPaths of pathsByViewRef.current.values()) {
+        for (const path of viewPaths) {
+          byKey.set(JSON.stringify(path), path);
+        }
+      }
+
+      const key = [...byKey.keys()].sort().join('\n');
+
+      // Re-emitted for every new profile even when the set is unchanged: a refinement that came back still truncated
+      // leaves the same paths on screen, and the host has to hear about them again to ask for more detail.
+      if (emittedRef.current.data === dataContainerRef.current && emittedRef.current.key === key) {
+        return;
+      }
+
+      emittedRef.current = { data: dataContainerRef.current, key };
+      onVisibleTruncatedPathsChangeRef.current?.([...byKey.values()]);
+    }, VISIBLE_TRUNCATED_DEBOUNCE_MS);
+  }, []);
+
+  useEffect(() => () => clearTimeout(emitTimerRef.current), []);
 
   const previousDataContainerRef = useRef(dataContainer);
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
@@ -201,7 +291,17 @@ const FlameGraphContainer = ({
       setFocusedItemIndexes(item ? item.itemIndexes : undefined);
     }
 
-    focusedItemPathRef.current = item && dataContainer.getItemPath(item);
+    const path = item && dataContainer.getItemPath(item);
+    const previous = focusedItemPathRef.current;
+    const unchanged =
+      path === previous ||
+      (path && previous && path.length === previous.length && path.every((l, i) => l === previous[i]));
+
+    focusedItemPathRef.current = path;
+
+    if (!unchanged) {
+      onFocusChangeRef.current?.(path);
+    }
   }, [focusedItemIndexes, dataContainer, keepFocusOnDataChange]);
 
   const styles = getStyles(theme, Boolean(fillHeight));
@@ -234,7 +334,7 @@ const FlameGraphContainer = ({
     onTableSort: stableOnTableSort,
     showFlameGraphOnly,
     disableCollapsing,
-    getExtraContextMenuButtons,
+    getExtraContextMenuButtons: getExtraContextMenuButtons ? stableGetExtraContextMenuButtons : undefined,
     setSearch,
     resetKey,
     keepFocusOnDataChange,
@@ -244,6 +344,9 @@ const FlameGraphContainer = ({
     tableRefreshEnabled,
     contentAwareWidthsEnabled,
     fillHeight,
+    loadingItems,
+    // Without a listener the views skip the collection entirely, so no consumer pays for a feature it does not use.
+    reportVisibleTruncatedPaths: onVisibleTruncatedPathsChange ? stableReportVisibleTruncatedPaths : undefined,
   };
 
   let body;

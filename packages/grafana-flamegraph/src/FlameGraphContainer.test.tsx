@@ -1,14 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
-import { createDataFrame, createTheme } from '@grafana/data';
+import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
+import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
+
+import 'jest-canvas-mock';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -138,8 +141,20 @@ describe('FlameGraphContainer', () => {
     })),
   });
 
-  const FlameGraphContainerWithProps = () => {
-    const flameGraphData = createDataFrame(data);
+  const FlameGraphContainerWithProps = ({
+    onFocusChange,
+    onVisibleTruncatedPathsChange,
+    loadingPaths,
+    getExtraContextMenuButtons,
+    data: frameData = data,
+  }: {
+    onFocusChange?: (path: string[] | undefined) => void;
+    onVisibleTruncatedPathsChange?: (paths: string[][]) => void;
+    loadingPaths?: string[][];
+    getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+    data?: Parameters<typeof createDataFrame>[0];
+  } = {}) => {
+    const flameGraphData = createDataFrame(frameData);
     flameGraphData.meta = {
       custom: {
         ProfileTypeID: 'cpu:foo:bar',
@@ -147,11 +162,132 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
+    return (
+      <FlameGraphContainer
+        data={flameGraphData}
+        getTheme={getTheme}
+        onFocusChange={onFocusChange}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+        loadingPaths={loadingPaths}
+        getExtraContextMenuButtons={getExtraContextMenuButtons}
+      />
+    );
+  };
+
+  /** Opens the flame graph's context menu on the root node. */
+  const openContextMenu = async () => {
+    const clickEvent = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(clickEvent, 'offsetX', { get: () => 10 });
+    Object.defineProperty(clickEvent, 'offsetY', { get: () => 10 });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', { configurable: true, value: 500 });
+
+    fireEvent(await screen.findByTestId('flameGraph'), clickEvent);
+  };
+
+  // A truncated node under a bar wide enough to read, and another under a sliver the flame graph mutes.
+  const truncatedData = {
+    fields: [
+      { name: 'level', values: [0, 1, 2, 2, 1, 2, 2] },
+      {
+        name: 'label',
+        type: FieldType.string,
+        values: ['total', 'wide', 'w1', 'other', 'narrow', 'n1', 'other'],
+      },
+      { name: 'self', values: [398, 200, 200, 200, 0, 1, 1] },
+      { name: 'value', values: [1000, 600, 200, 200, 2, 1, 1] },
+    ],
   };
 
   it('should render without error', async () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
+  });
+
+  it('reports the call path of the focused node', async () => {
+    const onFocusChange = jest.fn();
+    render(<FlameGraphContainerWithProps onFocusChange={onFocusChange} />);
+
+    await openContextMenu();
+    await userEvent.click(screen.getByText('Focus block'));
+
+    await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(['total']));
+
+    onFocusChange.mockClear();
+    await userEvent.click(screen.getByLabelText('Remove focus'));
+
+    await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(undefined));
+  });
+
+  it('calls the latest getExtraContextMenuButtons, which is held at a stable identity', async () => {
+    const onClick = jest.fn();
+    const stale: GetExtraContextMenuButtonsFunction = () => [
+      { label: 'Stale action', icon: 'eye', onClick: jest.fn() },
+    ];
+    const latest: GetExtraContextMenuButtonsFunction = () => [{ label: 'Latest action', icon: 'eye', onClick }];
+
+    const { rerender } = render(<FlameGraphContainerWithProps getExtraContextMenuButtons={stale} />);
+    rerender(<FlameGraphContainerWithProps getExtraContextMenuButtons={latest} />);
+
+    await openContextMenu();
+    await userEvent.click(screen.getByText('Latest action'));
+
+    expect(onClick).toHaveBeenCalled();
+    expect(screen.queryByText('Stale action')).not.toBeInTheDocument();
+  });
+
+  it('marks the nodes given in loadingPaths as loading', async () => {
+    const { rerender } = render(<FlameGraphContainerWithProps />);
+    expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0);
+
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total']]} />);
+    await waitFor(() => expect(screen.getAllByTestId('flameGraphLoadingMarker')).toHaveLength(1));
+
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total', 'not.a.real.function']]} />);
+    await waitFor(() => expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0));
+  });
+
+  it('reports the truncated nodes the flame graph draws as real bars', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    // The truncated node under 'narrow' is a sub-pixel sliver, so it is not something the user can see.
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+  });
+
+  it('reports nothing while a search is greying the flame graph out', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+
+    await userEvent.type(screen.getByPlaceholderText('Search...'), 'wide');
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenLastCalledWith([]));
+  });
+
+  it('does not report a sandwich view, whose paths are not call paths', async () => {
+    const onVisibleTruncatedPathsChange = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
+      />
+    );
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+
+    await userEvent.click((await screen.findAllByLabelText('Show in sandwich view'))[0]);
+
+    await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenLastCalledWith([]));
   });
 
   it('should update search when row selected in top table', async () => {

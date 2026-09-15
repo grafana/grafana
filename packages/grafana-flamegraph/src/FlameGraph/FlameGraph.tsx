@@ -25,6 +25,7 @@ import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafan
 import { ColorSchemeButton } from '../ColorSchemeButton';
 import { alignOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
+import { type ReportVisibleTruncatedPaths } from '../hooks';
 import {
   type ClickedItemData,
   type ColorScheme,
@@ -60,6 +61,8 @@ type Props = {
   search: string;
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 
   viewMode: ViewMode;
   paneView: PaneView;
@@ -89,6 +92,8 @@ const FlameGraph = ({
   search,
   collapsedMap,
   setCollapsedMap,
+  loadingItems,
+  reportVisibleTruncatedPaths,
   viewMode,
   paneView,
   onTextAlignChange,
@@ -148,6 +153,7 @@ const FlameGraph = ({
     showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
+    loadingItems,
     getExtraContextMenuButtons,
     collapsing,
     search,
@@ -191,7 +197,15 @@ const FlameGraph = ({
     );
   } else if (levels?.length) {
     canvas = (
-      <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+      <FlameGraphCanvas
+        {...commonCanvasProps}
+        root={levels[0][0]}
+        depth={levels.length}
+        direction={'children'}
+        // Only the plain view draws the tree the host queried. A sandwich draws merged callers and callees, whose
+        // paths run outwards from the sandwiched function and so cannot be turned back into a call site.
+        reportVisibleTruncatedPaths={sandwichItem ? undefined : reportVisibleTruncatedPaths}
+      />
     );
   }
 

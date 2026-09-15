@@ -1,9 +1,14 @@
 import { css } from '@emotion/css';
-import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
-import { PIXELS_PER_LEVEL } from '../constants';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { MUTE_THRESHOLD, PIXELS_PER_LEVEL, TRUNCATED_NODE_NAME } from '../constants';
+import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
+import { loadingShimmer } from '../loadingShimmer';
 import {
   type ClickedItemData,
   type ColorScheme,
@@ -16,7 +21,7 @@ import {
 import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
 import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
-import { getBarX, useFlameRender } from './rendering';
+import { getBarX, useFlameRender, walkTree } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -50,6 +55,8 @@ type Props = {
   viewMode: ViewMode;
   paneView: PaneView;
   search: string;
+  loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
 
 const FlameGraphCanvas = ({
@@ -78,8 +85,10 @@ const FlameGraphCanvas = ({
   viewMode,
   paneView,
   search,
+  loadingItems,
+  reportVisibleTruncatedPaths,
 }: Props) => {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
@@ -169,7 +178,94 @@ const FlameGraphCanvas = ({
     setTooltipItem(undefined);
   }, []);
 
-  // hide context menu if outside the flame graph canvas is clicked
+  // Which truncated nodes the user can see is decided by the same walk that draws them: anything the renderer mutes is
+  // a sliver too narrow to read, and anything outside the current zoom is off the canvas altogether.
+  const visibleTruncatedPaths = useMemo(() => {
+    // A search greys out every non-matching bar, truncated ones included, so there is nothing on screen to report.
+    if (!reportVisibleTruncatedPaths || matchedLabels || direction !== 'children' || !wrapperWidth || !totalViewTicks) {
+      return [];
+    }
+
+    const paths: string[][] = [];
+
+    walkTree(
+      root,
+      direction,
+      data,
+      totalViewTicks,
+      rangeMin,
+      rangeMax,
+      wrapperWidth,
+      collapsedMap,
+      (item, x, y, width, height, label, muted) => {
+        if (!muted && label === TRUNCATED_NODE_NAME && x < wrapperWidth && x + width > 0) {
+          paths.push(data.getItemPath(item));
+        }
+      },
+      // A device pixel ratio of 1 keeps the walk's geometry in the CSS pixels the clipping above is in. It cancels out
+      // of the muting rule, so this changes nothing about which bars count as muted.
+      1
+    );
+
+    return paths;
+  }, [
+    reportVisibleTruncatedPaths,
+    matchedLabels,
+    direction,
+    wrapperWidth,
+    totalViewTicks,
+    root,
+    data,
+    rangeMin,
+    rangeMax,
+    collapsedMap,
+  ]);
+
+  useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
+
+  const levelHeight = PIXELS_PER_LEVEL;
+  const loadingMarkers = useMemo(() => {
+    if (!loadingItems?.size || direction !== 'children' || !wrapperWidth || !totalViewTicks) {
+      return [];
+    }
+
+    const pixelsPerTick = wrapperWidth / totalViewTicks / (rangeMax - rangeMin);
+    const markers: Array<{ key: string; left: number; top: number; width: number }> = [];
+
+    for (const item of loadingItems) {
+      let left = getBarX(item.start, totalViewTicks, rangeMin, pixelsPerTick);
+      let width = item.value * pixelsPerTick;
+
+      if (left < 0) {
+        width += left;
+        left = 0;
+      }
+
+      width = Math.min(width, wrapperWidth - left);
+
+      if (width <= MUTE_THRESHOLD || left > wrapperWidth) {
+        continue;
+      }
+
+      let level = 0;
+      let current: LevelItem | undefined = item;
+
+      while (current && current.level > 0) {
+        const collapsedConfig = collapsedMap.get(current);
+
+        if (!collapsedConfig || !collapsedConfig.collapsed || collapsedConfig.items[0] === current) {
+          level++;
+        }
+
+        current = current.parents?.[0];
+      }
+
+      markers.push({ key: `${item.level}-${item.start}`, left, top: level * levelHeight + 1, width });
+    }
+
+    return markers;
+  }, [loadingItems, direction, wrapperWidth, totalViewTicks, rangeMin, rangeMax, collapsedMap, levelHeight]);
+
   useEffect(() => {
     const handleOnClick = (e: MouseEvent) => {
       if (
@@ -193,6 +289,14 @@ const FlameGraphCanvas = ({
           onMouseMove={onGraphMouseMove}
           onMouseLeave={onGraphMouseLeave}
         />
+        {loadingMarkers.map((marker) => (
+          <div
+            key={marker.key}
+            data-testid="flameGraphLoadingMarker"
+            className={styles.loadingMarker}
+            style={{ left: marker.left, top: marker.top, width: marker.width, height: levelHeight - 2 }}
+          />
+        ))}
       </div>
       <FlameGraphTooltip
         position={mousePosition}
@@ -242,7 +346,7 @@ const FlameGraphCanvas = ({
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
@@ -258,6 +362,16 @@ const getStyles = () => ({
     cursor: 'pointer',
     flex: 1,
     overflow: 'hidden',
+    position: 'relative',
+  }),
+  loadingMarker: css({
+    label: 'loadingMarker',
+    position: 'absolute',
+    pointerEvents: 'none',
+    borderRadius: theme.shape.radius.default,
+    outline: `1px dashed ${theme.colors.text.secondary}`,
+    outlineOffset: '-1px',
+    ...loadingShimmer(theme),
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',

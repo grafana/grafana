@@ -7,7 +7,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
-import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';
+import { TRUNCATED_NODE_NAME } from '../constants';
+import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
 import { ColorScheme, ColorSchemeDiff, type PaneView, type ViewMode } from '../types';
 
 import { ActionsCell } from './ActionsCell';
@@ -15,7 +17,14 @@ import { CallTreeTable } from './CallTreeTable';
 import { ColorBarCell } from './ColorBarCell';
 import { DiffCell } from './DiffCell';
 import { FunctionCellWithExpander } from './FunctionCellWithExpander';
-import { buildAllCallTreeNodes, buildCallersTree, type CallTreeNode, getInitialExpandedState } from './utils';
+import {
+  buildAllCallTreeNodes,
+  buildCallersTree,
+  type CallTreeNode,
+  collectExpandedPaths,
+  getInitialExpandedState,
+  resolveExpandedPaths,
+} from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -30,7 +39,13 @@ type Props = {
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   viewMode?: ViewMode;
   paneView?: PaneView;
+  loadingItems?: Set<LevelItem>;
+  reportVisibleTruncatedPaths?: ReportVisibleTruncatedPaths;
 };
+
+// react-table rebuilds its whole row model when this changes identity, so it must not be an inline
+// arrow in the useTable call: that rebuilds a row per node in the profile on every single render.
+const getSubRows = (row: CallTreeNode) => row.children ?? [];
 
 function findCallTreeNode(nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined {
   for (const node of nodes) {
@@ -60,6 +75,8 @@ const FlameGraphCallTreeContainer = memo(
     getExtraContextMenuButtons,
     viewMode,
     paneView,
+    loadingItems,
+    reportVisibleTruncatedPaths,
   }: Props) => {
     const [isCompact, setIsCompact] = useState(false);
     const styles = useStyles2(getStyles);
@@ -321,8 +338,19 @@ const FlameGraphCallTreeContainer = memo(
       [currentSearchMatchId]
     );
 
+    // Rows the user expanded, kept as label paths so that they can be found again in a profile that changed
+    // underneath them. See where this is captured, below the table.
+    const expandedPathsRef = useRef<string[][]>([]);
+    const previousNodesRef = useRef(nodes);
+
     const expandedState = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
+
+      // autoResetExpanded sends react-table back to this state whenever the data changes, which for a progressively
+      // refined profile is every time an answer lands. Putting the user's rows back in keeps them open.
+      for (const id of resolveExpandedPaths(nodes, expandedPathsRef.current)) {
+        baseExpanded[id] = true;
+      }
 
       const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
         for (const node of nodes) {
@@ -600,7 +628,7 @@ const FlameGraphCallTreeContainer = memo(
       {
         columns,
         data: tableNodes,
-        getSubRows: (row) => row.children || [],
+        getSubRows,
         initialState: {
           sortBy: [{ id: 'total', desc: true }],
           expanded: expandedState,
@@ -614,6 +642,30 @@ const FlameGraphCallTreeContainer = memo(
 
     tableInstanceRef.current = tableInstance;
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+
+    // Skipped on the render where the data changed: react-table has not reset yet, so its expanded row ids still
+    // belong to the previous tree and reading them against this one would resolve to the wrong functions.
+    if (previousNodesRef.current === nodes) {
+      expandedPathsRef.current = collectExpandedPaths(nodes, tableInstance.state.expanded ?? {});
+    }
+
+    previousNodesRef.current = nodes;
+
+    // A truncated node the user can see here is one whose ancestors are all expanded, which is exactly the row model
+    // react-table hands back. Unlike a flame graph bar, such a row is legible however little time it holds, so how
+    // wide it would be drawn does not come into it.
+    const visibleTruncatedPaths = useMemo(() => {
+      // The callers tree is built from merged parent subtrees, so its rows have no call path to report.
+      if (!reportVisibleTruncatedPaths || callersNodeLabel) {
+        return [];
+      }
+
+      return rows
+        .filter((row) => row.original.label === TRUNCATED_NODE_NAME)
+        .map((row) => data.getItemPath(row.original.levelItem));
+    }, [reportVisibleTruncatedPaths, callersNodeLabel, rows, data]);
+
+    useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
 
     return (
       <div className={styles.container} data-testid="callTree">
@@ -712,6 +764,7 @@ const FlameGraphCallTreeContainer = memo(
                 scrollContainerRef={scrollContainerRef}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
+                loadingItems={loadingItems}
               />
             )}
           </AutoSizer>

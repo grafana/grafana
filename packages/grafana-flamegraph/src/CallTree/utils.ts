@@ -301,3 +301,79 @@ export function getRowBarColor(
     }
   }
 }
+
+/**
+ * Label paths, from the displayed roots down, of the rows the user has expanded. react-table keys expansion by row
+ * id, which is a positional path ('0.3.1'), so a refinement that adds or reorders siblings leaves those ids pointing
+ * at different functions. Labels survive it.
+ */
+export function collectExpandedPaths(nodes: CallTreeNode[], expanded: Record<string, boolean>): string[][] {
+  const expandedIds = Object.keys(expanded).filter((id) => expanded[id]);
+
+  if (!expandedIds.length) {
+    return [];
+  }
+
+  // A row id is its parent's id plus a child index, so the ids of a row's ancestors are exactly the prefixes of its
+  // own. Collecting those lets the walk below skip every branch with nothing expanded in it, which matters because a
+  // refined profile can hold a million nodes and this runs on every render.
+  const onPath = new Set<string>();
+
+  for (const id of expandedIds) {
+    const segments = id.split('.');
+
+    for (let i = 1; i <= segments.length; i++) {
+      onPath.add(segments.slice(0, i).join('.'));
+    }
+  }
+
+  const paths: string[][] = [];
+
+  const walk = (list: CallTreeNode[], path: string[]) => {
+    for (const node of list) {
+      if (!onPath.has(node.id)) {
+        continue;
+      }
+
+      const nodePath = [...path, node.label];
+
+      if (expanded[node.id]) {
+        paths.push(nodePath);
+      }
+
+      if (node.children) {
+        walk(node.children, nodePath);
+      }
+    }
+  };
+
+  walk(nodes, []);
+
+  return paths;
+}
+
+/** Row ids of the given label paths in the tree as it is now, skipping the paths the new data no longer has. */
+export function resolveExpandedPaths(nodes: CallTreeNode[], paths: string[][]): string[] {
+  const ids: string[] = [];
+
+  for (const path of paths) {
+    let list = nodes;
+    let node: CallTreeNode | undefined;
+
+    for (const label of path) {
+      node = list.find((candidate) => candidate.label === label);
+
+      if (!node) {
+        break;
+      }
+
+      list = node.children ?? [];
+    }
+
+    if (node) {
+      ids.push(node.id);
+    }
+  }
+
+  return ids;
+}
