@@ -9,7 +9,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore, type GraphiteQueryEditorState } from '../state/store';
+import { createStore } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -178,44 +178,6 @@ describe('Graphite actions', () => {
       expect(ctx.state.target.target).toBe('new.metrics.*');
       expect(ctx.state.segments[0].value).toBe('new');
       expect(ctx.state.segments[1].value).toBe('metrics');
-    });
-
-    it('should preserve query changes while initialization is pending', async () => {
-      let resolveInitialization!: () => void;
-      let state!: GraphiteQueryEditorState;
-
-      ctx.datasource.waitForFuncDefsLoaded = jest.fn(
-        () =>
-          new Promise<void>((resolve) => {
-            resolveInitialization = resolve;
-          })
-      );
-
-      const dispatch = createStore((nextState) => {
-        state = nextState;
-      });
-
-      const initialization = dispatch(
-        actions.init({
-          datasource: ctx.datasource,
-          target: { target: 'initial.metric', refId: 'A' },
-          refresh: jest.fn(),
-          queries: [],
-          //@ts-ignore
-          templateSrv: getTemplateSrv(),
-        })
-      );
-
-      await Promise.resolve();
-
-      const rangeChange = dispatch(actions.timeRangeChanged(undefined));
-      const queryChange = dispatch(actions.queryChanged({ target: 'updated.metric', refId: 'A' }));
-
-      resolveInitialization();
-
-      await expect(Promise.all([initialization, rangeChange, queryChange])).resolves.toBeDefined();
-
-      expect(state.target.target).toBe('updated.metric');
     });
   });
 

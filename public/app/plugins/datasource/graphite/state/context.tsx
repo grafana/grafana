@@ -1,6 +1,5 @@
 import { type AnyAction } from '@reduxjs/toolkit';
 import { createContext, type Dispatch, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
-import { usePrevious } from 'react-use';
 
 import { type QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -43,12 +42,11 @@ export const GraphiteQueryEditorContext = ({
   }, []);
 
   // synchronise changes provided in props with editor's state
-  const previousRange = usePrevious(range);
   useEffect(() => {
-    if (JSON.stringify(previousRange?.raw) !== JSON.stringify(range?.raw)) {
+    if (state && JSON.stringify(state.range?.raw) !== JSON.stringify(range?.raw)) {
       dispatch(actions.timeRangeChanged(range));
     }
-  }, [dispatch, range, previousRange]);
+  }, [dispatch, range, state]);
 
   useEffect(
     () => {

@@ -189,17 +189,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
-  let pending = Promise.resolve();
 
-  const dispatch = (action: AnyAction) => {
-    const next = pending.then(async () => {
-      state = await reducer(action, state);
-      onChange(state);
-    });
-
-    pending = next.catch(() => {});
-
-    return next;
+  const dispatch = async (action: AnyAction) => {
+    state = await reducer(action, state);
+    onChange(state);
   };
 
   return dispatch as Dispatch<AnyAction>;
