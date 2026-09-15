@@ -35,7 +35,6 @@ import {
 } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardSearchItem } from 'app/features/search/types';
@@ -79,7 +78,6 @@ export class BackendSrv implements BackendService {
   private inspectorStream: Subject<InspectorStream> = new Subject<InspectorStream>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
-  private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
   private _loginPingInProgress?: Observable<FetchResponse> | null = null;
   private deviceID?: string | null = null;
 
@@ -514,15 +512,7 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = this.loginPing();
-                if (hasRotatableSession(this.dependencies.contextSrv.user.authenticatedBy)) {
-                  const expired = getSessionExpiry() * 1000 < Date.now();
-                  if (expired) {
-                    authChecker = this.rotateToken();
-                  }
-                }
-
-                return from(authChecker).pipe(
+                return from(this.loginPing()).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       // Rethrow the original per-request error instead so each caller gets its own config/traceId
@@ -611,29 +601,6 @@ export class BackendSrv implements BackendService {
     return callback().finally(() => {
       this.noBackendCache = false;
     });
-  }
-
-  rotateToken() {
-    if (this._tokenRotationInProgress) {
-      return this._tokenRotationInProgress;
-    }
-
-    this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
-      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
-      // no matter how many requests are waiting on this same rotation.
-      catchError((err) => {
-        if (err.status === 401) {
-          this.dependencies.logout();
-        }
-        return throwError(() => err);
-      }),
-      finalize(() => {
-        this._tokenRotationInProgress = null;
-      }),
-      share()
-    );
-
-    return this._tokenRotationInProgress;
   }
 
   loginPing() {

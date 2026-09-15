@@ -83,6 +83,7 @@ export type PreinstalledPlugin = {
  * This takes `window.grafanaBootData.settings` as input and returns a config object.
  */
 export class GrafanaBootConfig {
+  sessionHeartbeatInterval?: number;
   publicDashboardAccessToken?: string;
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
