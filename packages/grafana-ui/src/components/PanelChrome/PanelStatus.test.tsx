@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -141,6 +141,41 @@ describe('PanelStatus', () => {
 
       await userEvent.click(button);
       expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the popover open so Tab from the trigger reaches the Fix with Assistant button', async () => {
+      // The portaled popover content sits elsewhere in the DOM than the trigger, so this only
+      // reproduces the real page's Tab order (and the bug it used to trigger) if there's another
+      // focusable element right after the trigger for focus to wrongly skip to.
+      render(
+        <>
+          <PanelStatus
+            items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
+            onInvestigateErrors={jest.fn()}
+          />
+          <button>Next focusable element on the page</button>
+        </>
+      );
+
+      await userEvent.tab();
+      expect(screen.getByTestId(selectors.components.Panels.Panel.status('error'))).toHaveFocus();
+      const button = await screen.findByRole('button', { name: 'Fix with Assistant' });
+
+      await userEvent.tab();
+      // The floating-ui focus manager moves focus asynchronously, so this needs a waitFor.
+      await waitFor(() => {
+        expect(button).toHaveFocus();
+      });
+      expect(screen.getByText('Errors and notices')).toBeInTheDocument();
+
+      // While the popover is open, Tab cycles within it (icon + button) rather than escaping to
+      // the rest of the page — Escape releases it and hands focus back to the trigger.
+      await userEvent.keyboard('{Escape}');
+      expect(screen.getByTestId(selectors.components.Panels.Panel.status('error'))).toHaveFocus();
+      expect(screen.queryByText('Errors and notices')).not.toBeInTheDocument();
+
+      await userEvent.tab();
+      expect(screen.getByRole('button', { name: 'Next focusable element on the page' })).toHaveFocus();
     });
 
     it('offers to explain rather than fix when there are no errors to fix', async () => {

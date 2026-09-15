@@ -94,7 +94,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
         {onInvestigateErrors && (
           <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
             {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
-                          host asks the assistant to explain in that case. */}
+                host asks the assistant to explain in that case. */}
             {topSeverity === 'error'
               ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
               : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
@@ -115,7 +115,10 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
   );
 
   return (
-    <Tooltip content={content} placement="bottom-start" interactive>
+    // `onInspect` on the trigger opens the inspector directly on click — the tooltip itself only
+    // opens on hover/focus. `trapFocus` lets keyboard users then Tab from the trigger into the
+    // Fix/Explain with Assistant button instead of Tab skipping over the popover entirely.
+    <Tooltip content={content} placement="bottom-start" interactive trapFocus>
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}

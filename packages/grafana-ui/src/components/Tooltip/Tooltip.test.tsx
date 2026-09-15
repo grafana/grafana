@@ -1,10 +1,30 @@
-﻿import { render, screen } from '@testing-library/react';
+﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type MutableRefObject } from 'react';
 
 import { TextLink } from '../Link/TextLink';
 
 import { Tooltip } from './Tooltip';
+
+// The portaled content sits elsewhere in the DOM than the trigger, so this only reproduces real
+// Tab order (and what `trapFocus` fixes) if there's another focusable element right after the
+// trigger for focus to wrongly skip to without it.
+function renderInteractiveTooltip(trapFocus: boolean) {
+  render(
+    <>
+      <Tooltip
+        content={
+          <button>Action inside tooltip</button>
+        }
+        interactive
+        trapFocus={trapFocus}
+      >
+        <button>Trigger</button>
+      </Tooltip>
+      <button>Next focusable element on the page</button>
+    </>
+  );
+}
 
 describe('Tooltip', () => {
   it('renders correctly', () => {
@@ -97,5 +117,39 @@ describe('Tooltip', () => {
         description: 'Tooltip content',
       })
     ).toBeInTheDocument();
+  });
+
+  describe('trapFocus', () => {
+    it('is a no-op by default: Tab from the trigger skips over interactive content', async () => {
+      renderInteractiveTooltip(false);
+
+      await userEvent.tab();
+      expect(screen.getByText('Trigger')).toHaveFocus();
+      await screen.findByText('Action inside tooltip');
+
+      await userEvent.tab();
+      expect(screen.getByText('Next focusable element on the page')).toHaveFocus();
+    });
+
+    it('when set, lets Tab from the trigger reach content before moving on, and Escape releases it', async () => {
+      renderInteractiveTooltip(true);
+
+      await userEvent.tab();
+      expect(screen.getByText('Trigger')).toHaveFocus();
+      const actionButton = await screen.findByText('Action inside tooltip');
+
+      await userEvent.tab();
+      // FloatingFocusManager moves focus asynchronously.
+      await waitFor(() => {
+        expect(actionButton).toHaveFocus();
+      });
+
+      await userEvent.keyboard('{Escape}');
+      expect(screen.getByText('Trigger')).toHaveFocus();
+      expect(screen.queryByText('Action inside tooltip')).not.toBeInTheDocument();
+
+      await userEvent.tab();
+      expect(screen.getByText('Next focusable element on the page')).toHaveFocus();
+    });
   });
 });
