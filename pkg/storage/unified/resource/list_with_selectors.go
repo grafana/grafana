@@ -60,7 +60,10 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		// useSelectorSearch() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
-	if err := ErrorFromResponse(searchResp.GetError(), err); err != nil {
+	if err != nil {
+		return nil, err
+	}
+	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
 	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
@@ -178,6 +181,10 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	// An index covers one namespace, so a cross-namespace list stays on the store
 	// scan, which supports it.
 	if req.Options.Key.Namespace == "" {
+		return false
+	}
+	// Search indexes collections and does not apply a name filter.
+	if req.Options.Key.Name != "" {
 		return false
 	}
 	hasSelectors := len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0

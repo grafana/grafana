@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"iter"
 	"net/http"
 	"testing"
@@ -71,6 +72,16 @@ func TestUseSelectorSearch(t *testing.T) {
 				ResourceVersion: 42,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when list has a name": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
 				},
 			},
 			expectedAllowed: false,
@@ -296,6 +307,23 @@ func TestListWithSelectors(t *testing.T) {
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
 		require.Equal(t, "search failed", resp.Error.Message)
+	})
+
+	t.Run("returns transport errors directly", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchErr := errors.New("search unavailable")
+		s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, searchErr)
+		require.Nil(t, resp)
 	})
 
 	t.Run("rejects a continue token from the store path", func(t *testing.T) {
