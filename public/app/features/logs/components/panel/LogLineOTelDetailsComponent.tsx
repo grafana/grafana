@@ -16,6 +16,7 @@ import {
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
+import { LogLineOTelDetailsError } from './LogLineOTelDetailsError';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
@@ -69,8 +70,10 @@ export const LogLineDetailsOTelComponent = ({
 
   return (
     <LogLineDetailsOTelComponentBody
+      fields={fieldsWithoutLinks}
       groupedFields={groupedFields}
       groupedLabels={groupedLabels}
+      labels={labelsWithLinks}
       log={log}
       logs={logs}
       search={search}
@@ -79,16 +82,20 @@ export const LogLineDetailsOTelComponent = ({
 };
 
 interface LogLineDetailsOTelComponentBodyProps {
+  fields: FieldDef[];
   groupedFields: Array<GroupedOTelAttributes<FieldDef>>;
   groupedLabels: Array<GroupedOTelAttributes<LabelWithLinks>>;
+  labels: LabelWithLinks[];
   log: LogListModel;
   logs: LogListModel[];
   search: string;
 }
 
 const LogLineDetailsOTelComponentBody = ({
+  fields,
   groupedFields,
   groupedLabels,
+  labels,
   log,
   logs,
   search,
@@ -109,6 +116,7 @@ const LogLineDetailsOTelComponentBody = ({
   return (
     <div className={styles.componentWrapper}>
       <div className={styles.container}>
+        <LogLineOTelDetailsError fields={fields} labels={labels} />
         <div className={styles.categories}>
           {groupedFields.length > 0 &&
             groupedFields.map(({ category, items }) => (
