@@ -9079,6 +9079,7 @@
         }
       },
       "resource-attributes-inherited": "(inherited from slowest span)",
+      "link-copied": "Link copied to clipboard",
       "share-span": "Share",
       "summary-count-aria_one": "{{count}} aggregated span",
       "summary-count-aria_other": "{{count}} aggregated spans",

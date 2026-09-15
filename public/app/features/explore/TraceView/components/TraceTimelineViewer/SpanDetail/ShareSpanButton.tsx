@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { type GrafanaTheme2, type LinkModel, textUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 type Props = {
   focusSpanLink: LinkModel;
@@ -20,34 +22,40 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function ShareSpanButton(props: Props) {
-  const { focusSpanLink } = props;
-  const { interpolatedParams, ...linkProps } = focusSpanLink ?? {};
+function getShareUrl(href: string | undefined): string {
+  const current = window.location.href;
+  if (!href) {
+    return current;
+  }
+  try {
+    const sanitized = textUtil.sanitizeUrl(new URL(href, current).href);
+    if (!sanitized || sanitized === 'about:blank') {
+      return current;
+    }
+    return sanitized;
+  } catch {
+    return current;
+  }
+}
+
+export function ShareSpanButton({ focusSpanLink }: Props) {
   const styles = useStyles2(getStyles);
+  const notifyApp = useAppNotification();
+
   return (
-    <span>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <a
-        data-testid="share-span-button"
-        {...linkProps}
-        onClick={(e) => {
-          // click handling logic copied from react router:
-          // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-          if (
-            focusSpanLink.onClick &&
-            e.button === 0 && // Ignore everything but left clicks
-            (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-            !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-          ) {
-            e.preventDefault();
-            focusSpanLink.onClick(e);
-          }
-        }}
-      >
-        <Button variant="secondary" size="sm" icon="share-alt" fill="outline" className={styles.shareButton}>
-          <Trans i18nKey="explore.span-detail.share-span">Share</Trans>
-        </Button>
-      </a>
-    </span>
+    <Button
+      data-testid="share-span-button"
+      variant="secondary"
+      size="sm"
+      icon="share-alt"
+      fill="outline"
+      className={styles.shareButton}
+      onClick={() => {
+        copyStringToClipboard(getShareUrl(focusSpanLink?.href));
+        notifyApp.success(t('explore.span-detail.link-copied', 'Link copied to clipboard'));
+      }}
+    >
+      <Trans i18nKey="explore.span-detail.share-span">Share</Trans>
+    </Button>
   );
 }
