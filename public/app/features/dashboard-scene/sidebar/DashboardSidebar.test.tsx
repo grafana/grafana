@@ -4,9 +4,11 @@ import {
   ConstantVariable,
   CustomVariable,
   type MultiValueVariable,
+  type SceneObject,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
+  StateCommittedEvent,
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
@@ -419,6 +421,73 @@ describe('DashboardSidebar', () => {
     });
 
     expect(variableSet.state.variables).toEqual([predefined]);
+  });
+
+  describe('StateCommittedEvent', () => {
+    function buildTestScene() {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutManager = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
+      });
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: layoutManager,
+      });
+      activateFullSceneTree(dashboard);
+
+      return { dashboard, sidebar: dashboard.state.sidebar, source: panel };
+    }
+
+    function stateCommited(source: SceneObject, description: string, replay: () => void, revert: () => void) {
+      source.publishEvent(new StateCommittedEvent({ source, description, replay, revert }), true);
+    }
+
+    it('records new entry on the undo stack without performing it again', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toEqual('Some change');
+      expect(replay).not.toHaveBeenCalled();
+      expect(revert).not.toHaveBeenCalled();
+    });
+
+    it('undo reverts the change and redo re-applies it', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+      sidebar.undoAction();
+
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(replay).not.toHaveBeenCalled();
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      sidebar.redoAction();
+
+      expect(replay).toHaveBeenCalledTimes(1);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a new transaction is committed', () => {
+      const { sidebar, source } = buildTestScene();
+
+      stateCommited(source, 'Change 1', jest.fn(), jest.fn());
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      stateCommited(source, 'Change 2', jest.fn(), jest.fn());
+
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
   });
 
   describe('Selecting repeated elements', () => {
