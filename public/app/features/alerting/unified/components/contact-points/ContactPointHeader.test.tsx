@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -35,6 +35,26 @@ describe('ContactPointHeader', () => {
     policies: [],
     grafana_managed_receiver_configs: [],
   };
+
+  it('disables export when the contact point contains a legacy integration', async () => {
+    const user = userEvent.setup();
+    const contactPointWithV0Integration = {
+      ...mockContactPoint,
+      provenance: KnownProvenance.None,
+      grafana_managed_receiver_configs: [{ type: 'slack', settings: {}, version: 'v0mimir1' }],
+    } as ContactPointWithMetadata;
+
+    renderWithProvider(<ContactPointHeader contactPoint={contactPointWithV0Integration} onDelete={jest.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'More actions for contact point "Test Contact Point"' }));
+    const exportButton = await screen.findByRole('menuitem', { name: 'Export' });
+    expect(exportButton).toBeDisabled();
+
+    await user.hover(exportButton);
+    expect(
+      await screen.findByText('Export is not available for contact points that contain legacy integrations')
+    ).toBeInTheDocument();
+  });
 
   it('shows Provisioned badge when contact point has file provenance via K8s annotations', () => {
     const contactPointWithFile = {

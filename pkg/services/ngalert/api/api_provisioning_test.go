@@ -208,14 +208,25 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("are missing, PUT returns 404", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			cp := createInvalidContactPoint()
+		t.Run("are missing", func(t *testing.T) {
+			t.Run("PUT returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				cp := createInvalidContactPoint()
 
-			response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
+				response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
 
-			require.Equal(t, 404, response.Status())
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("DELETE returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteDeleteContactPoint(&rc, "does not exist")
+
+				require.Equal(t, 404, response.Status())
+			})
 		})
 	})
 

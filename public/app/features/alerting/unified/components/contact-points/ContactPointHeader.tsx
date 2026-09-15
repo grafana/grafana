@@ -37,6 +37,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
   const isProvisioned = isProvisionedResource(provenance);
+  const hasLegacyIntegration = integrations.some(({ version }) => version?.startsWith('v0'));
 
   // Entity-scoped ability checks
   const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
@@ -97,16 +98,30 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   }
 
   if (isSupported(exportAbility)) {
+    const legacyExportTooltip = t(
+      'alerting.contact-point-header.export-legacy-integration-tooltip',
+      'Export is not available for contact points that contain legacy integrations'
+    );
     menuActions.push(
       <Fragment key="export-contact-point">
-        <Menu.Item
-          icon="download-alt"
-          label={t('alerting.contact-point-header.export-label-export', 'Export')}
-          ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
-          disabled={!exportAbility.granted}
-          data-testid="export"
-          onClick={() => openExportDrawer(name)}
-        />
+        <ConditionalWrap
+          shouldWrap={hasLegacyIntegration}
+          wrap={(children) => (
+            <Tooltip content={legacyExportTooltip} placement="top">
+              <span>{children}</span>
+            </Tooltip>
+          )}
+        >
+          <Menu.Item
+            icon="download-alt"
+            label={t('alerting.contact-point-header.export-label-export', 'Export')}
+            ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
+            className={hasLegacyIntegration ? styles.disabledExport : undefined}
+            disabled={!exportAbility.granted || hasLegacyIntegration}
+            data-testid="export"
+            onClick={() => openExportDrawer(name)}
+          />
+        </ConditionalWrap>
         <Menu.Divider />
       </Fragment>
     );
@@ -298,5 +313,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
     borderTopLeftRadius: `${theme.shape.radius.lg}`,
     borderTopRightRadius: `${theme.shape.radius.lg}`,
+  }),
+  disabledExport: css({
+    opacity: theme.colors.action.disabledOpacity,
   }),
 });
