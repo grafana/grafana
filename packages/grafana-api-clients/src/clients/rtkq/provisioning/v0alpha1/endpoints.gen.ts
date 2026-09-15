@@ -1723,8 +1723,12 @@ export type MoveJobOptions = {
   targetPath?: string;
 };
 export type PullRequestJobOptions = {
+  /** URL of the head repository for a pull request from a fork, when available. */
+  forkURL?: string;
   /** The specific commit hash that triggered this notice */
   hash?: string;
+  /** Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs. */
+  isFork?: boolean;
   /** Pull request number (when appropriate) */
   pr?: number;
   /** The branch of commit hash */

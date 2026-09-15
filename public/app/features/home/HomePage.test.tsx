@@ -17,6 +17,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
+import { stubDatasource, stubSolution } from './solutions/test-utils';
+import { useHomepageSolutions } from './useHomepageSolutions';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -32,6 +34,11 @@ jest.mock('./analytics/main', () => ({
 
 jest.mock('app/plugins/panel/news/useNewsFeed');
 
+jest.mock('./useHomepageSolutions', () => ({
+  ...jest.requireActual('./useHomepageSolutions'),
+  useHomepageSolutions: jest.fn(),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
@@ -41,6 +48,9 @@ const useNewsFeedMock = jest.mocked(useNewsFeed);
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.clear();
+  jest
+    .mocked(useHomepageSolutions)
+    .mockImplementation(jest.requireActual('./useHomepageSolutions').useHomepageSolutions);
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   mockUsePluginBridge.mockReturnValue({ installed: false, loading: false });
   useNewsFeedMock.mockReturnValue({
@@ -296,6 +306,34 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     // ...but the redesigned homepage ignores the HomepageTabs extension point.
     expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
+  });
+
+  it('starts card placement while extensions are still loading and hands it to the overview', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+    const datasource = jest.fn(async () => stubDatasource);
+    // Only placement reads this fact, so a call while the skeleton is up proves detection started at mount.
+    const needsAttention = jest.fn(async () => false);
+    const stub = stubSolution('metrics', {
+      title: 'Metrics & infrastructure',
+      signal: async () => 'active',
+      datasource,
+      needsAttention,
+    });
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+
+    const { rerender } = render(<HomePage />);
+
+    // The whole-page skeleton is up, yet detection is already running.
+    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
+    expect(datasource).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+    rerender(<HomePage />);
+
+    // The card renders once the extensions settle.
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {

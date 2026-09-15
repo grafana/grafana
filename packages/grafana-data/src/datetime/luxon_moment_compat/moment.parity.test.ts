@@ -206,6 +206,27 @@ describe('moment compatibility parity', () => {
   });
 
   describe('locale and week semantics', () => {
+    it.each(['de', 'en-AU'])('uses Intl Monday-first week rules for %s', (locale) => {
+      const value = moment.utc('2024-05-05').locale(locale);
+      expect(value.week()).toBe(18);
+      expect(value.clone().startOf('week').format('YYYY-MM-DD')).toBe('2024-04-29');
+    });
+
+    it('keeps locale and ISO week accessors, aliases, and setters separate', () => {
+      const value = moment.utc('2024-05-05').locale('en-US');
+      expect(value.weeks()).toBe(19);
+      expect(value.isoWeeks()).toBe(18);
+      expect(value.clone().set('weeks', 20).format('YYYY-MM-DD')).toBe('2024-05-12');
+      expect(value.clone().set('isoWeeks', 20).format('YYYY-MM-DD')).toBe('2024-05-19');
+    });
+
+    it('applies the week-start override to numbering as well as boundaries', () => {
+      moment.updateLocale('parity-intl-week', { parentLocale: 'en-US', week: { dow: 1 } });
+      const value = moment.utc('2024-05-05');
+      expect(value.week()).toBe(18);
+      expect(value.startOf('week').format('YYYY-MM-DD')).toBe('2024-04-29');
+    });
+
     it('gets the instance locale without changing it or adopting a later global locale', () => {
       const value = moment.utc('2024-05-06').locale('de');
       moment.locale('fr');
@@ -255,7 +276,81 @@ describe('moment compatibility parity', () => {
     });
   });
 
+  describe('DST wall-time parsing', () => {
+    it.each([Date.UTC(2024, 0, 15), Date.UTC(2024, 6, 15)])(
+      'chooses the earlier fold occurrence with the clock at %s',
+      (now) => {
+        Settings.now = () => now;
+        Settings.resetCaches();
+
+        expect(moment.tz('2024-11-03T01:30:00', 'America/New_York').toISOString()).toBe('2024-11-03T05:30:00.000Z');
+        expect(moment.tz('2024-11-03 01:30', 'YYYY-MM-DD HH:mm', 'America/New_York').toISOString()).toBe(
+          '2024-11-03T05:30:00.000Z'
+        );
+        expect(moment.tz([2024, 10, 3, 1, 30], 'America/New_York').toISOString()).toBe('2024-11-03T05:30:00.000Z');
+        expect(
+          moment.tz({ year: 2024, month: 10, day: 3, hour: 1, minute: 30 }, 'America/New_York').toISOString()
+        ).toBe('2024-11-03T05:30:00.000Z');
+      }
+    );
+
+    it('retains explicitly selected later occurrences', () => {
+      const later = moment.tz('2024-11-03T01:30:00-05:00', 'America/New_York');
+      expect(later.toISOString()).toBe('2024-11-03T06:30:00.000Z');
+      expect(moment.tz('2024-11-03 01:30 -0500', 'YYYY-MM-DD HH:mm ZZ', 'America/New_York').toISOString()).toBe(
+        '2024-11-03T06:30:00.000Z'
+      );
+      expect(moment.tz(1730615400000, 'America/New_York').toISOString()).toBe('2024-11-03T06:30:00.000Z');
+      expect(moment.tz('1730615400', 'X', 'America/New_York').toISOString()).toBe('2024-11-03T06:30:00.000Z');
+      expect(moment(later).add(0).toISOString()).toBe('2024-11-03T06:30:00.000Z');
+    });
+
+    it('keeps spring-gap adjustment forward', () => {
+      expect(moment.tz('2024-03-10T02:30:00', 'America/New_York').toISOString()).toBe('2024-03-10T07:30:00.000Z');
+    });
+  });
+
+  describe('UTC offset setters', () => {
+    it.each([
+      { input: 5.5, minutes: 330, formatted: '17:30 +05:30' },
+      { input: 16, minutes: 16, formatted: '12:16 +00:16' },
+      { input: '-0530', minutes: -330, formatted: '06:30 -05:30' },
+      { input: '+05', minutes: 300, formatted: '17:00 +05:00' },
+    ])('sets offset $input without changing the instant', ({ input, minutes, formatted }) => {
+      const value = moment.utc('2024-05-08T12:00:00Z').utcOffset(input);
+      expect(value.utcOffset()).toBe(minutes);
+      expect(value.format('HH:mm Z')).toBe(formatted);
+      expect(value.toISOString()).toBe('2024-05-08T12:00:00.000Z');
+    });
+
+    it('can preserve wall time and then convert the instant back to Z', () => {
+      const value = moment.utc('2024-05-08T12:00:00Z').locale('de');
+      expect(value.utcOffset('-05:00', true)).toBe(value);
+      expect(value.toISOString()).toBe('2024-05-08T17:00:00.000Z');
+      expect(value.locale()).toBe('de');
+      expect(value.utcOffset('Z').format('HH:mm Z')).toBe('17:00 +00:00');
+      expect(value.utcOffset('garbage')).toBe(value);
+      expect(value.utcOffset()).toBe(0);
+    });
+
+    it('replaces a named zone with a fixed offset for subsequent arithmetic', () => {
+      const value = moment.tz('2024-03-09T12:00:00', 'America/New_York').utcOffset(-300);
+      expect(value.add(1, 'day').format('YYYY-MM-DD HH:mm Z')).toBe('2024-03-10 12:00 -05:00');
+    });
+  });
+
   describe('construction and zone conversion', () => {
+    it('uses the requested zone and locale for empty-array input at the current instant', () => {
+      Settings.now = () => 1714996800000;
+      moment.locale('de');
+      const named = moment.tz([], 'America/New_York');
+
+      expect(moment.utc([]).format('HH:mm Z')).toBe('12:00 +00:00');
+      expect(named.format('HH:mm Z')).toBe('08:00 -04:00');
+      expect(named.format('MMMM')).toBe('Mai');
+      expect(named.valueOf()).toBe(1714996800000);
+    });
+
     it('preserves the locale and system-zone identity when copying a local instance', () => {
       const source = moment('2024-05-06T12:00:00').locale('de');
       moment.locale('fr');

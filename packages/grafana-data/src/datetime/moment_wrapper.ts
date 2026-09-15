@@ -12,7 +12,7 @@ export type { Moment };
 
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
-  __momentBuiltinFormatBrand: any;
+  __momentBuiltinFormatBrand: unknown;
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
@@ -55,7 +55,8 @@ export interface DateTime extends Object {
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
-  utcOffset: () => number;
+  utcOffset(): number;
+  utcOffset(value: number | string, keepLocalTime?: boolean): DateTime;
   hour?: () => number;
   minute?: () => number;
 }

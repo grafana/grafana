@@ -28,6 +28,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -71,6 +72,11 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+}
+
 type service struct {
 	services.NamedService
 
@@ -109,6 +115,7 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
 
 	// vpRegistry serves the resolved policy consulted by apistore.encode.
 	vpRegistry *versionpolicy.VersionPolicyRegistry
@@ -141,6 +148,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -168,6 +176,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -205,7 +214,7 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
@@ -213,6 +222,11 @@ func ProvideService(
 		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
 		k8sRoute.Get(snapshotPath, handler)
 		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+		// Allow unauthenticated GET of the SSO login-config singleton: the login
+		// page needs it before the user authenticates. The response is secret-free.
+		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
+		k8sRoute.Get(ssoLoginConfigPath, handler)
 
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
