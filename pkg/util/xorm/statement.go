@@ -100,8 +100,8 @@ func (statement *Statement) Init() {
 }
 
 var (
-	ptrPkType = reflect.TypeOf(&core.PK{})
-	pkType    = reflect.TypeOf(core.PK{})
+	ptrPkType = reflect.TypeFor[*core.PK]()
+	pkType    = reflect.TypeFor[core.PK]()
 )
 
 // NoAutoCondition if you do not want convert bean's field as query condition, then use this function
@@ -548,7 +548,7 @@ func (statement *Statement) ID(id any) *Statement {
 
 	switch idType.Kind() {
 	case reflect.String:
-		statement.idParam = &core.PK{idValue.Convert(reflect.TypeOf("")).Interface()}
+		statement.idParam = &core.PK{idValue.Convert(reflect.TypeFor[string]()).Interface()}
 		return statement
 	}
 

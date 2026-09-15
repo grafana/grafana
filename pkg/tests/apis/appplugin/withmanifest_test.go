@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,9 @@ const thingAPIVersion = testAppGroup + "/v1"
 func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5,
+		featuremgmt.FlagGrafanaUseRouterMiddleware, // The new router
+	)
 
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
@@ -217,23 +220,32 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	]`, disco)
 }
 
-// TestIntegrationPluginManifestOpenAPIV2 verifies the aggregate spec resolves manifest schemas.
-func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
+// TestIntegrationPluginManifestOpenAPIV3 verifies discovery links resolve the plugin's schemas.
+func TestIntegrationPluginManifestOpenAPIV3(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 
 	disco := helper.NewDiscoveryClient()
-	result := disco.RESTClient().Get().AbsPath("/openapi/v2").Do(context.Background())
-	require.NoError(t, result.Error())
-
-	var statusCode int
-	result.StatusCode(&statusCode)
-	require.Equal(t, 200, statusCode)
-
-	raw, err := result.Raw()
+	paths, err := disco.OpenAPIV3().Paths()
 	require.NoError(t, err)
-	require.Contains(t, string(raw), testAppGroup)
+	require.Contains(t, paths, "apis/"+testAppGroup+"/v1")
+	require.Contains(t, paths, "apis/"+testAppGroup+"/v0alpha1")
+	require.Contains(t, paths, "apis/folder.grafana.app/v1", "embedded APIs must remain discoverable")
+
+	raw, err := paths["apis/"+testAppGroup+"/v1"].Schema("application/json")
+	require.NoError(t, err)
+	doc, err := openapi3.NewLoader().LoadFromData(raw)
+	require.NoError(t, err, "all schema references must resolve")
+	path := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things/{name}"
+	thing := doc.Paths.Find(path)
+	require.NotNil(t, thing)
+	response := thing.Get.Responses.Status(http.StatusOK)
+	require.NotNil(t, response)
+	spec := response.Value.Content["application/json"].Schema.Value.Properties["spec"]
+	require.NotNil(t, spec)
+	require.True(t, spec.Value.Properties["foo"].Value.Type.Is("string"))
+	require.True(t, spec.Value.Properties["count"].Value.Type.Is("integer"))
 }
 
 // newThing is the body of a valid Thing, ready to be given a name.
@@ -269,7 +281,7 @@ func thingsClient(t *testing.T, helper *apis.K8sTestHelper) dynamic.ResourceInte
 func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	client := thingsClient(t, helper)
 	ctx := context.Background()
 
@@ -483,7 +495,7 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 func TestIntegrationPluginManifestFolderScopedKind(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	ctx := context.Background()
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -577,7 +589,10 @@ func createFolder(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper,
 func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagPluginStoreServiceLoading)
+	helper := setupHelperWithManifest(t, rest.Mode5,
+		featuremgmt.FlagGrafanaUseRouterMiddleware,
+		featuremgmt.FlagPluginStoreServiceLoading,
+	)
 
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
@@ -590,7 +605,7 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	client := helper.NewDiscoveryClient().RESTClient()
 	ctx := context.Background()
 
@@ -658,9 +673,8 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	raw, err = client.Get().AbsPath(route).DoRaw(ctx)
 	require.Error(t, err)
 
-	// The lazy v3 client returns a ServiceUnavailable, but httpadapter.HandlerFunc
-	// turns any CallRoute failure into a plain-text 500, so the status reason
-	// and the k8s Status body are both lost on the way out.
-	require.True(t, apierrors.IsInternalError(err), "got %v", err)
+	// The lazy v3 client returns a ServiceUnavailable, and httpadapter.HandlerFunc
+	// preserves APIStatus errors and their Kubernetes Status body.
+	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 	require.Contains(t, string(raw), "does not implement ClientV3")
 }

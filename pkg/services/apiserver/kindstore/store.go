@@ -291,12 +291,12 @@ func (s *Store) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 }
 
 // AllowCreateOnUpdate implements [rest.RESTUpdateStrategy].
-func (s *Store) AllowCreateOnUpdate() bool {
+func (s *Store) AllowCreateOnUpdate(ctx context.Context) bool {
 	return false
 }
 
 // AllowUnconditionalUpdate implements [rest.RESTUpdateStrategy].
-func (s *Store) AllowUnconditionalUpdate() bool {
+func (s *Store) AllowUnconditionalUpdate(ctx context.Context) bool {
 	return false
 }
 

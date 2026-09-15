@@ -114,6 +114,11 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
+  * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+  * @default false
+  */
+  ['alerting.ruleStatusSync']?: boolean;
+  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -228,6 +233,11 @@ export interface FeatureToggles {
   * @default false
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
+  /**
+  * Handle datasource proxy requests through the datasource API group endpoint.
+  * @default false
+  */
+  datasourcesApiServerEnableProxyEndpoint?: boolean;
   /**
   * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
@@ -610,11 +620,6 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
-  /**
-  * Enables step mode for alerting queries and expressions
-  * @default true
-  */
-  alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Use session storage for handling the redirection after login
   * @default true
@@ -1297,18 +1302,13 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
-  * Enables the new Flame Graph UI containing the Call Tree view
-  * @default false
-  */
-  flameGraphWithCallTree?: boolean;
-  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
   * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
+  * @default true
   */
   logsTablePanelNG?: boolean;
   /**

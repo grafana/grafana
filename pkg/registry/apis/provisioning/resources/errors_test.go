@@ -72,10 +72,9 @@ func TestResourceValidationError(t *testing.T) {
 		require.Len(t, unwrapped, 2, "Unwrap should return 2 errors for joined error")
 
 		// Check that one of the unwrapped errors is a BadRequest
-		var badRequestErr *apierrors.StatusError
 		foundBadRequest := false
 		for _, err := range unwrapped {
-			if errors.As(err, &badRequestErr) {
+			if _, ok := errors.AsType[*apierrors.StatusError](err); ok {
 				foundBadRequest = true
 				require.True(t, apierrors.IsBadRequest(err), "unwrapped error should be a BadRequest")
 				break
@@ -102,9 +101,8 @@ func TestResourceValidationError(t *testing.T) {
 		require.Len(t, unwrapped, 2)
 
 		// Find the BadRequest error in the unwrapped slice
-		var badRequestErr *apierrors.StatusError
 		for _, err := range unwrapped {
-			if errors.As(err, &badRequestErr) {
+			if _, ok := errors.AsType[*apierrors.StatusError](err); ok {
 				// errors.Is should work with the unwrapped BadRequest error
 				require.True(t, errors.Is(validationErr, err), "errors.Is should find the unwrapped BadRequest error")
 				break

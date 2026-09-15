@@ -46,10 +46,10 @@ type GrafanaAuthorizer struct {
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
 func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
-	authorizers := []authorizer.Authorizer{ //nolint:prealloc
-		NewImpersonationAuthorizer(),
-		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-		newNamespaceAuthorizer(),
+	authorizers := []union.NamedAuthorizer{ //nolint:prealloc
+		{AuthorizerName: "impersonation", Authorizer: NewImpersonationAuthorizer()},
+		{AuthorizerName: "privileged-groups", Authorizer: authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup)},
+		{AuthorizerName: "namespace", Authorizer: NewNamespaceAuthorizer()},
 	}
 
 	// Individual services may have explicit implementations
@@ -58,13 +58,17 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 		apis: apis,
 	}
 	// The apiVersion flavors will run first and can return early when FGAC has appropriate rules
-	authorizers = append(authorizers, &authorizerForAPI{apis: apis, mu: &ga.mu})
+	authorizers = append(authorizers, union.NamedAuthorizer{AuthorizerName: "api", Authorizer: &authorizerForAPI{apis: apis, mu: &ga.mu}})
 
 	// org role authorizer is last -- and will return allow for verbs that match expectations
 	// it is only helpful here for remote APIs in some cloud use-cases.
 	//nolint:staticcheck // remove once build handler chains are untangled between local and remote APIs handling
-	authorizers = append(authorizers, NewRoleAuthorizer())
-	ga.auth = union.New(authorizers...)
+	authorizers = append(authorizers, union.NamedAuthorizer{AuthorizerName: "role", Authorizer: NewRoleAuthorizer()})
+	auth, err := union.New(authorizers...)
+	if err != nil {
+		panic(err)
+	}
+	ga.auth = auth
 	return ga
 }
 
@@ -93,6 +97,16 @@ func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	return a.auth.Authorize(ctx, attr)
 }
 
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *GrafanaAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *GrafanaAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 type authorizerForAPI struct {
 	mu   *sync.RWMutex
 	apis map[string]authorizer.Authorizer
@@ -106,4 +120,14 @@ func (a *authorizerForAPI) Authorize(ctx context.Context, attr authorizer.Attrib
 		return auth.Authorize(ctx, attr)
 	}
 	return authorizer.DecisionNoOpinion, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *authorizerForAPI) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *authorizerForAPI) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }

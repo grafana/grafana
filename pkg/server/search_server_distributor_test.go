@@ -206,15 +206,13 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for _, testServer := range testServers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
 				require.NoError(t, err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 
@@ -367,7 +365,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil, nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,

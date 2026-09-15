@@ -3,6 +3,7 @@ package kvlease
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -237,6 +238,153 @@ func TestKVLeaseElector_MissingLeaseName(t *testing.T) {
 func TestKVLeaseElector_NilKVRejected(t *testing.T) {
 	_, err := New(nil, testElectionConfig(), "test", log.NewNopLogger(), nil)
 	require.Error(t, err)
+}
+
+func TestKVLeaseElector_RetriesAfterKVFailure(t *testing.T) {
+	tests := []struct {
+		name  string
+		store *failingAcquireKV
+	}{
+		{
+			name:  "listing leases",
+			store: &failingAcquireKV{mapKV: newMapKV(), failKeys: true},
+		},
+		{
+			name:  "reading latest lease",
+			store: newFailingGetKV(),
+		},
+		{
+			name:  "creating lease",
+			store: &failingAcquireKV{mapKV: newMapKV(), failBatch: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := testElectionConfig()
+			cfg.RetryPeriod = 10 * time.Millisecond
+			logger := &recordingLogger{}
+			elector, err := New(tt.store, cfg, "test", logger, nil, testElectorOpts()...)
+			require.NoError(t, err)
+
+			ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+			defer cancel()
+
+			leaderCalled := make(chan struct{})
+			done := make(chan error, 1)
+			go func() {
+				done <- elector.Run(ctx, func(ctx context.Context) {
+					close(leaderCalled)
+					<-ctx.Done()
+				})
+			}()
+
+			select {
+			case <-leaderCalled:
+			case err := <-done:
+				t.Fatalf("Run returned instead of retrying: %v", err)
+			case <-ctx.Done():
+				t.Fatal("leadership was not acquired after the KV store recovered")
+			}
+			require.Equal(t, []string{"Failed to acquire KV lease, retrying"}, logger.errorMessages())
+		})
+	}
+}
+
+func TestKVLeaseElector_CancellationStopsKVFailureRetry(t *testing.T) {
+	store := &failingAcquireKV{mapKV: newMapKV(), alwaysFailKeys: true}
+	cfg := testElectionConfig()
+	cfg.RetryPeriod = time.Hour
+	elector, err := New(store, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() {
+		done <- elector.Run(ctx, func(context.Context) {
+			t.Error("leader function must not run when lease acquisition fails")
+		})
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.keysCalls.Load() > 0
+	}, time.Second, time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not return promptly after cancellation")
+	}
+}
+
+type failingAcquireKV struct {
+	*mapKV
+	failKeys       bool
+	alwaysFailKeys bool
+	failGet        bool
+	failBatch      bool
+	keysCalls      atomic.Int32
+}
+
+type recordingLogger struct {
+	mu     sync.Mutex
+	errors []string
+}
+
+func (l *recordingLogger) New(...any) *log.ConcreteLogger { return log.NewNopLogger() }
+func (l *recordingLogger) Log(...any) error               { return nil }
+func (l *recordingLogger) Debug(string, ...any)           {}
+func (l *recordingLogger) Info(string, ...any)            {}
+func (l *recordingLogger) Warn(string, ...any)            {}
+func (l *recordingLogger) FromContext(context.Context) log.Logger {
+	return l
+}
+
+func (l *recordingLogger) Error(msg string, _ ...any) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.errors = append(l.errors, msg)
+}
+
+func (l *recordingLogger) errorMessages() []string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return slices.Clone(l.errors)
+}
+
+func newFailingGetKV() *failingAcquireKV {
+	store := newMapKV()
+	store.data["test-lease~00000000000000000001"] = []byte(`{"holder":"old","expires":1}`)
+	return &failingAcquireKV{mapKV: store, failGet: true}
+}
+
+func (m *failingAcquireKV) Keys(ctx context.Context, section string, opt kv.ListOptions) iter.Seq2[string, error] {
+	m.keysCalls.Add(1)
+	if m.alwaysFailKeys || m.failKeys {
+		m.failKeys = false
+		return func(yield func(string, error) bool) {
+			yield("", errors.New("temporary KV failure"))
+		}
+	}
+	return m.mapKV.Keys(ctx, section, opt)
+}
+
+func (m *failingAcquireKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if m.failGet {
+		m.failGet = false
+		return nil, errors.New("temporary KV failure")
+	}
+	return m.mapKV.Get(ctx, section, key)
+}
+
+func (m *failingAcquireKV) Batch(ctx context.Context, section string, ops []kv.BatchOp) error {
+	if m.failBatch {
+		m.failBatch = false
+		return errors.New("temporary KV failure")
+	}
+	return m.mapKV.Batch(ctx, section, ops)
 }
 
 // mapKV is a minimal in-memory KV for testing the elector.

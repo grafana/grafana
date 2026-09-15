@@ -1,6 +1,7 @@
 package appplugin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -176,13 +178,16 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 	manifest := *b.manifest
 	manifest.Group = b.group
 
-	built, err := searchroutes.BuildForServedGroupVersions(
+	built, err := searchroutes.BuildForServedGroupVersionsWithOptions(
 		[]*app.ManifestData{&manifest},
 		map[schema.GroupVersion]bool{gv: true},
 		b.opts.SearchAPIEnabled,
 		b.opts.TrashAPIEnabled,
 		b.tracer,
 		b.search,
+		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
+			return b.features != nil && b.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
+		}},
 	)
 	if err != nil {
 		return nil, err
