@@ -16,10 +16,24 @@ export interface NavEntryBuilder {
   build: () => NavModelItem | undefined;
 }
 
+/**
+ * Builds the visible items from a list of entries. A gate or builder that
+ * throws costs its own item and nothing else: these run while the redux store
+ * is being created, so an uncaught error would abort the whole tree — and with
+ * it navIndex — leaving every page rendering a not-found header. Entries come
+ * from enterprise and plugin code as well as core, so one bad config read
+ * should not be able to do that.
+ */
 export const buildEntries = (entries: NavEntryBuilder[]): NavModelItem[] =>
   entries
-    .filter((entry) => entry.when?.() ?? true)
-    .map((entry) => entry.build())
+    .map((entry) => {
+      try {
+        return (entry.when?.() ?? true) ? entry.build() : undefined;
+      } catch (error) {
+        console.error('[navtree] nav entry failed to build', error);
+        return undefined;
+      }
+    })
     .filter((item) => !!item);
 
 // Admin subsections that exist as attachment targets for plugin pages and

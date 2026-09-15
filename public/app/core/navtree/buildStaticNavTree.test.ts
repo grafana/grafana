@@ -504,4 +504,28 @@ describe('registered nav entries', () => {
     expect(warn).toHaveBeenCalledWith('[navtree] registered nav entry parent not found', 'no-such-section');
     warn.mockRestore();
   });
+
+  // The gates run inside configureStore, so an entry that throws must not take
+  // the rest of the tree — and navIndex — down with it
+  it('drops an entry whose gate throws and keeps the rest of the tree', () => {
+    setup({ permissions: DASHBOARD_READER });
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    addNavEntries({
+      parentId: NavID.dashboards,
+      entry: {
+        when: () => {
+          throw new Error('missing config');
+        },
+        build: () => ({ text: 'Exploding', id: 'exploding-entry' }),
+      },
+    });
+
+    const tree = buildStaticNavTree();
+
+    expect(findById(tree, 'exploding-entry')).toBeUndefined();
+    expect(findById(tree, NavID.dashboards)).toBeDefined();
+    expect(findById(tree, NavID.home)).toBeDefined();
+    expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
+    error.mockRestore();
+  });
 });
