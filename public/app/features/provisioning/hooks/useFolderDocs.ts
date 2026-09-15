@@ -7,15 +7,14 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { type FolderDoc, listFolderDocs } from '../utils/folderDocConventions';
 
+import { isFileItem } from './useGetRepositoryFolders';
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 import { useRefetchOnRepoSync } from './useRefetchOnRepoSync';
 
 export interface UseFolderDocsResult {
   repository?: RepositoryView;
   folder?: Folder;
-  /** Folder's source path relative to the repository root, without trailing slash. */
-  sourceDir: string;
-  /** Markdown docs found in the folder: conventions first, then other markdown. */
+  /** Markdown docs in the folder: README first (synthesized if missing), other conventions, then other markdown. */
   docs: FolderDoc[];
   /** True while resolving the repository or listing its files. */
   isLoading: boolean;
@@ -35,8 +34,7 @@ export interface UseFolderDocsResult {
 export function useFolderDocs(folderUID: string): UseFolderDocsResult {
   const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
 
-  const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
-  const sourceDir = sourcePath.replace(/\/+$/, '');
+  const sourceDir = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
 
   const shouldFetch = !!repository?.name && !!folderUID && !isRepoLoading;
 
@@ -50,17 +48,13 @@ export function useFolderDocs(folderUID: string): UseFolderDocsResult {
   useRefetchOnRepoSync(repository?.name, refetch);
 
   const docs = useMemo(() => {
-    const items = data?.items ?? [];
-    const paths = items
-      .map((item) => (item && typeof item === 'object' && 'path' in item ? String(item.path) : ''))
-      .filter(Boolean);
+    const paths = (data?.items ?? []).filter(isFileItem).map((item) => item.path);
     return listFolderDocs(paths, sourceDir);
   }, [data, sourceDir]);
 
   return {
     repository,
     folder,
-    sourceDir,
     docs,
     isLoading: isRepoLoading || isFilesLoading,
   };

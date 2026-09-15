@@ -29,7 +29,7 @@ const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
 ];
 
 /** The README convention is the default tab and drives the empty state. */
-export const README_CONVENTION = FOLDER_DOC_CONVENTIONS[0];
+const README_CONVENTION = FOLDER_DOC_CONVENTIONS[0];
 
 export interface FolderDoc {
   /** Set when the file is a recognized convention; undefined for other markdown. */
@@ -45,7 +45,7 @@ export interface FolderDoc {
  * `t()` calls so the strings are statically extractable — a dynamic `t(key)`
  * would not be.
  */
-export function getFolderDocLabel(key: FolderDocKey): string {
+function getFolderDocLabel(key: FolderDocKey): string {
   switch (key) {
     case 'readme':
       return t('browse-dashboards.readme.tab-readme', 'README');
@@ -67,6 +67,10 @@ export function getDocTabLabel(doc: FolderDoc): string {
  * first in their defined order; any other `.md` files follow, sorted
  * case-insensitively by file name. Only immediate children match — a
  * `README.md` in a sub-folder belongs to that sub-folder, not this one.
+ *
+ * A README tab is always first: when the file doesn't exist yet it is
+ * synthesized at the folder's default README path, so its "Add README"
+ * affordance and the other tabs stay reachable together.
  */
 export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDoc[] {
   const dir = stripTrailingSlashes(sourceDir);
@@ -103,22 +107,12 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
     docs.push({ path: file.path, fileName: file.fileName });
   }
 
-  return docs;
-}
-
-/**
- * Guarantees a README tab is present (first), synthesizing one at the folder's
- * default README path when the file doesn't exist yet. This keeps the README
- * tab — and its "Add README" affordance — visible even when the folder only has
- * other docs, so the rest of the tabs stay reachable.
- */
-export function ensureReadmeTab(docs: FolderDoc[], sourceDir: string): FolderDoc[] {
-  if (docs.some((doc) => doc.key === README_CONVENTION.key)) {
-    return docs;
+  if (!docs.some((doc) => doc.key === README_CONVENTION.key)) {
+    const path = dir ? `${dir}/${README_CONVENTION.fileName}` : README_CONVENTION.fileName;
+    docs.unshift({ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName });
   }
-  const dir = stripTrailingSlashes(sourceDir);
-  const path = dir ? `${dir}/${README_CONVENTION.fileName}` : README_CONVENTION.fileName;
-  return [{ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName }, ...docs];
+
+  return docs;
 }
 
 /** Whether a file name is a markdown doc (`.md`). */

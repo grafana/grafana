@@ -1,10 +1,4 @@
-import {
-  type FolderDoc,
-  ensureReadmeTab,
-  getDocTabLabel,
-  getFolderDocLabel,
-  listFolderDocs,
-} from './folderDocConventions';
+import { type FolderDoc, getDocTabLabel, listFolderDocs } from './folderDocConventions';
 
 describe('listFolderDocs', () => {
   it('lists convention docs first (in priority order), then other markdown alphabetically', () => {
@@ -43,14 +37,16 @@ describe('listFolderDocs', () => {
       ],
       'dashboards/team-a'
     );
-    expect(docs).toEqual([{ path: 'dashboards/team-a/notes.md', fileName: 'notes.md' }]);
+    expect(docs).toEqual([
+      // Synthesized: the extensionless `README` doesn't count.
+      { key: 'readme', path: 'dashboards/team-a/README.md', fileName: 'README.md' },
+      { path: 'dashboards/team-a/notes.md', fileName: 'notes.md' },
+    ]);
   });
 
-  it('matches convention file names case-insensitively', () => {
+  it('matches convention file names case-insensitively and keeps the actual file', () => {
     const docs = listFolderDocs(['dashboards/team-a/readme.md'], 'dashboards/team-a');
-    expect(docs).toHaveLength(1);
-    expect(docs[0].key).toBe('readme');
-    expect(docs[0].fileName).toBe('readme.md');
+    expect(docs).toEqual([{ key: 'readme', path: 'dashboards/team-a/readme.md', fileName: 'readme.md' }]);
   });
 
   it('ignores docs in sub-folders or parent folders', () => {
@@ -74,55 +70,38 @@ describe('listFolderDocs', () => {
 
   it('tolerates a trailing slash on the source dir', () => {
     const docs = listFolderDocs(['dashboards/team-a/README.md'], 'dashboards/team-a/');
-    expect(docs).toHaveLength(1);
+    expect(docs).toEqual([{ key: 'readme', path: 'dashboards/team-a/README.md', fileName: 'README.md' }]);
   });
 
-  it('returns nothing when no markdown docs exist', () => {
-    expect(listFolderDocs(['dashboards/team-a/dash.json'], 'dashboards/team-a')).toEqual([]);
-  });
-});
-
-describe('ensureReadmeTab', () => {
-  it('prepends a synthetic README tab when the folder has no README', () => {
-    const contributing: FolderDoc = {
-      key: 'contributing',
-      path: 'dashboards/team-a/CONTRIBUTING.md',
-      fileName: 'CONTRIBUTING.md',
-    };
-
-    const docs = ensureReadmeTab([contributing], 'dashboards/team-a');
+  it('prepends a synthetic README tab when the folder has other docs but no README', () => {
+    const docs = listFolderDocs(['dashboards/team-a/CONTRIBUTING.md'], 'dashboards/team-a');
 
     expect(docs.map((d) => d.key)).toEqual(['readme', 'contributing']);
     expect(docs[0]).toEqual({ key: 'readme', path: 'dashboards/team-a/README.md', fileName: 'README.md' });
   });
 
+  it('returns only a synthetic README when no markdown docs exist', () => {
+    expect(listFolderDocs(['dashboards/team-a/dash.json'], 'dashboards/team-a')).toEqual([
+      { key: 'readme', path: 'dashboards/team-a/README.md', fileName: 'README.md' },
+    ]);
+  });
+
   it('synthesizes the README at the repository root when there is no source dir', () => {
-    const docs = ensureReadmeTab([], '');
-    expect(docs).toEqual([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
-  });
-
-  it('leaves an existing README in place', () => {
-    const existing: FolderDoc = { key: 'readme', path: 'a/readme.md', fileName: 'readme.md' };
-    const docs = ensureReadmeTab([existing], 'a');
-    expect(docs).toEqual([existing]);
-  });
-});
-
-describe('getFolderDocLabel', () => {
-  it('returns the GitHub tab label for every convention', () => {
-    const labels = (['readme', 'contributing', 'security'] as const).map(getFolderDocLabel);
-    expect(labels).toEqual(['README', 'Contributing', 'Security']);
+    expect(listFolderDocs([], '')).toEqual([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
   });
 });
 
 describe('getDocTabLabel', () => {
-  it('uses the convention label for recognized docs', () => {
-    const doc: FolderDoc = { key: 'contributing', path: 'a/CONTRIBUTING.md', fileName: 'CONTRIBUTING.md' };
-    expect(getDocTabLabel(doc)).toBe('Contributing');
+  it('uses the GitHub tab label for every recognized convention', () => {
+    const labels = (['readme', 'contributing', 'security'] as const).map((key) =>
+      getDocTabLabel({ key, path: `a/${key}.md`, fileName: `${key}.md` })
+    );
+    expect(labels).toEqual(['README', 'Contributing', 'Security']);
   });
 
   it('uses the file name without extension for other markdown', () => {
-    expect(getDocTabLabel({ path: 'a/CHANGELOG.md', fileName: 'CHANGELOG.md' })).toBe('CHANGELOG');
+    const changelog: FolderDoc = { path: 'a/CHANGELOG.md', fileName: 'CHANGELOG.md' };
+    expect(getDocTabLabel(changelog)).toBe('CHANGELOG');
     expect(getDocTabLabel({ path: 'a/notes.MD', fileName: 'notes.MD' })).toBe('notes');
   });
 

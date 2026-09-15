@@ -1,6 +1,7 @@
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
@@ -64,7 +65,6 @@ function setDocs(overrides: Partial<UseFolderDocsResult> = {}) {
   mockUseFolderDocs.mockReturnValue({
     repository: mockRepository,
     folder: mockFolder,
-    sourceDir: 'dashboards/team-a',
     docs: [readmeDoc],
     isLoading: false,
     ...overrides,
@@ -73,11 +73,7 @@ function setDocs(overrides: Partial<UseFolderDocsResult> = {}) {
 
 function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
   mockUseFolderReadme.mockReturnValue({
-    repository: mockRepository,
-    folder: mockFolder,
-    readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
-    isLoading: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     syncFinished: undefined,
@@ -93,6 +89,12 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    // locationUtil keeps module-level config, so reset it between tests
+    locationUtil.initialize({
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
     setDocs();
     setReadmeResult();
   });
@@ -181,6 +183,25 @@ describe('FolderReadmePanel', () => {
       );
     });
 
+    it('prefixes tab hrefs with the configured app sub url', () => {
+      // Cmd/middle-click and copy-link bypass the router, so the href itself has
+      // to be valid under a subpath install.
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+      setDocs({ docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md')] });
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/dashboards/f/test-folder'] },
+      });
+
+      expect(screen.getByRole('tab', { name: 'Contributing' })).toHaveAttribute(
+        'href',
+        '/grafana/dashboards/f/test-folder?docTab=CONTRIBUTING.md'
+      );
+    });
+
     it('switches the active doc via the URL and reports an interaction when a tab is clicked', async () => {
       const contributing = doc('contributing', 'CONTRIBUTING.md');
       setDocs({ docs: [readmeDoc, contributing] });
@@ -190,7 +211,7 @@ describe('FolderReadmePanel', () => {
 
       expect(locationService.getSearchObject()).toEqual({ docTab: 'CONTRIBUTING.md' });
       expect(screen.getByRole('tab', { name: 'Contributing' })).toHaveAttribute('aria-selected', 'true');
-      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', contributing.path);
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'contributing' });
     });
 
@@ -202,7 +223,7 @@ describe('FolderReadmePanel', () => {
         historyOptions: { initialEntries: ['/?docTab=CONTRIBUTING.md'] },
       });
 
-      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', contributing.path);
     });
 
     it('reports "other" for a non-convention doc selection', async () => {
@@ -213,15 +234,6 @@ describe('FolderReadmePanel', () => {
       await user.click(screen.getByRole('tab', { name: 'CHANGELOG' }));
 
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'other' });
-    });
-
-    it('still shows the other doc tabs (plus a README tab) when the README file is missing', () => {
-      // useFolderDocs only discovers files that exist — no README here.
-      setDocs({ docs: [doc('security', 'SECURITY.md')] });
-      setup();
-
-      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
     });
   });
 
@@ -387,9 +399,10 @@ describe('FolderReadmePanel', () => {
     });
   });
 
-  describe('Add README empty state (no recognized docs)', () => {
+  describe('Add README empty state (README file missing)', () => {
     beforeEach(() => {
-      setDocs({ docs: [] });
+      // useFolderDocs always lists a README tab, synthesized when the file is absent.
+      setDocs({ docs: [readmeDoc] });
       setReadmeResult({ status: 'missing', markdownContent: undefined });
     });
 
@@ -464,16 +477,16 @@ describe('FolderReadmePanel', () => {
   });
 
   it('renders nothing when the folder is not provisioned', () => {
-    setDocs({ repository: undefined, docs: [] });
-    setReadmeResult({ repository: undefined });
+    setDocs({ repository: undefined, docs: [readmeDoc] });
+    setReadmeResult({ status: 'loading', markdownContent: undefined });
 
     const { container } = setup();
     expect(container).toBeEmptyDOMElement();
   });
 
   it('shows a loading indicator while discovery is in progress', () => {
-    setDocs({ repository: undefined, docs: [], isLoading: true });
-    setReadmeResult({ status: 'loading', isLoading: true, repository: undefined });
+    setDocs({ repository: undefined, docs: [readmeDoc], isLoading: true });
+    setReadmeResult({ status: 'loading', markdownContent: undefined });
 
     setup();
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
@@ -481,7 +494,7 @@ describe('FolderReadmePanel', () => {
   });
 
   it('shows a loading indicator while the doc content is loading', () => {
-    setReadmeResult({ status: 'loading', isLoading: true, markdownContent: undefined });
+    setReadmeResult({ status: 'loading', markdownContent: undefined });
 
     setup();
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();

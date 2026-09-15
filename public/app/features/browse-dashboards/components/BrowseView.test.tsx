@@ -181,24 +181,22 @@ describe('browse-dashboards BrowseView', () => {
       workflows: [],
     } as never;
 
-    function mockDocs(docs: useFolderDocsModule.UseFolderDocsResult['docs'] = []) {
+    const readmeDoc = { key: 'readme' as const, path: 'README.md', fileName: 'README.md' };
+
+    // useFolderDocs always lists a README tab first, synthesized when the file is absent.
+    function mockDocs(docs: useFolderDocsModule.UseFolderDocsResult['docs'] = [readmeDoc]) {
       jest.spyOn(useFolderDocsModule, 'useFolderDocs').mockReturnValue({
         repository: mockRepository,
         folder: undefined,
-        sourceDir: '',
         docs,
         isLoading: false,
       });
     }
 
     function mockReadme(markdownContent = '# README\n\nbody') {
-      mockDocs([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
+      mockDocs();
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: mockRepository,
-        folder: undefined,
-        readmePath: 'README.md',
         status: 'ok',
-        isLoading: false,
         markdownContent,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -206,13 +204,9 @@ describe('browse-dashboards BrowseView', () => {
     }
 
     function mockReadmeMissing() {
-      mockDocs([]);
+      mockDocs();
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: mockRepository,
-        folder: undefined,
-        readmePath: 'README.md',
         status: 'missing',
-        isLoading: false,
         markdownContent: undefined,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -327,16 +321,9 @@ describe('browse-dashboards BrowseView', () => {
 
     it('keeps a ?docTab= deep link when navigating from one folder to another', async () => {
       setTestFlags({ 'provisioning.readmes': true });
-      mockDocs([
-        { key: 'readme', path: 'README.md', fileName: 'README.md' },
-        { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' },
-      ]);
+      mockDocs([readmeDoc, { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' }]);
       const readmeSpy = jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: mockRepository,
-        folder: undefined,
-        readmePath: 'README.md',
         status: 'ok',
-        isLoading: false,
         markdownContent: '# README',
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -367,7 +354,7 @@ describe('browse-dashboards BrowseView', () => {
       );
 
       expect(await screen.findByRole('tab', { name: 'Security' })).toHaveAttribute('aria-selected', 'true');
-      expect(readmeSpy).toHaveBeenLastCalledWith(folderC.item.uid, 'SECURITY.md');
+      expect(readmeSpy).toHaveBeenLastCalledWith('r', 'SECURITY.md');
     });
   });
 });

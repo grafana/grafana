@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
-import { type GrafanaTheme2, renderMarkdown, textUtil, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
@@ -13,17 +13,10 @@ import {
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
-import {
-  type FolderDoc,
-  ensureReadmeTab,
-  FOLDER_DOC_TAB_PARAM,
-  getDocTabLabel,
-  README_CONVENTION,
-} from '../../utils/folderDocConventions';
+import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
@@ -58,25 +51,19 @@ export function FolderReadmePanel({ folderUID }: Props) {
 
 function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, docs: foundDocs, sourceDir, isLoading: isDiscovering } = useFolderDocs(folderUID);
-
-  // Always surface a README tab (first) — synthesized when the file is missing —
-  // so its "Add README" affordance and the other tabs stay reachable together.
-  const docs = useMemo(() => ensureReadmeTab(foundDocs, sourceDir), [foundDocs, sourceDir]);
+  const { repository, folder, docs, isLoading: isDiscovering } = useFolderDocs(folderUID);
 
   // The active tab lives in the URL so it's deep-linkable and survives reloads.
-  // Falls back to the first (highest-priority) doc — README when present.
+  // Falls back to the first doc, which is always the README.
   const location = useLocation();
-  const [queryParams] = useQueryParams();
-  const activeTab =
-    typeof queryParams[FOLDER_DOC_TAB_PARAM] === 'string' ? queryParams[FOLDER_DOC_TAB_PARAM] : undefined;
+  const activeTab = new URLSearchParams(location.search).get(FOLDER_DOC_TAB_PARAM);
   const activeIndex = Math.max(
     0,
     docs.findIndex((doc) => doc.fileName === activeTab)
   );
   const activeDoc = docs[activeIndex];
 
-  const { status, markdownContent, readmePath, refetch, syncFinished } = useFolderReadme(folderUID, activeDoc.path);
+  const { status, markdownContent, refetch, syncFinished } = useFolderReadme(repository?.name, activeDoc.path);
 
   const sectionRef = useRef<HTMLElement>(null);
   // TODO remove when react-use is fixed
@@ -104,9 +91,9 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   }
 
   // Tabs are links (`?docTab=<file>`), so navigation is handled by the app's
-  // global link interception; the click handler only reports analytics.
-  const tabHref = (doc: FolderDoc) =>
-    urlUtil.renderUrl(location.pathname, { ...queryParams, [FOLDER_DOC_TAB_PARAM]: doc.fileName });
+  // global link interception; the click handler only reports analytics. The href
+  // carries the app sub-path so open-in-new-tab / copy-link work on subpath installs.
+  const tabHref = (doc: FolderDoc) => locationUtil.getUrlForPartial(location, { [FOLDER_DOC_TAB_PARAM]: doc.fileName });
   const reportTabSelected = (doc: FolderDoc) => {
     if (repository) {
       FolderReadmeEvents.tabSelected({ repositoryType: repository.type, doc: doc.key ?? 'other' });
@@ -115,14 +102,14 @@ function FolderReadmePanelContent({ folderUID }: Props) {
 
   // The empty "Add README" state only makes sense for the README itself; another
   // doc that fails to load is a load error, not a missing README.
-  const isReadmeContext = activeDoc.key === README_CONVENTION.key;
+  const isReadmeContext = activeDoc.key === 'readme';
 
   const editUrl = repository
     ? getRepoEditFileUrl({
         repoType: repository.type,
         url: repository.url,
         branch: repository.branch,
-        filePath: readmePath,
+        filePath: activeDoc.path,
         pathPrefix: repository.path,
       })
     : undefined;
@@ -132,7 +119,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
         repoType: repository.type,
         url: repository.url,
         branch: repository.branch,
-        filePath: readmePath,
+        filePath: activeDoc.path,
         pathPrefix: repository.path,
         template: buildReadmeTemplate(folder?.spec?.title ?? ''),
       })
@@ -179,7 +166,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           status={isDiscovering ? 'loading' : status}
           markdownContent={markdownContent}
           repository={repository}
-          readmePath={readmePath}
+          readmePath={activeDoc.path}
           newFileUrl={newFileUrl}
           isReadmeContext={isReadmeContext}
           refetch={refetch}
