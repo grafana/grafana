@@ -1148,12 +1148,52 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 }
 
 func TestValidateRuleNodeEmptyLabelKey(t *testing.T) {
+	// ValidateRuleNode no longer rejects empty label keys: legacy rules can
+	// already have an empty key in storage, and rejecting the key in the
+	// per-rule validator would block the whole group from being edited (#130220).
+	// The empty-key check moved to ValidateEmptyLabelKey, called from
+	// validateEmptyLabelKeyInDelta in api_ruler.go on the change delta.
 	cfg := config(t)
 	limits := makeLimits(cfg)
 
 	r := validRule()
 	r.Labels = map[string]string{"": "true"}
 	_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int64N(10)+1), rand.Int64(), randFolder().UID, limits)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "label key cannot be empty")
+	require.NoError(t, err)
+}
+
+func TestValidateEmptyLabelKey(t *testing.T) {
+	t.Run("rejects empty key with rule title and UID", func(t *testing.T) {
+		rule := &models.AlertRule{
+			Title: "My Rule",
+			UID:   "abc123",
+			Labels: map[string]string{
+				"": "orphan-value",
+			},
+		}
+		err := ValidateEmptyLabelKey(rule)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "rule 'My Rule' (UID: abc123)")
+		require.ErrorContains(t, err, "label with an empty key")
+	})
+
+	t.Run("accepts rules with all valid keys", func(t *testing.T) {
+		rule := &models.AlertRule{
+			Title:  "My Rule",
+			UID:    "abc123",
+			Labels: map[string]string{"severity": "warning", "team": "platform"},
+		}
+		require.NoError(t, ValidateEmptyLabelKey(rule))
+	})
+
+	t.Run("accepts rule with no labels", func(t *testing.T) {
+		rule := &models.AlertRule{Title: "Bare", UID: "bare"}
+		require.NoError(t, ValidateEmptyLabelKey(rule))
+	})
+
+	t.Run("accepts rule with empty labels map", func(t *testing.T) {
+		rule := &models.AlertRule{Title: "Empty", UID: "empty", Labels: map[string]string{}}
+		require.NoError(t, ValidateEmptyLabelKey(rule))
+	})
 }
