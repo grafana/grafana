@@ -9,10 +9,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
+
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -85,12 +92,27 @@ type ExternalRulerSyncer struct {
 
 	lastSyncHashMu sync.RWMutex
 	lastSyncHash   map[int64]uint64
+
+	// clientGenerator and namespaceMapper are required; NewExternalRulerSyncer's
+	// callers always pass real ones. The k8s client itself is built lazily from
+	// clientGenerator, NOT in NewExternalRulerSyncer: eager construction
+	// deadlocks during DI, since the ClientGenerator blocks on the apiserver
+	// being ready, which can't happen while we hold the main init goroutine.
+	// See resolveCfgClient.
+	clientGenerator resource.ClientGenerator
+	namespaceMapper request.NamespaceMapper
+
+	cfgClientMu sync.Mutex
+	cfgClient   *alertingrulesv0alpha1.ConfigClient
 }
 
 // NewExternalRulerSyncer constructs an ExternalRulerSyncer. The ruler config GET
 // is routed through the datasource proxy service (transport, auth and egress
-// validation are handled there). The syncer runs from the external_ruler_uid
-// ini setting alone.
+// validation are handled there). The operator-level external_ruler_uid ini
+// setting is always the enable signal for itself; per-org sync driven by the
+// rules Config resource's spec.externalRulerSync.datasourceUid needs no
+// separate flag either — an org Admin setting that field is itself the
+// enable signal, the same way the ini setting is for the operator.
 func NewExternalRulerSyncer(
 	settings *setting.UnifiedAlertingSettings,
 	logger log.Logger,
@@ -101,6 +123,8 @@ func NewExternalRulerSyncer(
 	namespaceStore namespaceStore,
 	orgStore orgStore,
 	folderPermissions accesscontrol.FolderPermissionsService,
+	clientGenerator resource.ClientGenerator,
+	namespaceMapper request.NamespaceMapper,
 ) *ExternalRulerSyncer {
 	return &ExternalRulerSyncer{
 		settings:          settings,
@@ -113,18 +137,148 @@ func NewExternalRulerSyncer(
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
 		lastSyncHash:      make(map[int64]uint64),
+		clientGenerator:   clientGenerator,
+		namespaceMapper:   namespaceMapper,
 	}
 }
 
-// Run polls all orgs at AdminConfigPollInterval until ctx is cancelled. It is a
-// no-op unless the operator configured a ruler datasource via the
-// external_ruler_uid setting — that setting is the enable signal (there is no
-// separate feature flag).
-func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
-	if s.settings.ExternalRulerUID == "" {
-		s.logger.Debug("External ruler sync not configured (external_ruler_uid unset); not starting")
-		return nil
+// resolveCfgClient lazily builds and caches the rules Config client. Built
+// lazily (not in NewExternalRulerSyncer) because the ClientGenerator blocks
+// until the apiserver is ready, which would deadlock during DI. The successful
+// client is cached, but construction failures are NOT: the next call retries,
+// so a transient apiserver-not-ready at the first tick doesn't disable the API
+// sync path until the process restarts.
+func (s *ExternalRulerSyncer) resolveCfgClient() (*alertingrulesv0alpha1.ConfigClient, error) {
+	s.cfgClientMu.Lock()
+	defer s.cfgClientMu.Unlock()
+	if s.cfgClient != nil {
+		return s.cfgClient, nil
 	}
+	c, err := alertingrulesv0alpha1.NewConfigClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		return nil, fmt.Errorf("construct Config client: %w", err)
+	}
+	s.cfgClient = c
+	return s.cfgClient, nil
+}
+
+// orgServiceContext wraps ctx with a service identity scoped to the org's
+// namespace for in-process k8s calls.
+func (s *ExternalRulerSyncer) orgServiceContext(ctx context.Context, orgID int64) (context.Context, string) {
+	ns := s.namespaceMapper(orgID)
+	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns), ns
+}
+
+// resolvedRulerSync is the effective external-ruler-sync configuration for one
+// org, after applying the ini override. A zero value (uid == "") means sync
+// isn't configured for the org.
+type resolvedRulerSync struct {
+	uid    string // datasource to sync rules from
+	origin externalSyncOrigin
+}
+
+// resolveExternalRulerConfig computes the effective sync config for the org.
+// The operator-level ExternalRulerUID ini setting takes precedence over the
+// per-org value. The per-org value is read from the rules Config k8s resource;
+// if its client can't be constructed the sync fails for this tick rather than
+// falling back to anything.
+func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedRulerSync, error) {
+	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
+		return resolvedRulerSync{uid: iniUID, origin: originIni}, nil
+	}
+
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		return resolvedRulerSync{}, err
+	}
+	nsCtx, ns := s.orgServiceContext(ctx, orgID)
+	cfg, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return resolvedRulerSync{origin: originAPI}, nil
+		}
+		return resolvedRulerSync{}, err
+	}
+	return resolvedRulerSync{
+		uid:    externalRulerSyncDatasourceUIDFromConfig(cfg),
+		origin: originAPI,
+	}, nil
+}
+
+// writeStatus upserts the org's Config.status using compute(prev), creating the
+// resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
+// logged). Unchanged status produces no physical write (unified storage
+// dedup).
+func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) {
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		s.logger.Warn("Failed to resolve Config client for status write", "org_id", orgID, "error", err)
+		return
+	}
+	nsCtx, ns := s.orgServiceContext(ctx, orgID)
+	if ns == "" {
+		return
+	}
+	id := resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName}
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		existing, getErr := c.Get(nsCtx, id)
+		if k8serrors.IsNotFound(getErr) {
+			// Seed .Status on Create. Unified storage persists the whole object on
+			// Create today; a future migration to a real /status subresource would
+			// silently drop this — at that point swap to UpdateStatus.
+			r := &alertingrulesv0alpha1.Config{
+				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName},
+				Status:     compute(nil),
+			}
+			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
+				// AlreadyExists -> another writer raced us. Surface as a conflict so
+				// RetryOnConflict re-enters and sees the existing object.
+				if k8serrors.IsAlreadyExists(createErr) {
+					return k8serrors.NewConflict(alertingrulesv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
+				}
+				return createErr
+			}
+			return nil
+		}
+		if getErr != nil {
+			return getErr
+		}
+		_, updateErr := c.UpdateStatus(nsCtx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+		return updateErr
+	})
+	if err != nil {
+		s.logger.Warn("Failed to write Config status", "org_id", orgID, "error", err)
+	}
+}
+
+// recordSyncResult writes the latest sync outcome (nil = success) onto the
+// org's Config.status.
+func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeSyncStatus(prev, uid, origin, syncErr, now)
+	})
+}
+
+// recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
+// the singleton if absent (writeStatus creates on missing). Best-effort. Called
+// only when the API path is reachable (flag on) but no datasourceUid is set —
+// an install that never touches the API path never gets a Config resource
+// created for it.
+func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeNotConfiguredStatus(prev, now)
+	})
+}
+
+// Run polls all orgs at AdminConfigPollInterval until ctx is cancelled. Always
+// starts the ticker: sync can be enabled either operator-wide via the
+// external_ruler_uid ini setting or per-org via the rules Config resource,
+// and only a per-org tick can tell which — see resolveExternalRulerConfig.
+// Each tick is cheap for an org with neither configured.
+func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
 	s.logger.Info("Starting external ruler syncer", "poll_interval", s.settings.AdminConfigPollInterval)
 	ticker := time.NewTicker(s.settings.AdminConfigPollInterval)
 	defer ticker.Stop()
@@ -152,11 +306,16 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 	}
 }
 
-// IsConfiguredForOrg reports whether external ruler sync is configured — i.e.
-// the external_ruler_uid ini setting is set. Used by the convert API to reject
-// manual rule imports while sync owns the org's rules.
-func (s *ExternalRulerSyncer) IsConfiguredForOrg(_ context.Context, _ int64) (bool, error) {
-	return s.settings.ExternalRulerUID != "", nil
+// IsConfiguredForOrg reports whether external ruler sync is configured for the
+// given org — i.e. resolveExternalRulerConfig (ini override or the rules
+// Config resource) resolves a non-empty datasource UID. Used by the convert
+// API to reject manual rule imports while sync owns the org's rules.
+func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
+	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	return rc.uid != "", nil
 }
 
 // IsManagedFolder reports whether folderUID is inside the org's sync-managed
@@ -166,12 +325,15 @@ func (s *ExternalRulerSyncer) IsConfiguredForOrg(_ context.Context, _ int64) (bo
 // unrelated folders are still allowed. If the root folder doesn't exist yet
 // nothing is managed, so this returns false (allow).
 func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error) {
-	uid := s.settings.ExternalRulerUID
-	if uid == "" {
+	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	if rc.uid == "" {
 		return false, nil
 	}
 	svcCtx, user := identity.WithServiceIdentity(ctx, orgID)
-	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(uid), orgID, user, "")
+	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return false, nil
@@ -198,18 +360,39 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 // failures are logged and counted so a bad org can't break the others.
 func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	orgIDStr := strconv.FormatInt(orgID, 10)
+	// Declared here, not at its resolve call below, so the panic-recover
+	// closure can read its uid/origin for the status write. Zero-valued until
+	// resolveExternalRulerConfig actually runs, so a panic that happens before
+	// or during that resolve still gets a real (if less specific) failure
+	// record instead of nothing.
+	var rc resolvedRulerSync
 	// A panic in a per-org tick (conversion, datasource proxy, upstream response)
-	// must not crash the background syncer goroutine and the process; recover and
-	// record it like any other per-org failure.
+	// must not crash the background syncer goroutine and the process; recover
+	// and record it like any other per-org failure. recordFailure both
+	// increments the failure metric and writes status, so this is the only
+	// place that needs to do either.
 	defer func() {
 		if r := recover(); r != nil {
 			s.logger.Error("External ruler sync panicked", "org_id", orgID, "panic", r, "stack", string(debug.Stack()))
-			s.metrics.SyncFailures.WithLabelValues(orgIDStr, ReasonPanic.Label()).Inc()
+			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonPanic, Cause: fmt.Errorf("panic: %v", r)})
 		}
 	}()
 
-	uid := s.settings.ExternalRulerUID
-	if uid == "" {
+	var err error
+	rc, err = s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		s.logger.Warn("Failed to resolve external ruler config", "org_id", orgID, "error", err)
+		return
+	}
+	if rc.uid == "" {
+		if rc.origin == originAPI {
+			// The API path is reachable and the Config resource was checked, but no
+			// datasourceUid is set: seed/report NotConfigured so the singleton
+			// exists without a manual create. An install that never reaches the API
+			// path (no ini override, no per-org datasourceUid set) gets no Config
+			// resource and no status write at all.
+			s.recordNotConfigured(ctx, orgID)
+		}
 		return
 	}
 
@@ -218,9 +401,9 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	start := time.Now()
 	defer func() { s.metrics.SyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds()) }()
 
-	ds, err := s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: uid, OrgID: orgID})
+	ds, err := s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.uid, OrgID: orgID})
 	if err != nil {
-		s.recordFailure(orgID, orgIDStr, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
 		return
 	}
 	// TODO: validate the datasource (prometheus-compatible + Mimir flavor) at the
@@ -228,7 +411,8 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	// Alertmanager sync's input-time check. The operator-set ini datasource is
 	// trusted here (as the AM ini path is).
 	//
-	// Recording rules write to the same datasource they are queried from.
+	// Recording rules write to the same datasource they are queried from unless
+	// spec.externalRulerSync.targetDatasourceUid overrides it (API path only).
 	targetDS := ds
 
 	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
@@ -237,7 +421,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		if errors.Is(err, ErrNotARuler) {
 			reason = ReasonNotARuler
 		}
-		s.recordFailure(orgID, orgIDStr, &SyncError{Reason: reason, Cause: err})
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: reason, Cause: err})
 		return
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
@@ -252,7 +436,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	}
 
 	if applyErr := s.apply(svcCtx, svcUser, orgID, ds, targetDS, cfg); applyErr != nil {
-		s.recordFailure(orgID, orgIDStr, applyErr)
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, applyErr)
 		return
 	}
 
@@ -261,6 +445,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.lastSyncHashMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
+	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil)
 }
 
 type groupKey struct {
@@ -383,8 +568,10 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 	return nil
 }
 
-// recordFailure logs a classified failure and increments the failures metric.
-func (s *ExternalRulerSyncer) recordFailure(orgID int64, orgIDStr string, syncErr *SyncError) {
+// recordFailure logs a classified failure, increments the failures metric, and
+// folds the outcome into the org's Config.status.
+func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
+	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
 }
