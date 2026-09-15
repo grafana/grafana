@@ -100,7 +100,7 @@ function interpolateMatcherOptions(matcherOptions: unknown, replaceVariables?: I
   }
 
   if (typeof matcherOptions === 'string') {
-    return replaceVariables(matcherOptions);
+    return replaceVariables(matcherOptions, undefined, VariableFormatID.Regex);
   }
 
   if (
@@ -112,7 +112,7 @@ function interpolateMatcherOptions(matcherOptions: unknown, replaceVariables?: I
     const options = matcherOptions as { pattern: string };
     return {
       ...options,
-      pattern: replaceVariables(options.pattern),
+      pattern: replaceVariables(options.pattern, undefined, VariableFormatID.Regex),
     };
   }
 
