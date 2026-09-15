@@ -215,8 +215,8 @@ github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmO
 github.com/apache/arrow-go/v18 v18.5.2 h1:3uoHjoaEie5eVsxx/Bt64hKwZx4STb+beAkqKOlq/lY=
 github.com/apache/arrow-go/v18 v18.5.2/go.mod h1:yNoizNTT4peTciJ7V01d2EgOkE1d0fQ1vZcFOsVtFsw=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
-github.com/apache/thrift v0.23.1-0.20260429145742-d2acd3c49e58 h1:rDLE+tSW60VzRD7v5I+DU22Mjhmm+mfLc5Xl5dHkx6w=
-github.com/apache/thrift v0.23.1-0.20260429145742-d2acd3c49e58/go.mod h1:zPt6WxgvTOM6hF92y8C+MkEM5LMxZuk4JcQOiU4Esvs=
+github.com/apache/thrift v0.24.0 h1:zy31L1a49QTNB2bG1BBfMXol3yJrTH975G3pPubQVLQ=
+github.com/apache/thrift v0.24.0/go.mod h1:zPt6WxgvTOM6hF92y8C+MkEM5LMxZuk4JcQOiU4Esvs=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
 github.com/apparentlymart/go-textseg/v15 v15.0.0 h1:uYvfpb3DyLSCGWnctWKGj857c6ew1u1fNQOlOtuGxQY=
@@ -889,8 +889,8 @@ github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f h1:fTlIj5n
 github.com/grafana/pyroscope/api v1.2.1-0.20251118081820-ace37f973a0f/go.mod h1:VBNcIhunCZsJ3/mcYx+j7uFf0P/108eiWa+8+Z9ll3o=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7EAJ0BHIethd+J6LqxFNw5mSiI2bM=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
-github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 h1:eE5H7yF7ajvPapPmTWQyQebd3OB3xp1xZqhX/7LNMfs=
-github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
+github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6 h1:0vKwR5tCpriVVMy1BCqYXISlJZLWhwTV55m7TkpjjZQ=
+github.com/grafana/saml v0.4.15-0.20260724082031-0c3051b8b3c6/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
 github.com/grafana/sqlds/v5 v5.0.4 h1:Q4T4wXI5tolN1EUQtN81I4SGBFlBF4tD8XYh34/kk24=
 github.com/grafana/sqlds/v5 v5.0.4/go.mod h1:BvFzzPgc2bmr3R78s1TuZr2gOELpBM9tt6m1DKI8Ts4=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 h1:kE5kdMnyPJmlNUdWhahfzqPYB3vM8DtAxgWymbB8nOA=
