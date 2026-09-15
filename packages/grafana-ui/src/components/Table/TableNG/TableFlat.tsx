@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
@@ -36,6 +36,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -445,6 +446,8 @@ export function TableFlat(props: TableNGProps) {
     pageSize,
     noPanelPadding,
   });
+  const showPagination = enablePagination && numRows > 0;
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {
@@ -549,6 +552,7 @@ export function TableFlat(props: TableNGProps) {
       onColumnResize={resizeHandler}
       onColumnsReorder={tableRefreshEnabled ? handleColumnsReorder : undefined}
       onCellClick={onCellClick}
+      className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
           event.preventGridDefault();
