@@ -37,10 +37,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	mg.AddCreateMigration()
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
-	addStarMigrations(mg)
 	addOrgMigrations(mg)
 	addDashboardMigration(mg) // Do NOT add more migrations to this function.
-	addDashboardUIDStarMigrations(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
@@ -189,6 +187,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleStateBigIntMigration(mg)
 
 	mg.AddObsoleteMigration(obsolete.PlaylistMigrations())
+	mg.AddObsoleteMigration(obsolete.StarsMigrations())
 
 	ualert.CollateBinAlertRuleFolderFullpath(mg)
 }
