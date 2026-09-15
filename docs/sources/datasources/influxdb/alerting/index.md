@@ -16,7 +16,7 @@ labels:
 menuTitle: Alerting
 title: InfluxDB alerting
 weight: 550
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB alerting
@@ -124,6 +124,19 @@ Complex queries with many nested functions or large result sets may timeout or f
 - Reducing the time range
 - Using appropriate aggregation intervals
 - Adding filters to limit the data scanned
+
+## Handle transient errors and timeouts
+
+Brief InfluxDB latency spikes or network interruptions can cause alert rule evaluations to fail. By default, a failed evaluation moves the rule into an error state, which can trigger a large number of spurious notifications at once even though your data is healthy.
+
+To make alert rules resilient to transient errors:
+
+1. In the alert rule settings, expand **Configure no data and error handling** and set **Alert state if execution error or timeout** to **Keep Last State**. The rule keeps its previous state through brief evaluation failures instead of firing an error alert.
+1. Set a **Pending period** so the alert condition must be met for a sustained period across multiple evaluations before the alert fires.
+1. If evaluations fail because queries run out of time, increase the data source timeout. Refer to [Advanced HTTP settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/#advanced-http-settings) for details.
+1. Simplify or narrow alert queries so they complete well within the timeout. Refer to [Query complexity](#query-complexity) for guidance.
+
+For more information about error state handling, refer to [No data and error handling](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling).
 
 ## Best practices
 

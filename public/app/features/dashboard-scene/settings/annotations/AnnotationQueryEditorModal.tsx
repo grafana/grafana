@@ -7,7 +7,7 @@ import { Button, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { edit } from '../../actions/utils/edit';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 
@@ -59,7 +59,7 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
             }
           : { ...query, datasource: dsRef };
 
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.sidebar.annotation.change-data-source', 'Change annotation data source'),
         source: layer,
         perform: () => {

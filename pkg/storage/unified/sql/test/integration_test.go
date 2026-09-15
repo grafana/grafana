@@ -59,7 +59,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
 	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t)                //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {
 		dbSection.Key("high_availability").SetValue("true")
@@ -214,7 +214,7 @@ func TestClientServer(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address
@@ -315,7 +315,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address

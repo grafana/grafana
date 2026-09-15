@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	serviceaccountstest "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -61,7 +62,7 @@ func ProvideFolderPermissions(
 	cache := localcache.ProvideService()
 
 	userSvc, err := userimpl.ProvideService(
-		sqlStore,
+		legacysql.NewDatabaseProvider(sqlStore),
 		orgService,
 		cfg,
 		teamSvc,
@@ -93,6 +94,7 @@ func ProvideFolderPermissions(
 		acSvc,
 		teamSvc,
 		userSvc,
+		&serviceaccountstest.FakeServiceAccountService{},
 		actionSets,
 		apiserver.ProvideDirectRestConfigProvider(),
 	)

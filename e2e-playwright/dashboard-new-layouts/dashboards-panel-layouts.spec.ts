@@ -38,8 +38,7 @@ test.describe(
 
         await checkAutoGridLayoutInputs(gridLayoutOptions);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
@@ -88,8 +87,7 @@ test.describe(
           expect(lastPanelBox!.y, 'Last panel should be on the same row as the first').toBe(firstPanelBox.y);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
@@ -130,8 +128,7 @@ test.describe(
         // Changing to 1100 custom width should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -163,8 +160,7 @@ test.describe(
         // Changing to 1 max column should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -209,8 +205,7 @@ test.describe(
           })
           .toBeGreaterThan(regularRowHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
@@ -254,8 +249,7 @@ test.describe(
           expect(customHeight).toBeGreaterThan(regularRowHeight);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
@@ -298,8 +292,7 @@ test.describe(
           })
           .toBeGreaterThan(initialHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
           .poll(async () => (await getPanelBox(panels, 'New panel')).height, {

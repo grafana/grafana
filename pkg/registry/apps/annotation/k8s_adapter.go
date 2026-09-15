@@ -107,7 +107,6 @@ type k8sRESTAdapter struct {
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
 }
@@ -150,7 +149,7 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -211,7 +210,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -247,7 +246,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	options *metav1.CreateOptions,
 ) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -309,7 +308,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -391,7 +390,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))

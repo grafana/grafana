@@ -31,8 +31,8 @@ func NewSearchDisplayProvider(client resourcepb.ResourceIndexClient) *SearchDisp
 
 var searchDisplayFields = []string{
 	resource.SEARCH_FIELD_TITLE,
-	resource.SEARCH_FIELD_PREFIX + builders.USER_EMAIL,
-	resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+	builders.USER_EMAIL,
+	builders.USER_LOGIN,
 	resource.SEARCH_FIELD_LEGACY_ID,
 }
 

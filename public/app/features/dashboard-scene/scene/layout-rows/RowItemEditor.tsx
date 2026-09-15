@@ -3,6 +3,7 @@ import { useId, useMemo, useRef } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,12 +11,22 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
-import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
-import { dashboardEditActions } from '../../sidebar/shared';
+import {
+  getSectionFiltersCount,
+  AddSectionFilterButton,
+  SectionFiltersCategoryTitle,
+  SectionFiltersList,
+} from '../../sidebar/SectionFiltersList';
+import {
+  getSectionVariablesCount,
+  AddSectionVariableButton,
+  SectionVariablesCategoryTitle,
+  SectionVariablesList,
+} from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -23,7 +34,8 @@ import { type RowItem } from './RowItem';
 
 export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
-  const { layout } = model.useState();
+  // The canvas can remount during DnD loading while this editor remains mounted.
+  const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
 
   const rowCategory = useMemo(
     () =>
@@ -80,6 +92,9 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
       id: SidebarCategoryType.RowSectionVariables,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionVariablesCount(model),
+      headerActions: <AddSectionVariableButton sectionOwner={model} />,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
       ),
@@ -102,6 +117,9 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
       title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
       id: SidebarCategoryType.RowSectionFilters,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionFiltersCount(model),
+      headerActions: <AddSectionFilterButton sectionOwner={model} />,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
@@ -239,7 +257,7 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
     title = generateUniqueTitle('New row', existingNames);
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.row-title', 'Change row title'),
     source: row,
     perform: () => row.onChangeTitle(title),

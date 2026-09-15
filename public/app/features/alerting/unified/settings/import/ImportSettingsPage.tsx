@@ -8,7 +8,6 @@ import { logError } from '../../Analytics';
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { AutoSyncConfiguration } from '../../components/settings/AutoSyncConfiguration';
-import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
@@ -61,14 +60,10 @@ function ImportSettingsContent() {
 }
 
 function StagedConfigurationSection() {
-  const { canRevert } = getStagedConfigPermissions();
+  const { canPromote, canRevert } = getStagedConfigPermissions();
   const { stagedConfig, liveConfig, isLoading, isError, error, refetch } = useStagedConfig();
-  const { datasourceUid: autoSyncUid, isLoading: isLoadingAutoSync } = useIsAutoSyncActive();
 
-  // The syncer addresses its own staged config by the datasource UID, so a matching identifier means this
-  // staged config is auto-sync's output rather than a manual import.
-  const isSyncManaged = Boolean(autoSyncUid) && stagedConfig?.identifier === autoSyncUid;
-  const isLoadingCard = isLoading || isLoadingAutoSync;
+  const isSyncManaged = stagedConfig?.managed_by === 'auto-sync';
 
   useEffect(() => {
     if (isError) {
@@ -88,7 +83,7 @@ function StagedConfigurationSection() {
         </Trans>
       </Text>
 
-      {isLoadingCard && (
+      {isLoading && (
         <LoadingPlaceholder text={t('alerting.settings.import.loading', 'Loading imported configurations…')} />
       )}
 
@@ -108,7 +103,7 @@ function StagedConfigurationSection() {
         </Alert>
       )}
 
-      {!isLoadingCard && !isError && !stagedConfig && (
+      {!isLoading && !isError && !stagedConfig && (
         <EmptyState
           variant="call-to-action"
           message={t('alerting.settings.import.empty-title', 'No configuration imported yet')}
@@ -128,9 +123,10 @@ function StagedConfigurationSection() {
         </EmptyState>
       )}
 
-      {!isLoadingCard && !isError && stagedConfig && (
+      {!isLoading && !isError && stagedConfig && (
         <StagedConfiguration
           stagedConfig={stagedConfig}
+          canPromote={canPromote}
           canRevert={canRevert}
           isSyncManaged={isSyncManaged}
           liveConfig={liveConfig}

@@ -1049,6 +1049,18 @@
           },
           "additionalProperties": false
         },
+        "card": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "checkbox": {
           "type": "object",
           "properties": {
@@ -1081,6 +1093,9 @@
             },
             "background": {
               "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1111,6 +1126,21 @@
           "properties": {
             "background": {
               "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "modal": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1139,6 +1169,12 @@
         "drawer": {
           "type": "object",
           "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            },
             "padding": {
               "type": "number"
             }
@@ -1248,6 +1284,117 @@
                   "type": "string"
                 },
                 "left": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "badge": {
+          "type": "object",
+          "properties": {
+            "blue": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "red": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "green": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "orange": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "purple": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "darkgrey": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "brand": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
                   "type": "string"
                 }
               },

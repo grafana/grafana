@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject, type PageObjectArgs } from '../../PageObject';
 
@@ -22,22 +22,60 @@ export class RepeatOptions extends PageObject {
   /** Repeats the element by the given template variable */
   async repeatByVariable(variableName: string) {
     await test.step(`Repeat by variable "${variableName}"`, async () => {
-      await this.selectOption(variableName);
+      await this.selectRepeatByVariableOption(variableName);
     });
   }
 
   /** Disables the element's repetition */
   async disableRepeatByVariable() {
     await test.step('Disable repeat by variable', async () => {
-      await this.selectOption('Disable repeating');
+      await this.selectRepeatByVariableOption('Disable repeating');
     });
   }
 
-  /** Selects an option in the "Repeat by variable" dropdown, expanding the options group first if collapsed */
-  private async selectOption(optionLabel: string) {
-    const toggle = this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByTestId(
-      this.selectors.components.OptionsGroup.toggle(this.groupId)
-    );
+  /**
+   * Sets the panel repeat direction (custom grid panels only)
+   * @param direction Horizontal or Vertical radio label
+   */
+  async setRepeatDirection(direction: 'Horizontal' | 'Vertical') {
+    await test.step(`Set repeat direction to "${direction}"`, async () => {
+      await this.ensureExpanded();
+
+      await this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat direction`)
+      )
+        .getByRole('radio', { name: direction })
+        .click({ force: true });
+    });
+  }
+
+  /** Returns the "Max per row" select (custom grid panels only; hidden when direction is Vertical) */
+  getMaxPerRowSelect(): Locator {
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Max per row`)
+    ).getByRole('combobox');
+  }
+
+  /**
+   * Selects a max per row value (custom grid panels only; requires Horizontal direction)
+   * @param value one of the preset options shown in the select
+   */
+  async selectMaxPerRow(value: 2 | 3 | 4 | 6 | 8 | 12) {
+    await test.step(`Select max per row "${value}"`, async () => {
+      await this.ensureExpanded();
+      await this.getMaxPerRowSelect().click();
+      await this.page
+        .getByRole('listbox')
+        .getByRole('option', { name: String(value), exact: true })
+        .click();
+    });
+  }
+
+  /** Expands the Repeat options group when it is collapsed */
+  private async ensureExpanded() {
+    const toggle = this.getByGrafanaSelector(this.selectors.components.OptionsGroup.toggle(this.groupId), {
+      root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+    });
 
     // the toggle collapses an already-open group (expanded state persists in local storage), so only click when collapsed
     if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
@@ -45,6 +83,11 @@ export class RepeatOptions extends PageObject {
         await toggle.click();
       });
     }
+  }
+
+  /** Selects an option in the "Repeat by variable" dropdown, expanding the options group first if collapsed */
+  private async selectRepeatByVariableOption(optionLabel: string) {
+    await this.ensureExpanded();
 
     await this.getByGrafanaSelector(
       this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`)

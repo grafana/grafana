@@ -164,8 +164,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Keeper{}.OpenAPIModelName()),
+										Ref: ref(Keeper{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -238,8 +237,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -400,8 +398,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SecureValue{}.OpenAPIModelName()),
+										Ref: ref(SecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -464,9 +461,8 @@ func schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -509,8 +505,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},

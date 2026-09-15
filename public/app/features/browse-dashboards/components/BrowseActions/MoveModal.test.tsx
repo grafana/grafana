@@ -83,11 +83,11 @@ describe('browse-dashboards MoveModal', () => {
         ).toBeInTheDocument();
       });
 
-      it('warns that the selected folder contains other resources', async () => {
+      it('warns that the selected folder contains resources', async () => {
         render(<MoveModal {...props} />);
 
         expect(
-          await screen.findByRole('alert', { name: /contains other resources that will be moved/i })
+          await screen.findByRole('alert', { name: /contains resources that will be moved/i })
         ).toBeInTheDocument();
       });
     });

@@ -7,7 +7,7 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
-import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
 
 let isScenesContextSet = false;
 
@@ -108,11 +108,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
-  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addLinkButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
-  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addFilterButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_filter_button_clicked', properties);
   },
 
@@ -165,15 +165,16 @@ export const DashboardInteractions = {
     reportDashboardInteraction('global_variables_loaded', properties);
   },
 
-  // dashboards_global_variables_mode_changed
-  // when a user changes the predefined variables radio (None / All / Global / Folder)
-  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
-    reportDashboardInteraction('global_variables_mode_changed', properties);
+  // dashboards_predefined_variable_toggled
+  // when a user checks or unchecks a global or folder variable on the dashboard.
+  // Do not send variable names — they are customer-authored (cardinality + leak).
+  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; checked: boolean }) => {
+    reportDashboardInteraction('predefined_variable_toggled', properties);
   },
 
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
-  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_annotation_button_clicked', properties);
   },
   // dashboards_annotations_reordered
@@ -185,7 +186,7 @@ export const DashboardInteractions = {
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });

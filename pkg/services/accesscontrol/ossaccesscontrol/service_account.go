@@ -91,7 +91,7 @@ func ProvideServiceAccountPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

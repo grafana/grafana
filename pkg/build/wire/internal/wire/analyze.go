@@ -20,6 +20,7 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"slices"
 	"sort"
 	"strings"
 
@@ -161,8 +162,8 @@ dfs:
 			// on the stack in reverse order so that calls are added in argument
 			// order.
 			visitedArgs := true
-			for i := len(p.Args) - 1; i >= 0; i-- {
-				a := p.Args[i]
+			for _, a := range slices.Backward(p.Args) {
+
 				if index.At(a.Type) == nil {
 					if visitedArgs {
 						// Make sure to re-visit this type after visiting all arguments.

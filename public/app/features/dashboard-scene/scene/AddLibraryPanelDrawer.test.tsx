@@ -18,6 +18,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+
 describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
   let addLibPanelDrawer: AddLibraryPanelDrawer;
@@ -28,7 +33,7 @@ describe('AddLibraryPanelWidget', () => {
     addLibPanelDrawer = result.drawer;
   });
 
-  it('should add library panel from menu', () => {
+  it('should add library panel from menu', async () => {
     const panelInfo: LibraryPanel = {
       uid: 'uid',
       model: {
@@ -40,7 +45,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -84,7 +89,7 @@ describe('AddLibraryPanelWidget', () => {
     // the CTA should enter edit mode
     expect(dashboard.state.isEditing).toBe(undefined);
 
-    drawer.onAddLibraryPanel(panelInfo);
+    await drawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
@@ -128,7 +133,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     expect(panels.length).toBe(1);
@@ -142,7 +147,7 @@ describe('AddLibraryPanelWidget', () => {
     expect(panels[0].state.key).toBe('panel-1'); // Key should be preserved from original panel
   });
 
-  it('should set hoverHeader to true if the library panel title is empty', () => {
+  it('should set hoverHeader to true if the library panel title is empty', async () => {
     const panelInfo: LibraryPanel = {
       uid: 'uid',
       model: {
@@ -154,7 +159,7 @@ describe('AddLibraryPanelWidget', () => {
       type: 'timeseries',
     };
 
-    addLibPanelDrawer.onAddLibraryPanel(panelInfo);
+    await addLibPanelDrawer.onAddLibraryPanel(panelInfo);
 
     const panels = dashboard.state.body.getVizPanels();
     const panel = panels[0];
