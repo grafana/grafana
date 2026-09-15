@@ -15,29 +15,37 @@ const saved = jest.mocked(TextPanelInteractions.saved);
 
 function snapshot(overrides: Partial<TextPanelSnapshot> = {}): TextPanelSnapshot {
   return {
+    content: '',
     options: { mode: TextMode.Markdown, content: '', renderMode: RenderMode.Once },
     fieldConfig: { defaults: {}, overrides: [] },
     newFeaturesEnabled: true,
     hasData: false,
     editorViewAtSave: 'preview',
     editorViewChanged: false,
-    contentChanged: false,
     ...overrides,
   };
 }
 
 function withContent(content: string, overrides: Partial<TextPanelSnapshot> = {}): TextPanelSnapshot {
-  return snapshot({ options: { mode: TextMode.Markdown, content, renderMode: RenderMode.Once }, ...overrides });
+  return snapshot({
+    content,
+    options: { mode: TextMode.Markdown, content, renderMode: RenderMode.Once },
+    ...overrides,
+  });
 }
 
+/** Derived against an empty baseline, so `contentChanged` reflects the content under test. */
 function forContent(content: string, options: Partial<Options> = {}) {
-  return deriveSavedProperties(
-    snapshot({ options: { mode: TextMode.Markdown, content, renderMode: RenderMode.Once, ...options } })
-  );
+  const snap = snapshot({
+    content,
+    options: { mode: TextMode.Markdown, content, renderMode: RenderMode.Once, ...options },
+  });
+  return deriveSavedProperties(snap, '');
 }
 
 function forFieldConfig(defaults: FieldConfigSource['defaults'], overrides: FieldConfigSource['overrides'] = []) {
-  return deriveSavedProperties(snapshot({ fieldConfig: { defaults, overrides } }));
+  const snap = snapshot({ fieldConfig: { defaults, overrides } });
+  return deriveSavedProperties(snap, snap.content);
 }
 
 describe('deriveSavedProperties', () => {
@@ -56,9 +64,9 @@ describe('deriveSavedProperties', () => {
   });
 
   it('falls back to the default render mode when the panel has none', () => {
-    expect(deriveSavedProperties(snapshot({ options: { mode: TextMode.Markdown, content: '' } })).renderMode).toBe(
-      RenderMode.Once
-    );
+    const snap = snapshot({ options: { mode: TextMode.Markdown, content: '' } });
+
+    expect(deriveSavedProperties(snap, snap.content).renderMode).toBe(RenderMode.Once);
   });
 
   it.each([
@@ -103,24 +111,39 @@ describe('deriveSavedProperties', () => {
     expect(forFieldConfig({}).hasValueMappings).toBe(false);
   });
 
-  it('passes the editing session through unchanged', () => {
-    const props = deriveSavedProperties(
-      snapshot({
-        newFeaturesEnabled: false,
-        hasData: true,
-        editorViewAtSave: 'split',
-        editorViewChanged: true,
-        contentChanged: true,
-      })
-    );
+  it('counts value mappings set as a field override, which reach the value just as the defaults do', () => {
+    const mappings: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { ok: { text: 'Healthy', index: 0 } } },
+    ];
+    const overrides = [
+      { matcher: { id: 'byName', options: 'cpu' }, properties: [{ id: 'mappings', value: mappings }] },
+    ];
 
-    expect(props).toMatchObject({
+    expect(forFieldConfig({}, overrides).hasValueMappings).toBe(true);
+    expect(forFieldConfig({}, [{ matcher: { id: 'byName', options: 'cpu' }, properties: [] }]).hasValueMappings).toBe(
+      false
+    );
+  });
+
+  it('passes the editing session through unchanged', () => {
+    const snap = snapshot({
       newFeaturesEnabled: false,
       hasData: true,
       editorViewAtSave: 'split',
       editorViewChanged: true,
-      contentChanged: true,
     });
+
+    expect(deriveSavedProperties(snap, snap.content)).toMatchObject({
+      newFeaturesEnabled: false,
+      hasData: true,
+      editorViewAtSave: 'split',
+      editorViewChanged: true,
+    });
+  });
+
+  it('measures contentChanged against the baseline content it is given', () => {
+    expect(deriveSavedProperties(withContent('# Edited'), '# Start').contentChanged).toBe(true);
+    expect(deriveSavedProperties(withContent('# Start'), '# Start').contentChanged).toBe(false);
   });
 });
 
@@ -132,8 +155,13 @@ describe('TextPanelSaveTracker', () => {
     tracker = new TextPanelSaveTracker();
   });
 
+  /** The first record of an editing session is the panel as the author found it. */
+  const open = (panelId: number, snap: TextPanelSnapshot) => tracker.record(panelId, snap);
+
   it('reports one event per edited panel when the dashboard is saved', () => {
-    tracker.record(1, withContent('# Plain'));
+    open(1, withContent('# Plain'));
+    open(2, withContent('# Plain'));
+    tracker.record(1, withContent('# Plain, edited'));
     tracker.record(2, withContent('{{host}}'));
 
     appEvents.publish(new DashboardSavedEvent());
@@ -149,8 +177,34 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).not.toHaveBeenCalled();
   });
 
+  // Such a panel leaves the dashboard clean, so no discard event would ever clear its receipt.
+  it('reports nothing for a panel the author opened but did not change', () => {
+    open(1, withContent('# Untouched'));
+    tracker.record(
+      1,
+      withContent('# Untouched', { editorViewAtSave: 'write', editorViewChanged: true, hasData: true })
+    );
+
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('reports a field config edit, with contentChanged false', () => {
+    const mappings: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { ok: { text: 'Healthy', index: 0 } } },
+    ];
+    open(1, withContent('# Same'));
+    tracker.record(1, withContent('# Same', { fieldConfig: { defaults: { mappings }, overrides: [] } }));
+
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ contentChanged: false, hasValueMappings: true }));
+  });
+
   it('reports the panel as it looked when last recorded', () => {
-    tracker.record(1, withContent('draft'));
+    open(1, withContent('draft'));
+    tracker.record(1, withContent('draft, again'));
     tracker.record(1, withContent('{{#each data}}{{host}}{{/each}}', { editorViewAtSave: 'split' }));
 
     appEvents.publish(new DashboardSavedEvent());
@@ -160,6 +214,7 @@ describe('TextPanelSaveTracker', () => {
   });
 
   it('drops the config when the author discards, so a later save still reports nothing', () => {
+    open(1, withContent('# Start'));
     tracker.record(1, withContent('# Abandoned'));
 
     appEvents.publish(new DashboardDiscardedEvent());
@@ -169,22 +224,28 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).not.toHaveBeenCalled();
   });
 
-  it('does not report a panel that was forgotten, so an unchanged panel cannot leak to a later save', () => {
-    tracker.record(1, withContent('# Opened'));
-    tracker.record(2, withContent('{{host}}'));
+  // Closing and reopening the editor replays the edited state as the session's first record. That
+  // must not become the new baseline, or the pending edit is lost.
+  it('still reports a panel whose editor was reopened after the edit', () => {
+    open(1, withContent('# Start'));
+    tracker.record(1, withContent('# Edited'));
+    tracker.record(1, withContent('# Edited'));
 
-    tracker.forget(1);
     appEvents.publish(new DashboardSavedEvent());
 
     expect(saved).toHaveBeenCalledTimes(1);
-    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ hasHandlebars: true }));
+    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ contentChanged: true }));
   });
 
-  it('does not report the same panel again on a second save', () => {
-    tracker.record(1, withContent('# Once'));
+  // What was saved is the new baseline, so an editor left open cannot report the same edit twice.
+  it('does not report the same edit again on a later save', () => {
+    open(1, withContent('# Start'));
+    tracker.record(1, withContent('# Edited'));
 
     appEvents.publish(new DashboardSavedEvent());
+    expect(saved).toHaveBeenCalledTimes(1);
 
+    tracker.record(1, withContent('# Edited'));
     appEvents.publish(new DashboardSavedEvent());
 
     expect(saved).toHaveBeenCalledTimes(1);

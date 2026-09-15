@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { isEqual } from 'lodash';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -112,7 +111,6 @@ export function TextNGPanel(props: Props) {
   );
 
   const viewChanged = useRef(false);
-  const editStart = useRef({ content, options, fieldConfig });
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
   // when the page moves, which should land as directly as a scroll would, and on a
@@ -129,7 +127,6 @@ export function TextNGPanel(props: Props) {
   ) {
     if (isEditing && !wasEditing) {
       viewChanged.current = false;
-      editStart.current = { content, options, fieldConfig };
     }
     setWasEditing(isEditing);
     setPrevWindow(rowWindow);
@@ -144,24 +141,20 @@ export function TextNGPanel(props: Props) {
     setView(next);
   };
 
+  // The tracker decides what counts as a change, so it holds the baseline across editor sessions.
   useEffect(() => {
     if (!isEditing) {
       return;
     }
 
-    if (isEqual(editStart.current, { content, options, fieldConfig })) {
-      textPanelSaveTracker.forget(id);
-      return;
-    }
-
     textPanelSaveTracker.record(id, {
+      content,
       options,
       fieldConfig,
       newFeaturesEnabled: newFeaturesEnabled(),
       hasData: hasRenderableData(frames),
       editorViewAtSave: view,
       editorViewChanged: viewChanged.current,
-      contentChanged: content !== editStart.current.content,
     });
   }, [isEditing, id, options, fieldConfig, frames, view, content]);
 

@@ -745,17 +745,14 @@ describe('TextNGPanel', () => {
 
   describe('save reporting', () => {
     let record: jest.SpyInstance;
-    let forget: jest.SpyInstance;
 
     beforeEach(() => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       record = jest.spyOn(textPanelSaveTracker, 'record').mockImplementation(() => {});
-      forget = jest.spyOn(textPanelSaveTracker, 'forget').mockImplementation(() => {});
     });
 
     afterEach(() => {
       record.mockRestore();
-      forget.mockRestore();
     });
 
     const editProps = (overrides: Partial<Props['options']> = {}, props: Partial<Props> = {}) =>
@@ -764,58 +761,40 @@ describe('TextNGPanel', () => {
         options: { content: '# Hello', mode: TextMode.Markdown, ...overrides },
       });
 
-    /** A real edit is what makes a panel reportable. */
-    async function openAndEdit(props: Props, edit: Partial<Props['options']> = { content: '# Edited' }) {
-      const { rerender } = render(editing(props));
-      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
-
-      const edited = Object.assign({}, props, { options: { ...props.options, ...edit } });
-      rerender(editing(edited));
-
-      return { rerender, edited };
-    }
-
     it('records nothing while the panel is only being viewed', () => {
       setup(editProps(), CoreApp.Dashboard);
 
       expect(record).not.toHaveBeenCalled();
     });
 
-    it('records nothing for a panel the author opened but did not change', async () => {
-      setup(editProps(), CoreApp.PanelEditor);
+    it('records the panel config while the author is in the editor', async () => {
+      setup(editProps({ renderMode: RenderMode.PerRow }), CoreApp.PanelEditor);
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
-
-      expect(record).not.toHaveBeenCalled();
-      expect(forget).toHaveBeenCalledWith(1);
-    });
-
-    it('records the panel config once the author changes it', async () => {
-      await openAndEdit(editProps({ renderMode: RenderMode.PerRow }));
 
       expect(record).toHaveBeenLastCalledWith(
         1,
         expect.objectContaining({
-          options: expect.objectContaining({ content: '# Edited', renderMode: RenderMode.PerRow }),
+          content: '# Hello',
+          options: expect.objectContaining({ renderMode: RenderMode.PerRow }),
           newFeaturesEnabled: true,
-          contentChanged: true,
           editorViewChanged: false,
         })
       );
     });
 
-    it('forgets the panel again once the author reverts the edit', async () => {
+    it('records the edited content, which the tracker measures against the baseline', async () => {
       const props = editProps();
-      const { rerender } = await openAndEdit(props);
-      expect(record).toHaveBeenCalled();
+      const { rerender } = render(editing(props));
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
-      forget.mockClear();
-      rerender(editing(props));
+      rerender(editing(Object.assign({}, props, { options: { ...props.options, content: '# Edited' } })));
 
-      expect(forget).toHaveBeenLastCalledWith(1);
+      expect(record).toHaveBeenLastCalledWith(1, expect.objectContaining({ content: '# Edited' }));
     });
 
     it('records the view the author ended on, and that they chose it', async () => {
-      await openAndEdit(editProps());
+      setup(editProps(), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
@@ -839,7 +818,8 @@ describe('TextNGPanel', () => {
       },
       { name: 'there is no query at all', frames: [], expected: false },
     ])('records hasData=$expected when $name', async ({ frames, expected }) => {
-      await openAndEdit(editProps({}, { data: createData(frames) }));
+      setup(editProps({}, { data: createData(frames) }), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
       expect(record).toHaveBeenLastCalledWith(1, expect.objectContaining({ hasData: expected }));
     });
