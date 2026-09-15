@@ -339,6 +339,9 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		case w3cPropagator:
 			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})
 		case jaegerPropagator:
+			if ots.log != nil {
+				ots.log.Warn("Jaeger propagation format (uber-trace-id) is deprecated and will be removed in a future release. Please switch to 'w3c' propagation in your tracing configuration.")
+			}
 			propagators = append(propagators, jaegerpropagator.Jaeger{})
 		case "":
 		default:
