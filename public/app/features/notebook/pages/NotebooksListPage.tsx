@@ -13,7 +13,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_LIST_FILTER_TYPE, type NotebookListFilterType } from '../analytics/types';
+import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 import { notebookNewEditUrl } from '../urls';
@@ -56,29 +56,24 @@ export function NotebooksListPage() {
    */
   const previousFilters = useRef({ search: debouncedSearch, createdByMe, tagFilter });
 
-  /** Which control changed and which way, held while the results for it are still on their way. */
-  const pendingReport = useRef<{ filterType: NotebookListFilterType; cleared: boolean } | null>(null);
-
   useEffect(() => {
     const previous = previousFilters.current;
-    if (debouncedSearch !== previous.search) {
-      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.SEARCH, cleared: !debouncedSearch.trim() };
-    } else if (tagFilter !== previous.tagFilter) {
-      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.TAG, cleared: tagFilter.length === 0 };
-    } else if (createdByMe !== previous.createdByMe) {
-      pendingReport.current = { filterType: NOTEBOOK_LIST_FILTER_TYPE.CREATED_BY_ME, cleared: !createdByMe };
-    }
     previousFilters.current = { search: debouncedSearch, createdByMe, tagFilter };
 
-    // No count exists until the answer arrives, and the walk keeps it climbing after the first
-    // page. A failure with no rows reports nothing: zero would read as a search that found nothing.
-    if (!pendingReport.current || isReloading || isLoadingMore || (error && rows.length === 0)) {
-      return;
+    // The whole filter set, not only the control that changed, so one event says which filters the
+    // reader had on at once. A zero here also says which way the change went.
+    const filters = { queryLength: debouncedSearch.trim().length, tagCount: tagFilter.length, createdByMe };
+
+    // As the filter commits, without waiting for its results. The event says that somebody
+    // filtered, and a failed request does not make that less true.
+    if (debouncedSearch !== previous.search) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.SEARCH, filters);
+    } else if (tagFilter !== previous.tagFilter) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.TAG, filters);
+    } else if (createdByMe !== previous.createdByMe) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.CREATED_BY_ME, filters);
     }
-    const { filterType, cleared } = pendingReport.current;
-    pendingReport.current = null;
-    NotebookAnalytics.listFiltered(filterType, cleared, rows.length);
-  }, [debouncedSearch, tagFilter, createdByMe, isReloading, isLoadingMore, rows.length, error]);
+  }, [debouncedSearch, tagFilter, createdByMe]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;

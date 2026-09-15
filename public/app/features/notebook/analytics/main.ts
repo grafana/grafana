@@ -27,6 +27,7 @@ import {
   type NotebookLinkCopiedProperties,
   type NotebookLinkCopySource,
   type NotebookListFilteredProperties,
+  type NotebookListFilterState,
   type NotebookListFilterType,
   type NotebookLoadedProperties,
   type NotebookNewStartedProperties,
@@ -74,7 +75,7 @@ const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exp
 /** Fired once a copy-link click actually put the link on the clipboard. */
 const createLinkCopiedEvent = createNotebookEvent<NotebookLinkCopiedProperties>('link_copied');
 
-/** Fired once per committed filter change on the notebooks list, after the new results arrive. */
+/** Fired once per committed filter change on the notebooks list, as the change commits. */
 const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperties>('list_filtered');
 
 /**
@@ -163,8 +164,8 @@ export const NotebookAnalytics = {
     createLinkCopiedEvent({ notebookUid, source });
   },
 
-  listFiltered(filterType: NotebookListFilterType, cleared: boolean, resultCount: number): void {
-    createListFilteredEvent({ filterType, cleared, resultCount });
+  listFiltered(filterType: NotebookListFilterType, filters: NotebookListFilterState): void {
+    createListFilteredEvent({ filterType, ...filters });
   },
 
   cellAddedFromAddToNotebook(

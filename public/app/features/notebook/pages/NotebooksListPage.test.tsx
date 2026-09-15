@@ -703,7 +703,7 @@ describe('NotebooksListPage', () => {
 
     // One event for a search somebody finished, not one per keystroke. Seven characters going out
     // as seven events is the failure this guards.
-    it('reports a committed search once, with the count it found', async () => {
+    it('reports a committed search once', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       setNotebooks(twoNotebooks());
 
@@ -711,7 +711,9 @@ describe('NotebooksListPage', () => {
 
       await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('search', false, 1));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
       expect(mockListFiltered).toHaveBeenCalledTimes(1);
     });
 
@@ -728,7 +730,9 @@ describe('NotebooksListPage', () => {
       await within(await screen.findByRole('listbox')).findByText('latency');
       await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
 
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('tag', false, 1));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
       expect(mockListFiltered).toHaveBeenCalledTimes(1);
     });
 
@@ -740,7 +744,9 @@ describe('NotebooksListPage', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
 
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('tag', false, 1));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
     });
 
     // Clicking a tag already in the filter narrows nothing, so there is nothing to report. The hook
@@ -760,10 +766,17 @@ describe('NotebooksListPage', () => {
       // against rather than a wait that was already over.
       await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('search', false, 1));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', {
+          queryLength: 7,
+          tagCount: 1,
+          createdByMe: false,
+        })
+      );
       expect(mockListFiltered.mock.calls).toEqual([
-        ['tag', false, 1],
-        ['search', false, 1],
+        ['tag', { queryLength: 0, tagCount: 1, createdByMe: false }],
+        // The tag is still on, which is the point of sending the whole set rather than the change.
+        ['search', { queryLength: 7, tagCount: 1, createdByMe: false }],
       ]);
     });
 
@@ -778,20 +791,24 @@ describe('NotebooksListPage', () => {
 
         await userEvent.click(await screen.findByLabelText('Created by me'));
 
-        await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', false, 1));
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
       } finally {
         contextSrv.user = originalUser;
       }
     });
 
-    // Both directions report, so without `cleared` turning a filter on and off again would send two
-    // events nobody can tell apart.
-    it('reports a filter the reader backed out of as cleared', async () => {
+    // Both directions report. The state is what separates them, so turning a filter on and then off
+    // again sends two events that read differently.
+    it('reports the box going off as well as going on', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       const originalUser = contextSrv.user;
       contextSrv.user = { ...originalUser, uid: 'me' };
-      // Every notebook here belongs to the reader, so filtering to their own changes no count. That
-      // leaves `cleared` as the only thing separating the two events.
       setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Also mine', [], 'user:me')]);
 
       try {
@@ -799,21 +816,33 @@ describe('NotebooksListPage', () => {
 
         const checkbox = await screen.findByLabelText('Created by me');
         await userEvent.click(checkbox);
-        await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', false, 2));
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
 
         await userEvent.click(checkbox);
 
-        await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', true, 2));
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: false,
+          })
+        );
         expect(mockListFiltered.mock.calls).toEqual([
-          ['created_by_me', false, 2],
-          ['created_by_me', true, 2],
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: true }],
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: false }],
         ]);
       } finally {
         contextSrv.user = originalUser;
       }
     });
 
-    it('reports an emptied search box as cleared', async () => {
+    it('reports an emptied search box as a zero-length query', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       setNotebooks(twoNotebooks());
 
@@ -821,45 +850,48 @@ describe('NotebooksListPage', () => {
 
       const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
       await userEvent.type(searchBox, 'latency');
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('search', false, 1));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
 
       await userEvent.clear(searchBox);
 
-      // Back to the whole list, which is the count the cleared event carries.
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('search', true, 2));
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 0, tagCount: 0, createdByMe: false })
+      );
     });
 
-    // Filtering is server-side. A count read when the filter commits is a count of nothing, because
-    // the rows stay empty until the answer for the new filters arrives.
-    it('waits for the new results before reporting a count', async () => {
+    // The event says somebody searched, so it goes out with the search rather than waiting for the
+    // results. Holding it until the results land would lose any search the reader filters again on
+    // top of before that happens.
+    it('reports as the filter commits, without waiting for the results', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       setNotebooks(twoNotebooks());
 
-      const { rerender } = render(<NotebooksListPage />);
+      render(<NotebooksListPage />);
       expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
 
-      // The page holds nothing for the new filters yet, which is the window this is about.
+      // Nothing lands for the new filters from here on.
       setNotebooks(twoNotebooks(), { isReloading: true });
       await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
-      // The request carrying the new text is what says the debounce committed. Without waiting for
-      // it the assertion below would pass on a search that had not happened yet.
+      // The request carrying the new text is what says the debounce committed. The skeleton alone
+      // would not: it appears on the first keystroke, before the debounce fires.
       await waitFor(() =>
         expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
           expect.objectContaining({ where: { text: { value: 'latency' } } })
         )
       );
+
+      // Nothing has landed for that request, and the event has already gone out.
       expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
-      expect(mockListFiltered).not.toHaveBeenCalled();
-
-      setNotebooks(twoNotebooks());
-      rerender(<NotebooksListPage />);
-
-      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledWith('search', false, 1));
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
       expect(mockListFiltered).toHaveBeenCalledTimes(1);
     });
 
-    it('reports nothing when the filtered request failed with nothing to show', async () => {
+    // The reader searched. A request that then failed does not make that less true, and the event
+    // carries nothing about the outcome that the failure could contradict.
+    it('reports a search whose request failed', async () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       setNotebooks(twoNotebooks(), { errorWhenFiltered: { status: 500, data: { message: 'search exploded' } } });
 
@@ -867,10 +899,8 @@ describe('NotebooksListPage', () => {
 
       await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
-      // The reader is looking at an alert, so a count of zero here would read as a search that
-      // found nothing.
       expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
-      expect(mockListFiltered).not.toHaveBeenCalled();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
     });
   });
 });
