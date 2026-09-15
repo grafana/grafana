@@ -5,7 +5,7 @@ import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 export const DIAGRAM_CLASS = 'mermaid-diagram';
-export const DIAGRAM_ERROR_CLASS = 'mermaid-diagram-error';
+const DIAGRAM_ERROR_CLASS = 'mermaid-diagram-error';
 
 // Also matches already-rendered diagrams, so a theme change redraws them instead of leaving stale colors.
 const MERMAID_SELECTOR = `code.language-mermaid, pre.mermaid, .${DIAGRAM_CLASS}`;
