@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DataFrameType, store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -9,17 +9,19 @@ import { type FieldDef } from '../logParser';
 import { ServiceHexagonIcon } from '../otel/ServiceHexagonIcon';
 import {
   groupOTelAttributes,
+  OTelAttributeCategory,
   OTHER_CATEGORY_ID,
   SERVICE_HEXAGON_CATEGORY_ICON,
   type GroupedOTelAttributes,
 } from '../otel/details';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
-import { type LabelWithLinks } from './LogLineDetailsFields';
+import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
+import { filter } from 'd3';
 
 interface LogLineDetailsOTelComponentProps {
   log: LogListModel;
@@ -47,9 +49,9 @@ export const LogLineDetailsOTelComponent = ({
     () =>
       log.dataFrame.meta?.type === DataFrameType.LogLines
         ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
+        []
         : // for other frames, do not show the log message unless there is a link attached
-          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+        log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
     [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
   );
 
@@ -65,164 +67,164 @@ export const LogLineDetailsOTelComponent = ({
     [extensionLinks, log.labels]
   );
 
-  // Datasources expose attributes as either dataframe fields or labels, not both.
-  const groupedAttributes = useMemo<GroupedOTelDetails>(
-    () =>
-      fieldsWithoutLinks.length > 0
-        ? { kind: 'fields', groups: groupOTelAttributes(fieldsWithoutLinks, (field) => field.keys[0] ?? '') }
-        : { kind: 'labels', groups: groupOTelAttributes(labelsWithLinks, (label) => label.key) },
-    [fieldsWithoutLinks, labelsWithLinks]
+  const groupedFields = useMemo(
+    () => groupOTelAttributes(fieldsWithoutLinks, (field) => field.keys[0] ?? ''),
+    [fieldsWithoutLinks]
   );
+  const groupedLabels = useMemo(() => groupOTelAttributes(labelsWithLinks, (label) => label.key), [labelsWithLinks]);
 
   return (
-    <LogLineDetailsOTelComponentBody groupedAttributes={groupedAttributes} log={log} logs={logs} search={search} />
+    <LogLineDetailsOTelComponentBody
+      groupedFields={groupedFields}
+      groupedLabels={groupedLabels}
+      log={log}
+      logs={logs}
+      search={search}
+    />
   );
 };
 
 interface LogLineDetailsOTelComponentBodyProps {
-  groupedAttributes: GroupedOTelDetails;
+  groupedFields: Array<GroupedOTelAttributes<FieldDef>>;
+  groupedLabels: Array<GroupedOTelAttributes<LabelWithLinks>>;
   log: LogListModel;
   logs: LogListModel[];
   search: string;
 }
 
 const LogLineDetailsOTelComponentBody = ({
-  groupedAttributes,
+  groupedFields,
+  groupedLabels,
   log,
   logs,
   search,
 }: LogLineDetailsOTelComponentBodyProps) => {
-  const { fontSize, logOptionsStorageKey } = useLogListContext();
+  const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    setExpandedCategories(
-      groupedAttributes.groups
-        .map((group) => group.category.id)
-        .filter((categoryId) => store.getBool(`${logOptionsStorageKey}.log-details.${categoryId}-open`, false))
-    );
-  }, [groupedAttributes, logOptionsStorageKey]);
-
-  const toggleCategory = useCallback(
-    (categoryId: string) => {
-      const expanded = expandedCategories.includes(categoryId);
-
-      if (expanded) {
-        setExpandedCategories((categories) => categories.filter((id) => id !== categoryId));
-        store.delete(`${logOptionsStorageKey}.log-details.${categoryId}-open`);
-      } else {
-        setExpandedCategories([...expandedCategories, categoryId]);
-        store.set(`${logOptionsStorageKey}.log-details.${categoryId}-open`, true);
-      }
-    },
-    [expandedCategories, logOptionsStorageKey]
-  );
-
-  console.log(expandedCategories);
-
-  if (!groupedAttributes.groups.length) {
+  if (!groupedFields.length && !groupedLabels.length) {
     return (
       <div className={styles.componentWrapper}>
         <Box marginTop={1} paddingLeft={0.5}>
           <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
         </Box>
       </div>
-    );
+    )
   }
-
-  const showFlatAttributes =
-    groupedAttributes.groups.length === 1 && groupedAttributes.groups[0].category.id === OTHER_CATEGORY_ID;
 
   return (
     <div className={styles.componentWrapper}>
       <div className={styles.container}>
-        {showFlatAttributes ? (
-          <OTelAttributeItems groupedAttributes={groupedAttributes} log={log} logs={logs} search={search} />
-        ) : (
-          <div className={styles.categories}>
-            {groupedAttributes.groups.map(({ category, items }) => {
-              const isCategoryOpen = expandedCategories.includes(category.id);
-              const label = t(category.labelKey, category.defaultLabel);
-
-              return (
-                <div className={styles.category} key={category.id}>
-                  <button
-                    type="button"
-                    className={styles.categoryHeader}
-                    aria-expanded={isCategoryOpen}
-                    onClick={() => toggleCategory(category.id)}
-                  >
-                    <Icon
-                      name={isCategoryOpen ? 'angle-down' : 'angle-right'}
-                      className={styles.chevronIcon}
-                      size={fontSize === 'small' ? 'md' : 'lg'}
-                    />
-                    <span className={styles.categoryHeaderContent}>
-                      {category.icon === SERVICE_HEXAGON_CATEGORY_ICON ? (
-                        <ServiceHexagonIcon className={styles.categoryIcon} />
-                      ) : (
-                        <Icon name={category.icon} className={styles.categoryIcon} />
-                      )}
-                      <span className={styles.categoryLabel}>{label}</span>
-                      <span className={styles.categoryCounter}>
-                        <Counter value={items.length} variant="secondary" />
-                      </span>
-                    </span>
-                  </button>
-                  {isCategoryOpen && (
-                    <div className={styles.categoryContent}>
-                      <OTelAttributeItems
-                        groupedAttributes={
-                          groupedAttributes.kind === 'fields'
-                            ? { kind: 'fields', groups: [{ category, items }] }
-                            : { kind: 'labels', groups: [{ category, items }] }
-                        }
-                        log={log}
-                        logs={logs}
-                        search={search}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div className={styles.categories}>
+          {groupedFields.length &&
+            groupedFields.map(({ category, items }) => (
+              <OTelCategory<FieldDef>
+                key={category.id}
+                category={category}
+                items={items}
+                filter={filterFields}
+                search={search}
+                RenderFields={LogLineOTelDetailsFields}
+              />
+            ))}
+          {groupedLabels.length &&
+            groupedLabels.map(({ category, items }) => (
+              <OTelCategory<LabelWithLinks>
+                key={category.id}
+                category={category}
+                items={items}
+                filter={filterLabels}
+                search={search}
+                RenderFields={LogLineOTelDetailsLabelFields}
+              />
+            ))}
+        </div>
       </div>
     </div>
   );
 };
 
-function OTelAttributeItems({
-  groupedAttributes,
+function OTelCategory<T>({
+  category,
+  filter,
+  items,
   log,
   logs,
+  RenderFields,
   search,
 }: {
-  groupedAttributes: GroupedOTelDetails;
+  category: OTelAttributeCategory;
+  filter: (f: T[], s: string) => T[];
+  items: T[];
   log: LogListModel;
   logs: LogListModel[];
-  search: string;
+  RenderFields: (props: { fields: T[]; log: LogListModel; logs: LogListModel[] }) => JSX.Element | null;
+  search?: string;
 }) {
-  if (groupedAttributes.kind === 'fields') {
-    return (
-      <LogLineOTelDetailsFields
-        log={log}
-        logs={logs}
-        fields={groupedAttributes.groups.flatMap((group) => group.items)}
-        search={search}
-      />
+  const { fontSize, logOptionsStorageKey } = useLogListContext();
+  const [expanded, setExpanded] = useState(
+    logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.log-details.${category.id}-open`, true) : true
+  );
+  const styles = useStyles2(getStyles, fontSize);
+
+  useEffect(() => {
+    setExpanded((expanded) =>
+      logOptionsStorageKey
+        ? store.getBool(`${logOptionsStorageKey}.log-details.${category.id}-open`, expanded)
+        : expanded
     );
+  }, [category.id, logOptionsStorageKey]);
+
+  const toggleCategory = useCallback(() => {
+    if (expanded) {
+      setExpanded(false);
+      store.delete(`${logOptionsStorageKey}.log-details.${category.id}-open`);
+    } else {
+      setExpanded(true);
+      store.set(`${logOptionsStorageKey}.log-details.${category.id}-open`, true);
+    }
+  }, [category.id, expanded, logOptionsStorageKey]);
+
+  const label = t(category.labelKey, category.defaultLabel);
+  const filteredItems = useMemo(() => search !== undefined ? filter(items, search) : items, [filter, items, search]);
+
+  if (!items.length) {
+    return null;
   }
 
   return (
-    <LogLineOTelDetailsLabelFields
-      log={log}
-      logs={logs}
-      fields={groupedAttributes.groups.flatMap((group) => group.items)}
-      search={search}
-    />
+    <div className={styles.category} key={category.id}>
+      <button type="button" className={styles.categoryHeader} aria-expanded={expanded} onClick={() => toggleCategory()}>
+        <Icon
+          name={expanded ? 'angle-down' : 'angle-right'}
+          className={styles.chevronIcon}
+          size={fontSize === 'small' ? 'md' : 'lg'}
+        />
+        <span className={styles.categoryHeaderContent}>
+          {category.icon === SERVICE_HEXAGON_CATEGORY_ICON ? (
+            <ServiceHexagonIcon className={styles.categoryIcon} />
+          ) : (
+            <Icon name={category.icon} className={styles.categoryIcon} />
+          )}
+          <span className={styles.categoryLabel}>{label}</span>
+          <span className={styles.categoryCounter}>
+            <Counter value={filteredItems.length} variant="secondary" />
+          </span>
+        </span>
+      </button>
+      {expanded && (
+        <div className={styles.categoryContent}>
+          {!filteredItems.length && (
+            <div className={styles.componentWrapper}>
+              <Box marginTop={1} paddingLeft={0.5}>
+                <Trans i18nKey="logs.log-line-details.search.no-results">No matching result.</Trans>
+              </Box>
+            </div>
+          )}
+          <RenderFields log={log} logs={logs} fields={filteredItems} />
+        </div>
+      )}
+    </div>
   );
 }
 
