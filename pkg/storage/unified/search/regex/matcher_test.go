@@ -309,29 +309,21 @@ func TestParsePreservesCountedRepetition(t *testing.T) {
 }
 
 func TestParseRepeatedQuantifiers(t *testing.T) {
-	// Without PerlX, a second quantifier repeats the preceding expression.
-	for _, tc := range []regexMatchCase{
-		{
-			name:       "optional star",
-			expression: "a*?",
-			matches:    []string{"", "a", "aa"},
-			rejects:    []string{"b"},
-		},
-		{
-			name:       "optional plus",
-			expression: "a+?",
-			matches:    []string{"", "a", "aa"},
-			rejects:    []string{"b"},
-		},
-		{
-			name:       "optional bounded repetition",
-			expression: "a{2,4}?",
-			matches:    []string{"", "aa", "aaaa"},
-			rejects:    []string{"a", "aaaaa"},
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) { assertRegexMatches(t, tc) })
+	for _, expression := range []string{"a*?", "a+?", "a??", "a{0}?", "a{2,4}?", "a**", "a++", "a?*", "a*{2}", "a{2}{3}", "(a+?)", "(?i)a+?"} {
+		t.Run(expression, func(t *testing.T) {
+			_, err := Parse(expression)
+			require.ErrorContains(t, err, "unsupported successive quantifiers")
+		})
 	}
+}
+
+func TestParseExplicitlyGroupedRepetition(t *testing.T) {
+	assertRegexMatches(t, regexMatchCase{
+		name:       "optional repeated group",
+		expression: "(a+)?",
+		matches:    []string{"", "a", "aa"},
+		rejects:    []string{"b"},
+	})
 }
 
 type regexMatchCase struct {

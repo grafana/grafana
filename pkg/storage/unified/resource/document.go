@@ -588,7 +588,7 @@ const (
 // Regex operators match whole values on filterable, case-preserving keyword fields.
 // Supported operations are literals, character classes, grouping, alternation,
 // and greedy repetition. Equivalent spellings, including hex escapes and POSIX
-// classes, are accepted. Successive quantifiers are nested repetitions.
+// classes, are accepted. Successive quantifiers are unsupported.
 // A leading (?i) folds value case; dot matches newlines. Missing fields or labels
 // are evaluated as empty values. Flattened labels split literal-key=value at the
 // first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.

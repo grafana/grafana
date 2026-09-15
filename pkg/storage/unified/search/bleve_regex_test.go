@@ -35,6 +35,13 @@ func TestFilterDictionaryPrefix(t *testing.T) {
 	assert.ErrorContains(t, err, "invalid regex for field labels: invalid regular expression:")
 }
 
+func TestRegexFilterRejectsSuccessiveQuantifiers(t *testing.T) {
+	for _, flattened := range []bool{false, true} {
+		_, err := parseRegexFilter("field", "severity=a+?", flattened)
+		require.ErrorContains(t, err, "unsupported successive quantifiers")
+	}
+}
+
 func TestLabelMatcher(t *testing.T) {
 	for _, tc := range []struct {
 		expression string

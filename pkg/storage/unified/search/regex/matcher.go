@@ -55,9 +55,14 @@ func validateRegexNode(expression *syntax.Regexp) error {
 		return errors.New("regular expression uses unsupported lazy quantifier")
 	}
 	switch expression.Op {
+	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
+		// Without PerlX, lazy-looking quantifiers can change empty-value matching.
+		switch expression.Sub[0].Op {
+		case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
+			return errors.New("regular expression uses unsupported successive quantifiers")
+		}
 	case syntax.OpNoMatch, syntax.OpEmptyMatch, syntax.OpLiteral, syntax.OpCharClass, syntax.OpAnyChar, syntax.OpAnyCharNotNL,
-		syntax.OpCapture, syntax.OpStar, syntax.OpPlus, syntax.OpQuest,
-		syntax.OpRepeat, syntax.OpConcat, syntax.OpAlternate:
+		syntax.OpCapture, syntax.OpConcat, syntax.OpAlternate:
 	default:
 		return fmt.Errorf("regular expression uses unsupported syntax operation %s", expression.Op)
 	}
