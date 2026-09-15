@@ -10706,7 +10706,6 @@
       "errors-and-notices": "Errors and notices",
       "explain-with-assistant": "Explain with Assistant",
       "fix-with-assistant": "Fix with Assistant",
-      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",

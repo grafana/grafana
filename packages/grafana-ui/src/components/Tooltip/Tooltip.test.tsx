@@ -12,13 +12,7 @@ import { Tooltip } from './Tooltip';
 function renderInteractiveTooltip(trapFocus: boolean) {
   render(
     <>
-      <Tooltip
-        content={
-          <button>Action inside tooltip</button>
-        }
-        interactive
-        trapFocus={trapFocus}
-      >
+      <Tooltip content={<button>Action inside tooltip</button>} interactive trapFocus={trapFocus}>
         <button>Trigger</button>
       </Tooltip>
       <button>Next focusable element on the page</button>
