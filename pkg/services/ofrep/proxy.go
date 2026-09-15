@@ -8,11 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
@@ -25,7 +27,12 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	r = r.WithContext(ctx)
 	logger := b.logger.FromContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
+	target := b.upstreamForBulk(ctx, namespace, logger)
+	if target != nil {
+		logger.Debug("selected upstream for bulk eval", "namespace", namespace, "target", target.Host)
+	}
+
+	proxy, err := b.newProxy(ofrepPath, namespace, target, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		logger.Error("Failed to create proxy", "error", err)
@@ -78,7 +85,12 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	r = r.WithContext(ctx)
 	logger := b.logger.FromContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, r.Header.Get("User-Agent"))
+	target := b.upstreamForFlag(ctx, flagKey, namespace, logger)
+	if target != nil {
+		logger.Debug("selected upstream for flag eval", "key", flagKey, "namespace", namespace, "target", target.Host)
+	}
+
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, target, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		logger.Error("Failed to create proxy", "key", flagKey, "error", err)
@@ -131,18 +143,36 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath, namespace, incomingUserAgent string) (*httputil.ReverseProxy, error) {
+func isUnknownNamespace(namespace string) bool {
+	return namespace == "" || namespace == "*"
+}
+
+func (b *APIBuilder) upstreamForFlag(ctx context.Context, flagKey, namespace string, logger log.Logger) *url.URL {
+	if b.bypassEnabled(ctx, logger) && (isUnknownNamespace(namespace) || !b.hgOverrideFlags[flagKey]) {
+		return b.goffURL
+	}
+	return b.url
+}
+
+func (b *APIBuilder) upstreamForBulk(ctx context.Context, namespace string, logger log.Logger) *url.URL {
+	if b.bypassEnabled(ctx, logger) && isUnknownNamespace(namespace) {
+		return b.goffURL
+	}
+	return b.url
+}
+
+func (b *APIBuilder) newProxy(proxyPath, namespace string, targetURL *url.URL, incomingUserAgent string) (*httputil.ReverseProxy, error) {
 	if proxyPath == "" {
 		return nil, fmt.Errorf("proxy path is required")
 	}
 
-	if b.url == nil {
+	if targetURL == nil {
 		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
 	}
 
 	director := func(req *http.Request) {
-		req.URL.Scheme = b.url.Scheme
-		req.URL.Host = b.url.Host
+		req.URL.Scheme = targetURL.Scheme
+		req.URL.Host = targetURL.Host
 		req.URL.Path = proxyPath
 		req.Header.Set("User-Agent", withStackTag(incomingUserAgent, namespace))
 	}
