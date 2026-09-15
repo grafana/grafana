@@ -49,6 +49,21 @@ const hideAcceptedFileTypesCaption = css({
   },
 });
 
+// FileDropzone's `accept` option buckets extensions by MIME type, so a `.txt` file (MIME
+// text/plain) collides with the `.yml` bucket and passes; re-check the filename directly.
+function validateYamlFileExtension(file: File) {
+  const hasYamlExtension = YAML_FILE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+  if (hasYamlExtension) {
+    return null;
+  }
+  return {
+    code: 'file-invalid-type',
+    message: t('alerting.import-to-gma.step1.yaml-invalid-type', 'File must be a YAML file ({{extensions}})', {
+      extensions: YAML_FILE_EXTENSIONS.join(', '),
+    }),
+  };
+}
+
 /** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
 function isAutoSyncSegmentEnabled(): boolean {
   return Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
@@ -261,6 +276,7 @@ export function Step1Content({
                             options={{
                               multiple: false,
                               accept: YAML_FILE_EXTENSIONS,
+                              validator: validateYamlFileExtension,
                               onDrop: (acceptedFiles) => {
                                 const file = acceptedFiles[0];
                                 if (file) {

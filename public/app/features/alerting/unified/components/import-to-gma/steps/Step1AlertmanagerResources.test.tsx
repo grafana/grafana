@@ -211,6 +211,23 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
     });
 
+    it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['hello'], 'notes.txt', { type: 'text/plain' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
     it('removes the YAML file when its remove button is clicked', async () => {
       const { user } = render(
         <TestWrapper

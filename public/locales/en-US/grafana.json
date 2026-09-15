@@ -1786,6 +1786,7 @@
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
+        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
         "yaml-remove": "Remove {{name}}"
       },
       "step2": {
