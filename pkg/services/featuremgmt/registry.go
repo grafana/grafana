@@ -1278,14 +1278,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertingQueryAndExpressionsStepMode",
-			Description: "Enables step mode for alerting queries and expressions",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3063,6 +3055,15 @@ var (
 		{
 			Name:         "table.refresh",
 			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.refreshNewFeatures",
+			Description:  "Catch-all toggle for new features developed as part of the Q3 table panel refresh",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

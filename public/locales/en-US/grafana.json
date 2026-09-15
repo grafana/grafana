@@ -6707,6 +6707,10 @@
       },
       "title-delete": "Delete {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "Remove",
+      "unknown-transformation-title": "Unknown transformation: {{transformationId}}"
+    },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
       "no-transformations-found": "No transformations found",
@@ -8654,6 +8658,16 @@
       "title-raw-prometheus": "Raw Prometheus",
       "title-table": "Table",
       "title-traces": "Traces"
+    },
+    "explore-actions": {
+      "close-split-view-left": "Close split view left",
+      "close-split-view-right": "Close split view right",
+      "correlations-editor": "Correlations editor",
+      "open-split-view": "Open split view",
+      "run-query": "Run query",
+      "run-query-left": "Run query (left)",
+      "run-query-right": "Run query (right)",
+      "section-explore": "Explore"
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -13130,9 +13144,7 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export",
-      "open-in-cursor": "Open in Cursor",
-      "opening-in-cursor": "Opening in Cursor"
+      "label": "Export"
     },
     "history": {
       "add-block": "Add block",
