@@ -24,6 +24,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { textPanelSaveTracker } from 'app/plugins/panel/text/analytics/saveTracker';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -333,6 +334,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // clear pending suggestions
     vizSuggestionsTracker.record(panel.state.key!, undefined);
+    textPanelSaveTracker.forget(this.getPanelId());
 
     if (this.state.isNewPanel) {
       dashboard.removePanel(panel);

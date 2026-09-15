@@ -95,6 +95,11 @@ export class TextPanelSaveTracker {
     entry.edited = isSameConfig(snapshot, entry.baseline) ? undefined : snapshot;
   }
 
+  /** Called when a panel edit is discarded, which publishes no dashboard-level event. */
+  forget(panelId: number) {
+    this.tracked.delete(panelId);
+  }
+
   private onDashboardSaved = () => {
     if (this.dashboard !== currentDashboard()) {
       this.tracked.clear();

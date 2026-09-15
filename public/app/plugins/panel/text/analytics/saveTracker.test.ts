@@ -240,6 +240,29 @@ describe('TextPanelSaveTracker', () => {
     expect(saved).toHaveBeenCalledTimes(1);
   });
 
+  it('reports nothing for a panel whose edit was discarded in the panel editor', () => {
+    open(1, withContent('# Start'));
+    tracker.record(1, withContent('# Abandoned'));
+
+    tracker.forget(1);
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).not.toHaveBeenCalled();
+  });
+
+  it('still reports the other panels when one panel edit is discarded', () => {
+    open(1, withContent('# Start'));
+    open(2, withContent('# Start'));
+    tracker.record(1, withContent('# Abandoned'));
+    tracker.record(2, withContent('{{host}}'));
+
+    tracker.forget(1);
+    appEvents.publish(new DashboardSavedEvent());
+
+    expect(saved).toHaveBeenCalledTimes(1);
+    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ hasHandlebars: true }));
+  });
+
   it('does not report the same edit again on a later save', () => {
     open(1, withContent('# Start'));
     tracker.record(1, withContent('# Edited'));
