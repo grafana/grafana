@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -208,6 +209,23 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 // The initial list drives an OnAdd per existing object and marks HasSynced, so a
 // controller can start reconciling the full set — just like an informer's
 // LIST-seeded cache.
+func TestInformer_SetLogger(t *testing.T) {
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, nil,
+		func(ns, name string) runtime.Object { return obj(name) },
+		func(ctx context.Context) ([]runtime.Object, int64, error) { return nil, 0, nil },
+	)
+
+	defaultLogger := n.log
+	require.NotNil(t, defaultLogger, "the constructor must always set a default logger")
+
+	custom := log.New("test.custom.logger")
+	n.SetLogger(custom)
+	assert.Same(t, custom, n.log, "SetLogger must replace the logger")
+
+	n.SetLogger(nil)
+	assert.Same(t, custom, n.log, "a nil logger must be ignored, leaving the previous one in place")
+}
+
 func TestInformer_InitialListDeliversAdds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
