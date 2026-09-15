@@ -8,6 +8,7 @@
     "generation": 2,
     "creationTimestamp": "2002-03-04T01:00:00Z",
     "labels": {
+      "default": "true",
       "grafana.app/deprecatedInternalID": "1234"
     },
     "annotations": {
