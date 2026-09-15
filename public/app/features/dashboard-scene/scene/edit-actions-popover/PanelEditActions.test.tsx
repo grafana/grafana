@@ -373,7 +373,12 @@ describe('<PanelEditActionsWrapper />', () => {
       });
 
       render(
-        <EditActionsLayoutProvider containerRef={{ current: portalRoot }} isDocked={false} isHidden={false}>
+        <EditActionsLayoutProvider
+          containerRef={{ current: portalRoot }}
+          isDocked={false}
+          isHidden={false}
+          sidebarPosition="right"
+        >
           <ElementSelectionContext.Provider
             value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
           >
