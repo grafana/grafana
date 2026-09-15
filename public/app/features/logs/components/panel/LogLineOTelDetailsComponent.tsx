@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DataFrameType, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { DataFrameType, store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Box, Counter, Icon, useStyles2 } from '@grafana/ui';
 
@@ -92,27 +92,34 @@ const LogLineDetailsOTelComponentBody = ({
   logs,
   search,
 }: LogLineDetailsOTelComponentBodyProps) => {
-  const { fontSize } = useLogListContext();
+  const { fontSize, logOptionsStorageKey } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
-  const [closedCategories, setClosedCategories] = useState<Set<string>>(() => new Set());
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    setClosedCategories(new Set());
-  }, [groupedAttributes]);
+    setExpandedCategories(
+      groupedAttributes.groups
+        .map((group) => group.category.id)
+        .filter((categoryId) => store.getBool(`${logOptionsStorageKey}.log-details.${categoryId}-open`, false))
+    );
+  }, [groupedAttributes, logOptionsStorageKey]);
 
-  const toggleCategory = useCallback((categoryId: string) => {
-    setClosedCategories((previousClosedCategories) => {
-      const nextClosedCategories = new Set(previousClosedCategories);
+  const toggleCategory = useCallback(
+    (categoryId: string) => {
+      const expanded = expandedCategories.includes(categoryId);
 
-      if (nextClosedCategories.has(categoryId)) {
-        nextClosedCategories.delete(categoryId);
+      if (expanded) {
+        setExpandedCategories((categories) => categories.filter((id) => id !== categoryId));
+        store.delete(`${logOptionsStorageKey}.log-details.${categoryId}-open`);
       } else {
-        nextClosedCategories.add(categoryId);
+        setExpandedCategories([...expandedCategories, categoryId]);
+        store.set(`${logOptionsStorageKey}.log-details.${categoryId}-open`, true);
       }
+    },
+    [expandedCategories, logOptionsStorageKey]
+  );
 
-      return nextClosedCategories;
-    });
-  }, []);
+  console.log(expandedCategories);
 
   if (!groupedAttributes.groups.length) {
     return (
@@ -135,7 +142,7 @@ const LogLineDetailsOTelComponentBody = ({
         ) : (
           <div className={styles.categories}>
             {groupedAttributes.groups.map(({ category, items }) => {
-              const isCategoryOpen = !closedCategories.has(category.id);
+              const isCategoryOpen = expandedCategories.includes(category.id);
               const label = t(category.labelKey, category.defaultLabel);
 
               return (
