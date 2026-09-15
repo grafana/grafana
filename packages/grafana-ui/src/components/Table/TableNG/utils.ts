@@ -1470,8 +1470,20 @@ export function getHeaderAffordanceWidth(
   return width;
 }
 
+/**
+ * The label as the header cell lays it out: a wrapped header renders `pre-line`, where a newline in
+ * the display name breaks the line, while an unwrapped one renders `nowrap` and collapses it into a
+ * space. `measureWidth` sizes to the widest hard-broken segment, which would clip the single line.
+ */
+function getHeaderMeasurementLabel(field: Field): string {
+  const displayName = getDisplayName(field);
+  return field.config.custom?.wrapHeaderText ? displayName : displayName.replace(/\s+/g, ' ');
+}
+
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, opts: HeaderAffordanceOptions): number {
-  return ctx.measureWidth(getDisplayName(field)) + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts);
+  return (
+    ctx.measureWidth(getHeaderMeasurementLabel(field)) + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts)
+  );
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
