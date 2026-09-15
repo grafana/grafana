@@ -29,7 +29,6 @@ type RenderRowFn = NonNullable<NonNullable<DataGridProps<TableRow, TableSummaryR
 
 // Props that TableDataGrid manages internally — consumers must not override these.
 type OmittedDataGridProps =
-  | 'className'
   | 'role'
   | 'rowKeyGetter'
   | 'selectedRows'
@@ -82,7 +81,6 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onTooltipClose: () => void;
   inspectCell?: InspectCellProps | null;
   onInspectCellDismiss: () => void;
-  className?: string;
 }
 
 export function TableDataGrid({
@@ -187,7 +185,7 @@ export function TableDataGrid({
         {...commonDataGridProps}
         role={role}
         ref={gridRef}
-        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset, className)}
+        className={clsx(styles.grid, className)}
         columns={columns}
         rows={rows}
         rowClass={(row, rowIdx) =>
