@@ -13,7 +13,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule-identifier';
 
 export interface FetchPromRulesFilter {
   dashboardUID?: string;

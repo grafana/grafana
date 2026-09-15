@@ -10,12 +10,8 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { parseQueryParamMatchers } from '../utils/matchers';
-import {
-  isDataSourceManagedIdentifier,
-  toPluginRuleIdentifier,
-  tryDecodeUriComponent,
-  unescapePathSeparators,
-} from '../utils/rule-id';
+import { toPluginRuleIdentifier } from '../utils/rule-id';
+import { isDataSourceManagedIdentifier, tryDecodeUriComponent, unescapePathSeparators } from '../utils/rule-identifier';
 
 import { type ProxyContext, type ProxyHandler, type ProxyMatcher, type RouteProxy } from './types';
 

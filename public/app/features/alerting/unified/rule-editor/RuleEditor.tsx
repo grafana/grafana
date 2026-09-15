@@ -9,7 +9,8 @@ import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRu
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
-import * as ruleId from '../utils/rule-id';
+import { getRuleIdFromPathname } from '../utils/rule-id';
+import { tryParse } from '../utils/rule-identifier';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -114,8 +115,8 @@ export default withPageErrorBoundary(RuleEditor);
 function useRuleEditorPathParams() {
   const params = useParams<RuleEditorPathParams>();
   const { type } = params;
-  const id = ruleId.getRuleIdFromPathname(params);
-  const identifier = ruleId.tryParse(id, true);
+  const id = getRuleIdFromPathname(params);
+  const identifier = tryParse(id, true);
 
   return { identifier, type };
 }
@@ -124,7 +125,7 @@ function useIdentifierFromCopy() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
 
-  return ruleId.tryParse(copyFromId);
+  return tryParse(copyFromId);
 }
 
 function useDefaultsFromQuery() {

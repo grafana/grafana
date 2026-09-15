@@ -14,7 +14,8 @@ import { ActiveTab } from './components/rule-viewer/activeTab';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';
-import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
+import { getRuleIdFromPathname } from './utils/rule-id';
+import { parse as parseRuleId } from './utils/rule-identifier';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const RuleViewer = () => {

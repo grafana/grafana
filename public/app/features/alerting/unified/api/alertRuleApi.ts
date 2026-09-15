@@ -16,7 +16,8 @@ import { type ExportFormats } from '../components/export/providers';
 import { type Folder } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier, rulerRuleType } from '../utils/rules';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule-identifier';
+import { rulerRuleType } from '../utils/rules';
 
 import { type RulerGroupUpdatedResponse } from './alertRuleModel';
 import { type WithNotificationOptions, alertingApi } from './alertingApi';

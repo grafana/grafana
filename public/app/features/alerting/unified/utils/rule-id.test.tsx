@@ -19,11 +19,10 @@ import {
   hashQuery,
   hashRule,
   hashRulerRule,
-  parse,
-  stringifyDataSourceIdentifier,
   stringifyIdentifier,
   stripPromQLComments,
 } from './rule-id';
+import { parse, stringifyDataSourceIdentifier } from './rule-identifier';
 
 const alertingRule = {
   prom: {

@@ -49,7 +49,7 @@ import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG }
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { type AsyncRequestState } from './redux';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from './rule-identifier';
+import { isCloudRuleIdentifier } from './rule-identifier';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
@@ -153,11 +153,6 @@ export function alertInstanceKey(alert: Alert): string {
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message?.includes(RULER_NOT_SUPPORTED_MSG);
 }
-
-// Re-exported for backward compatibility. Moved to rule-identifier.ts so the alerting route table
-// can reach them during app startup without pulling this module in.
-// eslint-disable-next-line no-barrel-files/no-barrel-files
-export { isCloudRuleIdentifier, isPrometheusRuleIdentifier };
 
 export function isGrafanaRuleIdentifier(identifier: RuleIdentifier): identifier is GrafanaRuleIdentifier {
   return 'uid' in identifier;

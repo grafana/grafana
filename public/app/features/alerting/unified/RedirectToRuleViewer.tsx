@@ -13,7 +13,7 @@ import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
 import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
-import { unescapePathSeparators } from './utils/rule-id';
+import { unescapePathSeparators } from './utils/rule-identifier';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const pageTitle = 'Find rule';

@@ -6,13 +6,12 @@ import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
-import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
-  alertInstanceKey,
+  escapePathSeparators,
   isCloudRuleIdentifier,
-  isGrafanaRuleIdentifier,
   isPrometheusRuleIdentifier,
-} from 'app/features/alerting/unified/utils/rules';
+} from 'app/features/alerting/unified/utils/rule-identifier';
+import { alertInstanceKey, isGrafanaRuleIdentifier } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   type Alert,

@@ -12,7 +12,7 @@ import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { parse } from '../../../utils/rule-id';
+import { parse } from '../../../utils/rule-identifier';
 import { MetaText } from '../../MetaText';
 import { AnnotationValue } from '../../rule-viewer/Details';
 import { ErrorMessageRow } from '../state-history/ErrorMessageRow';

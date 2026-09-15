@@ -1,9 +1,11 @@
 /**
- * Taking rule identifiers apart and putting them back together. Nothing in here touches React,
- * the Redux store or any alerting API — the alerting route table imports this module while the
- * app is starting up, so anything it reaches lands in the first bundle the browser downloads.
+ * Taking rule identifiers apart and putting them back together. Nothing in here touches React, the
+ * Redux store or any alerting API, so working out what an identifier says costs nothing more than
+ * this file.
  *
- * The rest of the identifier code lives in `rule-id.ts`, which re-exports everything here.
+ * Building identifiers from rules, and hashing them, lives in `rule-id.ts` — that needs the rule
+ * types, the data source helpers and the analytics logger, none of which reading an identifier
+ * should drag in.
  */
 import {
   type CloudRuleIdentifier,
@@ -15,8 +17,8 @@ import { CLOUD_RULE_IDENTIFIER_PREFIX, PROMETHEUS_RULE_IDENTIFIER_PREFIX } from 
 
 /**
  * A Ruler identifier carries the hash of the rule as the Ruler API returned it. Kept here rather
- * than with the other rule type guards in `utils/rules.ts`, which reaches far too much to be
- * imported during startup. `utils/rules.ts` re-exports it.
+ * than with the other rule type guards in `utils/rules.ts`, so that telling two identifiers apart
+ * doesn't pull in everything that module reaches.
  */
 export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is CloudRuleIdentifier {
   return 'rulerRuleHash' in identifier;

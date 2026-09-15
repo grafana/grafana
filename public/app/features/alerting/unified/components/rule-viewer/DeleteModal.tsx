@@ -11,7 +11,7 @@ import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromG
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
-import { isCloudRuleIdentifier } from '../../utils/rules';
+import { isCloudRuleIdentifier } from '../../utils/rule-identifier';
 
 type DeleteModalHook = [
   JSX.Element,
