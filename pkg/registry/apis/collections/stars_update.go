@@ -129,12 +129,12 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 }
 
 func itemFromPath(urlPath, prefix string) (starItem, error) {
-	idx := strings.Index(urlPath, prefix)
-	if idx == -1 {
+	_, after, ok := strings.Cut(urlPath, prefix)
+	if !ok {
 		return starItem{}, apierrors.NewBadRequest("invalid request path")
 	}
 
-	path := strings.TrimPrefix(urlPath[idx+len(prefix):], "/")
+	path := strings.TrimPrefix(after, "/")
 	parts := strings.Split(path, "/")
 	if len(parts) != 3 {
 		return starItem{}, apierrors.NewBadRequest("expected {group}/{kind}/{id}")
