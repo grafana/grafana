@@ -9,9 +9,9 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
+import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
-import { FOOTER_TEST_ID } from './editor/TextNGEditorFooter';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
@@ -535,11 +535,48 @@ describe('TextNGPanel', () => {
 
       setup(props, CoreApp.Dashboard);
 
-      const picker = screen.getByRole('combobox');
-      await userEvent.click(picker);
+      await userEvent.click(screen.getByRole('combobox'));
       await userEvent.click(await screen.findByRole('option', { name: 'Frame B' }));
 
       expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
+    });
+
+    it('renders the selector left of the pagination in a single panel footer', () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const pagedFrame = toDataFrame({
+        name: 'Frame C',
+        fields: [{ name: 'n', values: Array.from({ length: 150 }, (_, i) => i) }],
+      });
+      const props = createProps(replaceVariablesMock, {
+        // Wide, so the pagination summary shows alongside the full control.
+        width: 1000,
+        height: 400,
+        data: createData([pagedFrame, frameB]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, pageSize: 10 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const [left, center] = Array.from(
+        screen.getByTestId(FOOTER_TEST_ID).querySelectorAll<HTMLElement>(':scope > div')
+      );
+
+      expect(within(left).getByRole('combobox')).toHaveValue('Frame C');
+      expect(center).toHaveTextContent('1 - 10 of 150 rows');
+    });
+
+    it('holds the frame selector in the editor footer while editing, not in a row of its own', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+      const footers = await screen.findAllByTestId(FOOTER_TEST_ID);
+
+      expect(footers).toHaveLength(1);
+      expect(within(footers[0]).getByRole('combobox')).toHaveValue('Frame A');
     });
 
     it('does not make the rendered content a row flex item', () => {

@@ -8,9 +8,9 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
+import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
-import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 beforeAll(() => {
