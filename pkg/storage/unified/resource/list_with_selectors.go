@@ -60,8 +60,8 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		// useSelectorSearch() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
-	if err != nil {
-		return nil, err
+	if err := ErrorFromResponse(searchResp.GetError(), err); err != nil {
+		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
 	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
 
@@ -185,7 +185,7 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
-	if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+	if req.ResourceVersion > 0 || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
 		return false
 	}
 

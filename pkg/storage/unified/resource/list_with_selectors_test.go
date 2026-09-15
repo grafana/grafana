@@ -64,6 +64,17 @@ func TestUseSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
+		"false when resource version is set": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:          resourcepb.ListRequest_STORE,
+				ResourceVersion: 42,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
 		"false when no selectors and resource is not allowlisted": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
@@ -264,6 +275,27 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
+	})
+
+	t.Run("returns an embedded search error", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("search failed"),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Equal(t, "search failed", resp.Error.Message)
 	})
 
 	t.Run("rejects a continue token from the store path", func(t *testing.T) {
