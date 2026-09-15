@@ -68,7 +68,9 @@ func wrapStorageError(err error, verb string, gr schema.GroupResource, name stri
 	switch {
 	case errors.Is(err, context.Canceled):
 		message := err.Error()
+		var details *metav1.StatusDetails
 		if !gr.Empty() {
+			details = &metav1.StatusDetails{Group: gr.Group, Kind: gr.Resource, Name: name}
 			if name != "" {
 				message = fmt.Sprintf("%s (%s %s %s)", message, strings.ToLower(verb), gr.String(), name)
 			} else {
@@ -80,6 +82,7 @@ func wrapStorageError(err error, verb string, gr schema.GroupResource, name stri
 			Code:    499,
 			Reason:  metav1.StatusReasonUnknown,
 			Message: message,
+			Details: details,
 		}}
 	case errors.Is(err, context.DeadlineExceeded):
 		return apierrors.NewTimeoutError(err.Error(), 0)

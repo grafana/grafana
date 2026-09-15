@@ -162,6 +162,11 @@ func TestWrapStorageError(t *testing.T) {
 		// error text for an unrecognized code like 499 -- guard against
 		// reintroducing that by asserting our message actually survives.
 		assert.Contains(t, statusErr.Status().Message, "failed to list plugins")
+
+		require.NotNil(t, statusErr.Status().Details)
+		assert.Equal(t, gr.Group, statusErr.Status().Details.Group)
+		assert.Equal(t, gr.Resource, statusErr.Status().Details.Kind)
+		assert.Equal(t, "test-plugin", statusErr.Status().Details.Name)
 	})
 
 	t.Run("context.DeadlineExceeded maps to 504, not 500", func(t *testing.T) {
