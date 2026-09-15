@@ -190,10 +190,12 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray05,
-    page: palette.gray10,
     primary: palette.gray10,
     secondary: palette.gray15,
+    tertiary: palette.gray15,
     elevated: palette.gray15,
+
+    page: palette.gray10,
   };
 
   action = {
@@ -283,10 +285,12 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray100,
-    page: palette.white,
     primary: palette.white,
     secondary: palette.gray95,
+    tertiary: palette.gray95,
     elevated: palette.white,
+
+    page: palette.white,
   };
 
   action = {
@@ -390,6 +394,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   return merge(
     {
       ...base,
+      background,
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
       tertiary: getRichColor({ color: tertiary, name: 'tertiary' }),

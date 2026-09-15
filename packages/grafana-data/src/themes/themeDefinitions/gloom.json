@@ -40,6 +40,7 @@
       "page": "#09090C",
       "primary": "#121118",
       "secondary": "#211e28",
+      "tertiary": "#302B38",
       "elevated": "#211e28"
     },
     "action": {

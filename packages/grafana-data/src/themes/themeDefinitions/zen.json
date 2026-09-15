@@ -31,6 +31,7 @@
       "page": "#EFEFEF",
       "primary": "#E9E9E9",
       "secondary": "#D8D8D8",
+      "tertiary": "#C7C7C7",
       "elevated": "#E9E9E9"
     },
     "action": {

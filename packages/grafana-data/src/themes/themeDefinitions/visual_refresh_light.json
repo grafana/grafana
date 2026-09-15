@@ -8,7 +8,9 @@
       "primary": "palette.neutral50",
       "secondary": "palette.white",
       "tertiary": "palette.neutral150",
-      "elevated": "palette.white"
+      "elevated": "palette.white",
+
+      "page": "palette.neutral50"
     },
     "primary": {
       "main": "palette.neutral950",
@@ -120,6 +122,9 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "panel": {
+      "background": "palette.white"
+    },
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"

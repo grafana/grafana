@@ -59,6 +59,7 @@
       "page": "#FFFCF8",
       "primary": "#FFFFFF",
       "secondary": "#f9f3e8",
+      "tertiary": "#F3E7D1",
       "elevated": "#FFFFFF"
     },
     "action": {

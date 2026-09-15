@@ -8,6 +8,7 @@
       "page": "#010101",
       "primary": "#020202",
       "secondary": "#080808",
+      "tertiary": "#0E0E0E",
       "elevated": "#080808"
     },
     "text": {

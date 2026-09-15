@@ -8,7 +8,9 @@
       "primary": "palette.ink900",
       "secondary": "palette.ink850",
       "tertiary": "palette.ink750",
-      "elevated": "palette.ink750"
+      "elevated": "palette.ink750",
+
+      "page": "palette.ink900"
     },
     "primary": {
       "main": "palette.ink100",
@@ -120,6 +122,9 @@
     "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
   },
   "components": {
+    "panel": {
+      "background": "palette.ink850"
+    },
     "card": {
       "background": "palette.ink850",
       "borderColor": "palette.ink700"
