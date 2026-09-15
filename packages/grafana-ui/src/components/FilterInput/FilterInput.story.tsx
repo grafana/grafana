@@ -8,7 +8,7 @@ const meta: Meta<typeof FilterInput> = {
   title: 'Inputs/FilterInput',
   component: FilterInput,
   argTypes: {
-    icon: { control: { type: 'select', options: ['search', 'filter'] } },
+    variant: { control: { type: 'select', options: ['search', 'filter'] } },
   },
   parameters: {
     docs: {
@@ -25,7 +25,7 @@ export const Basic: StoryFn<typeof FilterInput> = (args) => {
 
 Basic.args = {
   placeholder: 'Filter...',
-  icon: 'filter',
+  variant: 'filter',
 };
 
 export default meta;

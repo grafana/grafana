@@ -14,12 +14,12 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
   onChange: (value: string) => void;
   escapeRegex?: boolean;
   suffix?: InputProps['suffix'];
-  /** Icon shown as a prefix. Use `filter` when the field narrows an already-visible list rather than searching a wider dataset. */
-  icon?: 'search' | 'filter';
+  /** Controls the prefix icon: `search` for querying a wider dataset, `filter` for narrowing an already-visible list. */
+  variant?: 'search' | 'filter';
 }
 
 export const FilterInput = forwardRef<HTMLInputElement, Props>(
-  ({ value, width, onChange, escapeRegex = true, suffix: _suffix, icon = 'search', ...restProps }, ref) => {
+  ({ value, width, onChange, escapeRegex = true, suffix: _suffix, variant = 'search', ...restProps }, ref) => {
     const innerRef = useRef<HTMLInputElement | null>(null);
     const combinedRef = useCombinedRefs<HTMLInputElement>(ref, innerRef);
 
@@ -45,7 +45,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
 
     return (
       <Input
-        prefix={<Icon name={icon} />}
+        prefix={<Icon name={variant} />}
         suffix={suffix}
         width={width}
         type="text"

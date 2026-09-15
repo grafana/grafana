@@ -12,16 +12,16 @@ describe('FilterInput', () => {
     expect(screen.queryByTestId('icon-filter')).not.toBeInTheDocument();
   });
 
-  it('should show the filter icon when icon="filter" is passed', () => {
-    render(<FilterInput value="" onChange={onChange} icon="filter" />);
+  it('should show the filter icon when variant="filter" is passed', () => {
+    render(<FilterInput value="" onChange={onChange} variant="filter" />);
 
     expect(screen.getByTestId('icon-filter')).toBeInTheDocument();
     expect(screen.queryByTestId('icon-search')).not.toBeInTheDocument();
   });
 
-  it('should not forward the icon prop as a raw DOM attribute on the input', () => {
-    render(<FilterInput value="" onChange={onChange} icon="filter" />);
+  it('should not forward the variant prop as a raw DOM attribute on the input', () => {
+    render(<FilterInput value="" onChange={onChange} variant="filter" />);
 
-    expect(screen.getByRole('textbox')).not.toHaveAttribute('icon');
+    expect(screen.getByRole('textbox')).not.toHaveAttribute('variant');
   });
 });
