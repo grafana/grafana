@@ -201,7 +201,7 @@ describe('new layouts empty state', () => {
     const dashboard = setupScene();
 
     expect(screen.getByText('Select layout')).toBeInTheDocument();
-    expect(screen.queryByText('Or start blank')).not.toBeInTheDocument();
+    expect(screen.queryByText('Or build your it from scratch')).not.toBeInTheDocument();
     expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add');
   });
 
@@ -222,7 +222,7 @@ describe('new layouts empty state', () => {
     const dashboard = setupScene();
 
     expect(screen.getByTestId('dashboard-landing-prompt')).toBeInTheDocument();
-    expect(screen.getByText('Or start blank')).toBeInTheDocument();
+    expect(screen.getByText('Or build it from scratch')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
     expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
     expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
