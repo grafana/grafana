@@ -183,6 +183,35 @@ max by (service) (up{env="staging"}) * 0.8`,
     expect(match).toBe(rulerRuleWithComments);
   });
 
+  it('should tell apart rules whose expressions differ only in a duration-shaped label value', () => {
+    // The multi-window burn rate pattern: same rule name, same labels, and the window each rule
+    // looks at appears only as a label matcher inside the expression. Those select different
+    // series, so normalizing durations must not reach inside the quotes and merge the two.
+    const rulerRule60m = alertingFactory.ruler.recordingRule.build({
+      record: 'slo_burn_state',
+      labels: {},
+      expr: `max by (service) (slo_burn{window="60m"})`,
+    });
+    const rulerRule1h = alertingFactory.ruler.recordingRule.build({
+      record: 'slo_burn_state',
+      labels: {},
+      expr: `max by (service) (slo_burn{window="1h"})`,
+    });
+    const rulerGroup = alertingFactory.ruler.group.build({ rules: [rulerRule60m, rulerRule1h] });
+
+    // Prometheus returns the 1h rule, but at a different position than the ruler group has it,
+    // so a position based fallback would pick the wrong rule.
+    const promRule = mockPromRecordingRule({
+      name: 'slo_burn_state',
+      labels: {},
+      query: `max by (service) (slo_burn{window="1h"})`,
+    });
+    const promRuleWithOrigin = createPromRuleWithOrigin(promRule, 0, 2);
+
+    const match = getMatchingRulerRule(rulerGroup, promRuleWithOrigin);
+    expect(match).toBe(rulerRule1h);
+  });
+
   it('should match prometheus rule against one of two identical ruler rules', () => {
     // Create two identical ruler alerting rules
     const rulerRule1 = alertingFactory.ruler.alertingRule.build({

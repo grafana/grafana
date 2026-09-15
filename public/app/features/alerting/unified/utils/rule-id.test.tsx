@@ -440,6 +440,21 @@ max by (environment, namespace, service) (service_condition{environment!="produc
     expect(hashQuery('rate(requests_total[5m])')).not.toBe(hashQuery('rate(requests_total[6m])'));
   });
 
+  it('should not conflate an empty selector with a template string', () => {
+    expect(hashQuery(`label_format origin="{{.app_host}}"`)).not.toBe(hashQuery(`label_format origin="{}"`));
+  });
+
+  it('should not treat a duration-shaped label value as a duration', () => {
+    // these select different series, so they must stay distinguishable
+    expect(hashQuery('slo_burn{window="60m"}')).not.toBe(hashQuery('slo_burn{window="1h"}'));
+    expect(hashQuery("slo_burn{window='60m'}")).not.toBe(hashQuery("slo_burn{window='1h'}"));
+    expect(hashQuery('slo_burn{window=`60m`}')).not.toBe(hashQuery('slo_burn{window=`1h`}'));
+  });
+
+  it('should still normalize a range duration next to a duration-shaped label value', () => {
+    expect(hashQuery('rate(slo_burn{window="60m"}[60m])')).toBe(hashQuery('rate(slo_burn{window="60m"}[1h])'));
+  });
+
   it('should produce the same hash for a ruler expr and a Prometheus query that rewrote its durations', () => {
     const rulerExpr = `((sum_over_time((service_signal{check="success", sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{check="success", sensitivity="low"} < bool 100)[60m:]) >= bool 60) > bool 0) * 4`;
     const promQuery = `((sum_over_time((service_signal{check="success",sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{check="success",sensitivity="low"} < bool 100)[1h:]) >= bool 60) > bool 0) * 4`;
@@ -481,6 +496,28 @@ describe('normalizePromQLDurations', () => {
 
   it('should leave a query without durations unchanged', () => {
     expect(normalizePromQLDurations('max by (cluster) (up)')).toBe('max by (cluster) (up)');
+  });
+
+  it('should leave a duration inside a string alone', () => {
+    expect(normalizePromQLDurations('slo_burn{window="60m"}')).toBe('slo_burn{window="60m"}');
+    expect(normalizePromQLDurations("slo_burn{window='60m'}")).toBe("slo_burn{window='60m'}");
+    expect(normalizePromQLDurations('slo_burn{window=`60m`}')).toBe('slo_burn{window=`60m`}');
+  });
+
+  it('should normalize a range duration alongside a duration-shaped label value', () => {
+    expect(normalizePromQLDurations('rate(slo_burn{window="60m"}[5m])')).toBe('rate(slo_burn{window="60m"}[300000ms])');
+  });
+
+  it('should not let an escaped quote end a string early', () => {
+    expect(normalizePromQLDurations('label_replace(up, "dst", "{{\\"60m\\"}}", "src", "(.*)")')).toBe(
+      'label_replace(up, "dst", "{{\\"60m\\"}}", "src", "(.*)")'
+    );
+  });
+
+  it('should normalize durations on both sides of a string', () => {
+    expect(normalizePromQLDurations('rate(up{w="60m"}[5m]) offset 90m')).toBe(
+      'rate(up{w="60m"}[300000ms]) offset 5400000ms'
+    );
   });
 });
 

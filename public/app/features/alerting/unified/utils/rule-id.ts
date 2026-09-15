@@ -332,7 +332,13 @@ export function stripPromQLComments(query: string): string {
 }
 
 /**
- * Matches a PromQL duration literal – one or more `<number><unit>` parts, e.g. `5m`, `1h30m`, `500ms`.
+ * Matches either a quoted string or a PromQL duration literal – one or more `<number><unit>` parts,
+ * e.g. `5m`, `1h30m`, `500ms`.
+ *
+ * The string alternative comes first and captures into group 1. Since the scan runs left to right,
+ * an opening quote swallows the rest of the literal, so a duration written inside a string is never
+ * offered to the duration alternative. All three PromQL string syntaxes are covered, and a backslash
+ * escape inside one doesn't end it early.
  *
  * The lookbehind and lookahead keep us from matching a duration-looking tail inside an identifier,
  * so a recording rule named `job:latency:rate5m` is left alone. They also have to exclude a dot:
@@ -341,7 +347,8 @@ export function stripPromQLComments(query: string): string {
  * The interval patterns elsewhere in Grafana can't stand in for this one – they either anchor to the
  * whole string, or they accept the units of a Grafana interval rather than a PromQL duration.
  */
-const PROMQL_DURATION_REGEX = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/g;
+const PROMQL_STRING_OR_DURATION_REGEX =
+  /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`)|(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/g;
 
 /**
  * Rewrites every duration in a query to a plain number of milliseconds.
@@ -349,15 +356,23 @@ const PROMQL_DURATION_REGEX = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/g;
  * Mimir parses the expression and prints it back out when it exposes the rule via the Prometheus
  * rules API, and printing picks the largest unit that fits. A hand-written `[60m:]` in the ruler
  * YAML therefore comes back as `[1h:]`, which would otherwise fingerprint differently.
+ *
+ * Durations inside a string are left alone. `window="60m"` and `window="1h"` select different series,
+ * so rewriting them would make two genuinely different rules look like one – as happens in the
+ * multi-window burn rate pattern, where each rule carries its own window as a label.
  */
 export function normalizePromQLDurations(query: string): string {
-  return query.replace(PROMQL_DURATION_REGEX, (duration) => {
+  return query.replace(PROMQL_STRING_OR_DURATION_REGEX, (match, quotedString?: string) => {
+    if (quotedString !== undefined) {
+      return quotedString;
+    }
+
     try {
-      return `${parsePrometheusDuration(duration)}ms`;
+      return `${parsePrometheusDuration(match)}ms`;
     } catch {
       // the two patterns could drift apart, so leave anything we can't parse exactly as we found it
       // rather than collapsing it to a value that would make unrelated durations look identical
-      return duration;
+      return match;
     }
   });
 }
