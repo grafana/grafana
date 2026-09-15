@@ -107,12 +107,11 @@ function interpolateMatcherOptions(matcherOptions: unknown, replaceVariables?: I
     matcherOptions &&
     typeof matcherOptions === 'object' &&
     'pattern' in matcherOptions &&
-    typeof (matcherOptions as { pattern?: unknown }).pattern === 'string'
+    typeof matcherOptions.pattern === 'string'
   ) {
-    const options = matcherOptions as { pattern: string };
     return {
-      ...options,
-      pattern: replaceVariables(options.pattern, undefined, VariableFormatID.Regex),
+      ...matcherOptions,
+      pattern: replaceVariables(matcherOptions.pattern, undefined, VariableFormatID.Regex),
     };
   }
 
