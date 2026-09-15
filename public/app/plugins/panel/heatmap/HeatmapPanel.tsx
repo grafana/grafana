@@ -128,7 +128,7 @@ const HeatmapPanelViz = ({
     }
 
     return [null, info.heatmap.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
-  }, [info.heatmap, info.exemplars]);
+  }, [info]);
 
   // ugh
   const dataRef = useRef(info);

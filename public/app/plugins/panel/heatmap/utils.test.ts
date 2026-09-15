@@ -305,7 +305,7 @@ describe('prepConfig', () => {
       xFieldType: FieldType.number,
       isTime: false,
       incrs: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-      hooks: ['init', 'drawClear'],
+      hooks: ['init', 'setData', 'drawClear'],
     },
   ])(
     'a $desc first field gives an isTime=$isTime x scale, x-axis incrs $incrs and hooks $hooks',
@@ -334,7 +334,7 @@ describe('prepConfig', () => {
       expect(builder.scales.find((s) => s.props.scaleKey === 'x')?.props.isTime).toBe(isTime);
       // Without a time x axis the ticks step by whole x buckets instead of uPlot's time incrs.
       expect(config.axes?.find((a) => a.scale === 'x')?.incrs).toEqual(incrs);
-      // The setData hook only exists to push getTimeRange() back onto a time x scale.
+      // Every heatmap syncs its fill values from setData; time axes also update their range there.
       expect(Object.keys(config.hooks ?? {})).toEqual(hooks);
     }
   );
@@ -413,6 +413,59 @@ describe('prepConfig', () => {
       [26, -4, 8, 8],
       [26, 6, 8, 8],
     ]);
+  });
+
+  it('keeps committed fill values during a deferred draw', () => {
+    const committedData: DenseHeatmap = [
+      [1000, 1000, 1000],
+      [0, 1, 2],
+      [5, 10, 15],
+    ];
+    const dataRef = {
+      current: createMinimalHeatmapData({
+        heatmapColors: {
+          values: [0, 1, 2],
+          palette: ['#a', '#b', '#c'],
+          minValue: 5,
+          maxValue: 15,
+        },
+      }),
+    };
+    const config = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'red',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const drawClear = config.hooks?.drawClear?.[0];
+    const heatmapPaths = config.series?.[1]?.paths;
+    if (!drawClear || !heatmapPaths) {
+      throw new Error('Expected a drawClear hook and a heatmap layer path builder');
+    }
+
+    dataRef.current = createMinimalHeatmapData({
+      heatmapColors: {
+        values: [0, 1],
+        palette: ['#a', '#b', '#c'],
+        minValue: 5,
+        maxValue: 10,
+      },
+    });
+
+    const rect = jest.fn();
+    const mockU = createMockU(committedData);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(createOrientMock(committedData, { rect }));
+
+    drawClear(mockU);
+    heatmapPaths(mockU, 1, 0, committedData[0].length - 1);
+
+    expect(rect).toHaveBeenCalledTimes(3);
+    expect(rect.mock.calls.every(([fillPath]) => fillPath !== undefined)).toBe(true);
+
+    orientSpy.mockRestore();
   });
 
   describe('x-scale range callback', () => {
