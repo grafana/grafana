@@ -31,15 +31,6 @@ jest.mock('./pluginPromo/attributePluginPromos', () => ({
   useAttributePluginPromoGetter: jest.fn(() => () => undefined),
 }));
 
-jest.mock('app/core/copy/appNotification', () => ({
-  useAppNotification: jest.fn(() => ({
-    success: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-  })),
-}));
-
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
