@@ -3308,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -4065,7 +4067,7 @@
       "auth-settings": "Ajustes de autenticación"
     },
     "auth-drawer-unconneced": {
-      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "subtitle": "Configura los ajustes de autenticación. Encuentra más información en nuestra <2>documentación</2>."
     },
     "auth-drawer-unconnected": {
       "advanced-auth": "Autenticación avanzada",
@@ -4254,7 +4256,7 @@
     }
   },
   "auth-config-auth-config-page-unconnected": {
-    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2><0>documentación</0></2>."
+    "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2>documentación</2>."
   },
   "bar-chart": {
     "warn": {
@@ -5742,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Mover {{typeName}}",
-      "panel-background": "Cambiar fondo del panel",
-      "panel-description": "Cambiar descripción del panel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Cambios en el panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-preset": "Aplicar valor preestablecido del panel",
       "panel-repeat-direction": "Repetir dirección",
       "panel-repeat-variable": "Repetición del panel por",
-      "panel-title": "Cambiar título del panel",
+      "panel-title": "",
       "paste-panel": "Pegar panel",
       "remove": "Eliminar {{typeName}}",
       "row-title": "Cambiar título de fila",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "¿Eliminar {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Borrar búsqueda",
       "no-transformations-found": "No se han encontrado transformaciones.",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Volver al dashboard",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8647,6 +8659,16 @@
       "title-table": "Tabla",
       "title-traces": "Trazas"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8698,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Enlace",
-      "open-value-in": "Abrir valor en"
+      "open-value-in": "Abrir valor en",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9205,10 @@
       "aria-label-copy": "Copiar al portapapeles",
       "attribute-plugin-promo": {
         "learn-more": "Más información"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "La observabilidad de la base de datos muestra planes de explicación visuales, eventos de espera y muestras de consultas, lo que te ayuda a diagnosticar problemas más allá de los intervalos de trazas.",
@@ -11412,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13119,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -15601,7 +15624,7 @@
     },
     "sub-menu-aria-label": "Submenú del selector de roles",
     "title": {
-      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2><0>documentación</0></2>."
+      "description": "Asigna roles a los usuarios para garantizar un control preciso sobre el acceso a las funciones y recursos de Grafana. Encuentra más información en nuestra <2>documentación</2>."
     }
   },
   "role-picker-drawer": {

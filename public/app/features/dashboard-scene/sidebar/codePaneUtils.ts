@@ -8,10 +8,10 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { ensureV2Response } from '../../dashboard/api/ResponseTransformers';
-import { type DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { isDashboardV2Spec } from '../../dashboard/api/utils';
 import { getK8sV2DashboardApiConfig } from '../../dashboard/api/v2';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { buildDashboardWithAccessInfoFromScene } from '../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
@@ -111,7 +111,8 @@ export function validateDashboardResourceEnvelope(
     metadata?: Record<string, unknown>;
   }
 ): { success: boolean; error?: string } {
-  const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+  const { group, version } = getK8sV2DashboardApiConfig();
+  const expectedAPIVersion = `${group}/${version}`;
   const { apiVersion, kind, spec, metadata } = resource;
 
   if (!spec) {
@@ -166,7 +167,6 @@ export function applyJsonToDashboard(
   jsonText: string
 ): { success: boolean; error?: string } {
   try {
-    const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
     const resource = JSON.parse(jsonText);
     const { spec } = resource;
 
@@ -175,29 +175,7 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    const { meta } = dashboard.state;
-    const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: expectedAPIVersion,
-      kind: 'DashboardWithAccessInfo',
-      metadata: {
-        name: dashboard.state.uid ?? '',
-        resourceVersion: '',
-        creationTimestamp: '',
-        ...dashboard.serializer.metadata,
-      },
-      spec,
-      access: {
-        canSave: meta.canSave,
-        canEdit: meta.canEdit,
-        canAdmin: meta.canAdmin,
-        canStar: meta.canStar,
-        canDelete: meta.canDelete,
-        canShare: meta.canShare,
-        annotationsPermissions: meta.annotationsPermissions,
-        url: meta.url,
-        slug: meta.slug,
-      },
-    };
+    const dto = buildDashboardWithAccessInfoFromScene(dashboard, spec);
 
     const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
     const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);

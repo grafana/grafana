@@ -593,8 +593,7 @@ func TestReconciler_WatchConsumer_IgnoresUnrelatedResources(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newReconciler(t, st, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	ch, err := st.WatchWriteEvents(ctx)
 	require.NoError(t, err)
 	go s.consumeWatchEvents(ctx, ch)
@@ -750,8 +749,7 @@ func TestReconciler_AcquireLockBlocking_BlocksUntilAvailable(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.lockRetryInterval = 10 * time.Millisecond
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	type result struct {
 		release func()

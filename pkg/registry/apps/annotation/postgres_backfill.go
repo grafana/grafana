@@ -67,8 +67,8 @@ func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.Backf
 }
 
 // ensureBatchPartitions creates the partition for every distinct week spanned
-// by the batch. ensurePartition is idempotent (CREATE ... IF NOT EXISTS) and
-// commits its own transaction, so it is safe to call up-front.
+// by the batch. ensurePartition is idempotent (CREATE ... IF NOT EXISTS), so
+// it is safe to call up-front.
 func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []migrator.BackfillRecord) error {
 	seen := make(map[string]struct{}, len(recs))
 	for _, rec := range recs {
@@ -77,7 +77,7 @@ func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []migr
 			continue
 		}
 		seen[key] = struct{}{}
-		if err := ensurePartition(ctx, s.pool, s.logger, rec.Time); err != nil {
+		if err := ensurePartition(ctx, s.pool, rec.Time); err != nil {
 			return fmt.Errorf("failed to ensure partition for time %d: %w", rec.Time, err)
 		}
 	}

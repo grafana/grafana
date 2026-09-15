@@ -38,6 +38,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useTypographyCtx,
+  useHeaderTypographyCtx,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -228,6 +229,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -247,6 +249,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
@@ -259,7 +262,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     fields: visibleFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
+    tableRefreshEnabled,
+    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
@@ -267,20 +272,31 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [nestedRows, expandedRows, getRowStableKeyForRowIdx]
   );
 
+  const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
+  // Nested frames carry their own header visibility, so the nested columns can't reuse the outer
+  // table's measurement options verbatim.
+  const nestedContentAwareWidths = useMemo(
+    () => (contentAwareWidths ? { ...contentAwareWidths, hasHeader: hasNestedHeaders } : undefined),
+    [contentAwareWidths, hasNestedHeaders]
+  );
+
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
     nestedVisibleFields: nestedPreparedFields,
     availableWidth,
     structureRev,
-    contentAware: contentAwareWidths,
+    contentAware: nestedContentAwareWidths,
   });
 
-  const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
+    tableRefreshEnabled,
+    // nested filter entries are keyed per parent but carry the column's display name, which is what
+    // the width path matches on — so the nested header reserves the active-filter icon the same way
+    filter,
   });
 
   const defaultRowHeight = useMemo(
