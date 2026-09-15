@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { hasConfiguredUid, isOperatorManaged } from '../../utils/autoSync';
+import { createRelativeUrl } from '../../utils/url';
 
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
@@ -121,7 +122,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
                     </Trans>
                   </span>
                   <LinkButton
-                    href="/connections/datasources/alertmanager"
+                    href={createRelativeUrl('/connections/datasources/alertmanager')}
                     icon="plus"
                     variant="secondary"
                     fill="outline"

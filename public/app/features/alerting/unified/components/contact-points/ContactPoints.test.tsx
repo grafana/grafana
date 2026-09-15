@@ -3,6 +3,7 @@ import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
@@ -183,6 +184,36 @@ describe('contact points', () => {
         );
         await screen.findByText(/create notification templates/i);
         expect(screen.queryByText(/^misconfigured$/i)).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when Grafana is served from a sub path', () => {
+      const originalAppSubUrl = config.appSubUrl;
+
+      beforeEach(() => {
+        config.appSubUrl = '/sub';
+      });
+
+      afterEach(() => {
+        config.appSubUrl = originalAppSubUrl;
+      });
+
+      it('includes the sub path in the new contact point link', async () => {
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toHaveAttribute(
+          'href',
+          '/sub/alerting/notifications/receivers/new'
+        );
+      });
+
+      it('includes the sub path in the new notification template link', async () => {
+        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
+
+        expect(await screen.findByRole('link', { name: /new notification template/i })).toHaveAttribute(
+          'href',
+          '/sub/alerting/notifications/templates/new'
+        );
       });
     });
 

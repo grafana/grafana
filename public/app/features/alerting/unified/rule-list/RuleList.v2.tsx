@@ -20,6 +20,7 @@ import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { ALERTING_PATHS } from '../utils/navigation';
+import { createRelativeUrl } from '../utils/url';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -151,7 +152,7 @@ export function RuleListActions() {
         <LinkButton
           variant="primary"
           icon="plus"
-          href="/alerting/new/alerting"
+          href={createRelativeUrl('/alerting/new/alerting')}
           data-testid={selectors.pages.Alerting.RuleList.newAlertRuleLink}
         >
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>

@@ -18,7 +18,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
-import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import {
@@ -32,6 +32,7 @@ import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
@@ -90,7 +91,9 @@ const ContactPointsTab = () => {
         button={
           addContactPointAbility.granted && (
             <LinkButton
-              href={makeAMLink('/alerting/notifications/receivers/new', selectedAlertmanager)}
+              href={createRelativeUrl('/alerting/notifications/receivers/new', {
+                alertmanager: selectedAlertmanager!,
+              })}
               icon="plus"
               size="lg"
             >
@@ -115,7 +118,7 @@ const ContactPointsTab = () => {
               icon="plus"
               aria-label={t('alerting.contact-points-tab.aria-label-add-contact-point', 'add contact point')}
               variant="primary"
-              href="/alerting/notifications/receivers/new"
+              href={createRelativeUrl('/alerting/notifications/receivers/new')}
               disabled={!addContactPointAbility.granted}
               data-testid={selectors.pages.Alerting.ContactPoints.addContactPointLink}
             >
@@ -170,7 +173,7 @@ const NotificationTemplatesTab = () => {
           <LinkButton
             icon="plus"
             variant="primary"
-            href="/alerting/notifications/templates/new"
+            href={createRelativeUrl('/alerting/notifications/templates/new')}
             disabled={!createTemplateAbility.granted}
           >
             <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
