@@ -19,8 +19,12 @@ const testWildcardPattern = "*.test.grafana.app"
 func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	// Real config: groups matching *.datasource.grafana.app get the datasources mapping
-	for _, group := range []string{"loki.datasource.grafana.app", "mimir.datasource.grafana.app"} {
+	// Real config: the literal wildcard and concrete matching groups get the datasource mapping.
+	for _, group := range []string{
+		"*.datasource.grafana.app",
+		"loki.datasource.grafana.app",
+		"mimir.datasource.grafana.app",
+	} {
 		mapping, ok := reg.Get(group, "datasources", "")
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
 		require.NotNil(t, mapping)
@@ -87,8 +91,10 @@ func TestFindGroupKey_WildcardMatching(t *testing.T) {
 		{"bar.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
 		// group with nested dots does not match wildcard
 		{"bar.baz.test.grafana.app", []string{testWildcardPattern}, "", false},
-		// Group starts with *: never matches
-		{"*.test.grafana.app", []string{testWildcardPattern}, "", false},
+		// A registered wildcard key resolves when supplied literally.
+		{"*.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
+		// An unregistered wildcard input never suffix-matches another key.
+		{"*.other.test.grafana.app", []string{testWildcardPattern}, "", false},
 		// Key not a wildcard (no *.): iterate and continue, no match
 		{"foo.test.grafana.app", []string{"dashboard.grafana.app"}, "", false},
 		{"foo.test.grafana.app", []string{"*"}, "", false},
@@ -122,8 +128,8 @@ func TestMapperRegistry_WildcardGroup(t *testing.T) {
 	}
 	var reg MapperRegistry = m
 
-	// Matching groups get the mapping
-	for _, group := range []string{"foo.test.grafana.app", "bar.test.grafana.app", "baz.test.grafana.app"} {
+	// The registered wildcard key and matching concrete groups get the mapping.
+	for _, group := range []string{testWildcardPattern, "foo.test.grafana.app", "bar.test.grafana.app", "baz.test.grafana.app"} {
 		t.Run("matches_"+group, func(t *testing.T) {
 			mapping, ok := reg.Get(group, "testresources", "")
 			require.True(t, ok, "Get(%q, \"testresources\") should find mapping", group)
@@ -135,12 +141,13 @@ func TestMapperRegistry_WildcardGroup(t *testing.T) {
 		})
 	}
 
-	// Wildcard as input, wrong suffix, no prefix, or unknown group must not resolve
+	// Unregistered wildcard input, nested prefix, wrong suffix, no prefix, or unknown group must not resolve.
 	denyCases := []struct {
 		name  string
 		group string
 	}{
-		{"wildcard_input", testWildcardPattern},
+		{"unregistered_wildcard_input", "*.other.test.grafana.app"},
+		{"nested_prefix", "foo.bar.test.grafana.app"},
 		{"wrong_suffix", "foo.test.grafana.app.evil"},
 		{"no_prefix", "test.grafana.app"},
 		{"unknown_group", "unknown.grafana.app"},
