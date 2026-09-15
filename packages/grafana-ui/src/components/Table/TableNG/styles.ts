@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
@@ -50,15 +50,6 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-// How far the `table.refresh` header background steps away from the background the rows sit on.
-// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
-// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
-// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
-
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -67,23 +58,9 @@ export const getGridStyles = memoize(
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-    }
-    // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
-    // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
-    const selectedRowColor = theme.isDark
-      ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
-      : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
-
-    const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
-
-    const headerBackgroundColor = tableRefreshEnabled
-      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
-      : bgColor;
+    const table = theme.components.table;
+    const bgColor = transparent ? table.backgroundOnCanvas : table.background;
+    const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -95,27 +72,19 @@ export const getGridStyles = memoize(
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': borderColor,
+        '--rdg-border-color': table.border,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
-        '--rdg-selection-color': theme.colors.info.transparent,
+        '--rdg-selection-color': table.cellSelectionBorder,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
-        // background" means one thing across the table. The old pair had the same blind spot the
-        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
-        // light theme is white on near-white.
-        '--rdg-row-hover-background-color': tableRefreshEnabled
-          ? headerBackgroundColor
-          : transparent
-            ? theme.colors.background.primary
-            : theme.colors.background.secondary,
-        '--rdg-row-selected-background-color': selectedRowColor,
-        '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
+        '--rdg-row-hover-background-color': table.rowHoverBackgroundSolid,
+        '--rdg-row-selected-background-color': table.rowSelectedBackground,
+        '--rdg-row-selected-hover-background-color': table.rowSelectedHoverBackground,
 
         // give the pagination controls their room back, so the grid and the pager together still fit
         // the panel (see getPaginationChromeHeight)
@@ -277,6 +246,11 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        ...(tableRefreshEnabled && {
+          '--rdg-border-color': table.headerBorder,
+          '& .rdg-cell-dragging': { backgroundColor: table.headerDraggingBackground },
+          '& .rdg-cell-drag-over': { backgroundColor: table.headerDragTargetBackground },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
