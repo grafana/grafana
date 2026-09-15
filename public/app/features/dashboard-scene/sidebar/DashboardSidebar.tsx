@@ -155,7 +155,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /**
    * Any SceneObject can perform state changes inside the object (e.g., drag and drop or resize).
-   * To make such changes undoable SceneObject can provide a closure to rever and replay
+   * To make such changes undoable SceneObject can provide a closure to revert and replay
    * the change. Since the change already happens inside SceneObject we skip perform and just add
    * the action to the stack.
    * @private
