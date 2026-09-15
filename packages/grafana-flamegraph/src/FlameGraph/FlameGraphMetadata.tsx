@@ -15,10 +15,20 @@ type Props = {
   onSandwichPillClick: () => void;
   focusedItem?: ClickedItemData;
   sandwichedLabel?: string;
+  /** Whether the sandwich on screen stands in for callers or callees that were dropped. */
+  sandwichTruncated?: boolean;
 };
 
 const FlameGraphMetadata = memo(
-  ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
+  ({
+    data,
+    focusedItem,
+    totalTicks,
+    sandwichedLabel,
+    sandwichTruncated,
+    onFocusPillClick,
+    onSandwichPillClick,
+  }: Props) => {
     const styles = useStyles2(getStyles);
     const parts: ReactNode[] = [];
     const ticksVal = getValueFormat('short')(totalTicks);
@@ -58,6 +68,24 @@ const FlameGraphMetadata = memo(
                 tooltip={'Remove sandwich view'}
                 aria-label={'Remove sandwich view'}
               />
+            </div>
+          </div>
+        </Tooltip>
+      );
+    }
+
+    if (sandwichedLabel && sandwichTruncated) {
+      // Without this a cut sandwich reads as the complete set of callers and callees.
+      parts.push(
+        <Tooltip
+          key={'sandwich-truncated'}
+          content={'Some callers or callees are grouped into other, because the sandwich is larger than the node limit.'}
+          placement="top"
+        >
+          <div>
+            <Icon size={'sm'} name={'angle-right'} />
+            <div className={styles.metadataPill} data-testid="sandwichTruncationNotice">
+              <Icon size={'sm'} name={'exclamation-circle'} /> <span>partial</span>
             </div>
           </div>
         </Tooltip>
