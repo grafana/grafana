@@ -112,7 +112,9 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [SolarWinds](/grafana/plugins/grafana-solarwinds-datasource)
 - [Splunk](/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure Monitoring](/grafana/plugins/grafana-splunk-monitoring-datasource)
+<!-- vale Grafana.Spelling = NO -->
 - [Sqlyze](/grafana/plugins/grafana-odbc-datasource)
+<!-- vale Grafana.Spelling = YES -->
 - [Sumo Logic](/grafana/plugins/grafana-sumologic-datasource)
 - [Vercel](/grafana/plugins/grafana-vercel-datasource)
 - [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
