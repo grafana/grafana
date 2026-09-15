@@ -156,7 +156,6 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconNam
  */
 export interface AnalyticsSettings {
   identifier: string;
-  intercomIdentifier?: string;
 }
 
 /**

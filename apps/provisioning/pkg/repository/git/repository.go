@@ -882,6 +882,9 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 	if base != "" {
 		baseHash, err = r.resolveRefToHash(ctx, base)
 		if err != nil {
+			if errors.Is(err, repository.ErrRefNotFound) {
+				return nil, &repository.CompareRefNotFoundError{Ref: base, Err: fmt.Errorf("resolve base ref: %w", err)}
+			}
 			return nil, fmt.Errorf("resolve base ref: %w", err)
 		}
 	}
@@ -889,6 +892,9 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 	// Resolve ref to hash
 	refHash, err := r.resolveRefToHash(ctx, ref)
 	if err != nil {
+		if errors.Is(err, repository.ErrRefNotFound) {
+			return nil, &repository.CompareRefNotFoundError{Ref: ref, Err: fmt.Errorf("resolve ref: %w", err)}
+		}
 		return nil, fmt.Errorf("resolve ref: %w", err)
 	}
 

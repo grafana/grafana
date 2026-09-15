@@ -1772,6 +1772,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-vector-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
@@ -1796,6 +1797,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-hybrid-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
