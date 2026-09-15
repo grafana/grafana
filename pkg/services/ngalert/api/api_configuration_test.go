@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -144,10 +143,6 @@ func createAPIAdminSut(
 		store: store.NewFakeAdminConfigStore(t),
 	}
 }
-
-//go:fix inline
-func ptrTo[T any](v T) *T { return new(v) }
-
 func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 	mimirDS := &datasources.DataSource{
 		UID:   "mimir-ds-uid",
@@ -189,7 +184,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			flagEnabled: true,
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("mimir-ds-uid"),
 				},
 			},
@@ -202,11 +197,11 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			flagEnabled: true,
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("mimir-ds-uid"),
 				},
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new(""),
 				},
 			},
@@ -219,7 +214,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			flagEnabled: true,
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("nonexistent-uid"),
 				},
 			},
@@ -231,7 +226,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			flagEnabled: true,
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("prom-uid"),
 				},
 			},
@@ -243,7 +238,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			flagEnabled: true,
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("vanilla-am"),
 				},
 			},
@@ -254,7 +249,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			datasources: []*datasources.DataSource{},
 			posts: []definitions.PostableNGalertConfig{
 				{
-					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 					ExternalAlertmanagerUID: new("any-uid"),
 				},
 			},
@@ -326,7 +321,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 
 	// First POST stores the UID with a valid datasource present.
 	resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+		AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 		ExternalAlertmanagerUID: new("mimir-ds-uid"),
 	})
 	require.Equal(t, http.StatusCreated, resp.Status())
@@ -337,7 +332,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 	// Re-POST with the same UID (and a different AlertmanagersChoice) — should
 	// succeed because validation is skipped when the UID hasn't changed.
 	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-		AlertmanagersChoice:     ptrTo(definitions.AllAlertmanagers),
+		AlertmanagersChoice:     new(definitions.AllAlertmanagers),
 		ExternalAlertmanagerUID: new("mimir-ds-uid"),
 	})
 	require.Equal(t, http.StatusCreated, resp.Status())
@@ -345,7 +340,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 	// POST with a different UID against the missing datasource — should fail
 	// validation as before.
 	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
+		AlertmanagersChoice:     new(definitions.InternalAlertmanager),
 		ExternalAlertmanagerUID: new("different-uid"),
 	})
 	require.Equal(t, http.StatusBadRequest, resp.Status())
