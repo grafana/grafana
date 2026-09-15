@@ -57,7 +57,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		searchResp, err = s.search.Search(ctx, srq)
 	} else {
 		// Use remote search service
-		// useSelectorSearch() already checks that either s.search or s.searchClient is set
+		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
 	if err != nil {
@@ -171,7 +171,7 @@ func (c SearchBackedListConfig) Allowed(group, resource string) bool {
 	return c.AllowedResources[group+"/"+resource]
 }
 
-func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
+func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
 		return false
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-func TestUseSelectorSearch(t *testing.T) {
+func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
 		allowlist       []string
@@ -183,7 +183,7 @@ func TestUseSelectorSearch(t *testing.T) {
 			}
 			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 
-			require.Equal(t, tc.expectedAllowed, s.useSelectorSearch(tc.req))
+			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
 }
