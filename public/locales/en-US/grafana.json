@@ -5775,7 +5775,7 @@
       "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-visualization-heading": "Add a visualization",
-      "assistant-placeholder": "Describe your dashboard This will open the assistant chat and start a conversation.",
+      "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",
