@@ -30,14 +30,18 @@ export type AlertIncidentSwitchHandle = {
 export function AlertIncidentTabs({
   alertsData,
   incidentsData,
-  team,
-  setTeam,
+  alertsTeam,
+  onAlertsTeamChange,
+  incidentsTeam,
+  onIncidentsTeamChange,
   switchRef,
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
-  team: TeamSelection;
-  setTeam: (team: TeamSelection) => void;
+  alertsTeam: TeamSelection;
+  onAlertsTeamChange: (team: TeamSelection) => void;
+  incidentsTeam: TeamSelection;
+  onIncidentsTeamChange: (team: TeamSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   const canViewIncidents = !!incidentsData.enabled;
@@ -59,18 +63,23 @@ export function AlertIncidentTabs({
   const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
   const incidentTeamValues = useIncidentTeamValues(canViewIncidents);
 
-  // One shared selection, but each tab offers its own option list and default-scope wording.
+  // Each tab keeps its own selection: the two option lists rarely match, so a shared
+  // pick would often name a team the other tab's field can't hold.
   const teamFilter =
     activeTab === ALERTS_TAB_ID
       ? {
           teamValues: alertTeamValues,
-          hasOwnTeamsScope: true,
+          selectedTeam: alertsTeam,
+          onChange: onAlertsTeamChange,
+          offersYourTeams: hasTeams,
           ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
         }
       : {
           teamValues: incidentTeamValues,
+          selectedTeam: incidentsTeam,
+          onChange: onIncidentsTeamChange,
           // Incidents have no "your teams" scope: the unfiltered default is every active incident.
-          hasOwnTeamsScope: false,
+          offersYourTeams: false,
           ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
         };
 
@@ -137,13 +146,7 @@ export function AlertIncidentTabs({
           {title}
         </Text>
         {/* Keyed by tab so switching remounts the dropdown with the other tab's options. */}
-        <TeamFilterCombobox
-          key={activeTab}
-          {...teamFilter}
-          userHasTeams={hasTeams}
-          selectedTeam={team}
-          onChange={setTeam}
-        />
+        <TeamFilterCombobox key={activeTab} {...teamFilter} />
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>

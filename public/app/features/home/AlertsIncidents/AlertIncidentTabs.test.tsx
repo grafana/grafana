@@ -144,17 +144,12 @@ function mockIncidentTeamField(values: string[]) {
     http.post(GET_FIELDS_PATH, () =>
       HttpResponse.json({
         fields: [
-          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical', archived: false }] },
+          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical' }] },
           {
             slug: 'team',
             archived: false,
-            selectoptions: [
-              ...values.map((value) => ({ value, archived: false })),
-              // Archived options are retired values that shouldn't be offered anymore.
-              { value: 'Disbanded Team', archived: true },
-              // Blank values would collide with the default-scope selection.
-              { value: '  ', archived: false },
-            ],
+            // Blank values would collide with the default-scope selection.
+            selectoptions: [...values.map((value) => ({ value })), { value: '  ' }],
           },
         ],
       })
@@ -221,15 +216,18 @@ afterEach(async () => {
 });
 
 function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
-  const [team, setTeam] = useState<TeamSelection>('');
-  const alertsData = useFiringAlerts(team);
-  const incidentsData = useIncidents(team);
+  const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
+  const [incidentsTeam, setIncidentsTeam] = useState<TeamSelection>('');
+  const alertsData = useFiringAlerts(alertsTeam);
+  const incidentsData = useIncidents(incidentsTeam);
   return (
     <AlertIncidentTabs
       alertsData={alertsData}
       incidentsData={incidentsData}
-      team={team}
-      setTeam={setTeam}
+      alertsTeam={alertsTeam}
+      onAlertsTeamChange={setAlertsTeam}
+      incidentsTeam={incidentsTeam}
+      onIncidentsTeamChange={setIncidentsTeam}
       switchRef={switchRef}
     />
   );
@@ -792,7 +790,7 @@ describe('AlertIncidentTabs', () => {
       await user.click(combobox);
 
       // Incidents have no "your teams" scope, so "All teams" is the only default option,
-      // followed by the active (non-archived, non-blank) field values sorted by name.
+      // followed by the non-blank field values sorted by name.
       const options = await screen.findAllByRole('option');
       expect(options.map((option) => option.textContent)).toEqual(['All teams', 'Team A', 'Team B']);
       await user.click(screen.getByRole('option', { name: 'Team B' }));
@@ -803,67 +801,13 @@ describe('AlertIncidentTabs', () => {
       expect(combobox).toHaveDisplayValue('Team B');
     });
 
-    it('carries a team picked on the Alerts tab over to the Incidents dropdown and request', async () => {
-      mockTeamLabelValues(['Team A', 'Team C']);
-      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
-      mockIrmPlugin();
-      mockIncidentTeamField(['Team A', 'Team C']);
-      const queries = mockIncidents([activeIncident]);
-
-      const { user } = render(<AlertIncidentTabsWithData />);
-
-      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
-      await user.click(await screen.findByRole('option', { name: 'Team C' }));
-
-      await user.click(screen.getByRole('tab', { name: /incidents/i }));
-
-      // One shared selection: the incidents dropdown shows it and the request is already scoped.
-      expect(await screen.findByRole('combobox', { name: /filter incidents by team/i })).toHaveDisplayValue('Team C');
-      expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
-      // The unfiltered request fed the tab counter on mount; the pick re-issued it scoped to Team C.
-      await waitFor(() =>
-        expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY, `${ACTIVE_INCIDENTS_QUERY} field:team:"Team C"`])
-      );
-    });
-
-    it("keeps a team member's 'All teams' scope when re-picking it on the Incidents tab", async () => {
+    it('keeps the Alerts and Incidents team selections independent', async () => {
       mockTeams([{ name: 'Team A' }]);
       mockTeamLabelValues(['Team A', 'Team C']);
       const alertRequests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
       mockIrmPlugin();
-      mockIncidentTeamField(['Team A']);
-      const queries = mockIncidents([activeIncident]);
-
-      const { user } = render(<AlertIncidentTabsWithData />);
-
-      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
-      await user.click(await screen.findByRole('option', { name: 'All teams' }));
-      await waitFor(() => expect(alertRequests).toHaveLength(2));
-
-      await user.click(screen.getByRole('tab', { name: /incidents/i }));
-      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
-      expect(incidentsCombobox).toHaveDisplayValue('All teams');
-
-      // "All teams" and the sentinel mean the same thing here, so this must not clear the selection.
-      await user.click(incidentsCombobox);
-      await user.click(await screen.findByRole('option', { name: 'All teams' }));
-
-      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
-
-      // Back on alerts the org-wide scope is intact rather than reset to "Your teams".
-      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('All teams');
-      expect(alertRequests).toHaveLength(2);
-      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
-    });
-
-    it("keeps alerts org-wide when a team member picks 'All teams' on the Incidents tab after a team", async () => {
-      mockTeams([{ name: 'Team A' }]);
-      mockTeamLabelValues(['Team A', 'Team C']);
-      const alertRequests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
-      mockIrmPlugin();
-      mockIncidentTeamField(['Team A', 'Team C']);
+      // Team C exists only as an alert label, not as an incident field value.
+      mockIncidentTeamField(['Team A', 'Team B']);
       const queries = mockIncidents([activeIncident]);
 
       const { user } = render(<AlertIncidentTabsWithData />);
@@ -875,21 +819,21 @@ describe('AlertIncidentTabs', () => {
       expect(alertRequests[1]).toEqual(['team=~"Team C"']);
 
       await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      // The alerts pick doesn't leak into incidents, which can't hold that value anyway.
       const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
-      expect(incidentsCombobox).toHaveDisplayValue('Team C');
-      await waitFor(() => expect(queries).toContain(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team C"`));
+      expect(incidentsCombobox).toHaveDisplayValue('All teams');
+      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
 
       await user.click(incidentsCombobox);
-      await user.click(await screen.findByRole('option', { name: 'All teams' }));
-      // The pick drops the field clause and shows every active incident.
-      await waitFor(() => expect(queries.at(-1)).toBe(ACTIVE_INCIDENTS_QUERY));
+      await user.click(await screen.findByRole('option', { name: 'Team B' }));
+      await waitFor(() => expect(queries.at(-1)).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`));
 
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
 
-      // "All teams" means org-wide on both tabs: alerts must not fall back to "Your teams".
-      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('All teams');
-      await waitFor(() => expect(alertRequests).toHaveLength(3));
-      expect(alertRequests[2]).toEqual([]);
+      // And the incidents pick doesn't disturb the alerts scope.
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('Team C');
+      expect(alertRequests).toHaveLength(2);
     });
 
     it('shows a team-scoped empty message when the selected team has no incidents', async () => {

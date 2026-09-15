@@ -17,7 +17,7 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * shared between the old-layout card and the redesigned tabs.
  *
  * When `selectedTeam` is an explicit team pick, incidents are filtered to that
- * team's custom field value; the default and "All teams" scopes fetch every active incident.
+ * team's custom field value; the default scope fetches every active incident.
  */
 export function useIncidents(selectedTeam: TeamSelection = '') {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
@@ -35,18 +35,19 @@ export function useIncidents(selectedTeam: TeamSelection = '') {
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
   const skip = pluginLoading || !installed;
-  // isFetching (not isLoading) so a team switch shows the skeleton instead of the stale list.
-  const { data, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
+  // currentData is undefined only until the current team's list arrives, so a team switch
+  // shows the skeleton while a homepage revisit (refetchOnMountOrArgChange) shows the cached list.
+  const { currentData, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
     skip ? skipToken : { pluginId, team },
     {
       refetchOnMountOrArgChange: true,
     }
   );
-  const incidents = useMemo(() => data?.incidents ?? [], [data]);
+  const incidents = useMemo(() => currentData?.incidents ?? [], [currentData]);
   // True when the server truncated the result at the query limit, i.e. the real total exceeds count.
-  const hasMore = data?.hasMore ?? false;
+  const hasMore = currentData?.hasMore ?? false;
 
-  const loading = pluginLoading || isFetching;
+  const loading = pluginLoading || (isFetching && currentData === undefined);
   const count = incidents.length;
   const hasIncidents = count > 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not

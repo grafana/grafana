@@ -23,37 +23,25 @@ interface Props {
   teamValues: string[] | undefined;
   selectedTeam: TeamSelection;
   onChange: (team: TeamSelection) => void;
-  /** Whether the signed-in user belongs to any Grafana teams. */
-  userHasTeams: boolean;
   /**
-   * Whether this view can scope to the user's own teams (alerts can, incidents can't).
-   * With it, team members get a "Your teams" default plus an explicit "All teams" escape hatch.
+   * Whether the default scope is the user's own teams (alerts, for team members). Adds a
+   * "Your teams" default plus an explicit "All teams" escape hatch; otherwise the default
+   * option already means "All teams".
    */
-  hasOwnTeamsScope: boolean;
+  offersYourTeams: boolean;
   ariaLabel: string;
 }
 
 /**
  * Dropdown to filter a homepage view by team. Presentational: the caller supplies
- * the option values (alert label values or incident field values), so both tabs can
- * share one selection while offering their own option lists.
+ * the option values (alert label values or incident field values) and owns the selection.
  */
-export function TeamFilterCombobox({
-  teamValues,
-  selectedTeam,
-  onChange,
-  userHasTeams,
-  hasOwnTeamsScope,
-  ariaLabel,
-}: Props) {
+export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, offersYourTeams, ariaLabel }: Props) {
   // Single sort site for both tabs, so neither data hook has to.
   const sortedValues = useMemo(() => [...(teamValues ?? [])].sort((a, b) => collator.compare(a, b)), [teamValues]);
 
-  const offersYourTeams = hasOwnTeamsScope && userHasTeams;
-  // For team members "All teams" must write the sentinel on every tab: the default scope
-  // means "your teams" on alerts, so writing '' here would silently re-scope that tab.
-  // Users without teams have no "your teams" scope anywhere, so '' already means all.
-  const allTeamsValue: TeamSelection = userHasTeams ? ALL_TEAMS : '';
+  // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
+  const allTeamsValue: TeamSelection = offersYourTeams ? ALL_TEAMS : '';
 
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
@@ -97,9 +85,8 @@ export function TeamFilterCombobox({
       options={loadOptions}
       value={valueOption}
       onChange={(option) => {
-        // Compare against what's displayed, not the raw selection: re-picking the shown option
-        // is a no-op even when it stands in for a different underlying value (see valueOption).
-        if (option.value !== valueOption.value) {
+        // Re-selecting the current value is a no-op so the parent doesn't re-render.
+        if (option.value !== selectedTeam) {
           onChange(option.value);
         }
       }}

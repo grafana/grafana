@@ -296,6 +296,8 @@ describe('IncidentsCard', () => {
     mockIncidents([activeIncidents[0]]);
     render(<IncidentsCardWithData />, { store });
 
+    // The cached list shows straight away while the refetch runs, not a skeleton.
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
     // cache would persist and this assertion would time out.
     expect(await screen.findByText('Database outage')).toBeInTheDocument();

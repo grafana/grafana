@@ -30,10 +30,11 @@ export interface ActiveIncidents {
 }
 
 // Subset of the Incident API's custom-field definitions — only what's needed to list the `team` options.
+// GetFields returns archived fields but already drops archived select options server-side.
 interface IncidentFieldDto {
   slug: string;
   archived?: boolean;
-  selectoptions?: Array<{ value: string; archived?: boolean }>;
+  selectoptions?: Array<{ value: string }>;
 }
 
 interface GetFieldsResponse {
@@ -95,7 +96,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
         const teamField = response.fields?.find((field) => field.slug === 'team' && !field.archived);
         // Blank values would render as an empty row and '' collides with the default-scope selection.
         return (teamField?.selectoptions ?? [])
-          .filter((option) => !option.archived && option.value.trim() !== '')
+          .filter((option) => option.value.trim() !== '')
           .map((option) => option.value);
       },
     }),

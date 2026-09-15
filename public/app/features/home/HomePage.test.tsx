@@ -16,7 +16,7 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -110,7 +110,7 @@ describe('HomePage', () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem(TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -126,13 +126,14 @@ describe('HomePage', () => {
     expect(filters[0][0]).toContain('platform');
   });
 
-  it('scopes active incidents to the same team stored in local storage', async () => {
+  it('scopes active incidents to their own stored team, not the alerts one', async () => {
     mockUsePluginBridge.mockReturnValue({
       installed: true,
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
-    window.localStorage.setItem(TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
     const queries: string[] = [];
     server.use(
       http.post(

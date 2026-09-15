@@ -1,9 +1,10 @@
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 /**
- * The homepage team filter, shared by the alerts and incidents views.
+ * A homepage team filter selection. The alerts and incidents views each keep their own,
+ * because their option lists differ (alert label values vs. incident field values).
  * '' is the default scope ("your teams" for alerts, everything for incidents);
- * ALL_TEAMS is an explicit org-wide pick; anything else is a team name.
+ * ALL_TEAMS is an explicit org-wide pick (alerts only); anything else is a team name.
  * A plain string so localStorage and the Combobox can hold it as-is.
  */
 export type TeamSelection = string;
@@ -11,8 +12,8 @@ export type TeamSelection = string;
 /** Sentinel for an explicit "All teams" pick; never a real team name. */
 export const ALL_TEAMS = ALL_VARIABLE_VALUE;
 
-// Predates the incidents filter, hence the "alerts" in the name; kept so users' saved picks survive.
-export const TEAM_FILTER_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
+export const ALERTS_TEAM_FILTER_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
+export const INCIDENTS_TEAM_FILTER_STORAGE_KEY = 'grafana.home.incidents.teamFilter';
 
 export type TeamScope = { kind: 'default' } | { kind: 'all' } | { kind: 'team'; team: string };
 
