@@ -14,7 +14,7 @@ import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponent, type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { usePluginBridge } from '../hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { withTimeout } from '../utils/promise';
 
@@ -29,12 +29,60 @@ const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
  */
 const TARGET_RESOLUTION_TIMEOUT_MS = 5_000;
 
+/**
+ * Where a URL ends up, once we've worked it out.
+ *
+ * It's an object rather than a bare string so that `undefined` can only mean one thing: we haven't
+ * worked it out yet. `url` being unset means we looked and there's nowhere in the plugin to send
+ * this URL. It carries the location it was worked out for, so a result left over from a moment ago
+ * can't be mistaken for an answer about the location we're looking at now.
+ */
+interface ResolvedTarget {
+  context: ProxyContext;
+  url: string | undefined;
+}
+
 /** Shown once we know a redirect is coming. Up to that point the route shows the usual loader. */
 function RedirectingPage() {
   return (
     <Page navId="alerting">
       <LoadingPlaceholder text={t('alerting.proxied-alerting-route.text-redirecting', 'Redirecting…')} />
     </Page>
+  );
+}
+
+/** Builds the error `withTimeout` fails with, and records it on the way past. */
+function timedOut(message: string, timeoutMs: number, path?: string): Error {
+  const error = new Error(message);
+  getLogger('features.alerting').logError(error, { timeout: String(timeoutMs), ...(path ? { path } : {}) });
+  return error;
+}
+
+/**
+ * Works out where in the plugin a URL belongs: first whether the plugin is there at all, then
+ * whether it has a page for this particular URL. Undefined either way means we keep serving the
+ * Grafana page.
+ *
+ * Both steps are in one chain on purpose. Asking about the plugin in a hook of its own makes its
+ * answer an input to the second step, and `useAsync` holds on to its last result when its inputs
+ * change — so there would be a render where the plugin has just been found but this still says
+ * "nowhere to go", and we'd mount the Grafana page and fire off all of its requests for a page
+ * we're about to leave.
+ */
+async function resolveTarget(proxy: RouteProxy, context: ProxyContext): Promise<string | undefined> {
+  const { settings } = await withTimeout(
+    probePlugin(SupportedPlugin.PrometheusAlerting),
+    PLUGIN_DISCOVERY_TIMEOUT_MS,
+    () => timedOut('Timed out while checking Prometheus Alerting plugin status', PLUGIN_DISCOVERY_TIMEOUT_MS)
+  );
+
+  // A plugin that's installed but switched off is treated the same as one that was never there.
+  if (!isPluginEnabled(settings)) {
+    return undefined;
+  }
+
+  return withTimeout(proxy.handler(context), TARGET_RESOLUTION_TIMEOUT_MS, () =>
+    timedOut('Timed out while resolving the Prometheus Alerting plugin URL', TARGET_RESOLUTION_TIMEOUT_MS, proxy.path)
   );
 }
 
@@ -61,41 +109,25 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
     const context = useProxyContext(proxy.path);
     const belongsToPlugin = proxy.matches(context);
 
-    // `installed` is true only when the plugin is both present and enabled, so a plugin that's
-    // been switched off is treated the same as one that was never there.
-    const { loading: checkingPlugin, installed: pluginAvailable } = usePluginBridge(
-      SupportedPlugin.PrometheusAlerting,
-      {
-        timeoutMs: belongsToPlugin ? PLUGIN_DISCOVERY_TIMEOUT_MS : undefined,
-        onTimeout: (error) => {
-          getLogger('features.alerting').logError(
-            new Error('Timed out while checking Prometheus Alerting plugin status'),
-            {
-              timeout: String(error.timeoutMs),
-            }
-          );
-        },
-      }
-    );
-
-    // Only worth working out a target once we know there's a plugin to send people to.
-    const { value: target, loading: buildingTarget } = useAsync(async () => {
-      if (!belongsToPlugin || !pluginAvailable) {
+    const { value: resolved, error: resolveError } = useAsync(async (): Promise<ResolvedTarget | undefined> => {
+      if (!belongsToPlugin) {
         return undefined;
       }
 
-      return withTimeout(proxy.handler(context), TARGET_RESOLUTION_TIMEOUT_MS, () => {
-        const error = new Error('Timed out while resolving the Prometheus Alerting plugin URL');
-        getLogger('features.alerting').logError(error, {
-          timeout: String(TARGET_RESOLUTION_TIMEOUT_MS),
-          path: proxy.path,
-        });
-        return error;
-      });
-    }, [belongsToPlugin, pluginAvailable, context]);
+      return { context, url: await resolveTarget(proxy, context) };
+    }, [belongsToPlugin, context]);
 
-    // The matcher already said yes before this module was fetched, but the URL can change while
-    // the page is mounted.
+    // The URL can change while the page is mounted, and `useAsync` keeps the answer it worked out
+    // for the old one — reported as settled, because it only flips itself back to loading from an
+    // effect, which runs after this render. So ask which location the answer is about rather than
+    // whether there is one. Sending someone to the rule they were looking at a moment ago would be
+    // worse than making them wait.
+    //
+    // A failed run (either step timing out) clears the value, so check that separately, or we'd
+    // sit here waiting for a result that is never coming.
+    const workingOutTarget = resolved?.context !== context && !resolveError;
+
+    // The matcher already said yes before this module was fetched, but again — the URL can change.
     if (!belongsToPlugin) {
       return <RoutePage {...props} />;
     }
@@ -109,16 +141,16 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
     // managed, so a redirect is what happens unless the plugin turns out to be missing or we can't
     // work out where in it this URL lives. Both of those land on the Grafana page below, which is
     // the page people expected in the first place, so there's nothing to walk back.
-    if (checkingPlugin || buildingTarget) {
+    if (workingOutTarget) {
       return <RedirectingPage />;
     }
 
     // Either the plugin isn't available, or we couldn't work out where in it this URL belongs.
-    if (!target) {
+    if (!resolved?.url) {
       return <RoutePage {...props} />;
     }
 
-    return <Navigate replace to={target} />;
+    return <Navigate replace to={resolved.url} />;
   };
 }
 
