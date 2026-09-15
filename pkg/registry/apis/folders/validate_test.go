@@ -1594,13 +1594,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	total := int64(len(rows))
-	offset := req.Offset
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > total {
-		offset = total
-	}
+	offset := min(max(req.Offset, 0), total)
 	end := total
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit

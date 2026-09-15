@@ -892,7 +892,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 
 func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 	var (
-		concurrentCount int64
+		concurrentCount atomic.Int64
 		maxConcurrent   int64
 		mu              sync.Mutex
 	)
@@ -916,8 +916,8 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			current := atomic.AddInt64(&concurrentCount, 1)
-			defer atomic.AddInt64(&concurrentCount, -1)
+			current := concurrentCount.Add(1)
+			defer concurrentCount.Add(-1)
 			mu.Lock()
 			if current > maxConcurrent {
 				maxConcurrent = current
@@ -986,7 +986,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Will be used to track concurrent executions
 			var (
-				concurrentCount int64
+				concurrentCount atomic.Int64
 				maxConcurrent   int64
 				mu              sync.Mutex
 			)
@@ -1020,8 +1020,8 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 			client := &mockDynamicClient{
 				deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 					// Track concurrent executions
-					current := atomic.AddInt64(&concurrentCount, 1)
-					defer atomic.AddInt64(&concurrentCount, -1)
+					current := concurrentCount.Add(1)
+					defer concurrentCount.Add(-1)
 
 					mu.Lock()
 					if current > maxConcurrent {
@@ -1100,10 +1100,10 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				// Mirror the error returned by the unified storage backend when
 				// a Write is rejected because of RV mismatch.
@@ -1129,7 +1129,7 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 	count, err := f.releaseExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
-	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should have been retried once after the initial conflict")
+	assert.Equal(t, int32(2), calls.Load(), "patch should have been retried once after the initial conflict")
 }
 
 // TestDeleteExistingItems_RetriesOnConflict mirrors the release-path test for
@@ -1148,10 +1148,10 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				return apierrors.NewConflict(
 					schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
@@ -1175,7 +1175,7 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 	count, err := f.deleteExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
-	assert.Equal(t, int32(2), atomic.LoadInt32(&calls), "delete should have been retried once after the initial conflict")
+	assert.Equal(t, int32(2), calls.Load(), "delete should have been retried once after the initial conflict")
 }
 
 // TestReleaseExistingItems_ReturnsErrorWhenConflictPersists ensures the retry
@@ -1195,10 +1195,10 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	clients := resources.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	client := &mockDynamicClient{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-			atomic.AddInt32(&calls, 1)
+			calls.Add(1)
 			return nil, apierrors.NewConflict(
 				schema.GroupResource{Group: folders.GroupVersion.Group, Resource: "folders"},
 				name,
@@ -1218,7 +1218,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 	_, err := f.releaseExistingItems(context.Background(), repo)
 	assert.Error(t, err)
-	assert.Greater(t, atomic.LoadInt32(&calls), int32(1), "finalizer should have retried at least once before giving up")
+	assert.Greater(t, calls.Load(), int32(1), "finalizer should have retried at least once before giving up")
 }
 
 // TestProcess_RemovePendingJobsFinalizer verifies that the remove-pending-jobs finalizer clears
