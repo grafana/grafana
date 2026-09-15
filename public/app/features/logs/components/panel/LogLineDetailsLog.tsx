@@ -44,7 +44,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
         filterType: 'include',
       });
     }
-  }, [log.dataFrame?.refId, log.datasourceType, log.entry, log.uid, noInteractions, onClickFilterString]);
+  }, [log.dataFrame?.refId, log.entry, noInteractions, onClickFilterString]);
 
   const filterOutLogLine = useCallback(() => {
     onClickFilterOutString?.(log.entry, log.dataFrame?.refId);
@@ -53,7 +53,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
         filterType: 'exclude',
       });
     }
-  }, [log.dataFrame?.refId, log.datasourceType, log.entry, log.uid, noInteractions, onClickFilterOutString]);
+  }, [log.dataFrame?.refId, log.entry, noInteractions, onClickFilterOutString]);
 
   const logLineDisplayed = displayedFields.includes(LOG_LINE_BODY_FIELD_NAME);
 
