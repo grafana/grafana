@@ -43,6 +43,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway guardrails */
+  DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -103,6 +105,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Pass React elements in plugin extension props by reference */
+  GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
@@ -201,6 +205,8 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
   TableRefresh: "table.refresh",
+  /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
+  TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
@@ -370,6 +376,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query gateway guardrails
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayGuardrails`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayGuardrails", false, options).value;
 };
 
 /**
@@ -703,6 +720,17 @@ export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEval
 };
 
 /**
+ * Pass React elements in plugin extension props by reference
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginExtensionReactElementProps`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginExtensionReactElementProps = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginExtensionReactElementProps", false, options).value;
+};
+
+/**
  * Nest app plugin navigation items in the mega menu based on their URL path hierarchy
  *
  * **Details:**
@@ -872,10 +900,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
@@ -1239,6 +1267,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refresh", false, options).value;
+};
+
+/**
+ * Catch-all toggle for new features developed as part of the Q3 table panel refresh
+ *
+ * **Details:**
+ * - flag key: `table.refreshNewFeatures`
+ * - default value: `false`
+ */
+export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refreshNewFeatures", false, options).value;
 };
 
 /**

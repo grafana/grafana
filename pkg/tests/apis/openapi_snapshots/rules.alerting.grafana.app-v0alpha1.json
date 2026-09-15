@@ -3168,6 +3168,33 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleHealth": {
+        "type": "string",
+        "enum": [
+          "Unknown",
+          "OK",
+          "Paused",
+          "Error",
+          "NoData"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState": {
+        "type": "string",
+        "enum": [
+          "Inactive",
+          "Healthy",
+          "Firing",
+          "Pending",
+          "Recovering"
+        ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleStateReason": {
+        "type": "string",
+        "enum": [
+          "Evaluated",
+          "KeepLast"
+        ]
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleDatasourceUID": {
         "type": "string",
         "pattern": "^[a-zA-Z0-9_-]+$"
@@ -3509,12 +3536,32 @@
             "type": "object",
             "additionalProperties": true
           },
+          "evaluationDuration": {
+            "description": "duration of the last evaluation in seconds",
+            "type": "number"
+          },
+          "health": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleHealth"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastEvaluationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleOperatorState"
             }
+          },
+          "state": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleState"
+          },
+          "stateReason": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleStateReason"
           }
         },
         "additionalProperties": false
@@ -4720,6 +4767,16 @@
         "type": "string",
         "pattern": "^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$"
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRecordingRuleHealth": {
+        "type": "string",
+        "enum": [
+          "Unknown",
+          "Recording",
+          "Paused",
+          "Error",
+          "NoData"
+        ]
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRelativeTimeRange": {
         "type": "object",
         "required": [
@@ -4780,6 +4837,20 @@
             "description": "additionalFields is reserved for future use",
             "type": "object",
             "additionalProperties": true
+          },
+          "evaluationDuration": {
+            "description": "duration of the last evaluation in seconds",
+            "type": "number"
+          },
+          "health": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRuleRecordingRuleHealth"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "lastEvaluationTime": {
+            "type": "string",
+            "format": "date-time"
           },
           "operatorStates": {
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -5045,8 +5116,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -5174,15 +5244,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -5201,7 +5269,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SortField"
             }
           },
@@ -5229,7 +5296,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.FacetTerm"
               }
             }
@@ -5237,7 +5303,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResultItem"
             }
           },
@@ -5282,8 +5347,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -5300,7 +5364,6 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
@@ -5316,7 +5379,6 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
@@ -5496,7 +5558,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -5505,8 +5566,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -5534,8 +5594,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

@@ -51,7 +51,7 @@ func TestEncodeName(t *testing.T) {
 		{"abc123", "auth.saml", "abc123.auth.saml"},
 	}
 	for _, tt := range tests {
-		require.Equal(t, tt.want, encodeName(tt.userUID, tt.authModule))
+		require.Equal(t, tt.want, EncodeName(tt.userUID, tt.authModule))
 
 		userUID, authModule, ok := decodeName(tt.want)
 		require.True(t, ok)

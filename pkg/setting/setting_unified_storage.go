@@ -75,12 +75,12 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 		if !strings.HasPrefix(env, envPrefix) {
 			continue
 		}
-		eqIdx := strings.IndexByte(env, '=')
-		if eqIdx < 0 {
+		before, after, ok := strings.Cut(env, "=")
+		if !ok {
 			continue
 		}
-		envKey := env[:eqIdx]
-		envValue := env[eqIdx+1:]
+		envKey := before
+		envValue := after
 		if envValue == "" {
 			continue
 		}

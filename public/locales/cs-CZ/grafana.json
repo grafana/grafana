@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Prohlédněte si historii všech událostí výstrah generovaných pravidly výstrah spravovanými Grafanou. Zobrazí se všechny události výstrah bez ohledu na to, zda je nastaveno časování potlačení nebo ztlumení.",
         "notifications": "Zobrazte historii všech oznámení odeslaných na základě pravidel výstrah spravovaných Grafanou."
@@ -3351,6 +3354,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5823,15 +5828,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Přesunout {{typeName}}",
-      "panel-background": "Změnit pozadí panelu",
-      "panel-description": "Změnit popis panelu",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Změny panelu",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-preset": "Použít předvolbu panelu",
       "panel-repeat-direction": "Opakovat směr",
       "panel-repeat-variable": "Opakování panelu podle",
-      "panel-title": "Změnit název panelu",
+      "panel-title": "",
       "paste-panel": "Vložit panel",
       "remove": "Odebrat {{typeName}}",
       "row-title": "Změnit název řádku",
@@ -6107,7 +6112,6 @@
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Čas",
       "title-edit": "",
@@ -6789,6 +6793,10 @@
       },
       "title-delete": "Odstranit {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Vymazat vyhledávání",
       "no-transformations-found": "Nebyly nalezeny žádné transformace",
@@ -6841,6 +6849,12 @@
     "view-panel": {
       "back-to-dashboard": "Zpět na nástěnku",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7181,6 +7195,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Chyba při načítání nástěnky"
     },
     "dashboard-scene": {
@@ -7730,6 +7750,10 @@
       "required": "Povinné"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Změny",
         "label-details": "Podrobnosti",
@@ -7844,6 +7868,9 @@
         "text-no-save": "Máte neuložené změny. Nemáte oprávnění k uložení. Chcete změny zahodit a sdílet původní verzi?",
         "title": "Neuložené změny"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "Hledáte něco jiného? Prohlédněte si <2>další navrhované nástěnky</2> nebo <6>vytvořte nástěnku od začátku</6>.",
@@ -8101,6 +8128,7 @@
       "title-label": "Název"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Uložit změny",
       "save-button-disabled-tooltip": "Před uložením opravte chyby ověření",
       "save-button-disabled-tooltip-yaml": "Dokument obsahuje chyby ověření. Přepnutím na JSON zobrazíte podrobnosti o chybách v řádku.",
@@ -8729,6 +8757,16 @@
       "title-table": "Tabulka",
       "title-traces": "Stopy"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8780,7 +8818,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Odkaz",
-      "open-value-in": "Otevřít hodnotu v"
+      "open-value-in": "Otevřít hodnotu v",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9248,10 +9287,14 @@
       "share-export-json": "Exportovat jako JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Čas zahájení",
       "success-indicator": "",
       "target": "Cíl",
       "tooltip-url": "{{route}} nebo {{url}} nebo {{target}} nebo {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID trasování",
       "url": "Adresa URL",
       "warning-indicator": ""
@@ -9268,6 +9311,10 @@
       "aria-label-copy": "Kopírovat do schránky",
       "attribute-plugin-promo": {
         "learn-more": "Další informace"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Pozorovatelnost databáze odhaluje vizuální plány vysvětlení, události čekání a vzorky dotazů, což vám pomůže diagnostikovat problémy nad rámec rozpětí trasování.",
@@ -10783,7 +10830,6 @@
       "ariaLabel-panel-loading": "Lišta načítání panelu",
       "ariaLabel-panel-status": "Stav panelu",
       "errors-and-notices": "Chyby a upozornění",
-      "inspect-errors-notices": "Zkontrolovat",
       "tooltip-cancel": "Zrušit dotaz",
       "tooltip-cancel-loading": "Zrušit dotaz",
       "tooltip-stop-streaming": "Zastavit streamování",
@@ -10865,9 +10911,13 @@
       "cell-filter-out": "Odfiltrovat hodnotu",
       "cell-inspect": "Zkontrolovat hodnotu",
       "cell-inspect-tooltip": "Zkontrolovat hodnotu",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Kopírovat do schránky",
       "csv-counts": "Řádky: {{rows}}, sloupce: {{columns}}",
       "csv-placeholder": "Zadej CSV tady…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Přidat všechny zobrazené hodnoty do filtru",
         "blanks": "(prázdné)",
@@ -11531,11 +11581,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_few": "",
-        "stats-sources_many": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12740,6 +12786,7 @@
       "title": "Vytvořit"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nové pravidlo výstrahy"
     },
     "create-dashboard": {
@@ -13238,7 +13285,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13258,7 +13304,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13279,9 +13324,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -13309,6 +13352,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13325,6 +13369,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_few": "",
@@ -13378,7 +13423,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Vymazat nastavení"
+      "clear-tooltip": "Vymazat nastavení",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Vybarvit řady podle"
@@ -16852,6 +16899,7 @@
       "tooltip-bold": "Tučné",
       "tooltip-bullet-list": "Seznam s odrážkami",
       "tooltip-checklist": "Kontrolní seznam",
+      "tooltip-diagram": "",
       "tooltip-heading": "Nadpis",
       "tooltip-insert-variable": "Vložit proměnnou",
       "tooltip-italic": "Kurzíva",
@@ -16865,10 +16913,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
-      "max-rows": "",
-      "max-rows-description": "",
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17089,6 +17145,10 @@
       "bar-stacked": "Sloupcový graf – kumulovaný",
       "bar-stacked-percent": "Sloupcový graf – kumulovaný podle procenta",
       "line": "Čárový graf"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Přidat časové pásmo",

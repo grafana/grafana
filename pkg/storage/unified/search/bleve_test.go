@@ -1027,6 +1027,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
 			enforceSortCapability: enforce,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1109,6 +1110,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			fields:                resource.StandardSearchFields(),
 			enforceSortCapability: true,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
 		require.Nil(t, errResult)
@@ -2360,8 +2362,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 

@@ -1253,7 +1253,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			if tt.withActionSets {
 				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
-					resourceName := strings.Split(set, ":")[0]
+					resourceName, _, _ := strings.Cut(set, ":")
 					permissionName := strings.Split(set, ":")[1]
 					setOptions := resourcepermissions.Options{Resource: resourceName}
 					actionSetName := setOptions.GetActionSetName(permissionName)

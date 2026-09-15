@@ -3,6 +3,7 @@ import { useMemo, useRef } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -33,7 +34,8 @@ import { type TabItem } from './TabItem';
 
 export function useSidebarOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
-  const { layout } = model.useState();
+  // The canvas can remount during DnD loading while this editor remains mounted.
+  const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
 
   const tabCategory = useMemo(
     () =>

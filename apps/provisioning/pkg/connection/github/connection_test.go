@@ -1481,6 +1481,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 		connection    *provisioning.Connection
 		secrets       github.ConnectionSecrets
 		expectedError string
+		wantAuthErr   bool // error must be classified as connection.ErrAuthentication (user-actionable)
 		validateToken func(t *testing.T, token common.RawSecureValue)
 	}{
 		{
@@ -1589,6 +1590,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				PrivateKey: common.RawSecureValue("not-valid-base64!@#"),
 			},
 			expectedError: "failed to decode base64 private key",
+			wantAuthErr:   true,
 		},
 		{
 			name: "error - invalid PEM format",
@@ -1606,6 +1608,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem-format"))),
 			},
 			expectedError: "failed to parse private key",
+			wantAuthErr:   true,
 		},
 		{
 			name: "error - empty private key",
@@ -1623,6 +1626,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				PrivateKey: common.RawSecureValue(""),
 			},
 			expectedError: "failed to parse private key",
+			wantAuthErr:   true,
 		},
 	}
 
@@ -1636,6 +1640,11 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
+				if tt.wantAuthErr {
+					assert.ErrorIs(t, err, connection.ErrAuthentication, "expected a user-actionable authentication error")
+				} else {
+					assert.NotErrorIs(t, err, connection.ErrAuthentication, "expected a system-caused error")
+				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, token)
