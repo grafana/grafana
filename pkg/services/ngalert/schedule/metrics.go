@@ -48,6 +48,8 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	groupsPerOrg := make(map[int64]map[string]struct{})
 	// gauge for rules imported from Prometheus per org
 	orgsRulesPrometheusImported := make(map[int64]map[string]int64)
+	// gauge for rules created by a plugin per org, by origin
+	orgsRulesByOrigin := make(map[int64]map[string]int64)
 
 	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
 
@@ -99,6 +101,13 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 			orgsRulesPrometheusImported[rule.OrgID][state]++
 		}
 
+		if origin := rule.Labels[models.PluginGrafanaOriginLabel]; origin != "" {
+			if orgsRulesByOrigin[rule.OrgID] == nil {
+				orgsRulesByOrigin[rule.OrgID] = make(map[string]int64)
+			}
+			orgsRulesByOrigin[rule.OrgID][origin]++
+		}
+
 		// Count groups per org
 		orgGroups, ok := groupsPerOrg[rule.OrgID]
 		if !ok {
@@ -129,6 +138,11 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	for orgID, settings := range simplifiedEditorSettingsPerOrg {
 		for setting, count := range settings {
 			sch.metrics.SimplifiedEditorRules.WithLabelValues(fmt.Sprint(orgID), setting).Set(float64(count))
+		}
+	}
+	for orgID, origins := range orgsRulesByOrigin {
+		for origin, count := range origins {
+			sch.metrics.PluginOriginRules.WithLabelValues(fmt.Sprint(orgID), origin).Set(float64(count))
 		}
 	}
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
