@@ -410,6 +410,16 @@ func resolveSecrets(desired map[string]any, stored map[string]any) {
 func redactSecrets(obj *iamv0.SSOSetting) *iamv0.SSOSetting {
 	out := obj.DeepCopy()
 	settings := out.Spec.Settings.UnstructuredContent()
+	redactSecretsInPlace(settings)
+	out.Spec.Settings = common.Unstructured{Object: settings}
+	return out
+}
+
+// redactSecretsInPlace masks secret-classified string values in the given
+// settings map (and nested LDAP server maps). It mutates the map directly, so
+// callers must own it — used for freshly-built List items where a DeepCopy would
+// choke on legacy non-JSON values (e.g. int64).
+func redactSecretsInPlace(settings map[string]any) {
 	for _, m := range secretMaps(settings) {
 		for k, v := range m {
 			if str, ok := v.(string); ok && str != "" && isSecretField(k) {
@@ -417,8 +427,6 @@ func redactSecrets(obj *iamv0.SSOSetting) *iamv0.SSOSetting {
 			}
 		}
 	}
-	out.Spec.Settings = common.Unstructured{Object: settings}
-	return out
 }
 
 // secretMaps returns every map that may hold secret fields. LDAP nests secrets
