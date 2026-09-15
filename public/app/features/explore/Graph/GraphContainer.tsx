@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useToggle } from 'react-use';
+import { useMeasure, useToggle } from 'react-use';
 
 import {
   type DataFrame,
@@ -20,6 +20,7 @@ import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { GraphMetaInfo } from './GraphMetaInfo';
 import { loadGraphStyle } from './utils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -28,6 +29,10 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   width: number;
   height: number;
   data: DataFrame[];
+  // All series from the query response, unfiltered by visualisation type, so
+  // stats from query types not rendered by the graph (e.g. instant, exemplar)
+  // are still available to GraphMetaInfo.
+  allSeries: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;
   timeRange: TimeRange;
@@ -42,6 +47,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
 
 export const GraphContainer = ({
   data,
+  allSeries,
   eventBus,
   height,
   width,
@@ -58,6 +64,7 @@ export const GraphContainer = ({
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
+  const [metaInfoRef, { height: metaInfoHeight }] = useMeasure<HTMLDivElement>();
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
@@ -96,22 +103,27 @@ export const GraphContainer = ({
       actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
       {(innerWidth, innerHeight) => (
-        <ExploreGraph
-          graphStyle={graphStyle}
-          data={slicedData}
-          height={innerHeight}
-          width={innerWidth}
-          timeRange={timeRange}
-          onChangeTime={onChangeTime}
-          timeZone={timeZone}
-          annotations={annotations}
-          splitOpenFn={splitOpenFn}
-          loadingState={loadingState}
-          thresholdsConfig={thresholdsConfig}
-          thresholdsStyle={thresholdsStyle}
-          eventBus={eventBus}
-          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
-        />
+        <>
+          <div ref={metaInfoRef}>
+            <GraphMetaInfo data={allSeries} />
+          </div>
+          <ExploreGraph
+            graphStyle={graphStyle}
+            data={slicedData}
+            height={innerHeight - metaInfoHeight}
+            width={innerWidth}
+            timeRange={timeRange}
+            onChangeTime={onChangeTime}
+            timeZone={timeZone}
+            annotations={annotations}
+            splitOpenFn={splitOpenFn}
+            loadingState={loadingState}
+            thresholdsConfig={thresholdsConfig}
+            thresholdsStyle={thresholdsStyle}
+            eventBus={eventBus}
+            queriesChangedIndexAtRun={queriesChangedIndexAtRun}
+          />
+        </>
       )}
     </PanelChrome>
   );
