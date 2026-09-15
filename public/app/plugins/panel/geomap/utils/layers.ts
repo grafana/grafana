@@ -13,6 +13,7 @@ import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
+import { guardLayerAttribution } from './attribution';
 import { getNextLayerName } from './utils';
 
 const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
@@ -133,6 +134,7 @@ export async function initLayer(
 
   const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
   const layer = handler.init(); // eslint-disable-line
+  guardLayerAttribution(layer);
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
   }

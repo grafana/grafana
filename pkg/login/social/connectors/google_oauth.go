@@ -248,13 +248,13 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		s.log.Debug("No id_token found, defaulting to API access", "token", token)
+		s.log.Debug("No id_token found, defaulting to API access")
 		return nil, nil
 	}
 
 	idTokenString, ok := idToken.(string)
 	if !ok {
-		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
+		s.log.Warn("ID token is not a string")
 		return nil, nil
 	}
 
@@ -272,7 +272,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 		// Otherwise, just extract the payload without signature validation
 		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
 		if err != nil {
-			s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			s.log.Warn("Error retrieving id_token", "error", err)
 			return nil, nil
 		}
 	}
