@@ -450,7 +450,7 @@ function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): G
             repeat: {
               value: p.repeat,
               mode: 'variable',
-              ...(p.repeatDirection !== undefined && { direction: p.repeatDirection }),
+              direction: p.repeatDirection ?? 'h',
               ...(p.maxPerRow !== undefined && { maxPerRow: p.maxPerRow }),
             },
           }

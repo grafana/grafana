@@ -722,6 +722,37 @@ func TestV1ToV2alpha1(t *testing.T) {
 	}
 }
 
+func TestGetRepeatOptionsFromPanel(t *testing.T) {
+	t.Run("defaults missing repeat direction to horizontal", func(t *testing.T) {
+		repeatOptions := getRepeatOptionsFromPanel(map[string]any{
+			"repeat":    "env",
+			"maxPerRow": float64(6),
+		})
+
+		require.NotNil(t, repeatOptions)
+		require.NotNil(t, repeatOptions.Direction)
+		assert.Equal(t, dashv2alpha1.DashboardRepeatOptionsDirectionH, *repeatOptions.Direction)
+
+		require.NotNil(t, repeatOptions.MaxPerRow)
+		assert.Equal(t, int64(6), *repeatOptions.MaxPerRow)
+	})
+
+	t.Run("preserves explicit vertical repeat direction", func(t *testing.T) {
+		repeatOptions := getRepeatOptionsFromPanel(map[string]any{
+			"repeat":          "env",
+			"repeatDirection": "v",
+			"maxPerRow":       float64(2),
+		})
+
+		require.NotNil(t, repeatOptions)
+		require.NotNil(t, repeatOptions.Direction)
+		assert.Equal(t, dashv2alpha1.DashboardRepeatOptionsDirectionV, *repeatOptions.Direction)
+
+		require.NotNil(t, repeatOptions.MaxPerRow)
+		assert.Equal(t, int64(2), *repeatOptions.MaxPerRow)
+	})
+}
+
 // TestV1ToV2alpha1_TimezoneEmptyString verifies that timezone: "" from V1 is left unset in V2
 // so that the user-profile-preference fallback continues to work.
 func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
