@@ -6,8 +6,8 @@ import {
   SceneObjectBase,
   SceneObjectRemovedEvent,
   sceneGraph,
-  StateTransactionCommittedEvent,
-  type StateTransactionCommittedPayload,
+  StateCommittedEvent,
+  type StateCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
@@ -75,8 +75,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     );
 
     this._subs.add(
-      dashboard.subscribeToEvent(StateTransactionCommittedEvent, ({ payload }) => {
-        this.handleStateTransactionCommitted(payload);
+      dashboard.subscribeToEvent(StateCommittedEvent, ({ payload }) => {
+        this.handleStateCommitted(payload);
       })
     );
 
@@ -160,13 +160,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * the action to the stack.
    * @private
    */
-  private handleStateTransactionCommitted(transaction: StateTransactionCommittedPayload) {
+  private handleStateCommitted(payload: StateCommittedPayload) {
     this.handleEditAction(
       {
-        source: transaction.source,
-        description: transaction.description,
-        perform: transaction.replay,
-        undo: transaction.revert,
+        source: payload.source,
+        description: payload.description,
+        perform: payload.replay,
+        undo: payload.revert,
       },
       true
     );
