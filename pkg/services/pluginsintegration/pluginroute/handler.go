@@ -137,11 +137,14 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	config.EffectiveVersion = builder.GetEffectiveVersion(0, opts.BuildVersion, "", "")
 	config.RESTOptionsGetter = getter
 	config.AggregatedDiscoveryGroupManager = discoveryendpoint.NewResourceManager("apis")
-	config.Authorization.Authorizer = union.New(
-		apiserverauthorizer.NewImpersonationAuthorizer(),
-		apiserverauthorizer.NewNamespaceAuthorizer(),
-		b.GetAuthorizer(),
+	config.Authorization.Authorizer, err = union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
 	)
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", group, err)
+	}
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
 		builder.GetDefaultBuildHandlerChainFunc, gvs,

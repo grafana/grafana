@@ -120,9 +120,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -140,9 +139,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -160,8 +158,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Display{}.OpenAPIModelName()),
+										Ref: ref(Display{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -278,8 +275,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SSOSetting{}.OpenAPIModelName()),
+										Ref: ref(SSOSetting{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -421,8 +417,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
 									},
 								},
 							},
@@ -532,8 +527,7 @@ func schema_pkg_apis_iam_v0alpha1_UserPermissions(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(UserPermission{}.OpenAPIModelName()),
+										Ref: ref(UserPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -614,8 +608,7 @@ func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
 									},
 								},
 							},
