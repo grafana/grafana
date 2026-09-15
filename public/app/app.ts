@@ -337,9 +337,15 @@ export class GrafanaApp {
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(await getAppPluginsToPreload());
-        getPluginExtensionRegistries();
       }
 
+      // this will fail if the user is not logged in
+      // but we need to call it unconditionally for public dashboards + snapshots
+      // otherwise getPanelPluginsMetasMapSync will throw an error
+      // currently it falls back to config.panels which makes this "work" temporarily
+      // TODO remove usage of getPanelPluginsMetasMapSync in favour of getPanelPluginsMetasMap
+      //   - this will allow us to remove this call entirely
+      // TODO ensure this can be called anonymously for public dashboards/snapshots
       await getPanelPluginMetas();
 
       setHelpNavItemHook(useHelpNode);
