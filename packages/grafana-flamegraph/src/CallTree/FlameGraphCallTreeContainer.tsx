@@ -17,7 +17,14 @@ import { CallTreeTable } from './CallTreeTable';
 import { ColorBarCell } from './ColorBarCell';
 import { DiffCell } from './DiffCell';
 import { FunctionCellWithExpander } from './FunctionCellWithExpander';
-import { buildAllCallTreeNodes, buildCallersTree, type CallTreeNode, getInitialExpandedState } from './utils';
+import {
+  buildAllCallTreeNodes,
+  buildCallersTree,
+  type CallTreeNode,
+  collectExpandedPaths,
+  getInitialExpandedState,
+  resolveExpandedPaths,
+} from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -331,8 +338,19 @@ const FlameGraphCallTreeContainer = memo(
       [currentSearchMatchId]
     );
 
+    // Rows the user expanded, kept as label paths so that they can be found again in a profile that changed
+    // underneath them. See where this is captured, below the table.
+    const expandedPathsRef = useRef<string[][]>([]);
+    const previousNodesRef = useRef(nodes);
+
     const expandedState = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
+
+      // autoResetExpanded sends react-table back to this state whenever the data changes, which for a progressively
+      // refined profile is every time an answer lands. Putting the user's rows back in keeps them open.
+      for (const id of resolveExpandedPaths(nodes, expandedPathsRef.current)) {
+        baseExpanded[id] = true;
+      }
 
       const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
         for (const node of nodes) {
@@ -624,6 +642,14 @@ const FlameGraphCallTreeContainer = memo(
 
     tableInstanceRef.current = tableInstance;
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+
+    // Skipped on the render where the data changed: react-table has not reset yet, so its expanded row ids still
+    // belong to the previous tree and reading them against this one would resolve to the wrong functions.
+    if (previousNodesRef.current === nodes) {
+      expandedPathsRef.current = collectExpandedPaths(nodes, tableInstance.state.expanded ?? {});
+    }
+
+    previousNodesRef.current = nodes;
 
     // A truncated node the user can see here is one whose ancestors are all expanded, which is exactly the row model
     // react-table hands back. Unlike a flame graph bar, such a row is legible however little time it holds, so how
