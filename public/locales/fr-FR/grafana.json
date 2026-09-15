@@ -3308,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5742,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Déplacer {{typeName}}",
-      "panel-background": "Modifier l’arrière-plan du panneau",
-      "panel-description": "Modifier la description du panneau",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Modifications du panneau",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-preset": "Appliquer le préréglage du panneau",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
-      "panel-title": "Modifier le titre du panneau",
+      "panel-title": "",
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "row-title": "Modifier le titre de la ligne",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "Supprimer {{name}} ?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Effacer la recherche",
       "no-transformations-found": "Aucune transformation trouvée",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Retour au tableau de bord",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8647,6 +8659,16 @@
       "title-table": "Tableau",
       "title-traces": "Traces"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8698,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Lien",
-      "open-value-in": "Ouvrir la valeur dans"
+      "open-value-in": "Ouvrir la valeur dans",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9205,10 @@
       "aria-label-copy": "Copier dans le presse-papiers",
       "attribute-plugin-promo": {
         "learn-more": "En savoir plus"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability met en avant des plans d’explication visuels, des événements d’attente et des exemples de requêtes pour vous aider à diagnostiquer les problèmes au-delà des spans de trace.",
@@ -11412,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13119,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

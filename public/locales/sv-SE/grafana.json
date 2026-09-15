@@ -3308,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5742,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Flytta {{typeName}}",
-      "panel-background": "Ändra panelbakgrund",
-      "panel-description": "Ändra panelbeskrivning",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Paneländringar",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-preset": "Tillämpa panelförinställning",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
-      "panel-title": "Ändra paneltitel",
+      "panel-title": "",
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "row-title": "Ändra radtitel",
@@ -6705,6 +6707,10 @@
       },
       "title-delete": "Radera {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Rensa sökningen",
       "no-transformations-found": "Inga omvandlingar hittades",
@@ -6755,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Tillbaka till instrumentpanelen",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8647,6 +8659,16 @@
       "title-table": "Tabell",
       "title-traces": "Spår"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8698,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Länk",
-      "open-value-in": "Öppna värde i"
+      "open-value-in": "Öppna värde i",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9182,6 +9205,10 @@
       "aria-label-copy": "Kopiera till urklippet",
       "attribute-plugin-promo": {
         "learn-more": "Läs mer"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Observerbarhet för databaser visar visuella förklaringsplaner, väntningshändelser och frågeexempel – vilket hjälper dig att diagnostisera problem bortom spårningens intervall.",
@@ -11412,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13119,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
