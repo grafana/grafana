@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Możesz sprawdzać historię wszystkich zdarzeń związanych z alertami wygenerowanych na podstawie reguł alertów zarządzanych przez Grafanę. Wyświetlane są wszystkie zdarzenia alertów niezależnie od tego, czy ustawiono okresy lub harmonogramy wyciszenia.",
         "notifications": "Przeglądaj historię wszystkich powiadomień wysłanych na podstawie reguł alertów zarządzanych przez Grafanę."
@@ -7854,6 +7857,9 @@
         "title": "Niezapisane zmiany"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Szukasz czegoś innego? Zobacz <2>inne sugerowane pulpity</2> lub <6>utwórz pulpit od podstaw</6>.",
       "title": "Obecnie wyświetlane: {{title}}"
@@ -8110,6 +8116,7 @@
       "title-label": "Tytuł"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Zapisz zmiany",
       "save-button-disabled-tooltip": "Przed zapisaniem napraw błędy wykryte podczas weryfikacji",
       "save-button-disabled-tooltip-yaml": "Dokument zawiera błędy weryfikacji. Przełącz na format JSON, aby zobaczyć szczegóły błędów w tekście.",
@@ -16871,6 +16878,7 @@
       "tooltip-bold": "Pogrubiona",
       "tooltip-bullet-list": "Lista punktowana",
       "tooltip-checklist": "Lista kontrolna",
+      "tooltip-diagram": "",
       "tooltip-heading": "Nagłówek",
       "tooltip-insert-variable": "Wstaw zmienną",
       "tooltip-italic": "Kursywa",
@@ -16884,8 +16892,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17106,6 +17124,10 @@
       "bar-stacked": "Wykres słupkowy – skumulowany",
       "bar-stacked-percent": "Wykres słupkowy – skumulowany procentowo",
       "line": "Wykres liniowy"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Dodaj strefę czasową",

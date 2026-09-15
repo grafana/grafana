@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visualize um histórico de todos os eventos de alerta gerados pelas suas regras de alerta gerenciadas pela Grafana. Todos os eventos de alerta são exibidos, independentemente de silenciamentos ou períodos de silenciamento estarem definidos.",
         "notifications": "Veja um histórico de todas as notificações enviadas por suas regras de alerta gerenciadas pela Grafana."
@@ -7760,6 +7763,9 @@
         "title": "Alterações não salvas"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Não é o que você está procurando? Veja <2>outros painéis sugeridos</2> ou <6>crie um do zero</6>.",
       "title": "Você está visualizando {{title}}"
@@ -8014,6 +8020,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Salvar alterações",
       "save-button-disabled-tooltip": "Corrija os erros de validação antes de salvar",
       "save-button-disabled-tooltip-yaml": "O documento contém erros de validação. Troque para JSON para ver os detalhes do erro em linha.",
@@ -16625,6 +16632,7 @@
       "tooltip-bold": "Negrito",
       "tooltip-bullet-list": "Lista com marcadores",
       "tooltip-checklist": "Lista de verificação",
+      "tooltip-diagram": "",
       "tooltip-heading": "Cabeçalho",
       "tooltip-insert-variable": "Inserir variável",
       "tooltip-italic": "Itálico",
@@ -16638,8 +16646,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16878,10 @@
       "bar-stacked": "Gráfico de barras: empilhado",
       "bar-stacked-percent": "Gráfico de barras: empilhado por porcentagem",
       "line": "Gráfico de linhas"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Adicionar fuso horário",
