@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -78,7 +79,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := db.InitTestDB(tb) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 
 	ac := acmock.New()
 
