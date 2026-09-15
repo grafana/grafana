@@ -92,6 +92,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   }
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  let fillValues = dataRef.current?.heatmapColors?.values;
   const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
   let qt: Quadtree;
@@ -107,6 +108,10 @@ export function prepConfig(opts: PrepConfigOpts) {
         background: 'transparent',
       });
     });
+  });
+
+  builder.addHook('setData', () => {
+    fillValues = dataRef.current?.heatmapColors?.values;
   });
 
   if (isTime) {
@@ -494,7 +499,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       ySizeDivisor,
       disp: {
         fill: {
-          values: (u, seriesIdx) => dataRef.current?.heatmapColors?.values!,
+          values: () => fillValues!,
           index: dataRef.current?.heatmapColors?.palette!,
         },
       },
