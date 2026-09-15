@@ -171,6 +171,8 @@ interface BaseTableProps {
    * the panel is being edited. The table still opens and closes it locally in between.
    */
   showColumnsSidebar?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
