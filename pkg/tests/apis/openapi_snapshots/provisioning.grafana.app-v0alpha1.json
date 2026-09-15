@@ -5509,9 +5509,17 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions": {
         "type": "object",
         "properties": {
+          "forkURL": {
+            "description": "URL of the head repository for a pull request from a fork, when available.",
+            "type": "string"
+          },
           "hash": {
             "description": "The specific commit hash that triggered this notice",
             "type": "string"
+          },
+          "isFork": {
+            "description": "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+            "type": "boolean"
           },
           "pr": {
             "description": "Pull request number (when appropriate)",

@@ -2225,6 +2225,20 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 							Format:      "",
 						},
 					},
+					"isFork": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"forkURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL of the head repository for a pull request from a fork, when available.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
