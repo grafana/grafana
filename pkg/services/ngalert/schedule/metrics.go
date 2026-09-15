@@ -5,7 +5,6 @@ import (
 	"hash/fnv"
 	"sort"
 	"strings"
-	"unicode"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -17,12 +16,22 @@ import (
 // an unvalidated user-set label from growing unbounded.
 const maxPluginOriginLabelLen = 64
 
+// pluginOriginReplacementChar replaces any character sanitizePluginOriginLabel rejects, so a removed character stays visible instead of silently vanishing.
+const pluginOriginReplacementChar = '*'
+
+// sanitizePluginOriginLabel keeps only the characters known plugin origins actually
+// use (plugin/grafana-slo-app): ASCII letters, digits, underscore, hyphen, slash.
+// Everything else, including unicode, is replaced with pluginOriginReplacementChar.
 func sanitizePluginOriginLabel(origin string) string {
 	origin = strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return -1
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+			return r
+		case r == '_' || r == '-' || r == '/':
+			return r
+		default:
+			return pluginOriginReplacementChar
 		}
-		return r
 	}, origin)
 	return util.TruncateUTF8(origin, maxPluginOriginLabelLen)
 }
