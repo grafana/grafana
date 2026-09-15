@@ -43,6 +43,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagGrafanaUseRouterMiddleware
+	// intercept /apis/... and /openapi/v3/... requests in middleware.
+	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -74,6 +78,10 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
+
+	// FlagAlertingRuleStatusSync
+	// Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+	FlagAlertingRuleStatusSync = "alerting.ruleStatusSync"
 
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
@@ -143,6 +151,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagKubernetesFolderCountsLegacyStorage
+	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
+	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
+
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -190,6 +202,10 @@ const (
 	// FlagDatasourcesApiServerEnableResourceEndpoint
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
+
+	// FlagDatasourcesApiServerEnableProxyEndpoint
+	// Handle datasource proxy requests through the datasource API group endpoint.
+	FlagDatasourcesApiServerEnableProxyEndpoint = "datasourcesApiServerEnableProxyEndpoint"
 
 	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
@@ -529,10 +545,6 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
-
-	// FlagGrafanaAssetSriChecks
-	// Enables SRI checks for Grafana JavaScript assets
-	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
 
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
@@ -938,6 +950,18 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagDashboardSearchFieldValueResults
+	// Uses field-value results for dashboard search requests
+	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
+
+	// FlagDashboardApiSearchFieldValueResults
+	// Uses field-value results for requests from the /api/search endpoint
+	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
+
+	// FlagSearchApiFieldValueResults
+	// Uses field-value results for generic resource search API requests
+	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1013,4 +1037,16 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
+
+	// FlagAlertingFolderHasRulesLabel
+	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
+	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
 )

@@ -127,26 +127,35 @@ func (k *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ..
 }
 
 // tryAcquire attempts to acquire the lease. Returns the lease on success,
-// nil if the lease is held by someone else (after waiting retryPeriod
-// before the next attempt), or an error if the context is cancelled.
+// nil after waiting retryPeriod when acquisition fails, or an error if the
+// context is cancelled.
 func (k *Elector) tryAcquire(ctx context.Context, mgr *lease.Manager) (*lease.Lease, error) {
 	l, err := mgr.Acquire(ctx, k.leaseName, lease.WithTTL(k.leaseDuration), lease.WithAutoRenew())
 	if err == nil {
 		return l, nil
 	}
 
-	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
-		t := time.NewTimer(k.retryPeriod)
-		defer t.Stop()
-		select {
-		case <-t.C:
-			return nil, nil
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
-	return nil, fmt.Errorf("acquiring lease: %w", err)
+	if !errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+		k.logger.Error("Failed to acquire KV lease, retrying",
+			"identity", k.identity,
+			"lease", k.leaseName,
+			"retry_period", k.retryPeriod,
+			"error", err,
+		)
+	}
+
+	t := time.NewTimer(k.retryPeriod)
+	defer t.Stop()
+	select {
+	case <-t.C:
+		return nil, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // runAsLeader runs the leader work function. Returns when

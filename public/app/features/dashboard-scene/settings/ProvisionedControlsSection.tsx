@@ -101,9 +101,9 @@ function getSourceTooltip(pluginName: string | undefined): string {
 
 function usePluginName(origin: ControlSourceRef | undefined): string | undefined {
   const pluginId = origin?.group ?? '';
-  const { value: meta } = useDatasourcePluginMeta(pluginId);
+  const { value: meta, loading } = useDatasourcePluginMeta(pluginId);
 
-  if (!pluginId) {
+  if (!pluginId || loading) {
     return undefined;
   }
 

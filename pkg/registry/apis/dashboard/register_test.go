@@ -409,6 +409,8 @@ func TestValidateLibraryPanelDeleteChecksUnifiedReferences(t *testing.T) {
 			}
 			require.NotNil(t, captured)
 			require.Equal(t, int64(1), captured.Limit)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, captured.ResultFormat)
+			require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, captured.Fields)
 			require.Equal(t, "stacks-1", captured.Options.Key.Namespace)
 			require.Equal(t, dashv0.DASHBOARD_RESOURCE, captured.Options.Key.Resource)
 			require.Equal(t, builders.DASHBOARD_LIBRARY_PANEL_REFERENCE, captured.Options.Fields[0].Key)

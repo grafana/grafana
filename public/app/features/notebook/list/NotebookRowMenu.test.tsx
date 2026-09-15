@@ -6,6 +6,7 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { downloadMarkdown } from '../export/downloadMarkdown';
 import { defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -16,13 +17,16 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({ useLazyGetNotebookQuery:
 // Also stubbed because the notebook header now reads its tag options from a facet on this module, and
 // it calls injectEndpoints on the real client as it loads - which the mock above does not provide.
 // The list page's own tests stub it for the same reason.
-jest.mock('./notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(),
-}));
+jest.mock('./notebookSearchApi', () => ({}));
 jest.mock('../export/downloadMarkdown', () => ({ downloadMarkdown: jest.fn() }));
+// Partial mock: this spies on exported only. Any other real call this menu makes keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { ...jest.requireActual('../analytics/main').NotebookAnalytics, exported: jest.fn() },
+}));
 
 const mockUseLazyGetNotebookQuery = jest.mocked(useLazyGetNotebookQuery);
 const mockDownloadMarkdown = jest.mocked(downloadMarkdown);
+const mockExported = jest.mocked(NotebookAnalytics.exported);
 
 function notebookWithOneCell() {
   return {
@@ -96,6 +100,8 @@ describe('NotebookRowMenu', () => {
       expect.stringContaining('Fetched findings'),
       'Q2 latency regression'
     );
+    // notebook_list, not notebook_toolbar: this menu only renders inside a list row.
+    expect(mockExported).toHaveBeenCalledWith('nb1', 'download', 'notebook_list');
   });
 
   it('does not fetch until an action is chosen', async () => {
