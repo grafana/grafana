@@ -109,7 +109,7 @@ test -f "$aws_credentials_file" &&\
   error "$aws_credentials_file file does not exist"
 
 # Ensure aws credentials file content matches expected
-if diff "$expected_aws_credentials" "$aws_credentials_file" &> /dev/null; then
+if diff "$expected_aws_credentials" "$aws_credentials_file" > /dev/null 2>&1; then
   ok "$aws_credentials_file content matches expected"
 else
   error "$aws_credentials_file content does not match expected"
