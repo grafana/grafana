@@ -37,15 +37,22 @@ describe('ShareSpanButton', () => {
     expect(await navigator.clipboard.readText()).toBe('http://localhost/explore?spanId=abc');
   });
 
-  it('copies the current page URL when sanitization blanks the span href', async () => {
+  it.each([
+    { name: 'the span href is missing', href: undefined, sanitized: undefined },
+    { name: 'sanitization blanks the span href', href: '/explore?spanId=abc', sanitized: 'about:blank' },
+    { name: 'sanitization returns an empty string', href: '/explore?spanId=abc', sanitized: '' },
+    { name: 'the span href is not a valid URL', href: 'https://exa mple.com', sanitized: undefined },
+  ])('copies the current page URL when $name', async ({ href, sanitized }) => {
     const user = userEvent.setup();
-    jest.spyOn(textUtil, 'sanitizeUrl').mockReturnValue('about:blank');
+    if (sanitized !== undefined) {
+      jest.spyOn(textUtil, 'sanitizeUrl').mockReturnValue(sanitized);
+    }
 
     render(
       <ShareSpanButton
         focusSpanLink={
           {
-            href: '/explore?spanId=abc',
+            href,
             title: 'Deep link to this span',
             origin: {},
           } as unknown as LinkModel
