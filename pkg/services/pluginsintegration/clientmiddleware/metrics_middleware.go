@@ -16,6 +16,36 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
+// ExtraLabels supplies additional labels for the plugin request counter, for
+// facts the middleware cannot resolve on its own -- for example the tenant a
+// request belongs to, or the service that called it, in a multi-tenant
+// deployment.
+//
+// Names must be constant for the life of the process. Values must return one
+// value per name, in the same order. A value that cannot be resolved should be
+// the empty string, which Prometheus drops at ingestion, so a deployment that
+// does not populate a label keeps exactly the series it has today.
+type ExtraLabels interface {
+	Names() []string
+	Values(ctx context.Context, pluginCtx backend.PluginContext) []string
+}
+
+// MetricsMiddlewareOption configures the metrics middleware.
+type MetricsMiddlewareOption func(*metricsMiddlewareOptions)
+
+type metricsMiddlewareOptions struct {
+	extraLabels ExtraLabels
+}
+
+// WithExtraLabels adds labels to the plugin request counter, resolved per
+// request by extra. Only the counter is extended: adding a label to the
+// duration and size histograms would multiply it by their bucket count.
+func WithExtraLabels(extra ExtraLabels) MetricsMiddlewareOption {
+	return func(o *metricsMiddlewareOptions) {
+		o.extraLabels = extra
+	}
+}
+
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
 	pluginRequestCounter                      *prometheus.CounterVec
@@ -31,15 +61,30 @@ type MetricsMiddleware struct {
 	backend.BaseHandler
 	pluginMetrics
 	pluginRegistry registry.Service
+
+	extraLabels     ExtraLabels
+	extraLabelNames []string
 }
 
-func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *MetricsMiddleware {
+func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, opts ...MetricsMiddlewareOption) *MetricsMiddleware {
+	var cfg metricsMiddlewareOptions
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	var extraLabelNames []string
+	if cfg.extraLabels != nil {
+		extraLabelNames = cfg.extraLabels.Names()
+	}
+
 	additionalLabels := []string{"status_source"}
+	counterLabels := append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...)
+	counterLabels = append(counterLabels, extraLabelNames...)
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
+	}, counterLabels)
 	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
@@ -81,20 +126,42 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 			pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
 			pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
 		},
-		pluginRegistry: pluginRegistry,
+		pluginRegistry:  pluginRegistry,
+		extraLabels:     cfg.extraLabels,
+		extraLabelNames: extraLabelNames,
 	}
 }
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
-func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) backend.HandlerMiddleware {
-	metrics := newMetricsMiddleware(promRegisterer, pluginRegistry)
+func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, opts ...MetricsMiddlewareOption) backend.HandlerMiddleware {
+	metrics := newMetricsMiddleware(promRegisterer, pluginRegistry, opts...)
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &MetricsMiddleware{
-			BaseHandler:    backend.NewBaseHandler(next),
-			pluginMetrics:  metrics.pluginMetrics,
-			pluginRegistry: metrics.pluginRegistry,
+			BaseHandler:     backend.NewBaseHandler(next),
+			pluginMetrics:   metrics.pluginMetrics,
+			pluginRegistry:  metrics.pluginRegistry,
+			extraLabels:     metrics.extraLabels,
+			extraLabelNames: metrics.extraLabelNames,
 		}
 	})
+}
+
+// extraValues resolves the extra label values for a request. It always returns
+// exactly len(extraLabelNames) values, so a provider returning the wrong number
+// of values cannot panic the request path.
+func (m *MetricsMiddleware) extraValues(ctx context.Context, pluginCtx backend.PluginContext) []string {
+	if m.extraLabels == nil || len(m.extraLabelNames) == 0 {
+		return nil
+	}
+
+	values := m.extraLabels.Values(ctx, pluginCtx)
+	if len(values) == len(m.extraLabelNames) {
+		return values
+	}
+
+	padded := make([]string, len(m.extraLabelNames))
+	copy(padded, values)
+	return padded
 }
 
 // pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
@@ -139,7 +206,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion, string(statusSource))
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
+	counterValues := []string{pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource)}
+	counterValues = append(counterValues, m.extraValues(ctx, pluginCtx)...)
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(counterValues...)
 	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
