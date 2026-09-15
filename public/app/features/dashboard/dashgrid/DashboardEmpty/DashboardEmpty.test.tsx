@@ -6,6 +6,7 @@ import { defaultDashboard } from '@grafana/schema';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
