@@ -1,16 +1,12 @@
 import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
-
-function newFeaturesEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
-}
+import { newFeaturesEnabled } from './utils';
 
 const showForData = (_options: Options, data?: DataFrame[]) => newFeaturesEnabled() && hasRenderableData(data);
 

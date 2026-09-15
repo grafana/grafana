@@ -7,6 +7,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
+import { textPanelSaveTracker } from '../analytics/saveTracker';
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { FOOTER_TEST_ID } from './TextNGFooter';
@@ -70,6 +71,16 @@ const defaultProps = createProps(replaceVariablesMock);
 const setup = (props: Props = defaultProps, app?: CoreApp) => {
   renderPanel(props, app);
 };
+
+// The panel inside a panel context, for the tests that rerender it with new props.
+const panelIn = (app: CoreApp) => (props: Props) => (
+  <PanelContextProvider value={{ app } as PanelContext}>
+    <TextNGPanel {...props} />
+  </PanelContextProvider>
+);
+
+const editing = panelIn(CoreApp.PanelEditor);
+const viewing = panelIn(CoreApp.Dashboard);
 
 describe('TextNGPanel', () => {
   beforeEach(() => {
@@ -353,22 +364,14 @@ describe('TextNGPanel', () => {
         options: { content: '# Hello', mode: TextMode.Markdown },
       });
 
-      const { rerender } = render(
-        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
-          <TextNGPanel {...props} />
-        </PanelContextProvider>
-      );
+      const { rerender } = render(editing(props));
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
       // The debounce that applies while the editor owns rendering must not delay this.
       const edited = Object.assign({}, props, {
         options: { content: '# Edited', mode: TextMode.Markdown },
       });
-      rerender(
-        <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
-          <TextNGPanel {...edited} />
-        </PanelContextProvider>
-      );
+      rerender(viewing(edited));
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
     });
@@ -618,12 +621,6 @@ describe('TextNGPanel', () => {
           toDataFrame({ name: `Frame ${i}`, fields: [{ name: 'host', values: [`web-${i}`] }] })
         );
 
-      const editing = (props: Props) => (
-        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
-          <TextNGPanel {...props} />
-        </PanelContextProvider>
-      );
-
       it.each([
         ['a query is added', 1, 2],
         ['a query is removed', 2, 1],
@@ -713,12 +710,6 @@ describe('TextNGPanel', () => {
       jest.useRealTimers();
     });
 
-    const viewing = (props: Props) => (
-      <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
-        <TextNGPanel {...props} />
-      </PanelContextProvider>
-    );
-
     const settle = () => act(() => jest.advanceTimersByTime(200));
 
     const html = () => screen.getByTestId('TextNGPanel-converted-content').innerHTML;
@@ -800,5 +791,87 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  describe('save reporting', () => {
+    let record: jest.SpyInstance;
+
+    beforeEach(() => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      record = jest.spyOn(textPanelSaveTracker, 'record').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      record.mockRestore();
+    });
+
+    const editProps = (overrides: Partial<Props['options']> = {}, props: Partial<Props> = {}) =>
+      createProps(replaceVariablesMock, {
+        ...props,
+        options: { content: '# Hello', mode: TextMode.Markdown, ...overrides },
+      });
+
+    it('records nothing while the panel is only being viewed', () => {
+      setup(editProps(), CoreApp.Dashboard);
+
+      expect(record).not.toHaveBeenCalled();
+    });
+
+    it('records the panel config while the author is in the editor', async () => {
+      setup(editProps({ renderMode: RenderMode.PerRow }), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      expect(record).toHaveBeenLastCalledWith(
+        1,
+        expect.objectContaining({
+          content: '# Hello',
+          options: expect.objectContaining({ renderMode: RenderMode.PerRow }),
+          newFeaturesEnabled: true,
+          editorViewChanged: false,
+        })
+      );
+    });
+
+    it('records the edited content, which the tracker measures against the baseline', async () => {
+      const props = editProps();
+      const { rerender } = render(editing(props));
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      rerender(editing(Object.assign({}, props, { options: { ...props.options, content: '# Edited' } })));
+
+      expect(record).toHaveBeenLastCalledWith(1, expect.objectContaining({ content: '# Edited' }));
+    });
+
+    it('records the view the author ended on, and that they chose it', async () => {
+      setup(editProps(), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      expect(record).toHaveBeenLastCalledWith(
+        1,
+        expect.objectContaining({ editorViewAtSave: 'split', editorViewChanged: true })
+      );
+    });
+
+    it.each([
+      {
+        name: 'a query returned fields and rows',
+        frames: [toDataFrame({ fields: [{ name: 'host', values: ['web-1'] }] })],
+        expected: true,
+      },
+      {
+        name: 'a query returned a frame with no rows',
+        frames: [toDataFrame({ fields: [{ name: 'host', values: [] }] })],
+        expected: false,
+      },
+      { name: 'there is no query at all', frames: [], expected: false },
+    ])('records hasData=$expected when $name', async ({ frames, expected }) => {
+      setup(editProps({}, { data: createData(frames) }), CoreApp.PanelEditor);
+      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+      expect(record).toHaveBeenLastCalledWith(1, expect.objectContaining({ hasData: expected }));
+    });
   });
 });
