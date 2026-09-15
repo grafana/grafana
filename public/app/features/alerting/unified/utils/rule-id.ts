@@ -111,7 +111,7 @@ export function tryDecodeUriComponent(value: string): string {
  * Everything that needs to know "is this rule data source managed, and what are its parts?" goes
  * through here, so the answer can't differ between the route matcher and the code that acts on it.
  */
-export function parseDataSourceManagedIdentifier(
+function parseDataSourceManagedIdentifier(
   identifier: string | undefined
 ): CloudRuleIdentifier | PrometheusRuleIdentifier | undefined {
   if (!identifier) {
