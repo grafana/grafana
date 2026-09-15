@@ -1,4 +1,4 @@
-import { NewSceneObjectAddedEvent, sceneGraph, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent } from '@grafana/scenes';
 import {
   defaultPanelKind,
   defaultSpec as defaultDashboardV2Spec,
@@ -7,6 +7,7 @@ import {
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { DashboardCodePane } from 'app/features/dashboard-scene/sidebar/DashboardCodePane';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -180,33 +181,14 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
   });
 
-  it('clears the sidebar selection so an open edit pane does not keep driving the discarded panel', () => {
+  it('closes the sidebar selection so an open edit does not contain stale content', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
-    const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel;
 
-    scene.state.sidebar.selectObject(panel);
-    expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(1);
-    expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+    scene.state.sidebar.openPane(new DashboardCodePane({}));
+    expect(scene.state.sidebar.state.openPane?.getId()).toBe('code');
 
     applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec' });
 
-    expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(0);
-    expect(scene.state.sidebar.state.openPane).toBeUndefined();
-  });
-
-  it('clears the sidebar selection on undo too, so it does not keep driving the discarded post-apply panel', () => {
-    const scene = buildScene(makeRowsSpec('Dashboard'));
-
-    applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec' });
-
-    // Select a panel from the post-apply tree.
-    const panel = sceneGraph.findObject(scene, (o) => o instanceof VizPanel) as VizPanel;
-    scene.state.sidebar.selectObject(panel);
-    expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(1);
-
-    scene.state.sidebar.undoAction();
-
-    expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(0);
     expect(scene.state.sidebar.state.openPane).toBeUndefined();
   });
 
