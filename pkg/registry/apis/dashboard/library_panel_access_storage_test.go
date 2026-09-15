@@ -7,13 +7,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -59,7 +62,7 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 	require.Equal(t, "patched", description)
 }
 
-func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
+func TestLibraryPanelAccessStorageRejectsDeniedWrites(t *testing.T) {
 	panel := testLibraryPanel("panel-a", "general")
 	backend := &recordingLibraryPanelStorage{object: panel}
 	denied := apierrors.NewForbidden(
@@ -70,7 +73,7 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 	storage := newLibraryPanelAccessStorage(
 		backend,
 		func(_ context.Context, _ runtime.Object, verb, _ string) error {
-			if verb == utils.VerbDelete {
+			if verb == utils.VerbCreate || verb == utils.VerbDelete {
 				return denied
 			}
 			return nil
@@ -80,7 +83,10 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
+	_, err := storage.Create(context.Background(), panel, nil, &metav1.CreateOptions{})
+	require.ErrorIs(t, err, denied)
+
+	_, _, err = storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.updateCalled)
 
@@ -118,6 +124,36 @@ func TestLibraryPanelAccessStorageRejectsConnectedDelete(t *testing.T) {
 	require.False(t, backend.deleteCalled)
 }
 
+func TestLibraryPanelAccessStorageDeleteLookupDoesNotRequireCallerReadAccess(t *testing.T) {
+	panel := testLibraryPanel("panel-a", "general")
+	backend := &deleteOnlyLibraryPanelStorage{
+		recordingLibraryPanelStorage: &recordingLibraryPanelStorage{object: panel},
+	}
+	var authorizeUsedCaller bool
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(ctx context.Context, obj runtime.Object, verb, namespace string) error {
+			authorizeUsedCaller = !identity.IsServiceIdentity(ctx)
+			require.Same(t, panel, obj)
+			require.Equal(t, utils.VerbDelete, verb)
+			require.Equal(t, "stacks-1", namespace)
+			return nil
+		},
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+	_, deleted, err := storage.Delete(ctx, panel.GetName(), nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.True(t, deleted)
+	require.True(t, backend.lookupUsedServiceIdentity)
+	require.True(t, authorizeUsedCaller)
+	require.True(t, backend.deleteCalled)
+}
+
 func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
 	oldPanel := testLibraryPanel("panel-a", "source")
 	backend := &recordingLibraryPanelStorage{object: oldPanel}
@@ -149,11 +185,96 @@ func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
 	require.False(t, backend.updateCalled)
 }
 
+func TestLibraryPanelAccessStoragePreservesWatchSupport(t *testing.T) {
+	expected := watch.NewFake()
+	backend := &watchableLibraryPanelStorage{
+		nonWatchableLibraryPanelStorage: &nonWatchableLibraryPanelStorage{},
+		watcher:                         expected,
+	}
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	watcher, ok := storage.(rest.Watcher)
+	require.True(t, ok)
+	actual, err := watcher.Watch(context.Background(), &metainternalversion.ListOptions{})
+	require.NoError(t, err)
+	require.Same(t, expected, actual)
+}
+
+func TestLibraryPanelAccessStorageDoesNotAdvertiseWatchWhenSelectedStorageCannotWatch(t *testing.T) {
+	storage := newLibraryPanelAccessStorage(
+		&nonWatchableLibraryPanelStorage{},
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	_, ok := storage.(rest.Watcher)
+	require.False(t, ok)
+	_, ok = storage.(rest.CollectionDeleter)
+	require.False(t, ok)
+}
+
+func TestLibraryPanelAccessStoragePreservesDeleteCollectionCapability(t *testing.T) {
+	storage := newLibraryPanelAccessStorage(
+		&collectionDeletingLibraryPanelStorage{nonWatchableLibraryPanelStorage: &nonWatchableLibraryPanelStorage{}},
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	deleter, ok := storage.(rest.CollectionDeleter)
+	require.True(t, ok)
+	_, err := deleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{})
+	require.True(t, apierrors.IsMethodNotSupported(err))
+}
+
 type recordingLibraryPanelStorage struct {
 	rest.StandardStorage
 	object       runtime.Object
 	updateCalled bool
 	deleteCalled bool
+}
+
+type nonWatchableLibraryPanelStorage struct {
+	libraryPanelStorage
+}
+
+type watchableLibraryPanelStorage struct {
+	*nonWatchableLibraryPanelStorage
+	watcher watch.Interface
+}
+
+type collectionDeletingLibraryPanelStorage struct {
+	*nonWatchableLibraryPanelStorage
+}
+
+type deleteOnlyLibraryPanelStorage struct {
+	*recordingLibraryPanelStorage
+	lookupUsedServiceIdentity bool
+}
+
+func (s *collectionDeletingLibraryPanelStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+	return nil, nil
+}
+
+func (s *watchableLibraryPanelStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
+	return s.watcher, nil
+}
+
+func (s *deleteOnlyLibraryPanelStorage) Get(ctx context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+	s.lookupUsedServiceIdentity = identity.IsServiceIdentity(ctx)
+	if !s.lookupUsedServiceIdentity {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"}, "panel-a")
+	}
+	return s.object, nil
 }
 
 func (s *recordingLibraryPanelStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
