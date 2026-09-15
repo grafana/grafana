@@ -105,7 +105,7 @@ func expectedWebhookURL(baseURL, namespace, repoName string) string {
 		strings.TrimRight(baseURL, "/"), gvr.Group, gvr.Version, namespace, gvr.Resource, repoName)
 }
 
-func postPullRequestWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, payload []byte) *unstructured.Unstructured {
+func postPullRequestWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, payload []byte) (*unstructured.Unstructured, *provisioning.Repository) {
 	t.Helper()
 
 	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
@@ -148,7 +148,7 @@ func postPullRequestWebhook(t *testing.T, helper *common.GitTestHelper, repoName
 	require.NoError(t, err, "webhook response should include the queued job")
 	job, ok := jobObj.(*unstructured.Unstructured)
 	require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
-	return job
+	return job, repo
 }
 
 // waitForWebhook polls until Status.Webhook is populated with the expected ID.
@@ -398,8 +398,15 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			})
 			require.NoError(t, err, "failed to marshal pull request payload")
 
-	job := postPullRequestWebhook(t, helper, repoName, payload)
-	helper.AwaitJobSuccess(t, job)
+			job, repo := postPullRequestWebhook(t, helper, repoName, payload)
+			isFork, found, err := unstructured.NestedBool(job.Object, "spec", "pr", "isFork")
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Equal(t, tt.fork, isFork)
+			require.Equal(t, forkURL, common.MustNestedString(job.Object, "spec", "pr", "forkURL"))
+			finishedJob := helper.AwaitJob(t, job)
+			require.Equal(t, string(provisioning.JobStateSuccess), common.MustNestedString(finishedJob.Object, "status", "state"))
+			require.Empty(t, common.MustNestedStringSlice(finishedJob.Object, "status", "errors"))
 
 			commentsMu.Lock()
 			capturedComments := append([]string(nil), comments...)
@@ -436,18 +443,20 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			require.NoError(t, err, "comment should contain a valid original URL")
 			require.Equal(t, "/d/gh-pr-comment-dash/github-pr-comment-dashboard-updated", originalURL.Path)
 
-	previewMarker := "[preview changes]("
-	previewStart := strings.Index(comment, previewMarker)
-	require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
-	previewRemainder := comment[previewStart+len(previewMarker):]
-	previewEnd := strings.Index(previewRemainder, ")")
-	require.NotEqualf(t, -1, previewEnd, "comment should close preview link:\n%s", comment)
-	previewURL, err := url.Parse(previewRemainder[:previewEnd])
-	require.NoError(t, err, "comment should contain a valid preview URL")
-	require.Equal(t, fmt.Sprintf("/admin/provisioning/%s/dashboard/preview/%s", repoName, dashboardPath), previewURL.Path)
-	require.Equal(t, branchName, previewURL.Query().Get("ref"))
-	require.Equal(t, url.QueryEscape(prURL), previewURL.Query().Get("pull_request_url"))
-	require.Contains(t, previewURL.RawQuery, "pull_request_url="+url.QueryEscape(url.QueryEscape(prURL)))
+			previewMarker := "[preview changes]("
+			previewStart := strings.Index(comment, previewMarker)
+			require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
+			previewRemainder := comment[previewStart+len(previewMarker):]
+			previewEnd := strings.Index(previewRemainder, ")")
+			require.NotEqualf(t, -1, previewEnd, "comment should close preview link:\n%s", comment)
+			previewURL, err := url.Parse(previewRemainder[:previewEnd])
+			require.NoError(t, err, "comment should contain a valid preview URL")
+			require.Equal(t, fmt.Sprintf("/admin/provisioning/%s/dashboard/preview/%s", repoName, dashboardPath), previewURL.Path)
+			require.Equal(t, branchName, previewURL.Query().Get("ref"))
+			require.Equal(t, url.QueryEscape(prURL), previewURL.Query().Get("pull_request_url"))
+			require.Contains(t, previewURL.RawQuery, "pull_request_url="+url.QueryEscape(url.QueryEscape(prURL)))
+		})
+	}
 }
 
 func TestIntegrationProvisioning_GithubPullRequestWebhookMissingRefCompletesWithWarning(t *testing.T) {
@@ -510,7 +519,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookMissingRefCompletesWith
 	})
 	require.NoError(t, err, "failed to marshal pull request payload")
 
-	job := postPullRequestWebhook(t, helper, repoName, payload)
+	job, _ := postPullRequestWebhook(t, helper, repoName, payload)
 	completed := helper.AwaitJob(t, job)
 
 	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(completed.Object, "status", "state"))
