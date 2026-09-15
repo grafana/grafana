@@ -308,6 +308,54 @@ describe('FlameGraphCallTreeContainer', () => {
       ]);
     });
 
+    it('keeps the rows the user expanded open when a refinement replaces the data', async () => {
+      const containerOf = (fields: Parameters<typeof createDataFrame>[0]) =>
+        new FlameGraphDataContainer(createDataFrame(fields), { collapsing: true });
+
+      // 'a' holds a truncated child, which a refinement then resolves into two real ones.
+      const coarse = containerOf({
+        fields: [
+          { name: 'level', values: [0, 1, 2, 2, 1] },
+          { name: 'label', type: FieldType.string, values: ['total', 'a', 'a1', 'other', 'b'] },
+          { name: 'self', values: [300, 100, 200, 100, 300] },
+          { name: 'value', values: [1000, 400, 200, 100, 300] },
+        ],
+      });
+      const refined = containerOf({
+        fields: [
+          { name: 'level', values: [0, 1, 2, 2, 2, 1] },
+          { name: 'label', type: FieldType.string, values: ['total', 'a', 'a1', 'a2', 'a3', 'b'] },
+          { name: 'self', values: [300, 100, 200, 60, 40, 300] },
+          { name: 'value', values: [1000, 400, 200, 60, 40, 300] },
+        ],
+      });
+
+      const props = { onSymbolClick: jest.fn(), onSandwich: jest.fn(), search: '', onSearch: jest.fn() };
+      let rerender: ReturnType<typeof render>['rerender'];
+
+      await act(async () => {
+        ({ rerender } = render(<FlameGraphCallTreeContainer data={coarse} {...props} />));
+      });
+      await act(async () => {
+        jest.runAllTimers();
+      });
+
+      expect(screen.queryByRole('button', { name: 'a1' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'a' }));
+      expect(screen.getByRole('button', { name: 'a1' })).toBeInTheDocument();
+
+      await act(async () => {
+        rerender(<FlameGraphCallTreeContainer data={refined} {...props} />);
+      });
+      await act(async () => {
+        jest.runAllTimers();
+      });
+
+      // 'a' stays open, now showing what the refinement resolved rather than the truncated stand-in.
+      expect(screen.getByRole('button', { name: 'a2' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'a3' })).toBeInTheDocument();
+    });
+
     it('marks the rows given in loadingItems as loading', async () => {
       const data = truncatedContainer();
       const loadingItem = data.getItemByPath(['total', 'other'])!;
