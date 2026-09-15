@@ -1225,7 +1225,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informer.NewGRPCConnectionKeysLister(b.unified), informerFactoryResyncInterval)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,
