@@ -30,6 +30,8 @@ import {
   type CurrentUserDTO,
 } from '@grafana/data';
 
+import { getLegacyFeatureToggleMode, reportOrBlockLegacyFeatureToggles } from './utils/legacyFeatureToggles';
+
 /**
  * @deprecated Use the type from `@grafana/data`
  */
@@ -291,6 +293,14 @@ export class GrafanaBootConfig {
 
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
+
+    // Installed after the overrides so the URL and localStorage switches still reach the real map,
+    // and before the bootData aliasing below so both access paths share the same proxy.
+    const legacyMode = getLegacyFeatureToggleMode();
+    if (legacyMode !== 'off') {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles
+      this.featureToggles = reportOrBlockLegacyFeatureToggles(this.featureToggles, legacyMode);
+    }
 
     // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
     this.bootData.settings.featureToggles = this.featureToggles;

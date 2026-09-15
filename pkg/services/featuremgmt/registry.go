@@ -288,6 +288,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "grafana.frontendLegacyFeatureToggleHandling",
+			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).`,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "off",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "provisioning.performance",
 			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
 			Stage:       FeatureStageExperimental,
@@ -3184,11 +3193,11 @@ var (
 		},
 		{
 			Name:         "grafana.frontendLegacyAPIHandling",
-			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+			Description:  `Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).`,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "off",
 			Generate:     Generate{Go: true},
 		},
 		{
