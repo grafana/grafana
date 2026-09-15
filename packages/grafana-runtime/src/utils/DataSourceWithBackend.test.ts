@@ -50,11 +50,13 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
 }
 
 const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
+const mockChunkedRequest = jest.fn();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
     return of(mockDatasourceRequest(options));
   },
+  chunked: (options: BackendSrvRequest) => mockChunkedRequest(options),
 } as unknown as BackendSrv;
 
 jest.mock('../services', () => ({
@@ -904,6 +906,7 @@ describe('DataSourceWithBackend', () => {
       mockGetBooleanValue.mockReset().mockReturnValue(false);
       mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
       mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
+      mockChunkedRequest.mockReset();
     });
 
     const prometheus = {
@@ -958,6 +961,73 @@ describe('DataSourceWithBackend', () => {
 
       expect(mock.calls[0][0].url).toBe('/apis/datasource.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy');
       expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.querier.newName', false);
+    });
+
+    it('uses chunked query streaming when every datasource type is enabled', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetObjectValue.mockImplementation((key: string) => {
+        if (key === 'datasources.querier.fe-chunked-types') {
+          return { types: ['dummy'] };
+        }
+        return { types: ['dummy'] };
+      });
+      mockChunkedRequest.mockReturnValue(
+        of({
+          data: new TextEncoder().encode('{"refId":"A","frame":{"schema":{"fields":[]},"data":{"values":[]}}}\n'),
+          status: 200,
+          statusText: 'OK',
+          ok: true,
+          headers: new Headers(),
+          redirected: false,
+          type: 'basic',
+          url: '/query',
+          config: { url: '/query' },
+        })
+      );
+
+      const { ds, mock } = createMockDatasource();
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(mock.calls).toHaveLength(0);
+      expect(mockChunkedRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Accept: 'text/jsonl' }),
+          url: '/apis/query.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy',
+        })
+      );
+    });
+
+    it('does not use chunked query streaming when the datasource type is not enabled', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetObjectValue.mockImplementation((key: string) => {
+        if (key === 'datasources.querier.fe-chunked-types') {
+          return { types: ['prometheus'] };
+        }
+        return { types: ['dummy'] };
+      });
+
+      const { ds, mock } = createMockDatasource();
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(mock.calls[0][0]).toMatchObject({
+        headers: expect.not.objectContaining({ Accept: 'text/jsonl' }),
+        url: '/apis/query.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy',
+      });
+      expect(mockChunkedRequest).not.toHaveBeenCalled();
     });
 
     it('uses the legacy endpoint when the datasource is not query-service compatible', async () => {
