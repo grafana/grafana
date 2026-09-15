@@ -233,6 +233,62 @@ function findCategory(key: string): AttributeCategoryConfig {
   );
 }
 
+const ERROR_CATEGORY_IDS = new Set(['error', 'exception']);
+
+function normalizeAttributeKey(key: string): string {
+  return key.toLowerCase().replace(/[-.]/g, '_');
+}
+
+export function isStacktraceAttributeKey(key: string): boolean {
+  const normalized = normalizeAttributeKey(key);
+  return normalized.endsWith('stacktrace') || normalized.endsWith('stack_trace');
+}
+
+export function isErrorAttributeKey(key: string): boolean {
+  if (isStacktraceAttributeKey(key)) {
+    return true;
+  }
+
+  return ERROR_CATEGORY_IDS.has(findCategory(key).id);
+}
+
+export type ErrorAttributeKind = 'message' | 'stacktrace' | 'other';
+
+export function getErrorAttributeKind(key: string): ErrorAttributeKind | undefined {
+  if (isStacktraceAttributeKey(key)) {
+    return 'stacktrace';
+  }
+  if (!isErrorAttributeKey(key)) {
+    return undefined;
+  }
+  if (normalizeAttributeKey(key).endsWith('_message')) {
+    return 'message';
+  }
+  return 'other';
+}
+
+export function classifyErrorAttributes<T>(
+  items: T[],
+  getKey: (item: T) => string
+): { messages: T[]; stacktraces: T[]; other: T[] } {
+  const messages: T[] = [];
+  const stacktraces: T[] = [];
+  const other: T[] = [];
+
+  for (const item of items) {
+    const kind = getErrorAttributeKind(getKey(item));
+    if (kind === 'message') {
+      messages.push(item);
+    } else if (kind === 'stacktrace') {
+      stacktraces.push(item);
+    } else if (kind === 'other') {
+      other.push(item);
+    }
+  }
+
+  return { messages, stacktraces, other };
+}
+
 export function groupOTelAttributes<T>(items: T[], getKey: (item: T) => string): Array<GroupedOTelAttributes<T>> {
   if (!items.length) {
     return [];
