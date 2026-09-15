@@ -11,14 +11,11 @@ interface Props {
 }
 
 /**
- * The incident actions, grouped the way a dashboard groups them.
+ * The incident actions, grouped as a dashboard groups them — IRM registers both under
+ * `category: 'IRM'`, so the labels and icons are theirs.
  *
- * IRM registers both of these into the panel menu under `category: 'IRM'`, which the dashboard turns
- * into a submenu — same labels, same icons, so the two surfaces file the same actions alike.
- *
- * Both items are built here rather than as components of their own, because `Menu.Item` decides it
- * has a submenu from `childItems.length` alone: a child that rendered null on a stack exposing only
- * one of the two would still open the submenu, on a blank row.
+ * Both items are built here rather than as components of their own: `Menu.Item` decides it has a
+ * submenu from `childItems.length` alone, so a child rendering null would open it on a blank row.
  */
 export function IrmMenuItem({ onDeclare, onAttach }: Props) {
   const { AttachToIncidentForm, DeclareIncidentForm } = useNotebookIncidents();

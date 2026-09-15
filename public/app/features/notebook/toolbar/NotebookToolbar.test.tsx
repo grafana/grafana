@@ -320,8 +320,7 @@ describe('NotebookToolbar', () => {
   });
 
   describe('incident actions', () => {
-    // Grouped into a submenu rather than sitting in the toolbar: most notebooks are not
-    // incident-related, and this is how a dashboard files the same two actions.
+    // Grouped rather than sitting in the toolbar: most notebooks are not incident-related.
     it('groups them behind an IRM submenu rather than a toolbar button', async () => {
       setIrmAvailable(true);
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -346,8 +345,7 @@ describe('NotebookToolbar', () => {
       expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
     });
 
-    // Both actions live in the menu now, so either one is reason enough to open it — this is the
-    // case that had no way in when the menu was gated on declare alone.
+    // This case had no way in when the menu was gated on declare alone.
     it('opens the overflow menu for a stack exposing only attach, without delete permission', async () => {
       setAttachOnly();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);

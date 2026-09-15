@@ -40,11 +40,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
-  // Both incident actions live in this menu now, so either one is reason enough to open it.
+  // Both incident actions live in this menu, so either is reason enough to open it.
   const { available: hasIncidents } = useNotebookIncidents();
   const hasMoreActions = hasIncidents || canDeleteNotebooks();
   // Owned here, not by the menu items: those are inside the Dropdown overlay, which unmounts as the
-  // menu closes. Same as the delete confirmation below.
+  // menu closes.
   const [isDeclaring, setIsDeclaring] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
 

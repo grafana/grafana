@@ -16,14 +16,10 @@ interface Props {
 }
 
 /**
- * Hands this notebook to a running incident, using IRM's own form — which does the write itself, so
- * all this supplies is the chrome and the notebook's identity.
+ * Hands this notebook to a running incident, using IRM's own form, which does the write itself.
  *
- * Wrapped in a Modal, unlike DeclareIncidentModal beside it: their attach form is a bare form, and
- * IRM's own dashboard entry point wraps it the same way.
- *
- * Rendered by the toolbar rather than the submenu item that opens it — that item is inside a
- * Dropdown overlay which unmounts as the menu closes.
+ * Wrapped in a Modal unlike DeclareIncidentModal, whose component brings its own. Owned by the
+ * toolbar, not the submenu item: that item is inside a Dropdown overlay which unmounts on close.
  */
 export function AttachToIncidentModal({ uid, title, onDismiss }: Props) {
   const { pluginId, AttachToIncidentForm } = useNotebookIncidents();
@@ -34,8 +30,8 @@ export function AttachToIncidentModal({ uid, title, onDismiss }: Props) {
 
   // Their form raises its own toast, which has no link and cannot be suppressed from here.
   const onAttach = (data: AttachToIncidentFormData) => {
-    // Belt and braces: their form calls onDismiss straight after this, but the props here are
-    // transcribed by hand, so nothing checks that it still does.
+    // Belt and braces: their form calls onDismiss right after, but the props are transcribed by
+    // hand, so nothing enforces that.
     onDismiss();
 
     const incident = data.selectedIncident?.incident;
@@ -71,8 +67,8 @@ export function AttachToIncidentModal({ uid, title, onDismiss }: Props) {
         attachURL={notebookShareUrl(uid)}
         defaultCaption={t('notebooks.incidents.caption', 'Notebook: {{title}}', {
           title,
-          // This is data, not display: IRM stores it as the attachment's label. Escaped, a
-          // notebook called `errors/sec` would be filed as `errors&#x2F;sec`.
+          // Data, not display: IRM stores this as the attachment's label, so `errors/sec` must not
+          // be filed as `errors&#x2F;sec`.
           interpolation: { escapeValue: false },
         })}
         onAttach={onAttach}
