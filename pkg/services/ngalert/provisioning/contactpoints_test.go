@@ -121,6 +121,15 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Nil(t, configStore.LastSaveCommand)
 	})
 
+	t.Run("DELETE of a missing contact point is idempotent", func(t *testing.T) {
+		configStore := fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService))
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
+
+		for range 2 {
+			require.NoError(t, sut.DeleteContactPoint(context.Background(), 1, adminUser, "missing"))
+		}
+	})
+
 	t.Run("service returns empty list when org has no Alertmanager config", func(t *testing.T) {
 		cfgStore := fakes.NewFakeAlertmanagerConfigStore("")
 		cfgStore.GetFn = func(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {

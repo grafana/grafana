@@ -434,25 +434,23 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	// Name of the contact point that will be removed, might be used if a
 	// full removal is done to check if it's referenced in any route.
 	name := ""
-	found := false
 	for i, receiver := range revision.Config.AlertmanagerConfig.Receivers {
 		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
-			if grafanaReceiver.UID != uid || !isV1IntegrationVersion(grafanaReceiver.Version) {
-				continue
+			if grafanaReceiver.UID == uid {
+				if !isV1IntegrationVersion(grafanaReceiver.Version) {
+					// V0 integrations are not exposed through contact point provisioning.
+					return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
+				}
+				name = grafanaReceiver.Name
+				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
+				// if this was the last receiver we removed, we remove the whole receiver
+				if len(receiver.GrafanaManagedReceivers) == 0 {
+					fullRemoval = true
+					revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers[:i], revision.Config.AlertmanagerConfig.Receivers[i+1:]...)
+				}
+				break
 			}
-			found = true
-			name = grafanaReceiver.Name
-			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
-			// if this was the last receiver we removed, we remove the whole receiver
-			if len(receiver.GrafanaManagedReceivers) == 0 {
-				fullRemoval = true
-				revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers[:i], revision.Config.AlertmanagerConfig.Receivers[i+1:]...)
-			}
-			break
 		}
-	}
-	if !found {
-		return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 	}
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
