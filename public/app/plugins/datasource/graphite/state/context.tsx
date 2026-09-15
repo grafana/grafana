@@ -52,6 +52,23 @@ export const GraphiteQueryEditorContext = ({
     });
   }, []);
 
+  // synchronise changes provided in props with editor's state
+  useEffect(
+    () => {
+      if (initialized) {
+        dispatch(
+          actions.editorPropsChanged({
+            range,
+            queries,
+            query,
+          })
+        );
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, initialized, query.target, JSON.stringify(queries), JSON.stringify(range?.raw)]
+  );
+
   useEffect(() => {
     if (initStarted.current) {
       return;
@@ -72,34 +89,6 @@ export const GraphiteQueryEditorContext = ({
       })
     );
   }, [datasource, dispatch, queries, query, range]);
-
-  // synchronise changes provided in props with editor's state
-  useEffect(() => {
-    if (state && JSON.stringify(state.range?.raw) !== JSON.stringify(range?.raw)) {
-      dispatch(actions.timeRangeChanged(range));
-    }
-  }, [dispatch, range, state]);
-
-  useEffect(
-    () => {
-      if (initialized) {
-        dispatch(actions.queriesChanged(queries));
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, initialized, JSON.stringify(queries)]
-  );
-
-  useEffect(
-    () => {
-      if (initialized && state?.target?.target !== query.target) {
-        dispatch(actions.queryChanged(query));
-      }
-    },
-    // Do not depend on the full state: internal editor updates must not resync from props.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, initialized, query]
-  );
 
   useEffect(
     () => {

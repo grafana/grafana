@@ -10,7 +10,12 @@ import { GraphiteQueryEditorContext, useGraphiteState } from './context';
 function StateProbe() {
   const state = useGraphiteState();
 
-  return <div data-testid="target">{state.target?.target ?? 'missing'}</div>;
+  return (
+    <>
+      <div data-testid="target">{state.target?.target ?? 'missing'}</div>
+      <div data-testid="queries">{JSON.stringify(state.queries)}</div>
+    </>
+  );
 }
 
 describe('GraphiteQueryEditorContext', () => {
@@ -19,6 +24,12 @@ describe('GraphiteQueryEditorContext', () => {
 
     const initialization = new Promise<void>((resolve) => {
       resolveInitialization = resolve;
+    });
+
+    let resolveQueryUpdate!: () => void;
+
+    const queryUpdate = new Promise<void>((resolve) => {
+      resolveQueryUpdate = resolve;
     });
 
     const datasource = new GraphiteDatasource({
@@ -30,7 +41,11 @@ describe('GraphiteQueryEditorContext', () => {
     });
 
     datasource.funcDefs = gfunc.getFuncDefs('1.0');
-    datasource.metricFindQuery = jest.fn(() => Promise.resolve([]));
+    datasource.metricFindQuery = jest
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockImplementationOnce(() => queryUpdate.then(() => []))
+      .mockResolvedValue([]);
     datasource.getFuncDef = gfunc.getFuncDef;
     datasource.createFuncInstance = gfunc.createFuncInstance;
     datasource.waitForFuncDefsLoaded = jest.fn(() => initialization);
@@ -74,8 +89,15 @@ describe('GraphiteQueryEditorContext', () => {
       target: 'updated.metric',
     };
 
+    const updatedQueries = [
+      {
+        ...query,
+        target: 'updated.queries.metric',
+      },
+    ];
+
     rerender(
-      <GraphiteQueryEditorContext {...props} query={updatedQuery}>
+      <GraphiteQueryEditorContext {...props} query={updatedQuery} queries={updatedQueries}>
         <StateProbe />
       </GraphiteQueryEditorContext>
     );
@@ -91,7 +113,21 @@ describe('GraphiteQueryEditorContext', () => {
       resolveInitialization();
     });
 
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      resolveQueryUpdate();
+      await queryUpdate;
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
     expect(await screen.findByTestId('target')).toHaveTextContent('updated.metric');
+    expect(screen.getByTestId('queries')).toHaveTextContent('updated.queries.metric');
     expect(datasource.waitForFuncDefsLoaded).toHaveBeenCalledTimes(1);
   });
 });
