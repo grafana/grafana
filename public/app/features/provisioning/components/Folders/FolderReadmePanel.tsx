@@ -1,22 +1,26 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
-import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
+import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
+import { splitPath } from '../utils/path';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -27,9 +31,13 @@ interface Props {
 }
 
 /**
- * GitHub-style README panel rendered inline below the dashboards list.
- * Header shows the file name + an Edit pencil that opens the host editor;
- * the body either renders the markdown or shows an "Add README" empty state.
+ * GitHub-style documentation panel rendered inline below the dashboards list.
+ * Markdown files in the folder are promoted into tabs — README, Contributing and
+ * Security first, then any other markdown. The README renders by default; its
+ * pencil opens the host editor.
+ *
+ * Mount with `key={folderUID}` so switching folders remounts the panel instead
+ * of carrying per-folder state (analytics, tab selection) across.
  *
  * Returns null when the `provisioning.readmes` toggle is off or a loaded folder
  * isn't provisioned; shows a spinner while loading.
@@ -44,8 +52,19 @@ export function FolderReadmePanel({ folderUID }: Props) {
 
 function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, readmePath, status, isLoading, markdownContent, refetch, syncFinished } =
-    useFolderReadme(folderUID);
+  const { repository, folder, docs, isLoading: isDiscovering } = useFolderDocs(folderUID);
+
+  // The active tab lives in the URL so it's deep-linkable and survives reloads.
+  // Falls back to the first doc, which is always the README.
+  const location = useLocation();
+  const activeTab = new URLSearchParams(location.search).get(FOLDER_DOC_TAB_PARAM);
+  const activeIndex = Math.max(
+    0,
+    docs.findIndex((doc) => doc.fileName === activeTab)
+  );
+  const activeDoc = docs[activeIndex];
+
+  const { status, markdownContent, refetch, syncFinished } = useFolderReadme(repository?.name, activeDoc.path);
 
   const sectionRef = useRef<HTMLElement>(null);
   // TODO remove when react-use is fixed
@@ -68,49 +87,50 @@ function FolderReadmePanelContent({ folderUID }: Props) {
     FolderReadmeEvents.panelViewed({ repositoryType: repository.type, status });
   }, [intersection, repository, status]);
 
-  if (!isLoading && !repository) {
+  if (!isDiscovering && !repository) {
     return null;
   }
 
-  const editUrl = repository
-    ? getRepoEditFileUrl({
-        repoType: repository.type,
-        url: repository.url,
-        branch: repository.branch,
-        filePath: readmePath,
-        pathPrefix: repository.path,
-      })
-    : undefined;
+  // Tabs are links (`?docTab=<file>`), so navigation is handled by the app's
+  // global link interception; the click handler only reports analytics. The href
+  // carries the app sub-path so open-in-new-tab / copy-link work on subpath installs.
+  const tabHref = (doc: FolderDoc) => locationUtil.getUrlForPartial(location, { [FOLDER_DOC_TAB_PARAM]: doc.fileName });
+  const reportTabSelected = (doc: FolderDoc) => {
+    if (repository) {
+      FolderReadmeEvents.tabSelected({ repositoryType: repository.type, doc: doc.key ?? 'other' });
+    }
+  };
 
-  const folderTitle = folder?.spec?.title ?? '';
-  const newFileUrl = repository
-    ? getRepoNewFileUrl({
-        repoType: repository.type,
-        url: repository.url,
-        branch: repository.branch,
-        filePath: readmePath,
-        pathPrefix: repository.path,
-        template: buildReadmeTemplate(folderTitle),
-      })
-    : undefined;
+  const hostFile = repository && {
+    repoType: repository.type,
+    url: repository.url,
+    branch: repository.branch,
+    filePath: activeDoc.path,
+    pathPrefix: repository.path,
+  };
+  const editUrl = hostFile && getRepoEditFileUrl(hostFile);
+  const newFileUrl =
+    hostFile && getRepoNewFileUrl({ ...hostFile, template: buildReadmeTemplate(folder?.spec?.title ?? '') });
 
   return (
     <section
       ref={sectionRef}
       id={FOLDER_README_ANCHOR_ID}
       className={styles.panel}
-      aria-labelledby={`${FOLDER_README_ANCHOR_ID}-title`}
+      aria-label={t('browse-dashboards.readme.panel-label', 'Folder documentation')}
     >
       <header className={styles.header}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name="file-alt" size="sm" />
-          <Text element="h2" variant="bodySmall" weight="medium">
-            <span id={`${FOLDER_README_ANCHOR_ID}-title`}>
-              {/* The literal filename README.md is the same in every locale; no Trans needed. */}
-              {'README.md'}
-            </span>
-          </Text>
-        </Stack>
+        <TabsBar hideBorder className={styles.tabs}>
+          {docs.map((doc) => (
+            <Tab
+              key={doc.path}
+              label={getDocTabLabel(doc)}
+              active={doc.path === activeDoc.path}
+              href={tabHref(doc)}
+              onChangeTab={() => reportTabSelected(doc)}
+            />
+          ))}
+        </TabsBar>
         {status === 'ok' && editUrl && (
           <LinkButton
             href={editUrl}
@@ -120,8 +140,8 @@ function FolderReadmePanelContent({ folderUID }: Props) {
             variant="secondary"
             fill="text"
             size="sm"
-            tooltip={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
-            aria-label={t('browse-dashboards.readme.edit-tooltip', 'Edit README')}
+            tooltip={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit document')}
+            aria-label={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit document')}
             onClick={() => {
               repository && FolderReadmeEvents.editClicked({ repositoryType: repository.type });
             }}
@@ -130,10 +150,10 @@ function FolderReadmePanelContent({ folderUID }: Props) {
       </header>
       <div className={styles.body}>
         <ReadmeBody
-          status={status}
+          status={isDiscovering ? 'loading' : status}
           markdownContent={markdownContent}
           repository={repository}
-          readmePath={readmePath}
+          doc={activeDoc}
           newFileUrl={newFileUrl}
           refetch={refetch}
           syncFinished={syncFinished}
@@ -147,21 +167,13 @@ interface ReadmeBodyProps {
   status: FolderReadmeStatus;
   markdownContent: string | undefined;
   repository: RepositoryView | undefined;
-  readmePath: string;
+  doc: FolderDoc;
   newFileUrl: string | undefined;
   refetch: () => void;
   syncFinished: number | undefined;
 }
 
-function ReadmeBody({
-  status,
-  markdownContent,
-  repository,
-  readmePath,
-  newFileUrl,
-  refetch,
-  syncFinished,
-}: ReadmeBodyProps) {
+function ReadmeBody({ status, markdownContent, repository, doc, newFileUrl, refetch, syncFinished }: ReadmeBodyProps) {
   if (status === 'loading' || !repository) {
     return (
       <Stack justifyContent="center">
@@ -179,17 +191,23 @@ function ReadmeBody({
           key={repository.name}
           markdown={markdownContent}
           repository={repository}
-          baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
+          baseDirInRepo={getDocBaseDir(repository.path, doc.path)}
           repositoryType={repository.type}
           syncFinished={syncFinished}
         />
       ) : (
         <Text color="secondary">
-          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
+          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display this document.</Trans>
         </Text>
       );
     case 'missing':
-      return <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />;
+      // The "Add README" prompt only makes sense for the README itself; any other
+      // doc came from the file listing, so a 404 is a load failure.
+      return doc.key === 'readme' ? (
+        <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />
+      ) : (
+        <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />
+      );
     case 'error':
       return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />;
   }
@@ -328,14 +346,12 @@ function RenderedMarkdown({
 }
 
 /**
- * The README's containing directory inside the host repo:
- *   `{repository.path}/{dirname(readmePath)}` with all empty segments dropped.
+ * The doc's containing directory inside the host repo:
+ *   `{repository.path}/{dirname(docPath)}` with all empty segments dropped.
  * Used as the base for resolving relative links inside the markdown.
  */
-function getReadmeBaseDir(repositoryPath: string | undefined, readmePath: string): string {
-  const lastSlash = readmePath.lastIndexOf('/');
-  const readmeDir = lastSlash >= 0 ? readmePath.slice(0, lastSlash) : '';
-  return [repositoryPath ?? '', readmeDir].filter(Boolean).join('/');
+function getDocBaseDir(repositoryPath: string | undefined, docPath: string): string {
+  return [repositoryPath ?? '', splitPath(docPath).directory].filter(Boolean).join('/');
 }
 
 function AddReadmeEmptyState({
@@ -372,7 +388,7 @@ function AddReadmeEmptyState({
 
 function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: RepositoryView['type'] }) {
   return (
-    <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load README")}>
+    <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load this document")}>
       <Button
         variant="secondary"
         size="sm"
@@ -417,9 +433,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing(1, 2),
+    gap: theme.spacing(1),
+    padding: theme.spacing(0, 1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     backgroundColor: theme.colors.background.secondary,
+  }),
+  // Take the space left by the edit button; TabsBar scrolls horizontally when
+  // the tabs don't fit.
+  tabs: css({
+    flex: 1,
+    minWidth: 0,
   }),
   body: css({
     padding: theme.spacing(2),
