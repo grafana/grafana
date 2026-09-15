@@ -94,7 +94,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     );
   }
 
-  if (generationAvailable) {
+  if (generationAvailable && isEditingNewDashboard) {
     return <AssistantDashboardEmpty dashboard={dashboard} />;
   }
 

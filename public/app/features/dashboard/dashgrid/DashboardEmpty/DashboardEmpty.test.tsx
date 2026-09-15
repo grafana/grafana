@@ -185,11 +185,12 @@ describe('new layouts empty state', () => {
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
-  function setupScene() {
+  function setupScene(args: Partial<DashboardSceneState> = {}) {
     config.featureToggles.dashboardNewLayouts = true;
     const dashboard = new DashboardScene({
       isEditing: true,
       body: AutoGridLayoutManager.createEmpty(),
+      ...args,
     });
     render(<DashboardEmpty dashboard={dashboard} canCreate />);
     return dashboard;
@@ -224,5 +225,14 @@ describe('new layouts empty state', () => {
     expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
     expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
     expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('does not show the assistant landing when planning is available but the dashboard is not new', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
+
+    setupScene({ uid: 'existing-uid' });
+
+    expect(screen.queryByTestId('dashboard-landing-prompt')).not.toBeInTheDocument();
+    expect(screen.getByText('Select layout')).toBeInTheDocument();
   });
 });
