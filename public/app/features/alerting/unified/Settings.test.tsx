@@ -7,7 +7,10 @@ import DataSourcesResponse from './components/settings/mocks/api/datasources.jso
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
+import { addPlugin } from './mocks/server/configure';
 import { addSettingsSection } from './settings/extensions';
+import { pluginMeta } from './testSetup/plugins';
+import { SupportedPlugin } from './types/pluginBridges';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -258,5 +261,39 @@ describe('Alerting settings', () => {
     expect(ui.alertmanagerTab.get()).toBeInTheDocument();
     expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
     expect(ui.notificationsTab.query()).not.toBeInTheDocument();
+  });
+});
+
+describe('Alerting settings with the Prometheus Alerting plugin', () => {
+  beforeEach(() => {
+    grantUserRole('ServerAdmin');
+    setupGrafanaManagedServer(server);
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+  });
+
+  it('leaves external Alertmanager configuration to the plugin but keeps enable/disable', async () => {
+    render(<SettingsPage />);
+
+    expect(await ui.builtInAlertmanagerSection.find()).toBeInTheDocument();
+
+    for (const ds of DataSourcesResponse) {
+      const card = ui.alertmanagerCard(ds.name).get();
+
+      await waitFor(() => {
+        expect(ui.editConfigurationButton.query(card)).not.toBeInTheDocument();
+      });
+      expect(ui.viewConfigurationButton.query(card)).not.toBeInTheDocument();
+    }
+
+    // Whether Grafana delivers its own alerts to an external Alertmanager is still ours to decide,
+    // so the delivery controls stay. (Provisioned data sources never had them.)
+    expect(ui.enableButton.queryAll().length + ui.disableButton.queryAll().length).toBeGreaterThan(0);
+  });
+
+  it('keeps "View configuration" on the built-in Alertmanager', async () => {
+    render(<SettingsPage />);
+
+    const internalAMCard = await ui.builtInAlertmanagerCard.find();
+    expect(await ui.viewConfigurationButton.find(internalAMCard)).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertManagerImplementation, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { type ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
+import { usePrometheusAlertingPlugin } from '../../plugin-proxy/usePrometheusAlertingPlugin';
 import {
   isAlertmanagerDataSourceInterestedInAlerts,
   isProvisionedDataSource,
@@ -25,6 +26,10 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
     disableAlertmanager,
     forwardingDisabled,
   } = useSettings();
+
+  // Configuring an external Alertmanager belongs to the Prometheus Alerting plugin once it's
+  // installed. Whether Grafana delivers its own alerts there is still ours, so enable/disable stays.
+  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -54,7 +59,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         // @ts-ignore
         const detailHref = createRelativeUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
-        const handleEditConfiguration = () => onEditConfiguration(name);
+        const handleEditConfiguration = pluginInstalled ? undefined : () => onEditConfiguration(name);
         const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);
         const handleDisable = forwardingDisabled ? undefined : () => disableAlertmanager(uid);
 
