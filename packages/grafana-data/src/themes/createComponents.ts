@@ -30,11 +30,8 @@ const ThemeTableColorsInputSchema = z.object({
     .describe('Opaque backing surface when the surrounding panel has no background.')
     .optional(),
   headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
-  headerBorder: z.string().describe('Header cell dividers.').optional(),
-  border: z
-    .string()
-    .describe('Body and footer dividers. Composite translucent values against the table background for colored cells.')
-    .optional(),
+  headerBorder: z.string().describe('Opaque header cell dividers.').optional(),
+  border: z.string().describe('Opaque body and footer dividers.').optional(),
   rowStripedBackground: z
     .string()
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
@@ -398,8 +395,11 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     background,
     backgroundOnCanvas: colors.background.canvas,
     headerBackground,
-    headerBorder: colors.mode === 'dark' ? colors.border.medium : colors.border.weak,
-    border: colors.border.weak,
+    headerBorder: onBackground(
+      colors.mode === 'dark' ? colors.border.medium : colors.border.weak,
+      headerBackground
+    ).toHexString(),
+    border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
     rowHoverBackgroundSolid: onBackground(rowHoverOverlay, background).toHexString(),
     rowHoverOverlay,

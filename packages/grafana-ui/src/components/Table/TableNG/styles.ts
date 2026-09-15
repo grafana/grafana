@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
@@ -60,8 +60,6 @@ export const getGridStyles = memoize(
   ) => {
     const table = theme.components.table;
     const bgColor = transparent ? table.backgroundOnCanvas : table.background;
-    // Flatten alpha so field-configured cell backgrounds do not change the divider color.
-    const borderColor = colorManipulator.onBackground(table.border, bgColor).toHexString();
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
@@ -74,9 +72,9 @@ export const getGridStyles = memoize(
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': borderColor,
+        '--rdg-border-color': table.border,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
         '--rdg-selection-color': table.cellSelectionBorder,

@@ -1236,11 +1236,11 @@
             },
             "headerBorder": {
               "type": "string",
-              "description": "Header cell dividers."
+              "description": "Opaque header cell dividers."
             },
             "border": {
               "type": "string",
-              "description": "Body and footer dividers. Composite translucent values against the table background for colored cells."
+              "description": "Opaque body and footer dividers."
             },
             "rowStripedBackground": {
               "type": "string",

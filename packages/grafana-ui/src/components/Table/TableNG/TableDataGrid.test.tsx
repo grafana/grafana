@@ -78,8 +78,8 @@ describe('TableDataGrid', () => {
 
   describe('table theme colors', () => {
     it.each([
-      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', 'rgba(204, 204, 220, 0.2)'],
-      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', 'rgba(36, 41, 46, 0.12)'],
+      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', '#4c4e56'],
+      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', '#d4d5d6'],
       ['visual_refresh_dark', '#111419', '#090b0f', '#202429', '#282d33', '#282d33'],
       ['visual_refresh_light', '#ffffff', '#fafafa', '#f0f0ef', '#e4e3e2', '#dddcdb'],
     ])('uses the %s table surfaces in opaque and transparent panels', (id, body, canvas, header, hover, divider) => {
@@ -115,7 +115,7 @@ describe('TableDataGrid', () => {
           table: {
             background: '#123456',
             headerBackground: '#234567',
-            border: 'rgba(255, 255, 255, 0.5)',
+            border: 'hsl(from #345678 h s l)',
             headerBorder: '#456789',
             rowHoverBackgroundSolid: '#56789a',
             rowSelectedBackground: '#6789ab',
@@ -133,8 +133,8 @@ describe('TableDataGrid', () => {
       const grid = window.getComputedStyle(screen.getByRole('grid'));
       expect(grid.getPropertyValue('--rdg-background-color')).toBe('#123456');
       expect(grid.getPropertyValue('--rdg-header-background-color')).toBe('#234567');
-      expect(grid.getPropertyValue('--rdg-border-color')).toBe('#899aab');
-      expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe('#899aab');
+      expect(grid.getPropertyValue('--rdg-border-color')).toBe('hsl(from #345678 h s l)');
+      expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe('hsl(from #345678 h s l)');
       expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe('#56789a');
       expect(grid.getPropertyValue('--rdg-row-selected-background-color')).toBe('#6789ab');
       expect(grid.getPropertyValue('--rdg-row-selected-hover-background-color')).toBe('#789abc');
