@@ -134,7 +134,6 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
-      'public/build-swagger-rspack', // swagger build output (rspack)
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
       'packages/get-document/index.js',
@@ -392,6 +391,17 @@ module.exports = [
   },
 
   {
+    name: 'grafana/e2e-selectors-serializable',
+    files: ['packages/grafana-e2e-selectors/src/selectors/**/*.ts'],
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    rules: {
+      '@grafana/serializable-e2e-selectors': 'error',
+    },
+  },
+
+  {
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
@@ -634,6 +644,7 @@ module.exports = [
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
       '@grafana/no-config-datasources': 'error',
+      '@grafana/no-config-feature-toggles': 'error',
     },
   },
   {

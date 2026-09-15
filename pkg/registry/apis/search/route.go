@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -99,6 +100,10 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 		requestGo:    searchQueryGoName,
 		responseKind: searchv0.KindSearchResults,
 		responseGo:   searchResultsGoName,
+		example: &searchv0.SearchQuery{
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+			Limit:    10,
+		},
 	})
 }
 
@@ -110,6 +115,10 @@ func trashRouteSpec(kindName, version string) *spec3.PathProps {
 		requestGo:    trashQueryGoName,
 		responseKind: searchv0.KindTrashResults,
 		responseGo:   trashResultsGoName,
+		example: &searchv0.TrashQuery{
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
+			Limit:    10,
+		},
 	})
 }
 
@@ -123,6 +132,7 @@ type routeSpecArgs struct {
 	requestGo    string
 	responseKind string
 	responseGo   string
+	example      any
 }
 
 // routeSpec builds what both endpoints have in common: a namespaced POST taking a
@@ -150,7 +160,7 @@ func routeSpec(a routeSpecArgs) *spec3.PathProps {
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required:    true,
 						Description: "A " + a.requestKind + " describing what to match, sort and return.",
-						Content:     jsonContent(a.requestGo),
+						Content:     jsonContent(a.requestGo, a.example),
 					},
 				},
 				Responses: &spec3.Responses{
@@ -159,7 +169,7 @@ func routeSpec(a routeSpecArgs) *spec3.PathProps {
 							200: {
 								ResponseProps: spec3.ResponseProps{
 									Description: "A " + a.responseKind + " envelope.",
-									Content:     jsonContent(a.responseGo),
+									Content:     jsonContent(a.responseGo, nil),
 								},
 							},
 						},

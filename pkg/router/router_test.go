@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // stubLoader satisfies RoutesLoader; the routing tests seed the snapshot
@@ -29,7 +29,7 @@ func withGroups(groups ...string) *GrafanaRouter {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte(g))
 			}),
-			lastRV:  "1",
+			lastKey: "1",
 			breaker: newGroupBreaker(g),
 		}
 	}
@@ -131,6 +131,53 @@ func TestServeRootDocsWithETag(t *testing.T) {
 		}
 		if rec2.Body.Len() != 0 {
 			t.Errorf("path %q: 304 response had a body: %q", path, rec2.Body.String())
+		}
+	}
+}
+
+func TestGroupFromPath(t *testing.T) {
+	cases := []struct {
+		path      string
+		wantGroup string
+	}{
+		{"/apis/dashboard.grafana.app", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/v1alpha1/dashboards", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/", "dashboard.grafana.app"},
+		// no single group to attribute the bare /apis root to
+		{"/apis", ""},
+		{"/apis/", ""},
+		// not under /apis at all
+		{"/openapi/v3", ""},
+		{"/healthz", ""},
+		{"", ""},
+		// prefix collision, not a real /apis boundary
+		{"/apisfoo", ""},
+		// arbitrary, client-controlled -- GroupFromPath doesn't validate
+		// against known backends, callers must check KnownGroup themselves
+		{"/apis/whatever-a-client-sends", "whatever-a-client-sends"},
+	}
+	for _, tc := range cases {
+		if got := GroupFromPath(tc.path); got != tc.wantGroup {
+			t.Errorf("GroupFromPath(%q) = %q, want %q", tc.path, got, tc.wantGroup)
+		}
+	}
+}
+
+func TestKnownGroup(t *testing.T) {
+	s := withGroups("dashboard.grafana.app", "folder.grafana.app")
+
+	cases := []struct {
+		group string
+		want  bool
+	}{
+		{"dashboard.grafana.app", true},
+		{"folder.grafana.app", true},
+		{"unknown.grafana.app", false},
+		{"", false},
+	}
+	for _, tc := range cases {
+		if got := s.KnownGroup(tc.group); got != tc.want {
+			t.Errorf("KnownGroup(%q) = %v, want %v", tc.group, got, tc.want)
 		}
 	}
 }
@@ -255,11 +302,10 @@ func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
 
 // failingBackend always fails Load, for testing partial-failure reconcile
 // scenarios (one group loads, another doesn't).
-type failingBackend struct{ group, rv string }
+type failingBackend struct{ group, key string }
 
-func (b failingBackend) RV() string                 { return b.rv }
-func (b failingBackend) Group() string              { return b.group }
-func (b failingBackend) Manifest() app.ManifestData { return app.ManifestData{} }
+func (b failingBackend) Key() string            { return b.key }
+func (b failingBackend) Group() metav1.APIGroup { return metav1.APIGroup{Name: b.group} }
 func (b failingBackend) Load(context.Context) (http.Handler, error) {
 	return nil, errors.New("load failed")
 }
@@ -271,8 +317,8 @@ func (b failingBackend) Load(context.Context) (http.Handler, error) {
 // unrelated group's failure.
 func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 	loader := staticLoader{backends: []Backend{
-		&fakeBackend{group: "good.grafana.app", rv: "1"},
-		failingBackend{group: "bad.grafana.app", rv: "1"},
+		&fakeBackend{group: metav1.APIGroup{Name: "good.grafana.app"}, key: "1"},
+		failingBackend{group: "bad.grafana.app", key: "1"},
 	}}
 	r := NewGrafanaRouter(loader)
 	r.storeServing(r.reconcile(context.Background()))

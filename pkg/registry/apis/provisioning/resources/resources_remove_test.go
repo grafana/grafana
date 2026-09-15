@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -31,9 +32,7 @@ func managedGrafanaObj(name, namespace string, extraAnnotations map[string]any) 
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 		utils.AnnoKeyManagerIdentity: testRepoName,
 	}
-	for k, v := range extraAnnotations {
-		annotations[k] = v
-	}
+	maps.Copy(annotations, extraAnnotations)
 	return &unstructured.Unstructured{Object: map[string]any{
 		"metadata": map[string]any{
 			"name":        name,

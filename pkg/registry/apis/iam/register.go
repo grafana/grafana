@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -47,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	teamlbacapi "github.com/grafana/grafana/pkg/registry/apis/iam/teamlbac"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -56,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -78,6 +81,7 @@ func RegisterAPIService(
 	sql db.DB,
 	ac accesscontrol.AccessControl,
 	accessClient types.AccessClient,
+	userPermissionsClient types.UserPermissionsClient,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
 	roleApiInstaller RoleApiInstaller,
@@ -95,6 +99,7 @@ func RegisterAPIService(
 	teamService teamservice.Service,
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
+	authInfoStore login.Store,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -150,6 +155,7 @@ func RegisterAPIService(
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
+		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
@@ -186,7 +192,8 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
-		ofClient: openfeature.NewDefaultClient(),
+		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
+		ofClient:        openfeature.NewDefaultClient(),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
@@ -198,6 +205,7 @@ func RegisterAPIService(
 
 func NewAPIService(
 	accessClient types.AccessClient,
+	userPermissionsClient types.UserPermissionsClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 	roleApiInstaller RoleApiInstaller,
@@ -240,6 +248,8 @@ func NewAPIService(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
 		),
+		// Standalone AuthInfo already carries the selected groups claim from its signed token.
+		userPermissions:            userpermissions.NewHandler(userPermissionsClient, false),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
@@ -402,6 +412,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableAuthInfoApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthInfoApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -445,6 +456,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableServiceAccountsApi {
 		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
+			return err
+		}
+	}
+
+	if enableAuthInfoApi {
+		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -537,9 +554,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		return err
 	}
 
-	teamLBACRuleGetter, ok := storage[iamv0.TeamLBACRuleInfo.StoragePath()].(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule storage does not implement rest.Getter")
+	teamLBACRuleGetter := b.teamLBACApiInstaller.GetRulesForSubjectGetter()
+	if teamLBACRuleGetter == nil {
+		return fmt.Errorf("TeamLBACRule for-subject subresource requires rule getter storage")
 	}
 
 	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
@@ -560,8 +577,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	}
 	// Kubernetes requires a separate storage-map entry for each named
 	// subresource. Its value is a Connect handler, not another persistence
-	// store: the handler delegates rule reads to teamLBACRuleGetter, the
-	// mode-aware CRUD storage already registered at "teamlbacrules" above.
+	// store: the handler delegates rule reads to the mode-aware getter retained
+	// by the installer. The base "teamlbacrules" entry is wrapped separately to
+	// enforce datasource CRUD permissions; using it here would incorrectly make
+	// a service authorized for for-subject also require datasource:get.
 	// Team's addmember/removemember subresources use the same pattern. This
 	// entry therefore adds only GET
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
@@ -661,6 +680,32 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		storewrapper.WithObserver(storageObserver{}),
 	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+	authInfoResource := iamv0.AuthInfoResourceInfo
+
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.AuthInfoKind()),
+	}
+	authInfoUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme,
+		authInfoResource, opts.OptsGetter, selectableFieldsOpts)
+	if err != nil {
+		return err
+	}
+
+	authInfoStore := rest.Storage(authInfoUniStore)
+
+	if b.authInfoLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, authInfoUniStore)
+		if err != nil {
+			return err
+		}
+		authInfoStore = dw
+	}
+
+	storage[authInfoResource.StoragePath()] = authInfoStore
 	return nil
 }
 
@@ -882,6 +927,16 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+
+	schema = oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "UserPermission"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{
@@ -1008,6 +1063,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableUserPermissionsApi := client.Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1026,8 +1082,11 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
-	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
+	routes := make([]*builder.APIRoutes, 0, 2+len(searchRoutes))
 	routes = append(routes, b.display.GetAPIRoutes(defs))
+	if enableUserPermissionsApi && b.userPermissions != nil {
+		routes = append(routes, b.userPermissions.GetAPIRoutes(defs))
+	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }

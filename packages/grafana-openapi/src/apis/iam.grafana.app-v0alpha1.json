@@ -41,6 +41,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -106,6 +112,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -1149,6 +1161,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -1393,6 +1411,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -2183,6 +2207,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -2849,6 +2879,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Display"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/~/permissions": {
+      "get": {
+        "tags": ["User"],
+        "description": "Get effective permissions for the currently authenticated identity",
+        "operationId": "getCurrentUserPermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPermissions"
                 }
               }
             }
@@ -4472,7 +4521,7 @@
       },
       "TeamLBACRule": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": ["metadata", "spec", "status"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4488,6 +4537,31 @@
           "spec": {
             "description": "Spec is the spec of the TeamLBACRule",
             "default": {}
+          },
+          "status": {
+            "default": {}
+          }
+        }
+      },
+      "TeamLBACRuleCondition": {
+        "description": "Condition is a minimal Kubernetes-style condition for dynamically computed Team LBAC status.",
+        "type": "object",
+        "required": ["type", "status", "reason"],
+        "properties": {
+          "reason": {
+            "description": "reason is a stable, machine-readable explanation for the current status. It is intentionally open-ended so clients tolerate reasons added later.",
+            "type": "string",
+            "default": ""
+          },
+          "status": {
+            "description": "status is True when the rule is enforceable, False when it is dormant, and Unknown when enforceability could not be determined.",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "type identifies the condition. Enforceable is the only type currently defined for TeamLBACRule.",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -4535,6 +4609,18 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "TeamLBACRuleStatus": {
+        "type": "object",
+        "properties": {
+          "conditions": {
+            "description": "conditions contains system-owned observations about the rule. The Enforceable condition is the only condition currently defined.",
+            "type": "array",
+            "items": {},
+            "x-kubernetes-list-map-keys": ["type"],
+            "x-kubernetes-list-type": "map"
           }
         }
       },
@@ -5047,6 +5133,35 @@
           }
         }
       },
+      "UserPermission": {
+        "description": "UserPermission is one effective action and scope granted to an identity.",
+        "type": "object",
+        "required": ["action", "scope"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "UserPermissions": {
+        "description": "UserPermissions contains the effective permissions for the current identity.",
+        "type": "object",
+        "required": ["permissions"],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserPermission"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
       "UserTeam": {
         "type": "object",
         "properties": {
@@ -5123,7 +5238,7 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\" or \"NotIn\" in v1.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
             "type": "string",
             "default": ""
           },
@@ -5359,7 +5474,7 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {

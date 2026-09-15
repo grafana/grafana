@@ -73,6 +73,7 @@ import (
 	_ "google.golang.org/grpc/resolver/manual"
 	_ "google.golang.org/protobuf/testing/protocmp"
 	_ "k8s.io/api/authentication/v1"
+	_ "k8s.io/api/authorization/v1"
 	_ "k8s.io/apiserver/pkg/endpoints/discovery"
 	_ "k8s.io/apiserver/pkg/endpoints/filters"
 	_ "k8s.io/apiserver/pkg/util/compatibility"

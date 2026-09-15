@@ -25,6 +25,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList": schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":        schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject":    schema_pkg_apis_iam_v0alpha1_TeamSubject(ref),
+		UserPermission{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_UserPermission(ref),
+		UserPermissions{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_UserPermissions(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":       schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":   schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
 	}
@@ -481,6 +483,68 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			IdentityRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "UserPermission is one effective action and scope granted to an identity.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserPermissions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "UserPermissions contains the effective permissions for the current identity.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"permissions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(UserPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"permissions"},
+			},
+		},
+		Dependencies: []string{
+			UserPermission{}.OpenAPIModelName()},
 	}
 }
 

@@ -186,6 +186,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
+    defaultHighlightedIndex: 0,
     isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
@@ -261,6 +262,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
+
           break;
         case useCombobox.stateChangeTypes.InputChange:
           // setInputValue is intentionally NOT called here. It is called synchronously in the

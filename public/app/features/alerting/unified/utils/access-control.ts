@@ -8,13 +8,12 @@
  *    Safe to call at module load time or in non-React contexts.
  *
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
- *    (`getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    (`getRulesAccess`). These are
  *    intentionally plain functions (not hooks) because they are also used in non-React
  *    contexts (route guards, panel menus). When used inside React components, wrap them
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
-import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -151,16 +150,4 @@ export function getRulesAccess() {
         : canUpdateCloudRules;
     },
   };
-}
-
-/**
- * Returns whether the "Create alert rule" option should appear in panel menus.
- * Called in non-React panel-menu utilities; not a hook.
- */
-export function getCreateAlertInMenuAvailability() {
-  const { unifiedAlertingEnabled } = getConfig();
-  const canRead = isGranted(getGlobalRuleAbility(RuleAction.View));
-  const canUpdate = isGranted(getGlobalRuleAbility(RuleAction.Update));
-
-  return unifiedAlertingEnabled && canRead && canUpdate;
 }

@@ -22,14 +22,15 @@ const datasource: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
   isDefault: true,
 };
 
 beforeEach(() => {
   runInstantQueriesMock.mockReset();
   probeFoundMock.mockReset();
-  probeFoundMock.mockImplementation(async (_type, hasData) => ((await hasData(datasource)) ? datasource : null));
+  probeFoundMock.mockImplementation(async (_type, hasData) =>
+    (await hasData(datasource, new AbortController().signal)) ? datasource : null
+  );
 });
 
 it('returns the Prometheus datasource whose span-metrics query finds data', async () => {
@@ -38,7 +39,10 @@ it('returns the Prometheus datasource whose span-metrics query finds data', asyn
   ]);
 
   await expect(probeSpanMetrics()).resolves.toBe(datasource);
-  expect(runInstantQueriesMock).toHaveBeenCalledWith({ probe: SPAN_METRICS_PROBE }, datasource, expect.any(Number));
+  expect(runInstantQueriesMock).toHaveBeenCalledWith({ probe: SPAN_METRICS_PROBE }, datasource, {
+    timeoutMs: expect.any(Number),
+    signal: expect.any(AbortSignal),
+  });
 });
 
 it('returns null when no span-metrics series exists', async () => {

@@ -108,7 +108,7 @@ export function useDataSourceInstanceSettings(
  * changes (compared by value, so inline objects are safe).
  *
  * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
- * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
+ * metadata is needed — `item` carries `uid`, `type`, `apiVersion`, `name`, `meta` and
  * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
  * demand.
  *

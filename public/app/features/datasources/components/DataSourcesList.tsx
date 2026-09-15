@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
@@ -126,7 +126,7 @@ export function DataSourcesListView({
         button={
           <LinkButton
             disabled={!hasCreateRights}
-            href={ROUTES.DataSourcesNew}
+            href={locationUtil.assureBaseUrl(ROUTES.DataSourcesNew)}
             icon="database"
             size="lg"
             data-testid={selectors.pages.DataSources.dataSourceAddButton}

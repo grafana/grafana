@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchV0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -43,6 +44,7 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableSearchAPI:      true,
+		EnableFeatureToggles: []string{featuremgmt.FlagSearchApiFieldValueResults},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -78,6 +80,24 @@ func TestIntegrationSearchAPI(t *testing.T) {
 	for name, title := range titles {
 		obj := &unstructured.Unstructured{Object: map[string]any{
 			"spec": map[string]any{"title": title, "schemaVersion": 41},
+		}}
+		obj.SetName(name)
+		obj.SetAPIVersion(gvr.GroupVersion().String())
+		obj.SetKind("Dashboard")
+		obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+		_, err := admin.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	// One dashboard carries both tags and one only the first, so the difference
+	// between "any of these tags" and "all of them" shows up in the results.
+	tags := map[string][]any{
+		"searchapi-tags-both": {"prod", "eu-west"},
+		"searchapi-tags-prod": {"prod"},
+	}
+	for name, list := range tags {
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{"title": name, "schemaVersion": 41, "tags": list},
 		}}
 		obj.SetName(name)
 		obj.SetAPIVersion(gvr.GroupVersion().String())
@@ -192,6 +212,63 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		assert.Equal(t, "folders", item.Resource.Resource)
 		assert.Equal(t, "Folder", item.Resource.Kind)
 		assert.Equal(t, folderUID, item.Resource.Name)
+	})
+
+	// All is the only way to ask for every value in one leaf; In asks for any of
+	// them, which is the mistake this operator exists to prevent.
+	t.Run("All requires every value", func(t *testing.T) {
+		all, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Filter: &searchV0.FilterPredicate{Field: "tags", Operator: "All", Values: []string{"prod", "eu-west"}},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Equal(t, []string{"searchapi-tags-both"}, names(all))
+
+		// One leaf per value inside an and is the older way to write the same thing,
+		// and stays valid.
+		perLeaf, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{And: []searchV0.WhereNode{
+				{Filter: &searchV0.FilterPredicate{Field: "tags", Operator: "In", Values: []string{"prod"}}},
+				{Filter: &searchV0.FilterPredicate{Field: "tags", Operator: "In", Values: []string{"eu-west"}}},
+			}},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Equal(t, names(all), names(perLeaf))
+
+		anyValue, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Filter: &searchV0.FilterPredicate{Field: "tags", Operator: "In", Values: []string{"prod", "eu-west"}},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.ElementsMatch(t, []string{"searchapi-tags-both", "searchapi-tags-prod"}, names(anyValue))
+	})
+
+	t.Run("All with one value behaves like In", func(t *testing.T) {
+		all, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Filter: &searchV0.FilterPredicate{Field: "tags", Operator: "All", Values: []string{"eu-west"}},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Equal(t, []string{"searchapi-tags-both"}, names(all))
+	})
+
+	// A folder holds one value, so asking for two can never match. Rejecting it is
+	// better than an empty result the caller cannot explain.
+	t.Run("rejects All with several values on a field holding a single value", func(t *testing.T) {
+		_, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Filter: &searchV0.FilterPredicate{Field: "folder", Operator: "All", Values: []string{folderUID, "other"}},
+			},
+			Limit: 10,
+		})
+		assert.Equal(t, http.StatusUnprocessableEntity, code)
 	})
 
 	// A malformed body cannot be validated at all, so it is a bad request.

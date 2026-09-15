@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -273,12 +274,7 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 	}
 
 	var contain = func(arr []string, s string) bool {
-		for _, item := range arr {
-			if item == s {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(arr, s)
 	}
 
 	for _, a := range targetActions {

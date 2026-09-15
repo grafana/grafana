@@ -84,14 +84,12 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 			Key:             row.Key,
 			ResourceVersion: row.ResourceVersion,
 		})
-		if err != nil {
-			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-		}
-		if val.Error != nil {
-			if val.Error.Code == http.StatusForbidden {
+		if err := ErrorFromResponse(val.GetError(), err); err != nil {
+			resErr := AsErrorResult(err)
+			if resErr.Code == http.StatusForbidden {
 				continue
 			}
-			return &resourcepb.ListResponse{Error: val.Error}, nil
+			return &resourcepb.ListResponse{Error: resErr}, nil
 		}
 		pageBytes += len(val.Value)
 		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
@@ -180,8 +178,8 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	}
 
 	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests())
-	return slices.ContainsFunc(manifests, func(m app.Manifest) bool {
-		return m.ManifestData.Group == req.Options.Key.Group
+	manifests := AppManifestsWithKinds(AppManifests()...)
+	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
+		return m.Group == req.Options.Key.Group
 	})
 }

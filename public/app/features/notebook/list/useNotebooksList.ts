@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -16,6 +16,9 @@ import {
   type ResultItem,
   type WhereNode,
 } from './notebookSearchApi';
+
+/** For ordering tag names for a reader, rather than by code point. */
+const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 /**
  * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the
@@ -94,6 +97,7 @@ interface UseNotebooksListOptions {
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
   const [usingFallback, setUsingFallback] = useState(searchUnavailable);
@@ -106,9 +110,21 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   // server-side and asking would filter everything out.
   const filterByAuthor = createdByMe && Boolean(currentUserUid);
 
+  /**
+   * Adds one tag to the filter, for callers that offer a tag rather than the whole selection — the
+   * table's rows, where a tag is clickable. A functional update with no dependencies, so this keeps
+   * one identity for the life of the hook: the table memoizes its columns, and a new callback each
+   * render would rebuild them.
+   *
+   * Already-selected tags are ignored rather than repeated, as they are in dashboard search.
+   */
+  const addTagFilter = useCallback((tag: string) => {
+    setTagFilter((current) => (current.includes(tag) ? current : [...current, tag]));
+  }, []);
+
   const searchBody = useMemo(
-    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined),
-    [debouncedSearch, filterByAuthor, currentUserUid]
+    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter),
+    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter]
   );
 
   const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
@@ -223,6 +239,17 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [rows, authorNames]
   );
 
+  /**
+   * Every tag carried by the notebooks loaded so far — not the library's tags, which only the search
+   * index's facet knows. It is here for a tag picker that has no facet to read, on a deployment that
+   * does not serve the search route.
+   *
+   * From the rows before client-side filtering, so the options do not narrow as the reader filters —
+   * the trap that left the author filter with nothing but the authors already on screen. Alphabetical
+   * because, with no counts to order by, nothing else says anything.
+   */
+  const loadedTags = useMemo(() => uniq(namedRows.flatMap((row) => row.tags)).sort(collator.compare), [namedRows]);
+
   // On the fallback path the server did no filtering, so it has to happen here. When search
   // is serving, the predicates are already in the request and this is a no-op.
   const filteredRows = useMemo(() => {
@@ -232,11 +259,14 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     const needle = debouncedSearch.trim().toLowerCase();
     return namedRows.filter(
       (row) =>
-        (!needle || row.title.toLowerCase().includes(needle)) && (!filterByAuthor || row.authorUid === currentUserUid)
+        (!needle || row.title.toLowerCase().includes(needle)) &&
+        (!filterByAuthor || row.authorUid === currentUserUid) &&
+        // Every selected tag, matching the `and` of leaves the search path sends.
+        tagFilter.every((tag) => row.tags.includes(tag))
     );
-  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid]);
+  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid, tagFilter]);
 
-  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
+  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor || tagFilter.length > 0;
 
   // Every page carries the same total for the query, so the first one answers for all of them.
   const searchMetadata = search.currentData?.pages[0]?.metadata;
@@ -275,6 +305,10 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     setSearchQuery,
     createdByMe,
     setCreatedByMe,
+    tagFilter,
+    setTagFilter,
+    addTagFilter,
+    loadedTags,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
     /**
@@ -294,7 +328,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
      * (the table's page index) without resetting it as rows merely accumulate. Built from the
      * committed filters, not the raw input, so it does not change on every keystroke.
      */
-    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}`,
+    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}|${tagFilter.join(',')}`,
     error: active.error,
   };
 }
@@ -304,7 +338,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
  * notebook — and flattened to a single leaf when only one predicate applies, because v1
  * accepts just a top-level leaf or one `and` of leaves.
  */
-function buildSearchQuery(search: string, authorUid: string | undefined): NotebookSearchQuery {
+function buildSearchQuery(search: string, authorUid: string | undefined, tags: string[]): NotebookSearchQuery {
   const leaves: WhereNode[] = [];
   const needle = search.trim();
   if (needle) {
@@ -317,6 +351,12 @@ function buildSearchQuery(search: string, authorUid: string | undefined): Notebo
     // resolved from either form because old resources elsewhere carry the legacy numeric id, but a
     // notebook cannot have been written that way, so matching on one form is enough here.
     leaves.push({ filter: { field: SearchField.createdBy, operator: 'In', values: [authorUid] } });
+  }
+  // One leaf per tag rather than one leaf listing them all: `In` is set membership, so a single leaf
+  // would match a notebook carrying *any* of them. Selecting two tags narrows the list here as it
+  // does elsewhere in Grafana, and `and` of leaves is what expresses that.
+  for (const tag of tags) {
+    leaves.push({ filter: { field: SearchField.tags, operator: 'In', values: [tag] } });
   }
 
   // No sort: `created`/`updated` are retrieve-only and 422 if sorted on, and the table owns

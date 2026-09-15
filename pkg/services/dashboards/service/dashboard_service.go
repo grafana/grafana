@@ -2052,6 +2052,10 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	request.Page = query.Page
 	request.Offset = (query.Page - 1) * query.Limit // only relevant when running in modes 3+
 	request.Fields = dashboardsearch.IncludeFields
+	if query.UseFieldValueResults {
+		request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+		request.Fields = slices.Clone(dashboardsearch.APISearchIncludeFields)
+	}
 
 	namespace := dr.k8sclient.GetNamespace(query.OrgId)
 	var err error
