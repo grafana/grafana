@@ -466,8 +466,8 @@ func apiVersionOf(tmp *unstructured.Unstructured) string {
 	// apiVersion is "<group>/<version>" for non-core resources and just
 	// "<version>" for core. The Group is authoritative from the key; we
 	// only need the version segment.
-	if i := strings.IndexByte(av, '/'); i >= 0 {
-		return av[i+1:]
+	if _, after, ok := strings.Cut(av, "/"); ok {
+		return after
 	}
 	return av
 }
