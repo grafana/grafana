@@ -2,20 +2,18 @@ import { useEffect } from 'react';
 import { useStore } from 'react-redux';
 
 import { type NavModelItem } from '@grafana/data';
-import { getAppPluginMetasStrict } from '@grafana/runtime/internal';
+import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
 import { arePluginNavItemsEnabled } from './buildStaticNavTree';
-import { pluginNavFailed, pluginNavLoaded } from './state';
+import { pluginNavLoaded } from './state';
 
 export interface UseNavTreeResult {
   /** The nav tree: static items plus, once loaded, the merged plugin nav items */
   data: NavModelItem[];
   /** True while the client-built tree is incomplete (plugin metas still loading) */
   isLoading: boolean;
-  /** True when the plugin metas fetch failed and only the static tree is shown */
-  isError: boolean;
 }
 
 /**
@@ -37,27 +35,19 @@ export function useNavTree(): UseNavTreeResult {
 
   useEffect(() => {
     // Merging once per session is enough: the metas fetch is session-cached,
-    // so a remount would just re-merge the same response. A failed fetch
-    // invalidates the service's cache entry and sets status back to 'failed',
-    // so the next mount retries.
+    // so a remount would just re-merge the same response. A failed fetch falls
+    // back to the bootdata apps and is reported by the pluginMeta service.
     if (!enabled || store.getState().pluginNavStatus === 'loaded') {
       return;
     }
     let cancelled = false;
-    getAppPluginMetasStrict().then(
-      (apps) => {
-        if (cancelled || store.getState().pluginNavStatus === 'loaded') {
-          return;
-        }
-        const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
-        dispatch(pluginNavLoaded({ tree: merged }));
-      },
-      () => {
-        if (!cancelled) {
-          dispatch(pluginNavFailed());
-        }
+    getAppPluginMetas().then((apps) => {
+      if (cancelled || store.getState().pluginNavStatus === 'loaded') {
+        return;
       }
-    );
+      const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
+      dispatch(pluginNavLoaded({ tree: merged }));
+    });
     return () => {
       cancelled = true;
     };
@@ -66,6 +56,5 @@ export function useNavTree(): UseNavTreeResult {
   return {
     data: navTree,
     isLoading: status === 'loading',
-    isError: status === 'failed',
   };
 }

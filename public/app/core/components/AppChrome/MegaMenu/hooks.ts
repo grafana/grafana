@@ -291,7 +291,7 @@ const useSectionOrdering = ({
 export const useNavCustomization = () => {
   // The nav tree layer: server or client-built tree plus its (plugin nav)
   // load state, which folds into this hook's overall loading/error surface.
-  const { data: navTree, isLoading: navTreeLoading, isError: navTreeError } = useNavTree();
+  const { data: navTree, isLoading: navTreeLoading } = useNavTree();
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -458,7 +458,6 @@ export const useNavCustomization = () => {
   return {
     canCustomise,
     isLoading,
-    navTreeError,
     navItems,
     pinnedEntries,
     activeItem,

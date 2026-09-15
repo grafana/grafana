@@ -1,7 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetasStrict, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
+import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   mockPluginMeta,
@@ -42,8 +42,11 @@ const page = (name: string, path: string, extra: Partial<MockPluginMetaInclude> 
 // the nav consumes in production.
 async function fetchApps(metas: MockPluginMeta[]) {
   invalidateCachedPromisesCache();
+  // getAppPluginMetas keeps the mapped apps in module state and only fetches
+  // when that is empty, so clear it or each test reuses the previous fixture
+  setAppPluginMetas({});
   setMockPluginMetas(metas);
-  return getAppPluginMetasStrict();
+  return getAppPluginMetas();
 }
 
 const mergeFromMetas = async (metas: MockPluginMeta[]) => mergePluginNavIntoTree(await fetchApps(metas));

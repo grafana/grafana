@@ -11,21 +11,19 @@ import { arePluginNavItemsEnabled } from './buildStaticNavTree';
  */
 export const pluginNavLoaded = createAction<{ tree: NavModelItem[] }>('navTree/pluginNavLoaded');
 
-/** Dispatched when the plugin metas fetch fails: the static-only tree stands. */
-export const pluginNavFailed = createAction('navTree/pluginNavFailed');
-
-export type PluginNavStatus = 'disabled' | 'loading' | 'loaded' | 'failed';
+export type PluginNavStatus = 'disabled' | 'loading' | 'loaded';
 
 /**
  * Load state for the client-built nav tree. `disabled` (flag off) and `loaded`
  * render the tree as-is; `loading` keeps the mega menu on its skeleton until
  * the complete tree is available (static items are not guaranteed to sort
- * above plugin items once custom ordering lands); `failed` renders the
- * static-only tree with a warning.
+ * above plugin items once custom ordering lands). A failed metas fetch still
+ * reaches `loaded`: the service falls back to the bootdata apps, so the tree
+ * is as complete as it is going to get.
  */
 export const pluginNavStatusReducer = createReducer<PluginNavStatus>(
   () => (arePluginNavItemsEnabled() ? 'loading' : 'disabled'),
   (builder) => {
-    builder.addCase(pluginNavLoaded, () => 'loaded').addCase(pluginNavFailed, () => 'failed');
+    builder.addCase(pluginNavLoaded, () => 'loaded');
   }
 );

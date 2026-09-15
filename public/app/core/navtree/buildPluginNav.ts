@@ -1,7 +1,7 @@
 import { cloneDeep, isUndefined, omitBy } from 'lodash';
 
 import {
-  type AppPluginMetaConfig,
+  type AppPluginConfig,
   isIconName,
   type NavModelItem,
   type PluginInclude,
@@ -53,7 +53,7 @@ const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, A
  * - page includes without a path are skipped (the meta spec carries no slug
  *   for the legacy /plugins/<id>/page/<slug> fallback URL)
  */
-export function mergePluginNavIntoTree(apps: AppPluginMetaConfig[]): NavModelItem[] {
+export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] {
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
 
   // Merge into a freshly built static tree rather than the current slice
@@ -87,7 +87,7 @@ export function mergePluginNavIntoTree(apps: AppPluginMetaConfig[]): NavModelIte
  * Builds the nav items for one app plugin and returns a new tree with the app
  * link (or its hoisted pages) placed into its section.
  */
-function addAppToTree(tree: NavModelItem[], app: AppPluginMetaConfig): NavModelItem[] {
+function addAppToTree(tree: NavModelItem[], app: AppPluginConfig): NavModelItem[] {
   const { appLink, hasAccessiblePages } = buildAppLink(app);
 
   // A `singlePage` app's only page folds into the app link itself, leaving it
@@ -103,13 +103,13 @@ function addAppToTree(tree: NavModelItem[], app: AppPluginMetaConfig): NavModelI
 }
 
 /** Builds the app's nav link from its page and dashboard includes */
-function buildAppLink(app: AppPluginMetaConfig): { appLink: NavModelItem; hasAccessiblePages: boolean } {
+function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; hasAccessiblePages: boolean } {
   let appUrl = `/a/${app.id}`;
   let hasAccessiblePages = false;
   const children: NavModelItem[] = [];
   const filterInclude = appNavConfigFor(app.id)?.filterInclude;
 
-  for (const include of app.includes) {
+  for (const include of app.includes ?? []) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
       continue;
     }
@@ -147,10 +147,10 @@ function buildAppLink(app: AppPluginMetaConfig): { appLink: NavModelItem; hasAcc
 
   return {
     appLink: {
-      text: app.name,
+      text: app.name ?? app.id,
       id: pluginPageId(app.id),
-      img: app.info.logos.small,
-      subTitle: app.info.description,
+      img: app.info?.logos?.small,
+      subTitle: app.info?.description,
       sortWeight: NavWeight.plugin,
       isSection: true,
       pluginId: app.id,
@@ -163,7 +163,7 @@ function buildAppLink(app: AppPluginMetaConfig): { appLink: NavModelItem; hasAcc
 }
 
 /** Applies the app's APP_NAV_CONFIG display overrides (name, icon, subtitle, badge) */
-function withNavConfigOverrides(app: AppPluginMetaConfig, appLink: NavModelItem): NavModelItem {
+function withNavConfigOverrides(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
   const navConfig = appNavConfigFor(app.id);
   if (!navConfig) {
     return appLink;
@@ -183,7 +183,7 @@ function withNavConfigOverrides(app: AppPluginMetaConfig, appLink: NavModelItem)
  * creating the section from its shell if this is the first app targeting it.
  * Returns a new tree.
  */
-function placeAppInSection(tree: NavModelItem[], app: AppPluginMetaConfig, appLink: NavModelItem): NavModelItem[] {
+function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
   const navConfig = appNavConfigFor(app.id);
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
@@ -222,7 +222,7 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginMetaConfig, appLi
     {
       ...shell,
       children: [...absorbed, ...sectionChildren],
-      ...(imgFromAppLogo && { img: config.appSubUrl + app.info.logos.large }),
+      ...(imgFromAppLogo && app.info?.logos && { img: config.appSubUrl + app.info.logos.large }),
     },
   ];
 }

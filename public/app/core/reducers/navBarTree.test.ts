@@ -1,6 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { pluginNavFailed, pluginNavLoaded } from '../navtree/state';
+import { pluginNavLoaded } from '../navtree/state';
 
 import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
 
@@ -243,19 +243,6 @@ describe('navBarTree reducer', () => {
       const twice = navTreeReducer(once, pluginNavLoaded({ tree: merged }));
 
       expect(twice).toEqual(once);
-    });
-  });
-
-  describe('pluginNavFailed', () => {
-    it('leaves the tree untouched so a later successful refetch keeps its merge targets', () => {
-      const state: NavModelItem[] = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'connections', text: 'Connections', children: [] },
-      ];
-
-      const next = navTreeReducer(state, pluginNavFailed());
-
-      expect(next).toEqual(state);
     });
   });
 });

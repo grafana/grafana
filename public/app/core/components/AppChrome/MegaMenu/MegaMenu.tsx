@@ -7,7 +7,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Alert, Button, IconButton, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
@@ -37,7 +37,6 @@ export const MegaMenu = memo(
     const {
       canCustomise,
       isLoading,
-      navTreeError,
       navItems,
       pinnedEntries,
       activeItem,
@@ -237,12 +236,6 @@ export const MegaMenu = memo(
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
-                {navTreeError && (
-                  <Alert
-                    severity="warning"
-                    title={t('navigation.megamenu.plugin-nav-failed', "Some navigation items couldn't be loaded")}
-                  />
-                )}
                 {isLoading ? (
                   <ul className={styles.itemList} aria-label={navLabel} aria-busy>
                     <MegaMenuSkeleton />

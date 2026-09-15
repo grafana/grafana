@@ -108,13 +108,14 @@ describe('MegaMenu with the client-built nav tree (grafana.multiTenantNavTree)',
     expect(screen.queryByRole('link', { name: 'Connections' })).not.toBeInTheDocument();
   });
 
-  it('renders the static tree with a warning when the plugin nav fetch fails', async () => {
+  it('renders the static tree when the plugin nav fetch fails', async () => {
     server.use(customGetPluginMetasHandler(() => HttpResponse.json(null, { status: 500 })));
 
     renderMegaMenu();
 
-    expect(await screen.findByText("Some navigation items couldn't be loaded")).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
+    // The metas service falls back to the bootdata apps and logs the fallback
+    // itself, so the menu leaves its skeleton and shows the tree it has
+    expect(await screen.findByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Navigation' })).not.toHaveAttribute('aria-busy');
   });
 });
