@@ -47,7 +47,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	pluginsURL := section.Key("plugins_url").MustString("")
-	if pluginsURL == "" {
+	if pluginsURL != "" {
 		return &remotePluginLoader{url: pluginsURL}, nil
 	}
 
