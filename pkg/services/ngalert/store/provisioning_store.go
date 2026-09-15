@@ -145,7 +145,7 @@ func (st DBstore) provenanceUpsert(sess *db.Session, recordKey, recordType strin
 		[]string{"record_key", "record_type", "org_id"},
 		[]string{"record_key", "record_type", "org_id", "provenance", "manager_kind", "manager_identity"})
 
-	params := []interface{}{
+	params := []any{
 		recordKey,
 		recordType,
 		org,
@@ -187,7 +187,7 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 		mp := managerForProvenanceWrite(stored, p)
 		_, err = sess.Table(provenanceRecord{}).
 			Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
-			Update(map[string]interface{}{
+			Update(map[string]any{
 				"provenance":       p,
 				"manager_kind":     string(mp.Kind),
 				"manager_identity": mp.Identity,
@@ -347,7 +347,7 @@ func (st DBstore) setManagerPropertiesUpsert(sess *db.Session, recordKey, record
 		[]string{"record_key", "record_type", "org_id"},
 		[]string{"record_key", "record_type", "org_id", "provenance", "manager_kind", "manager_identity"})
 
-	params := []interface{}{
+	params := []any{
 		recordKey,
 		recordType,
 		org,
@@ -375,7 +375,7 @@ func (st DBstore) setManagerPropertiesWithLocking(sess *db.Session, recordKey, r
 	if exists {
 		_, err = sess.Table(provenanceRecord{}).
 			Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
-			Update(map[string]interface{}{
+			Update(map[string]any{
 				"provenance":       p,
 				"manager_kind":     string(m.Kind),
 				"manager_identity": m.Identity,

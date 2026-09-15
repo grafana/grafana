@@ -54,12 +54,12 @@ type AfterLoadSessionProcessor interface {
 	AfterLoad(*Session)
 }
 
-type executedProcessorFunc func(*Session, interface{}) error
+type executedProcessorFunc func(*Session, any) error
 
 type executedProcessor struct {
 	fun     executedProcessorFunc
 	session *Session
-	bean    interface{}
+	bean    any
 }
 
 func (executor *executedProcessor) execute() error {

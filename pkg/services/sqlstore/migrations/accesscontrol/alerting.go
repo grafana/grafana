@@ -41,7 +41,7 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 		return fmt.Errorf("failed to query permission table: %w", err)
 	}
 	groupByRoleID := make(map[int64]bool)
-	toDelete := make([]interface{}, 0, len(results))
+	toDelete := make([]any, 0, len(results))
 	for _, result := range results {
 		if result.Action == accesscontrol.ActionAlertingNotificationsWrite {
 			groupByRoleID[result.RoleID] = false

@@ -58,7 +58,7 @@ func toK8s(x *resourcepb.ResourceTable) (metav1.Table, error) {
 	table.Rows = make([]metav1.TableRow, len(x.Rows))
 	for i, r := range x.Rows {
 		row := metav1.TableRow{
-			Cells: make([]interface{}, len(r.Cells)),
+			Cells: make([]any, len(r.Cells)),
 		}
 		if len(r.Cells) != columnCount {
 			return table, fmt.Errorf("invalid cells size (have=%d, expect=%d)", len(r.Cells), columnCount)

@@ -271,15 +271,15 @@ func (f *FolderDefinition) CreateWithAPIServer(t *testing.T, h *apis.K8sTestHelp
 		require.NoError(t, err)
 		client := dyn.Resource(gvr).Namespace(ns)
 		obj, err := client.Create(context.Background(), &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":      f.Name,
 					"namespace": ns,
 					"annotations": map[string]string{
 						utils.AnnoKeyFolder: parent,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": f.Name,
 				},
 			},
@@ -529,7 +529,7 @@ func getFoldersFromAPIServerList(t *testing.T, client dynamic.ResourceInterface)
 
 func dotify(t treeprint.Tree) string {
 	buff := bytes.Buffer{}
-	for _, line := range strings.Split(t.String(), "\n") {
+	for line := range strings.SplitSeq(t.String(), "\n") {
 		if line == "." || line == " " || len(line) == 0 {
 			continue
 		}

@@ -167,7 +167,7 @@ type ProvisionedAlertRule struct {
 	// example: [{"refId":"A","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}]
 	Data []AlertQuery `json:"data"`
 	// readonly: true
-	Updated time.Time `json:"updated,omitempty"`
+	Updated time.Time `json:"updated"`
 	// required: true
 	NoDataState NoDataState `json:"noDataState"`
 	// required: true
@@ -317,7 +317,7 @@ type AlertRuleExport struct {
 type AlertQueryExport struct {
 	RefID             string                  `json:"refId" yaml:"refId" hcl:"ref_id"`
 	QueryType         *string                 `json:"queryType,omitempty" yaml:"queryType,omitempty" hcl:"query_type"`
-	RelativeTimeRange RelativeTimeRangeExport `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty" hcl:"relative_time_range,block"`
+	RelativeTimeRange RelativeTimeRangeExport `json:"relativeTimeRange" yaml:"relativeTimeRange,omitempty" hcl:"relative_time_range,block"`
 	DatasourceUID     string                  `json:"datasourceUid" yaml:"datasourceUid" hcl:"datasource_uid"`
 	Model             map[string]any          `json:"model" yaml:"model"`
 	ModelString       string                  `json:"-" yaml:"-" hcl:"model"`

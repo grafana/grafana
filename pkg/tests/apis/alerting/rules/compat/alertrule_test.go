@@ -89,11 +89,11 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 		require.Equal(t, "A", retrievedRule.Condition)
 		require.Equal(t, "A", retrievedRule.Data[0].RefID)
 
-		model := map[string]interface{}{}
+		model := map[string]any{}
 		err := json.Unmarshal(retrievedRule.Data[0].Model, &model)
 		require.NoError(t, err)
 		require.NotNil(t, model)
-		expectedModel, ok := created.Spec.Expressions["A"].Model.(map[string]interface{})
+		expectedModel, ok := created.Spec.Expressions["A"].Model.(map[string]any)
 		if !ok {
 			t.Fatalf("Expected model to be a map[string]interface{}, got %T", created.Spec.Expressions["A"].Model)
 		}
@@ -240,11 +240,11 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			expectedDuration, err := prom_model.ParseDuration(fmt.Sprintf("%ds", created.Interval))
 			require.NoError(t, err)
 			require.Equal(t, expectedDuration.String(), string(retrievedRule.Spec.Trigger.Interval))
-			expectedModel := map[string]interface{}{}
+			expectedModel := map[string]any{}
 			err = json.Unmarshal(r.Data[0].Model, &expectedModel)
 			require.NoError(t, err)
 			require.NotNil(t, expectedModel)
-			retrievedModel, ok := retrievedRule.Spec.Expressions["A"].Model.(map[string]interface{})
+			retrievedModel, ok := retrievedRule.Spec.Expressions["A"].Model.(map[string]any)
 			if !ok {
 				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Expressions["A"].Model)
 			}
@@ -530,11 +530,11 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			expectedDuration, err := prom_model.ParseDuration(fmt.Sprintf("%ds", created.Interval))
 			require.NoError(t, err)
 			require.Equal(t, expectedDuration.String(), string(retrievedRule.Spec.Trigger.Interval))
-			expectedModel := map[string]interface{}{}
+			expectedModel := map[string]any{}
 			err = json.Unmarshal(r.Data[0].Model, &expectedModel)
 			require.NoError(t, err)
 			require.NotNil(t, expectedModel)
-			retrievedModel, ok := retrievedRule.Spec.Expressions["X"].Model.(map[string]interface{})
+			retrievedModel, ok := retrievedRule.Spec.Expressions["X"].Model.(map[string]any)
 			if !ok {
 				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Expressions["X"].Model)
 			}

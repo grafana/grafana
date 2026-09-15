@@ -273,7 +273,7 @@ func createInProcToken() (string, error) {
 
 	// Create signer with ES256 algorithm
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: privateKey}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
+		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderKey("typ"): authnlib.TokenTypeAccess,
 		},
 	})

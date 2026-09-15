@@ -213,7 +213,7 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	require.NoError(t, err)
 }
 
-func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
+func makePostRequest(t *testing.T, URL string) (int, map[string]any) {
 	t.Helper()
 
 	// nolint:gosec
@@ -225,7 +225,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	body := make(map[string]interface{})
+	body := make(map[string]any)
 	err = json.Unmarshal(b, &body)
 	require.NoError(t, err)
 

@@ -103,19 +103,19 @@ type recordingHandler struct {
 	deletes []*metav1.PartialObjectMetadata
 }
 
-func (h *recordingHandler) OnAdd(obj interface{}, _ bool) {
+func (h *recordingHandler) OnAdd(obj any, _ bool) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.adds = append(h.adds, obj.(*metav1.PartialObjectMetadata))
 }
 
-func (h *recordingHandler) OnUpdate(_, newObj interface{}) {
+func (h *recordingHandler) OnUpdate(_, newObj any) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.updates = append(h.updates, newObj.(*metav1.PartialObjectMetadata))
 }
 
-func (h *recordingHandler) OnDelete(obj interface{}) {
+func (h *recordingHandler) OnDelete(obj any) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.deletes = append(h.deletes, obj.(*metav1.PartialObjectMetadata))

@@ -110,7 +110,7 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 		return defaultErr
 	}
 
-	var dat map[string]interface{}
+	var dat map[string]any
 	if err := json.Unmarshal(normResp.Body(), &dat); err != nil {
 		return defaultErr
 	}

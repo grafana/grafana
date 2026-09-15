@@ -154,7 +154,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 }
 
 func (m *kqlMacroEngine) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
-	result := ""
+	var result strings.Builder
 	lastIndex := 0
 
 	for _, v := range re.FindAllStringSubmatchIndex(str, -1) {
@@ -167,9 +167,9 @@ func (m *kqlMacroEngine) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str str
 			}
 		}
 
-		result += str[lastIndex:v[0]] + repl(groups)
+		result.WriteString(str[lastIndex:v[0]] + repl(groups))
 		lastIndex = v[1]
 	}
 
-	return result + str[lastIndex:]
+	return result.String() + str[lastIndex:]
 }

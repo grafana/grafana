@@ -472,7 +472,7 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.Unmarshal(gettable, &data); err != nil {
 		return nil, err
 	}
@@ -619,7 +619,7 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 // definitions.Route explicit.
 type ManagedRoutes map[string]*definition.Route
 
-func (mr *ManagedRoutes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (mr *ManagedRoutes) UnmarshalYAML(unmarshal func(any) error) error {
 	type plain ManagedRoutes
 	if err := unmarshal((*plain)(mr)); err != nil {
 		return err
@@ -836,7 +836,7 @@ type ExternalAlertmanagerConfig struct {
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
 	// which redacts itself during encoding.
-	amSimple map[string]interface{} `yaml:"-" json:"-"`
+	amSimple map[string]any `yaml:"-" json:"-"`
 }
 
 func (c *ExternalAlertmanagerConfig) MarshalJSON() ([]byte, error) {
@@ -847,8 +847,8 @@ func (c *ExternalAlertmanagerConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	type plain struct {
-		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig map[string]any    `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
 
 	tmp := plain{
@@ -866,7 +866,7 @@ func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
 	}
 
 	type intermediate struct {
-		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+		AlertmanagerConfig map[string]any `yaml:"alertmanager_config" json:"alertmanager_config"`
 	}
 
 	var tmp intermediate
@@ -880,14 +880,14 @@ func (c *ExternalAlertmanagerConfig) UnmarshalJSON(b []byte) error {
 	// is non-nil on success so the nil-check in Marshal{JSON,YAML} still catches
 	// undecoded structs without rejecting legitimately empty upstream configs.
 	if c.amSimple == nil {
-		c.amSimple = map[string]interface{}{}
+		c.amSimple = map[string]any{}
 	}
 
 	return nil
 }
 
 // MarshalYAML implements yaml.Marshaller.
-func (c *ExternalAlertmanagerConfig) MarshalYAML() (interface{}, error) {
+func (c *ExternalAlertmanagerConfig) MarshalYAML() (any, error) {
 	// amSimple is populated by UnmarshalJSON/UnmarshalYAML and holds the raw alertmanager config
 	// without secret redaction. Marshaling without it would silently lose secret fields.
 	if c.amSimple == nil {
@@ -936,7 +936,7 @@ func (c *ExternalAlertmanagerConfig) UnmarshalYAML(value *yaml.Node) error {
 	// success so Marshal{JSON,YAML} still catches undecoded structs without
 	// rejecting legitimately empty upstream configs.
 	if c.amSimple == nil {
-		c.amSimple = map[string]interface{}{}
+		c.amSimple = map[string]any{}
 	}
 
 	c.TemplateFiles = tmp.TemplateFiles

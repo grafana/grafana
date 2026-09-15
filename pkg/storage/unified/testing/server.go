@@ -481,17 +481,17 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 
 	// Test 6: Verify the trash items have the correct metadata
 	for _, item := range trashListA2.Items {
-		var obj map[string]interface{}
+		var obj map[string]any
 		err := json.Unmarshal(item.Value, &obj)
 		require.NoError(t, err)
 
 		// Check that the item has deletion timestamp
-		metadata, ok := obj["metadata"].(map[string]interface{})
+		metadata, ok := obj["metadata"].(map[string]any)
 		require.True(t, ok, "Resource should have metadata")
 		require.NotNil(t, metadata["deletionTimestamp"], "Trash item should have deletion timestamp")
 
 		// Check that the item has the correct updatedBy field
-		annotations, ok := metadata["annotations"].(map[string]interface{})
+		annotations, ok := metadata["annotations"].(map[string]any)
 		require.True(t, ok, "Resource should have annotations")
 		require.Contains(t, annotations, "grafana.app/updatedBy", "Trash item should have updatedBy annotation")
 	}

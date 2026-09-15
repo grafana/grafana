@@ -308,14 +308,14 @@ func TestIntegrationLibraryElementNameRouteRequiresReadPermission(t *testing.T) 
 */
 
 func createLibraryElement(t *testing.T, grafanaListedAddr, user, password, folderUID string, expectedStatus int) string {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"datasource":  "${DS_GDEV-TESTDATA}",
 		"id":          1,
 		"title":       "Text - Library Panel",
 		"type":        "text",
 		"description": "A description",
 	}
-	createRequest := map[string]interface{}{
+	createRequest := map[string]any{
 		"name":      "Library Panel Name",
 		"model":     m,
 		"folderUid": folderUID,
@@ -335,7 +335,7 @@ func createLibraryElement(t *testing.T, grafanaListedAddr, user, password, folde
 
 func patchLibraryElement(t *testing.T, grafanaListedAddr, user, password, uid, folderUID string, expectedStatus int) {
 	version := getLibraryElementVersion(t, grafanaListedAddr, user, password, uid)
-	patchRequest := map[string]interface{}{
+	patchRequest := map[string]any{
 		"folderUid": folderUID,
 		"version":   version,
 		"kind":      1,
@@ -375,7 +375,7 @@ func getLibraryElementVersion(t *testing.T, grafanaListedAddr, user, password, u
 }
 
 func createTestFolder(t *testing.T, grafanaListedAddr string) string {
-	folderRequest := map[string]interface{}{
+	folderRequest := map[string]any{
 		"title": "Test Folder",
 	}
 	resp := makeHTTPRequest(t, "POST", fmt.Sprintf("http://admin2:admin@%s/api/folders", grafanaListedAddr), folderRequest, http.StatusOK)
@@ -386,8 +386,8 @@ func createTestFolder(t *testing.T, grafanaListedAddr string) string {
 }
 
 func grantFolderPermission(t *testing.T, grafanaListedAddr, folderUID string, userID int64, permission dashboardaccess.PermissionType) {
-	permissionRequest := map[string]interface{}{
-		"items": []map[string]interface{}{
+	permissionRequest := map[string]any{
+		"items": []map[string]any{
 			{
 				"userId":     userID,
 				"permission": int(permission),
@@ -398,13 +398,13 @@ func grantFolderPermission(t *testing.T, grafanaListedAddr, folderUID string, us
 }
 
 func revokeFolderPermissions(t *testing.T, grafanaListedAddr, folderUID string, userID int64) {
-	permissionRequest := map[string]interface{}{
-		"items": []map[string]interface{}{},
+	permissionRequest := map[string]any{
+		"items": []map[string]any{},
 	}
 	makeHTTPRequest(t, "POST", fmt.Sprintf("http://admin2:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID), permissionRequest, http.StatusOK)
 }
 
-func makeHTTPRequest(t *testing.T, method, url string, body interface{}, expectedStatus int) []byte {
+func makeHTTPRequest(t *testing.T, method, url string, body any, expectedStatus int) []byte {
 	var req *http.Request
 	var err error
 

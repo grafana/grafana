@@ -58,16 +58,16 @@ func newPermission(kind, name, verb string) permission {
 	}
 }
 
-func (p permission) ToMap() map[string]interface{} {
-	return map[string]interface{}{
+func (p permission) ToMap() map[string]any {
+	return map[string]any{
 		"kind": p.kind,
 		"name": p.name,
 		"verb": p.verb,
 	}
 }
 
-func newPermissionMaps(permissions ...permission) []map[string]interface{} {
-	permissionsMaps := make([]map[string]interface{}, len(permissions))
+func newPermissionMaps(permissions ...permission) []map[string]any {
+	permissionsMaps := make([]map[string]any, len(permissions))
 	for i, permission := range permissions {
 		permissionsMaps[i] = permission.ToMap()
 	}
@@ -169,8 +169,8 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, cli
 		require.NotEmpty(t, createdName)
 
 		// Verify spec
-		spec := created.Object["spec"].(map[string]interface{})
-		resource := spec["resource"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
+		resource := spec["resource"].(map[string]any)
 		require.Equal(t, gvrFolders.Group, resource["apiGroup"])
 		require.Equal(t, gvrFolders.Resource, resource["resource"])
 		require.Equal(t, parentUID, resource["name"])
@@ -182,17 +182,17 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, cli
 		require.Equal(t, createdName, fetched.GetName())
 
 		// Update the ResourcePermission
-		fetched.Object["spec"].(map[string]interface{})["permissions"] = newPermissionMaps(
+		fetched.Object["spec"].(map[string]any)["permissions"] = newPermissionMaps(
 			newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "edit"),
 		)
 		updated, err := clients.rpAdmin.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
-		updatedSpec := updated.Object["spec"].(map[string]interface{})
-		permissions := updatedSpec["permissions"].([]interface{})
+		updatedSpec := updated.Object["spec"].(map[string]any)
+		permissions := updatedSpec["permissions"].([]any)
 		require.Len(t, permissions, 1)
-		perm := permissions[0].(map[string]interface{})
+		perm := permissions[0].(map[string]any)
 		require.Equal(t, helper.Org1.Viewer.Identity.GetIdentifier(), perm["name"])
 		require.Equal(t, "edit", perm["verb"])
 
@@ -241,7 +241,7 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, cl
 
 		// Update should work
 		permission = newPermission("Team", helper.Org1.Staff.UID, "edit")
-		fetched.Object["spec"].(map[string]interface{})["permissions"] = []interface{}{permission.ToMap()}
+		fetched.Object["spec"].(map[string]any)["permissions"] = []any{permission.ToMap()}
 
 		_, err = clients.rpAdmin.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -299,7 +299,7 @@ func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, cl
 		require.NotNil(t, fetched)
 
 		// Update the ResourcePermission to grant editor permissions
-		fetched.Object["spec"].(map[string]interface{})["permissions"] = newPermissionMaps(
+		fetched.Object["spec"].(map[string]any)["permissions"] = newPermissionMaps(
 			newPermission("BasicRole", "Editor", "edit"),
 			newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "admin"),
 		)
@@ -329,7 +329,7 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 			fetched, err := clients.rpEditor.Resource.Get(ctx, "folder.grafana.app-folders-"+sub2UID, metav1.GetOptions{})
 			require.NoError(t, err)
 
-			fetched.Object["spec"].(map[string]interface{})["permissions"] = newPermissionMaps(
+			fetched.Object["spec"].(map[string]any)["permissions"] = newPermissionMaps(
 				newPermission("BasicRole", "Editor", "admin"),
 				newPermission("User", helper.Org1.Viewer.Identity.GetIdentifier(), "edit"),
 			)
@@ -364,7 +364,7 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 			require.NoError(t, err)
 			require.NotNil(t, fetched)
 
-			permissions := fetched.Object["spec"].(map[string]interface{})["permissions"]
+			permissions := fetched.Object["spec"].(map[string]any)["permissions"]
 			require.Len(t, permissions, 1)
 		})
 	})
@@ -407,7 +407,7 @@ func doResourcePermissionHierarchyTests(t *testing.T, helper *apis.K8sTestHelper
 			require.NoError(t, err)
 			require.NotNil(t, fetched)
 
-			permissions := fetched.Object["spec"].(map[string]interface{})["permissions"]
+			permissions := fetched.Object["spec"].(map[string]any)["permissions"]
 			require.Len(t, permissions, 1)
 		})
 	})
@@ -506,27 +506,27 @@ func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, 
 		Namespace: helper.Namespacer(user.Identity.GetOrgID()),
 		GVR:       gvrFolders,
 	})
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"generateName": "test-folder-",
 		"namespace":    helper.Namespacer(user.Identity.GetOrgID()),
 	}
 
 	if parentUID != "" {
-		metadata["annotations"] = map[string]interface{}{
+		metadata["annotations"] = map[string]any{
 			utils.AnnoKeyFolder: parentUID,
 		}
 	} else {
-		metadata["annotations"] = map[string]interface{}{
+		metadata["annotations"] = map[string]any{
 			utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault,
 		}
 	}
 
 	folder := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "folder.grafana.app/v1beta1",
 			"kind":       "Folder",
 			"metadata":   metadata,
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": title,
 			},
 		},
@@ -584,17 +584,17 @@ func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, user apis.Use
 	})
 
 	dashboard := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v1beta1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"generateName": "test-dashboard-",
 				"namespace":    helper.Namespacer(user.Identity.GetOrgID()),
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					utils.AnnoKeyFolder: folderUID,
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": title,
 			},
 		},
@@ -609,14 +609,14 @@ func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, user apis.Use
 func createResourcePermissionObject(resourceName, apiGroup, resource string, permissions ...permission) *unstructured.Unstructured {
 	permissionMaps := newPermissionMaps(permissions...)
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": iamv0.GROUP + "/" + iamv0.VERSION,
 			"kind":       "ResourcePermission",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": apiGroup + "-" + resource + "-" + resourceName,
 			},
-			"spec": map[string]interface{}{
-				"resource": map[string]interface{}{
+			"spec": map[string]any{
+				"resource": map[string]any{
 					"apiGroup": apiGroup,
 					"resource": resource,
 					"name":     resourceName,

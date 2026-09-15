@@ -57,7 +57,7 @@ func (DataSourceConnection) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceConnectionList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
+	metav1.ListMeta `json:"metadata,omitzero"`
 
 	Items []DataSourceConnection `json:"items"`
 }
@@ -83,7 +83,7 @@ type DataSourceApiServerRegistry interface {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServer struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitzero,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitzero"`
 
 	// The display name
 	Title string `json:"title"`
@@ -106,7 +106,7 @@ func (DataSourceApiServer) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceApiServerList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitzero,omitempty"`
+	metav1.ListMeta `json:"metadata,omitzero"`
 
 	Items []DataSourceApiServer `json:"items"`
 }

@@ -298,7 +298,7 @@ func getTeamViaK8sAPI(t *testing.T, helper *apis.K8sTestHelper, uid string) team
 	require.NoError(t, err)
 	require.NotNil(t, fetched)
 
-	spec := fetched.Object["spec"].(map[string]interface{})
+	spec := fetched.Object["spec"].(map[string]any)
 
 	labels := fetched.GetLabels()
 	id, err := strconv.ParseInt(labels["grafana.app/deprecatedInternalID"], 10, 64)

@@ -275,7 +275,7 @@ func toTimeField(field *data.Field) *data.Field {
 	timeField.Labels = field.Labels
 	ft := field.Type()
 	if ft.Numeric() {
-		for i := 0; i < count; i++ {
+		for i := range count {
 			v, err := field.FloatAt(i)
 			if err == nil {
 				t := time.Unix(0, int64(v)*int64(time.Millisecond))
@@ -289,7 +289,7 @@ func toTimeField(field *data.Field) *data.Field {
 		return timeField
 	}
 	if ft == data.FieldTypeNullableString || ft == data.FieldTypeString {
-		for i := 0; i < count; i++ {
+		for i := range count {
 			v, ok := field.ConcreteAt(i)
 			if ok && v != nil {
 				t, err := time.Parse(time.RFC3339, v.(string))

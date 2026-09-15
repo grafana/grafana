@@ -25,7 +25,7 @@ const (
 //
 //go:generate mockery --name=StatusPatcher
 type StatusPatcher interface {
-	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
+	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]any) error
 }
 
 // RepositoryHealthCheckerInterface defines the interface for repository health checking operations
@@ -46,7 +46,7 @@ type HealthResultWithPatchOps struct {
 	TestResults    *provisioning.TestResults
 	HealthStatus   provisioning.HealthStatus
 	ReadyCondition metav1.Condition
-	PatchOps       []map[string]interface{}
+	PatchOps       []map[string]any
 }
 
 // RepositoryHealthChecker provides unified health checking for repositories
@@ -125,7 +125,7 @@ func (hc *RepositoryHealthChecker) RecordFailure(ctx context.Context, failureTyp
 	healthStatus := hc.recordFailure(failureType, err)
 
 	// Create patch operation
-	patchOp := map[string]interface{}{
+	patchOp := map[string]any{
 		"op":    "replace",
 		"path":  "/status/health",
 		"value": healthStatus,
@@ -183,7 +183,7 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 
 	// Only update if health status actually changed
 	if hc.hasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
-		patchOp := map[string]interface{}{
+		patchOp := map[string]any{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
@@ -227,9 +227,9 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		return HealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
-	var patchOps []map[string]interface{}
+	var patchOps []map[string]any
 	if hc.hasHealthStatusChanged(cfg.Status.Health, newHealthStatus) {
-		patchOps = []map[string]interface{}{{
+		patchOps = []map[string]any{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,
@@ -251,7 +251,7 @@ func (hc *RepositoryHealthChecker) RefreshTimestamp(ctx context.Context, repo *p
 	healthStatus.Checked = time.Now().UnixMilli()
 
 	// Create patch operation
-	patchOp := map[string]interface{}{
+	patchOp := map[string]any{
 		"op":    "replace",
 		"path":  "/status/health",
 		"value": healthStatus,

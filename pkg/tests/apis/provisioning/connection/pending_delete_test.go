@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 	// Mutate the spec (changing the title increments metadata.Generation) and
 	// simultaneously set the pending-delete label.  Both mutations go in one
 	// Update so the controller sees the label from the very first reconcile attempt.
-	obj.Object["spec"].(map[string]interface{})["title"] = "Pending Delete Test Connection (modified)"
+	obj.Object["spec"].(map[string]any)["title"] = "Pending Delete Test Connection (modified)"
 
 	labels := obj.GetLabels()
 	if labels == nil {
@@ -192,7 +192,7 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) 
 			if err != nil {
 				return err
 			}
-			obj.Object["spec"].(map[string]interface{})["title"] = "Modified Title"
+			obj.Object["spec"].(map[string]any)["title"] = "Modified Title"
 			_, err = helper.Connections.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
 			return err
 		})

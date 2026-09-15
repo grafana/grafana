@@ -42,7 +42,7 @@ func TestGroupQueriesForBatch(t *testing.T) {
 	})
 
 	t.Run("queries with identical group keys share one group", func(t *testing.T) {
-		dim := []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}}}
+		dim := []dataquery.AzureMetricDimension{{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm1"}}}
 		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim, nil)
 		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim, nil)
 		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
@@ -65,7 +65,7 @@ func TestGroupQueriesForBatch(t *testing.T) {
 			{"time range", func(q *types.AzureMonitorQuery) { q.TimeRange.To = later.Add(time.Hour) }},
 			{"aggregation", func(q *types.AzureMonitorQuery) { q.Params.Set("aggregation", "Maximum") }},
 			{"dimension filters", func(q *types.AzureMonitorQuery) {
-				q.Dimensions = []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm2"}}}
+				q.Dimensions = []dataquery.AzureMetricDimension{{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm2"}}}
 			}},
 		}
 		for _, tt := range tests {
@@ -131,7 +131,7 @@ func TestDimensionFilterKey(t *testing.T) {
 		q := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm1"}},
 			},
 		}
 		assert.Equal(t, "VMName eq 'vm1'", dimensionFilterKey(q))
@@ -141,7 +141,7 @@ func TestDimensionFilterKey(t *testing.T) {
 		q := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{}},
 			},
 		}
 		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
@@ -153,7 +153,7 @@ func TestDimensionFilterKey(t *testing.T) {
 		q := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: nil},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: nil},
 			},
 		}
 		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
@@ -163,13 +163,13 @@ func TestDimensionFilterKey(t *testing.T) {
 		q1 := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1", "vm2"}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm1", "vm2"}},
 			},
 		}
 		q2 := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm2", "vm1"}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm2", "vm1"}},
 			},
 		}
 		assert.Equal(t, dimensionFilterKey(q1), dimensionFilterKey(q2))
@@ -179,15 +179,15 @@ func TestDimensionFilterKey(t *testing.T) {
 		q1 := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}},
-				{Dimension: strPtr("ResourceGroup"), Operator: strPtr("eq"), Filters: []string{"rg1"}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm1"}},
+				{Dimension: new("ResourceGroup"), Operator: new("eq"), Filters: []string{"rg1"}},
 			},
 		}
 		q2 := &types.AzureMonitorQuery{
 			Params: url.Values{},
 			Dimensions: []dataquery.AzureMetricDimension{
-				{Dimension: strPtr("ResourceGroup"), Operator: strPtr("eq"), Filters: []string{"rg1"}},
-				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}},
+				{Dimension: new("ResourceGroup"), Operator: new("eq"), Filters: []string{"rg1"}},
+				{Dimension: new("VMName"), Operator: new("eq"), Filters: []string{"vm1"}},
 			},
 		}
 		// Both orderings should produce the same key

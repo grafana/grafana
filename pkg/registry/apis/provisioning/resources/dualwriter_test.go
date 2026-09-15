@@ -607,7 +607,7 @@ func TestCreateFolder(t *testing.T) {
 				folder := ParseFolder("newfolder/", "test-repo")
 				tree.Add(folder, "")
 
-				folderObj := &unstructured.Unstructured{Object: map[string]interface{}{"k": "v"}}
+				folderObj := &unstructured.Unstructured{Object: map[string]any{"k": "v"}}
 				mockClient := &MockDynamicResourceInterface{}
 				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
 					Return(folderObj, nil)
@@ -655,13 +655,13 @@ func TestCreateFolder(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				notFound := apierrors.NewNotFound(schema.GroupResource{}, "uid")
-				folderObj := &unstructured.Unstructured{Object: map[string]interface{}{"foo": "bar"}}
+				folderObj := &unstructured.Unstructured{Object: map[string]any{"foo": "bar"}}
 				mockClient := &MockDynamicResourceInterface{}
 				// EnsureFolderExists (CreateFolderWithUID): Get → NotFound, Create succeeds
 				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
 					Return(nil, notFound).Once()
 				mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{}, []string(nil)).
-					Return(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil).Once()
+					Return(&unstructured.Unstructured{Object: map[string]any{}}, nil).Once()
 				// GetFolder: Get → folderObj
 				mockClient.On("Get", mock.Anything, mock.AnythingOfType("string"), metav1.GetOptions{}, []string(nil)).
 					Return(folderObj, nil).Once()
@@ -1311,7 +1311,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				tree := NewEmptyFolderTree()
 				tree.Add(Folder{ID: existingUID, Title: "Updated Title", Path: "myfolder/", MetadataHash: "new-hash"}, "")
 
-				folderObj := &unstructured.Unstructured{Object: map[string]interface{}{"kind": "Folder"}}
+				folderObj := &unstructured.Unstructured{Object: map[string]any{"kind": "Folder"}}
 
 				mockClient := &MockDynamicResourceInterface{}
 				// GetFolder call after EnsureFolderPathExist succeeds

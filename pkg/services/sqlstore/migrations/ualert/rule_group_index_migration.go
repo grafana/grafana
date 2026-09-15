@@ -64,7 +64,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]interface{}, 0, len(toUpdate))
+	versions := make([]any, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -195,7 +195,7 @@ func (d duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}

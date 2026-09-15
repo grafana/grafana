@@ -103,9 +103,9 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 			_ = teamBindingClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		}()
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
-		require.Equal(t, user.GetName(), createdSpec["subject"].(map[string]interface{})["name"])
-		require.Equal(t, team.GetName(), createdSpec["teamRef"].(map[string]interface{})["name"])
+		createdSpec := created.Object["spec"].(map[string]any)
+		require.Equal(t, user.GetName(), createdSpec["subject"].(map[string]any)["name"])
+		require.Equal(t, team.GetName(), createdSpec["teamRef"].(map[string]any)["name"])
 		require.Equal(t, "admin", createdSpec["permission"])
 		require.Equal(t, false, createdSpec["external"])
 
@@ -134,16 +134,16 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 
 		// Update the team binding
 		toUpdate := toCreate.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = createdUID
+		toUpdate.Object["spec"].(map[string]any)["permission"] = "member"
+		toUpdate.Object["metadata"].(map[string]any)["name"] = createdUID
 		updated, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
-		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec := updated.Object["spec"].(map[string]any)
 		require.Equal(t, createdUID, updated.GetName())
-		require.Equal(t, user.GetName(), updatedSpec["subject"].(map[string]interface{})["name"])
-		require.Equal(t, team.GetName(), updatedSpec["teamRef"].(map[string]interface{})["name"])
+		require.Equal(t, user.GetName(), updatedSpec["subject"].(map[string]any)["name"])
+		require.Equal(t, team.GetName(), updatedSpec["teamRef"].(map[string]any)["name"])
 		require.Equal(t, "member", updatedSpec["permission"])
 		require.Equal(t, false, updatedSpec["external"])
 
@@ -277,7 +277,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		})
 
 		toCreate := createTeamBindingObject(helper, user.GetName(), team.GetName())
-		toCreate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
+		toCreate.Object["spec"].(map[string]any)["permission"] = "invalid"
 
 		_, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -317,7 +317,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 				})
 
 				toUpdate := created.DeepCopy()
-				toUpdate.Object["spec"].(map[string]interface{})["permission"] = "member"
+				toUpdate.Object["spec"].(map[string]any)["permission"] = "member"
 				_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 				require.Error(t, err)
 
@@ -337,7 +337,7 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		})
 
 		toUpdate := createTeamBindingObject(helper, user.GetName(), team.GetName())
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = "invalid-team-binding-name"
+		toUpdate.Object["metadata"].(map[string]any)["name"] = "invalid-team-binding-name"
 		_, err := teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -363,8 +363,8 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		}()
 
 		toUpdate := toCreate.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = "test-team-2"
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		toUpdate.Object["spec"].(map[string]any)["teamRef"].(map[string]any)["name"] = "test-team-2"
+		toUpdate.Object["metadata"].(map[string]any)["name"] = created.GetName()
 		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -390,8 +390,8 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		}()
 
 		toUpdate := toCreate.DeepCopy()
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
-		toUpdate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = "test-user-2"
+		toUpdate.Object["metadata"].(map[string]any)["name"] = created.GetName()
+		toUpdate.Object["spec"].(map[string]any)["subject"].(map[string]any)["name"] = "test-user-2"
 
 		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
@@ -418,8 +418,8 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		}()
 
 		toUpdate := toCreate.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["external"] = true
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		toUpdate.Object["spec"].(map[string]any)["external"] = true
+		toUpdate.Object["metadata"].(map[string]any)["name"] = created.GetName()
 		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -445,8 +445,8 @@ func doTeamBindingCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHel
 		}()
 
 		toUpdate := createTeamBindingObject(helper, user.GetName(), team.GetName())
-		toUpdate.Object["spec"].(map[string]interface{})["permission"] = "invalid"
-		toUpdate.Object["metadata"].(map[string]interface{})["name"] = created.GetName()
+		toUpdate.Object["spec"].(map[string]any)["permission"] = "invalid"
+		toUpdate.Object["metadata"].(map[string]any)["name"] = created.GetName()
 		_, err = teamBindingClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -604,7 +604,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			obj := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
 			obj.SetName(name)
 
-			spec := obj.Object["spec"].(map[string]interface{})
+			spec := obj.Object["spec"].(map[string]any)
 			spec["title"] = name
 			spec["email"] = email
 
@@ -618,7 +618,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
 
-			spec := obj.Object["spec"].(map[string]interface{})
+			spec := obj.Object["spec"].(map[string]any)
 			spec["email"] = email
 			spec["login"] = login
 
@@ -637,9 +637,9 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 			toCreate := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
 			toCreate.SetName("")
 			toCreate.SetGenerateName("binding-")
-			toCreate.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = user.GetName()
-			toCreate.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = team.GetName()
-			toCreate.Object["spec"].(map[string]interface{})["external"] = external
+			toCreate.Object["spec"].(map[string]any)["subject"].(map[string]any)["name"] = user.GetName()
+			toCreate.Object["spec"].(map[string]any)["teamRef"].(map[string]any)["name"] = team.GetName()
+			toCreate.Object["spec"].(map[string]any)["external"] = external
 
 			created, err := teamBindingClient.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -706,7 +706,7 @@ func doTeamBindingFieldSelectionTests(t *testing.T, helper *apis.K8sTestHelper) 
 
 func createTeamBindingObject(helper *apis.K8sTestHelper, userName, teamName string) *unstructured.Unstructured {
 	obj := helper.LoadYAMLOrJSONFile("../testdata/teambinding-test-create-v0.yaml")
-	obj.Object["spec"].(map[string]interface{})["subject"].(map[string]interface{})["name"] = userName
-	obj.Object["spec"].(map[string]interface{})["teamRef"].(map[string]interface{})["name"] = teamName
+	obj.Object["spec"].(map[string]any)["subject"].(map[string]any)["name"] = userName
+	obj.Object["spec"].(map[string]any)["teamRef"].(map[string]any)["name"] = teamName
 	return obj
 }

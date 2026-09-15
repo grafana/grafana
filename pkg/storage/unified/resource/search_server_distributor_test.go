@@ -160,7 +160,7 @@ func updateSearchRingForTest(t *testing.T, store kv.Client, firstInstanceState r
 	desc.AddIngester("instance-b", "instance-b", "", []uint32{200}, ring.ACTIVE, now, false, time.Time{}, nil)
 	desc.AddIngester("instance-c", "instance-c", "", []uint32{300}, ring.ACTIVE, now, false, time.Time{}, nil)
 
-	err := store.CAS(t.Context(), RingKey, func(interface{}) (interface{}, bool, error) {
+	err := store.CAS(t.Context(), RingKey, func(any) (any, bool, error) {
 		return desc, false, nil
 	})
 	require.NoError(t, err)

@@ -14,13 +14,13 @@ import (
 // folderJSON generates a valid folder resource JSON file that the provisioning
 // parser should reject with "cannot declare folders through files".
 func folderJSON(uid, title string) []byte {
-	folder := map[string]interface{}{
+	folder := map[string]any{
 		"apiVersion": "folder.grafana.app/v1",
 		"kind":       "Folder",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": uid,
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"title": title,
 		},
 	}

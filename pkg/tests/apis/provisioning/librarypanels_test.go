@@ -27,11 +27,11 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 
 	t.Run("should fail to create library element in provisioned folder", func(t *testing.T) {
 		managedFolderName := helper.RequireSingleRepoFolder(t, "test-repo").GetName()
-		libraryElement := map[string]interface{}{
+		libraryElement := map[string]any{
 			"kind":      1,
 			"name":      "Library Panel",
 			"folderUid": managedFolderName,
-			"model": map[string]interface{}{
+			"model": map[string]any{
 				"type":  "text",
 				"title": "Library Panel",
 			},
@@ -49,13 +49,13 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 		managedFolderName := helper.RequireSingleRepoFolder(t, "test-repo").GetName()
 
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "test-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Library Panel",
 				},
 			},
@@ -64,11 +64,11 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdFolder)
 
-		libraryElement := map[string]interface{}{
+		libraryElement := map[string]any{
 			"kind":      1,
 			"name":      "Moved Library Panel",
 			"folderUid": createdFolder.GetName(),
-			"model": map[string]interface{}{
+			"model": map[string]any{
 				"type":  "text",
 				"title": "Moved Library Panel",
 			},
@@ -79,7 +79,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
 
-		res := libraryElementData["result"].(map[string]interface{})
+		res := libraryElementData["result"].(map[string]any)
 		t.Cleanup(func() {
 			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
 			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
@@ -94,7 +94,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 		})
 
 		// Patching libraryElement - changing folder to a managed one
-		updatedLibraryElement := map[string]interface{}{
+		updatedLibraryElement := map[string]any{
 			"kind":      1,
 			"version":   res["version"],
 			"folderUid": managedFolderName,
@@ -128,11 +128,11 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		helper.ReleaseAndDeleteRepository(t, repo)
 		common.WaitForResourcesReleased(t, helper.Folders.Resource, "folders")
 
-		libraryElement := map[string]interface{}{
+		libraryElement := map[string]any{
 			"kind":      1,
 			"name":      "Library Panel",
 			"folderUid": managedFolderName,
-			"model": map[string]interface{}{
+			"model": map[string]any{
 				"type":  "text",
 				"title": "Library Panel",
 			},
@@ -143,7 +143,7 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
 
-		res := libraryElementData["result"].(map[string]interface{})
+		res := libraryElementData["result"].(map[string]any)
 		t.Cleanup(func() {
 			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
 			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)

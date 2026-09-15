@@ -631,7 +631,7 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	patcher := mocks.NewStatusPatcher(t)
 	patcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]any) bool {
 			return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
 		})).
 		Once().
@@ -1095,18 +1095,18 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 
 // capturePatcher captures all patch operations for inspection in tests.
 type capturePatcher struct {
-	ops []map[string]interface{}
+	ops []map[string]any
 	err error
 }
 
-func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]any) error {
 	c.ops = append(c.ops, patchOperations...)
 	return c.err
 }
 
 // findPatchOp returns the last captured op for path, matching JSON Patch's
 // sequential-apply semantics
-func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
+func (c *capturePatcher) findPatchOp(path string) (map[string]any, bool) {
 	for _, v := range slices.Backward(c.ops) {
 		if v["path"] == path {
 			return v, true
@@ -1277,7 +1277,7 @@ type raceSimulatingPatcher struct {
 	storage *provisioning.Repository
 }
 
-func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]any) error {
 	for _, op := range patchOperations {
 		if op["op"] != "test" {
 			continue
@@ -2257,7 +2257,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	// Find the last /status/conditions patch operation — if there are multiple
 	// replace ops on the same path, the last one wins when applied as a JSON Patch.
-	var lastConditionsPatch map[string]interface{}
+	var lastConditionsPatch map[string]any
 	for _, op := range patcher.ops {
 		if path, ok := op["path"].(string); ok && path == "/status/conditions" {
 			lastConditionsPatch = op
@@ -2731,7 +2731,7 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 
 // callProcessHooks runs processHooks returning the hook ops and error, keeping
 // call sites to two blank identifiers (dogsled's max) instead of four returns.
-func callProcessHooks(rc *RepositoryController, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, accessible, shouldRotate bool) ([]map[string]interface{}, error) {
+func callProcessHooks(rc *RepositoryController, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, accessible, shouldRotate bool) ([]map[string]any, error) {
 	hookOps, _, _, err := rc.processHooks(context.Background(), repo, obj, testResults, accessible, shouldRotate)
 	return hookOps, err
 }
@@ -3791,7 +3791,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 // second rc.process() call observes the first call's writes instead of the
 // same stale object. Fails the test on any path it doesn't know how to
 // apply, so a future patch source can't silently go unverified here.
-func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map[string]interface{}) {
+func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map[string]any) {
 	t.Helper()
 	for _, op := range ops {
 		path, _ := op["path"].(string)

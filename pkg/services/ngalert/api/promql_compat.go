@@ -20,7 +20,7 @@ import (
 
 type instantQueryResponse struct {
 	Status    string    `json:"status"`
-	Data      queryData `json:"data,omitempty"`
+	Data      queryData `json:"data"`
 	ErrorType string    `json:"errorType,omitempty"`
 	Error     string    `json:"error,omitempty"`
 }

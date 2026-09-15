@@ -40,17 +40,17 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 
 	tests := []struct {
 		name         string
-		jobSpec      map[string]interface{}
+		jobSpec      map[string]any
 		wantAccepted bool
 		expectedErr  string
 	}{
 		{
 			name: "push job with config-added kind is accepted",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "ex-1", "kind": "Example", "group": "example.grafana.app"},
 					},
 				},
@@ -59,11 +59,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		},
 		{
 			name: "push job with config-added kind and no group is accepted",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "ex-1", "kind": "Example"},
 					},
 				},
@@ -72,11 +72,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		},
 		{
 			name: "migrate job with config-added kind is accepted",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMigrate),
 				"repository": repo,
-				"migrate": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"migrate": map[string]any{
+					"resources": []map[string]any{
 						{"name": "ex-1", "kind": "Example", "group": "example.grafana.app"},
 					},
 				},
@@ -85,11 +85,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		},
 		{
 			name: "push job with disabled configured kind is rejected",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "pl-1", "kind": "Playlist"},
 					},
 				},
@@ -98,11 +98,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		},
 		{
 			name: "push job with unconfigured kind is rejected",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "panel-1", "kind": "LibraryPanel"},
 					},
 				},
@@ -111,11 +111,11 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		},
 		{
 			name: "push job with wrong group for config-added kind is rejected",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "ex-1", "kind": "Example", "group": "wrong.grafana.app"},
 					},
 				},
@@ -128,10 +128,10 @@ func TestIntegrationProvisioning_JobValidationConfiguredResources(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			name := fmt.Sprintf("test-job-configured-%d", i)
 			jobObj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "provisioning.grafana.app/v0alpha1",
 					"kind":       "Job",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      name,
 						"namespace": "default",
 					},

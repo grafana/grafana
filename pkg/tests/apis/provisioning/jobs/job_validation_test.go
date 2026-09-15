@@ -29,9 +29,9 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	helper.RequireRepoFolderCount(t, repo, 1)
 
 	// Build a resource list that exceeds the selective-export cap (100).
-	overLimitResources := make([]map[string]interface{}, 101)
+	overLimitResources := make([]map[string]any, 101)
 	for i := range overLimitResources {
-		overLimitResources[i] = map[string]interface{}{
+		overLimitResources[i] = map[string]any{
 			"name": fmt.Sprintf("dash-%d", i),
 			"kind": "Dashboard",
 		}
@@ -39,19 +39,19 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		jobSpec     map[string]interface{}
+		jobSpec     map[string]any
 		expectedErr string
 	}{
 		{
 			name: "job without action",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"repository": repo,
 			},
 			expectedErr: "spec.action: Required value: action must be specified",
 		},
 		{
 			name: "job with invalid action",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     "invalid-action",
 				"repository": repo,
 			},
@@ -59,7 +59,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "pull job without pull options",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPull),
 				"repository": repo,
 			},
@@ -67,7 +67,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job without push options",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
 			},
@@ -75,10 +75,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with invalid branch name",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
+				"push": map[string]any{
 					"branch":  "feature..branch", // Invalid: consecutive dots
 					"message": "Test commit",
 				},
@@ -87,10 +87,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with path traversal",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
+				"push": map[string]any{
 					"path":    "../../etc/passwd", // Invalid: path traversal
 					"message": "Test commit",
 				},
@@ -99,19 +99,19 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "delete job without paths or resources",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionDelete),
 				"repository": repo,
-				"delete":     map[string]interface{}{},
+				"delete":     map[string]any{},
 			},
 			expectedErr: "spec.delete: Required value: at least one path or resource must be specified",
 		},
 		{
 			name: "delete job with invalid path",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionDelete),
 				"repository": repo,
-				"delete": map[string]interface{}{
+				"delete": map[string]any{
 					"paths": []string{"../invalid/path"},
 				},
 			},
@@ -119,10 +119,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "move job without target path",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMove),
 				"repository": repo,
-				"move": map[string]interface{}{
+				"move": map[string]any{
 					"paths": []string{"dashboard.json"},
 				},
 			},
@@ -130,10 +130,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "move job without paths or resources",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMove),
 				"repository": repo,
-				"move": map[string]interface{}{
+				"move": map[string]any{
 					"targetPath": "new-location/",
 				},
 			},
@@ -141,10 +141,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "move job with invalid target path",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMove),
 				"repository": repo,
-				"move": map[string]interface{}{
+				"move": map[string]any{
 					"paths":      []string{"dashboard.json"},
 					"targetPath": "../../../etc/", // Invalid: path traversal
 				},
@@ -153,7 +153,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "migrate job without migrate options",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMigrate),
 				"repository": repo,
 			},
@@ -163,11 +163,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			// Playlist is declared but disabled in the default config, so it is not part of
 			// the active supported set and must be rejected for export.
 			name: "push job with disabled resource kind",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "playlist-1", "kind": "Playlist"},
 					},
 				},
@@ -176,11 +176,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with wrong group for supported kind",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "dash-1", "kind": "Dashboard", "group": "folder.grafana.app"},
 					},
 				},
@@ -189,11 +189,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with resource missing name",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"kind": "Dashboard"},
 					},
 				},
@@ -202,11 +202,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with resource missing kind",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "dash-1"},
 					},
 				},
@@ -215,11 +215,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job with empty resource ref",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{},
 					},
 				},
@@ -228,11 +228,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job reports index of bad resource in a mixed list",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "dash-1", "kind": "Dashboard"},
 						{"name": "playlist-1", "kind": "Playlist"},
 					},
@@ -243,11 +243,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		{
 			// Kind matching is case-sensitive: "dashboard" does not match the supported "Dashboard".
 			name: "push job with lowercase dashboard kind",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "dash-1", "kind": "dashboard"},
 					},
 				},
@@ -257,11 +257,11 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		{
 			// LibraryPanel is declared but disabled in the default config.
 			name: "push job with LibraryPanel kind",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
-					"resources": []map[string]interface{}{
+				"push": map[string]any{
+					"resources": []map[string]any{
 						{"name": "panel-1", "kind": "LibraryPanel"},
 					},
 				},
@@ -270,10 +270,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "push job exceeding the selective export resource limit",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
-				"push": map[string]interface{}{
+				"push": map[string]any{
 					"resources": overLimitResources,
 				},
 			},
@@ -281,10 +281,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		},
 		{
 			name: "migrate job exceeding the selective export resource limit",
-			jobSpec: map[string]interface{}{
+			jobSpec: map[string]any{
 				"action":     string(provisioning.JobActionMigrate),
 				"repository": repo,
-				"migrate": map[string]interface{}{
+				"migrate": map[string]any{
 					"resources": overLimitResources,
 				},
 			},
@@ -296,10 +296,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create the job object directly
 			jobObj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "provisioning.grafana.app/v0alpha1",
 					"kind":       "Job",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      fmt.Sprintf("test-job-validation-%d", i),
 						"namespace": "default",
 					},

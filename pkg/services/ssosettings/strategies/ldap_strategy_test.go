@@ -21,16 +21,16 @@ active_sync_enabled = true`
 )
 
 var (
-	expectedLdapConfig = map[string]interface{}{
+	expectedLdapConfig = map[string]any{
 		"enabled":            true,
 		"allow_sign_up":      true,
 		"skip_org_role_sync": false,
-		"config": map[string]interface{}{
-			"servers": []interface{}{
-				map[string]interface{}{
+		"config": map[string]any{
+			"servers": []any{
+				map[string]any{
 					"host": "127.0.0.1",
 					"port": int64(3389),
-					"attributes": map[string]interface{}{
+					"attributes": map[string]any{
 						"email":     "mail",
 						"member_of": "memberOf",
 						"name":      "displayName",
@@ -39,23 +39,23 @@ var (
 					},
 					"bind_dn":       "cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io",
 					"bind_password": "grafana",
-					"group_mappings": []interface{}{
-						map[string]interface{}{
+					"group_mappings": []any{
+						map[string]any{
 							"group_dn": "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
 							"org_id":   int64(1),
 							"org_role": "Admin",
 						},
-						map[string]interface{}{
+						map[string]any{
 							"group_dn": "cn=editor,ou=groups,dc=ldap,dc=goauthentik,dc=io",
 							"org_id":   int64(1),
 							"org_role": "Editor",
 						},
-						map[string]interface{}{"group_dn": "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
+						map[string]any{"group_dn": "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
 							"org_id":   int64(1),
 							"org_role": "Viewer",
 						},
 					},
-					"search_base_dns": []interface{}{
+					"search_base_dns": []any{
 						"DC=ldap,DC=goauthentik,DC=io",
 					},
 					"search_filter": "(cn=%s)", "ssl_skip_verify": true,

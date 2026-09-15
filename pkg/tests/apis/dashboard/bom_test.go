@@ -40,28 +40,28 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 
 		// Create dashboard with BOMs in various fields using unstructured
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv0.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-v0-create",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"uid":           "bom-test-v0-create",
 					"title":         "\ufeffDashboard with BOM",
 					"description":   "Description\ufeffwith BOM in middle",
 					"schemaVersion": 39,
-					"panels": []interface{}{
-						map[string]interface{}{
+					"panels": []any{
+						map[string]any{
 							"title": "\ufeffPanel 1",
 							"type":  "graph",
 						},
-						map[string]interface{}{
+						map[string]any{
 							"title": "Panel 2\ufeff",
 							"type":  "table",
 						},
 					},
-					"tags": []interface{}{},
+					"tags": []any{},
 				},
 			},
 		}
@@ -70,7 +70,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err, "dashboard creation should succeed")
 
 		// Verify BOMs were stripped
-		spec, ok := created.Object["spec"].(map[string]interface{})
+		spec, ok := created.Object["spec"].(map[string]any)
 		require.True(t, ok)
 
 		title, _ := spec["title"].(string)
@@ -81,15 +81,15 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.Equal(t, "Descriptionwith BOM in middle", description)
 		require.NotContains(t, description, "\ufeff", "description should not contain BOMs")
 
-		panels, _ := spec["panels"].([]interface{})
+		panels, _ := spec["panels"].([]any)
 		require.Len(t, panels, 2)
 
-		panel1 := panels[0].(map[string]interface{})
+		panel1 := panels[0].(map[string]any)
 		panel1Title, _ := panel1["title"].(string)
 		require.Equal(t, "Panel 1", panel1Title)
 		require.NotContains(t, panel1Title, "\ufeff", "panel 1 title should not contain BOMs")
 
-		panel2 := panels[1].(map[string]interface{})
+		panel2 := panels[1].(map[string]any)
 		panel2Title, _ := panel2["title"].(string)
 		require.Equal(t, "Panel 2", panel2Title)
 		require.NotContains(t, panel2Title, "\ufeff", "panel 2 title should not contain BOMs")
@@ -104,21 +104,21 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 
 		// First, create a dashboard without BOMs
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv0.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-v0-patch",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"test-annotation": "test-value",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"uid":           "bom-test-v0-patch",
 					"title":         "Original Title",
 					"schemaVersion": 39,
-					"panels":        []interface{}{},
-					"tags":          []interface{}{},
+					"panels":        []any{},
+					"tags":          []any{},
 				},
 			},
 		}
@@ -127,7 +127,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Update with BOMs (simulating what the mutation hook will clean up)
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		spec["title"] = "\ufeffTitle with BOM"
 		spec["description"] = "Description\ufeffwith BOM"
 
@@ -135,7 +135,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify BOMs were stripped by the mutation hook during UPDATE
-		spec = updated.Object["spec"].(map[string]interface{})
+		spec = updated.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		require.NotContains(t, title, "\ufeff", "UPDATE should strip BOMs via mutation hook")
 
@@ -149,7 +149,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NotContains(t, annotations, "test-annotation", "annotation should be removed")
 
 		// Verify BOMs remain stripped in the patched dashboard
-		spec = patched.Object["spec"].(map[string]interface{})
+		spec = patched.Object["spec"].(map[string]any)
 		title, _ = spec["title"].(string)
 		require.NotContains(t, title, "\ufeff", "PATCH should maintain BOM stripping")
 	})
@@ -163,28 +163,28 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 
 		// Create dashboard with BOMs
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv1.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-v1",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/managedBy": "provisioning",
 						"grafana.app/managerId": "test-repo",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"uid":           "bom-test-v1",
 					"title":         "\ufeffDashboard V1 with BOM",
 					"description":   "Description\ufeffwith BOM",
 					"schemaVersion": 39,
-					"panels": []interface{}{
-						map[string]interface{}{
+					"panels": []any{
+						map[string]any{
 							"title": "\ufeffPanel Title",
 							"type":  "graph",
 						},
 					},
-					"tags": []interface{}{},
+					"tags": []any{},
 				},
 			},
 		}
@@ -193,7 +193,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify BOMs were stripped on CREATE
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		require.Equal(t, "Dashboard V1 with BOM", title)
 		require.NotContains(t, title, "\ufeff")
@@ -212,7 +212,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NotContains(t, annotations, "grafana.app/managerId")
 
 		// Verify BOMs remain stripped
-		spec = patched.Object["spec"].(map[string]interface{})
+		spec = patched.Object["spec"].(map[string]any)
 		title, _ = spec["title"].(string)
 		require.NotContains(t, title, "\ufeff")
 	})
@@ -225,13 +225,13 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		})
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv2alpha1.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-v2alpha1",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":       "\ufeffDashboard V2alpha1",
 					"description": "Description\ufeffwith BOM",
 				},
@@ -242,7 +242,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify BOMs were stripped
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		require.Equal(t, "Dashboard V2alpha1", title)
 		require.NotContains(t, title, "\ufeff")
@@ -260,13 +260,13 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		})
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv2beta1.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-v2beta1",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":       "\ufeffDashboard V2beta1",
 					"description": "Description\ufeffwith BOM",
 				},
@@ -277,7 +277,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify BOMs were stripped
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		require.Equal(t, "Dashboard V2beta1", title)
 		require.NotContains(t, title, "\ufeff")
@@ -303,30 +303,30 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 
 		// Create a dashboard with provisioning annotations
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv0.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-finalizer-simulation",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/managedBy":      "provisioning",
 						"grafana.app/managerId":      "test-repo",
 						"grafana.app/sourcePath":     "/dashboards/test.json",
 						"grafana.app/sourceChecksum": "abc123",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"uid":           "bom-test-finalizer",
 					"title":         "\ufeffDashboard for Finalizer Test",
 					"description":   "Description\ufeffwith BOM",
 					"schemaVersion": 39,
-					"panels": []interface{}{
-						map[string]interface{}{
+					"panels": []any{
+						map[string]any{
 							"title": "\ufeffPanel with BOM",
 							"type":  "graph",
 						},
 					},
-					"tags": []interface{}{},
+					"tags": []any{},
 				},
 			},
 		}
@@ -339,7 +339,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.Contains(t, annotations, "grafana.app/managedBy")
 		require.Contains(t, annotations, "grafana.app/managerId")
 
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		require.NotContains(t, title, "\ufeff", "BOMs should be stripped on CREATE")
 
@@ -363,7 +363,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NotContains(t, annotations, "grafana.app/sourceChecksum")
 
 		// Verify dashboard spec still has no BOMs after PATCH
-		spec = patched.Object["spec"].(map[string]interface{})
+		spec = patched.Object["spec"].(map[string]any)
 		title, _ = spec["title"].(string)
 		require.NotContains(t, title, "\ufeff", "BOMs should remain stripped after PATCH")
 
@@ -379,19 +379,19 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		})
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashv0.DashboardResourceInfo.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "bom-test-json-marshal",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"uid":           "bom-test-marshal",
 					"title":         "\ufeffDashboard Title",
 					"description":   "Description\ufeffwith BOM",
 					"schemaVersion": 39,
-					"panels":        []interface{}{},
-					"tags":          []interface{}{},
+					"panels":        []any{},
+					"tags":          []any{},
 				},
 			},
 		}
@@ -405,7 +405,7 @@ func TestIntegrationDashboard_BOMs(t *testing.T) {
 		require.NotContains(t, string(jsonBytes), "\ufeff", "JSON marshaling should not contain BOMs")
 
 		// Verify the actual stored values don't have BOMs
-		spec := created.Object["spec"].(map[string]interface{})
+		spec := created.Object["spec"].(map[string]any)
 		title, _ := spec["title"].(string)
 		assert.Equal(t, "Dashboard Title", title)
 		assert.NotContains(t, title, "\ufeff")

@@ -175,7 +175,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		var result map[string]interface{}
+		var result map[string]any
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
 		assert.Contains(t, result["message"].(string), "Cannot update permissions for folders managed by provisioning")
 		require.NoError(t, res.Body.Close())

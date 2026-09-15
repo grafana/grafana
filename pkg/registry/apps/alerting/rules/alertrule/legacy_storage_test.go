@@ -120,8 +120,8 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 			ExecErrState: model.AlertRuleExecErrStateError,
 			Expressions: model.AlertRuleExpressionMap{
 				"A": model.AlertRuleExpression{
-					Model:  map[string]interface{}{"type": "math", "expression": "1 == 1", "refId": "A"},
-					Source: boolPtr(true),
+					Model:  map[string]any{"type": "math", "expression": "1 == 1", "refId": "A"},
+					Source: new(true),
 				},
 			},
 		},
@@ -135,4 +135,5 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	require.Contains(t, statusErr.Status().Message, "missing annotations.summary")
 }
 
-func boolPtr(b bool) *bool { return &b }
+//go:fix inline
+func boolPtr(b bool) *bool { return new(b) }

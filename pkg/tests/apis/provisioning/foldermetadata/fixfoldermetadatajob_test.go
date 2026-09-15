@@ -38,10 +38,10 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 		state := common.MustNestedString(job.Object, "status", "state")
 		if state != "success" {
-			if msg, ok := job.Object["status"].(map[string]interface{})["message"].(string); ok {
+			if msg, ok := job.Object["status"].(map[string]any)["message"].(string); ok {
 				t.Logf("Job error message: %s", msg)
 			}
-			if errs, ok := job.Object["status"].(map[string]interface{})["errors"].([]interface{}); ok {
+			if errs, ok := job.Object["status"].(map[string]any)["errors"].([]any); ok {
 				t.Logf("Job errors: %v", errs)
 			}
 		}
@@ -117,9 +117,9 @@ func TestIntegrationProvisioning_FixFolderMetadataJob_RemovesKeepFiles(t *testin
 	t.Run("existing _folder.json is not overwritten", func(t *testing.T) {
 		data, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, "parent", "_folder.json")) //nolint:gosec
 		require.NoError(t, err)
-		var obj map[string]interface{}
+		var obj map[string]any
 		require.NoError(t, json.Unmarshal(data, &obj))
-		meta, _ := obj["metadata"].(map[string]interface{})
+		meta, _ := obj["metadata"].(map[string]any)
 		require.Equal(t, "pre-existing-parent-uid", meta["name"],
 			"pre-existing parent _folder.json must not be overwritten by the job")
 	})

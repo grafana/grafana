@@ -12,7 +12,7 @@ import (
 func TestUnstructuredToLegacyShortURL(t *testing.T) {
 	tests := []struct {
 		name        string
-		object      map[string]interface{}
+		object      map[string]any
 		expectedUID string
 		expectPath  string
 		expectSeen  int64
@@ -20,10 +20,10 @@ func TestUnstructuredToLegacyShortURL(t *testing.T) {
 	}{
 		{
 			name: "lastSeenAt as int64 (k8s codec path)",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": "d/foo/bar"},
-				"status":   map[string]interface{}{"lastSeenAt": int64(1700000000)},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": "d/foo/bar"},
+				"status":   map[string]any{"lastSeenAt": int64(1700000000)},
 			},
 			expectedUID: "abc123",
 			expectPath:  "d/foo/bar",
@@ -31,10 +31,10 @@ func TestUnstructuredToLegacyShortURL(t *testing.T) {
 		},
 		{
 			name: "lastSeenAt as float64 (JSON unmarshal path)",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": "d/foo/bar"},
-				"status":   map[string]interface{}{"lastSeenAt": float64(1700000000)},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": "d/foo/bar"},
+				"status":   map[string]any{"lastSeenAt": float64(1700000000)},
 			},
 			expectedUID: "abc123",
 			expectPath:  "d/foo/bar",
@@ -42,9 +42,9 @@ func TestUnstructuredToLegacyShortURL(t *testing.T) {
 		},
 		{
 			name: "missing status defaults lastSeenAt to 0",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": "d/foo/bar"},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": "d/foo/bar"},
 			},
 			expectedUID: "abc123",
 			expectPath:  "d/foo/bar",
@@ -52,10 +52,10 @@ func TestUnstructuredToLegacyShortURL(t *testing.T) {
 		},
 		{
 			name: "missing lastSeenAt defaults to 0",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": "d/foo/bar"},
-				"status":   map[string]interface{}{},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": "d/foo/bar"},
+				"status":   map[string]any{},
 			},
 			expectedUID: "abc123",
 			expectPath:  "d/foo/bar",
@@ -63,34 +63,34 @@ func TestUnstructuredToLegacyShortURL(t *testing.T) {
 		},
 		{
 			name: "missing spec returns error",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"status":   map[string]interface{}{"lastSeenAt": int64(1700000000)},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"status":   map[string]any{"lastSeenAt": int64(1700000000)},
 			},
 			expectErr: true,
 		},
 		{
 			name: "missing spec.path returns error",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{},
 			},
 			expectErr: true,
 		},
 		{
 			name: "non-string spec.path returns error",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": 42},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": 42},
 			},
 			expectErr: true,
 		},
 		{
 			name: "wrong-type lastSeenAt returns error",
-			object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "abc123"},
-				"spec":     map[string]interface{}{"path": "d/foo/bar"},
-				"status":   map[string]interface{}{"lastSeenAt": "not-a-number"},
+			object: map[string]any{
+				"metadata": map[string]any{"name": "abc123"},
+				"spec":     map[string]any{"path": "d/foo/bar"},
+				"status":   map[string]any{"lastSeenAt": "not-a-number"},
 			},
 			expectErr: true,
 		},

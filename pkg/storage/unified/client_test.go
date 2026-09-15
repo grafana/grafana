@@ -307,7 +307,7 @@ func (s *testServer) getCalls() map[string]int {
 	return calls
 }
 
-func (s *testServer) handler(srv interface{}, serverStream grpc.ServerStream) error {
+func (s *testServer) handler(srv any, serverStream grpc.ServerStream) error {
 	fullMethodName, ok := grpc.MethodFromServerStream(serverStream)
 	if ok {
 		md, _ := metadata.FromIncomingContext(serverStream.Context())

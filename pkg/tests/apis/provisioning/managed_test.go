@@ -40,16 +40,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "unmanaged-in-managed-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": managedFolderName,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Unmanaged Dashboard in Managed Folder",
 					"schemaVersion": 41,
 				},
@@ -65,18 +65,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("reject dashboard managed by different repo in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "wrong-manager-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         managedFolderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "some-other-manager",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Dashboard Managed by Different Manager",
 					"schemaVersion": 41,
 				},
@@ -91,13 +91,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow managed dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "unmanaged-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unmanaged Folder",
 				},
 			},
@@ -107,18 +107,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		unmanagedFolderName := createdFolder.GetName()
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "managed-in-unmanaged-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         unmanagedFolderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "my-kubectl",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Kubectl-Managed Dashboard in Unmanaged Folder",
 					"schemaVersion": 41,
 				},
@@ -132,13 +132,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow unmanaged dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "plain-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Plain Folder",
 				},
 			},
@@ -147,16 +147,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err, "should create plain folder")
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "plain-dash-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": createdFolder.GetName(),
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Plain Dashboard",
 					"schemaVersion": 41,
 				},
@@ -172,13 +172,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("reject moving unmanaged dashboard to managed folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "src-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Source Unmanaged Folder",
 				},
 			},
@@ -187,16 +187,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "move-to-managed-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": createdFolder.GetName(),
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Dashboard to Move to Managed Folder",
 					"schemaVersion": 41,
 				},
@@ -221,13 +221,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow moving dashboard to unmanaged folder", func(t *testing.T) {
 		folderA := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "folder-a-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Folder A",
 				},
 			},
@@ -236,13 +236,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		folderB := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "folder-b-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Folder B",
 				},
 			},
@@ -251,16 +251,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "movable-dash-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": createdA.GetName(),
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Dashboard to Move Between Unmanaged Folders",
 					"schemaVersion": 41,
 				},
@@ -287,13 +287,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow removing manager from dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "mgr-change-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Folder for Manager Change Test",
 				},
 			},
@@ -302,18 +302,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "kubectl-dash-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         createdFolder.GetName(),
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "my-kubectl",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Kubectl Dashboard for Manager Removal",
 					"schemaVersion": 41,
 				},
@@ -337,13 +337,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow changing manager identity on dashboard in unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "mgr-id-change-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Folder for Manager Identity Change Test",
 				},
 			},
@@ -352,18 +352,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err)
 
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "tf-dash-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         createdFolder.GetName(),
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "tf-workspace-1",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Terraform Dashboard for Identity Change",
 					"schemaVersion": 41,
 				},
@@ -402,16 +402,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "unmanaged-subfolder-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": managedFolderName,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unmanaged Sub-Folder in Managed Folder",
 				},
 			},
@@ -426,18 +426,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
 		folder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "wrong-mgr-subfolder-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         managedFolderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "some-other-manager",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Sub-Folder Managed by Different Manager",
 				},
 			},
@@ -451,13 +451,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "unmanaged-parent-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unmanaged Parent Folder",
 				},
 			},
@@ -466,18 +466,18 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err, "should create unmanaged parent folder")
 
 		child := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "managed-child-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         createdParent.GetName(),
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "my-kubectl",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Managed Child Folder in Unmanaged Parent",
 				},
 			},
@@ -490,13 +490,13 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 	t.Run("allow unmanaged sub-folder in unmanaged folder", func(t *testing.T) {
 		parent := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "plain-parent-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Plain Parent Folder",
 				},
 			},
@@ -505,16 +505,16 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err, "should create plain parent folder")
 
 		child := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "plain-child-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": createdParent.GetName(),
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Plain Child Folder",
 				},
 			},
@@ -707,13 +707,13 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 	// Create an unmanaged folder for testing
 	unmanagedFolder := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 			"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"generateName": "terraform-test-folder-",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": "Terraform Test Folder",
 			},
 		},
@@ -724,18 +724,18 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 	t.Run("User-Agent to User-Agent allowed (version updates)", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "tf-ua-to-ua-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         folderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Terraform Dashboard UA to UA",
 					"schemaVersion": 41,
 				},
@@ -759,18 +759,18 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 	t.Run("User-Agent to simple ID allowed (migration)", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "tf-ua-to-simple-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         folderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Terraform Dashboard UA to Simple",
 					"schemaVersion": 41,
 				},
@@ -793,18 +793,18 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 	t.Run("simple ID to simple ID blocked (immutable)", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "tf-simple-to-simple-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         folderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Terraform Dashboard Simple to Simple",
 					"schemaVersion": 41,
 				},
@@ -829,18 +829,18 @@ func TestIntegrationProvisioning_TerraformManagerIDTransitions(t *testing.T) {
 
 	t.Run("simple ID to User-Agent blocked (no reverting)", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "tf-simple-to-ua-",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder":         folderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
 						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title":         "Terraform Dashboard Simple to UA",
 					"schemaVersion": 41,
 				},
@@ -922,9 +922,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 		assert.Equal(collect, repo, annotations[utils.AnnoKeyManagerIdentity])
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned with repo manager")
 
-	mergePatch, err := json.Marshal(map[string]interface{}{
-		"metadata": map[string]interface{}{
-			"annotations": map[string]interface{}{
+	mergePatch, err := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"annotations": map[string]any{
 				utils.AnnoKeyManagerKind:     nil,
 				utils.AnnoKeyManagerIdentity: nil,
 				utils.AnnoKeySourcePath:      nil,

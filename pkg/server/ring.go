@@ -171,7 +171,7 @@ func ringClientRetryInterceptor() grpc.UnaryClientInterceptor {
 
 // ringClientRetryInstrument creates an interceptor to count retry attempts for metrics.
 func ringClientRetryInstrument(metric *prometheus.CounterVec) grpc.UnaryClientInterceptor {
-	return func(ctx context.Context, method string, req, resp interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, resp any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// We can tell if a call is a retry by checking the retry attempt metadata.
 		attempt, err := strconv.Atoi(metautils.ExtractOutgoing(ctx).Get(grpc_retry.AttemptMetadataKey))
 		if err == nil && attempt > 0 {

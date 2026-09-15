@@ -155,7 +155,7 @@ func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 		stats["stats.features.scim.has_successful_login.count"] = 0
 	}
 
-	s.samlCatalogStats.Range(func(key, value interface{}) bool {
+	s.samlCatalogStats.Range(func(key, value any) bool {
 		version := key.(string)
 		flag := value.(*atomic.Bool)
 		if flag.Load() {
@@ -424,7 +424,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 
 	goCtx := context.WithoutCancel(ctx)
 	// nolint:dogsled
-	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
+	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (any, error) {
 		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
 		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.FromContext(goCtx).Error("Failed to update last_seen_at", "err", err, "userId", userID)

@@ -105,7 +105,7 @@ func (n *NotificationSettingsValidatorProviderFake) Validator(ctx context.Contex
 
 type call struct {
 	Method string
-	Args   []interface{}
+	Args   []any
 }
 
 type fakeRuleAccessControlService struct {
@@ -119,7 +119,7 @@ type fakeRuleAccessControlService struct {
 	HasAccessInFolderFunc          func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
-func (s *fakeRuleAccessControlService) RecordCall(method string, args ...interface{}) {
+func (s *fakeRuleAccessControlService) RecordCall(method string, args ...any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -190,7 +190,7 @@ type fakeAlertRuleNotificationStore struct {
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	call := call{
 		Method: "RenameReceiverInNotificationSettings",
-		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
+		Args:   []any{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
 	}
 	f.Calls = append(f.Calls, call)
 
@@ -205,7 +205,7 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	call := call{
 		Method: "RenameTimeIntervalInNotificationSettings",
-		Args:   []interface{}{ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun},
+		Args:   []any{ctx, orgID, oldTimeInterval, newTimeInterval, validate, dryRun},
 	}
 	f.Calls = append(f.Calls, call)
 
@@ -220,7 +220,7 @@ func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSetting
 func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	call := call{
 		Method: "ListContactPointRoutings",
-		Args:   []interface{}{ctx, q},
+		Args:   []any{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
@@ -240,7 +240,7 @@ type fakeReceiverService struct {
 }
 
 func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
-	f.Calls = append(f.Calls, call{Method: "GetReceivers", Args: []interface{}{ctx, query, user}})
+	f.Calls = append(f.Calls, call{Method: "GetReceivers", Args: []any{ctx, query, user}})
 	if f.GetReceiversFunc != nil {
 		return f.GetReceiversFunc(ctx, query, user)
 	}
@@ -248,7 +248,7 @@ func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.Get
 }
 
 func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-	f.Calls = append(f.Calls, call{Method: "RenameReceiverInDependentResources", Args: []interface{}{ctx, orgID, revision, oldName, newName, receiverProvenance}})
+	f.Calls = append(f.Calls, call{Method: "RenameReceiverInDependentResources", Args: []any{ctx, orgID, revision, oldName, newName, receiverProvenance}})
 	if f.RenameReceiverInDependentResourcesFunc != nil {
 		return f.RenameReceiverInDependentResourcesFunc(ctx, orgID, revision, oldName, newName, receiverProvenance)
 	}
@@ -256,7 +256,7 @@ func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Con
 }
 
 func (f *fakeReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool {
-	f.Calls = append(f.Calls, call{Method: "ReceiverNameUsedByRoutes", Args: []interface{}{ctx, revision, name}})
+	f.Calls = append(f.Calls, call{Method: "ReceiverNameUsedByRoutes", Args: []any{ctx, revision, name}})
 	if f.ReceiverNameUsedByRoutesFunc != nil {
 		return f.ReceiverNameUsedByRoutesFunc(ctx, revision, name)
 	}

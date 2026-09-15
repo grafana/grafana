@@ -209,15 +209,15 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 // This avoids the cost of recursively parsing the (potentially huge) dashboard specs.
 func unmarshalMetadataOnly(data []byte) (*unstructured.Unstructured, error) {
 	var partial struct {
-		APIVersion string                 `json:"apiVersion"`
-		Kind       string                 `json:"kind"`
-		Metadata   map[string]interface{} `json:"metadata"`
+		APIVersion string         `json:"apiVersion"`
+		Kind       string         `json:"kind"`
+		Metadata   map[string]any `json:"metadata"`
 	}
 	if err := json.Unmarshal(data, &partial); err != nil {
 		return nil, err
 	}
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": partial.APIVersion,
 			"kind":       partial.Kind,
 			"metadata":   partial.Metadata,

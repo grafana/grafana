@@ -78,7 +78,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
+		createdSpec := created.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Team 1", createdSpec["title"])
 		require.Equal(t, "testteam1@example123.com", createdSpec["email"])
 		require.Equal(t, false, createdSpec["provisioned"])
@@ -91,7 +91,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Team 1", fetchedSpec["title"])
 		require.Equal(t, "testteam1@example123.com", fetchedSpec["email"])
 		require.Equal(t, false, fetchedSpec["provisioned"])
@@ -104,7 +104,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, updatedTeam)
 
-		updatedSpec := updatedTeam.Object["spec"].(map[string]interface{})
+		updatedSpec := updatedTeam.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Team 2", updatedSpec["title"])
 		require.Equal(t, "testteam2@example123.com", updatedSpec["email"])
 		require.Equal(t, false, updatedSpec["provisioned"])
@@ -113,7 +113,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, verifiedTeam)
 
-		verifiedSpec := verifiedTeam.Object["spec"].(map[string]interface{})
+		verifiedSpec := verifiedTeam.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Team 2", verifiedSpec["title"])
 		require.Equal(t, "testteam2@example123.com", verifiedSpec["email"])
 		require.Equal(t, false, verifiedSpec["provisioned"])
@@ -238,7 +238,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
+		createdSpec := created.Object["spec"].(map[string]any)
 		require.Equal(t, "Team with GenerateName", createdSpec["title"])
 		require.Equal(t, false, createdSpec["provisioned"])
 
@@ -250,7 +250,7 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Team with GenerateName", fetchedSpec["title"])
 		require.Equal(t, false, fetchedSpec["provisioned"])
 
@@ -300,11 +300,11 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 // validation, so this runs in every dual-write mode.
 func doTeamTitleUniquenessTests(t *testing.T, helper *apis.K8sTestHelper) {
 	newTeam := func(generateName, title string) *unstructured.Unstructured {
-		return &unstructured.Unstructured{Object: map[string]interface{}{
+		return &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "iam.grafana.app/v0alpha1",
 			"kind":       "Team",
-			"metadata":   map[string]interface{}{"generateName": generateName},
-			"spec":       map[string]interface{}{"title": title},
+			"metadata":   map[string]any{"generateName": generateName},
+			"spec":       map[string]any{"title": title},
 		}}
 	}
 
@@ -364,16 +364,16 @@ func doTeamTitleUniquenessTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		toUpdate, err := teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Target Team"
+		toUpdate.Object["spec"].(map[string]any)["title"] = "Rename Target Team"
 		_, err = teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		requireConflict(t, err, "Rename Target Team")
 
 		toUpdate, err = teamClient.Resource.Get(ctx, source.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		toUpdate.Object["spec"].(map[string]interface{})["title"] = "Rename Free Team"
+		toUpdate.Object["spec"].(map[string]any)["title"] = "Rename Free Team"
 		updated, err := teamClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "Rename Free Team", updated.Object["spec"].(map[string]interface{})["title"])
+		require.Equal(t, "Rename Free Team", updated.Object["spec"].(map[string]any)["title"])
 	})
 }
 
@@ -471,16 +471,16 @@ func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHel
 		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
 		viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
 
-		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "iam.grafana.app/v0alpha1",
 			"kind":       "Team",
-			"metadata":   map[string]interface{}{"generateName": "team-del-cascade-"},
-			"spec": map[string]interface{}{
+			"metadata":   map[string]any{"generateName": "team-del-cascade-"},
+			"spec": map[string]any{
 				"title":       "Team del cascade",
 				"email":       "del-cascade@example.com",
 				"provisioned": false,
 				"externalUID": "",
-				"members": []map[string]interface{}{
+				"members": []map[string]any{
 					{"kind": "User", "name": editorUID, "permission": "member", "external": false},
 					{"kind": "User", "name": viewerUID, "permission": "admin", "external": false},
 				},
@@ -553,7 +553,7 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 		require.NoError(t, err)
 		require.NotNil(t, team)
 
-		teamSpec := team.Object["spec"].(map[string]interface{})
+		teamSpec := team.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Team 2", teamSpec["title"])
 		require.Equal(t, "testteam2@example.com", teamSpec["email"])
 		require.Equal(t, false, teamSpec["provisioned"])
@@ -563,14 +563,14 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 
 		// Updating the team is not supported in Mode2 if the team has been created using the legacy APIs
 		if mode < rest.Mode2 {
-			team.Object["spec"].(map[string]interface{})["title"] = "Updated Test Team 2"
-			team.Object["spec"].(map[string]interface{})["email"] = "updated@example.com"
+			team.Object["spec"].(map[string]any)["title"] = "Updated Test Team 2"
+			team.Object["spec"].(map[string]any)["email"] = "updated@example.com"
 
 			updatedTeam, err := teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, updatedTeam)
 
-			updatedSpec := updatedTeam.Object["spec"].(map[string]interface{})
+			updatedSpec := updatedTeam.Object["spec"].(map[string]any)
 			require.Equal(t, "Updated Test Team 2", updatedSpec["title"])
 			require.Equal(t, "updated@example.com", updatedSpec["email"])
 			require.Equal(t, false, updatedSpec["provisioned"])
@@ -579,7 +579,7 @@ func doTeamCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper,
 			require.NoError(t, err)
 			require.NotNil(t, verifiedTeam)
 
-			verifiedSpec := verifiedTeam.Object["spec"].(map[string]interface{})
+			verifiedSpec := verifiedTeam.Object["spec"].(map[string]any)
 			require.Equal(t, "Updated Test Team 2", verifiedSpec["title"])
 			require.Equal(t, "updated@example.com", verifiedSpec["email"])
 			require.Equal(t, false, verifiedSpec["provisioned"])
@@ -608,12 +608,12 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	editorUID := helper.Org1.Editor.Identity.GetIdentifier()
 	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
 
-	newTeamWithMembers := func(prefix string, members []map[string]interface{}) *unstructured.Unstructured {
-		body := map[string]interface{}{
+	newTeamWithMembers := func(prefix string, members []map[string]any) *unstructured.Unstructured {
+		body := map[string]any{
 			"apiVersion": "iam.grafana.app/v0alpha1",
 			"kind":       "Team",
-			"metadata":   map[string]interface{}{"generateName": prefix},
-			"spec": map[string]interface{}{
+			"metadata":   map[string]any{"generateName": prefix},
+			"spec": map[string]any{
 				"title":       "Team " + prefix,
 				"email":       prefix + "@example.com",
 				"provisioned": false,
@@ -624,8 +624,8 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		return &unstructured.Unstructured{Object: body}
 	}
 
-	memberSpec := func(uid, permission string, external bool) map[string]interface{} {
-		return map[string]interface{}{
+	memberSpec := func(uid, permission string, external bool) map[string]any {
+		return map[string]any{
 			"kind":       "User",
 			"name":       uid,
 			"permission": permission,
@@ -635,7 +635,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should create team with members and hydrate on Get", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-", []map[string]interface{}{
+		obj := newTeamWithMembers("team-members-", []map[string]any{
 			memberSpec(editorUID, "member", false),
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
@@ -648,7 +648,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.True(t, found)
 		require.Len(t, members, 1)
-		m := members[0].(map[string]interface{})
+		m := members[0].(map[string]any)
 		require.Equal(t, "User", m["kind"])
 		require.Equal(t, editorUID, m["name"])
 		require.Equal(t, "member", m["permission"])
@@ -657,7 +657,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should add, update permission, and remove members via Update", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-upd-", []map[string]interface{}{
+		obj := newTeamWithMembers("team-members-upd-", []map[string]any{
 			memberSpec(editorUID, "member", false),
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
@@ -667,7 +667,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Add viewer as admin alongside editor
 		fetched, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []any{
 			memberSpec(editorUID, "member", false),
 			memberSpec(viewerUID, "admin", false),
 		}, "spec", "members"))
@@ -679,7 +679,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Promote editor to admin
 		fetched, err = teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []any{
 			memberSpec(editorUID, "admin", false),
 			memberSpec(viewerUID, "admin", false),
 		}, "spec", "members"))
@@ -688,34 +688,34 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		members, _, _ = unstructured.NestedSlice(updated.Object, "spec", "members")
 		require.Len(t, members, 2)
 		for _, raw := range members {
-			m := raw.(map[string]interface{})
+			m := raw.(map[string]any)
 			require.Equal(t, "admin", m["permission"])
 		}
 
 		// Remove viewer
 		fetched, err = teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(fetched.Object, []any{
 			memberSpec(editorUID, "admin", false),
 		}, "spec", "members"))
 		updated, err = teamClient.Resource.Update(ctx, fetched, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		members, _, _ = unstructured.NestedSlice(updated.Object, "spec", "members")
 		require.Len(t, members, 1)
-		m := members[0].(map[string]interface{})
+		m := members[0].(map[string]any)
 		require.Equal(t, editorUID, m["name"])
 	})
 
 	t.Run("should reject toggling external on an existing member", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-ext-", []map[string]interface{}{
+		obj := newTeamWithMembers("team-members-ext-", []map[string]any{
 			memberSpec(editorUID, "member", false),
 		})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
 
-		require.NoError(t, unstructured.SetNestedSlice(created.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(created.Object, []any{
 			memberSpec(editorUID, "member", true),
 		}, "spec", "members"))
 		_, err = teamClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
@@ -733,7 +733,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// 409 (not a 500) so the client can retry.
 	t.Run("concurrent adds of the same member never return 500", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-race-", []map[string]interface{}{})
+		obj := newTeamWithMembers("team-members-race-", []map[string]any{})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
@@ -752,7 +752,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 					errs[i] = getErr
 					return
 				}
-				if err := unstructured.SetNestedSlice(fetched.Object, []interface{}{
+				if err := unstructured.SetNestedSlice(fetched.Object, []any{
 					memberSpec(editorUID, "member", false),
 				}, "spec", "members"); err != nil {
 					errs[i] = err
@@ -783,7 +783,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		members, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
 		require.Len(t, members, 1)
-		m := members[0].(map[string]interface{})
+		m := members[0].(map[string]any)
 		require.Equal(t, editorUID, m["name"])
 	})
 
@@ -795,7 +795,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// whether or not the row existed.
 	t.Run("addMember/removeMember subresources are atomic and idempotent", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-subres-", []map[string]interface{}{})
+		obj := newTeamWithMembers("team-members-subres-", []map[string]any{})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
@@ -805,12 +805,12 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		addPath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, teamUID)
 		removePath := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/removemember", namespace, teamUID)
 		addBody := func(uid, perm string, external bool) []byte {
-			b, err := json.Marshal(map[string]interface{}{"name": uid, "permission": perm, "external": external})
+			b, err := json.Marshal(map[string]any{"name": uid, "permission": perm, "external": external})
 			require.NoError(t, err)
 			return b
 		}
 		removeBody := func(uid string) []byte {
-			b, err := json.Marshal(map[string]interface{}{"name": uid})
+			b, err := json.Marshal(map[string]any{"name": uid})
 			require.NoError(t, err)
 			return b
 		}
@@ -820,14 +820,14 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// First call returns 201 Created (fresh insert).
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		require.Equal(t, 201, rsp.Response.StatusCode, "first addMember should be 201 Created, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
 
 		fetched, err := teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		members, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
 		require.Len(t, members, 1)
-		require.Equal(t, editorUID, members[0].(map[string]interface{})["name"])
+		require.Equal(t, editorUID, members[0].(map[string]any)["name"])
 
 		// Re-adding the same user is an idempotent no-op: the handler
 		// short-circuits before the Update and returns 200 OK (vs the
@@ -835,13 +835,13 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// surface as an error.
 		rsp = apis.DoRequest(helper, apis.RequestParams{
 			User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: addBody(editorUID, "member", true),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		require.Equal(t, 200, rsp.Response.StatusCode, "second addMember should be idempotent 200, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
 
 		// removeMember deletes the row.
 		rsp = apis.DoRequest(helper, apis.RequestParams{
 			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		require.Equal(t, 200, rsp.Response.StatusCode, "removeMember response: %s", string(rsp.Body))
 
 		fetched, err = teamClient.Resource.Get(ctx, teamUID, metav1.GetOptions{})
@@ -855,7 +855,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// the failure counter.
 		rsp = apis.DoRequest(helper, apis.RequestParams{
 			User: helper.Org1.Admin, Method: "POST", Path: removePath, Body: removeBody(editorUID),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		require.Equal(t, 200, rsp.Response.StatusCode, "second removeMember should be 200 idempotent, got %d (%s)", rsp.Response.StatusCode, string(rsp.Body))
 	})
 
@@ -867,7 +867,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// RV-collision (no in-handler retry), so callers must retry.
 	t.Run("concurrent addMember of different users preserves every membership", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-subres-race-", []map[string]interface{}{})
+		obj := newTeamWithMembers("team-members-subres-race-", []map[string]any{})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
@@ -888,7 +888,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 			go func(i int, uid string) {
 				defer wg.Done()
 				<-barrier
-				body, err := json.Marshal(map[string]interface{}{"name": uid, "permission": "member", "external": true})
+				body, err := json.Marshal(map[string]any{"name": uid, "permission": "member", "external": true})
 				require.NoError(t, err)
 				// Retry on 409 with a small bounded budget.
 				const maxAttempts = 8
@@ -896,7 +896,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					rsp := apis.DoRequest(helper, apis.RequestParams{
 						User: helper.Org1.Admin, Method: "POST", Path: addPath, Body: body,
-					}, &map[string]interface{}{})
+					}, &map[string]any{})
 					code = rsp.Response.StatusCode
 					results[i].attempts = attempt
 					if code != 409 {
@@ -925,7 +925,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		final, _, _ := unstructured.NestedSlice(fetched.Object, "spec", "members")
 		names := make([]string, 0, len(final))
 		for _, raw := range final {
-			names = append(names, raw.(map[string]interface{})["name"].(string))
+			names = append(names, raw.(map[string]any)["name"].(string))
 		}
 		require.ElementsMatch(t, members, names, "no member should be silently lost")
 	})
@@ -942,7 +942,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	// replaying the stale snapshot.
 	t.Run("stale-RV update with different members must not silently drop members", func(t *testing.T) {
 		ctx := context.Background()
-		obj := newTeamWithMembers("team-members-stalerv-", []map[string]interface{}{})
+		obj := newTeamWithMembers("team-members-stalerv-", []map[string]any{})
 		created, err := teamClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = teamClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}) })
@@ -954,7 +954,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Peer instance commits first: editor is now on the team.
 		fresh, err := teamClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedSlice(fresh.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(fresh.Object, []any{
 			memberSpec(editorUID, "member", false),
 		}, "spec", "members"))
 		_, err = teamClient.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
@@ -963,7 +963,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// This instance's Update — built from the stale snapshot — appends
 		// viewer. With the RV precondition the apiserver returns 409, the
 		// caller refreshes, and both editor and viewer end up on the team.
-		require.NoError(t, unstructured.SetNestedSlice(stale.Object, []interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(stale.Object, []any{
 			memberSpec(viewerUID, "member", false),
 		}, "spec", "members"))
 		_, err = teamClient.Resource.Update(ctx, stale, metav1.UpdateOptions{})
@@ -984,7 +984,7 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		finalMembers, _, _ := unstructured.NestedSlice(final.Object, "spec", "members")
 		names := make([]string, 0, len(finalMembers))
 		for _, raw := range finalMembers {
-			m := raw.(map[string]interface{})
+			m := raw.(map[string]any)
 			names = append(names, m["name"].(string))
 		}
 		require.ElementsMatch(t, []string{editorUID, viewerUID}, names,
@@ -1004,16 +1004,16 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) 
 
 	t.Run("spec.externalGroups: validation rejects duplicates after lowercasing", func(t *testing.T) {
 		ctx := context.Background()
-		body := map[string]interface{}{
+		body := map[string]any{
 			"apiVersion": "iam.grafana.app/v0alpha1",
 			"kind":       "Team",
-			"metadata":   map[string]interface{}{"generateName": "team-egroups-dup-"},
-			"spec": map[string]interface{}{
+			"metadata":   map[string]any{"generateName": "team-egroups-dup-"},
+			"spec": map[string]any{
 				"title":          "Team egroups dup",
 				"email":          "egroups-dup@example.com",
 				"provisioned":    false,
 				"externalUID":    "",
-				"externalGroups": []interface{}{"LDAP-Admins", "  ldap-admins  "},
+				"externalGroups": []any{"LDAP-Admins", "  ldap-admins  "},
 			},
 		}
 		_, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: body}, metav1.CreateOptions{})

@@ -71,7 +71,7 @@ func (c unstructuredConvertor) ConvertToVersion(in runtime.Object, target runtim
 	return out, nil
 }
 
-func (c unstructuredConvertor) Convert(in, out, context interface{}) error {
+func (c unstructuredConvertor) Convert(in, out, context any) error {
 	inObj, ok := in.(runtime.Object)
 	if !ok {
 		return fmt.Errorf("cannot convert %T, expected a runtime object", in)

@@ -72,7 +72,7 @@ func (s *UserTeamREST) ProducesMIMETypes(verb string) []string {
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *UserTeamREST) ProducesObject(verb string) interface{} {
+func (s *UserTeamREST) ProducesObject(verb string) any {
 	return s.New()
 }
 

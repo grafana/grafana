@@ -242,7 +242,7 @@ type fakeStatusPatcher struct {
 	err    error
 }
 
-func (f *fakeStatusPatcher) Patch(_ context.Context, _ *provisioning.Repository, _ ...map[string]interface{}) error {
+func (f *fakeStatusPatcher) Patch(_ context.Context, _ *provisioning.Repository, _ ...map[string]any) error {
 	f.called = true
 	return f.err
 }

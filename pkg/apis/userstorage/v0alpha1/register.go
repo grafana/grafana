@@ -27,12 +27,12 @@ var UserStorageResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Data", Type: "string"},
 			{Name: "Created At", Type: "date"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			m, ok := obj.(*UserStorage)
 			if !ok {
 				return nil, fmt.Errorf("plugin-storage")
 			}
-			return []interface{}{
+			return []any{
 				m.Name,
 				m.Spec.Data,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),

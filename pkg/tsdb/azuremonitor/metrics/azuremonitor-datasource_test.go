@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -278,9 +279,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			for k, v := range commonAzureModelProps {
-				tt.azureMonitorVariedProperties[k] = v
-			}
+			maps.Copy(tt.azureMonitorVariedProperties, commonAzureModelProps)
 			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
 			tsdbQuery := []backend.DataQuery{
 				{
@@ -917,10 +916,10 @@ func TestBuildQueriesForBatch(t *testing.T) {
 		model := dataquery.AzureMonitorQuery{
 			Subscription: &sub,
 			AzureMonitor: &dataquery.AzureMetricQuery{
-				MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
-				MetricName:      strPtr("Percentage CPU"),
-				Aggregation:     strPtr("Average"),
-				TimeGrain:       strPtr("PT1M"),
+				MetricNamespace: new("Microsoft.Compute/virtualMachines"),
+				MetricName:      new("Percentage CPU"),
+				Aggregation:     new("Average"),
+				TimeGrain:       new("PT1M"),
 				Region:          &region,
 				Resources:       resources,
 			},
@@ -941,7 +940,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("single resource produces one query", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -950,8 +949,8 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("multiple resources with same subscription and region produce one query", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm2"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -961,8 +960,8 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("resources across different subscriptions produce separate queries", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub2"), ResourceGroup: new("rg2"), ResourceName: new("vm2"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -973,8 +972,8 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("resources across different regions produce separate queries", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm2"), Region: new("westus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -985,7 +984,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("region set only on the single resource entry is applied to the query", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("chinaeast2")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("chinaeast2")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -996,8 +995,8 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("region set only on resource entries sharing one group is applied to the query", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm2"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -1008,9 +1007,9 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("resources grouped by subscription and region preserve all resources", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
-			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm3"), Region: strPtr("eastus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub2"), ResourceGroup: new("rg2"), ResourceName: new("vm2"), Region: new("westus")},
+			{Subscription: new("sub1"), ResourceGroup: new("rg1"), ResourceName: new("vm3"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -1022,8 +1021,8 @@ func TestBuildQueriesForBatch(t *testing.T) {
 
 	t.Run("resources without explicit subscription fall back to query-level subscription", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
-			{ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+			{ResourceGroup: new("rg1"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub2"), ResourceGroup: new("rg2"), ResourceName: new("vm2"), Region: new("eastus")},
 		})
 		queries, err := buildBatch(q)
 		require.NoError(t, err)
@@ -1033,8 +1032,9 @@ func TestBuildQueriesForBatch(t *testing.T) {
 	})
 }
 
+//go:fix inline
 func strPtr(s string) *string {
-	return &s
+	return new(s)
 }
 
 // newSubscriptionTestServer returns an httptest.Server that responds to
@@ -1057,7 +1057,7 @@ func TestRetrieveSubscriptionDetails_CachesAcrossCalls(t *testing.T) {
 	srv, hits := newSubscriptionTestServer(t, "My Subscription")
 
 	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
 		require.NoError(t, err)
 		require.Equal(t, "My Subscription", name)
@@ -1085,7 +1085,7 @@ func TestRetrieveSubscriptionDetails_CoalescesConcurrentCalls(t *testing.T) {
 	const goroutines = 32
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
@@ -1174,7 +1174,7 @@ func TestRetrieveSubscriptionDetails_DoesNotCacheErrors(t *testing.T) {
 
 	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		_, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
 		require.Error(t, err)
 	}
@@ -1196,7 +1196,7 @@ func TestRetrieveSubscriptionDetails_UserScopedAuthDoesNotPersist(t *testing.T) 
 	creds := &azcredentials.AadCurrentUserCredentials{}
 	ctx := ctxWithUserLogin("alice")
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)
 		require.NoError(t, err)
 	}
@@ -1224,7 +1224,7 @@ func TestRetrieveSubscriptionDetails_UserScopedAuthCoalescesConcurrent(t *testin
 	const goroutines = 32
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)

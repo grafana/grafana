@@ -172,13 +172,13 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			// Capture the final patch to verify quota condition
 			var capturedQuotaCondition metav1.Condition
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
-				mock.MatchedBy(func(patch map[string]interface{}) bool {
+				mock.MatchedBy(func(patch map[string]any) bool {
 					return patch["path"] == "/status/sync"
 				}),
-				mock.MatchedBy(func(patch map[string]interface{}) bool {
+				mock.MatchedBy(func(patch map[string]any) bool {
 					return patch["path"] == "/status/stats"
 				}),
-				mock.MatchedBy(func(patch map[string]interface{}) bool {
+				mock.MatchedBy(func(patch map[string]any) bool {
 					if patch["path"] != "/status/conditions" {
 						return false
 					}
@@ -316,10 +316,10 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 
 			var capturedPullCondition metav1.Condition
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig,
-				mock.MatchedBy(func(patch map[string]interface{}) bool {
+				mock.MatchedBy(func(patch map[string]any) bool {
 					return patch["path"] == "/status/sync"
 				}),
-				mock.MatchedBy(func(patch map[string]interface{}) bool {
+				mock.MatchedBy(func(patch map[string]any) bool {
 					if patch["path"] != "/status/conditions" {
 						return false
 					}
@@ -397,13 +397,13 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Expect granular patches for state, job, and started fields
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["op"] == "replace" && patch["path"] == "/status/sync/state"
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["op"] == "replace" && patch["path"] == "/status/sync/job"
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["op"] == "replace" && patch["path"] == "/status/sync/started"
 					}),
 				).Return(errors.New("failed to patch status"))
@@ -522,14 +522,14 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should include new ref and quota condition
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						if patch["op"] != "replace" || patch["path"] != "/status/sync" {
 							return false
 						}
 						syncStatus := patch["value"].(provisioning.SyncStatus)
 						return syncStatus.LastRef == "new-ref" && syncStatus.State == provisioning.JobStateSuccess
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()
@@ -579,14 +579,14 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should preserve existing ref on failure and include quota condition
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						syncStatus := patch["value"].(provisioning.SyncStatus)
 						return patch["op"] == "replace" &&
 							patch["path"] == "/status/sync" &&
 							syncStatus.LastRef == "existing-ref" && // LastRef should not change on failure
 							syncStatus.State == provisioning.JobStateError
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()
@@ -642,10 +642,10 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status and conditions are patched for final update
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/sync"
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()
@@ -693,10 +693,10 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status, stats, and conditions are patched
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/sync"
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						if patch["path"] != "/status/stats" {
 							return false
 						}
@@ -712,7 +712,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 						return true
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()
@@ -770,10 +770,10 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status and conditions are patched (multiple stats should be ignored)
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/sync"
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()
@@ -830,7 +830,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should preserve existing-ref despite Warning state (not Error)
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						if patch["op"] != "replace" || patch["path"] != "/status/sync" {
 							return false
 						}
@@ -838,7 +838,7 @@ func TestSyncWorker_Process(t *testing.T) {
 						return syncStatus.LastRef == "existing-ref" && // LastRef preserved on quota error
 							syncStatus.State == provisioning.JobStateWarning
 					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
+					mock.MatchedBy(func(patch map[string]any) bool {
 						return patch["path"] == "/status/conditions"
 					}),
 				).Return(nil).Once()

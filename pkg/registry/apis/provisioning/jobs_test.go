@@ -921,10 +921,10 @@ func TestAuthorizeMoveJob(t *testing.T) {
 
 func makeUnstructured(name, folder string) *unstructured.Unstructured {
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      name,
 				"namespace": "default",
 			},

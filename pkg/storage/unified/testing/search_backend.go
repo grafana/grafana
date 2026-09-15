@@ -125,7 +125,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 						},
 						Title: "Document 1",
 						Tags:  []string{"tag1", "tag2"},
-						Fields: map[string]interface{}{
+						Fields: map[string]any{
 							"field1": 1,
 							"field2": "value1",
 						},
@@ -142,7 +142,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 						},
 						Title: "Document 2",
 						Tags:  []string{"tag2", "tag3"},
-						Fields: map[string]interface{}{
+						Fields: map[string]any{
 							"field1": 2,
 							"field2": "value2",
 						},
@@ -244,7 +244,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 						},
 						Title: "Document 3",
 						Tags:  []string{"tag3", "tag4"},
-						Fields: map[string]interface{}{
+						Fields: map[string]any{
 							"field1": 3,
 							"field2": "value3",
 						},

@@ -737,7 +737,7 @@ func estimateFieldBytes(field *data.Field) int {
 // forEachHARFrameCustom calls fn with the Custom map of every frame across all synthetic capture
 // responses (__har__-prefixed) in resp. No-op when resp is nil. Centralizes the nil-checks and type
 // assertion so collectHAR / HasCapturedHAR / PluginCaptureError don't each re-implement them.
-func forEachHARFrameCustom(resp *backend.QueryDataResponse, fn func(custom map[string]interface{})) {
+func forEachHARFrameCustom(resp *backend.QueryDataResponse, fn func(custom map[string]any)) {
 	if resp == nil {
 		return
 	}
@@ -749,7 +749,7 @@ func forEachHARFrameCustom(resp *backend.QueryDataResponse, fn func(custom map[s
 			if frame == nil || frame.Meta == nil {
 				continue
 			}
-			if custom, ok := frame.Meta.Custom.(map[string]interface{}); ok {
+			if custom, ok := frame.Meta.Custom.(map[string]any); ok {
 				fn(custom)
 			}
 		}
@@ -795,7 +795,7 @@ func ResponseError(resp *backend.QueryDataResponse) error {
 // here lets the failure still be recorded in the bundle.
 func PluginCaptureError(resp *backend.QueryDataResponse) error {
 	var msgs []string
-	forEachHARFrameCustom(resp, func(custom map[string]interface{}) {
+	forEachHARFrameCustom(resp, func(custom map[string]any) {
 		if msg, ok := custom["queryError"].(string); ok && msg != "" {
 			msgs = append(msgs, msg)
 		}
@@ -823,7 +823,7 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 	// suppress the no-capture error path and leave the handler returning a 200 bundle with no
 	// traffic.har.
 	captured := false
-	forEachHARFrameCustom(resp, func(custom map[string]interface{}) {
+	forEachHARFrameCustom(resp, func(custom map[string]any) {
 		if harStr, ok := custom["har"].(string); ok && isParseableHAR(harStr) {
 			captured = true
 		}
@@ -870,7 +870,7 @@ func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) (
 				if frame == nil || frame.Meta == nil {
 					continue
 				}
-				custom, ok := frame.Meta.Custom.(map[string]interface{})
+				custom, ok := frame.Meta.Custom.(map[string]any)
 				if !ok {
 					continue
 				}

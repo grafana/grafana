@@ -1463,8 +1463,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
+											Object: map[string]any{
+												"spec": map[string]any{
 													"hello": "dashboard",
 												},
 											},
@@ -1474,8 +1474,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 								"playlist": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
+											Object: map[string]any{
+												"spec": map[string]any{
 													"hello": "playlist",
 												},
 											},

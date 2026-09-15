@@ -9,7 +9,7 @@ import (
 func TestIsInterfaceNil(t *testing.T) {
 	testCases := []struct {
 		name     string
-		value    interface{}
+		value    any
 		expected bool
 	}{
 		// True nil cases
@@ -18,13 +18,13 @@ func TestIsInterfaceNil(t *testing.T) {
 		{"nil slice", ([]int)(nil), true},
 		{"nil map", (map[string]int)(nil), true},
 		{"nil function", (func())(nil), true},
-		{"nil interface wrapped in interface", (interface{})(nil), true},
+		{"nil interface wrapped in interface", (any)(nil), true},
 
 		// Channels are not handled by IsInterfaceNil (not in switch statement)
 		{"nil channel - not handled", (chan int)(nil), false},
 
 		// Non-nil cases
-		{"non-nil pointer", func() interface{} { val := 42; return &val }(), false},
+		{"non-nil pointer", func() any { val := 42; return &val }(), false},
 		{"non-nil slice", []int{1, 2, 3}, false},
 		{"empty slice", []int{}, false},
 		{"non-nil map", map[string]int{"key": 1}, false},
@@ -59,32 +59,32 @@ func TestIsInterfaceNil(t *testing.T) {
 func TestIsInterfaceNil_NestedInterfaces(t *testing.T) {
 	testCases := []struct {
 		name     string
-		value    interface{}
+		value    any
 		expected bool
 	}{
 		{
 			name: "nested interface with nil",
-			value: func() interface{} {
+			value: func() any {
 				var inner *int = nil
-				var middle interface{} = inner
+				var middle any = inner
 				return middle
 			}(),
 			expected: true,
 		},
 		{
 			name: "nested interface with value",
-			value: func() interface{} {
+			value: func() any {
 				val := 42
 				inner := &val
-				var middle interface{} = inner
+				var middle any = inner
 				return middle
 			}(),
 			expected: false,
 		},
 		{
 			name: "interface containing interface with value",
-			value: func() interface{} {
-				var inner interface{} = 42
+			value: func() any {
+				var inner any = 42
 				outer := inner
 				return outer
 			}(),
@@ -92,8 +92,8 @@ func TestIsInterfaceNil_NestedInterfaces(t *testing.T) {
 		},
 		{
 			name: "interface containing nil interface",
-			value: func() interface{} {
-				var inner interface{} = nil
+			value: func() any {
+				var inner any = nil
 				outer := inner
 				return outer
 			}(),
@@ -115,13 +115,13 @@ func TestIsInterfaceNil_ReflectKinds(t *testing.T) {
 		// according to its switch statement: Ptr, Slice, Map, Func, Interface
 		nilableTestCases := []struct {
 			name  string
-			value interface{}
+			value any
 		}{
 			{"nil pointer", (*int)(nil)},
 			{"nil slice", ([]int)(nil)},
 			{"nil map", (map[string]int)(nil)},
 			{"nil function", (func())(nil)},
-			{"nil interface", (interface{})(nil)},
+			{"nil interface", (any)(nil)},
 		}
 
 		for _, tc := range nilableTestCases {
@@ -135,7 +135,7 @@ func TestIsInterfaceNil_ReflectKinds(t *testing.T) {
 		// Test that nilable kinds NOT in the switch statement return false
 		unhandledTestCases := []struct {
 			name  string
-			value interface{}
+			value any
 		}{
 			{"nil channel", (chan int)(nil)},
 			// UnsafePointer would be another example, but harder to test
@@ -152,7 +152,7 @@ func TestIsInterfaceNil_ReflectKinds(t *testing.T) {
 		// Test kinds that cannot be nil
 		nonNilableTestCases := []struct {
 			name  string
-			value interface{}
+			value any
 		}{
 			{"int", 42},
 			{"string", "test"},

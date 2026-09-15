@@ -114,10 +114,10 @@ func makeBatchQuery(refID, sub, region string, resources []dataquery.AzureMonito
 	model := dataquery.AzureMonitorQuery{
 		Subscription: &sub,
 		AzureMonitor: &dataquery.AzureMetricQuery{
-			MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
-			MetricName:      strPtr("Percentage CPU"),
-			Aggregation:     strPtr("Average"),
-			TimeGrain:       strPtr("PT1M"),
+			MetricNamespace: new("Microsoft.Compute/virtualMachines"),
+			MetricName:      new("Percentage CPU"),
+			Aggregation:     new("Average"),
+			TimeGrain:       new("PT1M"),
 			Region:          &region,
 			Resources:       resources,
 		},
@@ -197,7 +197,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		dsInfo := makeBatchDsInfo(srv)
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		resp, err := ds.ExecuteTimeSeriesQuery(stubBatchFlag(t, true), []backend.DataQuery{q}, dsInfo, &http.Client{}, "", false)
@@ -218,7 +218,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		dsInfo := makeBatchDsInfo(srv)
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		resp, err := ds.ExecuteTimeSeriesQuery(stubBatchFlag(t, true), []backend.DataQuery{q}, dsInfo, &http.Client{}, "", false)
@@ -250,10 +250,10 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		dsInfo := makeBatchDsInfo(srv)
 		qOK := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm-ok"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm-ok"), Region: new("eastus")},
 		})
 		qBad := makeBatchQuery("B", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm-bad"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm-bad"), Region: new("eastus")},
 		})
 
 		resp, err := ds.ExecuteTimeSeriesQuery(stubBatchFlag(t, true), []backend.DataQuery{qOK, qBad}, dsInfo, &http.Client{}, "", false)
@@ -276,7 +276,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		dsInfo := makeBatchDsInfo(srv)
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		resp, err := ds.ExecuteTimeSeriesQuery(stubBatchFlag(t, true), []backend.DataQuery{q}, dsInfo, &http.Client{}, "", false)
@@ -306,22 +306,22 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		// Batchable query
 		batchQ := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		// Non-batchable: custom namespace
-		customNS := strPtr("MyApp/customMetrics")
+		customNS := new("MyApp/customMetrics")
 		nonBatchModel := dataquery.AzureMonitorQuery{
-			Subscription: strPtr("sub-123"),
+			Subscription: new("sub-123"),
 			AzureMonitor: &dataquery.AzureMetricQuery{
-				MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+				MetricNamespace: new("Microsoft.Compute/virtualMachines"),
 				CustomNamespace: customNS,
-				MetricName:      strPtr("requests"),
-				Aggregation:     strPtr("Average"),
-				TimeGrain:       strPtr("PT1M"),
-				Region:          strPtr("eastus"),
+				MetricName:      new("requests"),
+				Aggregation:     new("Average"),
+				TimeGrain:       new("PT1M"),
+				Region:          new("eastus"),
 				Resources: []dataquery.AzureMonitorResource{
-					{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+					{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 				},
 			},
 		}
@@ -362,7 +362,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		}
 
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
@@ -397,7 +397,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		}
 
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
@@ -429,7 +429,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 
 		dsInfo := makeBatchDsInfo(srv)
 		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 		})
 
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
@@ -485,7 +485,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 			HTTPClient: &http.Client{Transport: recorder},
 		}
 		q := makeBatchQuery("A", "sub-123", "chinaeast2", []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("chinaeast2")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("chinaeast2")},
 		})
 
 		resp, err := ds.ExecuteTimeSeriesQuery(stubBatchFlag(t, true), []backend.DataQuery{q}, dsInfo, &http.Client{}, "https://management.chinacloudapi.cn", false)
@@ -499,13 +499,13 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 func TestIsBatchableModel(t *testing.T) {
 	makeQuery := func(metricNamespace string, customNamespace *string) backend.DataQuery {
 		az := &dataquery.AzureMetricQuery{
-			MetricName: strPtr("Percentage CPU"),
+			MetricName: new("Percentage CPU"),
 			Resources: []dataquery.AzureMonitorResource{
-				{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+				{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1")},
 			},
 		}
 		if metricNamespace != "" {
-			az.MetricNamespace = strPtr(metricNamespace)
+			az.MetricNamespace = new(metricNamespace)
 		}
 		az.CustomNamespace = customNamespace
 		raw, _ := json.Marshal(dataquery.AzureMonitorQuery{AzureMonitor: az})
@@ -519,7 +519,7 @@ func TestIsBatchableModel(t *testing.T) {
 		want            bool
 	}{
 		{"standard resource-type namespace is batchable", "Microsoft.Compute/virtualMachines", nil, true},
-		{"custom namespace is not batchable", "Microsoft.Compute/virtualMachines", strPtr("myCustomNs"), false},
+		{"custom namespace is not batchable", "Microsoft.Compute/virtualMachines", new("myCustomNs"), false},
 		{"guest OS metrics are not batchable", "azure.vm.windows.guestmetrics", nil, false},
 		{"guest OS namespace match is case-insensitive", "Azure.VM.Linux.GuestMetrics", nil, false},
 		{"WAD namespace is not batchable", "WAD", nil, false},
@@ -539,8 +539,8 @@ func TestIsBatchableModel(t *testing.T) {
 		// queries (subscription-scoped, or legacy top-level resourceGroup/
 		// resourceName shapes) must take the legacy ARM path.
 		m := dataquery.AzureMonitorQuery{AzureMonitor: &dataquery.AzureMetricQuery{
-			MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
-			MetricName:      strPtr("Percentage CPU"),
+			MetricNamespace: new("Microsoft.Compute/virtualMachines"),
+			MetricName:      new("Percentage CPU"),
 		}}
 		assert.False(t, isBatchableModel(m))
 	})
@@ -599,15 +599,15 @@ func TestApplyLegacyDimensions(t *testing.T) {
 func TestFanOutByResource(t *testing.T) {
 	regionDefault := "eastus"
 	model := dataquery.AzureMonitorQuery{
-		Subscription: strPtr("sub-default"),
+		Subscription: new("sub-default"),
 		AzureMonitor: &dataquery.AzureMetricQuery{
-			MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
-			CustomNamespace: strPtr("myCustomNs"), // non-batchable, so it fans out
-			MetricName:      strPtr("requests"),
+			MetricNamespace: new("Microsoft.Compute/virtualMachines"),
+			CustomNamespace: new("myCustomNs"), // non-batchable, so it fans out
+			MetricName:      new("requests"),
 			Region:          &regionDefault,
 			Resources: []dataquery.AzureMonitorResource{
-				{Subscription: strPtr("sub-1"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("westus")},
-				{ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm2")}, // no explicit sub/region
+				{Subscription: new("sub-1"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("westus")},
+				{ResourceGroup: new("rg"), ResourceName: new("vm2")}, // no explicit sub/region
 			},
 		},
 	}
@@ -648,7 +648,7 @@ func TestExecuteBatchTimeSeriesQuerySharedResources(t *testing.T) {
 
 	dsInfo := makeBatchDsInfo(srv)
 	resources := []dataquery.AzureMonitorResource{
-		{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 	}
 	qA := makeBatchQuery("A", "sub-123", "eastus", resources)
 	qB := makeBatchQuery("B", "sub-123", "eastus", resources)
@@ -698,7 +698,7 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 	}
 
 	oneResource := []dataquery.AzureMonitorResource{
-		{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
 	}
 
 	t.Run("retryable failure falls back to ARM /batch and returns frames", func(t *testing.T) {
@@ -786,12 +786,12 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 	t.Run("more than maxARMBatchSize resources: fallback chunks into multiple ARM /batch calls", func(t *testing.T) {
 		const resourceCount = maxARMBatchSize + 5 // 25 -> chunks of 20 + 5
 		resources := make([]dataquery.AzureMonitorResource, 0, resourceCount)
-		for i := 0; i < resourceCount; i++ {
+		for i := range resourceCount {
 			resources = append(resources, dataquery.AzureMonitorResource{
-				Subscription:  strPtr("sub-123"),
-				ResourceGroup: strPtr("rg"),
-				ResourceName:  strPtr(fmt.Sprintf("vm%d", i)),
-				Region:        strPtr("eastus"),
+				Subscription:  new("sub-123"),
+				ResourceGroup: new("rg"),
+				ResourceName:  new(fmt.Sprintf("vm%d", i)),
+				Region:        new("eastus"),
 			})
 		}
 
@@ -828,8 +828,8 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 
 	t.Run("partial failure in ARM /batch response: failed resource errors, others still return frames", func(t *testing.T) {
 		resources := []dataquery.AzureMonitorResource{
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
-			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm1"), Region: new("eastus")},
+			{Subscription: new("sub-123"), ResourceGroup: new("rg"), ResourceName: new("vm2"), Region: new("eastus")},
 		}
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -222,13 +222,13 @@ func registerListConversions(scheme *runtime.Scheme) error {
 	// backing array across both list objects, and set each item's TypeMeta to the target version.
 	// The list-level TypeMeta is set by the scheme's setTargetKind after this function returns.
 	type convPair struct {
-		src, dst  interface{}
+		src, dst  any
 		convertFn conversion.ConversionFunc
 	}
 	pairs := []convPair{
 		{
 			(*v0alpha1.ConfigList)(nil), (*v1beta1.ConfigList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.ConfigList)
 				outList := out.(*v1beta1.ConfigList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -243,7 +243,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.ConfigList)(nil), (*v0alpha1.ConfigList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.ConfigList)
 				outList := out.(*v0alpha1.ConfigList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -258,7 +258,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.ReceiverList)
 				outList := out.(*v1beta1.ReceiverList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -273,7 +273,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.ReceiverList)(nil), (*v0alpha1.ReceiverList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.ReceiverList)
 				outList := out.(*v0alpha1.ReceiverList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -288,7 +288,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v0alpha1.InhibitionRuleList)(nil), (*v1beta1.InhibitionRuleList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.InhibitionRuleList)
 				outList := out.(*v1beta1.InhibitionRuleList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -303,7 +303,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.InhibitionRuleList)(nil), (*v0alpha1.InhibitionRuleList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.InhibitionRuleList)
 				outList := out.(*v0alpha1.InhibitionRuleList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -318,7 +318,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v0alpha1.RoutingTreeList)(nil), (*v1beta1.RoutingTreeList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.RoutingTreeList)
 				outList := out.(*v1beta1.RoutingTreeList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -333,7 +333,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.RoutingTreeList)(nil), (*v0alpha1.RoutingTreeList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.RoutingTreeList)
 				outList := out.(*v0alpha1.RoutingTreeList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -348,7 +348,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v0alpha1.TemplateGroupList)(nil), (*v1beta1.TemplateGroupList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.TemplateGroupList)
 				outList := out.(*v1beta1.TemplateGroupList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -363,7 +363,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.TemplateGroupList)(nil), (*v0alpha1.TemplateGroupList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.TemplateGroupList)
 				outList := out.(*v0alpha1.TemplateGroupList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -378,7 +378,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v0alpha1.TimeIntervalList)(nil), (*v1beta1.TimeIntervalList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v0alpha1.TimeIntervalList)
 				outList := out.(*v1beta1.TimeIntervalList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
@@ -393,7 +393,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		},
 		{
 			(*v1beta1.TimeIntervalList)(nil), (*v0alpha1.TimeIntervalList)(nil),
-			func(in, out interface{}, _ conversion.Scope) error {
+			func(in, out any, _ conversion.Scope) error {
 				inList := in.(*v1beta1.TimeIntervalList)
 				outList := out.(*v0alpha1.TimeIntervalList)
 				inList.ListMeta.DeepCopyInto(&outList.ListMeta)

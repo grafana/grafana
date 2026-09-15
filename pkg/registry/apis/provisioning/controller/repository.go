@@ -195,10 +195,10 @@ func NewRepositoryController(
 // it with the Repository informer to enqueue repositories on add and update.
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
-		AddFunc: func(obj interface{}, isInInitialList bool) {
+		AddFunc: func(obj any, isInInitialList bool) {
 			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
 		},
 	}
@@ -271,7 +271,7 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
+func (rc *RepositoryController) enqueue(obj any, trigger usinformer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
@@ -486,7 +486,7 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 	// "add" rather than "replace": deleteError is omitempty and therefore absent
 	// before the first failure, where a "replace" on the missing path would fail.
 	// "add" creates it, and replaces it when already present.
-	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
+	return rc.statusPatcher.Patch(ctx, obj, map[string]any{
 		"op":    "add",
 		"path":  "/status/deleteError",
 		"value": err.Error(),
@@ -537,7 +537,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
 
-func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
+func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]any, error) {
 	logger := logging.FromContext(ctx)
 	webhookRepo, ok := repo.(repository.WebhookRepository)
 	if !ok {
@@ -722,21 +722,21 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]any {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
-	var patchOperations []map[string]interface{}
+	var patchOperations []map[string]any
 
 	switch {
 	case syncOptions != nil:
 		// We will try to trigger a new sync job if we have sync options
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/sync/state",
 			"value": provisioning.JobStatePending,
 		})
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/sync/started",
 			"value": int64(0),
@@ -744,18 +744,18 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
 		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 		// specific errors?
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/sync/message",
 			"value": []string{},
 		})
 	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/sync/state",
 			"value": provisioning.JobStateError,
 		})
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/sync/message",
 			"value": []string{unhealthyMessage},
@@ -963,7 +963,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
-	var patchOperations []map[string]interface{}
+	var patchOperations []map[string]any
 
 	// applyPatches flushes any patches not yet written
 	applyPatches := func() error {
@@ -1054,7 +1054,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
 	if hasQuotaChanged {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/quota",
 			"value": newQuota,
@@ -1171,7 +1171,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 			branchHandler.SetBranch(defaultBranch)
 
-			patchOperations = append(patchOperations, map[string]interface{}{
+			patchOperations = append(patchOperations, map[string]any{
 				"op":    "replace",
 				"path":  fmt.Sprintf("/spec/%s/branch", repo.Config().Spec.Type),
 				"value": defaultBranch,
@@ -1190,12 +1190,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// 3. We try to patch with repoIDA - without the `test` op, this will succeed and there will be a mismatch
 		// between urlB and repoIDA
 		patchOperations = append(patchOperations,
-			map[string]interface{}{
+			map[string]any{
 				"op":    "test",
 				"path":  repoPath + "/url",
 				"value": obj.URL(),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"op":    "add",
 				"path":  repoPath + "/repoID",
 				"value": repoIDHandler.ResolvedRepoID(),
@@ -1263,7 +1263,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// generation mismatch or a missing webhook, that failure would never be
 	// retried once cooldown ends.
 	if hasSpecChanged && hookErr == nil && !hooksSuppressed {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/observedGeneration",
 			"value": obj.Generation,
@@ -1287,7 +1287,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			if fieldErrors == nil {
 				fieldErrors = []provisioning.ErrorDetails{}
 			}
-			patchOperations = append(patchOperations, map[string]interface{}{
+			patchOperations = append(patchOperations, map[string]any{
 				"op":    "replace",
 				"path":  "/status/fieldErrors",
 				"value": fieldErrors,
@@ -1301,7 +1301,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Persist a timestamp-only quota refresh with other status changes so it does not
 	// create its own informer update and reconciliation loop.
 	if !hasQuotaChanged && obj.Status.Quota != newQuota && len(patchOperations) > 0 {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/quota",
 			"value": newQuota,
@@ -1340,7 +1340,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 // missing) that got skipped this pass due to cooldown/repo inaccessibility, as
 // opposed to there being genuinely nothing to do — the caller uses this to
 // decide whether it's safe to advance observedGeneration.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, testResults *provisioning.TestResults, repoAccessible bool, shouldRotateSecret bool) (hookOps []map[string]any, failureStatus *provisioning.HealthStatus, suppressWebhooks bool, err error) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.process_hooks", repoSpanAttrs(obj))
 	defer span.End()
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
@@ -1381,7 +1381,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 				rc.webhookMetrics.recordRotationOverdue(rc.rotationErrorCause(err))
 			}
 			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
-			hookOps = append(hookOps, map[string]interface{}{
+			hookOps = append(hookOps, map[string]any{
 				"op":    "replace",
 				"path":  "/status/health",
 				"value": status,
@@ -1428,12 +1428,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	return hookOps, nil, suppressWebhooks, nil
 }
 
-func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]any {
 	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
 		return nil
 	}
 
-	return []map[string]interface{}{{
+	return []map[string]any{{
 		"op":    "replace",
 		"path":  "/status/health",
 		"value": status,

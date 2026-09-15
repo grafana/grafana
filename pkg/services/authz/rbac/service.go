@@ -747,7 +747,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 	}
 
 	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action, actionSets)
-	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
+	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (any, error) {
 		basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
 		if err != nil {
 			return nil, err
@@ -796,7 +796,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 	defer span.End()
 
 	anonPermKey := anonymousPermCacheKey(ns.Value, action, actionSets)
-	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
+	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (any, error) {
 		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: s.settings.AnonOrgRole})
 		if err != nil {
 			return nil, err
@@ -1262,7 +1262,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
 
-	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
+	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (any, error) {
 		folders, err := s.folderStore.ListFolders(ctx, ns)
 		if err != nil {
 			return nil, fmt.Errorf("could not get folders: %w", err)

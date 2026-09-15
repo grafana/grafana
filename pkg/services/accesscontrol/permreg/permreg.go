@@ -157,7 +157,7 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 		return nil
 	}
 
-	kind := strings.Split(scope, ":")[0]
+	kind, _, _ := strings.Cut(scope, ":")
 	scopePrefix, ok := pr.kindScopePrefix[kind]
 	if !ok {
 		pr.logger.Error("unknown kind: please update `kindScopePrefix` with the correct scope prefix", "kind", kind)

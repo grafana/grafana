@@ -416,7 +416,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 				},
 				"spec": map[string]any{
 					"interval": "10m",
-					"items": []interface{}{
+					"items": []any{
 						map[string]any{
 							"type":  "dashboard_by_uid",
 							"value": "xCmMwXdVz",

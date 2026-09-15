@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -133,10 +134,8 @@ func (q *CloudWatchQuery) IsInferredSearchExpression() bool {
 		if len(values) > 1 {
 			return true
 		}
-		for _, v := range values {
-			if v == "*" {
-				return true
-			}
+		if slices.Contains(values, "*") {
+			return true
 		}
 	}
 	return false
@@ -148,10 +147,8 @@ func (q *CloudWatchQuery) IsMultiValuedDimensionExpression() bool {
 	}
 
 	for _, values := range q.Dimensions {
-		for _, v := range values {
-			if v == "*" {
-				return false
-			}
+		if slices.Contains(values, "*") {
+			return false
 		}
 
 		if len(values) > 1 {

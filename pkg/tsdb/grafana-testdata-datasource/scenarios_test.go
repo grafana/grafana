@@ -293,7 +293,7 @@ func TestFlakyQueryDelay(t *testing.T) {
 
 	t.Run("returns base unchanged with 0 variability", func(t *testing.T) {
 		base := time.Second
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			require.Equal(t, base, flakyQueryDelay(base, 0))
 		}
 	})
@@ -301,14 +301,14 @@ func TestFlakyQueryDelay(t *testing.T) {
 	t.Run("stays within +/- variability percentage of base", func(t *testing.T) {
 		base := time.Second
 		// 100% variability => uniform in [0, 2*base]
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			delay := flakyQueryDelay(base, 100)
 			require.GreaterOrEqual(t, delay, time.Duration(0))
 			require.LessOrEqual(t, delay, 2*base)
 		}
 
 		// 50% variability => uniform in [0.5*base, 1.5*base]
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			delay := flakyQueryDelay(base, 50)
 			require.GreaterOrEqual(t, delay, base/2)
 			require.LessOrEqual(t, delay, base+base/2)

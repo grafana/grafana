@@ -21,7 +21,7 @@ func RegisterCustomAnalyzers(mapper *mapping.IndexMappingImpl) error {
 func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	// The ngram tokenFilter will create additional grams in the middle of each token.
 	// For example, the token "hello" will be tokenized into "hel", "hell", "hello", "ell", "ello", "llo".
-	tokenFilter := map[string]interface{}{
+	tokenFilter := map[string]any{
 		"type": ngram.Name,
 		"min":  NGRAM_MIN_TOKEN,
 		"max":  10.0,
@@ -32,7 +32,7 @@ func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	}
 
 	//Create a custom analyzer using the N-Gram tokenizer
-	ngramAnalyzer := map[string]interface{}{
+	ngramAnalyzer := map[string]any{
 		"type":          custom.Name,
 		"tokenizer":     whitespace.Name,
 		"token_filters": []string{tokenFilterName, lowercase.Name, unique.Name},

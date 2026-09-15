@@ -1169,7 +1169,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
 			azureLogAnalyticsQuery: nil,
-			Err: func(tt require.TestingT, err error, i ...interface{}) {
+			Err: func(tt require.TestingT, err error, i ...any) {
 				require.ErrorContains(tt, err, "requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly")
 			},
 		},

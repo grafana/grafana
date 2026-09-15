@@ -166,7 +166,7 @@ func NewConcurrentJobDriver(
 // the informer must be wired and running for jobs to be processed.
 func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
-		AddFunc: func(obj interface{}, isInInitialList bool) {
+		AddFunc: func(obj any, isInInitialList bool) {
 			job, ok := obj.(*provisioning.Job)
 			if !ok {
 				c.logger.Error("unexpected object type in job create event", "type", fmt.Sprintf("%T", obj))
@@ -184,7 +184,7 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedF
 			// Attribute the enqueue for the processing-level metrics.
 			c.enqueueCreate(job, c.processed.ClassifyAdd(job.ResourceVersion, isInInitialList))
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			job, ok := newObj.(*provisioning.Job)
 			if !ok {
 				c.logger.Error("unexpected object type in job update event", "type", fmt.Sprintf("%T", newObj))

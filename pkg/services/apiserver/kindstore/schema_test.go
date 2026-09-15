@@ -34,24 +34,24 @@ func TestSchemaValidator(t *testing.T) {
 	manifest := testManifest(t)
 	validator := buildTestKindValidator(t, "v0alpha1")
 
-	valid := map[string]interface{}{
+	valid := map[string]any{
 		"apiVersion": manifest.Group + "/v0alpha1",
 		"kind":       "TestKind",
-		"metadata":   map[string]interface{}{"name": "x", "namespace": "default"},
-		"spec":       map[string]interface{}{"testField": int64(42)},
+		"metadata":   map[string]any{"name": "x", "namespace": "default"},
+		"spec":       map[string]any{"testField": int64(42)},
 	}
 	require.NotPanics(t, func() {
 		require.Empty(t, validation.ValidateCustomResource(nil, valid, validator))
 	})
 
-	badType := map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "x"},
-		"spec":     map[string]interface{}{"testField": "not-an-integer"},
+	badType := map[string]any{
+		"metadata": map[string]any{"name": "x"},
+		"spec":     map[string]any{"testField": "not-an-integer"},
 	}
 	require.NotEmpty(t, validation.ValidateCustomResource(nil, badType, validator))
 
-	missingSpec := map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "x"},
+	missingSpec := map[string]any{
+		"metadata": map[string]any{"name": "x"},
 	}
 	require.NotEmpty(t, validation.ValidateCustomResource(nil, missingSpec, validator))
 }
@@ -61,15 +61,15 @@ func TestSchemaValidator(t *testing.T) {
 func TestSchemaValidatorNestedRefs(t *testing.T) {
 	validator := buildTestKindValidator(t, "v1alpha1")
 
-	valid := map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "x"},
-		"spec": map[string]interface{}{
+	valid := map[string]any{
+		"metadata": map[string]any{"name": "x"},
+		"spec": map[string]any{
 			"testField": "value",
-			"foo": map[string]interface{}{
+			"foo": map[string]any{
 				"foo": "a",
-				"bar": map[string]interface{}{
+				"bar": map[string]any{
 					"value": "b",
-					"baz":   map[string]interface{}{"value": int64(10)},
+					"baz":   map[string]any{"value": int64(10)},
 				},
 			},
 		},
@@ -79,15 +79,15 @@ func TestSchemaValidatorNestedRefs(t *testing.T) {
 	})
 
 	// wrong type three refs deep
-	deepBad := map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "x"},
-		"spec": map[string]interface{}{
+	deepBad := map[string]any{
+		"metadata": map[string]any{"name": "x"},
+		"spec": map[string]any{
 			"testField": "value",
-			"foo": map[string]interface{}{
+			"foo": map[string]any{
 				"foo": "a",
-				"bar": map[string]interface{}{
+				"bar": map[string]any{
 					"value": "b",
-					"baz":   map[string]interface{}{"value": "not-an-integer"},
+					"baz":   map[string]any{"value": "not-an-integer"},
 				},
 			},
 		},
@@ -138,16 +138,16 @@ func TestExpandSchemaRefsEverywhere(t *testing.T) {
 	root := spec.Schema{SchemaProps: spec.SchemaProps{
 		Type:                 []string{"object"},
 		Properties:           map[string]spec.Schema{"prop": ref()},
-		AdditionalProperties: &spec.SchemaOrBool{Schema: ptr(ref())},
-		AdditionalItems:      &spec.SchemaOrBool{Schema: ptr(ref())},
+		AdditionalProperties: &spec.SchemaOrBool{Schema: new(ref())},
+		AdditionalItems:      &spec.SchemaOrBool{Schema: new(ref())},
 		Items: &spec.SchemaOrArray{
-			Schema:  ptr(ref()),
+			Schema:  new(ref()),
 			Schemas: []spec.Schema{ref()},
 		},
 		AllOf: []spec.Schema{ref()},
 		AnyOf: []spec.Schema{ref()},
 		OneOf: []spec.Schema{ref()},
-		Not:   ptr(ref()),
+		Not:   new(ref()),
 		// Definitions are never consulted by the validator, so they are dropped
 		// rather than expanded.
 		Definitions: spec.Definitions{"unused": ref()},
@@ -206,4 +206,5 @@ func TestSchemaValidatorDropsCommonFields(t *testing.T) {
 	require.Len(t, kindSchema.Required, 4)
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }

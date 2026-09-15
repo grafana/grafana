@@ -591,7 +591,7 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 	foldersCount := 3
 	for i := range foldersCount {
-		payload, err := json.Marshal(map[string]interface{}{
+		payload, err := json.Marshal(map[string]any{
 			"title": fmt.Sprintf("Test-%d", i),
 			"uid":   fmt.Sprintf("uid-%d", i),
 		})
@@ -1769,12 +1769,12 @@ func createTestLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, client *ap
 		Method: http.MethodPost,
 		Path:   "/api/library-elements",
 		Body:   []byte(libPanelPayload),
-	}, &map[string]interface{}{})
+	}, &map[string]any{})
 
 	require.NotNil(t, libCreate.Response)
 	require.Equal(t, http.StatusOK, libCreate.Response.StatusCode)
 
-	libPanelUID := (*libCreate.Result)["result"].(map[string]interface{})["uid"].(string)
+	libPanelUID := (*libCreate.Result)["result"].(map[string]any)["uid"].(string)
 	require.NotEmpty(t, libPanelUID)
 
 	return libPanelUID
@@ -1804,7 +1804,7 @@ func createDashboardWithLibraryPanel(t *testing.T, helper *apis.K8sTestHelper, c
 		Method: http.MethodPost,
 		Path:   "/api/dashboards/db",
 		Body:   []byte(dashPayload),
-	}, &map[string]interface{}{})
+	}, &map[string]any{})
 
 	require.NotNil(t, dashCreate.Response)
 	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode)
@@ -1824,7 +1824,7 @@ func verifyLibraryPanelExists(t *testing.T, helper *apis.K8sTestHelper, client *
 		User:   client.Args.User,
 		Method: http.MethodGet,
 		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
-	}, &map[string]interface{}{})
+	}, &map[string]any{})
 
 	require.Equal(t, http.StatusOK, libGet.Response.StatusCode)
 }
@@ -1837,7 +1837,7 @@ func verifyLibraryPanelDeleted(t *testing.T, helper *apis.K8sTestHelper, client 
 		User:   client.Args.User,
 		Method: http.MethodGet,
 		Path:   fmt.Sprintf("/api/library-elements/%s", libPanelUID),
-	}, &map[string]interface{}{})
+	}, &map[string]any{})
 
 	require.Equal(t, http.StatusNotFound, libGet.Response.StatusCode, message)
 }
@@ -1850,7 +1850,7 @@ func verifyDashboardExists(t *testing.T, helper *apis.K8sTestHelper, client *api
 		User:   client.Args.User,
 		Method: http.MethodGet,
 		Path:   fmt.Sprintf("/api/dashboards/uid/%s", dashUID),
-	}, &map[string]interface{}{})
+	}, &map[string]any{})
 
 	require.Equal(t, http.StatusOK, dashGet.Response.StatusCode, fmt.Sprintf("dashboard %s should still exist", dashUID))
 }
@@ -2076,7 +2076,7 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?query=dashboard&limit=50&type=dashboard", client.Args.Namespace),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		var list v0alpha1.SearchResults
 		require.NotNil(t, resp.Response)
 		assert.Equal(t, http.StatusOK, resp.Response.StatusCode)
@@ -2096,7 +2096,7 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/%s", dashboardUID),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		if shouldExist {
 			require.Equal(t, http.StatusOK, getDash.Response.StatusCode, "dashboard %s should exist", dashboardUID)
 		} else {
@@ -2168,7 +2168,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 			User:   client.Args.User,
 			Method: http.MethodGet,
 			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1/namespaces/%s/folders", client.Args.Namespace),
-		}, &map[string]interface{}{})
+		}, &map[string]any{})
 		require.NotNil(t, resp.Response)
 		require.Equal(t, http.StatusOK, resp.Response.StatusCode)
 		require.NoError(t, json.Unmarshal(resp.Body, &folderList))

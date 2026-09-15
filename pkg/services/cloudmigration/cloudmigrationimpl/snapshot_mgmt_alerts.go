@@ -138,7 +138,7 @@ func (s *Service) getNotificationPolicies(ctx context.Context, signedInUser *use
 }
 
 type alertRule struct {
-	Updated              time.Time                                  `json:"updated,omitempty"`
+	Updated              time.Time                                  `json:"updated"`
 	Annotations          map[string]string                          `json:"annotations,omitempty"`
 	Labels               map[string]string                          `json:"labels,omitempty"`
 	Record               *definitions.Record                        `json:"record"`

@@ -614,10 +614,10 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 		{
 			name: "object with missing spec",
 			obj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "scim.grafana.com/v0alpha1",
 					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "test-config",
 						"namespace": "default",
 					},
@@ -652,14 +652,14 @@ func createMockSCIMConfig(userSyncEnabled, groupSyncEnabled bool) *unstructured.
 // Helper function to create a mock SCIMConfig unstructured object with non-provisioned users setting
 func createMockSCIMConfigWithNonProvisioned(userSyncEnabled, groupSyncEnabled, rejectNonProvisionedUsers bool) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "scim.grafana.com/v0alpha1",
 			"kind":       "SCIMConfig",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      "test-config",
 				"namespace": "default",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"enableUserSync":            userSyncEnabled,
 				"enableGroupSync":           groupSyncEnabled,
 				"rejectNonProvisionedUsers": rejectNonProvisionedUsers,

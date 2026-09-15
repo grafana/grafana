@@ -61,14 +61,14 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 			// Create document using unstructured
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "test.grafana.app/v1",
 					"kind":       "testresources",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      doc.name,
 						"namespace": nsPrefix,
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"title": doc.title,
 						"tags":  doc.tags,
 					},
@@ -164,14 +164,14 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 			// Create document using unstructured
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "test.grafana.app/v1",
 					"kind":       "testresources",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      doc.name,
 						"namespace": nsPrefix,
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"title": doc.title,
 						"tags":  doc.tags,
 					},

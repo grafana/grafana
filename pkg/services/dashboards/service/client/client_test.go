@@ -89,11 +89,11 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		options := metav1.GetOptions{}
 
 		expectedResult := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": name,
 				},
-				"status": map[string]interface{}{
+				"status": map[string]any{
 					"someOtherStatus": "ok",
 				},
 			},
@@ -121,12 +121,12 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		conversionErr := "failed to convert"
 
 		v1alpha1Result := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": name,
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": storedVersion,
 						"error":         conversionErr,
@@ -136,10 +136,10 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		}
 
 		expectedResultFallback := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "dashboard/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": name,
 				},
 			},
@@ -189,12 +189,12 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		fallbackErr := errors.New("fallback get failed")
 
 		v1alpha1Result := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": name,
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": storedVersion,
 						"error":         conversionErr,
@@ -223,7 +223,7 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		name := "d"
 		orgID := int64(1)
 		options := metav1.GetOptions{}
-		expected := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		expected := &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": name}}}
 		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
 
 		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, "")
@@ -238,7 +238,7 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		name := "d2"
 		orgID := int64(1)
 		options := metav1.GetOptions{}
-		expected := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "dashboard.grafana.app/v2beta1"}}
+		expected := &unstructured.Unstructured{Object: map[string]any{"apiVersion": "dashboard.grafana.app/v2beta1"}}
 		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
 
 		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
@@ -254,7 +254,7 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		name := "d-fallback-err"
 		orgID := int64(1)
 		options := metav1.GetOptions{}
-		fallbackResult := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		fallbackResult := &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": name}}}
 		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, errors.New("preferred get failed")).Once()
 		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(fallbackResult, nil).Once()
 
@@ -273,9 +273,9 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		options := metav1.GetOptions{}
 		storedVersion := v2alpha1.VERSION
 		bad := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			Object: map[string]any{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": storedVersion,
 						"error":         "conv err",
@@ -283,7 +283,7 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 				},
 			},
 		}
-		ok := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		ok := &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": name}}}
 		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(bad, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(ok, nil).Once()
 
@@ -297,10 +297,10 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 
 func TestK8sHandlerWithFallback_List(t *testing.T) {
 	// Helper function to create a dashboard item
-	createDashboard := func(name, resourceVersion string, status map[string]interface{}) unstructured.Unstructured {
+	createDashboard := func(name, resourceVersion string, status map[string]any) unstructured.Unstructured {
 		return unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":            name,
 					"resourceVersion": resourceVersion,
 				},
@@ -312,10 +312,10 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 	// Helper function to create a fallback dashboard item
 	createFallbackDashboard := func(name, resourceVersion, apiVersion string) unstructured.Unstructured {
 		return unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": apiVersion,
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":            name,
 					"resourceVersion": resourceVersion,
 				},
@@ -324,9 +324,9 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 	}
 
 	// Helper function to create conversion status
-	conversionStatus := func(failed bool, storedVersion, errorMsg string) map[string]interface{} {
-		return map[string]interface{}{
-			"conversion": map[string]interface{}{
+	conversionStatus := func(failed bool, storedVersion, errorMsg string) map[string]any {
+		return map[string]any{
+			"conversion": map[string]any{
 				"failed":        failed,
 				"storedVersion": storedVersion,
 				"error":         errorMsg,
@@ -338,8 +338,8 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		setup := setupTest(t)
 		expectedResult := &unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{
-				createDashboard("dashboard-1", "123", map[string]interface{}{"someOtherStatus": "ok"}),
-				createDashboard("dashboard-2", "456", map[string]interface{}{"anotherStatus": "ok"}),
+				createDashboard("dashboard-1", "123", map[string]any{"someOtherStatus": "ok"}),
+				createDashboard("dashboard-2", "456", map[string]any{"anotherStatus": "ok"}),
 			},
 		}
 
@@ -357,7 +357,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		setup := setupTest(t)
 		initialResult := &unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{
-				createDashboard("dashboard-ok", "123", map[string]interface{}{"someOtherStatus": "ok"}),
+				createDashboard("dashboard-ok", "123", map[string]any{"someOtherStatus": "ok"}),
 				createDashboard("dashboard-fallback", "456", conversionStatus(true, v2alpha1.VERSION, "conversion failed")),
 			},
 		}
@@ -372,7 +372,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		require.Len(t, result.Items, 2)
 
 		expectedItems := []unstructured.Unstructured{
-			createDashboard("dashboard-ok", "123", map[string]interface{}{"someOtherStatus": "ok"}),
+			createDashboard("dashboard-ok", "123", map[string]any{"someOtherStatus": "ok"}),
 			fallbackResult,
 		}
 		require.ElementsMatch(t, expectedItems, result.Items)
@@ -491,12 +491,12 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		ctx := context.Background()
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v0alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Updated Dashboard",
 				},
 			},
@@ -505,13 +505,13 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		options := metav1.UpdateOptions{}
 
 		expectedResult := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v0alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":            "test-dashboard",
 					"resourceVersion": "123",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Updated Dashboard",
 				},
 			},
@@ -533,12 +533,12 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		ctx := context.Background()
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v2alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard-v2",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Updated Dashboard V2",
 				},
 			},
@@ -547,13 +547,13 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		options := metav1.UpdateOptions{}
 
 		expectedResult := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v2alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":            "test-dashboard-v2",
 					"resourceVersion": "456",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Updated Dashboard V2",
 				},
 			},
@@ -575,12 +575,12 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		ctx := context.Background()
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v0alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard-error",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Error Dashboard",
 				},
 			},
@@ -606,12 +606,12 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		ctx := context.Background()
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": v2alpha1.VERSION,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard-v2-error",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Error Dashboard V2",
 				},
 			},
@@ -637,12 +637,12 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 
 		ctx := context.Background()
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "unknown/v1",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard-unknown",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unknown Dashboard",
 				},
 			},
@@ -651,13 +651,13 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		options := metav1.UpdateOptions{}
 
 		expectedResult := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "unknown/v1",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":            "test-dashboard-unknown",
 					"resourceVersion": "789",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unknown Dashboard",
 				},
 			},
@@ -685,8 +685,8 @@ func TestGetConversionStatus(t *testing.T) {
 	}{
 		{
 			name: "No status field",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
 			}},
 			expectedFailed:        false,
 			expectedStoredVersion: "",
@@ -694,9 +694,9 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Status field, but no conversion field",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status":   map[string]interface{}{"someOtherStatus": "ok"},
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status":   map[string]any{"someOtherStatus": "ok"},
 			}},
 			expectedFailed:        false,
 			expectedStoredVersion: "",
@@ -704,10 +704,10 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion field, failed=true, with storedVersion and error",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": v2alpha1.VERSION,
 						"error":         "conversion failed",
@@ -720,10 +720,10 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion field, failed=false",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        false,
 						"storedVersion": "v1alpha1",
 						"error":         "",
@@ -736,10 +736,10 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion field, missing failed (defaults to false)",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
+					"conversion": map[string]any{
 
 						"storedVersion": "v1alpha1",
 						"error":         "",
@@ -752,10 +752,10 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion field, failed=true, missing storedVersion",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed": true,
 
 						"error": "conversion failed",
@@ -768,10 +768,10 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion field, failed=true, missing error",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": v2alpha1.VERSION,
 					},
@@ -783,7 +783,7 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name:                  "Empty object",
-			obj:                   &unstructured.Unstructured{Object: map[string]interface{}{}},
+			obj:                   &unstructured.Unstructured{Object: map[string]any{}},
 			expectedFailed:        false,
 			expectedStoredVersion: "",
 			expectedError:         "",
@@ -797,8 +797,8 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Status not a map",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
 				"status":   "not a map",
 			}},
 			expectedFailed:        false,
@@ -807,9 +807,9 @@ func TestGetConversionStatus(t *testing.T) {
 		},
 		{
 			name: "Conversion not a map",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
+			obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "test"},
+				"status": map[string]any{
 					"conversion": "not a map",
 				},
 			}},
@@ -825,7 +825,7 @@ func TestGetConversionStatus(t *testing.T) {
 			if tt.obj != nil {
 				input = tt.obj.DeepCopy()
 			} else {
-				input = &unstructured.Unstructured{Object: map[string]interface{}{}}
+				input = &unstructured.Unstructured{Object: map[string]any{}}
 			}
 
 			failed, storedVersion, conversionErr := getConversionStatus(input)

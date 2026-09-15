@@ -132,7 +132,7 @@ func TestSessionStateDoesNotLeakBetweenOperations(t *testing.T) {
 		defer sess.Close()
 
 		visited := 0
-		err := sess.Table(LeakRule{}).Cols("guid").BufferSize(1).Iterate(new(LeakRule), func(int, interface{}) error {
+		err := sess.Table(LeakRule{}).Cols("guid").BufferSize(1).Iterate(new(LeakRule), func(int, any) error {
 			visited++
 			return nil
 		})

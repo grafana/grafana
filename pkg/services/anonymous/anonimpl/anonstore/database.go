@@ -105,11 +105,11 @@ user_agent = ?,
 updated_at = ?
 WHERE device_id = ? AND updated_at BETWEEN ? AND ?`
 
-	args := []interface{}{device.ClientIP, device.UserAgent, device.UpdatedAt.UTC(), device.DeviceID,
+	args := []any{device.ClientIP, device.UserAgent, device.UpdatedAt.UTC(), device.DeviceID,
 		device.UpdatedAt.UTC().Add(-anonymousDeviceExpiration), device.UpdatedAt.UTC().Add(time.Minute),
 	}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		args = append([]interface{}{query}, args...)
+		args = append([]any{query}, args...)
 		result, err := dbSession.Exec(args...)
 		if err != nil {
 			return err

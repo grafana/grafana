@@ -42,7 +42,7 @@ func (r *subChildrenREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *subChildrenREST) ProducesObject(verb string) interface{} {
+func (r *subChildrenREST) ProducesObject(verb string) any {
 	return &folders.FolderList{}
 }
 

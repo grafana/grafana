@@ -1676,14 +1676,14 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 		} else if mockCfg.shouldUseDynamicConfig {
 			// Create a mock SCIM config with the desired settings
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "scim.grafana.com/v0alpha1",
 					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "test-config",
 						"namespace": "default",
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"enableUserSync":            mockCfg.userSyncEnabled,
 						"enableGroupSync":           false, // Not used for this test
 						"rejectNonProvisionedUsers": mockCfg.nonProvisionedUsersRejected,
@@ -1945,14 +1945,14 @@ func TestUserSync_NamespaceMappingLogic(t *testing.T) {
 
 			// Set up a successful SCIM config response
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "scim.grafana.com/v0alpha1",
 					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "default",
 						"namespace": tt.expectedNamespace,
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"enableUserSync":  true,
 						"enableGroupSync": false,
 					},
@@ -2443,7 +2443,8 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
+//go:fix inline
+func strPtr(s string) *string { return new(s) }
 
 func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 	tests := []struct {
@@ -2462,7 +2463,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Admin",
 			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          strPtr("Editor"),
+			wantUpdateRole:          new("Editor"),
 		},
 		{
 			name:                    "explicit None role is synced (demotion)",
@@ -2471,7 +2472,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Editor",
 			assertedRole:            org.RoleNone,
-			wantUpdateRole:          strPtr("None"),
+			wantUpdateRole:          new("None"),
 		},
 		{
 			name:                    "unchanged role is not synced",

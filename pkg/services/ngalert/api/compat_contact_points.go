@@ -231,7 +231,7 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (alertingMode
 
 // marshallIntegration converts the API model integration to the storage model that contains settings in the JSON format.
 // The secret fields are not encrypted.
-func marshallIntegration(json jsoniter.API, integrationType schema.IntegrationType, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
+func marshallIntegration(json jsoniter.API, integrationType schema.IntegrationType, integration any, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
 	data, err := json.Marshal(integration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall integration '%s' to JSON: %w", integrationType, err)

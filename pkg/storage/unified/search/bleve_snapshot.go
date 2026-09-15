@@ -333,7 +333,7 @@ func (b *bleveBackend) downloadSnapshotCandidate(
 		return nil, "", 0, snapshotStatusDownloadError, fmt.Errorf("downloading snapshot: %w", err)
 	}
 
-	idx, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	idx, err := bleve.OpenUsing(destDir, map[string]any{"bolt_timeout": boltTimeout})
 	if err != nil {
 		_ = os.RemoveAll(destDir)
 		return nil, "", 0, snapshotStatusValidateError, fmt.Errorf("opening downloaded snapshot: %w", err)

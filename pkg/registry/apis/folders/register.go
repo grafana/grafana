@@ -452,7 +452,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	// the resource permission will likely already exist with admin can admin, so we will need to update it
 	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
 		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"metadata": map[string]any{
 					"name":      name,
 					"namespace": obj.GetNamespace(),
@@ -476,7 +476,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 
 	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"metadata": map[string]any{
 				"name":      name,
 				"namespace": obj.GetNamespace(),

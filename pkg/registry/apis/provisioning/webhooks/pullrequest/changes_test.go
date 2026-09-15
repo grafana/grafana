@@ -52,13 +52,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -127,13 +127,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -207,13 +207,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -282,13 +282,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -360,13 +360,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -438,13 +438,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -511,13 +511,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -584,13 +584,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -763,13 +763,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -832,13 +832,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -908,13 +908,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "test/v1",
 						"kind":       "TestResource",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "test-resource",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "Test Resource",
 						},
 					},
@@ -981,13 +981,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -1046,13 +1046,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -1173,13 +1173,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the:uid", // Invalid character in UID
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -1254,13 +1254,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -1326,13 +1326,13 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("xxxx"),
 				}
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       dashboardKind,
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "the-uid",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "hello world",
 						},
 					},
@@ -1465,13 +1465,13 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 		Data: []byte("xxxx"),
 	}
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       dashboardKind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "the-uid",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": "hello world",
 			},
 		},
@@ -1533,11 +1533,11 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	finfo := &repository.FileInfo{Path: "path/to/file.json", Ref: "ref", Data: []byte("xxxx")}
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       dashboardKind,
-			"metadata":   map[string]interface{}{"name": "the-uid"},
-			"spec":       map[string]interface{}{"title": "hello world"},
+			"metadata":   map[string]any{"name": "the-uid"},
+			"spec":       map[string]any{"title": "hello world"},
 		},
 	}
 	meta, _ := utils.MetaAccessor(obj)
@@ -1607,11 +1607,11 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 		Data: []byte("xxxx"),
 	}
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": folder.FolderResourceInfo.GroupVersion().String(),
 			"kind":       folderKind,
-			"metadata":   map[string]interface{}{"name": "the-uid"},
-			"spec":       map[string]interface{}{"title": "My Team"},
+			"metadata":   map[string]any{"name": "the-uid"},
+			"spec":       map[string]any{"title": "My Team"},
 		},
 	}
 	meta, _ := utils.MetaAccessor(obj)
@@ -1685,11 +1685,11 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		Data: []byte("xxxx"),
 	}
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": folder.FolderResourceInfo.GroupVersion().String(),
 			"kind":       folderKind,
-			"metadata":   map[string]interface{}{"name": "the-uid", "namespace": "x"},
-			"spec":       map[string]interface{}{"title": "My Team"},
+			"metadata":   map[string]any{"name": "the-uid", "namespace": "x"},
+			"spec":       map[string]any{"title": "My Team"},
 		},
 	}
 	meta, _ := utils.MetaAccessor(obj)
@@ -1764,11 +1764,11 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	// available and there is a single change, so the preview branch is reached.
 	finfo := &repository.FileInfo{Path: "playlist.json", Ref: "ref", Data: []byte("xxxx")}
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind":       "Playlist",
-			"metadata":   map[string]interface{}{"name": "the-uid"},
-			"spec":       map[string]interface{}{"title": "My Playlist"},
+			"metadata":   map[string]any{"name": "the-uid"},
+			"spec":       map[string]any{"title": "My Playlist"},
 		},
 	}
 	meta, _ := utils.MetaAccessor(obj)
@@ -1866,11 +1866,11 @@ func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
 func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 	obj := func(name string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResource.GroupVersion().String(),
 				"kind":       dashboardKind,
-				"metadata":   map[string]interface{}{"name": name},
-				"spec":       map[string]interface{}{"title": name},
+				"metadata":   map[string]any{"name": name},
+				"spec":       map[string]any{"title": name},
 			},
 		}
 	}
@@ -2237,11 +2237,11 @@ func recordPreviewedResults(progress *jobs.MockJobProgressRecorder) *[]jobs.JobR
 
 func dashboardObject(name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       dashboardKind,
-			"metadata":   map[string]interface{}{"name": name, "namespace": "x"},
-			"spec":       map[string]interface{}{"title": name},
+			"metadata":   map[string]any{"name": name, "namespace": "x"},
+			"spec":       map[string]any{"title": name},
 		},
 	}
 }

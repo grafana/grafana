@@ -103,7 +103,7 @@ func TestIntegrationTeamService(t *testing.T) {
 					team, err := teamClient.Resource.Get(ctx, createRsp.Result.UID, metav1.GetOptions{})
 					require.NoError(t, err)
 
-					teamSpec := team.Object["spec"].(map[string]interface{})
+					teamSpec := team.Object["spec"].(map[string]any)
 					require.Equal(t, "K8s Service Team", teamSpec["title"])
 					require.Equal(t, "k8s-team@example.com", teamSpec["email"])
 

@@ -56,7 +56,7 @@ func writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) 
 	re := regexp.MustCompile(`\{.*\}`)
 	jsonPart := re.FindString(message)
 	if jsonPart != "" {
-		var jsonData map[string]interface{}
+		var jsonData map[string]any
 		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
 			errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
 			backend.Logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
@@ -76,7 +76,7 @@ func writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) 
 
 				errorBody["error"] = fmt.Sprintf("%s: %s", errorType, errorDescription)
 			} else {
-				nestedError, ok := jsonData["error"].(map[string]interface{})
+				nestedError, ok := jsonData["error"].(map[string]any)
 
 				if !ok {
 					errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
@@ -672,7 +672,7 @@ func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryURL string, query *AzureLogAnalyticsQuery) (*http.Request, error) {
-	body := map[string]interface{}{
+	body := map[string]any{
 		"query": query.Query,
 	}
 

@@ -64,20 +64,20 @@ var _ nats.Subscriber = (*fakeSubscriber)(nil)
 // so a test can assert each constructor wires its own resource type.
 type typeRecorder struct {
 	mu   sync.Mutex
-	objs []interface{}
+	objs []any
 }
 
-func (r *typeRecorder) OnAdd(obj interface{}, _ bool)  { r.record(obj) }
-func (r *typeRecorder) OnUpdate(_, newObj interface{}) { r.record(newObj) }
-func (r *typeRecorder) OnDelete(interface{})           {}
+func (r *typeRecorder) OnAdd(obj any, _ bool)  { r.record(obj) }
+func (r *typeRecorder) OnUpdate(_, newObj any) { r.record(newObj) }
+func (r *typeRecorder) OnDelete(any)           {}
 
-func (r *typeRecorder) record(obj interface{}) {
+func (r *typeRecorder) record(obj any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.objs = append(r.objs, obj)
 }
 
-func (r *typeRecorder) last() interface{} {
+func (r *typeRecorder) last() any {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.objs) == 0 {

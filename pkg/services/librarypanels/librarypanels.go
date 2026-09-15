@@ -150,7 +150,7 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
 		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_uid IN (%s) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
 
-		args := make([]interface{}, 0, len(folderUIDs)+2)
+		args := make([]any, 0, len(folderUIDs)+2)
 		args = append(args, orgID)
 		for _, uid := range folderUIDs {
 			args = append(args, uid)

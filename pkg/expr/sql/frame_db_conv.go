@@ -139,7 +139,7 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 }
 
 // fieldValFromRowVal converts a go-mysql-server row value to a data.field value
-func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
+func fieldValFromRowVal(fieldType data.FieldType, val any) (any, error) {
 	// if the input interface is nil, we can return an untyped nil
 	if val == nil {
 		return nil, nil
@@ -207,7 +207,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 
 // parseVal attempts to assert `val` as type T. If successful, it returns either
 // the value or a pointer, depending on `isNullable`. If not, returns an error.
-func parseVal[T any](val interface{}, typeName string, isNullable bool) (interface{}, error) {
+func parseVal[T any](val any, typeName string, isNullable bool) (any, error) {
 	v, ok := val.(T)
 	if !ok {
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected %s", val, val, typeName)
@@ -216,7 +216,7 @@ func parseVal[T any](val interface{}, typeName string, isNullable bool) (interfa
 }
 
 // parseFloat64OrDecimal handles the special case where val can be float64 or decimal.Decimal.
-func parseFloat64OrDecimal(val interface{}, isNullable bool) (interface{}, error) {
+func parseFloat64OrDecimal(val any, isNullable bool) (any, error) {
 	if fv, ok := val.(float64); ok {
 		return ptrIfNull(fv, isNullable), nil
 	}
@@ -228,7 +228,7 @@ func parseFloat64OrDecimal(val interface{}, isNullable bool) (interface{}, error
 
 // parseBoolFromInt8 asserts val as an int8, converts non-zero to true.
 // Returns pointer if isNullable, otherwise the bool value.
-func parseBoolFromInt8(val interface{}, isNullable bool) (interface{}, error) {
+func parseBoolFromInt8(val any, isNullable bool) (any, error) {
 	v, ok := val.(int8)
 	if !ok {
 		return nil, fmt.Errorf("unexpected value type %v of type %T, expected int8 (for bool)", val, val)
@@ -238,7 +238,7 @@ func parseBoolFromInt8(val interface{}, isNullable bool) (interface{}, error) {
 }
 
 // ptrIfNull returns a pointer to val if isNullable is true; otherwise, returns val.
-func ptrIfNull[T any](val T, isNullable bool) interface{} {
+func ptrIfNull[T any](val T, isNullable bool) any {
 	if isNullable {
 		return &val
 	}

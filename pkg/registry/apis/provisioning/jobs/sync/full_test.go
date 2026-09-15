@@ -29,7 +29,7 @@ import (
 // matchesResult builds a testify matcher that compares a recorded
 // JobResourceResult against want on every identity field, ignoring the
 // non-deterministic operation duration set by the sync workers.
-func matchesResult(want jobs.JobResourceResult) interface{} {
+func matchesResult(want jobs.JobResourceResult) any {
 	errMsg := func(err error) string {
 		if err == nil {
 			return ""

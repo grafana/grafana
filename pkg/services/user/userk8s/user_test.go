@@ -1244,7 +1244,8 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
+//go:fix inline
+func strPtr(s string) *string { return new(s) }
 
 func TestUserK8sService_Update(t *testing.T) {
 	trueVal := true
@@ -1428,7 +1429,7 @@ func TestUserK8sService_Update(t *testing.T) {
 			requesterOrgID: 1,
 			cmd: &user.UpdateUserCommand{
 				UserID:  7,
-				OrgRole: strPtr("Editor"),
+				OrgRole: new("Editor"),
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodGet {

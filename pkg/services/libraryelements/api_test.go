@@ -143,9 +143,9 @@ func TestAuthorizeLibraryPanelUIDUsesK8sFolderForRBAC(t *testing.T) {
 
 func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
 	handler := &libraryElementsK8sHandler{}
-	items := []unstructured.Unstructured{{Object: map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "panel"},
-		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	items := []unstructured.Unstructured{{Object: map[string]any{
+		"metadata": map[string]any{"name": "panel"},
+		"spec":     map[string]any{"type": "text", "title": "Panel"},
 	}}}
 
 	require.Len(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, nil), 1)
@@ -155,9 +155,9 @@ func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
 func TestSortK8sLibraryPanelsByTitleCaseInsensitive(t *testing.T) {
 	makeItems := func() []unstructured.Unstructured {
 		return []unstructured.Unstructured{
-			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "charlie"}}},
-			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "Bravo"}}},
-			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "alpha"}}},
+			{Object: map[string]any{"spec": map[string]any{"title": "charlie"}}},
+			{Object: map[string]any{"spec": map[string]any{"title": "Bravo"}}},
+			{Object: map[string]any{"spec": map[string]any{"title": "alpha"}}},
 		}
 	}
 	titles := func(items []unstructured.Unstructured) []string {
@@ -180,8 +180,8 @@ func TestSortK8sLibraryPanelsByTitleCaseInsensitive(t *testing.T) {
 
 func TestPaginateK8sLibraryPanelsHandlesExtremePage(t *testing.T) {
 	items := []unstructured.Unstructured{
-		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "first"}}},
-		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "second"}}},
+		{Object: map[string]any{"metadata": map[string]any{"name": "first"}}},
+		{Object: map[string]any{"metadata": map[string]any{"name": "second"}}},
 	}
 
 	require.Equal(t, items, paginateK8sLibraryPanels(items, 2, 1))
@@ -216,12 +216,12 @@ func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testin
 	handler := &libraryElementsK8sHandler{folderService: &foldertest.FakeService{ExpectedFolder: &folder.Folder{
 		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1,
 	}}}
-	items := []unstructured.Unstructured{{Object: map[string]interface{}{
-		"metadata": map[string]interface{}{
+	items := []unstructured.Unstructured{{Object: map[string]any{
+		"metadata": map[string]any{
 			"name":        "panel",
-			"annotations": map[string]interface{}{"grafana.app/folder": "folder-uid"},
+			"annotations": map[string]any{"grafana.app/folder": "folder-uid"},
 		},
-		"spec": map[string]interface{}{"type": "text", "title": "Panel"},
+		"spec": map[string]any{"type": "text", "title": "Panel"},
 	}}}
 	reqContext := &contextmodel.ReqContext{
 		Context:      &web.Context{Req: &http.Request{}},
@@ -269,15 +269,15 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 func TestResolveFolderTitlesUsesLegacyRootName(t *testing.T) {
 	handler := &libraryElementsK8sHandler{}
 	items := []unstructured.Unstructured{
-		{Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
+		{Object: map[string]any{
+			"metadata": map[string]any{
+				"annotations": map[string]any{
 					"grafana.app/folder": accesscontrol.GeneralFolderUID,
 				},
 			},
 		}},
-		{Object: map[string]interface{}{
-			"metadata": map[string]interface{}{},
+		{Object: map[string]any{
+			"metadata": map[string]any{},
 		}},
 	}
 
@@ -289,9 +289,9 @@ func TestResolveFolderTitlesUsesLegacyRootName(t *testing.T) {
 
 func TestFilterK8sLibraryPanelsSearchesEmptyFolderUIDAsGeneral(t *testing.T) {
 	handler := &libraryElementsK8sHandler{}
-	items := []unstructured.Unstructured{{Object: map[string]interface{}{
-		"metadata": map[string]interface{}{"name": "panel"},
-		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	items := []unstructured.Unstructured{{Object: map[string]any{
+		"metadata": map[string]any{"name": "panel"},
+		"spec":     map[string]any{"type": "text", "title": "Panel"},
 	}}}
 
 	query := model.SearchLibraryElementsQuery{SearchString: "general"}

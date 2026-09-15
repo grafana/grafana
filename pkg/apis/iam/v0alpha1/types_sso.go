@@ -12,9 +12,9 @@ type SSOSetting struct {
 	// Standard object's metadata
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec SSOSettingSpec `json:"spec,omitempty"`
+	Spec SSOSettingSpec `json:"spec"`
 }
 
 func (SSOSetting) OpenAPIModelName() string {
@@ -34,7 +34,7 @@ func (SSOSettingSpec) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SSOSettingList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []SSOSetting `json:"items"`
 }

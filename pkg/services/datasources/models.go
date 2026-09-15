@@ -71,8 +71,8 @@ type DataSource struct {
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
 
-	Created time.Time `json:"created,omitempty"`
-	Updated time.Time `json:"updated,omitempty"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }

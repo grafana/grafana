@@ -2,6 +2,7 @@ package time
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -41,10 +42,8 @@ func CreateISO8601DurationFromIntervalMS(it int64) (string, error) {
 }
 
 func createISO8601Duration(timeValue int, timeUnit string) string {
-	for _, smallTimeUnit := range smallTimeUnits {
-		if timeUnit == smallTimeUnit {
-			return fmt.Sprintf("PT%v%v", timeValue, strings.ToUpper(timeUnit[0:1]))
-		}
+	if slices.Contains(smallTimeUnits, timeUnit) {
+		return fmt.Sprintf("PT%v%v", timeValue, strings.ToUpper(timeUnit[0:1]))
 	}
 
 	return fmt.Sprintf("P%v%v", timeValue, strings.ToUpper(timeUnit[0:1]))

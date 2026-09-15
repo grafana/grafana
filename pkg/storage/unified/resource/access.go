@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-type groupResource map[string]map[string]interface{}
+type groupResource map[string]map[string]any
 
 type accessMetrics struct {
 	checkDuration      *prometheus.HistogramVec
@@ -85,9 +85,9 @@ func batchSizeBucket(n int) string {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
-	"folder.grafana.app":    map[string]interface{}{"folders": nil},
-	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
+	"dashboard.grafana.app": map[string]any{"dashboards": nil, "variables": nil},
+	"folder.grafana.app":    map[string]any{"folders": nil},
+	"iam.grafana.app":       map[string]any{"users": nil, "teams": nil, "serviceaccounts": nil},
 }
 
 // authzLimitedClient is a client that enforces RBAC for the limited number of groups and resources.
@@ -150,7 +150,7 @@ func parseAuthzExemptions(values []string) (groupResource, error) {
 			return nil, fmt.Errorf("invalid unified storage authz exemption %q: it is already enforced", value)
 		}
 		if exemptions[group] == nil {
-			exemptions[group] = make(map[string]interface{})
+			exemptions[group] = make(map[string]any)
 		}
 		exemptions[group][resource] = nil
 	}

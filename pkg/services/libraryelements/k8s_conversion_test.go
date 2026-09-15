@@ -62,7 +62,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	}
 
 	unstructuredObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",
 			"kind":       "LibraryPanel",
 			"metadata": map[string]any{
@@ -74,35 +74,35 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 				"title":         "Test Library Panel",
 				"panelTitle":    "Test Panel Title",
 				"description":   "Test description",
-				"options": map[string]interface{}{
+				"options": map[string]any{
 					"content": "Test content",
 				},
-				"fieldConfig": map[string]interface{}{
-					"defaults": map[string]interface{}{
-						"color": map[string]interface{}{
+				"fieldConfig": map[string]any{
+					"defaults": map[string]any{
+						"color": map[string]any{
 							"mode": "palette-classic",
 						},
 					},
 				},
-				"gridPos": map[string]interface{}{
+				"gridPos": map[string]any{
 					"h": 8,
 					"w": 12,
 					"x": 0,
 					"y": 0,
 				},
-				"datasource": map[string]interface{}{
+				"datasource": map[string]any{
 					"type": "testdata",
 					"uid":  "test-datasource",
 				},
 				"transparent": true,
-				"links": []interface{}{
-					map[string]interface{}{
+				"links": []any{
+					map[string]any{
 						"title": "Test Link",
 						"url":   "https://example.com",
 					},
 				},
-				"targets": []interface{}{
-					map[string]interface{}{
+				"targets": []any{
+					map[string]any{
 						"refId": "A",
 						"expr":  "test_query",
 					},

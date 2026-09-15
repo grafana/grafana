@@ -119,7 +119,7 @@ func TestIntegrationConvertPrometheusAlertRuleRetrieval(t *testing.T) {
 	// Basic JSON model sanity for at least one expression
 	var sanityChecked bool
 	for _, exp := range found.Spec.Expressions {
-		if m, ok := exp.Model.(map[string]interface{}); ok {
+		if m, ok := exp.Model.(map[string]any); ok {
 			require.NotEmpty(t, m)
 			sanityChecked = true
 			break
@@ -206,10 +206,10 @@ func TestIntegrationConvertPrometheusRecordingRuleRetrieval(t *testing.T) {
 
 	require.Equal(t, ngmodels.ProvenanceConvertedPrometheus, ngmodels.Provenance(found.GetProvenanceStatus()))
 
-	if m, ok := exprSpec.Model.(map[string]interface{}); ok {
+	if m, ok := exprSpec.Model.(map[string]any); ok {
 		require.NotEmpty(t, m)
 	} else if b, ok := exprSpec.Model.([]byte); ok {
-		tmp := map[string]interface{}{}
+		tmp := map[string]any{}
 		_ = json.Unmarshal(b, &tmp)
 		require.NotEmpty(t, tmp)
 	}

@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testi
 	// and simultaneously set the pending-delete label.  Both mutations go in one
 	// Update so the controller sees the label from the very first reconcile attempt.
 	newInterval := initialRepo.Spec.Sync.IntervalSeconds + 10
-	repoObj.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["intervalSeconds"] = newInterval
+	repoObj.Object["spec"].(map[string]any)["sync"].(map[string]any)["intervalSeconds"] = newInterval
 
 	labels := repoObj.GetLabels()
 	if labels == nil {
@@ -171,7 +171,7 @@ func TestIntegrationProvisioning_RepositoryPendingDeleteAdmission(t *testing.T) 
 			if err != nil {
 				return err
 			}
-			obj.Object["spec"].(map[string]interface{})["title"] = "Modified Title"
+			obj.Object["spec"].(map[string]any)["title"] = "Modified Title"
 			_, err = helper.Repositories.Resource.Update(t.Context(), obj, metav1.UpdateOptions{})
 			return err
 		})

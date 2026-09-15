@@ -769,7 +769,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("notification settings", func(t *testing.T) {
-		mustMarshal := func(v interface{}) string {
+		mustMarshal := func(v any) string {
 			b, err := json.Marshal(v)
 			require.NoError(t, err)
 			return string(b)

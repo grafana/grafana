@@ -437,17 +437,17 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 	t.Run("sanitizes query expressions from v2 dashboard", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
-		v2Data := simplejson.NewFromAny(map[string]interface{}{
-			"elements": map[string]interface{}{
-				"panel-1": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"data": map[string]interface{}{
-							"spec": map[string]interface{}{
-								"queries": []interface{}{
-									map[string]interface{}{
-										"spec": map[string]interface{}{
-											"query": map[string]interface{}{
-												"spec": map[string]interface{}{
+		v2Data := simplejson.NewFromAny(map[string]any{
+			"elements": map[string]any{
+				"panel-1": map[string]any{
+					"spec": map[string]any{
+						"data": map[string]any{
+							"spec": map[string]any{
+								"queries": []any{
+									map[string]any{
+										"spec": map[string]any{
+											"query": map[string]any{
+												"spec": map[string]any{
 													"expr":       "go_goroutines{job=\"grafana\"}",
 													"refId":      "A",
 													"datasource": "prometheus",
@@ -455,10 +455,10 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 											},
 										},
 									},
-									map[string]interface{}{
-										"spec": map[string]interface{}{
-											"query": map[string]interface{}{
-												"spec": map[string]interface{}{
+									map[string]any{
+										"spec": map[string]any{
+											"query": map[string]any{
+												"spec": map[string]any{
 													"rawSql": "SELECT * FROM metrics",
 													"query":  "buckets()",
 													"refId":  "B",

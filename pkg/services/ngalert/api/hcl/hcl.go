@@ -8,9 +8,9 @@ import (
 )
 
 type Resource struct {
-	Type string      `hcl:"type,label"`
-	Name string      `hcl:"name,label"`
-	Body interface{} `hcl:",block"`
+	Type string `hcl:"type,label"`
+	Name string `hcl:"name,label"`
+	Body any    `hcl:",block"`
 }
 
 func Encode(resources ...Resource) (data []byte, err error) {

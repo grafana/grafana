@@ -1,5 +1,7 @@
 package metrics
 
+import "slices"
+
 import "github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 
 func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataquery.AzureMetricDimension {
@@ -28,11 +30,8 @@ func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataque
 			} else {
 				hasFilter := false
 				oldFilters := filter.Filters
-				for _, filterValue := range oldFilters {
-					if filterValue == oldFilter {
-						hasFilter = true
-						break
-					}
+				if slices.Contains(oldFilters, oldFilter) {
+					hasFilter = true
 				}
 				if !hasFilter && oldFilter != "*" {
 					oldFilters = append(oldFilters, oldFilter)

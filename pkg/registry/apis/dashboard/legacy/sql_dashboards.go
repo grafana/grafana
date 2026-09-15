@@ -441,16 +441,16 @@ func (r *rowsWrapper) Name() string {
 }
 
 func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
-	generatedDashboard := map[string]interface{}{
+	generatedDashboard := map[string]any{
 		"editable": true,
 		"id":       1,
-		"panels": []map[string]interface{}{
+		"panels": []map[string]any{
 			{
 				"description": "The JSON is invalid. You can import it again after fixing it.",
-				"gridPos":     map[string]interface{}{"h": 8, "w": 24, "x": 0, "y": 0},
+				"gridPos":     map[string]any{"h": 8, "w": 24, "x": 0, "y": 0},
 				"id":          1,
-				"options": map[string]interface{}{
-					"code":    map[string]interface{}{"language": "plaintext", "showLineNumbers": false, "showMiniMap": false},
+				"options": map[string]any{
+					"code":    map[string]any{"language": "plaintext", "showLineNumbers": false, "showMiniMap": false},
 					"content": string(data),
 					"mode":    "code",
 				},

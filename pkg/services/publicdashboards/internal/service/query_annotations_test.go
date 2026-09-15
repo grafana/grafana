@@ -199,18 +199,18 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 }
 
 func TestGetAnnotationsTimeRange(t *testing.T) {
-	var defaultV1DashboardData = simplejson.NewFromAny(map[string]interface{}{
-		"time": map[string]interface{}{
+	var defaultV1DashboardData = simplejson.NewFromAny(map[string]any{
+		"time": map[string]any{
 			"from": "2026-01-01T00:00:00.000Z",
 			"to":   "2026-01-01T12:00:00.000Z",
 		},
 		"timezone": "Europe/London",
 	})
-	var defaultV2DashboardData = simplejson.NewFromAny(map[string]interface{}{
-		"elements": map[string]interface{}{
-			"panel1": map[string]interface{}{},
+	var defaultV2DashboardData = simplejson.NewFromAny(map[string]any{
+		"elements": map[string]any{
+			"panel1": map[string]any{},
 		},
-		"timeSettings": map[string]interface{}{
+		"timeSettings": map[string]any{
 			"from":     "2026-01-01T00:00:00.000Z",
 			"to":       "2026-01-01T12:00:00.000Z",
 			"timezone": "Europe/London",

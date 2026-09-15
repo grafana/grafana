@@ -1569,7 +1569,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "filesystem-index")
 	require.NoError(t, copyable.CopyTo(bleve.FileSystemDirectory(destDir)))
 
-	copied, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	copied, err := bleve.OpenUsing(destDir, map[string]any{"bolt_timeout": boltTimeout})
 	require.NoError(t, err)
 	defer func() { require.NoError(t, copied.Close()) }()
 
@@ -2362,8 +2362,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 

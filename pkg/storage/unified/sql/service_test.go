@@ -57,7 +57,7 @@ var _ resource.ResourceServer = (*mockResourceServer)(nil)
 
 // requireAuthPassed asserts the error is NOT codes.Unauthenticated, meaning
 // the request got past the auth interceptor and reached the (unimplemented) handler.
-func requireAuthPassed(t *testing.T, err error, msgAndArgs ...interface{}) {
+func requireAuthPassed(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	require.Error(t, err, "mock handler returns Unimplemented")
 	assert.Equal(t, codes.Unimplemented, status.Code(err), msgAndArgs...)

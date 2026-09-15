@@ -12,7 +12,7 @@ import (
 
 func TestFromDatasourceData(t *testing.T) {
 	t.Run("should return nil when no credentials configured", func(t *testing.T) {
-		var data = map[string]interface{}{}
+		var data = map[string]any{}
 		var secureData = map[string]string{}
 
 		result, err := FromDatasourceData(data, secureData)
@@ -22,7 +22,7 @@ func TestFromDatasourceData(t *testing.T) {
 	})
 
 	t.Run("should return managed identity credentials when auth type is managed identity", func(t *testing.T) {
-		data := map[string]interface{}{
+		data := map[string]any{
 			"azureAuthType": "msi",
 			"cloudName":     "chinaazuremonitor",
 			"tenantId":      "LEGACY-TENANT-ID",
@@ -42,7 +42,7 @@ func TestFromDatasourceData(t *testing.T) {
 	})
 
 	t.Run("should return workload identity credentials when auth type is workload identity", func(t *testing.T) {
-		data := map[string]interface{}{
+		data := map[string]any{
 			"azureAuthType": azcredentials.AzureAuthWorkloadIdentity,
 		}
 		var secureData = map[string]string{}
@@ -54,7 +54,7 @@ func TestFromDatasourceData(t *testing.T) {
 
 	t.Run("when legacy client secret configuration present", func(t *testing.T) {
 		t.Run("should return client secret credentials when auth type is client secret", func(t *testing.T) {
-			var data = map[string]interface{}{
+			var data = map[string]any{
 				"azureAuthType": "clientsecret",
 				"cloudName":     "chinaazuremonitor",
 				"tenantId":      "LEGACY-TENANT-ID",
@@ -78,7 +78,7 @@ func TestFromDatasourceData(t *testing.T) {
 		})
 
 		t.Run("should return client secret credentials when auth type is not specified but configuration present", func(t *testing.T) {
-			var data = map[string]interface{}{
+			var data = map[string]any{
 				"cloudName": "chinaazuremonitor",
 				"tenantId":  "LEGACY-TENANT-ID",
 				"clientId":  "LEGACY-CLIENT-ID",
@@ -101,7 +101,7 @@ func TestFromDatasourceData(t *testing.T) {
 		})
 
 		t.Run("should error if no client secret is set", func(t *testing.T) {
-			var data = map[string]interface{}{
+			var data = map[string]any{
 				"azureAuthType": "clientsecret",
 				"cloudName":     "chinaazuremonitor",
 				"tenantId":      "LEGACY-TENANT-ID",
@@ -117,8 +117,8 @@ func TestFromDatasourceData(t *testing.T) {
 	})
 
 	t.Run("should return client secret credentials when client secret auth configured even if legacy configuration present", func(t *testing.T) {
-		var data = map[string]interface{}{
-			"azureCredentials": map[string]interface{}{
+		var data = map[string]any{
+			"azureCredentials": map[string]any{
 				"authType":   "clientsecret",
 				"azureCloud": "AzureChinaCloud",
 				"tenantId":   "TENANT-ID",
@@ -148,8 +148,8 @@ func TestFromDatasourceData(t *testing.T) {
 	})
 
 	t.Run("should return error when credentials not supported even if legacy configuration present", func(t *testing.T) {
-		var data = map[string]interface{}{
-			"azureCredentials": map[string]interface{}{
+		var data = map[string]any{
+			"azureCredentials": map[string]any{
 				"authType":   "invalid",
 				"azureCloud": "AzureChinaCloud",
 				"tenantId":   "TENANT-ID",

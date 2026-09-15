@@ -308,8 +308,8 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 						},
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-group-version-kind": []interface{}{
-									map[string]interface{}{
+								"x-kubernetes-group-version-kind": []any{
+									map[string]any{
 										"group":   "provisioning.grafana.app",
 										"kind":    "Connection",
 										"version": "v0alpha1",
@@ -331,8 +331,8 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 						},
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-group-version-kind": []interface{}{
-									map[string]interface{}{
+								"x-kubernetes-group-version-kind": []any{
+									map[string]any{
 										"group":   "provisioning.grafana.app",
 										"kind":    "Connection",
 										"version": "v1beta1",

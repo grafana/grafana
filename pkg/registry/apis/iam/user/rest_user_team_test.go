@@ -518,7 +518,7 @@ func member(name, permission string, external bool) iamv0alpha1.TeamTeamMember {
 type mockResponder struct {
 	called bool
 	err    error
-	obj    interface{}
+	obj    any
 	code   int
 }
 

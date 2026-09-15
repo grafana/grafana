@@ -396,7 +396,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			" OR it should include a object wrapper with an explicit 'apiVersion' and move the body into a 'spec' element", nil)
 	}
 
-	obj := &unstructured.Unstructured{Object: map[string]interface{}{
+	obj := &unstructured.Unstructured{Object: map[string]any{
 		"spec": spec,
 	}}
 
@@ -617,7 +617,7 @@ func (hs *HTTPServer) resolveLegacyInternalID(ctx context.Context, client dynami
 	return name, nil, nil
 }
 
-func nestedInternalID(obj map[string]interface{}) (int64, error) {
+func nestedInternalID(obj map[string]any) (int64, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "id")
 	if !found || err != nil || val == nil {
 		return 0, nil
@@ -638,7 +638,7 @@ func nestedInternalID(obj map[string]interface{}) (int64, error) {
 // so we usually see json.Number, but tolerate the common numeric types too.
 // A missing field returns (0, false, nil); a malformed field returns an error
 // so callers can surface a 400 instead of letting it fall through as a 409.
-func nestedSpecVersion(obj map[string]interface{}) (int64, bool, error) {
+func nestedSpecVersion(obj map[string]any) (int64, bool, error) {
 	val, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "version")
 	if err != nil {
 		return 0, false, fmt.Errorf("spec.version is invalid: %w", err)

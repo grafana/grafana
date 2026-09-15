@@ -40,7 +40,7 @@ func (db *MySQLDialect) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
 }
 
-func (db *MySQLDialect) BooleanValue(value bool) interface{} {
+func (db *MySQLDialect) BooleanValue(value bool) any {
 	if value {
 		return 1
 	}

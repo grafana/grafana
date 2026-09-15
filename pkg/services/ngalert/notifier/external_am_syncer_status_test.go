@@ -234,7 +234,7 @@ func TestClassifySaveError(t *testing.T) {
 		assert.Equal(t, "disk full", got.Error())
 	})
 	t.Run("identifier-mismatch error → ReasonIdentifierMismatch", func(t *testing.T) {
-		built := ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": "test"}})
+		built := ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]any{"Identifier": "test"}})
 		got := ClassifySaveError(built)
 		require.NotNil(t, got)
 		assert.Equal(t, ReasonIdentifierMismatch, got.Reason)

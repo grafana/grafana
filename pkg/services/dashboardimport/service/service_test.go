@@ -199,13 +199,13 @@ func TestInterpolateDashboardService(t *testing.T) {
 		testDashboard.Set("uid", "test-uid")
 
 		// Add __inputs section (required by template evaluator)
-		inputs := []interface{}{
-			map[string]interface{}{
+		inputs := []any{
+			map[string]any{
 				"name":     "DS_PROMETHEUS",
 				"type":     "datasource",
 				"pluginId": "prometheus",
 			},
-			map[string]interface{}{
+			map[string]any{
 				"name":     "DS_LOKI",
 				"type":     "datasource",
 				"pluginId": "loki",
@@ -213,16 +213,16 @@ func TestInterpolateDashboardService(t *testing.T) {
 		}
 		testDashboard.Set("__inputs", inputs)
 
-		panels := []interface{}{
-			map[string]interface{}{
+		panels := []any{
+			map[string]any{
 				"id": 1,
-				"datasource": map[string]interface{}{
+				"datasource": map[string]any{
 					"uid": "${DS_PROMETHEUS}",
 				},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"id": 2,
-				"datasource": map[string]interface{}{
+				"datasource": map[string]any{
 					"uid": "${DS_LOKI}",
 				},
 			},
@@ -259,8 +259,8 @@ func TestInterpolateDashboardService(t *testing.T) {
 		testDashboard.Set("title", "Test Dashboard")
 
 		// Add __inputs section for wildcard matching
-		inputs := []interface{}{
-			map[string]interface{}{
+		inputs := []any{
+			map[string]any{
 				"name":     "DS_TEST",
 				"type":     "datasource",
 				"pluginId": "testdata",
@@ -268,8 +268,8 @@ func TestInterpolateDashboardService(t *testing.T) {
 		}
 		testDashboard.Set("__inputs", inputs)
 
-		panels := []interface{}{
-			map[string]interface{}{
+		panels := []any{
+			map[string]any{
 				"id":         1,
 				"datasource": "${DS_TEST}",
 			},

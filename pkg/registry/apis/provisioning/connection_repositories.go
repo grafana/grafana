@@ -119,7 +119,7 @@ func (c *connectionRepositoriesConnector) invalidateHealth(ctx context.Context, 
 	}
 
 	patcher := appcontroller.NewConnectionStatusPatcher(c.access.GetClient())
-	if err := patcher.Patch(ctx, conn, map[string]interface{}{
+	if err := patcher.Patch(ctx, conn, map[string]any{
 		"op":    "add",
 		"path":  "/status/health/checked",
 		"value": 0,

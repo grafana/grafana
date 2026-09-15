@@ -20,10 +20,10 @@ import (
 // Helper function to create dashboard objects
 func createDashboardObject(name string) unstructured.Unstructured {
 	return unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": name,
 			},
 		},
@@ -33,13 +33,13 @@ func createDashboardObject(name string) unstructured.Unstructured {
 // Helper function to create v2 dashboard objects
 func createV2DashboardObject(name, version string) unstructured.Unstructured {
 	return unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": fmt.Sprintf("dashboard.grafana.app/%s", version),
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": name,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"version": 2,
 				"title":   "V2 Dashboard",
 			},
@@ -242,14 +242,14 @@ func TestExportResources_Dashboards_V0StoredVersionExportsAsV1(t *testing.T) {
 	// Listed at the preferred version with a v0 stored version + failed conversion.
 	mockItems := []unstructured.Unstructured{
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResourceV2.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "existing-dashboard",
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": "v0alpha1",
 					},
@@ -260,13 +260,13 @@ func TestExportResources_Dashboards_V0StoredVersionExportsAsV1(t *testing.T) {
 
 	// The un-converted object the v1 client returns for the re-fetch.
 	v1Dashboard := unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": resources.DashboardResource.GroupVersion().String(),
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "existing-dashboard",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": "classic dashboard",
 			},
 		},
@@ -311,14 +311,14 @@ func TestExportResources_Dashboards_V0StoredVersionExportsAsV1(t *testing.T) {
 func TestExportResources_Dashboards_FailedConversionNoStoredVersion(t *testing.T) {
 	mockItems := []unstructured.Unstructured{
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResource.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "dashboard-no-stored-version",
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed": true,
 						// No storedVersion field
 					},
@@ -365,8 +365,8 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 			createDashboard: func(name, version string) unstructured.Unstructured {
 				dashboard := createDashboardObject(name)
 				dashboard.SetAPIVersion(fmt.Sprintf("%s/%s", resources.DashboardResource.Group, version))
-				dashboard.Object["status"] = map[string]interface{}{
-					"conversion": map[string]interface{}{
+				dashboard.Object["status"] = map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": version,
 					},
@@ -439,13 +439,13 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 			expectSuccess: true,
 			createDashboard: func(name, version string) unstructured.Unstructured {
 				return unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": fmt.Sprintf("dashboard.grafana.app/%s", version),
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": name,
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"version": 3,
 							"title":   "V3 Dashboard",
 						},
@@ -459,14 +459,14 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockItems := []unstructured.Unstructured{
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": resources.DashboardResource.GroupVersion().String(),
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": tt.dashboardName,
 						},
-						"status": map[string]interface{}{
-							"conversion": map[string]interface{}{
+						"status": map[string]any{
+							"conversion": map[string]any{
 								"failed":        true,
 								"storedVersion": tt.storedVersion,
 							},
@@ -725,14 +725,14 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 	// Test that we can handle multiple dashboards with different stored versions
 	mockItems := []unstructured.Unstructured{
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResource.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "v2alpha-dashboard",
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": "v2alpha1",
 					},
@@ -740,14 +740,14 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 			},
 		},
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResource.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "v2beta-dashboard",
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": "v2beta1",
 					},
@@ -755,14 +755,14 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 			},
 		},
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": resources.DashboardResource.GroupVersion().String(),
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "v3-dashboard",
 				},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
+				"status": map[string]any{
+					"conversion": map[string]any{
 						"failed":        true,
 						"storedVersion": "v3alpha1",
 					},
@@ -807,13 +807,13 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 
 		// Setup v3alpha1 client
 		v3Dashboard := unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "dashboard.grafana.app/v3alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "v3-dashboard",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"version": 3,
 					"title":   "V3 Dashboard",
 				},

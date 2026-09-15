@@ -159,11 +159,11 @@ func getInstanceAttributeValue(attributeName string, instance ec2types.Instance)
 				return "", false, nil
 			}
 			data = v.String()
-		} else if attr, ok := v.Interface().(*string); ok {
+		} else if attr, ok := reflect.TypeAssert[*string](v); ok {
 			data = *attr
-		} else if attr, ok := v.Interface().(*time.Time); ok {
+		} else if attr, ok := reflect.TypeAssert[*time.Time](v); ok {
 			data = attr.String()
-		} else if _, ok := v.Interface().(*bool); ok {
+		} else if _, ok := reflect.TypeAssert[*bool](v); ok {
 			data = fmt.Sprint(v.Elem().Bool())
 		} else if v.Kind() == reflect.Pointer && v.Elem().CanInt() {
 			data = fmt.Sprint(v.Elem().Int())

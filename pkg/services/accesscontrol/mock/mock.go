@@ -20,21 +20,21 @@ type fullAccessControl interface {
 }
 
 type Calls struct {
-	Evaluate                       []interface{}
-	GetRoleByName                  []interface{}
-	GetUserPermissions             []interface{}
-	ClearUserPermissionCache       []interface{}
-	DeclareFixedRoles              []interface{}
-	DeclarePluginRoles             []interface{}
-	GetUserBuiltInRoles            []interface{}
-	RegisterFixedRoles             []interface{}
-	RegisterAttributeScopeResolver []interface{}
-	DeleteUserPermissions          []interface{}
-	DeleteTeamPermissions          []interface{}
-	SearchUsersPermissions         []interface{}
-	SearchUserPermissions          []interface{}
-	SaveExternalServiceRole        []interface{}
-	DeleteExternalServiceRole      []interface{}
+	Evaluate                       []any
+	GetRoleByName                  []any
+	GetUserPermissions             []any
+	ClearUserPermissionCache       []any
+	DeclareFixedRoles              []any
+	DeclarePluginRoles             []any
+	GetUserBuiltInRoles            []any
+	RegisterFixedRoles             []any
+	RegisterAttributeScopeResolver []any
+	DeleteUserPermissions          []any
+	DeleteTeamPermissions          []any
+	SearchUsersPermissions         []any
+	SearchUserPermissions          []any
+	SaveExternalServiceRole        []any
+	DeleteExternalServiceRole      []any
 }
 
 type Mock struct {
@@ -86,7 +86,7 @@ func New() *Mock {
 }
 
 func (m *Mock) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
-	m.Calls.GetRoleByName = append(m.Calls.GetRoleByName, []interface{}{ctx, orgID, roleName})
+	m.Calls.GetRoleByName = append(m.Calls.GetRoleByName, []any{ctx, orgID, roleName})
 	if m.GetRoleByNameFunc != nil {
 		return m.GetRoleByNameFunc(ctx, orgID, roleName)
 	}
@@ -97,8 +97,8 @@ func (m *Mock) Run(ctx context.Context) error {
 	return nil
 }
 
-func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
-	return make(map[string]interface{})
+func (m *Mock) GetUsageStats(ctx context.Context) map[string]any {
+	return make(map[string]any)
 }
 
 func (m *Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
@@ -114,7 +114,7 @@ func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 // Evaluate evaluates access to the given resource.
 // This mock uses GetUserPermissions to then call the evaluator Evaluate function.
 func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, usr, evaluator})
+	m.Calls.Evaluate = append(m.Calls.Evaluate, []any{ctx, usr, evaluator})
 	// Use override if provided
 	if m.EvaluateFunc != nil {
 		return m.EvaluateFunc(ctx, usr, evaluator)
@@ -149,7 +149,7 @@ func (m *Mock) Evaluate(ctx context.Context, usr identity.Requester, evaluator a
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
 func (m *Mock) GetUserPermissions(ctx context.Context, user identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
+	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []any{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
 		return m.GetUserPermissionsFunc(ctx, user, opts)
@@ -159,7 +159,7 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user identity.Requester, 
 }
 
 func (m *Mock) ClearUserPermissionCache(user identity.Requester) {
-	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
+	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []any{user})
 	// Use override if provided
 	if m.ClearUserPermissionCacheFunc != nil {
 		m.ClearUserPermissionCacheFunc(user)
@@ -170,7 +170,7 @@ func (m *Mock) ClearUserPermissionCache(user identity.Requester) {
 // assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // This mock returns no error unless an override is provided.
 func (m *Mock) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	m.Calls.DeclareFixedRoles = append(m.Calls.DeclareFixedRoles, []interface{}{registrations})
+	m.Calls.DeclareFixedRoles = append(m.Calls.DeclareFixedRoles, []any{registrations})
 	// Use override if provided
 	if m.DeclareFixedRolesFunc != nil {
 		return m.DeclareFixedRolesFunc(registrations...)
@@ -193,7 +193,7 @@ func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 // assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 // This mock returns no error unless an override is provided.
 func (m *Mock) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []interface{}{ctx, ID, name, regs})
+	m.Calls.DeclarePluginRoles = append(m.Calls.DeclarePluginRoles, []any{ctx, ID, name, regs})
 	// Use override if provided
 	if m.DeclarePluginRolesFunc != nil {
 		return m.DeclarePluginRolesFunc(ctx, ID, name, regs)
@@ -211,7 +211,7 @@ func (m *Mock) RegisterScopeAttributeResolver(scopePrefix string, resolver acces
 }
 
 func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
-	m.Calls.DeleteUserPermissions = append(m.Calls.DeleteUserPermissions, []interface{}{ctx, orgID, userID})
+	m.Calls.DeleteUserPermissions = append(m.Calls.DeleteUserPermissions, []any{ctx, orgID, userID})
 	// Use override if provided
 	if m.DeleteUserPermissionsFunc != nil {
 		return m.DeleteUserPermissionsFunc(ctx, userID)
@@ -220,7 +220,7 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 }
 
 func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
-	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []interface{}{ctx, orgID, teamID})
+	m.Calls.DeleteTeamPermissions = append(m.Calls.DeleteTeamPermissions, []any{ctx, orgID, teamID})
 	// Use override if provided
 	if m.DeleteTeamPermissionsFunc != nil {
 		return m.DeleteTeamPermissionsFunc(ctx, teamID)
@@ -231,7 +231,7 @@ func (m *Mock) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) e
 // SearchUsersPermissions returns all users' permissions filtered by an action prefix
 func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	user := usr.(*user.SignedInUser)
-	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, options})
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []any{ctx, user, options})
 	// Use override if provided
 	if m.SearchUsersPermissionsFunc != nil {
 		return m.SearchUsersPermissionsFunc(ctx, user, usr.GetOrgID(), options)
@@ -240,7 +240,7 @@ func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requeste
 }
 
 func (m *Mock) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
-	m.Calls.SearchUserPermissions = append(m.Calls.SearchUserPermissions, []interface{}{ctx, orgID, searchOptions})
+	m.Calls.SearchUserPermissions = append(m.Calls.SearchUserPermissions, []any{ctx, orgID, searchOptions})
 	// Use override if provided
 	if m.SearchUserPermissionsFunc != nil {
 		return m.SearchUserPermissionsFunc(ctx, orgID, searchOptions)
@@ -249,7 +249,7 @@ func (m *Mock) SearchUserPermissions(ctx context.Context, orgID int64, searchOpt
 }
 
 func (m *Mock) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	m.Calls.SaveExternalServiceRole = append(m.Calls.SaveExternalServiceRole, []interface{}{ctx, cmd})
+	m.Calls.SaveExternalServiceRole = append(m.Calls.SaveExternalServiceRole, []any{ctx, cmd})
 	// Use override if provided
 	if m.SaveExternalServiceRoleFunc != nil {
 		return m.SaveExternalServiceRoleFunc(ctx, cmd)
@@ -258,7 +258,7 @@ func (m *Mock) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.Sa
 }
 
 func (m *Mock) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	m.Calls.DeleteExternalServiceRole = append(m.Calls.DeleteExternalServiceRole, []interface{}{ctx, externalServiceID})
+	m.Calls.DeleteExternalServiceRole = append(m.Calls.DeleteExternalServiceRole, []any{ctx, externalServiceID})
 	// Use override if provided
 	if m.DeleteExternalServiceRoleFunc != nil {
 		return m.DeleteExternalServiceRoleFunc(ctx, externalServiceID)

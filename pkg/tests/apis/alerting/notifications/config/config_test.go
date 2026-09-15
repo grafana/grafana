@@ -67,7 +67,8 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 	})
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }
 
 func newConfigClient(t *testing.T, user apis.User) *alertingnotifv1beta1.ConfigClient {
 	t.Helper()
@@ -251,7 +252,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 
 			t.Run("is forbidden to write status", func(t *testing.T) {
 				_, err := client.UpdateStatus(ctx, singletonID, alertingnotifv1beta1.ConfigStatus{
-					ObservedGeneration: ptr(int64(1)),
+					ObservedGeneration: new(int64(1)),
 				}, resource.UpdateOptions{})
 				requireForbidden(t, err, "")
 			})
@@ -304,7 +305,7 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	t.Run("setting a non-existent datasource UID is rejected", func(t *testing.T) {
 		cfg := newConfig(alertingnotifv1beta1.ConfigSingletonName)
 		cfg.Spec.ExternalAlertmanagerSync = &alertingnotifv1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{
-			DatasourceUid: ptr("does-not-exist-uid"),
+			DatasourceUid: new("does-not-exist-uid"),
 		}
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
 		requireForbidden(t, err, "datasource not found")

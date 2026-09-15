@@ -971,10 +971,10 @@ func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 
 // convertPrometheusResponse returns a JSON or YAML response based on the Accept header.
 // Default is YAML for backward compatibility with mimirtool.
-func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body interface{}) *response.NormalResponse {
+func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body any) *response.NormalResponse {
 	acceptHeader := c.Req.Header.Get("Accept")
 
-	for _, accept := range strings.Split(acceptHeader, ",") {
+	for accept := range strings.SplitSeq(acceptHeader, ",") {
 		mediaType, _, err := mime.ParseMediaType(accept)
 		if err != nil {
 			continue

@@ -306,7 +306,7 @@ func parseGraphiteError(status int, body string) (errorMsg string) {
 	errorMsg = body
 	if status == http.StatusInternalServerError {
 		if strings.HasPrefix(body, "<body") {
-			htmlErrorMsg := ""
+			var htmlErrorMsg strings.Builder
 			tokenizer := html.NewTokenizer(strings.NewReader(body))
 			// Break here as that typically means we've reached EOF
 			for tokenizer.Next() != html.ErrorToken {
@@ -314,11 +314,11 @@ func parseGraphiteError(status int, body string) (errorMsg string) {
 				if token.Type == html.TextToken {
 					trimmed := strings.TrimSpace(token.Data)
 					if trimmed != "" {
-						htmlErrorMsg += html.UnescapeString(trimmed) + "\n"
+						htmlErrorMsg.WriteString(html.UnescapeString(trimmed) + "\n")
 					}
 				}
 			}
-			errorMsg = strings.TrimSpace(htmlErrorMsg)
+			errorMsg = strings.TrimSpace(htmlErrorMsg.String())
 		}
 	}
 	return errorMsg

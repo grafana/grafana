@@ -190,26 +190,26 @@ func replaceInStringSlice(slice []string, oldVersion, newVersion string) []strin
 
 // replaceGVKExtension replaces the version in x-kubernetes-group-version-kind extension
 // and ensures it's always in array format
-func replaceGVKExtension(gvkExt interface{}, oldVersion, newVersion string) interface{} {
+func replaceGVKExtension(gvkExt any, oldVersion, newVersion string) any {
 	switch gvk := gvkExt.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		// Single GVK object - replace version and wrap in array
 		if version, ok := gvk["version"].(string); ok && version == oldVersion {
-			newGVK := map[string]interface{}{
+			newGVK := map[string]any{
 				"group":   gvk["group"],
 				"kind":    gvk["kind"],
 				"version": newVersion,
 			}
-			return []interface{}{newGVK}
+			return []any{newGVK}
 		}
 		// Version doesn't match, keep as array
-		return []interface{}{gvk}
-	case []map[string]interface{}:
+		return []any{gvk}
+	case []map[string]any:
 		// Typed array - replace version in each item
-		result := make([]interface{}, 0, len(gvk))
+		result := make([]any, 0, len(gvk))
 		for _, item := range gvk {
 			if version, ok := item["version"].(string); ok {
-				newItem := map[string]interface{}{
+				newItem := map[string]any{
 					"group": item["group"],
 					"kind":  item["kind"],
 				}
@@ -222,13 +222,13 @@ func replaceGVKExtension(gvkExt interface{}, oldVersion, newVersion string) inte
 			}
 		}
 		return result
-	case []interface{}:
+	case []any:
 		// Interface array - process each item
-		result := make([]interface{}, 0, len(gvk))
+		result := make([]any, 0, len(gvk))
 		for _, item := range gvk {
-			if gvkMap, ok := item.(map[string]interface{}); ok {
+			if gvkMap, ok := item.(map[string]any); ok {
 				if version, ok := gvkMap["version"].(string); ok {
-					newItem := map[string]interface{}{
+					newItem := map[string]any{
 						"group": gvkMap["group"],
 						"kind":  gvkMap["kind"],
 					}
@@ -331,25 +331,25 @@ func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
 
 		// Handle different GVK types
 		switch gvk := gvkExt.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			// Single GVK object - replace version and keep as array
 			if version, ok := gvk["version"].(string); ok && version == oldVersion {
 				// Create new map to avoid modifying original
-				newGVK := map[string]interface{}{
+				newGVK := map[string]any{
 					"group":   gvk["group"],
 					"kind":    gvk["kind"],
 					"version": newVersion,
 				}
 				// Use []interface{} to match k8s OpenAPI expectations
-				schema.Extensions["x-kubernetes-group-version-kind"] = []interface{}{newGVK}
+				schema.Extensions["x-kubernetes-group-version-kind"] = []any{newGVK}
 			}
-		case []map[string]interface{}:
+		case []map[string]any:
 			// Typed array - replace version in each item (deduplicate if needed)
 			seen := make(map[string]bool)
-			result := []interface{}{}
+			result := []any{}
 			for _, item := range gvk {
 				if version, ok := item["version"].(string); ok {
-					newItem := map[string]interface{}{
+					newItem := map[string]any{
 						"group": item["group"],
 						"kind":  item["kind"],
 					}
@@ -369,14 +369,14 @@ func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
 			if len(result) > 0 {
 				schema.Extensions["x-kubernetes-group-version-kind"] = result
 			}
-		case []interface{}:
+		case []any:
 			// Interface array - convert and process
 			seen := make(map[string]bool)
-			result := []interface{}{}
+			result := []any{}
 			for _, item := range gvk {
-				if gvkMap, ok := item.(map[string]interface{}); ok {
+				if gvkMap, ok := item.(map[string]any); ok {
 					if version, ok := gvkMap["version"].(string); ok {
-						newItem := map[string]interface{}{
+						newItem := map[string]any{
 							"group": gvkMap["group"],
 							"kind":  gvkMap["kind"],
 						}
@@ -437,8 +437,8 @@ func ensureGVKForVersion(oas *spec3.OpenAPI, group, version string) {
 			schema.Extensions = make(spec.Extensions)
 		}
 
-		schema.Extensions["x-kubernetes-group-version-kind"] = []interface{}{
-			map[string]interface{}{
+		schema.Extensions["x-kubernetes-group-version-kind"] = []any{
+			map[string]any{
 				"group":   group,
 				"kind":    kind,
 				"version": version,

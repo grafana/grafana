@@ -82,7 +82,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotNil(t, created)
 
 		// Verify creation response
-		createdSpec := created.Object["spec"].(map[string]interface{})
+		createdSpec := created.Object["spec"].(map[string]any)
 		require.Equal(t, "testuser1@example123", createdSpec["email"])
 		require.Equal(t, "testuser1", createdSpec["login"])
 		require.Equal(t, "Test User 1", createdSpec["title"])
@@ -100,7 +100,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotNil(t, fetched)
 
 		// Verify fetched user matches created user
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "testuser1@example123", fetchedSpec["email"])
 		require.Equal(t, "testuser1", fetchedSpec["login"])
 		require.Equal(t, "Test User 1", fetchedSpec["title"])
@@ -142,7 +142,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 
 		// Modify the user spec
-		spec := userToUpdate.Object["spec"].(map[string]interface{})
+		spec := userToUpdate.Object["spec"].(map[string]any)
 		spec["title"] = "Updated Test User"
 		spec["email"] = "updated.test.user@example"
 		userToUpdate.Object["spec"] = spec
@@ -153,14 +153,14 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotNil(t, updated)
 
 		// Verify the update response
-		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec := updated.Object["spec"].(map[string]any)
 		require.Equal(t, "Updated Test User", updatedSpec["title"])
 		require.Equal(t, "updated.test.user@example", updatedSpec["email"])
 
 		// Fetch again to confirm
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Updated Test User", fetchedSpec["title"])
 		require.Equal(t, "updated.test.user@example", fetchedSpec["email"])
 
@@ -268,8 +268,8 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 
 		// Modify the user spec to have the same email as user1
-		spec := userToUpdate.Object["spec"].(map[string]interface{})
-		user1Spec := user1.Object["spec"].(map[string]interface{})
+		spec := userToUpdate.Object["spec"].(map[string]any)
+		user1Spec := user1.Object["spec"].(map[string]any)
 		spec["email"] = user1Spec["email"]
 		userToUpdate.Object["spec"] = spec
 
@@ -311,8 +311,8 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 
 		// Modify the user spec to have the same login as user1
-		spec := userToUpdate.Object["spec"].(map[string]interface{})
-		user1Spec := user1.Object["spec"].(map[string]interface{})
+		spec := userToUpdate.Object["spec"].(map[string]any)
+		user1Spec := user1.Object["spec"].(map[string]any)
 		spec["login"] = user1Spec["login"]
 		userToUpdate.Object["spec"] = spec
 
@@ -364,7 +364,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.NotNil(t, user)
 
 		// Verify fetched user matches created user
-		userSpec := user.Object["spec"].(map[string]interface{})
+		userSpec := user.Object["spec"].(map[string]any)
 		require.Equal(t, "legacyuser3@example", userSpec["email"])
 		require.Equal(t, "legacyuser3", userSpec["login"])
 		require.Equal(t, "Legacy User 3", userSpec["title"])
@@ -451,7 +451,7 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Create the user before marking it as hidden so BeforeCreate does not block it.
 		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
-		spec := obj.Object["spec"].(map[string]interface{})
+		spec := obj.Object["spec"].(map[string]any)
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
 		obj.Object["spec"] = spec
@@ -479,13 +479,13 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		list, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		for _, item := range list.Items {
-			itemSpec := item.Object["spec"].(map[string]interface{})
+			itemSpec := item.Object["spec"].(map[string]any)
 			require.NotEqual(t, hiddenLogin, itemSpec["login"])
 		}
 
 		// Update should return 403 for a hidden user.
 		userToUpdate := created.DeepCopy()
-		updateSpec := userToUpdate.Object["spec"].(map[string]interface{})
+		updateSpec := userToUpdate.Object["spec"].(map[string]any)
 		updateSpec["title"] = "Updated Title"
 		userToUpdate.Object["spec"] = updateSpec
 		_, err = adminClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
@@ -519,7 +519,7 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 
 		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
-		spec := obj.Object["spec"].(map[string]interface{})
+		spec := obj.Object["spec"].(map[string]any)
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
 		obj.Object["spec"] = spec
@@ -549,7 +549,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 			obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
 
-			spec := obj.Object["spec"].(map[string]interface{})
+			spec := obj.Object["spec"].(map[string]any)
 			spec["email"] = email
 			spec["login"] = login
 
@@ -575,7 +575,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		require.NoError(t, err)
 		require.Len(t, listByEmail.Items, 1)
-		emailSpec := listByEmail.Items[0].Object["spec"].(map[string]interface{})
+		emailSpec := listByEmail.Items[0].Object["spec"].(map[string]any)
 		require.Equal(t, "fs-user2@example.com", emailSpec["email"])
 		require.Equal(t, "fs-user2", emailSpec["login"])
 
@@ -585,7 +585,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		})
 		require.NoError(t, err)
 		require.Len(t, listByLogin.Items, 1)
-		loginSpec := listByLogin.Items[0].Object["spec"].(map[string]interface{})
+		loginSpec := listByLogin.Items[0].Object["spec"].(map[string]any)
 		require.Equal(t, "fs-user3@example.com", loginSpec["email"])
 		require.Equal(t, "fs-user3", loginSpec["login"])
 
@@ -620,7 +620,7 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Get the user and check initial lastSeenAt (should be old — set to 10 years ago on creation)
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		status := fetched.Object["status"].(map[string]interface{})
+		status := fetched.Object["status"].(map[string]any)
 		initialLastSeenAt := toInt64(t, status["lastSeenAt"])
 
 		initialTime := time.Unix(initialLastSeenAt, 0)
@@ -632,7 +632,7 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Update status subresource with the chosen timestamp
 		statusObj := fetched.DeepCopy()
-		statusMap := statusObj.Object["status"].(map[string]interface{})
+		statusMap := statusObj.Object["status"].(map[string]any)
 		statusMap["lastSeenAt"] = wantLastSeenAt
 		statusObj.Object["status"] = statusMap
 
@@ -643,7 +643,7 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Fetch the user and verify the exact value was persisted
 		fetchedAfter, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
-		statusAfter := fetchedAfter.Object["status"].(map[string]interface{})
+		statusAfter := fetchedAfter.Object["status"].(map[string]any)
 		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
 		require.Equal(t, wantLastSeenAt, gotLastSeenAt,
 			"lastSeenAt should match the value provided in the status update")
@@ -763,7 +763,7 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 // toInt64 converts a value from unstructured JSON (which may be float64 or int64) to int64.
-func toInt64(t *testing.T, v interface{}) int64 {
+func toInt64(t *testing.T, v any) int64 {
 	t.Helper()
 	switch n := v.(type) {
 	case int64:

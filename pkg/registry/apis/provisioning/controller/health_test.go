@@ -345,7 +345,7 @@ func TestRecordFailure(t *testing.T) {
 				mockPatcher.On("Patch", mock.Anything, repo, mock.AnythingOfType("map[string]interface {}")).
 					Return(nil).
 					Run(func(args mock.Arguments) {
-						patchOp := args[2].(map[string]interface{})
+						patchOp := args[2].(map[string]any)
 						assert.Equal(t, "replace", patchOp["op"])
 						assert.Equal(t, "/status/health", patchOp["path"])
 
@@ -573,7 +573,7 @@ func TestRefreshHealth(t *testing.T) {
 					mockPatcher.On("Patch", mock.Anything, mockRepo.config, mock.AnythingOfType("map[string]interface {}")).
 						Return(nil).
 						Run(func(args mock.Arguments) {
-							patchOp := args[2].(map[string]interface{})
+							patchOp := args[2].(map[string]any)
 							assert.Equal(t, "replace", patchOp["op"])
 							assert.Equal(t, "/status/health", patchOp["path"])
 

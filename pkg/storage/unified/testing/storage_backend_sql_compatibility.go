@@ -2009,11 +2009,11 @@ func verifyListConsistencyBetweenServersWithRVCheck(t *testing.T, server1, serve
 
 // extractResourceNameFromJSON extracts the resource name from JSON metadata
 func extractResourceNameFromJSON(t *testing.T, jsonData []byte) string {
-	var obj map[string]interface{}
+	var obj map[string]any
 	err := json.Unmarshal(jsonData, &obj)
 	require.NoError(t, err, "Failed to unmarshal JSON")
 
-	metadata, ok := obj["metadata"].(map[string]interface{})
+	metadata, ok := obj["metadata"].(map[string]any)
 	require.True(t, ok, "metadata field not found or not an object")
 
 	name, ok := metadata["name"].(string)
@@ -2024,11 +2024,11 @@ func extractResourceNameFromJSON(t *testing.T, jsonData []byte) string {
 
 // extractResourceNamespaceFromJSON extracts the resource namespace from JSON metadata
 func extractResourceNamespaceFromJSON(t *testing.T, jsonData []byte) string {
-	var obj map[string]interface{}
+	var obj map[string]any
 	err := json.Unmarshal(jsonData, &obj)
 	require.NoError(t, err, "Failed to unmarshal JSON")
 
-	metadata, ok := obj["metadata"].(map[string]interface{})
+	metadata, ok := obj["metadata"].(map[string]any)
 	require.True(t, ok, "metadata field not found or not an object")
 
 	namespace, ok := metadata["namespace"].(string)

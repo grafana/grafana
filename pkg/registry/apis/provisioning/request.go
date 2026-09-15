@@ -53,7 +53,7 @@ func isJSONContentType(r *http.Request) bool {
 
 // unmarshalJSON unmarshals the request body into the provided interface
 // it also checks the Content-Type and limits the size of the request body
-func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
+func unmarshalJSON(r *http.Request, maxSize int64, v any) error {
 	if !isJSONContentType(r) {
 		return fmt.Errorf("content type is not JSON: %s", r.Header.Get("Content-Type"))
 	}

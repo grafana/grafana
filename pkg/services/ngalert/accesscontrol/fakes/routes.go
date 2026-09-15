@@ -72,7 +72,7 @@ type FakeRouteAccessService[T models.Identified] struct {
 }
 
 func (s *FakeRouteAccessService[T]) FilterRead(ctx context.Context, user identity.Requester, routes ...T) ([]T, error) {
-	s.Calls = append(s.Calls, Call{"FilterRead", []interface{}{ctx, user, routes}})
+	s.Calls = append(s.Calls, Call{"FilterRead", []any{ctx, user, routes}})
 	if s.FilterReadFunc != nil {
 		return s.FilterReadFunc(ctx, user, routes...)
 	}
@@ -80,7 +80,7 @@ func (s *FakeRouteAccessService[T]) FilterRead(ctx context.Context, user identit
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeRead(ctx context.Context, user identity.Requester, route T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeRead", []interface{}{ctx, user, route}})
+	s.Calls = append(s.Calls, Call{"AuthorizeRead", []any{ctx, user, route}})
 	if s.AuthorizeReadFunc != nil {
 		return s.AuthorizeReadFunc(ctx, user, route)
 	}
@@ -88,7 +88,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeRead(ctx context.Context, user iden
 }
 
 func (s *FakeRouteAccessService[T]) HasRead(ctx context.Context, user identity.Requester, route T) (bool, error) {
-	s.Calls = append(s.Calls, Call{"HasRead", []interface{}{ctx, user, route}})
+	s.Calls = append(s.Calls, Call{"HasRead", []any{ctx, user, route}})
 	if s.HasReadFunc != nil {
 		return s.HasReadFunc(ctx, user, route)
 	}
@@ -96,7 +96,7 @@ func (s *FakeRouteAccessService[T]) HasRead(ctx context.Context, user identity.R
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeReadSome(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeReadSome", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeReadSome", []any{ctx, user}})
 	if s.AuthorizeReadSomeFunc != nil {
 		return s.AuthorizeReadSomeFunc(ctx, user)
 	}
@@ -104,7 +104,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeReadSome(ctx context.Context, user 
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeReadByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeReadByUID", []any{ctx, user, uid}})
 	if s.AuthorizeReadByUIDFunc != nil {
 		return s.AuthorizeReadByUIDFunc(ctx, user, uid)
 	}
@@ -112,7 +112,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeReadByUID(ctx context.Context, user
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeCreate(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeCreate", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeCreate", []any{ctx, user}})
 	if s.AuthorizeCreateFunc != nil {
 		return s.AuthorizeCreateFunc(ctx, user)
 	}
@@ -120,7 +120,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeCreate(ctx context.Context, user id
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeUpdate(ctx context.Context, user identity.Requester, route T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeUpdate", []interface{}{ctx, user, route}})
+	s.Calls = append(s.Calls, Call{"AuthorizeUpdate", []any{ctx, user, route}})
 	if s.AuthorizeUpdateFunc != nil {
 		return s.AuthorizeUpdateFunc(ctx, user, route)
 	}
@@ -128,7 +128,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeUpdate(ctx context.Context, user id
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeUpdateByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeUpdateByUID", []any{ctx, user, uid}})
 	if s.AuthorizeUpdateByUIDFunc != nil {
 		return s.AuthorizeUpdateByUIDFunc(ctx, user, uid)
 	}
@@ -136,7 +136,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeUpdateByUID(ctx context.Context, us
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeDelete(ctx context.Context, user identity.Requester, route T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeDelete", []interface{}{ctx, user, route}})
+	s.Calls = append(s.Calls, Call{"AuthorizeDelete", []any{ctx, user, route}})
 	if s.AuthorizeDeleteFunc != nil {
 		return s.AuthorizeDeleteFunc(ctx, user, route)
 	}
@@ -144,7 +144,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeDelete(ctx context.Context, user id
 }
 
 func (s *FakeRouteAccessService[T]) AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeDeleteByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeDeleteByUID", []any{ctx, user, uid}})
 	if s.AuthorizeDeleteByUIDFunc != nil {
 		return s.AuthorizeDeleteByUIDFunc(ctx, user, uid)
 	}
@@ -152,7 +152,7 @@ func (s *FakeRouteAccessService[T]) AuthorizeDeleteByUID(ctx context.Context, us
 }
 
 func (s *FakeRouteAccessService[T]) DeleteAllPermissions(ctx context.Context, orgID int64, route T) error {
-	s.Calls = append(s.Calls, Call{"DeleteAllPermissions", []interface{}{ctx, orgID, route}})
+	s.Calls = append(s.Calls, Call{"DeleteAllPermissions", []any{ctx, orgID, route}})
 	if s.DeleteAllPermissionsFunc != nil {
 		return s.DeleteAllPermissionsFunc(ctx, orgID, route)
 	}
@@ -160,7 +160,7 @@ func (s *FakeRouteAccessService[T]) DeleteAllPermissions(ctx context.Context, or
 }
 
 func (s *FakeRouteAccessService[T]) SetDefaultPermissions(ctx context.Context, user identity.Requester, route T) error {
-	s.Calls = append(s.Calls, Call{"SetDefaultPermissions", []interface{}{ctx, user, route}})
+	s.Calls = append(s.Calls, Call{"SetDefaultPermissions", []any{ctx, user, route}})
 	if s.SetDefaultPermissionsFunc != nil {
 		return s.SetDefaultPermissionsFunc(ctx, user, route)
 	}
@@ -168,7 +168,7 @@ func (s *FakeRouteAccessService[T]) SetDefaultPermissions(ctx context.Context, u
 }
 
 func (s *FakeRouteAccessService[T]) Access(ctx context.Context, user identity.Requester, routes ...T) (map[string]models.RoutePermissionSet, error) {
-	s.Calls = append(s.Calls, Call{"Access", []interface{}{ctx, user, routes}})
+	s.Calls = append(s.Calls, Call{"Access", []any{ctx, user, routes}})
 	if s.AccessFunc != nil {
 		return s.AccessFunc(ctx, user, routes...)
 	}

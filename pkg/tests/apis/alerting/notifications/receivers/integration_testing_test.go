@@ -241,7 +241,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 						Body: v1beta1.CreateReceiverIntegrationTestRequestBody{
 							Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 								Type: "webhook",
-								Settings: map[string]interface{}{
+								Settings: map[string]any{
 									"url": "http://localhost:8080",
 								},
 							},
@@ -281,7 +281,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 								Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 									Uid:  nil,
 									Type: "webhook",
-									Settings: map[string]interface{}{
+									Settings: map[string]any{
 										"url": "http://localhost:8080",
 									},
 								},
@@ -398,7 +398,7 @@ func TestIntegrationTesting(t *testing.T) {
 	integration := v1beta1.ReceiverIntegration{
 		Type:    "webhook",
 		Version: "v1",
-		Settings: map[string]interface{}{
+		Settings: map[string]any{
 			"url":      server.URL,
 			"username": "user",
 			"password": "secret-password",
@@ -471,7 +471,7 @@ func TestIntegrationTesting(t *testing.T) {
 				Alert: alert,
 				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 					Type: "webhook",
-					Settings: map[string]interface{}{
+					Settings: map[string]any{
 						"url":      server.URL + "/some-other",
 						"username": "user1",
 						"password": "test",
@@ -520,7 +520,7 @@ func TestIntegrationTesting(t *testing.T) {
 					Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 						Uid:  new("test-uid"),
 						Type: "webhook",
-						Settings: map[string]interface{}{
+						Settings: map[string]any{
 							"url":      server.URL + "/some-other",
 							"username": "user1",
 							"password": "test",
@@ -544,7 +544,7 @@ func TestIntegrationTesting(t *testing.T) {
 						Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 							Uid:  new("test-uid"),
 							Type: "webhook",
-							Settings: map[string]interface{}{
+							Settings: map[string]any{
 								"url": server.URL,
 							},
 						},
@@ -597,7 +597,7 @@ func TestIntegrationTestingEmailValidation(t *testing.T) {
 			Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
 				Type:    "email",
 				Version: "v1",
-				Settings: map[string]interface{}{
+				Settings: map[string]any{
 					"addresses": emailAddress,
 				},
 			},
@@ -625,7 +625,7 @@ func TestIntegrationTestingEmailValidation(t *testing.T) {
 		require.NotEmpty(t, otherOrgEmail, "expected Org2 user to have a non-empty email")
 
 		otherOrgReq := req
-		otherOrgReq.Body.Integration.Settings = map[string]interface{}{"addresses": otherOrgEmail}
+		otherOrgReq.Body.Integration.Settings = map[string]any{"addresses": otherOrgEmail}
 
 		_, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, otherOrgReq)
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got: %v", err)

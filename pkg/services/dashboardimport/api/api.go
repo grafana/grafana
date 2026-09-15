@@ -161,5 +161,5 @@ type ImportDashboardResponse struct {
 // swagger:response interpolateDashboardResponse
 type InterpolateDashboardResponse struct {
 	// in: body
-	Body interface{} `json:"body"`
+	Body any `json:"body"`
 }

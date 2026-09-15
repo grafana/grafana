@@ -74,7 +74,7 @@ func (r *DTOConnector) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *DTOConnector) ProducesObject(verb string) interface{} {
+func (r *DTOConnector) ProducesObject(verb string) any {
 	return r.New()
 }
 

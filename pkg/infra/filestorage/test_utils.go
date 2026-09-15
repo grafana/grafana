@@ -12,7 +12,7 @@ import (
 
 type cmdErrorOutput struct {
 	message  string
-	args     []interface{}
+	args     []any
 	instance error
 }
 
@@ -78,48 +78,48 @@ type listLastPathCheck struct {
 	v string
 }
 
-func fContents(contents []byte) interface{} {
+func fContents(contents []byte) any {
 	return fileContentsCheck{v: contents}
 }
 
-func fName(name string) interface{} {
+func fName(name string) any {
 	return fileNameCheck{v: name}
 }
 
-func fPath(path string) interface{} {
+func fPath(path string) any {
 	return filePathCheck{v: path}
 }
 
-func fProperties(properties map[string]string) interface{} {
+func fProperties(properties map[string]string) any {
 	return filePropertiesCheck{v: properties}
 }
-func fSize(size int64) interface{} {
+func fSize(size int64) any {
 	return fileSizeCheck{v: size}
 }
 
-func fMimeType(mimeType string) interface{} {
+func fMimeType(mimeType string) any {
 	return fileMimeTypeCheck{v: mimeType}
 }
 
-func listSize(size int) interface{} {
+func listSize(size int) any {
 	return listSizeCheck{v: size}
 }
 
-func listHasMore(hasMore bool) interface{} {
+func listHasMore(hasMore bool) any {
 	return listHasMoreCheck{v: hasMore}
 }
 
-func listLastPath(path string) interface{} {
+func listLastPath(path string) any {
 	return listLastPathCheck{v: path}
 }
 
-func checks(c ...interface{}) []interface{} {
+func checks(c ...any) []any {
 	return c
 }
 
 type queryGet struct {
 	input  queryGetInput
-	checks []interface{}
+	checks []any
 }
 
 type queryListFilesInput struct {
@@ -130,8 +130,8 @@ type queryListFilesInput struct {
 
 type queryListFiles struct {
 	input queryListFilesInput
-	list  []interface{}
-	files [][]interface{}
+	list  []any
+	files [][]any
 }
 
 type queryListFoldersInput struct {
@@ -141,10 +141,10 @@ type queryListFoldersInput struct {
 
 type queryListFolders struct {
 	input  queryListFoldersInput
-	checks [][]interface{}
+	checks [][]any
 }
 
-func interfaceName(myvar interface{}) string {
+func interfaceName(myvar any) string {
 	if t := reflect.TypeOf(myvar); t.Kind() == reflect.Pointer {
 		return "*" + t.Elem().Name()
 	} else {
@@ -152,7 +152,7 @@ func interfaceName(myvar interface{}) string {
 	}
 }
 
-func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName string, fs FileStorage) {
+func handleCommand(t *testing.T, ctx context.Context, cmd any, cmdName string, fs FileStorage) {
 	t.Helper()
 
 	var err error
@@ -197,12 +197,12 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 	}
 }
 
-func runChecks(t *testing.T, stepName string, path string, output interface{}, checks []interface{}) {
+func runChecks(t *testing.T, stepName string, path string, output any, checks []any) {
 	if len(checks) == 0 {
 		return
 	}
 
-	runFileMetadataCheck := func(file FileMetadata, check interface{}, checkName string) {
+	runFileMetadataCheck := func(file FileMetadata, check any, checkName string) {
 		switch c := check.(type) {
 		case filePropertiesCheck:
 			require.Equal(t, c.v, file.Properties, "%s-%s %s", stepName, checkName, path)
@@ -265,7 +265,7 @@ func formatPathStructure(files []*File) string {
 	return res
 }
 
-func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName string, fs FileStorage) {
+func handleQuery(t *testing.T, ctx context.Context, query any, queryName string, fs FileStorage) {
 	t.Helper()
 
 	switch q := query.(type) {
@@ -339,7 +339,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 	}
 }
 
-func executeTestStep(t *testing.T, ctx context.Context, step interface{}, stepNumber int, fs FileStorage) {
+func executeTestStep(t *testing.T, ctx context.Context, step any, stepNumber int, fs FileStorage) {
 	name := fmt.Sprintf("[%d]%s", stepNumber, interfaceName(step))
 
 	switch s := step.(type) {

@@ -159,7 +159,7 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
@@ -255,7 +255,7 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
@@ -349,14 +349,14 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
-					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
+					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) {
 						found := false
 						for _, op := range patchOperations {
 							if op["op"].(string) == "replace" &&
@@ -452,14 +452,14 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
-					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
+					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) {
 						found := false
 						for _, op := range patchOperations {
 							if op["op"].(string) == "replace" &&
@@ -553,14 +553,14 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
-					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
+					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) {
 						found := false
 						for _, op := range patchOperations {
 							if op["op"].(string) == "replace" &&
@@ -656,14 +656,14 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
-					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
+					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) {
 						// Verify token regeneration patch operation exists
 						tokenFound := false
 						for _, op := range patchOperations {
@@ -796,7 +796,7 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
@@ -923,7 +923,7 @@ func TestConnectionController_process(t *testing.T) {
 					ConnectionHealthResultWithPatchOps{
 						TestResults:  &provisioning.TestResults{Success: true},
 						HealthStatus: provisioning.HealthStatus{Healthy: true},
-						PatchOps:     []map[string]interface{}{},
+						PatchOps:     []map[string]any{},
 					},
 					nil,
 				)
@@ -1010,14 +1010,14 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
-					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
+					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) {
 						found := false
 						for _, op := range patchOperations {
 							if op["op"].(string) == "replace" &&
@@ -1112,7 +1112,7 @@ func TestConnectionController_process(t *testing.T) {
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
 						HealthStatus: healthStatus,
-						PatchOps: []map[string]interface{}{
+						PatchOps: []map[string]any{
 							{"op": "replace", "path": "/status/health", "value": healthStatus},
 						},
 					}, nil)
@@ -1348,9 +1348,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			mockPatcher.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Run(func(args mock.Arguments) {
 					// Extract variadic patch operations - they come as individual arguments after the first two
-					patchOps := []map[string]interface{}{}
+					patchOps := []map[string]any{}
 					for i := 2; i < len(args); i++ {
-						if op, ok := args[i].(map[string]interface{}); ok {
+						if op, ok := args[i].(map[string]any); ok {
 							patchOps = append(patchOps, op)
 						}
 					}

@@ -42,7 +42,7 @@ const (
 //
 //go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
 type ConnectionStatusPatcher interface {
-	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
+	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]any) error
 }
 
 // ConnectionController controls Connection resources.
@@ -124,16 +124,16 @@ func NewConnectionController(
 // it with the Connection informer to enqueue connections on add and update.
 func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
-		AddFunc: func(obj interface{}, isInInitialList bool) {
+		AddFunc: func(obj any, isInInitialList bool) {
 			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
+func (cc *ConnectionController) enqueue(obj any, trigger usinformer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)
@@ -399,10 +399,10 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	}
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
-	var patchOperations []map[string]interface{}
+	var patchOperations []map[string]any
 
 	if hasSpecChanged {
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/observedGeneration",
 			"value": conn.Generation,
@@ -432,7 +432,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			if !tokenExpiresAt.IsZero() {
 				tokenStatus.Expiration = tokenExpiresAt.UnixMilli()
 			}
-			patchOperations = append(patchOperations, map[string]interface{}{
+			patchOperations = append(patchOperations, map[string]any{
 				"op":    "add",
 				"path":  "/status/token",
 				"value": tokenStatus,
@@ -466,7 +466,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	if fieldErrors == nil {
 		fieldErrors = []provisioning.ErrorDetails{}
 	}
-	patchOperations = append(patchOperations, map[string]interface{}{
+	patchOperations = append(patchOperations, map[string]any{
 		"op":    "replace",
 		"path":  "/status/fieldErrors",
 		"value": fieldErrors,
@@ -553,7 +553,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (token common.RawSecureValue, expiresAt time.Time, patchOperations []map[string]interface{}, err error) {
+) (token common.RawSecureValue, expiresAt time.Time, patchOperations []map[string]any, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
@@ -578,7 +578,7 @@ func (cc *ConnectionController) generateConnectionToken(
 
 	logger.Info("successfully generated new connection token")
 
-	patchOperations = []map[string]interface{}{
+	patchOperations = []map[string]any{
 		{
 			"op":   "replace",
 			"path": "/secure/token",

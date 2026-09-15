@@ -45,10 +45,10 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
 	// create the library element first
-	libraryElement := map[string]interface{}{
+	libraryElement := map[string]any{
 		"kind": 1,
 		"name": "Test Library Panel",
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":  "timeseries",
 			"title": "Test Library Panel",
 		},
@@ -57,18 +57,18 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
 	require.NoError(t, err)
 	require.NotNil(t, libraryElementData)
-	data := libraryElementData["result"].(map[string]interface{})
+	data := libraryElementData["result"].(map[string]any)
 	uid := data["uid"].(string)
 	require.NotEmpty(t, uid)
 
 	// then reference the library element in the dashboard
 	dashboard := createDashboardObject(t, "Library Panel Test", "", 1)
-	dashboard.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-		map[string]interface{}{
+	dashboard.Object["spec"].(map[string]any)["panels"] = []any{
+		map[string]any{
 			"id":    1,
 			"title": "Library Panel",
 			"type":  "library-panel-ref",
-			"libraryPanel": map[string]interface{}{
+			"libraryPanel": map[string]any{
 				"uid":  uid,
 				"name": "Test Library Panel",
 			},
@@ -84,7 +84,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
 	require.NoError(t, err)
 	require.NotNil(t, connectionsData)
-	connections := connectionsData["result"].([]interface{})
+	connections := connectionsData["result"].([]any)
 	require.Len(t, connections, 1)
 
 	// The legacy API must not delete a panel while a dashboard still references
@@ -95,13 +95,13 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
 	}, &struct{}{})
 	require.Equal(t, http.StatusForbidden, deleteResp.Response.StatusCode)
-	var deleteError map[string]interface{}
+	var deleteError map[string]any
 	require.NoError(t, json.Unmarshal(deleteResp.Body, &deleteError))
 	require.Equal(t, model.ErrLibraryElementHasConnections.Error(), deleteError["message"])
 
 	stillExists, err := getDashboardViaHTTP(t, &ctx, fmt.Sprintf("/api/library-elements/%s", uid), ctx.AdminUser)
 	require.NoError(t, err)
-	require.Equal(t, uid, stillExists["result"].(map[string]interface{})["uid"])
+	require.Equal(t, uid, stillExists["result"].(map[string]any)["uid"])
 }
 
 // this tests the /apis path to ensure authorization is being enforced. /api integration tests are within the service package
@@ -262,11 +262,11 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
 
-	legacyOnlyUIDBody, err := json.Marshal(map[string]interface{}{
+	legacyOnlyUIDBody, err := json.Marshal(map[string]any{
 		"kind": 1,
 		"uid":  "Legacy_UID",
 		"name": "Legacy-only UID",
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":  "text",
 			"title": "Legacy-only UID",
 		},
@@ -280,7 +280,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		ContentType: "application/json",
 	}, &struct{}{})
 	require.Equal(t, http.StatusBadRequest, legacyOnlyUIDResp.Response.StatusCode)
-	var legacyOnlyUIDError map[string]interface{}
+	var legacyOnlyUIDError map[string]any
 	require.NoError(t, json.Unmarshal(legacyOnlyUIDResp.Body, &legacyOnlyUIDError))
 	require.Equal(t, model.ErrLibraryElementInvalidUID.Error(), legacyOnlyUIDError["message"])
 
@@ -295,19 +295,19 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	legacyFolder := legacyFolderResponse.Result
 	require.NotNil(t, legacyFolder)
 	require.NotZero(t, legacyFolder.ID) // nolint:staticcheck
-	createdByFolderID, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+	createdByFolderID, err := postHelper(t, &ctx, "/api/library-elements", map[string]any{
 		"kind":     1,
 		"name":     "FolderIDPanel",
 		"folderId": legacyFolder.ID, // nolint:staticcheck
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":  "text",
 			"title": "Folder ID panel",
 		},
 	}, ctx.AdminUser)
 	require.NoError(t, err)
-	createdByFolderIDResult := createdByFolderID["result"].(map[string]interface{})
+	createdByFolderIDResult := createdByFolderID["result"].(map[string]any)
 	require.Equal(t, legacyFolder.UID, createdByFolderIDResult["folderUid"])
-	patchWithoutFolderBody, err := json.Marshal(map[string]interface{}{
+	patchWithoutFolderBody, err := json.Marshal(map[string]any{
 		"kind":    1,
 		"name":    "FolderIDPanelRenamed",
 		"version": 1,
@@ -322,7 +322,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	}, &model.LibraryElementResponse{})
 	require.Equal(t, http.StatusOK, patchWithoutFolderResponse.Response.StatusCode)
 	require.Equal(t, legacyFolder.UID, patchWithoutFolderResponse.Result.Result.FolderUID)
-	moveToRootBody, err := json.Marshal(map[string]interface{}{
+	moveToRootBody, err := json.Marshal(map[string]any{
 		"folderUid": "",
 		"kind":      1,
 		"version":   2,
@@ -341,25 +341,25 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 
 	// create: the display title and properties without a typed spec field (e.g.
 	// transformations) must survive the conversion round trip
-	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]any{
 		"kind":      1,
 		"name":      "CRUDPanel",
 		"folderUid": "",
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":            "text",
 			"title":           "CRUD panel display title",
 			"description":     "some description",
-			"transformations": []interface{}{map[string]interface{}{"id": "reduce"}},
+			"transformations": []any{map[string]any{"id": "reduce"}},
 		},
 	}, ctx.AdminUser)
 	require.NoError(t, err)
-	result := created["result"].(map[string]interface{})
+	result := created["result"].(map[string]any)
 	uid := result["uid"].(string)
 	require.NotEmpty(t, uid)
 	require.Equal(t, "CRUDPanel", result["name"])
 	require.Equal(t, float64(1), result["version"])
-	require.Equal(t, "General", result["meta"].(map[string]interface{})["folderName"])
-	createdModel := result["model"].(map[string]interface{})
+	require.Equal(t, "General", result["meta"].(map[string]any)["folderName"])
+	createdModel := result["model"].(map[string]any)
 	require.Equal(t, "CRUD panel display title", createdModel["title"])
 	require.Contains(t, createdModel, "transformations")
 	require.Equal(t, "some description", createdModel["description"])
@@ -367,25 +367,25 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	// get by uid
 	got, err := getDashboardViaHTTP(t, &ctx, fmt.Sprintf("/api/library-elements/%s", uid), ctx.AdminUser)
 	require.NoError(t, err)
-	gotResult := got["result"].(map[string]interface{})
+	gotResult := got["result"].(map[string]any)
 	require.Equal(t, uid, gotResult["uid"])
-	gotModel := gotResult["model"].(map[string]interface{})
+	gotModel := gotResult["model"].(map[string]any)
 	require.Equal(t, "CRUD panel display title", gotModel["title"])
 	require.Contains(t, gotModel, "transformations")
 
 	// get all, with and without a matching search string
 	all, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements", ctx.AdminUser)
 	require.NoError(t, err)
-	require.Equal(t, float64(1), all["result"].(map[string]interface{})["totalCount"])
-	require.Len(t, all["result"].(map[string]interface{})["elements"], 1)
+	require.Equal(t, float64(1), all["result"].(map[string]any)["totalCount"])
+	require.Len(t, all["result"].(map[string]any)["elements"], 1)
 
 	filtered, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=crudpanel", ctx.AdminUser)
 	require.NoError(t, err)
-	require.Equal(t, float64(1), filtered["result"].(map[string]interface{})["totalCount"])
+	require.Equal(t, float64(1), filtered["result"].(map[string]any)["totalCount"])
 
 	empty, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=doesnotmatch", ctx.AdminUser)
 	require.NoError(t, err)
-	require.Equal(t, float64(0), empty["result"].(map[string]interface{})["totalCount"])
+	require.Equal(t, float64(0), empty["result"].(map[string]any)["totalCount"])
 
 	// get by name
 	byName, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements/name/CRUDPanel", ctx.AdminUser)
@@ -414,7 +414,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, restrictedUID))
 
 	// patch with a stale version must fail the optimistic concurrency check
-	staleBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 99})
+	staleBody, err := json.Marshal(map[string]any{"kind": 1, "name": "CRUDPanelRenamed", "version": 99})
 	require.NoError(t, err)
 	staleResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
 		User:        ctx.AdminUser,
@@ -426,7 +426,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.Equal(t, http.StatusPreconditionFailed, staleResp.Response.StatusCode)
 
 	// patch: rename keeps the model and bumps the version
-	patchBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 1})
+	patchBody, err := json.Marshal(map[string]any{"kind": 1, "name": "CRUDPanelRenamed", "version": 1})
 	require.NoError(t, err)
 	patchResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
 		User:        ctx.AdminUser,
@@ -436,12 +436,12 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		ContentType: "application/json",
 	}, &struct{}{})
 	require.Equal(t, http.StatusOK, patchResp.Response.StatusCode)
-	var patched map[string]interface{}
+	var patched map[string]any
 	require.NoError(t, json.Unmarshal(patchResp.Body, &patched))
-	patchedResult := patched["result"].(map[string]interface{})
+	patchedResult := patched["result"].(map[string]any)
 	require.Equal(t, "CRUDPanelRenamed", patchedResult["name"])
 	require.Equal(t, float64(2), patchedResult["version"])
-	patchedModel := patchedResult["model"].(map[string]interface{})
+	patchedModel := patchedResult["model"].(map[string]any)
 	require.Equal(t, "CRUD panel display title", patchedModel["title"])
 	require.Contains(t, patchedModel, "transformations")
 
@@ -454,7 +454,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
 	}, &struct{}{})
 	require.Equal(t, http.StatusNotFound, getResp.Response.StatusCode)
-	var notFoundBody map[string]interface{}
+	var notFoundBody map[string]any
 	require.NoError(t, json.Unmarshal(getResp.Body, &notFoundBody))
 	require.Equal(t, "library element could not be found", notFoundBody["message"])
 }
@@ -471,22 +471,22 @@ func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	ctx := createTestContext(t, helper, helper.Org1)
 	client := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
 
-	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+	panel := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
 		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": "status-missing-panel",
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"type":        "text",
 			"title":       "Status missing panel",
 			"panelTitle":  "Panel title",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
+			"options":     map[string]any{},
+			"fieldConfig": map[string]any{},
 		},
-		"status": map[string]interface{}{
-			"missing": map[string]interface{}{
-				"transformations": []interface{}{map[string]interface{}{"id": "reduce"}},
+		"status": map[string]any{
+			"missing": map[string]any{
+				"transformations": []any{map[string]any{"id": "reduce"}},
 			},
 		},
 	}}
@@ -528,18 +528,18 @@ func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
 	// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
 	viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
 
-	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+	panel := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
 		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": "viewer-write-probe",
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"type":        "text",
 			"title":       "Viewer write probe",
 			"panelTitle":  "Viewer write probe",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
+			"options":     map[string]any{},
+			"fieldConfig": map[string]any{},
 		},
 	}}
 
@@ -599,18 +599,18 @@ func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) 
 	ctx := createTestContext(t, helper, helper.Org1)
 	client := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
 
-	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+	panel := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
 		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": "merge-patch-probe",
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"type":        "text",
 			"title":       "Merge patch probe",
 			"panelTitle":  "Merge patch probe",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
+			"options":     map[string]any{},
+			"fieldConfig": map[string]any{},
 		},
 	}}
 
@@ -658,10 +658,10 @@ func getLibraryElementGVR() schema.GroupVersionResource {
 // currently through /api
 func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title string, folderUID string) (string, error) {
 	t.Helper()
-	libraryElement := map[string]interface{}{
+	libraryElement := map[string]any{
 		"kind": 1,
 		"name": title,
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":  "text",
 			"title": title,
 		},
@@ -677,7 +677,7 @@ func createLibraryElement(t *testing.T, ctx TestContext, user apis.User, title s
 	}
 
 	require.NotNil(t, libraryElementData)
-	data := libraryElementData["result"].(map[string]interface{})
+	data := libraryElementData["result"].(map[string]any)
 	uidStr := data["uid"].(string)
 	require.NotEmpty(t, uidStr)
 
@@ -722,11 +722,11 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	setResourceUserPermission(t, ctx, ctx.AdminUser, false, accessibleFolder.UID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelView))
 	setResourceUserPermission(t, ctx, ctx.AdminUser, false, inaccessibleFolder.UID, []ResourcePermissionSetting{})
 
-	libraryElement := map[string]interface{}{
+	libraryElement := map[string]any{
 		"kind":      1,
 		"name":      "Accessible Library Panel",
 		"folderUid": accessibleFolder.UID,
-		"model": map[string]interface{}{
+		"model": map[string]any{
 			"type":  "text",
 			"title": "Accessible Library Panel",
 		},
@@ -735,17 +735,17 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	libraryElementData, err := postHelper(t, &ctx, libraryElementURL, libraryElement, ctx.AdminUser)
 	require.NoError(t, err)
 	require.NotNil(t, libraryElementData)
-	data := libraryElementData["result"].(map[string]interface{})
+	data := libraryElementData["result"].(map[string]any)
 	uid := data["uid"].(string)
 	require.NotEmpty(t, uid)
 
 	dashInGeneral := createDashboardObject(t, "Dashboard in General", "", 1)
-	dashInGeneral.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-		map[string]interface{}{
+	dashInGeneral.Object["spec"].(map[string]any)["panels"] = []any{
+		map[string]any{
 			"id":    1,
 			"title": "Library Panel",
 			"type":  "library-panel-ref",
-			"libraryPanel": map[string]interface{}{
+			"libraryPanel": map[string]any{
 				"uid":  uid,
 				"name": "Accessible Library Panel",
 			},
@@ -757,12 +757,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	require.NotNil(t, createdDashInGeneral)
 
 	dashInAccessibleFolder := createDashboardObject(t, "Dashboard in Accessible Folder", accessibleFolder.UID, 1)
-	dashInAccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-		map[string]interface{}{
+	dashInAccessibleFolder.Object["spec"].(map[string]any)["panels"] = []any{
+		map[string]any{
 			"id":    1,
 			"title": "Library Panel",
 			"type":  "library-panel-ref",
-			"libraryPanel": map[string]interface{}{
+			"libraryPanel": map[string]any{
 				"uid":  uid,
 				"name": "Accessible Library Panel",
 			},
@@ -773,12 +773,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	require.NotNil(t, createdDashInAccessible)
 
 	dashInInaccessibleFolder := createDashboardObject(t, "Dashboard in Inaccessible Folder", inaccessibleFolder.UID, 1)
-	dashInInaccessibleFolder.Object["spec"].(map[string]interface{})["panels"] = []interface{}{
-		map[string]interface{}{
+	dashInInaccessibleFolder.Object["spec"].(map[string]any)["panels"] = []any{
+		map[string]any{
 			"id":    1,
 			"title": "Library Panel",
 			"type":  "library-panel-ref",
-			"libraryPanel": map[string]interface{}{
+			"libraryPanel": map[string]any{
 				"uid":  uid,
 				"name": "Accessible Library Panel",
 			},
@@ -792,11 +792,11 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	connectionsData, err := getDashboardViaHTTP(t, &ctx, connectionsURL, ctx.AdminUser)
 	require.NoError(t, err)
 	require.NotNil(t, connectionsData)
-	connections := connectionsData["result"].([]interface{})
+	connections := connectionsData["result"].([]any)
 	require.Len(t, connections, 3, "Admin should see all connections")
 	connectionUIDs := make([]string, 0, len(connections))
 	for _, conn := range connections {
-		connMap := conn.(map[string]interface{})
+		connMap := conn.(map[string]any)
 		if connectionUID, ok := connMap["connectionUid"].(string); ok {
 			connectionUIDs = append(connectionUIDs, connectionUID)
 		}
@@ -815,12 +815,12 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	connectionsDataLimited, err := getDashboardViaHTTP(t, &ctx, connectionsURL, limitedUser)
 	require.NoError(t, err)
 	require.NotNil(t, connectionsDataLimited)
-	connectionsLimited := connectionsDataLimited["result"].([]interface{})
+	connectionsLimited := connectionsDataLimited["result"].([]any)
 	require.Len(t, connectionsLimited, 2, "Limited user should only see connections to accessible dashboards")
 
 	connectionUIDsLimited := make([]string, 0, len(connectionsLimited))
 	for _, conn := range connectionsLimited {
-		connMap := conn.(map[string]interface{})
+		connMap := conn.(map[string]any)
 		if connectionUID, ok := connMap["connectionUid"].(string); ok {
 			connectionUIDsLimited = append(connectionUIDsLimited, connectionUID)
 		}
@@ -898,13 +898,13 @@ func getVisibleLibraryElementUIDs(t *testing.T, ctx *TestContext, user apis.User
 	require.NoError(t, err)
 	require.NotNil(t, listData)
 
-	result := listData["result"].(map[string]interface{})
-	elements := result["elements"].([]interface{})
+	result := listData["result"].(map[string]any)
+	elements := result["elements"].([]any)
 	totalCount := int(result["totalCount"].(float64))
 
 	visibleUIDs := make([]string, 0, len(elements))
 	for _, elem := range elements {
-		elemMap := elem.(map[string]interface{})
+		elemMap := elem.(map[string]any)
 		if uid, ok := elemMap["uid"].(string); ok {
 			visibleUIDs = append(visibleUIDs, uid)
 		}

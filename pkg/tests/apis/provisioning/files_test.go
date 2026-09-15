@@ -576,13 +576,13 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var result map[string]interface{}
+		var result map[string]any
 		require.NoError(t, json.Unmarshal(body, &result))
 
-		resource, ok := result["resource"].(map[string]interface{})
+		resource, ok := result["resource"].(map[string]any)
 		require.True(t, ok, "response should have resource field")
 
-		file, ok := resource["file"].(map[string]interface{})
+		file, ok := resource["file"].(map[string]any)
 		require.True(t, ok, "resource should have file field")
 
 		content, ok := file["content"].(string)
@@ -608,11 +608,11 @@ func TestIntegrationProvisioning_ReadmeFiles(t *testing.T) {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var result map[string]interface{}
+		var result map[string]any
 		require.NoError(t, json.Unmarshal(body, &result))
 
-		resource := result["resource"].(map[string]interface{})
-		file := resource["file"].(map[string]interface{})
+		resource := result["resource"].(map[string]any)
+		file := resource["file"].(map[string]any)
 		content := file["content"].(string)
 		require.Equal(t, nestedReadmeContent, content, "nested README content should match")
 	})
@@ -903,8 +903,8 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	// Grant view permission to Viewer role via HTTP API (for the initial dashboard)
 	// Note: This only grants permissions to the initial dashboard, but viewers should be able to read all
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	setDashboardPermissions := func(permissions []map[string]interface{}) {
-		payload := map[string]interface{}{
+	setDashboardPermissions := func(permissions []map[string]any) {
+		payload := map[string]any{
 			"items": permissions,
 		}
 		payloadBytes, err := json.Marshal(payload)
@@ -920,7 +920,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 	}
 
 	// Grant view permission to Viewer role for the initial dashboard
-	setDashboardPermissions([]map[string]interface{}{
+	setDashboardPermissions([]map[string]any{
 		{"role": "Viewer", "permission": common.FolderPermissionView},
 	})
 

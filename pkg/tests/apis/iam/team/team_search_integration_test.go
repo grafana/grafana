@@ -67,9 +67,9 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 	require.NotNil(t, team1)
 
 	team2YAML := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
-	team2YAML.Object["metadata"].(map[string]interface{})["name"] = "testteam2"
-	team2YAML.Object["spec"].(map[string]interface{})["title"] = "Another Team"
-	team2YAML.Object["spec"].(map[string]interface{})["email"] = "anotherteam@example.com"
+	team2YAML.Object["metadata"].(map[string]any)["name"] = "testteam2"
+	team2YAML.Object["spec"].(map[string]any)["title"] = "Another Team"
+	team2YAML.Object["spec"].(map[string]any)["email"] = "anotherteam@example.com"
 
 	team2, err := teamClient.Resource.Create(ctx, team2YAML, metav1.CreateOptions{})
 	require.NoError(t, err)

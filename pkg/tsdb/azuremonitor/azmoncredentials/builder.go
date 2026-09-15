@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 )
 
-func FromDatasourceData(data map[string]interface{}, secureData map[string]string) (azcredentials.AzureCredentials, error) {
+func FromDatasourceData(data map[string]any, secureData map[string]string) (azcredentials.AzureCredentials, error) {
 	var credentials azcredentials.AzureCredentials
 	var err error
 
@@ -30,7 +30,7 @@ func FromDatasourceData(data map[string]interface{}, secureData map[string]strin
 	return credentials, err
 }
 
-func getFromLegacy(data map[string]interface{}, secureData map[string]string) (azcredentials.AzureCredentials, error) {
+func getFromLegacy(data map[string]any, secureData map[string]string) (azcredentials.AzureCredentials, error) {
 	authType, err := maputil.GetStringOptional(data, "azureAuthType")
 	if err != nil {
 		return nil, err

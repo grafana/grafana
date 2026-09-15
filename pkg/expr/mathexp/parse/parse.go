@@ -32,7 +32,7 @@ type Tree struct {
 type Func struct {
 	Args          []ReturnType
 	Return        ReturnType
-	F             interface{}
+	F             any
 	VariantReturn bool
 	Check         func(*Tree, *FuncNode) error
 }
@@ -82,7 +82,7 @@ func New(funcs ...map[string]Func) *Tree {
 }
 
 // errorf formats the error and terminates processing.
-func (t *Tree) errorf(format string, args ...interface{}) {
+func (t *Tree) errorf(format string, args ...any) {
 	t.Root = nil
 	format = fmt.Sprintf("expr: %s", format)
 	panic(fmt.Errorf(format, args...))

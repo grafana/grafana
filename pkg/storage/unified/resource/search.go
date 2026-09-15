@@ -1880,7 +1880,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	if idx == nil {
 		span.AddEvent("Building index")
 		buildStartTime := time.Now()
-		ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
+		ch := s.buildIndex.DoChan(key.String(), func() (any, error) {
 			// We want to finish building of the index even if original context is canceled.
 			// We reuse original context without cancel to keep the tracing spans correct.
 			ctx := context.WithoutCancel(ctx)
@@ -2621,7 +2621,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			title = v.(string)
 		}
 		if v, ok := spec["tags"]; ok {
-			if tagSlice, ok := v.([]interface{}); ok {
+			if tagSlice, ok := v.([]any); ok {
 				tags = make([]string, len(tagSlice))
 				for i, tag := range tagSlice {
 					if strTag, ok := tag.(string); ok {
@@ -2643,7 +2643,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		},
 		Title: title,
 		Tags:  tags,
-		Fields: map[string]interface{}{
+		Fields: map[string]any{
 			"title": title,
 			"value": val,
 		},

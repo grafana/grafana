@@ -103,7 +103,7 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
 	for _, usageStatProvider := range usageStatProviders {
 		provider := usageStatProvider.GetUsageStats
-		collector := func(ctx context.Context) (map[string]interface{}, error) {
+		collector := func(ctx context.Context) (map[string]any, error) {
 			return provider(ctx), nil
 		}
 

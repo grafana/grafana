@@ -18,22 +18,22 @@ const (
 	v1beta1APIVersion  = "provisioning.grafana.app/v1beta1"
 )
 
-func repositoryBody(name, apiVersion, provisioningPath string) map[string]interface{} {
-	return map[string]interface{}{
+func repositoryBody(name, apiVersion, provisioningPath string) map[string]any {
+	return map[string]any{
 		"apiVersion": apiVersion,
 		"kind":       "Repository",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name":      name,
 			"namespace": "default",
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"title": "API Version Test - " + name,
 			"type":  "local",
-			"local": map[string]interface{}{
+			"local": map[string]any{
 				"path": provisioningPath,
 			},
 			"workflows": []string{"write"},
-			"sync": map[string]interface{}{
+			"sync": map[string]any{
 				"enabled":         false,
 				"target":          "folder",
 				"intervalSeconds": 60,
@@ -42,24 +42,24 @@ func repositoryBody(name, apiVersion, provisioningPath string) map[string]interf
 	}
 }
 
-func connectionBody(name, apiVersion string) map[string]interface{} {
-	return map[string]interface{}{
+func connectionBody(name, apiVersion string) map[string]any {
+	return map[string]any{
 		"apiVersion": apiVersion,
 		"kind":       "Connection",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name":      name,
 			"namespace": "default",
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"title": "Version Test Connection - " + name,
 			"type":  "github",
-			"github": map[string]interface{}{
+			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
 			},
 		},
-		"secure": map[string]interface{}{
-			"privateKey": map[string]interface{}{
+		"secure": map[string]any{
+			"privateKey": map[string]any{
 				"create": common.TestGithubPrivateKeyBase64(),
 			},
 		},
@@ -75,13 +75,13 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 
 	type resourceDef struct {
 		resource string
-		body     func(name, apiVersion string) map[string]interface{}
+		body     func(name, apiVersion string) map[string]any
 	}
 
 	resources := []resourceDef{
 		{
 			resource: "repositories",
-			body: func(name, apiVersion string) map[string]interface{} {
+			body: func(name, apiVersion string) map[string]any {
 				return repositoryBody(name, apiVersion, helper.ProvisioningPath)
 			},
 		},
@@ -132,10 +132,10 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 						require.NoError(t, err)
 						assert.Equal(t, expected, obj["apiVersion"])
 
-						items, _ := obj["items"].([]interface{})
+						items, _ := obj["items"].([]any)
 						require.GreaterOrEqual(t, len(items), 1, "list should contain at least one item")
 						for i, item := range items {
-							itemObj, ok := item.(map[string]interface{})
+							itemObj, ok := item.(map[string]any)
 							require.True(t, ok, "item %d should be a map", i)
 							assert.Equal(t, expected, itemObj["apiVersion"], "item %d", i)
 						}
@@ -167,7 +167,7 @@ func TestIntegrationVersionConsistency(t *testing.T) {
 				_, err := helper.RESTDo("POST", version, "repositories", body)
 				require.NoError(t, err)
 
-				var obj map[string]interface{}
+				var obj map[string]any
 				err = common.RetryOnConflict(t, func() error {
 					current, err := helper.RESTDo("GET", version, "repositories/"+name)
 					if err != nil {

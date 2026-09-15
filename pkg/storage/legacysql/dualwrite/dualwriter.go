@@ -580,17 +580,17 @@ func (w *wrappedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime.Ob
 	return obj, err
 }
 
-func objectInfo(obj runtime.Object) map[string]interface{} {
+func objectInfo(obj runtime.Object) map[string]any {
 	if obj == nil {
-		return map[string]interface{}{"object": "nil"}
+		return map[string]any{"object": "nil"}
 	}
 
 	acc, err := meta.Accessor(obj)
 	if err != nil {
-		return map[string]interface{}{"object": fmt.Sprintf("%T", obj), "error": err.Error()}
+		return map[string]any{"object": fmt.Sprintf("%T", obj), "error": err.Error()}
 	}
 
-	info := map[string]interface{}{
+	info := map[string]any{
 		"name": acc.GetName(),
 	}
 

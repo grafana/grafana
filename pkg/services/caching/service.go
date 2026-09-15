@@ -84,7 +84,7 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *back
 var _ CachingService = &OSSCachingService{}
 
 // GetKey creates a prefixed cache key and uses the internal `encoder` to encode the query into a string
-func GetKey(namespace, prefix string, query interface{}) (string, error) {
+func GetKey(namespace, prefix string, query any) (string, error) {
 	keybuf := bytes.NewBuffer(nil)
 
 	encoder := &JSONEncoder{}
@@ -145,12 +145,12 @@ func (e *JSONEncoder) DecodeBytes(r io.Reader) ([]byte, error) {
 }
 
 // Encode encodes the `v` interface into `w` using a json.Encoder
-func (e *JSONEncoder) Encode(w io.Writer, v interface{}) error {
+func (e *JSONEncoder) Encode(w io.Writer, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
 // Decode encodes the io.Reader `r` into the interface `v` using a json.Decoder
-func (e *JSONEncoder) Decode(r io.Reader, v interface{}) error {
+func (e *JSONEncoder) Decode(r io.Reader, v any) error {
 	return json.NewDecoder(r).Decode(v)
 }
 

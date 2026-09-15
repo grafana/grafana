@@ -120,7 +120,7 @@ func pluginInfoCollector(pluginStore pluginstore.Store, pluginSettings pluginset
 				Description string
 				PluginType  string `json:"type"`
 
-				Author          plugins.InfoLink `json:"author,omitempty"`
+				Author          plugins.InfoLink `json:"author"`
 				SignatureStatus plugins.SignatureStatus
 				SignatureType   plugins.SignatureType
 				SignatureOrg    string

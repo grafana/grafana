@@ -633,7 +633,7 @@ func TestParseFolderResource(t *testing.T) {
 			assert.Equal(t, tt.expectedAction, string(result.Action), "action should match")
 
 			// Verify title from folder object
-			assert.Equal(t, tt.expectedTitle, result.Obj.Object["spec"].(map[string]interface{})["title"], "title should be derived from path")
+			assert.Equal(t, tt.expectedTitle, result.Obj.Object["spec"].(map[string]any)["title"], "title should be derived from path")
 
 			// Verify parent folder context
 			assert.Equal(t, tt.expectedParentFolder, result.Meta.GetFolder(), "parent folder ID should match")

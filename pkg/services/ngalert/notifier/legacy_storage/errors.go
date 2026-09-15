@@ -9,7 +9,7 @@ var (
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Error": err.Error(),
 		},
 		Error: err,

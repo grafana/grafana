@@ -111,8 +111,8 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.NotNil(t, team)
 
-		require.NoError(t, unstructured.SetNestedSlice(team.Object, []interface{}{
-			map[string]interface{}{
+		require.NoError(t, unstructured.SetNestedSlice(team.Object, []any{
+			map[string]any{
 				"kind":       "User",
 				"name":       u1.GetName(),
 				"permission": teamPermissions[i-1],

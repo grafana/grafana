@@ -120,7 +120,7 @@ func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 	result := data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))
 	capture := data.NewFrame("")
-	capture.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	capture.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[]}}`}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A":         {Frames: data.Frames{result}},
 		"__har__ds": {Frames: data.Frames{capture}},
@@ -229,7 +229,7 @@ func TestCollectHAR_emptyExternalFrame_benign(t *testing.T) {
 	// collectHAR must return (nil, nil) so the handler produces a 200 bundle without traffic.har,
 	// not a 500. (Regression guard: an untrusted plugin's empty capture must not fail the run.)
 	f := data.NewFrame("")
-	f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	f.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[]}}`}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{f}}}}
 
 	out, err := collectHAR(resp, &harcapture.Buffer{})
@@ -251,14 +251,14 @@ func TestHasCapturedHAR(t *testing.T) {
 	// An external __har__ frame counts as captured even when the in-process buffer is empty — the
 	// handler must not short-circuit a failed query away in that case.
 	f := data.NewFrame("")
-	f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	f.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[]}}`}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{f}}}}
 	require.True(t, HasCapturedHAR(resp, &harcapture.Buffer{}))
 
 	// A __har__ frame WITHOUT a har payload must NOT count as captured (else the no-capture error
 	// path is wrongly suppressed and the bundle is empty).
 	empty := data.NewFrame("")
-	empty.Meta = &data.FrameMeta{Custom: map[string]interface{}{"other": "x"}}
+	empty.Meta = &data.FrameMeta{Custom: map[string]any{"other": "x"}}
 	noPayload := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{empty}}}}
 	require.False(t, HasCapturedHAR(noPayload, &harcapture.Buffer{}), "frame without a har payload is not captured traffic")
 
@@ -267,7 +267,7 @@ func TestHasCapturedHAR(t *testing.T) {
 	// let a failed query fall through to a 200 bundle with no traffic.har -- the exact outcome the
 	// no-capture error path exists to prevent.
 	malformed := data.NewFrame("")
-	malformed.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "not valid har"}}
+	malformed.Meta = &data.FrameMeta{Custom: map[string]any{"har": "not valid har"}}
 	malformedResp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{malformed}}}}
 	require.False(t, HasCapturedHAR(malformedResp, &harcapture.Buffer{}), "a malformed har payload is not captured traffic")
 }
@@ -277,7 +277,7 @@ func TestCollectHAR_malformedExternalFrame_benign(t *testing.T) {
 	// Redaction is deferred, so the frame is merged verbatim: mergeHAR skips the unparseable document
 	// and, with no other entries, returns (nil, nil) — a benign empty bundle, not an error.
 	f := data.NewFrame("")
-	f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "not valid har"}}
+	f.Meta = &data.FrameMeta{Custom: map[string]any{"har": "not valid har"}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{f}}}}
 
 	out, err := collectHAR(resp, &harcapture.Buffer{})
@@ -290,7 +290,7 @@ func TestCollectHAR_ExternalFramesVerbatim_andNilFrame(t *testing.T) {
 	// merged VERBATIM (the secret is preserved, not stripped) — same policy as in-process capture.
 	frameHAR := `{"log":{"entries":[{"request":{"headers":[{"name":"Authorization","value":"Bearer FRAMESECRET"}],"queryString":[],"cookies":[],"url":"http://x/y"},"response":{"headers":[],"cookies":[]}}]}}`
 	withHAR := data.NewFrame("")
-	withHAR.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": frameHAR}}
+	withHAR.Meta = &data.FrameMeta{Custom: map[string]any{"har": frameHAR}}
 
 	resp := &backend.QueryDataResponse{
 		Responses: backend.Responses{
@@ -372,7 +372,7 @@ func TestCollectHAR_mergesBufferAndExternalFrame(t *testing.T) {
 
 	frameHAR := `{"log":{"entries":[{"request":{"url":"http://external/y"}}]}}`
 	f := data.NewFrame("")
-	f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": frameHAR}}
+	f.Meta = &data.FrameMeta{Custom: map[string]any{"har": frameHAR}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__": backend.DataResponse{Frames: data.Frames{f}}}}
 
 	out, err := collectHAR(resp, buf)
@@ -393,9 +393,9 @@ func TestCollectHAR_multipleDatasources_namespacedRefIDs(t *testing.T) {
 	// datasource ("__har__<uid>"), so a query spanning two external datasources yields two distinct
 	// __har__-prefixed responses. collectHAR must collect BOTH (not just one) and consume both.
 	frameA := data.NewFrame("__har__A")
-	frameA.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[{"request":{"url":"http://a/1"}}]}}`}}
+	frameA.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[{"request":{"url":"http://a/1"}}]}}`}}
 	frameB := data.NewFrame("__har__B")
-	frameB.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[{"request":{"url":"http://b/1"}},{"request":{"url":"http://b/2"}}]}}`}}
+	frameB.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[{"request":{"url":"http://b/1"}},{"request":{"url":"http://b/2"}}]}}`}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"__har__A": backend.DataResponse{Frames: data.Frames{frameA}},
 		"__har__B": backend.DataResponse{Frames: data.Frames{frameB}},
@@ -420,7 +420,7 @@ func TestCollectHAR_multipleDatasources_namespacedRefIDs(t *testing.T) {
 
 func TestHasCapturedHAR_namespacedRefID(t *testing.T) {
 	f := data.NewFrame("__har__P123")
-	f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+	f.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[]}}`}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"__har__P123": backend.DataResponse{Frames: data.Frames{f}}}}
 	require.True(t, HasCapturedHAR(resp, &harcapture.Buffer{}), "a datasource-namespaced capture frame counts as captured")
 }
@@ -440,9 +440,9 @@ func TestPluginCaptureError_multipleDatasources(t *testing.T) {
 	// Each external datasource can stash its own queryError under its namespaced frame; report all,
 	// ordered deterministically.
 	fa := data.NewFrame("__har__A")
-	fa.Meta = &data.FrameMeta{Custom: map[string]interface{}{"queryError": "boom A"}}
+	fa.Meta = &data.FrameMeta{Custom: map[string]any{"queryError": "boom A"}}
 	fb := data.NewFrame("__har__B")
-	fb.Meta = &data.FrameMeta{Custom: map[string]interface{}{"queryError": "boom B"}}
+	fb.Meta = &data.FrameMeta{Custom: map[string]any{"queryError": "boom B"}}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"__har__A": {Frames: data.Frames{fa}},
 		"__har__B": {Frames: data.Frames{fb}},
@@ -489,14 +489,14 @@ func TestPluginCaptureError(t *testing.T) {
 
 	// No queryError in the frame -> nil.
 	noErr := data.NewFrame("__har__")
-	noErr.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "{}"}}
+	noErr.Meta = &data.FrameMeta{Custom: map[string]any{"har": "{}"}}
 	require.NoError(t, PluginCaptureError(&backend.QueryDataResponse{Responses: backend.Responses{
 		"__har__": {Frames: data.Frames{noErr}},
 	}}))
 
 	// queryError present -> surfaced.
 	withErr := data.NewFrame("__har__")
-	withErr.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": "{}", "queryError": "datasource boom"}}
+	withErr.Meta = &data.FrameMeta{Custom: map[string]any{"har": "{}", "queryError": "datasource boom"}}
 	err := PluginCaptureError(&backend.QueryDataResponse{Responses: backend.Responses{
 		"__har__": {Frames: data.Frames{withErr}},
 	}})
@@ -886,7 +886,7 @@ func TestSummarizeQueryDataResponse(t *testing.T) {
 
 	t.Run("capture frames are excluded", func(t *testing.T) {
 		hcap := data.NewFrame("")
-		hcap.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": `{"log":{"entries":[]}}`}}
+		hcap.Meta = &data.FrameMeta{Custom: map[string]any{"har": `{"log":{"entries":[]}}`}}
 		resp := backend.NewQueryDataResponse()
 		resp.Responses["A"] = backend.DataResponse{Frames: data.Frames{data.NewFrame("cpu")}}
 		resp.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{hcap}}

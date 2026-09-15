@@ -12,7 +12,7 @@ import (
 
 type Call struct {
 	MethodName string
-	Arguments  []interface{}
+	Arguments  []any
 }
 
 type FakeSilenceStore struct {
@@ -23,12 +23,12 @@ type FakeSilenceStore struct {
 }
 
 func (s *FakeSilenceStore) ListSilences(ctx context.Context, orgID int64, filter []string) ([]*models.Silence, error) {
-	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"ListSilences", []interface{}{ctx, orgID, filter}})
+	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"ListSilences", []any{ctx, orgID, filter}})
 	return slices.Collect(maps.Values(s.Silences)), nil
 }
 
 func (s *FakeSilenceStore) GetSilence(ctx context.Context, orgID int64, id string) (*models.Silence, error) {
-	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"GetSilence", []interface{}{ctx, orgID, id}})
+	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"GetSilence", []any{ctx, orgID, id}})
 	if silence, ok := s.Silences[id]; ok {
 		return silence, nil
 	}
@@ -36,7 +36,7 @@ func (s *FakeSilenceStore) GetSilence(ctx context.Context, orgID int64, id strin
 }
 
 func (s *FakeSilenceStore) CreateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error) {
-	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"CreateSilence", []interface{}{ctx, orgID, ps}})
+	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"CreateSilence", []any{ctx, orgID, ps}})
 	uid := util.GenerateShortUID()
 	ps.ID = &uid
 	s.Silences[uid] = &ps
@@ -44,7 +44,7 @@ func (s *FakeSilenceStore) CreateSilence(ctx context.Context, orgID int64, ps mo
 }
 
 func (s *FakeSilenceStore) UpdateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error) {
-	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"UpdateSilence", []interface{}{ctx, orgID, ps}})
+	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"UpdateSilence", []any{ctx, orgID, ps}})
 	if _, ok := s.Silences[*ps.ID]; !ok {
 		return "", alertingNotify.ErrSilenceNotFound
 	}
@@ -53,7 +53,7 @@ func (s *FakeSilenceStore) UpdateSilence(ctx context.Context, orgID int64, ps mo
 }
 
 func (s *FakeSilenceStore) DeleteSilence(ctx context.Context, orgID int64, id string) error {
-	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"DeleteSilence", []interface{}{ctx, orgID, id}})
+	s.RecordedOps = append(s.RecordedOps, GenericRecordedQuery{"DeleteSilence", []any{ctx, orgID, id}})
 	if _, ok := s.Silences[id]; !ok {
 		return alertingNotify.ErrSilenceNotFound
 	}

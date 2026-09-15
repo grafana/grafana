@@ -631,8 +631,8 @@ func convertNamespace(tableBase string) string {
 
 // stripTableParameterValues returns the table name before the first '_' suffix (schemads convention).
 func stripTableParameterValues(name string) string {
-	if i := strings.IndexByte(name, '_'); i >= 0 {
-		return name[:i]
+	if before, _, ok := strings.Cut(name, "_"); ok {
+		return before
 	}
 	return name
 }

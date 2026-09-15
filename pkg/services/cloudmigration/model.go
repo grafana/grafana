@@ -292,7 +292,7 @@ type MigrateDataRequestItem struct {
 	Type  MigrateDataType
 	RefID string
 	Name  string
-	Data  interface{}
+	Data  any
 }
 
 type MigrateDataResponse struct {

@@ -409,7 +409,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 	if len(cfg.ManagedRoutes) > 0 {
 		for _, c := range cfg.ExtraConfigs {
 			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
-				return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+				return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]any{"Identifier": c.Identifier}})
 			}
 		}
 	}
@@ -471,7 +471,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Cont
 			// for now we validate that after the update there will be just one extra config.
 			for _, c := range configs {
 				if c.Identifier != extraConfig.Identifier {
-					return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
+					return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]any{"Identifier": c.Identifier}})
 				}
 			}
 		}
