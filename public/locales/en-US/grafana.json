@@ -1787,6 +1787,7 @@
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-parse-error": "Your YAML has a syntax error: {{message}}",
         "yaml-remove": "Remove {{name}}"
       },
       "step2": {

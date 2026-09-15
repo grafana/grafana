@@ -489,6 +489,78 @@ describe('Step1AlertmanagerResources', () => {
       });
       expect(dryRunCount).toBe(settledCount);
     });
+
+    // Regression test for the debounce fix — see the effect's comment in Step1AlertmanagerResources.tsx.
+    it('re-runs the dry-run against the current value when a still-valid name is edited further, without blurring', async () => {
+      const user = userEvent.setup();
+      const receivedIdentifiers: string[] = [];
+      server.use(
+        http.post('/api/convert/api/v1/alerts', ({ request }) => {
+          receivedIdentifiers.push(request.headers.get('X-Grafana-Alerting-Config-Identifier') ?? '');
+          return HttpResponse.json({ status: 'success' });
+        })
+      );
+
+      render(
+        <TestWrapper
+          defaultValues={{
+            policyTreeName: 'prometheus-prod',
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <DryRunLoopHarness />
+        </TestWrapper>
+      );
+
+      await waitFor(() => expect(receivedIdentifiers).toContain('prometheus-prod'));
+
+      const input = screen.getByPlaceholderText(/prometheus-prod/i);
+      // One keystroke: never passes through an invalid intermediate value, unlike e.g. "-2" would.
+      await user.type(input, '2');
+      expect(input).toHaveFocus(); // no blur happened
+
+      await waitFor(() => expect(receivedIdentifiers).toContain('prometheus-prod2'));
+    });
+
+    // isStep1Valid recomputes from the live value every render, so it needs no debounce fix like above.
+    it('useStep1Validation reflects the current, still-valid name immediately without blur', async () => {
+      const user = userEvent.setup();
+      // ValidationHookWrapper above only re-notifies on change, which never happens here (isValid is
+      // true throughout) — render the live value directly instead.
+      function ValidationDisplay({ canImport }: { canImport: boolean }) {
+        const isValid = useStep1Validation(canImport);
+        return <div data-testid="step1-valid">{String(isValid)}</div>;
+      }
+
+      render(
+        <TestWrapper
+          defaultValues={{
+            policyTreeName: 'prometheus-prod',
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+          <ValidationDisplay canImport />
+        </TestWrapper>
+      );
+
+      await waitFor(() => expect(screen.getByTestId('step1-valid')).toHaveTextContent('true'));
+
+      const input = screen.getByPlaceholderText(/prometheus-prod/i);
+      // Single keystroke — see the comment on the equivalent edit above.
+      await user.type(input, '2');
+      expect(input).toHaveFocus(); // no blur happened
+      expect(input).toHaveValue('prometheus-prod2');
+
+      // No waitFor: this must already be true on the very next render, with no async settling.
+      expect(screen.getByTestId('step1-valid')).toHaveTextContent('true');
+    });
   });
 
   describe('AlertmanagerDataSourceSelect auto-population', () => {

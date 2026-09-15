@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
 import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { useDebounce } from 'react-use';
 
 import { type DataSourceSettings, OrgRole, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -169,24 +170,29 @@ export function Step1Content({
     !duplicateTemplateFileName &&
     hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
 
-  // Trigger dry-run when a source is selected (YAML file or datasource) or the template files change.
-  // When the step is no longer runnable (e.g. a duplicate template name), clear any previous result so
-  // a stale success can't keep the review step reporting the config as ready to import.
-  useEffect(() => {
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    } else {
-      onResetDryRun();
-    }
-  }, [
-    canRunDryRun,
-    onTriggerDryRun,
-    onResetDryRun,
-    notificationsSource,
-    notificationsYamlFile,
-    notificationsDatasourceUID,
-    notificationsTemplateFiles,
-  ]);
+  // Debounced, and keyed on policyTreeName too: canRunDryRun alone can stay true across an edit to an
+  // already-valid name, so keying only on it would validate a stale value. Resets any previous result
+  // once the step becomes unrunnable, so a stale success can't stick.
+  useDebounce(
+    () => {
+      if (canRunDryRun) {
+        onTriggerDryRun();
+      } else {
+        onResetDryRun();
+      }
+    },
+    500,
+    [
+      canRunDryRun,
+      onTriggerDryRun,
+      onResetDryRun,
+      notificationsSource,
+      notificationsYamlFile,
+      notificationsDatasourceUID,
+      notificationsTemplateFiles,
+      policyTreeName,
+    ]
+  );
 
   // Drop any leftover Policy Tree Name error once Auto-sync disables the field.
   useEffect(() => {
@@ -204,13 +210,11 @@ export function Step1Content({
     }
   }, [isLoadingAutoSyncConfig, isSelectedDatasourceAutoSyncCapable, autoSyncNotificationsEnabled, setValue]);
 
-  // Trigger validation + dry-run when the policy tree name input loses focus
-  const handlePolicyTreeNameBlur = useCallback(async () => {
-    await trigger('policyTreeName'); //force validation onblur
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    }
-  }, [trigger, canRunDryRun, onTriggerDryRun]);
+  // The debounced effect above already re-runs the dry-run on every edit; this just refreshes the
+  // field's own validation error on blur.
+  const handlePolicyTreeNameBlur = useCallback(() => {
+    trigger('policyTreeName');
+  }, [trigger]);
 
   const sourceOptions = getNotificationsSourceOptions();
 

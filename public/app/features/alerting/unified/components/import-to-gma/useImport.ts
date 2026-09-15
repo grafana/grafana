@@ -42,8 +42,13 @@ function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
   let parsed: unknown;
   try {
     parsed = load(yamlContent);
-  } catch {
-    return { alertmanagerConfig: yamlContent, templateFiles: {} };
+  } catch (err) {
+    // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
+    throw new Error(
+      t('alerting.import-to-gma.step1.yaml-parse-error', 'Your YAML has a syntax error: {{message}}', {
+        message: err instanceof Error ? err.message : String(err),
+      })
+    );
   }
 
   if (!isRecord(parsed)) {
