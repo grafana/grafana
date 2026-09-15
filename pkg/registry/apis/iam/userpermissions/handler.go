@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -19,6 +20,7 @@ import (
 
 const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
 const currentUserPermissionsPath = "users/~/permissions"
+const skipCacheParam = "skipCache"
 
 // Handler serves the current identity's effective permissions.
 type Handler struct {
@@ -45,6 +47,12 @@ func (h *Handler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.A
 				Required:    true,
 				Description: "workspace",
 				Schema:      spec.StringProperty(),
+			}}, {ParameterProps: spec3.ParameterProps{
+				Name:        skipCacheParam,
+				In:          "query",
+				Required:    false,
+				Description: "recompute the permissions instead of serving the cached snapshot",
+				Schema:      spec.BooleanProperty(),
 			}}},
 			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
 				200: {ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
@@ -78,8 +86,15 @@ func (h *Handler) handle(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// Callers that refresh after granting themselves permissions need the
+	// recomputed set; a cached snapshot would omit the grant they just made and
+	// stay in their session until something else refreshes it. Defaults to the
+	// cache so routine reads (every boot, for one) stay cheap.
+	skipCache, _ := strconv.ParseBool(req.URL.Query().Get(skipCacheParam))
+
 	response, err := h.client.GetUserPermissions(ctx, delegatedAuthInfo{AuthInfo: info, groups: groups}, authlib.GetUserPermissionsRequest{
 		Namespace: namespace,
+		SkipCache: skipCache,
 	})
 	if err != nil {
 		errhttp.Write(ctx, err, w)
