@@ -81,10 +81,10 @@ if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
         *\;*)
             pluginUrl=$(echo "$plugin" | cut -d';' -f 1)
             pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2)
-            grafana cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
+            grafana cli --pluginUrl "${pluginUrl}" --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
             ;;
         *)
-            grafana cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}
+            grafana cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${plugin}"
             ;;
         esac
     done
