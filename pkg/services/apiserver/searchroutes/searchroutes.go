@@ -47,6 +47,10 @@ func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
 	return len(kind.SearchFields) > 0 || enrolledWithoutSearchFields[group+"/"+resourceName]
 }
 
+type BuildOptions struct {
+	FieldValueResultsEnabled searchapi.FieldValueResultsEnabled
+}
+
 // Build returns the search and trash routes to mount, or nil when both are off or
 // there is no client to serve them with.
 //
@@ -63,9 +67,31 @@ func Build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	return BuildWithOptions(searchEnabled, trashEnabled, tracer, index, builders, installers, BuildOptions{})
+}
+
+// BuildWithOptions leaves the result-format decision with the host: embedded
+// Grafana can pass a tenant setting, while a standalone server can pass a
+// process setting.
+func BuildWithOptions(
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+	options BuildOptions,
+) []builder.GroupVersionRoutes {
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+	routes, err := BuildForServedGroupVersionsWithOptions(
+		resource.AppManifests(), servedGroupVersions(builders, installers),
+		searchEnabled, trashEnabled, tracer, index, options,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	return routes
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
@@ -115,6 +141,18 @@ func BuildForServedGroupVersions(
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
 ) ([]builder.GroupVersionRoutes, error) {
+	return BuildForServedGroupVersionsWithOptions(manifests, served, searchEnabled, trashEnabled, tracer, index, BuildOptions{})
+}
+
+func BuildForServedGroupVersionsWithOptions(
+	manifests []*app.ManifestData,
+	served map[schema.GroupVersion]bool,
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	options BuildOptions,
+) ([]builder.GroupVersionRoutes, error) {
 	// Whether an endpoint is on is read by the caller, because the two servers
 	// that mount them are configured differently: one from an ini file, one from
 	// flags.
@@ -126,7 +164,9 @@ func BuildForServedGroupVersions(
 	if err != nil {
 		return nil, err
 	}
-	handler := searchapi.NewHandler(index, provider, tracer)
+	handler := searchapi.NewHandlerWithOptions(index, provider, tracer, searchapi.HandlerOptions{
+		FieldValueResultsEnabled: options.FieldValueResultsEnabled,
+	})
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 

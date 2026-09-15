@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Consultez l’historique de tous les événements d’alerte générés par vos règles d’alerte gérées par Grafana. Tous les événements d’alerte sont affichés, que des périodes de silence ou de mise en sourdine aient été définies ou non.",
         "notifications": "Affichez l’historique de toutes les notifications envoyées par vos règles d’alerte gérées par Grafana."
@@ -3305,6 +3308,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -3349,7 +3354,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Gestionnaires d’alerte",
+        "alert-managers": "",
         "import": "Importer"
       }
     },
@@ -5739,15 +5744,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Déplacer {{typeName}}",
-      "panel-background": "Modifier l’arrière-plan du panneau",
-      "panel-description": "Modifier la description du panneau",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Modifications du panneau",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-preset": "Appliquer le préréglage du panneau",
       "panel-repeat-direction": "Répéter la direction",
       "panel-repeat-variable": "Répéter le panneau selon",
-      "panel-title": "Modifier le titre du panneau",
+      "panel-title": "",
       "paste-panel": "Coller le panneau",
       "remove": "Supprimer {{typeName}}",
       "row-title": "Modifier le titre de la ligne",
@@ -6023,7 +6028,6 @@
       "description": "Une séquence verticale de panneaux, de texte et de cellules de code",
       "name": "Notebook",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Heure",
       "title-edit": "",
@@ -6313,6 +6317,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6416,17 +6433,6 @@
           "empty": "(vide)",
           "no-title": "<sans titre>"
         }
-      },
-      "predefined-variables": {
-        "all": "Tout",
-        "description": "",
-        "folder": "Dossier",
-        "global": "Global",
-        "label": "Variables prédéfinies",
-        "none": "Aucun",
-        "pane-header": "Variables prédéfinies",
-        "title": "Variables prédéfinies",
-        "tooltip": "Choisissez les variables globales et de dossier que ce tableau de bord reçoit"
       },
       "redo": "Rétablir",
       "row": {
@@ -6701,6 +6707,10 @@
       },
       "title-delete": "Supprimer {{name}} ?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Effacer la recherche",
       "no-transformations-found": "Aucune transformation trouvée",
@@ -6751,6 +6761,12 @@
     "view-panel": {
       "back-to-dashboard": "Retour au tableau de bord",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7043,6 +7059,10 @@
       "recommendation": "Une fois la fonctionnalité réactivée, vos tableaux de bord s’afficheront normalement dans leur format de tableau de bord dynamique. Pour cette raison, nous vous recommandons fortement de ne pas modifier ces tableaux de bord tant que la fonctionnalité n’est pas rétablie, car les modifications effectuées en mode classique peuvent entraîner des résultats inattendus. Vous pouvez également enregistrer une copie du tableau de bord à l’aide de l’option « Enregistrer comme copie » dans le menu d’enregistrement du tableau de bord.",
       "save-warning": "Tout tableau de bord créé en tant que tableau de bord dynamique ou converti en tableau de bord dynamique s’ouvrira comme un tableau de bord classique. L’enregistrement du tableau de bord peut entraîner la perte des fonctionnalités de tableau de bord dynamique déjà configurées."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Personnaliser les options",
       "json-values-tooltip": "Fournissez un fichier JSON représentant un tableau d’objets, chaque objet pouvant comporter un nombre quelconque de propriétés.<br/>Consultez <4>notre documentation</4> pour plus d’informations.",
@@ -7085,6 +7105,12 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
     },
     "dashboard-scene": {
@@ -7514,13 +7540,6 @@
       },
       "title-close": "Fermer"
     },
-    "predefined-variables": {
-      "label-all": "Tout",
-      "label-custom": "Personnalisé",
-      "label-folder": "Dossier",
-      "label-global": "Global",
-      "label-none": "Aucun"
-    },
     "provisioned-controls-section": {
       "label": "Provisionnement par la source de données",
       "tooltip": "Ajouté par le plugin {{pluginName}}",
@@ -7639,6 +7658,10 @@
       "required": "Champ requis"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Modifications",
         "label-details": "Détails",
@@ -7751,6 +7774,9 @@
         "text-no-save": "Vous avez des modifications non enregistrées. Vous n’avez pas l’autorisation d’enregistrer. Souhaitez-vous abandonner les modifications et partager l’original ?",
         "title": "Modifications non enregistrées"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "Ce n’est pas ce que vous recherchez ? Consultez <2>d’autres tableaux de bord suggérés</2> ou <6>créez-en un à partir de zéro</6>.",
@@ -8006,6 +8032,7 @@
       "title-label": "Titre"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Enregistrer les modifications",
       "save-button-disabled-tooltip": "Corriger les erreurs de validation avant d’enregistrer",
       "save-button-disabled-tooltip-yaml": "Le document contient des erreurs de validation. Passez en JSON pour voir les détails des erreurs dans les lignes.",
@@ -8399,7 +8426,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valeur fixe"
       },
-      "label": "Scalaire",
+      "label-field": "",
       "label-limit": "Limiter",
       "label-value": "Valeur",
       "noOptionsMessage-no-fields-found": "Aucun champ trouvé",
@@ -8632,6 +8659,16 @@
       "title-table": "Tableau",
       "title-traces": "Traces"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8683,7 +8720,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Lien",
-      "open-value-in": "Ouvrir la valeur dans"
+      "open-value-in": "Ouvrir la valeur dans",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9125,6 +9163,7 @@
       "critical-path": "Chemin critique",
       "critical-path-tooltip": "Sélectionne les traces du chemin critique, la plus longue séquence de tâches dépendantes déterminant la durée minimale de la trace.",
       "duration": "Durée",
+      "error-indicator": "",
       "errors": "Erreurs",
       "errors-tooltip": "Sélectionne les traces dont l’état est égal à erreur.",
       "export-started": "Exportation lancée",
@@ -9142,11 +9181,17 @@
       "share-export-json": "Exporter au format JSON",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Heure de début",
+      "success-indicator": "",
       "target": "Cible",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Identifiant de trace",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9160,6 +9205,10 @@
       "aria-label-copy": "Copier dans le presse-papiers",
       "attribute-plugin-promo": {
         "learn-more": "En savoir plus"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability met en avant des plans d’explication visuels, des événements d’attente et des exemples de requêtes pour vous aider à diagnostiquer les problèmes au-delà des spans de trace.",
@@ -10655,7 +10704,6 @@
       "ariaLabel-panel-loading": "Barre de chargement du panneau",
       "ariaLabel-panel-status": "État du panneau",
       "errors-and-notices": "Erreurs et notifications",
-      "inspect-errors-notices": "Inspecter",
       "tooltip-cancel": "Annuler une requête",
       "tooltip-cancel-loading": "Annuler une requête",
       "tooltip-stop-streaming": "Arrêter la diffusion",
@@ -10737,9 +10785,13 @@
       "cell-filter-out": "Filtrer la valeur",
       "cell-inspect": "Inspecter la valeur",
       "cell-inspect-tooltip": "Inspecter la valeur",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copier dans le presse-papier",
       "csv-counts": "Lignes :{{rows}}, colonnes :{{columns}}",
       "csv-placeholder": "Saisir le CSV ici…",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Ajouter toutes les valeurs affichées au filtre",
         "blanks": "(Vides)",
@@ -11387,9 +11439,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12490,6 +12540,9 @@
       "subtitle": "Règles qui déterminent si une alerte va être déclenchée",
       "title": "Règles d'alerte"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
@@ -12559,6 +12612,7 @@
       "title": "Créer"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Nouvelle règle d'alerte"
     },
     "create-dashboard": {
@@ -12593,6 +12647,10 @@
     },
     "explore": {
       "title": "Explorer"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Obtenez des analyses de suivi des utilisateurs réels",
@@ -12674,6 +12732,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12766,10 @@
     },
     "profiles": {
       "title": "Profils"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -13039,7 +13105,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13059,7 +13124,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13080,9 +13144,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -13110,6 +13172,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13126,6 +13189,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13175,7 +13239,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Effacer les paramètres"
+      "clear-tooltip": "Effacer les paramètres",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Série de couleurs par"
@@ -16589,6 +16655,7 @@
       "tooltip-bold": "Gras",
       "tooltip-bullet-list": "Liste à puces",
       "tooltip-checklist": "Liste de contrôle",
+      "tooltip-diagram": "",
       "tooltip-heading": "Titre",
       "tooltip-insert-variable": "Insérer une variable",
       "tooltip-italic": "Italique",
@@ -16602,12 +16669,21 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
     },
+    "pagination": {
+      "summary": ""
+    },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16773,6 +16849,8 @@
       "name-faceted-filter": "Visibilité des séries"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Tirets",
@@ -16823,6 +16901,10 @@
       "bar-stacked": "Graphique en barres – empilé",
       "bar-stacked-percent": "Graphique en barres – empilé en pourcentage",
       "line": "Graphique en lignes"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Ajouter le fuseau horaire",

@@ -64,12 +64,10 @@ func TestAlertRule(t *testing.T) {
 			version2 := &Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()}
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
-			go func() {
+			wg.Go(func() {
 				wg.Done()
 				r.Update(version1)
-				wg.Done()
-			}()
+			})
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
@@ -230,10 +228,9 @@ func TestAlertRule(t *testing.T) {
 		rule := gen.GenerateRef()
 		rule.UID = r.key.UID
 		rule.OrgID = r.key.OrgID
-		for i := 0; i < 10; i++ {
-			wg.Add(1)
-			go func() {
-				for i := 0; i < 20; i++ {
+		for range 10 {
+			wg.Go(func() {
+				for i := range 20 {
 					max := 3
 					if i <= 10 {
 						max = 2
@@ -251,8 +248,7 @@ func TestAlertRule(t *testing.T) {
 						r.Stop(nil)
 					}
 				}
-				wg.Done()
-			}()
+			})
 		}
 
 		wg.Wait()
@@ -876,7 +872,7 @@ func TestRuleRoutine(t *testing.T) {
 		// define some state
 		states := make([]*state.State, 0, len(allStates))
 		for _, s := range allStates {
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
 					CacheID:      data.Labels(rule.Labels).Fingerprint(),
