@@ -20,6 +20,18 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
     const { scene } = context;
 
     try {
+      // A plan preview is a static, view-mode surface by design (see enterEditModeIfNeeded in
+      // types.ts) — it must never enter edit mode, including via this command called directly.
+      // Without this check, a caller invoking ENTER_EDIT_MODE while planning would bypass that
+      // guarantee entirely, independent of every other mutation command's own planning check.
+      if (scene.isPlanning()) {
+        return {
+          success: false,
+          error: 'Cannot enter edit mode while a dashboard plan is being previewed.',
+          changes: [],
+        };
+      }
+
       const wasEditing = scene.state.isEditing ?? false;
 
       if (!wasEditing) {

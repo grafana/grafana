@@ -10,8 +10,10 @@ import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+function buildMockScene(
+  options: { editable?: boolean; isEditing?: boolean; isPlanning?: boolean } = {}
+): DashboardScene {
+  const { editable = true, isEditing = false, isPlanning = false } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
@@ -20,7 +22,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
-    isPlanning: jest.fn(() => false),
+    isPlanning: jest.fn(() => isPlanning),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -229,6 +231,22 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect((result.data as { wasAlreadyEditing: boolean }).wasAlreadyEditing).toBe(true);
+    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+  });
+
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed', async () => {
+    // The preview is a static, view-mode surface by design -- this command must not be a
+    // back door around every other mutation command's own planning check.
+    scene = buildMockScene({ editable: true, isPlanning: true });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'ENTER_EDIT_MODE',
+      payload: {},
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Cannot enter edit mode while a dashboard plan is being previewed');
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
