@@ -12,17 +12,15 @@ palette.
 | `headerBackground`           | Header surface                                                              |
 | `border`                     | Body and footer dividers                                                    |
 | `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
-| `rowHoverSurface`            | Solid hover surface for an unstriped row                                    |
-| `rowHoverOverlay`            | Hover fill composited over a row's existing background                      |
+| `rowHoverBackground`         | Hovered, unselected row surface                                             |
 | `rowSelectedBackground`      | Selected row surface                                                        |
 | `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
 
 Background surfaces and dividers must be opaque where they cover field-configured
 cell backgrounds or scrolling content.
 
-Use the solid hover surface for plain rows and the hover overlay when striped and
-selected rows need their own hover treatment. The overlay may be opaque or translucent;
-consumers must not apply it to field-configured cell colors or nested tables.
+Use the row hover background for plain and striped rows. Selected rows use their
+dedicated selected hover background.
 
 ## Inheritance and overrides
 
