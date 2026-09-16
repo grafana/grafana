@@ -41,6 +41,19 @@ describe('table colors', () => {
     expect(createTheme({ colors: { mode: 'dark' } }).components.table.headerBackground).toBe('#2c2f35');
   });
 
+  it('composites translucent custom header colors onto opaque table surfaces', () => {
+    const table = createTheme({
+      colors: {
+        mode: 'dark',
+        background: { primary: '#000000' },
+        secondary: { main: 'rgba(255, 255, 255, 0.1)', shade: 'rgba(255, 255, 255, 0.2)' },
+      },
+    }).components.table;
+
+    expect(table.headerBackground).toBe('#1a1a1a');
+    expect(table.headerBorder).toBe('#484848');
+  });
+
   it('accepts partial table overrides in theme definitions and rejects non-color inputs', () => {
     expect(ThemeComponentsInputSchema.parse({ table: { rowStripedBackground: 'palette.ink750' } })).toEqual({
       table: { rowStripedBackground: 'palette.ink750' },
