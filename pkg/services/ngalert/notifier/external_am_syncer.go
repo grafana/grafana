@@ -183,7 +183,7 @@ type amConfigReader interface {
 // persistence for the hash.
 type ExternalAMSyncer struct {
 	datasourceService datasources.DataSourceService
-	proxy             dsproxyclient.Proxy
+	dsProxyClient     *dsproxyclient.Client
 	settings          *setting.Cfg
 	metrics           *metrics.MultiOrgAlertmanager
 	logger            log.Logger
@@ -222,14 +222,16 @@ func NewExternalAMSyncer(
 ) *ExternalAMSyncer {
 	return &ExternalAMSyncer{
 		datasourceService: datasourceService,
-		proxy:             proxy,
-		settings:          settings,
-		metrics:           m,
-		logger:            logger,
-		lastSyncHash:      make(map[int64]uint64),
-		clientGenerator:   clientGenerator,
-		namespaceMapper:   namespaceMapper,
-		configReader:      configReader,
+		// The config endpoint is /api/v1/alerts on the datasource; no Accept
+		// header (Mimir serves YAML there by default).
+		dsProxyClient:   dsproxyclient.New(proxy, logger, "/api/v1/alerts", amSyncLogin, ""),
+		settings:        settings,
+		metrics:         m,
+		logger:          logger,
+		lastSyncHash:    make(map[int64]uint64),
+		clientGenerator: clientGenerator,
+		namespaceMapper: namespaceMapper,
+		configReader:    configReader,
 	}
 }
 
@@ -688,9 +690,7 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 // hash of the raw response body alongside the parsed value; callers use the
 // hash for cross-tick dedup without needing to keep the body bytes around.
 func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, uint64, error) {
-	// The config endpoint is /api/v1/alerts on the datasource; no Accept header
-	// (Mimir serves YAML there by default).
-	res, err := dsproxyclient.Get(ctx, s.proxy, s.logger, ds, "/api/v1/alerts", amSyncLogin, "")
+	res, err := s.dsProxyClient.Get(ctx, ds)
 	if err != nil {
 		return nil, 0, err
 	}

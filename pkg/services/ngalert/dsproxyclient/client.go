@@ -35,41 +35,56 @@ type Result struct {
 	Body   []byte
 }
 
-// Get issues a GET for upstreamPath (e.g. "/api/v1/alerts") through proxy,
-// routed by ds's UID. login identifies the calling sync worker in the
-// service-identity user the proxy access-checks (surfaced in logs/audit
-// only, not otherwise meaningful). accept, when non-empty, sets the Accept
-// header on the outbound request.
-//
-// Runs from a background job with no user request context, so it builds
-// its own service-identity context and user rather than relying on one
-// already present in ctx.
-func Get(ctx context.Context, proxy Proxy, logger log.Logger, ds *datasources.DataSource, upstreamPath, login, accept string) (Result, error) {
+// Client fetches from a fixed upstream path through Grafana's datasource
+// proxy service. One Client per sync worker: upstreamPath, login and accept
+// never vary across the datasources a given worker fetches from, only ds
+// itself does.
+type Client struct {
+	proxy        Proxy
+	logger       log.Logger
+	upstreamPath string
+	// login identifies the calling sync worker in the service-identity user
+	// the proxy access-checks (surfaced in logs/audit only, not otherwise
+	// meaningful).
+	login string
+	// accept, when non-empty, sets the Accept header on every request.
+	accept string
+}
+
+// New constructs a Client for upstreamPath (e.g. "/api/v1/alerts").
+func New(proxy Proxy, logger log.Logger, upstreamPath, login, accept string) *Client {
+	return &Client{proxy: proxy, logger: logger, upstreamPath: upstreamPath, login: login, accept: accept}
+}
+
+// Get issues a GET routed by ds's UID. Runs from a background job with no
+// user request context, so it builds its own service-identity context and
+// user rather than relying on one already present in ctx.
+func (c *Client) Get(ctx context.Context, ds *datasources.DataSource) (Result, error) {
 	svcCtx, _ := identity.WithServiceIdentity(ctx, ds.OrgID)
 
 	// The proxy strips /api/datasources/proxy/uid/<uid>/ to derive the upstream path.
-	proxyURL := fmt.Sprintf("/api/datasources/proxy/uid/%s/%s", ds.UID, strings.TrimPrefix(upstreamPath, "/"))
+	proxyURL := fmt.Sprintf("/api/datasources/proxy/uid/%s/%s", ds.UID, strings.TrimPrefix(c.upstreamPath, "/"))
 	req, err := http.NewRequestWithContext(svcCtx, http.MethodGet, proxyURL, nil)
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
-	if accept != "" {
-		req.Header.Set("Accept", accept)
+	if c.accept != "" {
+		req.Header.Set("Accept", c.accept)
 	}
 
 	// Capture the proxied reply in-memory, mirroring AlertingProxy.withReq (api/util.go).
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
-	c := &contextmodel.ReqContext{
+	reqCtx := &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req:  req,
 			Resp: web.NewResponseWriter(req.Method, &closeNotifierResponseWriter{resp}),
 		},
-		SignedInUser: serviceIdentityUser(ds.OrgID, login),
+		SignedInUser: serviceIdentityUser(ds.OrgID, c.login),
 		// Must be non-nil — the proxy panics on a nil Logger when it errors.
-		Logger: logger,
+		Logger: c.logger,
 	}
 
-	proxy.ProxyDatasourceRequestWithUID(c, ds.UID)
+	c.proxy.ProxyDatasourceRequestWithUID(reqCtx, ds.UID)
 
 	return Result{Status: resp.Status(), Body: resp.Body()}, nil
 }

@@ -55,13 +55,13 @@ const rulerSyncLogin = "grafana_external_ruler_sync"
 // datasource by routing the ruler config GET through Grafana's datasource proxy
 // service (transport, auth and egress validation are all handled there).
 type RulerFetcher struct {
-	proxy  dsproxyclient.Proxy
-	logger log.Logger
+	client *dsproxyclient.Client
 }
 
-// NewRulerFetcher constructs a RulerFetcher around the datasource proxy service.
+// NewRulerFetcher constructs a RulerFetcher around the datasource proxy
+// service. Mimir serves the ruler config API as YAML.
 func NewRulerFetcher(proxy dsproxyclient.Proxy, logger log.Logger) *RulerFetcher {
-	return &RulerFetcher{proxy: proxy, logger: logger}
+	return &RulerFetcher{client: dsproxyclient.New(proxy, logger, "config/v1/rules", rulerSyncLogin, "application/yaml")}
 }
 
 // Fetch retrieves the ruler configuration from ds, returning the parsed configs
@@ -70,8 +70,7 @@ func NewRulerFetcher(proxy dsproxyclient.Proxy, logger log.Logger) *RulerFetcher
 // with an empty object when there are no rule groups, so a 404 is never "no
 // rules"; a 2xx body that isn't a rule-config object yields ErrNotARuler.
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
-	// Mimir serves the ruler config API as YAML.
-	res, err := dsproxyclient.Get(ctx, f.proxy, f.logger, ds, "config/v1/rules", rulerSyncLogin, "application/yaml")
+	res, err := f.client.Get(ctx, ds)
 	if err != nil {
 		return nil, 0, err
 	}
