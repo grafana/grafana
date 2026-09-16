@@ -8,11 +8,14 @@ import { getBackendSrv } from '../backendSrv';
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
+import { logMetasDisagreementsWithBootData, logUnloadableModules, PluginMetaSource } from './moduleChecks';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
 let panels: PanelPluginMetas = {};
 let panelsByAliasIDs: PanelPluginMetas = {};
+
+const getPanelModule = (panel: PanelPluginMeta | undefined): string | undefined => panel?.module;
 
 function initialized(): boolean {
   return Boolean(Object.keys(panels).length);
@@ -40,7 +43,7 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
-function setPanelsAndAliases(input: PanelPluginMetas) {
+function setPanelsAndAliases(input: PanelPluginMetas, source: PluginMetaSource) {
   // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
   // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
   if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
@@ -48,6 +51,11 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
+  logUnloadableModules(panels, source, PluginType.panel, getPanelModule);
+  if (source === PluginMetaSource.metas) {
+    // eslint-disable-next-line @grafana/no-config-panels
+    logMetasDisagreementsWithBootData(panels, config.panels, PluginType.panel, getPanelModule, getPanelModule);
+  }
 }
 
 function setMetas(metas: PluginMetasResponse | null) {
@@ -55,20 +63,20 @@ function setMetas(metas: PluginMetasResponse | null) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-panels
-    setPanelsAndAliases(config.panels);
+    setPanelsAndAliases(config.panels, PluginMetaSource.bootdata);
     logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
     return;
   }
 
   const mapper = getPanelPluginMapper();
-  setPanelsAndAliases(mapper(metas));
+  setPanelsAndAliases(mapper(metas), PluginMetaSource.metas);
   logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
 }
 
 async function initPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-panels
-    setPanelsAndAliases(config.panels);
+    setPanelsAndAliases(config.panels, PluginMetaSource.bootdata);
     logPluginMetaDebug('PluginMeta: initializing panel plugins cache with bootdata values', {});
     return;
   }
@@ -169,13 +177,13 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
     throw new Error('setPanelPluginMetas() function can only be called from tests.');
   }
 
-  setPanelsAndAliases(structuredClone(override));
+  setPanelsAndAliases(structuredClone(override), PluginMetaSource.bootdata);
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
-    setPanelsAndAliases(settings.panels);
+    setPanelsAndAliases(settings.panels, PluginMetaSource.bootdata);
     return;
   }
 
