@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,7 +71,7 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.NotNil(t, created)
 
 		// The object name is deterministic: "<userUID>.<authModule>".
-		expectedName := authinfo.EncodeName(userUID, "ldap")
+		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
@@ -309,7 +309,7 @@ func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, emai
 // createAuthInfoObject builds an AuthInfo object with its deterministic name pre-populated.
 func createAuthInfoObject(helper *apis.K8sTestHelper, userUID, authModule, authID string) *unstructured.Unstructured {
 	obj := helper.LoadYAMLOrJSONFile("../testdata/authinfo-test-create-v0.yaml")
-	obj.SetName(authinfo.EncodeName(userUID, authModule))
+	obj.SetName(iamv0alpha1.EncodeName(userUID, authModule))
 	obj.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = userUID
 	obj.Object["spec"].(map[string]interface{})["authModule"] = authModule
 	obj.Object["spec"].(map[string]interface{})["authID"] = authID
