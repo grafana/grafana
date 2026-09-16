@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/notebooks"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -119,7 +120,8 @@ func FolderPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService resourcepermissions.ActionSetService,
 	restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
@@ -176,7 +178,7 @@ func ProvideFolderPermissions(
 		RoleGroup:          folderPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, serviceAccountRetriever, actionSetService)
 	if err != nil {
 		return nil, err
 	}

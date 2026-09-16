@@ -623,18 +623,17 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
-	// Search is mounted on the terms every other Grafana kind gets it on: Thing
-	// declares search fields, so it is enrolled, and its endpoint names its own
-	// path so it can never collide with a kind route, which is always mounted
-	// under an object name.
+	// Search is mounted on the terms every other Grafana kind gets it on, and its
+	// endpoint names its own path so it can never collide with a kind route,
+	// which is always mounted under an object name.
 	require.Contains(t, doc.Paths, prefix+"/search")
 	// Trash grants access to whoever deleted the object; no plugin kind is on
 	// the allowlist for it.
 	require.NotContains(t, doc.Paths, prefix+"/trash")
 
-	// Widget declares no search fields, so it is not enrolled -- declaring them
-	// is what marks a kind as reviewed for search.
-	require.NotContains(t, doc.Paths,
+	// Widget declares no search fields, which is no longer a reason to withhold
+	// the endpoint: search over the fields every resource has still works.
+	require.Contains(t, doc.Paths,
 		"/apis/"+testAppGroup+"/v1/namespaces/{namespace}/widgets/search")
 
 	route := "/apis/" + testAppGroup + "/v1/namespaces/default/things/thing-route/reload"
