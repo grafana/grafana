@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
@@ -77,17 +77,18 @@ export const getGridStyles = memoize(
     zebraStriping?: boolean
   ) => {
     const table = theme.components.table;
-    const bgColor = transparent ? table.backgroundOnCanvas : table.background;
+    const bgColor = transparent
+      ? theme.flags.visualDesignRefresh
+        ? theme.colors.background.page
+        : theme.colors.background.canvas
+      : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
     // sizes both the masks' boxes and the arc they cut, so the two can't drift
     const cornerRadius = theme.shape.radius.default;
-
-    // Preserve each row's underlying surface when the stripe hover overlay is active.
-    const rowHoverBackgroundColor = zebraStriping ? 'var(--rdg-row-background-color)' : table.rowHoverBackgroundSolid;
-    const selectedRowHoverColor = zebraStriping
-      ? 'var(--rdg-row-selected-background-color)'
-      : table.rowSelectedHoverBackground;
+    const headerBorderColor = colorManipulator
+      .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
+      .toHexString();
 
     // deliberately not a theme color — this reads as a shadow cast on the rows, and it's the same
     // value ScrollIndicators uses for the scroll cue on the dashboard lists
@@ -103,14 +104,14 @@ export const getGridStyles = memoize(
         '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
-        '--rdg-selection-color': table.cellSelectionBorder,
+        '--rdg-selection-color': theme.colors.action.selectedBorder,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        '--rdg-row-hover-background-color': rowHoverBackgroundColor,
+        '--rdg-row-hover-background-color': table.rowHoverBackground,
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
-        '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
+        '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
         blockSize: '100%',
         scrollbarWidth: 'thin',
@@ -180,11 +181,11 @@ export const getGridStyles = memoize(
           },
         }),
 
-        // Overlay cells so hover preserves plain, striped and selected row backgrounds, including
-        // frozen cells. Nested containers must be excluded: hovering their children also hovers them.
+        // Repeat the hover surface on striped cells, including frozen cells. Nested containers must
+        // be excluded because hovering their children also hovers the expansion container.
         ...(zebraStriping && {
-          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}):hover > .rdg-cell`]: {
-            backgroundImage: `linear-gradient(${table.rowHoverOverlay}, ${table.rowHoverOverlay})`,
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell`]: {
+            backgroundColor: table.rowHoverBackground,
           },
         }),
 
@@ -371,14 +372,14 @@ export const getGridStyles = memoize(
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         ...(tableRefreshEnabled && {
-          '--rdg-border-color': table.headerBorder,
+          '--rdg-border-color': headerBorderColor,
           '& .rdg-cell-dragging': {
             cursor: 'grabbing',
-            backgroundColor: table.headerDraggingBackground,
+            backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.1),
             boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
           },
           '& .rdg-cell-drag-over': {
-            backgroundColor: table.headerDragTargetBackground,
+            backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.05),
             boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
           },
         }),
@@ -425,8 +426,8 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
 export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
   css({
     backgroundColor: tableRefreshEnabled
-      ? theme.components.table.headerDragTargetBackground
-      : theme.components.table.background,
+      ? theme.colors.emphasize(theme.components.table.headerBackground, 0.05)
+      : theme.components.panel.background,
   })
 );
 
