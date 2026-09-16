@@ -366,6 +366,8 @@ func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name 
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
+//
+//nolint:gocyclo
 func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
 	defer span.End()

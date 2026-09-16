@@ -9,10 +9,32 @@ import (
 
 const arrayProjection = "[*]"
 
-// Extract evaluates a dot path with [*] array projections.
-// Missing fields and JSON nulls return nil. Projections flatten array results in source order.
-// When projecting a sub-field, non-object elements and missing paths contribute nil entries.
-// Empty paths and incompatible traversal types return errors.
+// Extract evaluates path against the given unstructured object. Three
+// shapes are supported:
+//
+//   - Plain dot path ("spec.email"): traverses the object via
+//     unstructured.NestedFieldNoCopy. The returned value reflects whatever
+//     sits at the path — a scalar, a slice, or a map. The caller decides
+//     which value types it accepts; this function does not coerce values.
+//   - Scalar-array passthrough ("spec.tags"): identical to the plain dot
+//     path; the result happens to be a slice of scalars. Array values are
+//     returned unchanged when no projection is used.
+//   - Array projection ("spec.members[*].name"): traverses to the slice
+//     before "[*]", then evaluates the remainder against each element.
+//     The remainder may contain further projections, as in
+//     "spec.groups[*].members[*].name". Each projection flattens array-valued
+//     results into []any in source order, so "spec.members[*].tags" also
+//     collects the elements of each member's tags array. Missing or null
+//     values contribute nil entries, as do non-object elements when a
+//     sub-field is requested. Callers can skip those entries without
+//     dropping the values collected from other elements.
+//
+// Returns (nil, nil) when a dot traversal resolves to a missing field or
+// JSON null, including before a projection. Within a projection, those
+// values appear as nil entries in the result. An error is returned for an
+// empty path, a non-slice at a [*] step, or an incompatible intermediate
+// type during dot traversal. Traversal errors within a projection fail
+// the entire extraction.
 func Extract(obj map[string]any, path string) (any, error) {
 	if path == "" {
 		return nil, fmt.Errorf("empty path")
