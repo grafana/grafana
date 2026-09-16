@@ -193,9 +193,10 @@ func TestKindsWithoutPluralUseTheDefaultedResource(t *testing.T) {
 	info, opts := testAPIGroupOptions(t, b)
 	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 
-	var paths []string
-	for _, r := range b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}).Namespace {
-		paths = append(paths, r.Path)
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}).Namespace
+	paths := make([]string, len(routes))
+	for _, r := range routes {
+		paths[i] = r.Path
 	}
 	require.Contains(t, paths, "noplurals/{name}/orphan")
 }
