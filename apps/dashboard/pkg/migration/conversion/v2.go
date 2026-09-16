@@ -1,6 +1,9 @@
 package conversion
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -8,18 +11,23 @@ import (
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func Convert_V2alpha1_to_V0(in *dashv2alpha1.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	v1beta1 := &dashv1.Dashboard{}
-	if err := ConvertDashboard_V2alpha1_to_V1(in, v1beta1, scope); err != nil {
+	if err := Convert_V2alpha1_to_V1(in, v1beta1, scope); err != nil {
 		return err
 	}
 	return Convert_V1_to_V0(v1beta1, out, scope)
 }
 
 func Convert_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
-	return ConvertDashboard_V2alpha1_to_V1(in, out, scope)
+	if err := ConvertDashboard_V2alpha1_to_V1(in, out, scope); err != nil {
+		return err
+	}
+	normalizeLegacyDashboardUID(out)
+	return nil
 }
 
 func Convert_V2alpha1_to_V2beta1(in *dashv2alpha1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
@@ -42,7 +50,11 @@ func Convert_V2beta1_to_V1(in *dashv2beta1.Dashboard, out *dashv1.Dashboard, sco
 	if err := ConvertDashboard_V2beta1_to_V2alpha1(in, v2alpha1, scope); err != nil {
 		return err
 	}
-	return ConvertDashboard_V2alpha1_to_V1(v2alpha1, out, scope)
+	if err := ConvertDashboard_V2alpha1_to_V1(v2alpha1, out, scope); err != nil {
+		return err
+	}
+	normalizeLegacyDashboardUID(out)
+	return nil
 }
 
 func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope) error {
@@ -50,4 +62,16 @@ func Convert_V2beta1_to_V2alpha1(in *dashv2beta1.Dashboard, out *dashv2alpha1.Da
 		return NewConversionError(err.Error(), "v2beta1", "v2alpha1", "ConvertDashboard_V2beta1_to_V2alpha1")
 	}
 	return nil
+}
+
+// normalizeLegacyDashboardUID keeps v2 dashboard names intact while producing a
+// deterministic legacy UID for the v1 storage/API, which is limited to 40
+// characters and a smaller character set.
+func normalizeLegacyDashboardUID(dashboard *dashv1.Dashboard) {
+	if dashboard.Name == "" || util.ValidateUID(dashboard.Name) == nil {
+		return
+	}
+
+	sum := sha256.Sum256([]byte(dashboard.Name))
+	dashboard.Name = hex.EncodeToString(sum[:])[:util.MaxUIDLength]
 }

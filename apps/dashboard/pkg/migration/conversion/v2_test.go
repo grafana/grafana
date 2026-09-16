@@ -90,3 +90,17 @@ func TestV2ConversionSuccessStatus(t *testing.T) {
 		require.Equal(t, dashv2beta1.VERSION, *target.Status.Conversion.StoredVersion)
 	})
 }
+
+func TestV2alpha1ToV1SchemeConversionNormalizesLongName(t *testing.T) {
+	const longName = "this-is-a-long-dashboard-name-for-sure-even-if-not-said-so"
+	const expectedUID = "e3dff1e11cc1643ac0e7e771b7ed556904f4313a"
+
+	scheme := newTestScheme(t)
+	in := validV2alpha1Dashboard()
+	in.Name = longName
+	target := &dashv1.Dashboard{}
+
+	require.NoError(t, scheme.Convert(in, target, nil))
+	require.Equal(t, expectedUID, target.Name)
+	require.Equal(t, longName, in.Name)
+}

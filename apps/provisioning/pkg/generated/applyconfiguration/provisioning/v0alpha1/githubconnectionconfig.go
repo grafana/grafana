@@ -11,6 +11,8 @@ type GitHubConnectionConfigApplyConfiguration struct {
 	AppID *string `json:"appID,omitempty"`
 	// GitHub App installation ID
 	InstallationID *string `json:"installationID,omitempty"`
+	// The GitHub Enterprise Server URL. Empty uses github.com.
+	ServerURL *string `json:"serverUrl,omitempty"`
 }
 
 // GitHubConnectionConfigApplyConfiguration constructs a declarative configuration of the GitHubConnectionConfig type for use with
@@ -32,5 +34,13 @@ func (b *GitHubConnectionConfigApplyConfiguration) WithAppID(value string) *GitH
 // If called multiple times, the InstallationID field is set to the value of the last call.
 func (b *GitHubConnectionConfigApplyConfiguration) WithInstallationID(value string) *GitHubConnectionConfigApplyConfiguration {
 	b.InstallationID = &value
+	return b
+}
+
+// WithServerURL sets the ServerURL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ServerURL field is set to the value of the last call.
+func (b *GitHubConnectionConfigApplyConfiguration) WithServerURL(value string) *GitHubConnectionConfigApplyConfiguration {
+	b.ServerURL = &value
 	return b
 }

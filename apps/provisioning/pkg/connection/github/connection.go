@@ -95,7 +95,10 @@ func (c config) InstallationID() string {
 }
 
 func (c config) CustomServerURL() string {
-	return ""
+	if c.obj.Spec.GitHub == nil {
+		return ""
+	}
+	return c.obj.Spec.GitHub.ServerURL
 }
 
 var _ ConnectionConfig = config{}

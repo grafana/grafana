@@ -65,6 +65,16 @@ func setMetadata(in, out DashboardConversion) {
 	out.SetObjectMeta(in.GetObjectMeta())
 	out.SetAPIVersion(out.GetAPIVersion())
 	out.SetKind(in.GetKind())
+
+	// v2 metadata.name is allowed to be longer/more permissive than the legacy
+	// v1 UID. The conversion function may normalize the name before this metadata
+	// copy, so normalize again after copying metadata to preserve the legacy UID.
+	if _, ok := out.(*dashv1.Dashboard); ok {
+		switch in.(type) {
+		case *dashv2.Dashboard, *dashv2alpha1.Dashboard, *dashv2beta1.Dashboard:
+			normalizeLegacyDashboardUID(out.(*dashv1.Dashboard))
+		}
+	}
 }
 
 // normalizeConversion wraps a conversion function with both metrics and status handling.

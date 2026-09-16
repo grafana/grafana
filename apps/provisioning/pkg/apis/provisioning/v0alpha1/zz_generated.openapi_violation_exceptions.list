@@ -30,6 +30,7 @@ API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubEnterprise
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,GitHubEnterpriseOAuth
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ConnectionSpec,OAuth
+API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubConnectionConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseConnectionConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseOAuthConnectionConfig,ServerURL
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,GitHubEnterpriseRepositoryConfig,ServerURL
