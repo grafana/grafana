@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -58,6 +58,9 @@ beforeEach(() => {
     getNews: jest.fn(),
   });
 
+  // A signed-in org member is the default; the anonymous / no-org tests override this.
+  jest.replaceProperty(contextSrv, 'isSignedIn', true);
+  jest.replaceProperty(contextSrv.user, 'orgRole', OrgRole.Viewer);
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
   // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
@@ -334,6 +337,54 @@ describe('HomePage', () => {
 
     // The card renders once the extensions settle.
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+  });
+
+  describe('solutions gating', () => {
+    const renderWithStubSolution = () => {
+      setTestFlags({ 'grafana.growthHomepage': true });
+      const datasource = jest.fn(async () => stubDatasource);
+      const stub = stubSolution('metrics', {
+        title: 'Metrics & infrastructure',
+        signal: async () => 'active',
+        datasource,
+      });
+      jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+
+      render(<HomePage />);
+      return { datasource };
+    };
+
+    it('hides recommendations and the overview and skips placement for anonymous users', async () => {
+      jest.replaceProperty(contextSrv, 'isSignedIn', false);
+
+      const { datasource } = renderWithStubSolution();
+
+      // The rest of the page still renders...
+      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      // ...without the solutions sections or their placement probes.
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Metrics & infrastructure' })).not.toBeInTheDocument();
+      expect(datasource).not.toHaveBeenCalled();
+    });
+
+    it('hides recommendations and the overview and skips placement for users with no org role', async () => {
+      jest.replaceProperty(contextSrv.user, 'orgRole', OrgRole.None);
+
+      const { datasource } = renderWithStubSolution();
+
+      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Metrics & infrastructure' })).not.toBeInTheDocument();
+      expect(datasource).not.toHaveBeenCalled();
+    });
+
+    it('renders the overview for a signed-in org member', async () => {
+      const { datasource } = renderWithStubSolution();
+
+      expect(await screen.findByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+      expect(datasource).toHaveBeenCalled();
+    });
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
