@@ -1,3 +1,19 @@
+<!-- 13.2.2 START -->
+
+# 13.2.2 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132089](https://github.com/grafana/grafana/pull/132089), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Fix folder rename UID collision during full sync [#132157](https://github.com/grafana/grafana/pull/132157), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.2.2 END -->
 <!-- 13.2.1 START -->
 
 # 13.2.1 (2026-09-02)
@@ -195,6 +211,22 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.6 START -->
+
+# 13.1.6 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132090](https://github.com/grafana/grafana/pull/132090), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** Fix folder rename UID collision during full sync [#132164](https://github.com/grafana/grafana/pull/132164), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.1.6 END -->
 <!-- 13.1.5 START -->
 
 # 13.1.5 (2026-09-02)
@@ -483,6 +515,21 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.9 START -->
+
+# 13.0.9 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+### Bug fixes
+
+- **Dashboards:** Preserve query variable refresh setting on v2 dashboard import [#132088](https://github.com/grafana/grafana/pull/132088), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.0.9 END -->
 <!-- 13.0.8 START -->
 
 # 13.0.8 (2026-09-02)
@@ -958,6 +1005,18 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.11 START -->
+
+# 12.4.11 (2026-09-15)
+
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-15815
+- Security: Fix CVE-2026-76154
+- Security: Fix CVE-2026-79656
+
+<!-- 12.4.11 END -->
 <!-- 12.4.10 START -->
 
 # 12.4.10 (2026-09-02)

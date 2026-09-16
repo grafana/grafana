@@ -15,7 +15,6 @@ import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
   Combobox,
-  Field,
   Pagination,
   ScrollContainer,
   Stack,
@@ -36,6 +35,7 @@ import {
 } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
+import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
@@ -68,9 +68,7 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  // Adding or removing a query toggles the frame picker, which changes the tree
-  // shape and remounts the editor, so its view mode is held here instead.
-  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
+  const [view, setView] = useState<ViewMode>('split');
 
   const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
     usePagination({
@@ -139,6 +137,25 @@ export function TextNGPanel(props: Props) {
     ]
   );
 
+  const frameOptions = useMemo(
+    () => frames.map((frame, index) => ({ label: getFrameDisplayName(frame), value: index })),
+    [frames]
+  );
+
+  // Auto width so the dropdown hugs the query name instead of spanning the footer.
+  const frameSelector =
+    frames.length > 1 ? (
+      <Combobox
+        aria-label={t('textng.frame-picker.label', 'Query')}
+        options={frameOptions}
+        value={frameOptions[currentFrameIndex]}
+        width="auto"
+        minWidth={8}
+        maxWidth={20}
+        onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+      />
+    ) : null;
+
   const paginationBar = active ? (
     <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
       <Pagination
@@ -158,8 +175,7 @@ export function TextNGPanel(props: Props) {
   ) : null;
 
   const panel = isEditing ? (
-    // Show the rendered content while the editor chunk loads; the editor
-    // opens in Preview view, so the content stays in place.
+    // Rendered content, while the editor chunk loads.
     <Suspense
       fallback={
         <EditorLoadingFallback
@@ -167,6 +183,7 @@ export function TextNGPanel(props: Props) {
           series={series}
           replaceVariables={replaceVariables}
           rowWindow={rowWindow}
+          hasFooter={Boolean(frameSelector || paginationBar)}
           transparent={transparent}
         />
       }
@@ -178,6 +195,7 @@ export function TextNGPanel(props: Props) {
         codeLanguage={options.code?.language}
         renderMode={options.renderMode}
         rowWindow={rowWindow}
+        frameSelector={frameSelector}
         pagination={paginationBar}
         previewRef={contentRef}
         series={series}
@@ -193,38 +211,24 @@ export function TextNGPanel(props: Props) {
     <TextNGView {...processed} code={options.code} fitContent={fitContentOn} contentRef={contentRef} />
   );
 
-  const panelPagination = isEditing ? null : paginationBar;
-
-  const frameOptions = useMemo(
-    () => frames.map((frame, index) => ({ label: getFrameDisplayName(frame), value: index })),
-    [frames]
-  );
-
-  const framePicker =
-    frames.length > 1 ? (
-      <Field noMargin>
-        <Combobox
-          aria-label={t('textng.frame-picker.label', 'Query')}
-          options={frameOptions}
-          value={frameOptions[currentFrameIndex]}
-          onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
-        />
-      </Field>
+  // While editing, the footer belongs to the editor, below its panes.
+  const panelFooter =
+    !isEditing && (frameSelector || paginationBar) ? (
+      <TextNGFooter left={frameSelector} center={paginationBar} />
     ) : null;
 
-  if (!panelPagination && !framePicker) {
+  if (!panelFooter) {
     return panel;
   }
 
-  // Fit-content: no fixed-height flex wrapper — the picker sits below the panel
+  // Fit-content: no fixed-height flex wrapper — the footer sits below the panel
   // in normal flow so the stack's natural height, not a forced 100%, is what
   // the layout measures.
   if (fitContentOn) {
     return (
       <Stack direction="column" gap={1}>
         {panel}
-        {panelPagination}
-        {framePicker}
+        {panelFooter}
       </Stack>
     );
   }
@@ -234,8 +238,7 @@ export function TextNGPanel(props: Props) {
       <Stack direction="column" grow={1} minHeight={0}>
         {panel}
       </Stack>
-      {panelPagination}
-      {framePicker}
+      {panelFooter}
     </Stack>
   );
 }
@@ -314,12 +317,14 @@ function EditorLoadingFallback({
   series,
   replaceVariables,
   rowWindow,
+  hasFooter,
   transparent,
 }: {
   options: Options;
   series: DataFrame[];
   replaceVariables: InterpolateFunction;
   rowWindow?: RowWindow;
+  hasFooter?: boolean;
   transparent?: boolean;
 }) {
   const theme = useTheme2();
@@ -345,7 +350,7 @@ function EditorLoadingFallback({
           <TextNGView {...rendered} code={options.code} transparent={transparent} />
         </div>
       </div>
-      {isCode && <Stack minHeight={theme.components.height.md} />}
+      {(isCode || hasFooter) && <Stack minHeight={theme.components.height.md} />}
     </div>
   );
 }

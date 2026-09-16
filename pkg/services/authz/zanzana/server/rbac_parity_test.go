@@ -115,14 +115,14 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 		{
 			name:        "dashboard get inherits down the folder tree",
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "folders:uid:parent"}},
-			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: parityStrPtr("parent")}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
 			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "child"),
 			expected:    true,
 		},
 		{
 			name:        "dashboard get does not inherit up the folder tree",
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "folders:uid:child"}},
-			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: parityStrPtr("parent")}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
 			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "parent"),
 			expected:    false,
 		},
@@ -180,7 +180,7 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 		{
 			name:        "folder get on a child via a grant on the parent",
 			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:parent"}},
-			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: parityStrPtr("parent")}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
 			req:         parityCheckReq(folderGroup, folderResource, "", utils.VerbGet, "child", "parent"),
 			expected:    true,
 		},
@@ -238,7 +238,7 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:general"}},
 			req:          parityCheckReq(dashboardGroup, "variables", "", utils.VerbGet, "region", ""),
 			expected:     true,
-			zanzanaToday: parityBoolPtr(false),
+			zanzanaToday: new(false),
 			divergence: "RBAC maps an empty parent to general for variables on every verb, because variables " +
 				"persist with an empty folder annotation while grants use folders:uid:general. Zanzana applies " +
 				"the empty-to-general default on create only, so a root variable read falls through to a " +
@@ -249,7 +249,7 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: "folders:edit", Scope: "folders:uid:general"}},
 			req:          parityCheckReq(dashboardGroup, "variables", "", utils.VerbUpdate, "region", ""),
 			expected:     true,
-			zanzanaToday: parityBoolPtr(false),
+			zanzanaToday: new(false),
 			divergence: "Same empty-parent handling as the get case above: RBAC rewrites the parent to general " +
 				"for variables on every verb, Zanzana only on create.",
 		},
@@ -260,7 +260,7 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: "annotations:read", Scope: "dashboards:uid:dash1"}},
 			req:          parityCheckReq(dashboardGroup, dashboardResource, "annotations", utils.VerbGet, "dash1", ""),
 			expected:     true,
-			zanzanaToday: parityBoolPtr(false),
+			zanzanaToday: new(false),
 			divergence: "Zanzana's translation table has no entry for the annotations:* actions, so the grant " +
 				"produces no tuple at all. RBAC maps the annotations subresource onto annotations:read " +
 				"scoped to the dashboard.",
@@ -299,7 +299,7 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash1"}},
 			req:          parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbList, "", ""),
 			expected:     true,
-			zanzanaToday: parityBoolPtr(false),
+			zanzanaToday: new(false),
 			divergence: "A check with no name is a capabilities probe. RBAC answers \"does the user hold this " +
 				"action on anything\" and allows it, leaving result narrowing to the caller. Zanzana has no " +
 				"equivalent: an empty name only lets it test the group_resource object, which a per-object " +
@@ -392,7 +392,7 @@ func TestIntegrationRBACParityList(t *testing.T) {
 		{
 			name:        "dashboards folder grant expands to descendants",
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "folders:uid:parent"}},
-			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: parityStrPtr("parent")}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
 			req:         parityListReq(dashboardGroup, dashboardResource, "", utils.VerbGet),
 			expected:    parityListResult{Folders: []string{"parent", "child"}},
 		},
@@ -418,7 +418,7 @@ func TestIntegrationRBACParityList(t *testing.T) {
 		{
 			name:        "folders grant expands to descendants",
 			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:parent"}},
-			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: parityStrPtr("parent")}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
 			req:         parityListReq(folderGroup, folderResource, "", utils.VerbGet),
 			expected:    parityListResult{Items: []string{"parent", "child"}},
 		},
@@ -669,7 +669,3 @@ func normalizeParityListPtr(l *parityListResult) *parityListResult {
 	out := normalizeParityList(*l)
 	return &out
 }
-
-func parityStrPtr(s string) *string { return &s }
-
-func parityBoolPtr(b bool) *bool { return &b }

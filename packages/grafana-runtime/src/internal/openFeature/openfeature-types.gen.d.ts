@@ -40,6 +40,7 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "datasources.azureMonitorBatchAPI"
@@ -107,7 +108,9 @@ declare module "@openfeature/core" {
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
-    | "datasources.gatewayGuardrails";
+    | "datasources.gatewayGuardrails"
+    | "grafana.pluginExtensionReactElementProps"
+    | "grafana.logDetailsDisplayedFieldControls";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
