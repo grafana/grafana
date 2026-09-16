@@ -47,7 +47,6 @@ import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
-import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -74,20 +73,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       return;
     }
 
+    // A plan preview is a fully static surface: allowlist to View rather than guard each item
+    // (Edit, Get help/Inspect, Copy, legend/style, plugin extensions, ...) individually -- Edit
+    // slipped through the previous per-item guards entirely, and subtraction only ever closes
+    // items we thought of. View is safe: unlike editPanel/editview, viewPanel never triggers
+    // edit mode (DashboardSceneUrlSync) and renders the same static panel with no toolbar.
+    if (dashboard.isPlanning()) {
+      menu.setState({ items: [getViewMenuItem(panel)] });
+      return;
+    }
+
     const isEditingPanel = Boolean(dashboard.state.editPanel);
     if (!isEditingPanel) {
-      items.push({
-        text: t('panel.header-menu.view', `View`),
-        iconClassName: 'eye',
-        shortcut: 'v',
-        href: locationUtil.getUrlForPartial(locationService.getLocation(), {
-          viewPanel: panel.getPathId(),
-          editPanel: undefined,
-        }),
-        onClick: () => {
-          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
-        },
-      });
+      items.push(getViewMenuItem(panel));
     }
 
     if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
@@ -166,20 +164,15 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    // Share has no isEditing check anywhere in its chain (this menu item, or the 'p e'/'p s'
-    // keyboard shortcuts) — it's reachable during planning by construction, and would let a
-    // placeholder's synthetic sample data leave the preview as if it were real.
-    if (!refuseWhilePlanning(dashboard)) {
-      items.push({
-        type: 'submenu',
-        text: t('panel.header-menu.share', 'Share'),
-        iconClassName: 'share-alt',
-        subMenu,
-        onClick: (e) => {
-          e.preventDefault();
-        },
-      });
-    }
+    items.push({
+      type: 'submenu',
+      text: t('panel.header-menu.share', 'Share'),
+      iconClassName: 'share-alt',
+      subMenu,
+      onClick: (e) => {
+        e.preventDefault();
+      },
+    });
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -242,14 +235,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
-    // Gated only by config/RBAC, not isEditing or a query check — for a query-less placeholder,
-    // onCreateAlert either throws (a confusing error toast) or navigates to a blank alert form, so
-    // hide the item rather than let the click fail.
     const isCreateAlertMenuOptionAvailable =
       config.unifiedAlertingEnabled &&
       contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-      contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate) &&
-      !refuseWhilePlanning(dashboard);
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate);
 
     if (isCreateAlertMenuOptionAvailable) {
       moreSubMenu.push({
@@ -308,10 +297,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       items.push(exploreMenuItem);
     }
 
-    // The menu item and the 'i' keyboard shortcut are both unconditional otherwise.
-    if (!refuseWhilePlanning(dashboard)) {
-      items.push(getInspectMenuItem(plugin, panel, dashboard));
-    }
+    items.push(getInspectMenuItem(plugin, panel, dashboard));
 
     if (config.featureToggles.panelTimeSettings) {
       items.push({
@@ -440,6 +426,21 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
+}
+
+function getViewMenuItem(panel: VizPanel): PanelMenuItem {
+  return {
+    text: t('panel.header-menu.view', `View`),
+    iconClassName: 'eye',
+    shortcut: 'v',
+    href: locationUtil.getUrlForPartial(locationService.getLocation(), {
+      viewPanel: panel.getPathId(),
+      editPanel: undefined,
+    }),
+    onClick: () => {
+      DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+    },
+  };
 }
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {

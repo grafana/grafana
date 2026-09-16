@@ -129,28 +129,47 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('while planning', () => {
-    // None of Share/Inspect/alert-rule creation check isEditing anywhere in their own chain
-    // (see refuseWhilePlanning) -- each is reachable during a plan preview by construction.
-    // Explore needs no guard here: tryGetExploreUrlForPanel already returns undefined for a
-    // panel with no query runner, so getExploreMenuItem is never even built for a placeholder.
-    it('hides Share, Inspect and the alert-rule option', async () => {
-      const { scene, menu, panel } = await buildTestScene({});
+    // The menu reduces to an allowlist (View only), not per-item guards. The scene built here
+    // otherwise makes Edit, Share, Explore, Inspect, alert-rule creation, and a plugin extension
+    // all available, so the assertion proves subtraction rather than coincidental absence.
+    it('reduces the menu to View only', async () => {
+      const { menu, panel } = await buildTestScene({ planning: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
       config.unifiedAlertingEnabled = true;
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
-
-      scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
-      });
+      getObservablePluginLinksMock.mockReturnValueOnce(
+        of([
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+          },
+        ])
+      );
 
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.find((i) => i.text === 'Share')).toBeUndefined();
-      expect(menu.state.items?.find((i) => i.text === 'Inspect')).toBeUndefined();
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      expect(moreMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
+      expect(menu.state.items?.map((i) => i.text)).toEqual(['View']);
+      expect(menu.state.items?.[0].href).toContain('viewPanel=');
+    });
+
+    it('never re-offers Edit -- the regression Oscar reported', async () => {
+      // Edit is gated only on canEditDashboard()/editable/isReadOnlyRepeat/isEditingPanel, none
+      // of which go false during planning on their own -- this is the case that slipped through
+      // the original per-item refuseWhilePlanning guards entirely, since Edit never had one.
+      const { menu } = await buildTestScene({ planning: true });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Edit')).toBeUndefined();
     });
   });
 
@@ -1214,6 +1233,7 @@ describe('panelMenuBehavior', () => {
 
 interface SceneOptions {
   isEmbedded?: boolean;
+  planning?: boolean;
 }
 
 async function buildTestScene(options: SceneOptions) {
@@ -1250,6 +1270,9 @@ async function buildTestScene(options: SceneOptions) {
       isEmbedded: options.isEmbedded ?? false,
     },
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    planning: options.planning
+      ? { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} }
+      : undefined,
   });
 
   await new Promise((r) => setTimeout(r, 1));
