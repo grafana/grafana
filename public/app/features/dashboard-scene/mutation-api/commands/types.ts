@@ -107,17 +107,9 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 /**
  * Enter edit mode if the dashboard is not already editing.
  * Call this at the top of any command handler that modifies the dashboard.
- *
- * Skipped while a plan preview is active: the preview's whole premise is that it never enters
- * edit mode (see RENDER_PLAN's own doc comment), so flipping it here on behalf of an unrelated
- * command would undo that. Oscar's call, knowing the tradeoff: mutation commands still run
- * against the preview without edit mode rather than being refused outright. Confirmed this
- * produces correct, not half-applied, state for ADD_PANEL/ADD_ROW/UPDATE_PANEL specifically (see
- * their test files) -- each mutates layout-manager/VizPanel state directly and does not itself
- * depend on isEditing being true.
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
-  if (!scene.state.isEditing && !scene.isPlanning()) {
+  if (!scene.state.isEditing) {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.

@@ -312,15 +312,13 @@ describe('RENDER_PLAN', () => {
 });
 
 describe('other mutation commands, while a plan preview is active', () => {
-  // Oscar's decision: stop enterEditModeIfNeeded from flipping the scene into edit mode on behalf
-  // of an unrelated command, but let the other ~30 mutation commands still run against the
-  // preview without it. Confirmed here, against a real scene and real layout managers rather than
-  // by reasoning about it: ADD_PANEL applies correctly -- title, key, and layout position are all
-  // as expected -- with isEditing staying false throughout.
-  it('ADD_PANEL still adds a panel correctly, without entering edit mode', async () => {
+  // A planning scene is not a mutation target: DashboardMutationClient refuses every mutating
+  // command except RENDER_PLAN/END_PLANNING (see DashboardMutationClient.test.ts). Covered here
+  // too, so RENDER_PLAN's own test suite proves the isPlanning() it sets actually blocks a write.
+  it('ADD_PANEL is refused, not applied', async () => {
     const { scene, client } = setup();
     await client.execute({ type: 'RENDER_PLAN', payload: plan });
-    expect(scene.state.isEditing).toBeFalsy();
+    const panelCountBefore = scene.state.body.getVizPanels().length;
 
     const result = await client.execute({
       type: 'ADD_PANEL',
@@ -336,8 +334,7 @@ describe('other mutation commands, while a plan preview is active', () => {
       },
     });
 
-    expect(result.success).toBe(true);
-    expect(scene.state.isEditing).toBeFalsy();
-    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toContain('New panel');
+    expect(result.success).toBe(false);
+    expect(scene.state.body.getVizPanels()).toHaveLength(panelCountBefore);
   });
 });

@@ -256,11 +256,7 @@ describe('Variable mutation commands', () => {
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
-  it('ENTER_EDIT_MODE refuses while a plan is being previewed, rather than silently no-op-ing', async () => {
-    // Its whole job is entering edit mode, and there is no sensible "run it anyway" the way the
-    // other ~30 commands can (enterEditModeIfNeeded just skips the flip for those, per Oscar's
-    // decision) -- silently succeeding without actually entering edit mode would be a lie to the
-    // caller, so this one refuses outright instead.
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed, like every other mutating command', async () => {
     scene = buildMockScene({ editable: true, isPlanning: true });
     client = new DashboardMutationClient(scene);
 
@@ -270,7 +266,7 @@ describe('Variable mutation commands', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Cannot enter edit mode while a dashboard plan is being previewed');
+    expect(result.error).toContain('read-only');
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
