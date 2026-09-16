@@ -20,11 +20,10 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
-import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPED_ROW_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
-  type FromFieldsResult,
   type GetActionsFunctionLocal,
   type MeasureCellHeightEntry,
   type TableColumn,
@@ -41,6 +40,7 @@ import {
   compileFrameToRecords,
   computeColWidths,
   computeContentAwareColWidths,
+  createBoundedCache,
   createFitWidthMeasurer,
   createTypographyContext,
   displayJsonValue,
@@ -52,18 +52,22 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
-  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
   getPillCellHeightMeasurer,
   getRowHeight,
-  inferPills,
-  createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  filterFieldsByHiddenColumns,
+  isColumnMenuVisible,
+  inferPills,
+  makeStripedRowClass,
+  markEdgeColumns,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
+  orderFieldsByPinnedColumns,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -1298,25 +1302,39 @@ describe('TableNG utils', () => {
   });
 
   describe('getPillCellHeightMeasurer', () => {
+    // horizontal chrome of a legacy pill: 6px of padding on each side.
+    const PILL_SPACING = 12;
+    // a refreshed pill is a Tag, with theme.spacing.x1 of padding on each side.
+    const REFRESHED_PILL_SPACING = 16;
+
     it('counts up the number of lines using the pill measuring method', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING);
       measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       measurer('tag1,tag2', 100, {} as Field, 0, 20);
       measurer('tag2', 200, {} as Field, 0, 20);
@@ -1326,7 +1344,7 @@ describe('TableNG utils', () => {
 
     it('does not re-measure pill text when only the column width changes (resize)', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING);
       const value = 'aaaa,bbbb,cccc';
       measurer(value, 100, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
@@ -1337,21 +1355,39 @@ describe('TableNG utils', () => {
     });
 
     it('returns a consistent height when the same value and width are measured repeatedly', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       // react-data-grid re-measures every row on each layout pass; repeats must be stable
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
     });
 
     it('wraps to more lines as the column narrows', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
       const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       expect(narrow).toBeGreaterThan(wide);
     });
 
+    it('wraps sooner when the pills carry the wider refreshed chrome', () => {
+      const measureWidth = jest.fn((str: string) => str.length * 5);
+      const value = 'tag1,tag2,tag3';
+      // 3 pills of 20px text: 3*(20+12) + 2*4 = 104, so all three fit one 110px line.
+      expect(getPillCellHeightMeasurer(measureWidth, PILL_SPACING)(value, 110, {} as Field, 0, 20)).toBe(20);
+      // the same pills at 16px chrome need 3*(20+16) + 2*4 = 116, so one wraps to a second line.
+      expect(getPillCellHeightMeasurer(measureWidth, REFRESHED_PILL_SPACING)(value, 110, {} as Field, 0, 20)).toBe(44);
+    });
+
     it('scales the height with the caller line height at the same width', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING
+      );
       const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
       // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
       expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
@@ -1840,6 +1876,25 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('isColumnMenuVisible', () => {
+    it('is visible when the column is filterable, even with no hide/pin/reorder', () => {
+      expect(isColumnMenuVisible(true, false, false)).toBe(true);
+    });
+
+    it('is visible when hide/pin are available, even on a non-filterable column', () => {
+      expect(isColumnMenuVisible(false, true, false)).toBe(true);
+    });
+
+    it('is visible when reorder is available, even with nothing else', () => {
+      // The "Manage columns" item opens the sidebar for reorder, so reorder alone justifies the menu.
+      expect(isColumnMenuVisible(false, false, true)).toBe(true);
+    });
+
+    it('is hidden when none of filter/hide/pin/reorder apply', () => {
+      expect(isColumnMenuVisible(false, false, false)).toBe(false);
+    });
+  });
+
   describe('computeContentAwareColWidths', () => {
     // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
     // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
@@ -1860,11 +1915,12 @@ describe('TableNG utils', () => {
       return typographyCtx;
     };
 
-    const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
+    const compute = (fields: Field[], availWidth: number, showTypeIcons = false, preventHorizontalOverflow = false) =>
       computeContentAwareColWidths(fields, availWidth, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
         showTypeIcons,
+        preventHorizontalOverflow,
       });
 
     afterEach(() => jest.restoreAllMocks());
@@ -1964,6 +2020,146 @@ describe('TableNG utils', () => {
       expect(compute(fields, 100)).toEqual([COLUMN.MAX_AUTO_WIDTH]);
     });
 
+    it('levels a wrapped column down to fit the panel rather than overflowing it', () => {
+      const cols = (wrap: boolean): Field[] => [
+        // 100*8+13+6 = 819, well over the 400 cap.
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: wrap } } },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+      ];
+
+      // Content totals 400 + 50 = 450 against a 300px panel. The wrapped column can trade the 150px
+      // of overflow for extra row height, so it gives all of it back and the table fits exactly.
+      expect(compute(cols(true), 300)).toEqual([250, 50]);
+      // Unwrapped, the same content would be clipped rather than reflowed, so it keeps its width and
+      // the grid scrolls instead.
+      expect(compute(cols(false), 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+    });
+
+    it('takes the overflow from the widest wrapped column first, then levels them together', () => {
+      const fields: Field[] = [
+        // 40*8+13+6 = 339
+        { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: { custom: { wrapText: true } } },
+        // 20*8+13+6 = 179
+        { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: { custom: { wrapText: true } } },
+      ];
+
+      // Content totals 518. A 40px deficit comes entirely out of A, which is 160px wider than B:
+      // the narrower column gives up nothing while a wider one still has slack.
+      expect(compute(fields, 478)).toEqual([299, 179]);
+      // A 200px deficit first levels A down to B (160px), then splits the remaining 40px between
+      // them (20px each), so they land on a common width instead of A collapsing on its own.
+      expect(compute(fields, 318)).toEqual([159, 159]);
+    });
+
+    it('never levels a wrapped column below its header label, keeping the residual overflow', () => {
+      const fields: Field[] = [
+        {
+          name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+          type: FieldType.string,
+          values: ['x'.repeat(60)], // 499 => capped to 400
+          config: { custom: { wrapText: true } },
+        },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+      ];
+
+      // The 250px deficit against a 200px panel is more than the wrapped column can give: the header
+      // label doesn't reflow, so it stops at 275 and the grid still scrolls, just 125px less far.
+      expect(compute(fields, 200)).toEqual([275, 50]);
+    });
+
+    it('never levels a wrapped column below its configured minWidth', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['x'.repeat(100)], // 819 => capped to 400
+          config: { custom: { wrapText: true, minWidth: 300 } },
+        },
+      ];
+
+      expect(compute(fields, 100)).toEqual([300]);
+    });
+
+    it('leaves a graphical column at its measured width even when wrapText is set on it', () => {
+      const fields: Field[] = [
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: true } } }, // capped to 400
+        {
+          name: 'g',
+          type: FieldType.number,
+          values: [1],
+          // wrapText has no effect on a sparkline's rendering, but a default applied to every column
+          // shouldn't make this one eligible for the level-down either — there's nothing to reflow.
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+        },
+      ];
+
+      // Same 300px deficit as the preventHorizontalOverflow case below: S gives back everything a
+      // wrapped column can (down to its header), the sparkline stays untouched.
+      expect(compute(fields, 250)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+    });
+
+    describe('preventHorizontalOverflow', () => {
+      it('levels an unwrapped column down to fit, truncating its content instead of scrolling', () => {
+        const fields: Field[] = [
+          // 100*8+13+6 = 819, well over the 400 cap; no wrapText, so the content ellipsizes.
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+        ];
+
+        // Content totals 450 against a 300px panel. With the option the 150px of overflow comes out
+        // of the text column, which then shows an ellipsis rather than hiding N behind a scrollbar.
+        expect(compute(fields, 300, false, true)).toEqual([250, 50]);
+        // Without it, an unwrapped column keeps its content width and the grid scrolls (the default).
+        expect(compute(fields, 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+      });
+
+      it('still takes the overflow from the widest column first, then levels them together', () => {
+        const fields: Field[] = [
+          { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: {} }, // 339
+          { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: {} }, // 179
+        ];
+
+        // Same widest-first levelling wrapped columns get: a 40px deficit comes entirely out of A,
+        // which is 160px wider than B...
+        expect(compute(fields, 478, false, true)).toEqual([299, 179]);
+        // ...while a 200px deficit levels A down to B and then splits the last 40px between them.
+        expect(compute(fields, 318, false, true)).toEqual([159, 159]);
+      });
+
+      it('leaves graphical columns at their measured width — there is nothing in them to truncate', () => {
+        const fields: Field[] = [
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} }, // capped to 400
+          {
+            name: 'g',
+            type: FieldType.number,
+            values: [1],
+            config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+          },
+        ];
+
+        // The 300px deficit is more than levelling S down to the sparkline's width would cover, so a
+        // shrinkable sparkline would have been dragged down with it ([125, 125]). Squeezing a
+        // sparkline clips the graphic instead of ellipsizing text, so S absorbs the whole deficit.
+        expect(compute(fields, 250, false, true)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+      });
+
+      it('still stops at the header label, keeping the residual overflow', () => {
+        const fields: Field[] = [
+          {
+            name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+            type: FieldType.string,
+            values: ['x'.repeat(60)], // 499 => capped to 400
+            config: {},
+          },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+        ];
+
+        // Truncating the values is fine; truncating the column's own title isn't. The option gets as
+        // close to fitting as the header allows and the grid scrolls the rest.
+        expect(compute(fields, 200, false, true)).toEqual([275, 50]);
+      });
+    });
+
     it('measures the display-formatted string, not the raw value', () => {
       const fields: Field[] = [
         {
@@ -2061,8 +2257,9 @@ describe('TableNG utils', () => {
       const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
       const expected = longestLine * CHAR_W + CELL_CHROME;
 
-      // availWidth below the content so it can't grow to fill (which would mask the difference).
-      expect(compute([jsonField(value, true)], 40)).toEqual([expected]);
+      // availWidth exactly at the content width, so the column neither grows to fill (which would
+      // mask the difference) nor levels down to fit (wrapped columns give width back on overflow).
+      expect(compute([jsonField(value, true)], expected)).toEqual([expected]);
       // the widest line is far narrower than the whole blob, which would hit the cap.
       expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
       expect(pretty.length * CHAR_W + CELL_CHROME).toBeGreaterThan(COLUMN.MAX_AUTO_WIDTH);
@@ -2159,11 +2356,13 @@ describe('TableNG utils', () => {
       });
       // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
       // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
-      const wrapped = computeContentAwareColWidths([field(true)], 50, {
+      // availWidth is the wrapped content width, so neither column grows and the wrapped one has no
+      // overflow to level down into.
+      const wrapped = computeContentAwareColWidths([field(true)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
-      const inline = computeContentAwareColWidths([field(false)], 50, {
+      const inline = computeContentAwareColWidths([field(false)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
@@ -2321,6 +2520,19 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves header space for the drag handle when column reorder is enabled', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + sort arrow 22 + drag-handle space 20 + chrome 13 = 87.
+      const widths = computeContentAwareColWidths(fields, 80, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        enableColumnReorder: true,
+      });
+      expect(widths).toEqual([87]);
+      // the same column with reorder disabled needs only 67 (no handle reserved).
+      expect(compute(fields, 60)).toEqual([67]);
+    });
+
     it('reserves the first column’s extra padding when the panel has none of its own', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
@@ -2392,9 +2604,9 @@ describe('TableNG utils', () => {
     });
 
     it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
-      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
-      // non-filterable column must not pay for it: header 32 + sort arrow 22 + chrome 13 = 67, not
-      // the 89 it would need if the menu were reserved as well.
+      // With no filter, no hide/pin and no reorder the menu has nothing to offer this column, so it
+      // doesn't render and the column must not pay for it: header 32 + sort arrow 22 + chrome 13 =
+      // 67, not the 89 it would need with the menu reserved as well.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 60, {
@@ -2403,6 +2615,35 @@ describe('TableNG utils', () => {
           tableRefreshEnabled: true,
         })
       ).toEqual([67]);
+    });
+
+    it('reserves column menu space for a non-filterable column when hide/pin are available', () => {
+      // Hide/pin apply to every column, not just filterable ones, so the menu (and its space) is in
+      // flow whenever `canManageColumns` is set, independent of `filterable`.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + sort arrow 22 + menu 22 + chrome 13 = 89; content "a" is tiny.
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          canManageColumns: true,
+        })
+      ).toEqual([89]);
+    });
+
+    it('reserves column menu space for a non-filterable, unmanaged column when reorder is available', () => {
+      // Reorder alone justifies the menu too, since its "Manage columns" item opens the sidebar.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + sort arrow 22 + drag handle 20 + menu 22 + chrome 13 = 109.
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          enableColumnReorder: true,
+        })
+      ).toEqual([109]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
@@ -2491,6 +2732,37 @@ describe('TableNG utils', () => {
       const widths = computeContentAwareColWidths(fields, 154, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: headerCtx,
+      });
+
+      // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
+      expect(widths).toEqual([73, 83]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up (it's sized to its
+      // header's exact minimum). Ceiling each column independently in that branch avoids that.
+      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(typographyCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({
+          width: headerWidths[String(text)],
+        })) as typeof typographyCtx.ctx.measureText);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + sort arrow 22 + chrome 13 = 72.5; header "B" => 47.4 + 22 + 13 = 82.4.
+      // Content "x" is tiny, so the header drives both. availWidth 110 < their 154.9 total, so this
+      // overflows.
+      const widths = computeContentAwareColWidths(fields, 110, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: typographyCtx,
       });
 
       // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
@@ -2651,14 +2923,8 @@ describe('TableNG utils', () => {
         ...overrides,
       }) as TableColumn;
 
-    // markEdgeColumns mutates the passed-in FromFieldsResult's columns in place rather than
-    // returning a new list, so tests build one of these and read back `.columns` after the call.
-    const withColumns = (columns: TableColumn[]): FromFieldsResult => ({ columns, cellRootRenderers: {} });
-
     it('tags the first and last columns on every cell variant', () => {
-      const result = withColumns([col('a'), col('b'), col('c')]);
-      markEdgeColumns(result);
-      const [first, middle, last] = result.columns;
+      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
 
       expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
@@ -2670,20 +2936,15 @@ describe('TableNG utils', () => {
     });
 
     it('tags a single column as both edges', () => {
-      const result = withColumns([col('a')]);
-      markEdgeColumns(result);
-      const [only] = result.columns;
-
+      const [only] = markEdgeColumns([col('a')]);
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
     });
 
     it('keeps existing classes, including ones computed per row', () => {
-      const result = withColumns([
+      const [first] = markEdgeColumns([
         col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
       ]);
-      markEdgeColumns(result);
-      const [first] = result.columns;
 
       expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
       expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
@@ -2691,10 +2952,8 @@ describe('TableNG utils', () => {
       );
     });
 
-    it('leaves the list unchanged when there are no columns', () => {
-      const result = withColumns([]);
-      markEdgeColumns(result);
-      expect(result.columns).toEqual([]);
+    it('returns the list unchanged when there are no columns', () => {
+      expect(markEdgeColumns([])).toEqual([]);
     });
   });
 
@@ -3292,6 +3551,72 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when order is undefined', () => {
+      expect(orderFieldsByDisplayNames(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when order is empty', () => {
+      expect(orderFieldsByDisplayNames(fields, [])).toBe(fields);
+    });
+
+    it('reorders fields to match the given display names', () => {
+      expect(orderFieldsByDisplayNames(fields, ['C', 'A', 'B'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from order, preserving their original relative order', () => {
+      expect(orderFieldsByDisplayNames(fields, ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+
+    it('ignores names in order that do not match any field', () => {
+      expect(orderFieldsByDisplayNames(fields, ['D', 'C'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when hiddenColumns is undefined', () => {
+      expect(filterFieldsByHiddenColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when hiddenColumns is empty', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('filters out fields whose display name is hidden', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set(['B']))).toEqual([fieldA, fieldC]);
+    });
+  });
+
+  describe('orderFieldsByPinnedColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when pinnedColumns is undefined', () => {
+      expect(orderFieldsByPinnedColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when pinnedColumns is empty', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('moves pinned fields to the front, preserving relative order within each group', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C']))).toEqual([fieldC, fieldA, fieldB]);
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C', 'A']))).toEqual([fieldA, fieldC, fieldB]);
+    });
+  });
+
   describe('parseStyleJson', () => {
     it('parses the contents of the styleField for this row and returns a style object', () => {
       expect(parseStyleJson('{"color":"red"}')).toEqual({ color: 'red' });
@@ -3500,5 +3825,55 @@ describe('TableNG utils', () => {
     ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
       expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
+  });
+});
+
+describe('makeStripedRowClass', () => {
+  const flatRows = (count: number): TableRow[] => Array.from({ length: count }, (_, i) => ({ __index: i, __depth: 0 }));
+
+  it('stripes every other row of a flat table, starting from the second', () => {
+    const rows = flatRows(5);
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined, STRIPED_ROW_CLASS, undefined]);
+  });
+
+  // A nested table interleaves a container row after each parent that has nested data, in one
+  // grid. Counting every row - as react-data-grid's own `rdg-row-odd` does - put the parity on the
+  // containers and left every parent row unstriped.
+  it('counts only the parent rows of a nested table, skipping the containers', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 1, __depth: 1 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([
+      undefined,
+      NESTED_ROW_CLASS,
+      STRIPED_ROW_CLASS,
+      NESTED_ROW_CLASS,
+      undefined,
+      NESTED_ROW_CLASS,
+    ]);
+  });
+
+  // Only rows with nested data get a container row, so the interleaving isn't regular and the
+  // parity can't be derived from the grid's own row index arithmetic either.
+  it('keeps the rhythm when only some parents have a container row', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.filter((r) => r.__depth === 0).map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined]);
   });
 });

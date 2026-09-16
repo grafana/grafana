@@ -163,8 +163,24 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  /**
+   * Set by callers that would rather see a column's content truncated than have the table scroll
+   * sideways — a table embedded in a fixed layout, where a horizontal scrollbar hides columns the
+   * surrounding UI has already reserved room for. Auto columns are then levelled down to fit the
+   * available width, widest first, instead of keeping their content width. Only affects
+   * content-aware widths (`contentAwareWidthsEnabled`).
+   */
+  preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  /**
+   * `table.refresh`: whether the column management sidebar is open. Read as the sidebar's starting
+   * state and followed whenever it changes, so the panel option that drives it stays in charge while
+   * the panel is being edited. The table still opens and closes it locally in between.
+   */
+  showColumnsSidebar?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
