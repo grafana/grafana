@@ -91,7 +91,7 @@ export const getGridStyles = memoize(
         '--rdg-row-background-color': bgColor,
         '--rdg-row-hover-background-color': table.rowHoverBackground,
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
-        '--rdg-row-selected-hover-background-color': table.rowSelectedHoverBackground,
+        '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
         // give the pagination controls their room back, so the grid and the pager together still fit
         // the panel (see getPaginationChromeHeight)
