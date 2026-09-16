@@ -108,18 +108,24 @@ it.each(['row', 'tab'] as const)(
       expect(added.error).toBeUndefined();
       expect(added.success).toBe(true);
     }
+    // toHaveLength + toBe rather than toEqual([user]): a live RowItem/TabItem holds a circular
+    // _parent back-reference, and if this ever regresses, Jest's worker crashes trying to
+    // serialize that object over IPC (JSON.stringify can't handle the cycle) instead of reporting
+    // a clean assertion failure.
     if (scene.state.body instanceof RowsLayoutManager) {
       const [first, second] = scene.state.body.state.rows;
       const user = new RowItem({ title: 'Same title', layout: DefaultGridLayoutManager.fromVizPanels([]) });
       scene.state.body.setState({ rows: [second, user, first] });
       await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
-      expect(scene.state.body.state.rows).toEqual([user]);
+      expect(scene.state.body.state.rows).toHaveLength(1);
+      expect(scene.state.body.state.rows[0]).toBe(user);
     } else if (scene.state.body instanceof TabsLayoutManager) {
       const [first, second] = scene.state.body.state.tabs;
       const user = new TabItem({ title: 'Same title', layout: DefaultGridLayoutManager.fromVizPanels([]) });
       scene.state.body.setState({ tabs: [second, user, first] });
       await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
-      expect(scene.state.body.state.tabs).toEqual([user]);
+      expect(scene.state.body.state.tabs).toHaveLength(1);
+      expect(scene.state.body.state.tabs[0]).toBe(user);
     } else {
       throw new Error('Expected section layout');
     }
@@ -403,7 +409,11 @@ it.each(['row', 'tab'] as const)(
           ? body.state.tabs.map((tab) => tab.state.title)
           : [];
     expect(titles).toEqual(['Wraps existing']);
-    expect(scene.state.body.getVizPanels()).toEqual([existing]);
+    // toHaveLength + toBe rather than toEqual([existing]): see the comment on the assertions above
+    // in "discards original %s objects after reorder..." for why toEqual on a live scene object is
+    // worth avoiding here.
+    expect(scene.state.body.getVizPanels()).toHaveLength(1);
+    expect(scene.state.body.getVizPanels()[0]).toBe(existing);
   }
 );
 
@@ -465,7 +475,10 @@ it('removes empty planning sections before wrappers created after them', async (
   if (!(body instanceof TabsLayoutManager)) {
     throw new Error('Expected tabs layout');
   }
-  expect(body.state.tabs).toEqual([]);
+  // toHaveLength rather than toEqual([]): a live TabItem holds a circular _parent back-reference,
+  // and if this ever regresses, Jest's worker crashes trying to serialize that object over IPC
+  // (JSON.stringify can't handle the cycle) instead of reporting a clean assertion failure.
+  expect(body.state.tabs).toHaveLength(0);
 });
 
 it.each([
