@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type dummyRoutesLoader struct {
@@ -28,45 +28,27 @@ type dummyBackend struct {
 	group string
 }
 
-func (d *dummyBackend) Group() string {
-	return d.group
+func (d *dummyBackend) Group() metav1.APIGroup {
+	return metav1.APIGroup{
+		Name: d.group,
+		Versions: []metav1.GroupVersionForDiscovery{{
+			GroupVersion: fmt.Sprintf("%s/v0alpha1", d.group),
+			Version:      "v0alpha1",
+		}, {
+			GroupVersion: fmt.Sprintf("%s/v0alpha2", d.group),
+			Version:      "v0alpha2",
+		}},
+	}
 }
 
 func (d *dummyBackend) Load(context.Context) (http.Handler, error) {
 	return d, nil
 }
 
-func (d *dummyBackend) Manifest() app.ManifestData {
-	return app.ManifestData{
-		Group: d.group,
-		Versions: []app.ManifestVersion{
-			{
-				Name:   "v0alpha1",
-				Served: true,
-				Kinds: []app.ManifestVersionKind{
-					{
-						Kind:   "x",
-						Plural: "xs",
-						Scope:  "namespaced",
-					},
-				},
-			},
-			{
-				Name:   "v0alpha2",
-				Served: true,
-			},
-			{
-				Name:   "v0alpha3",
-				Served: false,
-			},
-		},
-	}
-}
-
-func (d *dummyBackend) RV() string {
+func (d *dummyBackend) Key() string {
 	return "static"
 }
 
 func (d *dummyBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group)
+	_, _ = fmt.Fprint(w, "dummy backend for group: ", d.group) // nolint:gosec // G705: XSS via taint analysis (gosec)
 }

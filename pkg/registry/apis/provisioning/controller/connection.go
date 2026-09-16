@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -37,15 +38,6 @@ const (
 	tokenWriteRetryDelay = 2 * time.Second
 )
 
-type connectionQueueItem struct {
-	key      string
-	attempts int
-	// trigger records what enqueued this item, for the processing-level metrics.
-	// It rides the item so retries (which re-add the same item) keep the
-	// attribution.
-	trigger usinformer.ProcessTrigger
-}
-
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
 //go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
@@ -66,12 +58,14 @@ type ConnectionController struct {
 
 	// processed classifies each delivery (encapsulating the NATS/apiserver
 	// backend) and counts the start of each reconcile by what enqueued it.
-	processed *usinformer.ProcessedMetrics
+	processed  *usinformer.ProcessedMetrics
+	triggersMu sync.Mutex
+	triggers   map[string]usinformer.ProcessTrigger
 
 	// To allow injection for testing.
-	processFn func(ctx context.Context, item *connectionQueueItem) error
+	processFn func(ctx context.Context, key string) error
 
-	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	queue          workqueue.TypedRateLimitingInterface[string]
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
 }
@@ -92,9 +86,10 @@ func NewConnectionController(
 		conns:     conns,
 		tracer:    tracer,
 		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
+		triggers:  make(map[string]usinformer.ProcessTrigger),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
 				Name:            "provisioningConnectionController",
 				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
 			},
@@ -144,7 +139,34 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key, trigger: trigger})
+	// Store the attribution before a worker can pick up the key.
+	cc.setTrigger(key, trigger)
+	cc.queue.Add(key)
+}
+
+// The first enqueue owns the attribution when subsequent events coalesce onto
+// the same key. Lazy initialization also supports controllers built as literals.
+func (cc *ConnectionController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
+	cc.triggersMu.Lock()
+	defer cc.triggersMu.Unlock()
+	if cc.triggers == nil {
+		cc.triggers = make(map[string]usinformer.ProcessTrigger)
+	}
+	if _, ok := cc.triggers[key]; !ok {
+		cc.triggers[key] = trigger
+	}
+}
+
+// Pop attribution at pickup so terminal outcomes cannot erase a newer event
+// received during reconciliation. Retries restore the popped attribution.
+func (cc *ConnectionController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
+	cc.triggersMu.Lock()
+	defer cc.triggersMu.Unlock()
+	trigger, ok := cc.triggers[key]
+	if ok {
+		delete(cc.triggers, key)
+	}
+	return trigger, ok
 }
 
 // connectionResourceVersion returns the resource version of a delivered
@@ -212,57 +234,63 @@ func (cc *ConnectionController) runWorker(ctx context.Context) {
 }
 
 func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
-	item, quit := cc.queue.Get()
+	key, quit := cc.queue.Get()
 	if quit {
 		return false
 	}
-	defer cc.queue.Done(item)
+	defer cc.queue.Done(key)
 
-	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
-	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
-	// Count the start of processing once per pickup, attributed to what enqueued
-	// the item. Retries re-add the same item (attempts already bumped) and are not
-	// recounted.
-	if item.attempts == 0 {
-		cc.processed.RecordProcessed(item.trigger)
+	trigger, ok := cc.popTrigger(key)
+	// NumRequeues counts prior AddRateLimited calls, excluding this attempt.
+	attempts := cc.queue.NumRequeues(key) + 1
+	// Only informer-driven first attempts count. Internal AddAfter reschedules
+	// have no attribution, and rate-limited retries must not be counted again.
+	if ok && attempts == 1 {
+		cc.processed.RecordProcessed(trigger)
 	}
 
-	err := cc.processFn(ctx, item)
+	err := cc.processFn(ctx, key)
 	if err == nil {
-		cc.queue.Forget(item)
+		cc.queue.Forget(key)
 		return true
 	}
 
-	item.attempts++
-	logger = logger.With("error", err, "attempts", item.attempts)
+	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("ConnectionController failed to process key")
 
-	if item.attempts >= connectionMaxAttempts {
+	if attempts >= connectionMaxAttempts {
 		logger.Error("ConnectionController failed too many times")
-		cc.queue.Forget(item)
+		cc.queue.Forget(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("ConnectionController will not retry")
-		cc.queue.Forget(item)
+		cc.queue.Forget(key)
 		return true
 	}
 
 	logger.Info("ConnectionController will retry as service is unavailable")
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
-	cc.queue.AddRateLimited(item)
+	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	// Keep retry attribution without overwriting an event received in flight or
+	// inventing attribution for an internal reschedule.
+	if ok {
+		cc.setTrigger(key, trigger)
+	}
+	cc.queue.AddRateLimited(key)
 
 	return true
 }
 
-func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) (err error) {
-	logger := cc.logger.With("key", item.key)
+func (cc *ConnectionController) process(ctx context.Context, key string) (err error) {
+	logger := cc.logger.With("key", key)
 	ctx = logging.Context(ctx, logger)
 
-	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
@@ -332,7 +360,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
 				logger.Info("connection token secret not yet readable after recent write; will retry", "error", err)
-				cc.queue.AddAfter(&connectionQueueItem{key: item.key}, tokenWriteRetryDelay)
+				cc.queue.AddAfter(key, tokenWriteRetryDelay)
 				return nil
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)

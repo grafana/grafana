@@ -661,6 +661,53 @@ func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
 	assert.Equal(t, note, mq.Field())
 }
 
+func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
+	b := regexRequirementTestIndex(t)
+	tag := resource.SEARCH_FIELD_PREFIX + "tag"
+	for _, tc := range []struct {
+		name   string
+		regex  string
+		prefix string
+	}{
+		{name: "literal prefix", regex: "X.*", prefix: "X"},
+		{name: "case insensitive expression", regex: "(?i)X.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: tag, Operator: string(resource.OperatorRegex), Values: []string{tc.regex}})
+			require.Nil(t, errRes)
+			regex, ok := q.(*boundedRegexQuery)
+			require.True(t, ok)
+			assert.Equal(t, tag, regex.field)
+			assert.Equal(t, tc.prefix, regex.literalPrefix)
+		})
+	}
+
+	for _, tc := range []struct {
+		name   string
+		field  string
+		values []string
+	}{
+		{name: "lowercased keyword field", field: resource.SEARCH_FIELD_PREFIX + "note", values: []string{"N.*"}},
+		{name: "text-only field", field: resource.SEARCH_FIELD_PREFIX + "summary", values: []string{"S.*"}},
+		{name: "lowercased title", field: resource.SEARCH_FIELD_TITLE, values: []string{"T.*"}},
+		{name: "missing value", field: tag},
+		{name: "multiple values", field: tag, values: []string{"X.*", "Y.*"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertBadRequest(t, b, tc.field, string(resource.OperatorRegex), tc.values...)
+		})
+	}
+}
+
+func regexRequirementTestIndex(t *testing.T) *bleveIndex {
+	t.Helper()
+	return customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+	)
+}
+
 func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
 	b := customFieldsIndex(t,
 		resource.SearchFieldDefinition{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},

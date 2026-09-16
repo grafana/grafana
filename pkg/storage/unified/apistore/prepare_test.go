@@ -1142,3 +1142,80 @@ func TestUpdateCapExemptsDeletion(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+// checkGVK decides the version an object is persisted as. A declared GVK settles
+// it exactly; the Scheme fallback can only guess, and cannot distinguish the
+// versions of a Go type registered under several -- the shape the v1beta1/v1
+// dashboard and folder aliases have.
+func TestCheckGVK(t *testing.T) {
+	const group = "gvktest.grafana.app"
+	gr := schema.GroupResource{Group: group, Resource: "widgets"}
+	v1GVK := schema.GroupVersionKind{Group: group, Version: "v1", Kind: "Widget"}
+	v2GVK := schema.GroupVersionKind{Group: group, Version: "v2", Kind: "Widget"}
+
+	// One Go type under two versions, so ObjectKinds reports both for it.
+	aliasScheme := runtime.NewScheme()
+	aliasScheme.AddKnownTypeWithName(v1GVK, &capWidget{})
+	aliasScheme.AddKnownTypeWithName(v2GVK, &capWidget{})
+
+	t.Run("a declared GVK completes an object that carries none", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v2GVK, obj.GetObjectKind().GroupVersionKind())
+	})
+
+	t.Run("the declared GVK is used instead of the scheme's guess", func(t *testing.T) {
+		declared := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK, Scheme: aliasScheme}}
+		obj := &capWidget{}
+		require.NoError(t, declared.checkGVK(obj))
+		require.Equal(t, v2GVK, obj.GetObjectKind().GroupVersionKind())
+
+		// Without one, the version is whichever registration the scheme reports
+		// first. That it may be either is the point: it is not known to be the
+		// version this storage serves.
+		guessed := &Storage{gr: gr, opts: StorageOptions{Scheme: aliasScheme}}
+		other := &capWidget{}
+		require.NoError(t, guessed.checkGVK(other))
+		require.Contains(t, []schema.GroupVersionKind{v1GVK, v2GVK},
+			other.GetObjectKind().GroupVersionKind())
+	})
+
+	t.Run("an object's own complete GVK is left alone", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(v1GVK)
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"a write that named its own version keeps it")
+	})
+
+	t.Run("a declared GVK fills in only what is missing", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Group: group, Version: "v1"})
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"the kind is completed, the version already on the object is kept")
+	})
+
+	t.Run("no declared GVK and no scheme leaves the object untouched", func(t *testing.T) {
+		s := &Storage{gr: gr}
+		obj := &capWidget{}
+		require.NoError(t, s.checkGVK(obj))
+		require.True(t, obj.GetObjectKind().GroupVersionKind().Empty())
+	})
+
+	// encode writes the object's own GVK, so a declared one is enough to persist
+	// a correct apiVersion with no Scheme involved.
+	t.Run("encode persists the declared version without a scheme", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		var buf bytes.Buffer
+		require.NoError(t, s.encode(&capWidget{Value: "hi"}, &buf, true))
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v2", out.GetAPIVersion())
+		require.Equal(t, "Widget", out.GetKind())
+	})
+}

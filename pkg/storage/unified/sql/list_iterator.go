@@ -13,6 +13,9 @@ type listIter struct {
 	listRV       int64
 	sortAsc      bool
 	useCurrentRV bool
+	keysOnly     bool
+	clusterWide  bool
+	listScope    string
 
 	// any error
 	err error
@@ -30,10 +33,17 @@ type listIter struct {
 
 // ContinueToken implements resource.ListIterator.
 func (l *listIter) ContinueToken() string {
+	rv := l.listRV
 	if l.useCurrentRV {
-		return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
+		rv = l.rv
 	}
-	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset, SortAscending: l.sortAsc}.String()
+	token := ContinueToken{ResourceVersion: rv, StartOffset: l.offset, SortAscending: l.sortAsc}
+	if l.keysOnly {
+		token.KeysOnly = true
+		token.ClusterWide = l.clusterWide
+		token.Namespace = l.listScope
+	}
+	return token.String()
 }
 
 func (l *listIter) Error() error {
