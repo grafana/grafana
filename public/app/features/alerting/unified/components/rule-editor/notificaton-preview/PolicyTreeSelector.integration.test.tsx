@@ -420,6 +420,32 @@ describe('PolicyTreeSelector', () => {
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
 
+    // The mirror of the migration test above: while the flag is off, saving must leave a
+    // label-routed rule exactly as it was. Migrating early would silently rewrite how every
+    // existing rule is routed, before the editor is able to read the canonical setting.
+    it('does not migrate the legacy label to notification_settings.policy on save', async () => {
+      mockRulerGroupWithLabels({ [NAMED_ROOT_LABEL_NAME]: CUSTOM_POLICY_NAME });
+
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      await user.click(ui.buttons.save.get());
+
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const savedRule = bodies[0].rules.find((r) => r.grafana_alert.title === grafanaRulerRule.grafana_alert.title);
+
+      expect(savedRule?.labels?.[NAMED_ROOT_LABEL_NAME]).toBe(CUSTOM_POLICY_NAME);
+      expect(savedRule?.grafana_alert.notification_settings?.policy).toBeUndefined();
+    });
+
     it('shows collapsed default view when rule has no __grafana_managed_route__ label', async () => {
       mockRulerGroupWithLabels({}); // no policy label
 
@@ -699,6 +725,32 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+    });
+
+    // This is the migration that rolling out alertingPolicyRoutingSettings relies on: a rule that
+    // was routed through the legacy label moves to notification_settings.policy the next time it is
+    // saved, even if the user never touches the policy field. Both mechanisms resolve to the same
+    // label at evaluation time, so the rule must end up with exactly one of them.
+    it('migrates the legacy label to notification_settings.policy on save', async () => {
+      const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
+      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      // Save without touching the policy - the migration has to happen on its own.
+      await user.click(ui.buttons.save.get());
+
+      const requests = await capture;
+      const bodies = await Promise.all(
+        requests.map((r) => r.json() as Promise<RulerRuleGroupDTO<RulerGrafanaRuleDTO>>)
+      );
+      const savedRule = bodies[0].rules.find((r) => r.grafana_alert.title === grafanaRulerRule.grafana_alert.title);
+
+      expect(savedRule?.grafana_alert.notification_settings?.policy).toBe(CUSTOM_POLICY_NAME);
+      expect(savedRule?.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
     });
 
     it('clears the policy on reset (re-opening the selector shows default, not the stale label)', async () => {
