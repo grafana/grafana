@@ -11,6 +11,7 @@ import {
 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -33,7 +34,9 @@ import {
   k8sRouteToRoute,
   k8sSubRouteToRoute,
   parseAmConfigRoute,
+  resolveNamedPolicyName,
   routeToK8sSubRoute,
+  stripInternalLabels,
   useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
 } from './useNotificationPolicyRoute';
@@ -154,6 +157,41 @@ test('createKubernetesRoutingTreeSpec', () => {
 
   expect(tree.metadata.name).toBe(ROOT_ROUTE_NAME);
   expect(tree).toMatchSnapshot();
+});
+
+describe('resolveNamedPolicyName', () => {
+  it('prefers notification_settings.policy over the legacy label', () => {
+    const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'legacy-policy' };
+    expect(resolveNamedPolicyName({ policy: 'field-policy' }, labels)).toBe('field-policy');
+  });
+
+  it('falls back to the legacy label when notification_settings.policy is unset', () => {
+    const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'legacy-policy' };
+    expect(resolveNamedPolicyName(undefined, labels)).toBe('legacy-policy');
+  });
+
+  it('returns undefined when neither source has a policy', () => {
+    expect(resolveNamedPolicyName(undefined, {})).toBeUndefined();
+    expect(resolveNamedPolicyName(undefined, undefined)).toBeUndefined();
+  });
+});
+
+describe('stripInternalLabels', () => {
+  it('removes the internal routing label', () => {
+    const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'some-policy', team: 'frontend' };
+    expect(stripInternalLabels(labels)).toStrictEqual({ team: 'frontend' });
+  });
+
+  it('does not mutate the input object', () => {
+    const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'some-policy' };
+    stripInternalLabels(labels);
+    expect(labels).toStrictEqual({ [NAMED_ROOT_LABEL_NAME]: 'some-policy' });
+  });
+
+  it('is a no-op when the internal label is absent', () => {
+    const labels: Labels = { team: 'frontend' };
+    expect(stripInternalLabels(labels)).toStrictEqual({ team: 'frontend' });
+  });
 });
 
 describe('isRouteProvisioned', () => {
