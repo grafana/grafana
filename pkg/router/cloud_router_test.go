@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -271,6 +272,55 @@ func generateSelfSignedCAPEM(t *testing.T) []byte {
 	require.NoError(t, err)
 
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+}
+
+// stubTokenExchanger is a fake authnlib.TokenExchanger returning a fixed
+// token, just enough to exercise which header a wrapper writes it into.
+type stubTokenExchanger struct{}
+
+func (stubTokenExchanger) Exchange(_ context.Context, _ authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
+	return &authnlib.TokenExchangeResponse{Token: "exchanged-token"}, nil
+}
+
+// capturingRoundTripper records the last request it saw instead of sending it.
+type capturingRoundTripper struct {
+	req *http.Request
+}
+
+func (c *capturingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	c.req = req
+	return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody}, nil
+}
+
+// TestAggregateTokenWrapper_HeaderPerTarget pins the fix for the bug where
+// cloud_app_platform_apiserver -- an app-platform apiserver that
+// authenticates a standard bearer token from Authorization, same family as
+// manifestAuthWrapper's target -- was getting the CAP token on X-Access-Token
+// like baas_apiserver, so discovery/proxied requests to it never authenticated.
+func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
+	t.Run("cloud_app_platform_apiserver uses Authorization", func(t *testing.T) {
+		captured := &capturingRoundTripper{}
+		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", stubTokenExchanger{}, "aud")(captured)
+
+		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://cap.invalid/apis", nil))
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, "Bearer exchanged-token", captured.req.Header.Get("Authorization"))
+		require.Empty(t, captured.req.Header.Get("X-Access-Token"))
+	})
+
+	t.Run("baas_apiserver uses X-Access-Token", func(t *testing.T) {
+		captured := &capturingRoundTripper{}
+		wrapped := aggregateTokenWrapper("baas_apiserver", stubTokenExchanger{}, "aud")(captured)
+
+		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://baas.invalid/apis", nil))
+		require.NoError(t, err)
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, "Bearer exchanged-token", captured.req.Header.Get("X-Access-Token"))
+		require.Empty(t, captured.req.Header.Get("Authorization"))
+	})
 }
 
 // TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients checks the

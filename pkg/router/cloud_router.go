@@ -134,7 +134,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 			// rejects a config with both a custom Transport and any
 			// TLSClientConfig field set.
 			Transport:     newAggregateBaseTransport(tlsCfg),
-			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace),
+			WrapTransport: aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience),
 			Timeout:       defaultAggregateDiscoveryTimeout,
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
@@ -472,6 +472,19 @@ func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 // which fronts every group discovered there, so 2 idle connections per host is
 // far too few to keep keepalive useful under concurrent proxied traffic.
 const aggregateMaxIdleConnsPerHost = 100
+
+// aggregateTokenWrapper picks the header the exchanged CAP token is sent on
+// for one aggregate target. cloud_app_platform_apiserver is an app-platform
+// apiserver (same family as manifestAuthWrapper's target in
+// pkg/storage/unified/resource/manifest_watcher.go), which authenticates a
+// standard bearer token from Authorization rather than the authlib
+// X-Access-Token header -- baas_apiserver is not, so it keeps the default.
+func aggregateTokenWrapper(name string, tokenExchanger authnlib.TokenExchanger, audience string) transport.WrapperFunc {
+	if name == "cloud_app_platform_apiserver" {
+		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
+	}
+	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
+}
 
 // newAggregateBaseTransport returns a fresh base transport for one aggregate
 // target. Called once per target so no two targets share a connection pool,
