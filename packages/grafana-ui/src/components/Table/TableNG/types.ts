@@ -178,6 +178,16 @@ interface BaseTableProps {
   jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Initial sidebar state. Later prop changes also update the sidebar. */
+  showColumnsSidebar?: boolean;
+  /** Controlled column order, by display name. */
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
+  /** Controlled hidden columns, by display name. */
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  /** All columns the controlling owner can show, including those removed from `data`. */
+  columnCatalog?: string[];
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

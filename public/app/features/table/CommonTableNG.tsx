@@ -9,7 +9,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
+  'tableRefreshEnabled' | 'tableRefreshNewFeaturesEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
 >;
 
 /**

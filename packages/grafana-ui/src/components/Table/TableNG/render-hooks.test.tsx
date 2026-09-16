@@ -29,7 +29,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
-import { getHeaderCellStyles } from './styles';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -445,6 +445,73 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it('is draggable per column, from that column’s own config', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+      const mixedFields = frame.fields.map((field, index) => ({
+        ...field,
+        config: { ...field.config, custom: { ...field.config.custom, reorderable: index === 0 } },
+      }));
+
+      const mixed = callFromFields(hook, mixedFields, [100, 100], frame, rows, rows);
+      expect(mixed.columns.map((c) => c.draggable)).toEqual([true, false]);
+
+      const unset = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(unset.columns.map((c) => c.draggable)).toEqual([false, false]);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
+  });
+
+  describe('table.refresh column hide/pin', () => {
+    it('threads onHideColumn/onTogglePin/isPinned into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const onTogglePin = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn, onTogglePin, pinnedColumns: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+      expect(fieldAProps.isPinned).toBe(true);
+      expect(fieldBProps.isPinned).toBe(false);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onTogglePin?.();
+      expect(onTogglePin).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn/onTogglePin when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+      expect(headerProps.onTogglePin).toBeUndefined();
+    });
+
+    it('sets canHideColumn based on the number of fields being built', () => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(false);
+    });
   });
 
   it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
