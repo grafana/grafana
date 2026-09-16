@@ -603,7 +603,8 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
-        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 3 + scrollbarHeight;
+        const verticalPaddingBlock = TABLE.CELL_PADDING * 2;
+        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + verticalPaddingBlock * 2 + scrollbarHeight;
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
