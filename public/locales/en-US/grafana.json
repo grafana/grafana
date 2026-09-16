@@ -10710,6 +10710,8 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10867,6 +10869,9 @@
     },
     "toolbar-button-row": {
       "show-more": "Show more items"
+    },
+    "tooltip": {
+      "dismiss": "Dismiss"
     },
     "u-plot": {
       "config": {
