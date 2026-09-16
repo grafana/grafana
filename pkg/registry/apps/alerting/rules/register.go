@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -133,7 +134,7 @@ func resolveOrgID(ctx context.Context) int64 {
 // newFolderValidator returns a callback that validates folder existence using the folder service.
 func newFolderValidator(ng *ngalert.AlertNG) func(ctx context.Context, folderUID string) (bool, error) {
 	return func(ctx context.Context, folderUID string) (bool, error) {
-		if folderUID == "" {
+		if folder.IsRootFolderUID(folderUID) {
 			return false, nil
 		}
 		orgID := resolveOrgID(ctx)

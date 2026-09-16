@@ -153,20 +153,19 @@ jobs:
         if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
         id: meticulous-eligibility
         continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          run=true
-          if [ "$PR_AUTHOR" = "renovate-sh-app[bot]" ]; then
-            # Renovate applies labels after opening the PR, so read the current labels.
-            run=false
-            if gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.labels[].name' | grep -Fxq 'ci/meticulous'; then
-              run=true
-            fi
-          fi
-          echo "run=$run" | tee -a "$GITHUB_OUTPUT"
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            if (context.payload.pull_request.user.login === 'renovate-sh-app[bot]') {
+              // Renovate applies labels after opening the PR, so read the current labels.
+              const { data: pullRequest } = await github.rest.pulls.get({
+                ...context.repo,
+                pull_number: context.issue.number,
+              });
+              run = pullRequest.labels.some((label) => label.name === 'ci/meticulous');
+            }
+            core.setOutput('run', run);
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: pr-targz

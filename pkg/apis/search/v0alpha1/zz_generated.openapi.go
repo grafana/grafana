@@ -19,6 +19,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm":       schema_pkg_apis_search_v0alpha1_FacetTerm(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate": schema_pkg_apis_search_v0alpha1_FilterPredicate(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.RangePredicate":  schema_pkg_apis_search_v0alpha1_RangePredicate(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.RegexPredicate":  schema_pkg_apis_search_v0alpha1_RegexPredicate(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResourceRef":     schema_pkg_apis_search_v0alpha1_ResourceRef(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem":      schema_pkg_apis_search_v0alpha1_ResultItem(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultsMetadata": schema_pkg_apis_search_v0alpha1_ResultsMetadata(ref),
@@ -163,6 +164,41 @@ func schema_pkg_apis_search_v0alpha1_RangePredicate(ref common.ReferenceCallback
 					},
 				},
 				Required: []string{"field"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_search_v0alpha1_RegexPredicate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"pattern": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"negate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Negate inverts the match: the field must not match the pattern.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"field", "pattern"},
 			},
 		},
 	}
@@ -641,7 +677,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"and": {
@@ -690,6 +726,11 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 							Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.RangePredicate"),
 						},
 					},
+					"regex": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.RegexPredicate"),
+						},
+					},
 					"exists": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate"),
@@ -699,6 +740,6 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.RangePredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.TextPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"},
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.RangePredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.RegexPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.TextPredicate", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"},
 	}
 }
