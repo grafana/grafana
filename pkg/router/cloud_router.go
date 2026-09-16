@@ -34,13 +34,14 @@ const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
 // grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set,
-// or any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
-// its .url configured, so the router module (not a separate process) owns
-// its lifecycle. Returns (nil, nil) when none of those are set -- an ini
-// section is never truly absent (SectionWithEnvOverrides always returns a
-// valid, empty section), so it's the presence of at least one of these
-// upstream apiserver URLs that actually gates whether this loader activates;
-// callers fall back to the dummy loader when it doesn't.
+// any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
+// its .url configured, or plugins_url is set, so the router module (not a
+// separate process) owns its lifecycle. Returns (nil, nil) when none of
+// those are set -- an ini section is never truly absent
+// (SectionWithEnvOverrides always returns a valid, empty section), so it's
+// the presence of at least one of these three sources that actually gates
+// whether this loader activates; callers fall back to the dummy loader when
+// it doesn't.
 //
 // Auth is a CAP token exchanged for a signed access token on every request
 // to the remote apiserver, carried on X-Access-Token rather than a static
@@ -63,22 +64,46 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 	}
 
-	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 {
+	// plugins_url is a third, independently-gated source: the plugin-manifests
+	// operator it points at needs no CAP token (it's an unauthenticated
+	// in-cluster HTTP endpoint, unlike the two aggregate targets and the
+	// appmanifest apiserver), so it must not be folded into the
+	// aggregateTargetConfigs loop below or the cap_token/token_exchange_url
+	// gate that follows.
+	var pluginsTarget *pluginManifestsTarget
+	if pluginsURL := section.Key("plugins_url").MustString(""); pluginsURL != "" {
+		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+		pluginsTarget, err = newPluginManifestsTarget(pluginsURL, patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout})
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+	}
+
+	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 && pluginsTarget == nil {
 		return nil, nil
 	}
 
-	capToken := section.Key("cap_token").MustString("")
-	tokenExchangeURL := section.Key("token_exchange_url").MustString("")
-	if capToken == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)
-	}
+	// cap_token/token_exchange_url are only needed for the appmanifest
+	// apiserver and the two CAP-token-authenticated aggregate targets --
+	// pluginsTarget alone must be able to activate without them.
+	var tokenExchanger *authnlib.TokenExchangeClient
+	if appManifestApiserverURL != "" || len(aggregateTargetConfigs) > 0 {
+		capToken := section.Key("cap_token").MustString("")
+		tokenExchangeURL := section.Key("token_exchange_url").MustString("")
+		if capToken == "" || tokenExchangeURL == "" {
+			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)
+		}
 
-	tokenExchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            capToken,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("token exchange client: %w", err)
+		tokenExchanger, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			TokenExchangeURL: tokenExchangeURL,
+			Token:            capToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("token exchange client: %w", err)
+		}
 	}
 
 	var aggregateTargets []*aggregateTarget
@@ -130,7 +155,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		clients = k8s.NewClientRegistry(restCfg, k8s.ClientConfig{})
 	}
 
-	return newCloudLoader(clients, aggregateTargets)
+	return newCloudLoader(clients, aggregateTargets, pluginsTarget)
 }
 
 // embeddedManifestKey is the key component used for API groups sourced from
@@ -165,6 +190,11 @@ type cloudLoader struct {
 	// cloud_app_platform_apiserver) this loader actively polls for API
 	// groups, independent of whether the CRD/appmanifest side is active.
 	aggregateTargets []*aggregateTarget
+
+	// pluginsTarget is the third source: nil unless plugins_url is
+	// configured, independent of both the CRD/appmanifest side and the
+	// aggregate targets.
+	pluginsTarget *pluginManifestsTarget
 }
 
 type tlsCacheKey struct {
@@ -177,13 +207,14 @@ type apiGroupWithKey struct {
 	key   string
 }
 
-func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget) (*cloudLoader, error) {
+func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                      make(chan struct{}, 1),
 		transports:                 map[tlsCacheKey]*http.Transport{},
 		coreGroupsWithoutManifests: getAPIGroupsForCoreGroupsWithoutManifests(),
 		clients:                    clients,
 		aggregateTargets:           aggregateTargets,
+		pluginsTarget:              pluginsTarget,
 	}
 
 	if clients != nil {
@@ -246,6 +277,12 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	for _, target := range l.aggregateTargets {
 		g.Go(func() error {
 			target.run(gctx, l.dirty)
+			return nil
+		})
+	}
+	if l.pluginsTarget != nil {
+		g.Go(func() error {
+			l.pluginsTarget.run(gctx, l.dirty)
 			return nil
 		})
 	}
@@ -375,6 +412,9 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	for _, target := range l.aggregateTargets {
 		combined = append(combined, target.Backends()...)
+	}
+	if l.pluginsTarget != nil {
+		combined = append(combined, l.pluginsTarget.Backends()...)
 	}
 	return combined, nil
 }

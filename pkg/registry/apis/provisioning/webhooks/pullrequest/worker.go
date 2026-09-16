@@ -49,7 +49,7 @@ func ProvidePullRequestWorker(
 	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
-	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)
+	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)
 }
@@ -104,7 +104,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	ctx = logging.Context(ctx, logger)
 	ctx, span := tracing.Start(ctx, "provisioning.pullrequest.process")
 	defer func() {
-		if processErr != nil {
+		if processErr != nil && !jobs.IsWarning(processErr) {
 			_ = tracing.Error(span, processErr)
 		}
 		span.End()
@@ -135,6 +135,18 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
+	if opts.IsFork != nil && *opts.IsFork {
+		logger.Info("skipping fork pull request preview")
+		if err := c.commenter.Comment(ctx, prRepo, opts.PR, changeInfo{UnsupportedFork: true}); err != nil {
+			c.metrics.recordCommentPosted(utils.ErrorOutcome)
+			return fmt.Errorf("comment pull request: %w", err)
+		}
+		c.metrics.recordCommentPosted(utils.SuccessOutcome)
+		progress.SetFinalMessage(ctx, unsupportedForkMessage)
+		outcome = utils.SuccessOutcome
+		return nil
+	}
+
 	progress.SetMessage(ctx, "listing pull request files")
 	base, err := prRepo.MergeBase(ctx, opts.Ref)
 	if err != nil {
@@ -144,6 +156,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
+		var missingRef *repository.CompareRefNotFoundError
+		if errors.As(err, &missingRef) && missingRef.Ref == opts.Ref {
+			outcome = string(provisioning.JobStateWarning)
+			logger.Info("pull request ref no longer exists, skipping preview", "ref", opts.Ref)
+			return jobs.AsWarning(fmt.Errorf("pull request ref %q no longer exists; preview skipped", opts.Ref))
+		}
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)
 	}

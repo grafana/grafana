@@ -39,20 +39,31 @@ func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetCo
 		if url == "" {
 			continue
 		}
-		var patterns []string
-		if raw := section.Key(name + ".group_regex").MustString(""); raw != "" {
-			for _, p := range strings.Split(raw, ",") {
-				patterns = append(patterns, strings.TrimSpace(p))
-			}
-		}
 		targets = append(targets, aggregateTargetConfig{
 			Name:          name,
 			URL:           url,
 			Audience:      section.Key(name + ".audience").MustString(""),
-			GroupPatterns: patterns,
+			GroupPatterns: splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
 		})
 	}
 	return targets, nil
+}
+
+// splitGroupPatterns splits a comma-separated group_regex config value into
+// its constituent glob patterns, trimming surrounding whitespace from each.
+// Shared by parseAggregateTargets and the plugins_url target's
+// plugins_group_regex, which is optional in exactly the same way. Empty
+// input yields nil, matching compileGroupPatterns/matchesAnyPattern's "nil
+// means match every group" contract.
+func splitGroupPatterns(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var patterns []string
+	for _, p := range strings.Split(raw, ",") {
+		patterns = append(patterns, strings.TrimSpace(p))
+	}
+	return patterns
 }
 
 // compileGroupPatterns turns glob-style patterns ("*.grafana.app") into

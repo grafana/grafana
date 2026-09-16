@@ -2514,7 +2514,7 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 		for _, fc := range folderConfigs {
 			// Check if this identity has access based on its role
 			hasAccess := false
-			roleName := strings.Split(ident.Name, " ")[0] // Extract "Admin", "Editor", or "Viewer"
+			roleName, _, _ := strings.Cut(ident.Name, " ") // Extract "Admin", "Editor", or "Viewer"
 
 			switch roleName {
 			case "Admin":

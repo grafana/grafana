@@ -237,6 +237,96 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 	require.NotSame(t, http.DefaultTransport, first.client.Transport)
 }
 
+// TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
+// pins plugins_url's independence from the appmanifest/aggregate auth gate:
+// its operator is an unauthenticated in-cluster endpoint, so it must not
+// require cap_token/token_exchange_url the way the other two sources do.
+func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"plugins_url": "https://plugins.invalid/plugins",
+	})
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, loaderIface)
+
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+	require.NotNil(t, loader.pluginsTarget)
+	require.Nil(t, loader.routeBackendClient)
+	require.Empty(t, loader.aggregateTargets)
+}
+
+func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"plugins_url": "/just/a/path",
+	})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.ErrorContains(t, err, "must be absolute")
+}
+
+// TestCloudLoader_AllThreeSourcesCombineInLoad exercises plugins_url as a
+// third source alongside an aggregate target, confirming Load() combines
+// backends from both rather than treating them as mutually exclusive (the
+// dummy plugins_url loader this replaces returned early instead of
+// combining).
+func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
+	aggregateUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		list := metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "dashboard.grafana.app"}}}
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer aggregateUpstream.Close()
+
+	pluginsUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(pluginManifestsFixture))
+	}))
+	defer pluginsUpstream.Close()
+
+	tokenExchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"ok","data":{"token":"fake-token"}}`))
+	}))
+	defer tokenExchange.Close()
+
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"cap_token":               "tok",
+		"token_exchange_url":      tokenExchange.URL,
+		"baas_apiserver.url":      aggregateUpstream.URL,
+		"baas_apiserver.audience": "baas",
+		"plugins_url":             pluginsUpstream.URL,
+	})
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	require.NoError(t, err)
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+
+	svc, ok := loaderIface.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+	t.Cleanup(func() {
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
+	})
+
+	require.Eventually(t, func() bool {
+		backends, err := loader.Load(t.Context())
+		if err != nil {
+			return false
+		}
+		var sawAggregate, sawPlugin bool
+		for _, b := range backends {
+			switch b.Group().Name {
+			case "dashboard.grafana.app":
+				sawAggregate = true
+			case "appsdktest.ext.grafana.app":
+				sawPlugin = true
+			}
+		}
+		return sawAggregate && sawPlugin
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
 func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "dashboard.grafana.app"}}}
