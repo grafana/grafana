@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { DataLinksListItem, type DataLinksListItemProps } from './DataLinksListItem';
 
@@ -10,7 +10,7 @@ const baseLink = {
   onClick: jest.fn(),
 };
 
-function setupTestContext(options: Partial<DataLinksListItemProps>) {
+async function setupTestContext(options: Partial<DataLinksListItemProps>) {
   const defaults: DataLinksListItemProps = {
     index: 0,
     item: baseLink,
@@ -24,7 +24,7 @@ function setupTestContext(options: Partial<DataLinksListItemProps>) {
   const onDragEnd = jest.fn();
 
   const props = { ...defaults, ...options };
-  const { rerender } = render(
+  const { container, rerender } = render(
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="sortable-links" direction="vertical">
         {(provided) => (
@@ -36,29 +36,33 @@ function setupTestContext(options: Partial<DataLinksListItemProps>) {
     </DragDropContext>
   );
 
+  await waitFor(() => {
+    expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+  });
+
   return { rerender, props };
 }
 
 describe('DataLinksListItem', () => {
   describe('when link has title', () => {
-    it('then the link title should be visible', () => {
+    it('then the link title should be visible', async () => {
       const item = {
         ...baseLink,
         title: 'Some Data Link Title',
       };
-      setupTestContext({ item });
+      await setupTestContext({ item });
 
       expect(screen.getByText(/some data link title/i)).toBeInTheDocument();
     });
   });
 
   describe('when link has url', () => {
-    it('then the link url should be visible', () => {
+    it('then the link url should be visible', async () => {
       const item = {
         ...baseLink,
         url: 'http://localhost:3000',
       };
-      setupTestContext({ item });
+      await setupTestContext({ item });
 
       expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
       expect(screen.getByTitle(/http:\/\/localhost\:3000/i)).toBeInTheDocument();

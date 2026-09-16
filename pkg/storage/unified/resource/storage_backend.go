@@ -12,6 +12,7 @@ import (
 	"maps"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -103,16 +104,12 @@ type kvStorageBackend struct {
 
 	rvManager *rvmanager.ResourceVersionManager
 
-	// leaseManager, when non-nil, is used to serialize writes to the same
-	// resource via per-resource leases. Ignored when using `rvManager`.
+	// leaseManager serializes writes to the same resource via per-resource leases.
 	leaseManager *lease.Manager
 
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
 	// lease package default.
 	leaseTTL time.Duration
-
-	// leaseAutoRenew enables background auto-renewal of write leases.
-	leaseAutoRenew bool
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	dbKeepAlive any
@@ -132,7 +129,7 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors                   *prometheus.CounterVec
+	WriteConflicts                   *prometheus.CounterVec
 	EventEmitFailures                *prometheus.CounterVec
 	NatsNotifierDropped              *prometheus.CounterVec
 	WatchNotificationsPublished      *prometheus.CounterVec
@@ -142,9 +139,9 @@ type kvBackendMetrics struct {
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 	return &kvBackendMetrics{
-		ConflictErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_optimistic_lock_conflicts_total",
-			Help: "Total number of optimistic lock conflict errors in the KV storage backend",
+		WriteConflicts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_write_conflicts_total",
+			Help: "Total number of write conflicts in the KV storage backend (lease races and resource-version mismatches)",
 		}, []string{"resource", "action"}),
 		EventEmitFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_event_emit_after_commit_failures_total",
@@ -187,7 +184,7 @@ func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
 	if m == nil {
 		return
 	}
-	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+	m.WriteConflicts.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
@@ -223,9 +220,9 @@ type KVBackend interface {
 	// opening a second connection.
 	KV() KV
 
-	// LeaseManager returns the lease manager used by this backend, or nil
-	// if leases are disabled. Exposed so other subsystems can share the
-	// same manager and avoid running a second heartbeat loop.
+	// LeaseManager returns the lease manager used by this backend. It is never nil.
+	// Exposed so other subsystems can share the same manager and avoid running a
+	// second heartbeat loop.
 	LeaseManager() *lease.Manager
 }
 
@@ -299,21 +296,13 @@ type KVBackendOptions struct {
 
 	DashboardVersionsToKeep int
 
-	// EnableKVLeases enables per-resource leases for serializing writes.
-	EnableKVLeases bool
-
-	// Holder identifies this process for lease ownership. Required when
-	// EnableKVLeases is true.
+	// Holder identifies this process for lease ownership. When empty, the
+	// backend generates a process-specific holder.
 	Holder string
 
 	// LeaseTTL overrides the per-resource write lease TTL. Zero uses the lease
-	// package default (10s). Only effective when EnableKVLeases is true.
+	// package default (10s).
 	LeaseTTL time.Duration
-
-	// LeaseAutoRenew enables background auto-renewal of the write lease so it
-	// is not lost while a slow write is still in flight. Only effective when
-	// EnableKVLeases is true.
-	LeaseAutoRenew bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -323,6 +312,8 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
+		Holder:                  newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                cfg.KVLeaseTTL,
 		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 		EventRetentionPeriod:    cfg.EventRetentionPeriod,
 		EventPruningInterval:    cfg.EventPruningInterval,
@@ -344,6 +335,17 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
 	}
+}
+
+func newLeaseHolder(instanceID string) string {
+	if instanceID == "" {
+		hostname, err := os.Hostname()
+		if err != nil || hostname == "" {
+			hostname = "unknown"
+		}
+		instanceID = hostname
+	}
+	return fmt.Sprintf("%s-%s", instanceID, uuid.NewString())
 }
 
 var (
@@ -402,14 +404,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	metrics := newKVBackendMetrics(opts.Reg)
 
-	var leaseManager *lease.Manager
-	if opts.EnableKVLeases {
-		if opts.Holder == "" {
-			cancel()
-			return nil, errors.New("holder is required when enable_kv_leases is true")
-		}
-		leaseManager = lease.NewManager(kv, opts.Holder, "storage", opts.Reg)
+	holder := opts.Holder
+	if holder == "" {
+		holder = newLeaseHolder("")
 	}
+	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -432,7 +431,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		rvManager:               opts.RvManager,
 		leaseManager:            leaseManager,
 		leaseTTL:                opts.LeaseTTL,
-		leaseAutoRenew:          opts.LeaseAutoRenew,
 		dbKeepAlive:             opts.DBKeepAlive,
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
@@ -446,6 +444,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
+		leaseManager.Stop()
 		cancel()
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -456,6 +455,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
 		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			// The pruner is already running, so it has to be stopped here.
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
@@ -467,6 +467,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to start tenant watcher: %w", err)
 		}
@@ -518,9 +519,7 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
-	if k.leaseManager != nil {
-		k.leaseManager.Stop()
-	}
+	k.leaseManager.Stop()
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
 	return nil
@@ -663,8 +662,7 @@ func (b *kvStorageBackend) KV() KV {
 	return b.kv
 }
 
-// LeaseManager returns the lease manager owned by this backend, or nil
-// if leases are disabled. See KVBackend.LeaseManager.
+// LeaseManager returns the lease manager owned by this backend. See KVBackend.LeaseManager.
 func (b *kvStorageBackend) LeaseManager() *lease.Manager {
 	return b.leaseManager
 }
@@ -921,22 +919,14 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
-// maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
-// for this resource if leases are enabled. It returns:
+// acquireWriteLease acquires the per-resource lease that serializes WriteEvent
+// for this resource. It returns:
 //
 //   - a context derived from ctx that is cancelled if the lease is lost
 //     (e.g. its TTL expires while the write is in flight);
-//   - a boolean indicating whether a lease was acquired;
 //   - a release closure to be deferred — it stops the watcher goroutine and
 //     releases the lease.
-//
-// When leases are not active, it returns ctx unchanged and a no-op release.
-func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
-	leasesActive := k.leaseManager != nil
-	if !leasesActive {
-		return ctx, false, func() {}, nil
-	}
-
+func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	name := event.Key.Group + "/" + event.Key.Resource + "/" +
 		event.Key.Namespace + "/" + event.Key.Name
 	if event.Key.Namespace == "" {
@@ -947,17 +937,13 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 	if k.leaseTTL > 0 {
 		acquireOpts = append(acquireOpts, lease.WithTTL(k.leaseTTL))
 	}
-	if k.leaseAutoRenew {
-		acquireOpts = append(acquireOpts, lease.WithAutoRenew())
-	}
-
 	l, err := k.leaseManager.Acquire(ctx, name, acquireOpts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
-			return nil, false, nil, conflictError(event, "concurrent modification on the same resource, please retry")
+			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 		}
-		return nil, false, nil, fmt.Errorf("acquiring write lease: %w", err)
+		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
 	}
 
 	leaseCtx, cancel := context.WithCancel(ctx)
@@ -980,7 +966,7 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 		}
 	}
 
-	return leaseCtx, true, release, nil
+	return leaseCtx, release, nil
 }
 
 func recordSpanError(span trace.Span, err error) {
@@ -1045,7 +1031,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
+	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
 	if err != nil {
 		return 0, err
 	}
@@ -1054,6 +1040,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
+	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
@@ -1092,6 +1079,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
+		previousKey = latestKey
 	}
 
 	obj := event.Object
@@ -1100,35 +1088,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		_, err = k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			if latestKey.Action == kv.DataActionUpdated {
-				return 0, ErrResourceAlreadyExists
-			}
-
-			if leasesActive {
-				// Holding the lease guarantees no concurrent in-flight writes
-				// for this resource, so a non-deleted latest key is genuine.
-				return 0, ErrResourceAlreadyExists
-			}
-
-			// A creation event was found, but it might be a transient write from a
-			// concurrent create that hasn't gone through the optimistic lock
-			// checks. Confirm via the event store before returning AlreadyExists.
-			committed, err := k.confirmExistence(ctx, latestKey)
-			if err != nil {
-				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
-			}
-			if committed {
-				return 0, ErrResourceAlreadyExists
-			}
-			// Not confirmed: the data is likely transient. Proceed with the
-			// write and let the optimistic lock checks determine the winner.
+			return 0, ErrResourceAlreadyExists
 		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
 			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
 			// In compat mode the legacy `resource` table is the source of truth
@@ -1223,70 +1190,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer cancelPersist()
 	ctx = persistCtx
 
-	// Optimistic concurrency control to verify our write is the latest version
-	// and that the resource still had the expected PreviousRV when we wrote it.
-	if !leasesActive {
-		if event.PreviousRV != 0 {
-			// Update operations: verify PreviousRV matches and our write is latest
-			// Get both the latest and predecessor
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent modification detected")
-			}
-
-			if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
-				// Another concurrent write happened between our read and write
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "resource was modified concurrently")
-			}
-		} else if event.Type == resourcepb.WatchEvent_ADDED {
-			// Create operations: verify our write is the latest version
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create detected")
-			}
-
-			// Verify that the immediate predecessor is not a create
-			if prevKey.Action == DataActionCreated {
-				// Another concurrent create happened - delete our write and return error
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create attempts detected")
-			}
-		}
-	}
-
 	// Write event
 	eventData := Event{
 		Namespace:       namespace,
@@ -1297,6 +1200,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
+		PreviousAction:  previousKey.Action,
+		PreviousFolder:  previousKey.Folder,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -1321,43 +1226,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	k.publishWatchNotification(ctx, eventData)
 
 	return rv, nil
-}
-
-// confirmExistence checks whether a resource with the given `key` is genuinely
-// committed. During concurrent creates, the datastore can contain transient
-// writes that haven't survived the post-write optimistic lock checks. The
-// eventstore is used as a commit signal: an event is written only after the
-// optimistic locking checks, so its presence proves the write is committed.
-func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence")
-	defer span.End()
-
-	const eventThreshold = 30 * time.Second
-
-	// Extract the timestamp from the snowflake-formatted RV.
-	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
-	if time.Since(rvTime) > eventThreshold {
-		// Old RV: by this point, it can be assumed to be committed.
-		return true, nil
-	}
-
-	// Recent RV: look up the corresponding event to confirm it was committed.
-	_, err := k.eventStore.Get(ctx, EventKey{
-		Namespace:       key.Namespace,
-		Group:           key.Group,
-		Resource:        key.Resource,
-		Name:            key.Name,
-		ResourceVersion: key.ResourceVersion,
-		Action:          key.Action,
-		Folder:          key.Folder,
-	})
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, ErrNotFound) {
-		return false, nil
-	}
-	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) (rsp *BackendReadResponse) {
@@ -1483,7 +1351,10 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if token.Name == "" {
 			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		// Only use token namespace for cross-namespace queries (when request namespace is empty)
+		if !continueTokenMatchesListRequest(token, req) {
+			return 0, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
+		}
+		// Only use token namespace for cross-namespace queries (when request namespace is empty).
 		if req.Options.Key.Namespace == "" {
 			listOptions.ContinueNamespace = token.Namespace
 		}
@@ -1506,7 +1377,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
 	defer it.stop()
 
 	if err := cb(it); err != nil {
@@ -1516,8 +1387,21 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListIterator {
 	objs := batchGetResourceKeys(ctx, ds, keys)
 	if keysOnly {
 		// The data key already carries namespace/name/rv/folder, so the value
@@ -1526,11 +1410,12 @@ func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKe
 	}
 	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: isCrossNamespace,
-		keysOnly:         keysOnly,
-		next:             next,
-		stopFn:           stopFn,
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
 	}
 }
 
@@ -1578,9 +1463,10 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 }
 
 type kvListIterator struct {
-	listRV           int64
-	isCrossNamespace bool
-	keysOnly         bool
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1637,9 +1523,12 @@ func (i *kvListIterator) ContinueToken() string {
 		Name:            i.nextDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
-	// Only store namespace in token for cross-namespace queries
-	if i.isCrossNamespace {
+	if i.includeTokenNamespace {
 		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	if i.keysOnly {
+		token.KeysOnly = true
+		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
 }
@@ -2436,6 +2325,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
+			PreviousAction:  event.PreviousAction,
+			PreviousFolder:  event.PreviousFolder,
 			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():

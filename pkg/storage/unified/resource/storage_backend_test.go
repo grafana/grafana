@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,6 +78,32 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 		_ = kvBackend.Stop(ctx)
 	})
 	return kvBackend
+}
+
+func TestNewLeaseHolder(t *testing.T) {
+	t.Run("prefers the configured instance ID", func(t *testing.T) {
+		const instanceID = "storage-instance"
+		holder := newLeaseHolder(instanceID)
+
+		require.Equal(t, instanceID, requireValidLeaseHolderUUID(t, holder))
+	})
+
+	t.Run("defaults when no instance ID is configured", func(t *testing.T) {
+		holder := newLeaseHolder("")
+
+		require.NotEmpty(t, requireValidLeaseHolderUUID(t, holder))
+	})
+}
+
+func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
+	t.Helper()
+	uuidLength := len(uuid.Nil.String())
+	require.Greater(t, len(holder), uuidLength+1)
+	separatorIndex := len(holder) - uuidLength - 1
+	require.Equal(t, byte('-'), holder[separatorIndex])
+	_, err := uuid.Parse(holder[separatorIndex+1:])
+	require.NoError(t, err)
+	return holder[:separatorIndex]
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -159,7 +187,8 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// Reconciling a tenant writes its pending-delete record to the experimental
 	// KV while the resource label update goes through the main backend.
-	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	previousRV := backend.snowflake.Generate().Int64()
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
 
 	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
@@ -184,7 +213,7 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NoError(t, resource.UnmarshalJSON(value))
 	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
 
-	_, err = backend.eventStore.Get(t.Context(), EventKey{
+	event, err := backend.eventStore.Get(t.Context(), EventKey{
 		Namespace:       latest.Namespace,
 		Group:           latest.Group,
 		Resource:        latest.Resource,
@@ -193,6 +222,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 		Action:          latest.Action,
 	})
 	require.NoError(t, err)
+	require.Equal(t, previousRV, event.PreviousRV)
+	require.Equal(t, DataActionCreated, event.PreviousAction)
+	require.Empty(t, event.PreviousFolder)
 
 	// The experimental KV is metadata-only: resource data and events remain in
 	// the main KV even when tenant metadata routing is enabled.
@@ -221,28 +253,52 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NotEmpty(t, record.DeletedAt)
 }
 
-// TestKvStorageBackend_Accessors verifies that KV() returns the configured
-// store and that LeaseManager() reflects whether EnableKVLeases is set.
-// These accessors let other subsystems (e.g. KV-backed search snapshots)
-// share the backend's KV store and lease manager rather than opening
-// their own.
+// TestKvStorageBackend_Accessors verifies that other subsystems can share the
+// backend's KV store and lease manager rather than opening their own.
 func TestKvStorageBackend_Accessors(t *testing.T) {
 	t.Run("KV returns configured store", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
 		assert.Same(t, backend.kv, backend.KV())
 	})
 
-	t.Run("LeaseManager is nil when leases are disabled", func(t *testing.T) {
+	t.Run("LeaseManager is always available", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
-		assert.Nil(t, backend.LeaseManager())
+		assert.NotNil(t, backend.LeaseManager())
 	})
 
-	t.Run("LeaseManager is non-nil when leases are enabled", func(t *testing.T) {
+	t.Run("uses a caller-supplied holder", func(t *testing.T) {
+		const holder = "test-holder"
 		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
-			o.EnableKVLeases = true
-			o.Holder = "test-holder"
+			o.Holder = holder
 		})
-		assert.NotNil(t, backend.LeaseManager())
+
+		const leaseName = "configured-holder"
+		acquired, err := backend.LeaseManager().Acquire(t.Context(), leaseName)
+		require.NoError(t, err)
+
+		var leaseKey string
+		for key, err := range backend.KV().Keys(t.Context(), kv.LeasesSection, kv.ListOptions{
+			StartKey: leaseName + "~",
+			EndKey:   kv.PrefixRangeEnd(leaseName + "~"),
+			Limit:    1,
+		}) {
+			require.NoError(t, err)
+			leaseKey = key
+		}
+		require.NotEmpty(t, leaseKey)
+
+		reader, err := backend.KV().Get(t.Context(), kv.LeasesSection, leaseKey)
+		require.NoError(t, err)
+		data, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+
+		var metadata struct {
+			Holder string `json:"holder"`
+		}
+		require.NoError(t, json.Unmarshal(data, &metadata))
+		assert.Equal(t, holder, metadata.Holder)
+		require.NoError(t, backend.LeaseManager().Release(t.Context(), acquired))
 	})
 }
 
@@ -475,7 +531,7 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 	// The event must be persisted even though the client cancelled right after
 	// the data was committed.
 	found := false
-	for ev, err := range backend.eventStore.ListSince(context.Background(), 0, SortOrderAsc) {
+	for ev, err := range backend.eventStore.ListSince(context.Background(), 0) {
 		require.NoError(t, err)
 		if ev.Name == resourceName {
 			found = true
@@ -485,16 +541,30 @@ func TestKvStorageBackend_WriteEvent_ClientCancelAfterDataSave_PersistsEvent(t *
 }
 
 func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
-	for _, useChannel := range []bool{true, false} {
-		backend := setupTestStorageBackend(t)
-		name := "pollingNotifier"
-
-		if useChannel {
-			backend = setupTestStorageBackend(t, withChannelNotifier)
-			name = "channelNotifier"
-		}
-
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		configure func(*KVBackendOptions)
+	}{
+		{name: "pollingNotifier"},
+		{name: "channelNotifier", configure: withChannelNotifier},
+		{name: "natsNotifier", configure: func(opts *KVBackendOptions) {
+			sub := &fakeEventSubscriber{enabled: true}
+			opts.EnableNatsNotifier = true
+			opts.EventSubscriber = sub
+			opts.EventPublisher = &fakeEventPublisher{
+				enabled: true,
+				onPublish: func(subject string, data []byte) {
+					sub.currentHandler()(subject, data)
+				},
+			}
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				if tc.configure != nil {
+					tc.configure(opts)
+				}
+			})
 			ctx, stop := context.WithTimeout(t.Context(), 3*time.Second)
 			defer stop()
 
@@ -584,6 +654,15 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 					if j > 0 {
 						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
+						previousAction := DataActionCreated
+						if j > 1 {
+							previousAction = DataActionUpdated
+						}
+						require.Equal(t, previousAction, writtenEvent.PreviousAction)
+						require.Equal(t, events[j-1].Object.GetFolder(), writtenEvent.PreviousFolder) // #nosec G602 -- bounds checked by `j > 0`
+					} else {
+						require.Empty(t, writtenEvent.PreviousAction)
+						require.Empty(t, writtenEvent.PreviousFolder)
 					}
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
@@ -593,18 +672,23 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// countingKV wraps a KV and counts the reads issued against the data section,
-// so a test can tell how many storage round trips resolving a set of events
-// took, and how many keys those round trips covered.
+// countingKV counts data and event reads so tests can verify storage round trips
+// and detect per-event lookups.
 type countingKV struct {
 	KV
 	mu         sync.Mutex
 	roundTrips int
 	keysRead   int
 	keysListed int
+	eventReads int
 }
 
 func (k *countingKV) count(section string, keys int) {
+	if section == kv.EventsSection {
+		k.mu.Lock()
+		k.eventReads += keys
+		k.mu.Unlock()
+	}
 	if section != kv.DataSection {
 		return
 	}
@@ -620,6 +704,12 @@ func (k *countingKV) stats() (roundTrips, keysRead int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	return k.roundTrips, k.keysRead
+}
+
+func (k *countingKV) eventsRead() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.eventReads
 }
 
 func (k *countingKV) listed() int {
@@ -701,7 +791,7 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	// hand: a DataKey carries the folder and action too, and guessing either makes
 	// the batched read silently miss.
 	batch := make([]Event, 0, numEvents)
-	for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+	for event, err := range backend.eventStore.ListSince(ctx, 0) {
 		require.NoError(t, err)
 		batch = append(batch, event)
 	}
@@ -874,7 +964,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		}
 
 		batch := make([]Event, 0, numEvents)
-		for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+		for event, err := range backend.eventStore.ListSince(ctx, 0) {
 			require.NoError(t, err)
 			batch = append(batch, event)
 		}
@@ -964,10 +1054,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
-		end := batch + concurrency
-		if end > numEvents {
-			end = numEvents
-		}
+		end := min(batch+concurrency, numEvents)
 		batchSize := end - batch
 
 		type writeResult struct {
@@ -1821,6 +1908,87 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid continue token")
 }
 
+func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	tests := []struct {
+		name             string
+		requestNamespace string
+		token            ContinueToken
+	}{
+		{
+			name:             "cluster-wide token reused for its cursor namespace",
+			requestNamespace: "ns-two",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, ClusterWide: true, Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:             "namespaced token reused cluster-wide",
+			requestNamespace: "",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: tt.requestNamespace,
+				}},
+				KeysOnly:      true,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestKvStorageBackend_ListIterator_RejectsContinueTokenListTypeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	tests := []struct {
+		name        string
+		requestType bool
+		token       ContinueToken
+	}{
+		{
+			name:        "regular token used for keys-only list",
+			requestType: true,
+			token:       ContinueToken{Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:        "keys-only token used for regular list",
+			requestType: false,
+			token:       ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: "ns-two",
+				}},
+				KeysOnly:      tt.requestType,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestContinueTokenMatchesListRequest_AcceptsLegacyClusterWideKeysOnlyToken(t *testing.T) {
+	token := &ContinueToken{Name: "bbb", ResourceVersion: 1}
+	req := &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{}},
+		KeysOnly: true,
+	}
+	require.True(t, continueTokenMatchesListRequest(token, req))
+
+	req.Options.Key.Namespace = "ns-two"
+	require.False(t, continueTokenMatchesListRequest(token, req))
+}
+
 func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -2325,7 +2493,7 @@ func createAndSaveTestObject(t *testing.T, backend *kvStorageBackend, ctx contex
 	action := resourcepb.WatchEvent_ADDED
 	rv, testObj := addTestObject(t, backend, ctx, ns, name, uniqueStringGen())
 
-	for i := 0; i < updates; i += 1 {
+	for range updates {
 		rv = updateTestObject(t, backend, ctx, testObj, rv, ns, name, uniqueStringGen())
 		action = resourcepb.WatchEvent_MODIFIED
 	}
@@ -2870,7 +3038,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2948,7 +3116,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -3016,7 +3184,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
 			metaAccessor, err := utils.MetaAccessor(testObj)
 			require.NoError(t, err)
@@ -3103,7 +3271,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update the resource defaultPrunerHistoryLimit times to exceed the pruner limit
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit; i++ {
+		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -3183,7 +3351,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 		// Update defaultPrunerHistoryLimit-1 times (total events = limit, nothing to prune)
 		previousRV := rv1
-		for i := 0; i < defaultPrunerHistoryLimit-1; i++ {
+		for i := range defaultPrunerHistoryLimit - 1 {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -3251,7 +3419,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// Update the dashboard dashboardVersionsToKeep times to exceed the configured limit.
 		// Total events: 1 (create) + dashboardVersionsToKeep (updates) = limit + 1.
 		previousRV := rv1
-		for i := 0; i < dashboardVersionsToKeep; i++ {
+		for i := range dashboardVersionsToKeep {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)

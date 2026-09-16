@@ -84,33 +84,33 @@ describe('NotebookCellFrame', () => {
     renderFrame();
 
     expect(screen.queryByRole('button', { name: 'Drag to reorder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
   });
 
-  it('renders the handle and the insertion point in edit mode', async () => {
+  it('renders the handle and the add button in edit mode', async () => {
     renderFrame({ isEditing: true });
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Drag to reorder' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add block' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
   });
 
-  // The only behavioural pin on the insertion index. A divider belongs to the cell above it, so the
-  // frame at position i hands its divider i + 1; an off-by-one here would silently insert blocks in
+  // The only behavioural pin on the insertion index. The button belongs to the cell above it, so
+  // the frame at position i inserts at i + 1 — an off-by-one here would silently insert blocks in
   // the wrong place once edit mode wires onAdd up.
-  it('offers the insertion point below its own cell', async () => {
+  it('inserts below its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
-    await user.click(screen.getByRole('button', { name: 'Add block' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 2);
   });
 
-  // The actions bar is positioned above this frame's box, over the previous cell's insertion divider.
-  // Hidden but hit-testable, it would swallow clicks meant for that divider's Add block button, so the
-  // hidden state has to be inert and not merely invisible. jsdom does no hit-testing, so this pins the
+  // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
+  // hit-testable, it would still swallow clicks meant for this cell's own content, so the hidden
+  // state has to be inert and not merely invisible. jsdom does no hit-testing, so this pins the
   // declaration rather than the collision.
   it('makes the hidden actions bar inert', async () => {
     renderFrame({ isEditing: true, onDuplicate: () => {}, onDelete: () => {} });

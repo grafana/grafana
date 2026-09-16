@@ -57,15 +57,20 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   });
 
   builder.addNumberInput({
-    path: 'maxRows',
-    name: t('textng.options.max-rows', 'Row limit'),
+    path: 'pageSize',
+    name: t('textng.options.page-size', 'Page size'),
     description: t(
-      'textng.options.max-rows-description',
-      'Rows of query data to render. High values can slow the panel, especially with complex HTML.'
+      'textng.options.page-size-description',
+      'Number of rows per page. When empty, the page size is based on the panel height.'
     ),
     category: dataCategory,
-    settings: { min: 1, max: MAX_RENDERED_ROWS, integer: true, placeholder: String(MAX_RENDERED_ROWS) },
-    showIf: showForData,
+    settings: {
+      placeholder: t('textng.options.page-size-placeholder', 'auto'),
+      min: 1,
+      max: MAX_RENDERED_ROWS,
+      integer: true,
+    },
+    showIf: (options, data) => showForData(options, data) && options.renderMode === RenderMode.PerRow,
   });
 };
 

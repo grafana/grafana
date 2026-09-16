@@ -116,6 +116,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.authentication.title', 'Authentication');
     case 'licensing':
       return t('nav.statistics-and-licensing.title', 'Statistics and licensing');
+    case 'banner-settings':
+      return t('nav.banner-settings.title', 'Announcement banner');
+    case 'secrets-management':
+      return t('nav.secrets-management.title', 'Secrets Management');
     case 'recordedQueries':
       return t('nav.recorded-queries.title', 'Recorded queries');
     case 'correlations':
@@ -251,6 +255,12 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.recently-deleted.subtitle', 'Deleted dashboards are kept for up to 12 months.');
     case 'saved-queries':
       return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
+    case 'reports':
+      return t('nav.reporting.subtitle', 'Create and manage PDF reports distributed via e-mail');
+    case 'banner-settings':
+      return t('nav.banner-settings.subtitle', 'Show important updates and information at the top of every page');
+    case 'secrets-management':
+      return t('nav.secrets-management.subtitle', 'Manage secrets for your Grafana instance');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
@@ -288,6 +298,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-activity.subtitle', 'View alerts and active notifications');
     case 'alerts/recently-deleted':
       return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
+    case 'alert':
+      return t('nav.create-alert.subtitle', 'Create an alert rule');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':
