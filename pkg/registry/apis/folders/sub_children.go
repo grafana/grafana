@@ -88,7 +88,10 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 					Values:   []string{name},
 				}},
 			},
-			Fields:       []string{resource.SEARCH_FIELD_TITLE},
+			Fields: []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_RV,
+			},
 			Limit:        limit,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,

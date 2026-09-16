@@ -126,7 +126,7 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 	require.NotNil(t, search.lastReq)
 	require.Len(t, search.lastReq.Options.Fields, 1)
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, search.lastReq.ResultFormat)
-	require.Equal(t, []string{resource.SEARCH_FIELD_TITLE}, search.lastReq.Fields)
+	require.Equal(t, []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_RV}, search.lastReq.Fields)
 	require.Equal(t, resource.SEARCH_FIELD_FOLDER, search.lastReq.Options.Fields[0].Key)
 	require.Equal(t, []string{""}, search.lastReq.Options.Fields[0].Values)
 
