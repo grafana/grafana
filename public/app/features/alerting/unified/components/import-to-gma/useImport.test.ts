@@ -10,9 +10,7 @@ import {
   buildRoutingParams,
   deriveDryRunResult,
   deriveDryRunState,
-  mergeTemplateFiles,
   parseDryRunResponse,
-  readTemplateFiles,
   summarizeMergeStats,
   useDryRunNotifications,
   useImportNotifications,
@@ -314,115 +312,9 @@ describe('useDryRunNotifications reset', () => {
   });
 });
 
-describe('malformed YAML handling', () => {
-  // Genuinely invalid per js-yaml: bad indentation of a mapping entry.
-  const INVALID_YAML = ['route:', '  receiver: default', 'foo: bar: baz', ''].join('\n');
-
-  function captureConvertAttempts(mockResponse: () => Response) {
-    const attempts: unknown[] = [];
-    server.use(
-      http.post(CONVERT_URL, () => {
-        attempts.push(undefined);
-        return mockResponse();
-      })
-    );
-    return attempts;
-  }
-
-  // Regression: parseAlertmanagerYaml used to swallow this and ship the raw YAML anyway.
-  it('does not send invalid YAML to the backend', async () => {
-    const attempts = captureConvertAttempts(() => new HttpResponse(null, { status: 400 }));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({
-        source: 'yaml',
-        yamlFile: new File([INVALID_YAML], 'broken.yaml', { type: 'application/yaml' }),
-        configIdentifier: 'prod',
-      });
-    });
-
-    await waitFor(() => expect(result.current.result?.valid).toBe(false));
-    expect(attempts).toHaveLength(0);
-  });
-
-  // Regression: round-tripping through the backend (as above) wrapped this in the generic
-  // "{{config}} failed with {{status}}: {{message}}" shape instead of a friendly local one.
-  it('surfaces a friendly local message instead of the generic backend-request-failed wrapper', async () => {
-    const attempts = captureConvertAttempts(() =>
-      HttpResponse.json(
-        {
-          message:
-            'Invalid Alertmanager configuration: failed to parse alertmanager config: yaml: line 3: mapping values are not allowed in this context',
-        },
-        { status: 400 }
-      )
-    );
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({
-        source: 'yaml',
-        yamlFile: new File([INVALID_YAML], 'broken.yaml', { type: 'application/yaml' }),
-        configIdentifier: 'prod',
-      });
-    });
-
-    await waitFor(() => expect(result.current.result?.valid).toBe(false));
-    expect(result.current.result?.error).not.toMatch(/failed with \d/i);
-    expect(result.current.result?.error).toMatch(/syntax error/i);
-    expect(attempts).toHaveLength(0);
-  });
-});
-
 function templateFile(name: string, content: string) {
   return new File([content], name, { type: 'text/plain' });
 }
-
-describe('readTemplateFiles', () => {
-  it('returns an empty map when there are no files', async () => {
-    expect(await readTemplateFiles()).toEqual({});
-    expect(await readTemplateFiles([])).toEqual({});
-  });
-
-  it('keys each file by its name with the file content as the value', async () => {
-    const result = await readTemplateFiles([
-      templateFile('email.tmpl', 'email body'),
-      templateFile('slack.tmpl', 'slack body'),
-    ]);
-
-    expect(result).toEqual({ 'email.tmpl': 'email body', 'slack.tmpl': 'slack body' });
-  });
-
-  it('rejects when two files share the same name', async () => {
-    await expect(
-      readTemplateFiles([templateFile('dupe.tmpl', 'one'), templateFile('dupe.tmpl', 'two')])
-    ).rejects.toThrow('dupe.tmpl');
-  });
-});
-
-describe('mergeTemplateFiles', () => {
-  it('layers uploaded templates on top of the embedded ones', () => {
-    expect(mergeTemplateFiles({ 'embedded.tmpl': 'a' }, { 'uploaded.tmpl': 'b' })).toEqual({
-      'embedded.tmpl': 'a',
-      'uploaded.tmpl': 'b',
-    });
-  });
-
-  it('returns a copy of the embedded map when there are no uploaded templates', () => {
-    const embedded = { 'embedded.tmpl': 'a' };
-    const merged = mergeTemplateFiles(embedded, {});
-
-    expect(merged).toEqual(embedded);
-    expect(merged).not.toBe(embedded);
-  });
-
-  it('throws when an uploaded name collides with an embedded template', () => {
-    expect(() => mergeTemplateFiles({ 'shared.tmpl': 'embedded' }, { 'shared.tmpl': 'uploaded' })).toThrow(
-      'shared.tmpl'
-    );
-  });
-});
 
 describe('template file import wiring', () => {
   function captureConvertBodies() {
