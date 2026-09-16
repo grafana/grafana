@@ -434,6 +434,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	// Name of the contact point that will be removed, might be used if a
 	// full removal is done to check if it's referenced in any route.
 	name := ""
+	found := false
 	for i, receiver := range revision.Config.AlertmanagerConfig.Receivers {
 		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == uid {
@@ -441,6 +442,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 					// V0 integrations are not exposed through contact point provisioning.
 					return fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 				}
+				found = true
 				name = grafanaReceiver.Name
 				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
 				// if this was the last receiver we removed, we remove the whole receiver
@@ -451,6 +453,10 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 				break
 			}
 		}
+	}
+	if !found {
+		// Contact point does not exist. Deletion is idempotent, unlike the v0-integration case above.
+		return nil
 	}
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")

@@ -219,13 +219,13 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Equal(t, 404, response.Status())
 			})
 
-			t.Run("DELETE returns 404", func(t *testing.T) {
+			t.Run("DELETE is idempotent", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 
 				response := sut.RouteDeleteContactPoint(&rc, "does not exist")
 
-				require.Equal(t, 404, response.Status())
+				require.Equal(t, 202, response.Status())
 			})
 		})
 	})
