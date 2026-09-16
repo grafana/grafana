@@ -1,48 +1,28 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    cooldown:
-      default-days: 14 # wait 14 days before creating a PR for a new release
     commit-message:
       prefix: deps(actions)
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 0
+    groups:
+      github-actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
   - package-ecosystem: "gomod"
-    cooldown:
-      default-days: 14 # wait 14 days before creating a PR for a new release
     commit-message:
       prefix: deps(go)
     directories:
-      - "/"
-      # standalone test fixture module, not part of go.work, so the root entry above does not cover it
-      - "/pkg/plugins/manager/testdata/test-app-with-backend"
-      - "/hack"
-      - "/scripts/go-workspace"
-      - "/scripts/modowners"
-      - "/.citools/src/air"
-      - "/.citools/src/cue"
-      - "/.citools/src/golangci-lint"
-      - "/.citools/src/govulncheck"
-      - "/.citools/src/lefthook"
-      - "/.citools/src/swagger"
+      - "**/*"
     schedule:
       interval: "daily"
-      time: "02:00"
-      timezone: Etc/UTC
-    open-pull-requests-limit: 20
-    # group some updates together for easier review
+    open-pull-requests-limit: 0
     groups:
-      go.opentelemetry.io:
+      go-security:
+        applies-to: security-updates
         patterns:
-          - "go.opentelemetry.io/*"
-      k8s.io:
-        patterns:
-          - "k8s.io/*"
-      aws-sdk-go:
-        patterns:
-          - "github.com/aws/aws-sdk-go*"
-          - "github.com/aws/smithy-go"
-      grafana-app-sdk:
-        patterns:
-          - "github.com/grafana/grafana-app-sdk*"
+          - "*"
