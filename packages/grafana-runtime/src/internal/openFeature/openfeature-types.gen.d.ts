@@ -108,7 +108,8 @@ declare module "@openfeature/core" {
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
-    | "grafana.pluginExtensionReactElementProps";
+    | "grafana.pluginExtensionReactElementProps"
+    | "grafana.logDetailsDisplayedFieldControls";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

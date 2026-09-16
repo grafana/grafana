@@ -3268,6 +3268,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.logDetailsDisplayedFieldControls",
+        "resourceVersion": "1789483493839",
+        "creationTimestamp": "2026-09-15T14:44:53Z"
+      },
+      "spec": {
+        "description": "Deprecated: Toggle displayed fields from Log Details",
+        "stage": "deprecated",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.logLevelInference",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
