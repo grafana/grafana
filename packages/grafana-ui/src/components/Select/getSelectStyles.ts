@@ -115,8 +115,27 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     valueContainerMulti: css({
       label: 'grafana-select-value-container-multi',
+      // Keep wrapped tag rows stacked from the top instead of centering them, so the
+      // container's height matches its content without adding leading/trailing gaps.
+      alignItems: 'flex-start',
       flexWrap: 'wrap',
       display: 'flex',
+      gap: theme.spacing(0.5),
+      // Keep the same breathing room above and below the tags whether they fit on one
+      // line or wrap: the 32px control min-height supplies it for a single line, but a
+      // taller wrapped control would otherwise leave tags flush against the border.
+      padding: `${theme.spacing(0.5)} 0`,
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+    }),
+    // Explore label-filter value selects only — do not apply to dashboard variables,
+    // alert filters, or other wide multi-selects that need room to grow.
+    valueContainerMultiConstrained: css({
+      label: 'grafana-select-value-container-multi-constrained',
+      overflowX: 'hidden',
+      maxHeight: theme.spacing(15),
+      overflowY: 'auto',
     }),
     valueContainerMultiNoWrap: css({
       display: 'grid',
@@ -139,17 +158,32 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.size.sm,
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary),
       },
     }),
+    // Explore label-filter value chips only — wide multi-selects must keep full chip width.
+    multiValueContainerConstrained: css({
+      label: 'grafana-select-multi-value-container-constrained',
+      // Cap oversized tags so they do not widen the packed query-builder row. Ellipsis
+      // lives on the label — textOverflow does not apply to this flex wrapper.
+      maxWidth: '200px',
+    }),
+    multiValueLabel: css({
+      label: 'grafana-select-multi-value-label',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      // Flex items default to min-width: auto; allow the label to shrink so
+      // ellipsis can take effect while the remove button stays visible.
+      minWidth: 0,
+    }),
     multiValueRemove: css({
       label: 'grafana-select-multi-value-remove',
       margin: theme.spacing(0, 0.5),
       cursor: 'pointer',
+      flexShrink: 0,
       svg: {
         marginBottom: 0,
       },

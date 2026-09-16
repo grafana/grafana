@@ -370,6 +370,285 @@ describe('SelectBase', () => {
     });
   });
 
+  describe('auto-width (width="auto")', () => {
+    const originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+
+    beforeAll(() => {
+      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+        configurable: true,
+        get() {
+          return 120;
+        },
+      });
+    });
+
+    afterAll(() => {
+      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', originalOffsetWidth!);
+    });
+
+    it('pins the value container width of a single-value select to the measured content width', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          value={options[0]}
+          options={options}
+          width="auto"
+          aria-label="My select"
+        />
+      );
+
+      const container = screen.getByTestId(selectors.components.Select.container);
+      expect(container).toHaveStyle({ minWidth: '120px' });
+    });
+
+    it('does not pin a growing width on a multi-value select', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          isMulti
+          value={options}
+          options={options}
+          width="auto"
+          aria-label="My select"
+        />
+      );
+
+      const container = screen.getByTestId(selectors.components.Select.container);
+      expect(container).toHaveStyle({ minWidth: '0px' });
+    });
+  });
+
+  describe('multi-value tag overflow', () => {
+    it('wraps tag rows inside the container without a hard height cap on general multi-selects', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          isMulti
+          value={options}
+          options={options}
+          width="auto"
+          aria-label="My select"
+        />
+      );
+
+      const container = screen.getByTestId(selectors.components.Select.container);
+      expect(container).toHaveStyle({
+        flexWrap: 'wrap',
+        gap: '4px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+      });
+      // Height/scroll caps are Explore label-filter only — dashboard variables and other
+      // wide multi-selects must not truncate into a 120px scroll box.
+      expect(container).not.toHaveStyle({ maxHeight: '120px' });
+      expect(container).not.toHaveStyle({ overflowY: 'auto' });
+    });
+
+    it('does not cap chip width on general multi-selects', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          isMulti
+          value={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          options={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          aria-label="My select"
+        />
+      );
+
+      const select = screen.getByTestId(selectors.components.Select.container);
+      const chip = select.querySelector('[class*="grafana-select-multi-value-container"]');
+      expect(chip).not.toBeNull();
+      expect(chip).not.toHaveStyle({ maxWidth: '200px' });
+    });
+
+    it('caps Explore label-filter value chips and scrolls the value area instead of widening the row', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          isMulti
+          value={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          options={[
+            { label: 'a fairly long label that repeats', value: 1 },
+            { label: 'another fairly long label', value: 2 },
+          ]}
+          data-testid="data-testid Select value"
+          aria-label="My select"
+        />
+      );
+
+      const select = screen.getByTestId('data-testid Select value');
+      const chip = select.querySelector('[class*="grafana-select-multi-value-container"]');
+      const label = select.querySelector('[class*="grafana-select-multi-value-label"]');
+      const remove = select.querySelector('[class*="grafana-select-multi-value-remove"]');
+      expect(chip).not.toBeNull();
+      expect(label).not.toBeNull();
+      expect(remove).not.toBeNull();
+      expect(select).toHaveStyle({
+        maxHeight: '120px',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      });
+      // Cap width on the chip wrapper; ellipsis must live on the label (a flex
+      // container cannot text-overflow, and overflow there clips the remove control).
+      expect(chip).toHaveStyle({ maxWidth: '200px' });
+      expect(chip).not.toHaveStyle({ overflow: 'hidden' });
+      expect(label).toHaveStyle({
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        minWidth: '0',
+      });
+      expect(remove).toHaveStyle({ flexShrink: '0' });
+    });
+
+    it('keeps the select column content-height and top-aligned so packed rows do not stretch it', () => {
+      render(
+        <SelectBase onChange={onChangeHandler} isMulti value={options} options={options} aria-label="My select" />
+      );
+
+      // The outermost react-select div is the flex item in its row (e.g. the query
+      // builder label filter InputGroup). Rows default to `align-items: stretch`, so
+      // the column must opt out with `align-self` to stop it growing vertically when
+      // a sibling column (the value tag select) wraps onto multiple lines.
+      const valueContainer = screen.getByTestId(selectors.components.Select.container);
+      let column: HTMLElement | null = valueContainer;
+      while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
+        column = column.parentElement;
+      }
+      expect(column).toBeInTheDocument();
+      expect(column).toHaveStyle({
+        alignSelf: 'flex-start',
+      });
+
+      // Wrapped tag rows stack from the top of the column instead of centering.
+      expect(valueContainer).toHaveStyle({ alignItems: 'flex-start' });
+    });
+
+    it('locks single-value select boxes to 32px so packed rows do not stretch them', () => {
+      render(<SelectBase onChange={onChangeHandler} options={options} aria-label="My select" />);
+
+      // The visible bordered control box is the wrapper above the value container
+      // (identified by its standard 32px min-height).
+      const valueContainer = screen.getByTestId(selectors.components.Select.container);
+      let box: HTMLElement | null = valueContainer;
+      while (box && getComputedStyle(box).minHeight !== '32px') {
+        box = box.parentElement;
+      }
+      expect(box).toBeInTheDocument();
+      expect(box).toHaveStyle({
+        height: '32px',
+        minHeight: '32px',
+        maxHeight: '32px',
+      });
+    });
+
+    it('keeps the multi-value select box height flexible so it alone expands when tags wrap', () => {
+      render(
+        <SelectBase onChange={onChangeHandler} isMulti value={options} options={options} aria-label="My select" />
+      );
+
+      const valueContainer = screen.getByTestId(selectors.components.Select.container);
+      let box: HTMLElement | null = valueContainer;
+      while (box && getComputedStyle(box).minHeight !== '32px') {
+        box = box.parentElement;
+      }
+      expect(box).toBeInTheDocument();
+      expect(box).toHaveStyle({
+        height: 'auto',
+        minHeight: '32px',
+      });
+    });
+
+    it('sizes key/operator selects (data-testid "Select label"/"Select match operator") to their content so packed rows do not truncate them', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          value={options[0]}
+          options={options}
+          width="auto"
+          data-testid="data-testid Select label"
+          aria-label="My select"
+        />
+      );
+
+      const valueContainer = screen.getByTestId('data-testid Select label');
+      let column: HTMLElement | null = valueContainer;
+      while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
+        column = column.parentElement;
+      }
+      expect(column).toBeInTheDocument();
+      expect(column).toHaveStyle({
+        flexGrow: '0',
+        flexShrink: '0',
+        minWidth: 'max-content',
+      });
+    });
+
+    it.each([
+      { name: 'multi-value', isMulti: true as const, value: options },
+      { name: 'single-value (exact match)', isMulti: false as const, value: options[0] },
+    ])(
+      'makes the query builder $name select absorb the leftover row space with a 200px floor',
+      ({ isMulti, value }) => {
+        render(
+          <SelectBase
+            onChange={onChangeHandler}
+            isMulti={isMulti}
+            value={value}
+            options={options}
+            width="auto"
+            data-testid="data-testid Select value"
+            aria-label="My select"
+          />
+        );
+
+        const valueContainer = screen.getByTestId('data-testid Select value');
+        let column: HTMLElement | null = valueContainer;
+        while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
+          column = column.parentElement;
+        }
+        expect(column).toBeInTheDocument();
+        expect(column).toHaveStyle({
+          flexGrow: '1',
+          flexShrink: '1',
+          minWidth: '200px',
+        });
+      }
+    );
+
+    it('leaves other selects (no query builder data-testid) free to shrink, not locked to content width', () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          value={options[0]}
+          options={options}
+          width="auto"
+          aria-label="My select"
+        />
+      );
+
+      const valueContainer = screen.getByTestId(selectors.components.Select.container);
+      let column: HTMLElement | null = valueContainer;
+      while (column && getComputedStyle(column).alignSelf !== 'flex-start') {
+        column = column.parentElement;
+      }
+      expect(column).toBeInTheDocument();
+      expect(column).toHaveStyle({
+        minWidth: '0',
+      });
+    });
+  });
+
   describe('Escape key behavior in overlays', () => {
     it('should not close a Modal when pressing Escape while the menu is open', async () => {
       const onDismiss = jest.fn();
