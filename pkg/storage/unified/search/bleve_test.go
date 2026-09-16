@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -2362,8 +2363,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 
@@ -3069,4 +3069,46 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
 	}, scores(scopeQuery(textQuery, true, 0)))
+}
+
+func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
+	searcher := func(candidates, authorized int64) (*batchAuthzSearcher, *logtest.Fake) {
+		fake := &logtest.Fake{}
+		s := &batchAuthzSearcher{
+			namespace: "stacks-1",
+			group:     "dashboard.grafana.app",
+			resources: map[string]string{"dashboards": utils.VerbGet},
+			log:       fake,
+		}
+		s.candidates.Store(candidates)
+		s.authorized.Store(authorized)
+		return s, fake
+	}
+
+	t.Run("candidates found and none authorized", func(t *testing.T) {
+		s, fake := searcher(3, 0)
+		s.logIfNothingAuthorized()
+
+		require.Equal(t, 1, fake.WarnLogs.Calls)
+		require.Equal(t, "Search matched documents but none passed the permission check", fake.WarnLogs.Message)
+		require.Equal(t, []any{
+			"namespace", "stacks-1",
+			"group", "dashboard.grafana.app",
+			"resources", "dashboards",
+			"candidates", int64(3),
+			"authorized", int64(0),
+		}, fake.WarnLogs.Ctx)
+	})
+
+	t.Run("nothing matched", func(t *testing.T) {
+		s, fake := searcher(0, 0)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
+
+	t.Run("some results authorized", func(t *testing.T) {
+		s, fake := searcher(3, 1)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
 }

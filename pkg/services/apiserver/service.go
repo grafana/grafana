@@ -28,6 +28,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -221,6 +222,11 @@ func ProvideService(
 		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
 		k8sRoute.Get(snapshotPath, handler)
 		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+		// Allow unauthenticated GET of the SSO login-config singleton: the login
+		// page needs it before the user authenticates. The response is secret-free.
+		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
+		k8sRoute.Get(ssoLoginConfigPath, handler)
 
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)

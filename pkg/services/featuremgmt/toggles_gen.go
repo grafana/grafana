@@ -79,6 +79,10 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
+	// FlagAlertingRuleStatusSync
+	// Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+	FlagAlertingRuleStatusSync = "alerting.ruleStatusSync"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -98,6 +102,10 @@ const (
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagGrafanaFrontendLegacyFeatureToggleHandling
+	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).
+	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
 
 	// FlagProvisioningPerformance
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
@@ -147,6 +155,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagKubernetesFolderCountsLegacyStorage
+	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
+	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
+
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -194,6 +206,10 @@ const (
 	// FlagDatasourcesApiServerEnableResourceEndpoint
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
+
+	// FlagDatasourcesApiServerEnableProxyEndpoint
+	// Handle datasource proxy requests through the datasource API group endpoint.
+	FlagDatasourcesApiServerEnableProxyEndpoint = "datasourcesApiServerEnableProxyEndpoint"
 
 	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
@@ -533,10 +549,6 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
-
-	// FlagGrafanaAssetSriChecks
-	// Enables SRI checks for Grafana JavaScript assets
-	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
 
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
@@ -987,7 +999,7 @@ const (
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
 
 	// FlagGrafanaFrontendLegacyAPIHandling
-	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
 	// FlagGrafanaOfrepRootUrl
@@ -997,6 +1009,10 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagFeaturesLegacyOverrideLookupBypass
+	// Skips checking for flag overrides.
+	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
 
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
@@ -1037,4 +1053,12 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
+
+	// FlagAlertingFolderHasRulesLabel
+	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
+	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
+
+	// FlagUnifiedStorageClientRequireCallerIdentity
+	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
+	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
 )
