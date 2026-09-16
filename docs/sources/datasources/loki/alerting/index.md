@@ -148,6 +148,17 @@ To avoid unexpected No Data states:
 Editing and saving an alert rule resets its state to **Normal**. The rule re-enters **Pending** or **Alerting** on the next evaluation if the condition is still met. This is standard [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) behavior and isn't specific to the Loki data source.
 {{< /admonition >}}
 
+### Separate data source health alerts from application alerts
+
+A single alert rule that queries Loki conflates two different concerns: whether the thing you're monitoring (an error rate, a latency threshold, and so on) is healthy, and whether Loki itself could answer the query. When Loki is briefly unreachable—during a rolling restart, a network blip, or a closed-connection error—the query fails with an execution error, and Grafana raises a `DatasourceError` alert by default, on top of whatever the original rule was already checking.
+
+Decide, per alert rule, whether a Loki connectivity failure should affect that rule's state:
+
+- **For application-specific alert rules**, such as the error-rate example under [Example: alert on error log rate](#example-alert-on-error-log-rate), a transient Loki error usually isn't the condition you're trying to detect. Under **Configure no data and error handling**, set **Alert state if execution error or timeout** to **Normal** (or **Keep Last State** to hold the previous value through a brief outage instead) so a query failure doesn't also fire a `DatasourceError` alert alongside your real one.
+- **For monitoring Loki's own availability**, create a separate, dedicated alert rule rather than relying on `DatasourceError` alerts from your application rules. Reuse a query you already know returns data reliably when Loki is reachable—for example the "stopped logging" query under [Supported queries for alerting](#supported-queries-for-alerting)—set **Alert state if execution error or timeout** to **Alerting**, and add a **Pending period** (for example, `5m`) so the rule only fires once Loki has stayed unreachable for a sustained period, not for a single blip.
+
+This is the same **No Data** and **Error** state handling Grafana Alerting uses for every data source, not something specific to Loki. For the full set of options and how they interact with notifications, refer to [No Data and Error states](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#error-state) and the [Handle connectivity errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/guides/connectivity-errors/) guide, which covers this pattern in more depth.
+
 ## Troubleshoot alerting
 
 If your Loki alerts don't work as expected, use the following sections to diagnose common issues.
@@ -180,3 +191,5 @@ For more help, refer to [Troubleshoot Loki issues](https://grafana.com/docs/graf
 - [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
 - [Create a Grafana-managed alert rule](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
 - [Loki query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/)
+- [Handle connectivity errors in alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/guides/connectivity-errors/)
+- [No Data and Error states](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/)
