@@ -7,6 +7,7 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
@@ -89,8 +90,12 @@ export const FlagKeys = {
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
+  /** Deprecated: Toggle displayed fields from Log Details */
+  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables multi-tenant fallback behavior */
+  GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -105,6 +110,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Pass React elements in plugin extension props by reference */
+  GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
@@ -630,6 +637,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
 };
 
 /**
+ * Deprecated: Toggle displayed fields from Log Details
+ *
+ * **Details:**
+ * - flag key: `grafana.logDetailsDisplayedFieldControls`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
+};
+
+/**
  * Enables log level inference from log line contents when level is not defined as a field or a label
  *
  * **Details:**
@@ -638,6 +656,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables multi-tenant fallback behavior
+ *
+ * **Details:**
+ * - flag key: `grafana.mtFallback`
+ * - default value: `{}`
+ */
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
 };
 
 /**
@@ -715,6 +744,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Pass React elements in plugin extension props by reference
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginExtensionReactElementProps`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginExtensionReactElementProps = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginExtensionReactElementProps", false, options).value;
 };
 
 /**

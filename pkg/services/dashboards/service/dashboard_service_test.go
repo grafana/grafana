@@ -1498,7 +1498,9 @@ func TestGetDashboardTags(t *testing.T) {
 		OrgID: 1,
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+	})).Return(&resourcepb.ResourceSearchResponse{
 		Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 			"tags": {
 				Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
@@ -1650,6 +1652,31 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
 		require.NoError(t, err)
 		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+	})
+
+	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid"}, Cells: [][]byte{[]byte("Dashboard 1")}},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+
+		result, err := service.searchAllDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		require.Len(t, result.Hits, 1)
+		assert.Equal(t, "uid", result.Hits[0].Name)
+		assert.Equal(t, "Dashboard 1", result.Hits[0].Title)
 	})
 
 	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
