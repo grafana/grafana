@@ -3,8 +3,11 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
+	"sync"
 
+	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -129,90 +132,112 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		folder := obj.GetFolder()
 		gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 
-		checkRes, err := r.accessClient.BatchCheck(ctx, authInfo, authlib.BatchCheckRequest{
-			Namespace: obj.GetNamespace(),
-			Checks: []authlib.BatchCheckItem{
-				{
-					CorrelationID: "dash_read",
-					Verb:          utils.VerbGet,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "dash_write",
-					Verb:          utils.VerbUpdate,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "dash_delete",
-					Verb:          utils.VerbDelete,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "dash_admin",
-					Verb:          utils.VerbSetPermissions,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "annot_create",
-					Verb:          utils.VerbCreate,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Subresource:   "annotations",
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "annot_update",
-					Verb:          utils.VerbUpdate,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Subresource:   "annotations",
-					Name:          name,
-					Folder:        folder,
-				},
-				{
-					CorrelationID: "annot_delete",
-					Verb:          utils.VerbDelete,
-					Group:         gvr.Group,
-					Resource:      gvr.Resource,
-					Subresource:   "annotations",
-					Name:          name,
-					Folder:        folder,
-				},
+		// The dashboard and annotation checks travel in separate batches because
+		// the authz rollout routes a batch by its group/resource/subresource: a
+		// batch mixing the two would be sent to RBAC wholesale, taking this
+		// endpoint out of any dashboards rollout.
+		dashChecks := []authlib.BatchCheckItem{
+			{
+				CorrelationID: "dash_read",
+				Verb:          utils.VerbGet,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          name,
+				Folder:        folder,
 			},
-		})
-		if err != nil {
+			{
+				CorrelationID: "dash_write",
+				Verb:          utils.VerbUpdate,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          name,
+				Folder:        folder,
+			},
+			{
+				CorrelationID: "dash_delete",
+				Verb:          utils.VerbDelete,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          name,
+				Folder:        folder,
+			},
+			{
+				CorrelationID: "dash_admin",
+				Verb:          utils.VerbSetPermissions,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Name:          name,
+				Folder:        folder,
+			},
+		}
+		annotationChecks := []authlib.BatchCheckItem{
+			{
+				CorrelationID: "annot_create",
+				Verb:          utils.VerbCreate,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Subresource:   "annotations",
+				Name:          name,
+				Folder:        folder,
+			},
+			{
+				CorrelationID: "annot_update",
+				Verb:          utils.VerbUpdate,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Subresource:   "annotations",
+				Name:          name,
+				Folder:        folder,
+			},
+			{
+				CorrelationID: "annot_delete",
+				Verb:          utils.VerbDelete,
+				Group:         gvr.Group,
+				Resource:      gvr.Resource,
+				Subresource:   "annotations",
+				Name:          name,
+				Folder:        folder,
+			},
+		}
+
+		results := make(map[string]authlib.BatchCheckResult, len(dashChecks)+len(annotationChecks))
+		var mu sync.Mutex
+		g, gctx := errgroup.WithContext(ctx)
+		for _, checks := range [][]authlib.BatchCheckItem{dashChecks, annotationChecks} {
+			g.Go(func() error {
+				res, err := r.accessClient.BatchCheck(gctx, authInfo, authlib.BatchCheckRequest{
+					Namespace: obj.GetNamespace(),
+					Checks:    checks,
+				})
+				if err != nil {
+					return err
+				}
+				mu.Lock()
+				defer mu.Unlock()
+				maps.Copy(results, res.Results)
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
 			logger.Warn("Failed to batch check permissions", "err", err)
 			responder.Error(fmt.Errorf("failed to check permissions"))
 			return
 		}
 
-		if !checkRes.Results["dash_read"].Allowed {
+		if !results["dash_read"].Allowed {
 			responder.Error(fmt.Errorf("not allowed to view"))
 			return
 		}
 
 		access.CanStar = user.IsIdentityType(authlib.TypeUser)
-		access.CanSave = checkRes.Results["dash_write"].Allowed
-		access.CanEdit = checkRes.Results["dash_write"].Allowed
-		access.CanDelete = checkRes.Results["dash_delete"].Allowed
-		access.CanAdmin = checkRes.Results["dash_admin"].Allowed
+		access.CanSave = results["dash_write"].Allowed
+		access.CanEdit = results["dash_write"].Allowed
+		access.CanDelete = results["dash_delete"].Allowed
+		access.CanAdmin = results["dash_admin"].Allowed
 		access.AnnotationsPermissions = &dashboard.AnnotationPermission{Dashboard: dashboard.AnnotationActions{
-			CanAdd:    checkRes.Results["annot_create"].Allowed,
-			CanEdit:   checkRes.Results["annot_update"].Allowed,
-			CanDelete: checkRes.Results["annot_delete"].Allowed,
+			CanAdd:    results["annot_create"].Allowed,
+			CanEdit:   results["annot_update"].Allowed,
+			CanDelete: results["annot_delete"].Allowed,
 		}}
 
 		title := obj.FindTitle("")

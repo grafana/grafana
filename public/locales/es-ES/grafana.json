@@ -3245,14 +3245,19 @@
         "action-disable": "Deshabilitar sincronización",
         "add-datasource-link": "Añadir fuente de datos de Mimir",
         "badge-active": "Activo",
+        "badge-failing": "",
         "badge-not-configured": "No configurado",
         "badge-operator-managed": "Administrado por el operador",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Sincroniza continuamente la configuración de alertas desde una fuente de datos de Mimir o Cortex Alertmanager con Grafana.",
         "disable-confirm-action": "Deshabilitar sincronización",
         "disable-confirm-body": "Al deshabilitarla, se detendrá la sincronización continua desde la fuente de datos {{uid}}. Puedes volver a habilitarla más tarde seleccionando de nuevo una fuente de datos.",
         "disable-confirm-body-generic": "Al deshabilitarla, se detendrá la sincronización continua. Puedes volver a habilitarla más tarde seleccionando de nuevo una fuente de datos.",
         "disable-confirm-title": "¿Deshabilitar la sincronización automática de Mimir Alertmanager?",
         "disable-success": "Sincronización automática de Mimir Alertmanager deshabilitada",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Este valor lo establece la clave <1>[unified_alerting] external_alertmanager_uid</1> en grafana.ini y no se puede cambiar desde la interfaz de usuario. Edita el archivo de configuración y reinicia Grafana, o elimina la clave para gestionar la sincronización desde aquí.",
@@ -3271,6 +3276,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Configuración de sincronización automática"
       },
       "import": {
@@ -3308,6 +3314,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5742,15 +5750,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Mover {{typeName}}",
-      "panel-background": "Cambiar fondo del panel",
-      "panel-description": "Cambiar descripción del panel",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Cambios en el panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-preset": "Aplicar valor preestablecido del panel",
       "panel-repeat-direction": "Repetir dirección",
       "panel-repeat-variable": "Repetición del panel por",
-      "panel-title": "Cambiar título del panel",
+      "panel-title": "",
       "paste-panel": "Pegar panel",
       "remove": "Eliminar {{typeName}}",
       "row-title": "Cambiar título de fila",
@@ -6705,6 +6713,10 @@
       },
       "title-delete": "¿Eliminar {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Borrar búsqueda",
       "no-transformations-found": "No se han encontrado transformaciones.",
@@ -6755,6 +6767,12 @@
     "view-panel": {
       "back-to-dashboard": "Volver al dashboard",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8646,6 +8664,16 @@
       "title-raw-prometheus": "Prometheus sin procesar",
       "title-table": "Tabla",
       "title-traces": "Trazas"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11417,9 +11445,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13124,9 +13150,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

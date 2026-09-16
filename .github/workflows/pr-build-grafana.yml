@@ -228,20 +228,40 @@ jobs:
       statuses: read
 
     steps:
+      - name: Check whether Meticulous should run
+        id: meticulous-eligibility
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            if (context.payload.pull_request.user.login === 'renovate-sh-app[bot]') {
+              // Renovate applies labels after opening the PR, so read the current labels.
+              const { data: pullRequest } = await github.rest.pulls.get({
+                ...context.repo,
+                pull_number: context.issue.number,
+              });
+              run = pullRequest.labels.some((label) => label.name === 'ci/meticulous');
+            }
+            core.setOutput('run', run);
+
       - uses: actions/checkout@v6
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         with:
           persist-credentials: false
 
       - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
 
       - name: Pull image from GAR
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         run: docker pull "$IMAGE_TAG"
 
       - name: Get vault secrets
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -249,7 +269,8 @@ jobs:
             METICULOUS_API_TOKEN=meticulous-ui:api-token
 
       - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
+        if: steps.meticulous-eligibility.outputs.run == 'true'
+        uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
           image-tag: ${{ env.IMAGE_TAG }}

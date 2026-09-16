@@ -51,6 +51,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
 import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
@@ -220,7 +221,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
           onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
+            copyStringToClipboard(window.location.href);
             notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
           }}
         />
@@ -329,8 +330,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button
                 size="sm"
-                variant="primary"
-                fill="outline"
+                variant="secondary"
+                fill="text"
                 icon="ellipsis-v"
                 tooltip={t('explore.trace-page-header.share-tooltip', 'Share and feedback')}
                 aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share and feedback menu')}

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
@@ -49,10 +50,9 @@ func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserve
 	codecs := builder.ProvideCodecFactory(scheme)
 	info := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
 	return &info, builder.APIGroupOptions{
-		Scheme:              scheme,
-		OptsGetter:          apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
-		MetricsRegister:     prometheus.NewRegistry(),
-		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
+		Scheme:          scheme,
+		OptsGetter:      apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		MetricsRegister: prometheus.NewRegistry(),
 	}
 }
 
@@ -158,8 +158,8 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	t.Run("storage opts are required", func(t *testing.T) {
 		b := testBuilder(t, testManifest(t))
 		info, opts := testAPIGroupOptions(t, b)
-		opts.StorageOptsRegister = nil
-		require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts), "apps require storage opts")
+		opts.OptsGetter = nil
+		require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts), "apps require a storage options getter")
 	})
 
 	// Custom routes read their parent object through the getter, which is only
@@ -226,11 +226,10 @@ func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 	})
 }
 
-// Storage options are keyed by GroupResource, which carries no version, so both
-// served versions of a kind register against the same key and whichever runs
-// last would otherwise decide the folder scope for both. A kind that requires a
-// folder in any served version requires one in all of them.
-func TestUpdateAPIGroupInfoFolderScopeIsConsistentAcrossVersions(t *testing.T) {
+// Storage options are scoped to the group+version+resource being installed, not
+// registered against the shared GroupResource, so two served versions of a kind
+// no longer have to agree on their folder scope.
+func TestUpdateAPIGroupInfoFolderScopeIsPerVersion(t *testing.T) {
 	falseValue := false
 
 	manifest := &app.ManifestData{
@@ -250,16 +249,57 @@ func TestUpdateAPIGroupInfoFolderScopeIsConsistentAcrossVersions(t *testing.T) {
 	b := testBuilder(t, manifest)
 	info, opts := testAPIGroupOptions(t, b)
 
-	registered := map[schema.GroupResource][]apistore.StorageOptions{}
-	opts.StorageOptsRegister = func(gr schema.GroupResource, so apistore.StorageOptions) {
-		registered[gr] = append(registered[gr], so)
+	recorder := &recordingOptsGetter{
+		parent:   apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		recorded: map[schema.GroupResource][]apistore.StorageOptions{},
 	}
+	opts.OptsGetter = recorder
 	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 
 	gr := schema.GroupResource{Group: "example.ext.grafana.app", Resource: "things"}
-	require.Len(t, registered[gr], 2, "both versions register against the shared resource")
-	for i, so := range registered[gr] {
-		require.True(t, so.EnableFolderSupport, "registration %d dropped folder support", i)
-		require.True(t, so.RequireFolder, "registration %d dropped the folder requirement", i)
+	require.Len(t, recorder.recorded[gr], 2, "both versions complete a store for the shared resource")
+
+	scopes := make([]bool, 0, 2)
+	versions := make([]string, 0, 2)
+	for _, so := range recorder.recorded[gr] {
+		require.Equal(t, so.EnableFolderSupport, so.RequireFolder,
+			"manifest kinds require a folder exactly when they support one")
+		require.Equal(t, "Thing", so.GVK.Kind)
+		scopes = append(scopes, so.RequireFolder)
+		versions = append(versions, so.GVK.Version)
 	}
+	require.ElementsMatch(t, []bool{true, false}, scopes,
+		"each version keeps the folder scope it declared")
+	require.ElementsMatch(t, []string{"v1alpha1", "v2alpha1"}, versions,
+		"each store is identified by the version it serves")
+
+	// One settings store is shared by every served version, so its GVK is the
+	// version it persists as, not the version a request arrived through.
+	settingsGR := schema.GroupResource{Group: "example.ext.grafana.app", Resource: apppluginV0.APP_RESOURCE_NAME}
+	require.Len(t, recorder.recorded[settingsGR], 1)
+	require.Equal(t, schema.GroupVersionKind{
+		Group: "example.ext.grafana.app", Version: "v0alpha1", Kind: "Settings",
+	}, recorder.recorded[settingsGR][0].GVK)
+}
+
+// recordingOptsGetter captures the storage options each store is completed with.
+// They no longer pass through a registration hook, so the getter the store
+// resolves through is the only place to observe them.
+type recordingOptsGetter struct {
+	parent   *apistore.RESTOptionsGetter
+	recorded map[schema.GroupResource][]apistore.StorageOptions
+	scoped   *apistore.StorageOptions
+}
+
+func (r *recordingOptsGetter) WithStorageOptions(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+	// Shares recorded with the parent, so every scoped child reports back.
+	return &recordingOptsGetter{parent: r.parent, recorded: r.recorded, scoped: &opts}
+}
+
+func (r *recordingOptsGetter) GetRESTOptions(gr schema.GroupResource, obj runtime.Object) (generic.RESTOptions, error) {
+	if r.scoped == nil {
+		return r.parent.GetRESTOptions(gr, obj)
+	}
+	r.recorded[gr] = append(r.recorded[gr], *r.scoped)
+	return r.parent.WithStorageOptions(*r.scoped).GetRESTOptions(gr, obj)
 }
