@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { defaultTableOptions } from '@grafana/schema';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
 import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
@@ -31,6 +32,16 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'Enables/disables the log line link button in the first column of each row'
         ),
         defaultValue: defaultOptions.showCopyLogLink,
+      })
+      .addBooleanSwitch({
+        path: 'hoverOverflow',
+        name: t('logstable.hover-overflow.name', 'Cell hover overflow'),
+        category: logsTableCategory,
+        description: t(
+          'logstable.hover-overflow.description',
+          'Expand overflowing cell content on hover. Selected cells always expand.'
+        ),
+        defaultValue: defaultTableOptions.hoverOverflow,
       })
       .addBooleanSwitch({
         path: 'showControls',
