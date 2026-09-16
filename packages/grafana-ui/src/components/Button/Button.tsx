@@ -339,6 +339,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     hoverBorderColor = color.borderEmphasis;
   }
 
+  if ((color.name === 'error' || color.name === 'success') && theme.colors.mode !== 'light') {
+    outlineBorderColor = color.background;
+  }
+
   if (fill === 'outline') {
     return {
       background: 'transparent',
@@ -394,6 +398,12 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       hoverBorderColor = 'transparent';
       textColor = color.contrastText;
       hoverTextColor = color.contrastText;
+    }
+
+    if (color.name === 'accent' && fill === 'solid') {
+      backgroundColor = color.solidBackground;
+      borderColor = color.solidBorder;
+      textColor = color.solidText;
     }
 
     if ((color.name === 'error' || color.name === 'success') && fill === 'solid') {

@@ -44,7 +44,10 @@
       "backgroundEmphasis": "palette.orange100",
       "border": "palette.orange200",
       "borderEmphasis": "palette.orange300",
-      "contrastText": "palette.white"
+      "contrastText": "palette.white",
+      "solidBackground": "palette.orange100",
+      "solidBorder": "palette.orange200",
+      "solidText": "palette.orange700"
     },
     "error": {
       "main": "palette.red500",

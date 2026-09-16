@@ -68,6 +68,15 @@ export const ThemeRichColorInputSchema = z.object({
   subtleBackground: z.string().optional(),
   /** A more subtle alternative to `border`, for surfaces that shouldn't match a solid-fill button */
   subtleBorder: z.string().optional(),
+  /**
+   * A solid-fill button's own background, for colors (like accent) whose `background` is shared
+   * with other broad UI (nav, badges, focus rings) that shouldn't change when the button's color does
+   */
+  solidBackground: z.string().optional(),
+  /** A solid-fill button's own border - see `solidBackground` */
+  solidBorder: z.string().optional(),
+  /** A solid-fill button's own text color - see `solidBackground` */
+  solidText: z.string().optional(),
 
   /**
    * Used for hover

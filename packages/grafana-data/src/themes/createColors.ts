@@ -377,6 +377,17 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.subtleBorder = color.border;
     }
 
+    // Same fallback logic, but for the solid-fill button - see the `solidBackground` schema comment.
+    if (!color.solidBackground) {
+      color.solidBackground = color.background;
+    }
+    if (!color.solidBorder) {
+      color.solidBorder = color.border;
+    }
+    if (!color.solidText) {
+      color.solidText = color.text;
+    }
+
     // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
