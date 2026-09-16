@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -51,6 +53,29 @@ func TestAsErrorResult_UnpackCorrectErrorDetails(t *testing.T) {
 	// diff used as require.Equal has it's issues with Details.Causes
 	diff := cmp.Diff(&errDetails, got, protocmp.Transform())
 	require.Empty(t, diff)
+}
+
+func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
+	t.Parallel()
+
+	// The guard fires inside the list transaction, so the sentinel reaches
+	// AsErrorResult behind the transaction wrapper rather than on its own.
+	transactional := fmt.Errorf("transactional operation: %w", claims.ErrNamespaceMismatch)
+
+	for name, err := range map[string]error{
+		"bare":    claims.ErrNamespaceMismatch,
+		"wrapped": transactional,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got := AsErrorResult(err)
+			require.Equal(t, int32(http.StatusForbidden), got.Code, "an authorization outcome must not burn the 5xx error budget")
+			require.Equal(t, string(metav1.StatusReasonForbidden), got.Reason)
+			require.Equal(t, claims.ErrNamespaceMismatch.Error(), got.Message)
+			require.True(t, apierrors.IsForbidden(GetError(got)), "callers should see a typed Forbidden error")
+		})
+	}
 }
 
 func TestErrorFromResponse(t *testing.T) {
@@ -150,5 +175,41 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 	}
 	for _, httpCode := range unmapped {
 		require.Equal(t, codes.Unknown, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	}
+}
+
+func TestIsConflict(t *testing.T) {
+	t.Parallel()
+
+	grpcConflict := status.New(codes.Aborted, "conflict")
+	withDetails, err := grpcConflict.WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+	require.NoError(t, err)
+
+	withReasonOnly, err := status.New(codes.Aborted, "conflict").
+		WithDetails(&resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "conflict"})
+	require.NoError(t, err)
+
+	withOtherDetails, err := status.New(codes.NotFound, "missing").
+		WithDetails(&resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound)})
+	require.NoError(t, err)
+
+	tests := map[string]struct {
+		err      error
+		expected bool
+	}{
+		"nil":                         {err: nil, expected: false},
+		"typed conflict":              {err: apierrors.NewConflict(schema.GroupResource{Resource: "pods"}, "foo", nil), expected: true},
+		"grpc status details":         {err: withDetails.Err(), expected: true},
+		"grpc status reason only":     {err: withReasonOnly.Err(), expected: true},
+		"grpc status no details":      {err: grpcConflict.Err(), expected: false},
+		"grpc status other details":   {err: withOtherDetails.Err(), expected: false},
+		"wrapped grpc status details": {err: fmt.Errorf("update failed: %w", withDetails.Err()), expected: true},
+		"unrelated error":             {err: apierrors.NewBadRequest("nope"), expected: false},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, tc.expected, IsConflict(tc.err))
+		})
 	}
 }

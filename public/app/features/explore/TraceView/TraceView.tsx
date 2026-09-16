@@ -22,7 +22,7 @@ import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesDat
 import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -107,6 +107,7 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { app = CoreApp.Unknown } = usePanelContext();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
   const { value: isAdaptiveTracesAppInstalled } = useAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID);
@@ -292,7 +293,7 @@ export function TraceView(props: Props) {
             datasourceName={datasourceName}
             datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
@@ -344,7 +345,7 @@ export function TraceView(props: Props) {
             redrawListView={redrawListView}
             setRedrawListView={setRedrawListView}
             timeRange={props.timeRange}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
           />
         </>
       ) : (

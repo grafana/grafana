@@ -94,21 +94,3 @@ jobs:
         run: ./.github/workflows/scripts/test-endpoint-migration-check.sh "${{ github.event.pull_request.number }}" "${{ github.repository }}"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-
-  # Always-run job for use as required status check
-  endpoint-toggle-result:
-    if: always()
-    needs: [detect-changes, check-endpoint-migration]
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Check job results
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "Endpoint migration feature toggle check failed"
-          success-message: "Endpoint migration feature toggle check passed"

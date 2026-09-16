@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -745,7 +746,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		}
 
 		for _, tc := range testCases {
-			tc := tc // Capture for parallel execution
 			t.Run(tc.name, func(t *testing.T) {
 				// Create the dashboard with the specified refresh value
 				dashObj := createDashboardObject(t, "Dashboard with Refresh: "+tc.refreshValue, "", 0)
@@ -1265,7 +1265,6 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 
 	// Run tests for each identity type
 	for _, identity := range identities {
-		identity := identity // Capture range variable
 		t.Run(identity.Name, func(t *testing.T) {
 			// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 			// Get admin client for cleanup based on identity type
@@ -2513,7 +2512,7 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 		for _, fc := range folderConfigs {
 			// Check if this identity has access based on its role
 			hasAccess := false
-			roleName := strings.Split(ident.Name, " ")[0] // Extract "Admin", "Editor", or "Viewer"
+			roleName, _, _ := strings.Cut(ident.Name, " ") // Extract "Admin", "Editor", or "Viewer"
 
 			switch roleName {
 			case "Admin":
@@ -2573,13 +2572,7 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 
 				// Verify all expected items are found
 				for _, expected := range expectedTitles {
-					found := false
-					for _, title := range dashTitles {
-						if title == expected {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(dashTitles, expected)
 					require.True(t, found, "%s should see dashboard '%s' but didn't", identity.Name, expected)
 				}
 			})

@@ -57,11 +57,17 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		searchResp, err = s.search.Search(ctx, srq)
 	} else {
 		// Use remote search service
-		// useSelectorSearch() already checks that either s.search or s.searchClient is set
+		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
 	if err != nil {
 		return nil, err
+	}
+	// Logged as well as returned, because in environments where only logs are
+	// available an empty page and a failed search look the same.
+	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
 	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
 
@@ -160,8 +166,19 @@ func indexableSelectorOperator(op string) bool {
 	}
 }
 
-func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
+type SearchBackedListConfig struct {
+	AllowedResources map[string]bool
+}
+
+func (c SearchBackedListConfig) Allowed(group, resource string) bool {
+	return c.AllowedResources[group+"/"+resource]
+}
+
+func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
+		return false
+	}
+	if req.KeysOnly {
 		return false
 	}
 	// An index covers one namespace, so a cross-namespace list stays on the store
@@ -169,17 +186,22 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	if req.Options.Key.Namespace == "" {
 		return false
 	}
-	if len(req.Options.Fields) == 0 && len(req.Options.Labels) == 0 {
+	// Search indexes collections and does not apply a name filter.
+	if req.Options.Key.Name != "" {
+		return false
+	}
+	hasSelectors := len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0
+	if !hasSelectors && !s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) {
 		return false
 	}
 
-	if req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+	if req.ResourceVersion > 0 || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
 		return false
 	}
 
 	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests())
-	return slices.ContainsFunc(manifests, func(m app.Manifest) bool {
-		return m.ManifestData.Group == req.Options.Key.Group
+	manifests := AppManifestsWithKinds(AppManifests()...)
+	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
+		return m.Group == req.Options.Key.Group
 	})
 }

@@ -187,6 +187,7 @@ runs:
           frontend:
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
+            - '.github/actions/build-frontend/**'
             - 'public/**'
             - '**.js'
             - '**.jsx'
@@ -214,6 +215,7 @@ runs:
             # gate frontend jobs (e.g. Meticulous) that a test-only PR can't affect.
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/checkout/**'
+            - '.github/actions/build-frontend/**'
             - 'public/**'
             - '**.js'
             - '**.jsx'

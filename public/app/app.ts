@@ -1,8 +1,3 @@
-import 'symbol-observable';
-import 'regenerator-runtime/runtime';
-
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'file-saver';
 import 'jquery';
 
 import { createElement } from 'react';
@@ -44,9 +39,12 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  logError,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  getFeatureFlagClient,
+  FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
   setExpressionDataSourceInstance,
@@ -87,6 +85,8 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { navTreeInitialized } from './core/reducers/navBarTree';
+import { navIndexInitialized } from './core/reducers/navModel';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -96,6 +96,7 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -139,6 +140,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { dispatch } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -165,14 +167,13 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
-      // on the login page.
-      if (contextSrv.user.isSignedIn) {
-        try {
-          await initOpenFeature();
-        } catch (err) {
-          console.error('Failed to initialize OpenFeature provider', err);
-        }
+      // Capture any error generated to pass to Faro once available.
+      let openFeatureError: unknown;
+      try {
+        await initOpenFeature();
+      } catch (err) {
+        openFeatureError = err;
+        console.error('Failed to initialize OpenFeature provider', err);
       }
 
       const initI18nPromise = initializeI18n({
@@ -193,6 +194,12 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
+
+      // This needs to be done after the `initEchoSrv` since that initializes Faro.
+      if (openFeatureError) {
+        logError(new Error('Failed to initialize OpenFeature provider', { cause: openFeatureError }));
+      }
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
@@ -243,6 +250,20 @@ export class GrafanaApp {
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+
+      // The multi-tenant frontend service ships a reduced boot with no user
+      // permissions, so fetch them before anything permission-gated renders. The
+      // nav tree needs rebuilding either way: configureStore built it with an
+      // empty permission set, and its sections are permission-gated.
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
+        await contextSrv.fetchUserPermissions();
+        dispatch(navTreeInitialized());
+        dispatch(navIndexInitialized());
+      }
+
       initExtensions();
 
       initAlerting();
