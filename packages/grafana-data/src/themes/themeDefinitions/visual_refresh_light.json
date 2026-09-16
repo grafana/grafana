@@ -124,8 +124,7 @@
       "headerBackground": "palette.neutral150",
       "border": "palette.neutral250",
       "rowStripedBackground": "palette.neutral100",
-      "rowHoverBackground": "palette.neutral250",
-      "rowSelectedBackground": "palette.amber200"
+      "rowHoverBackground": "palette.neutral250"
     },
     "card": {
       "background": "palette.white",
