@@ -53,10 +53,22 @@ jest.mock('app/api/clients/folder/v1beta1', () => ({
 }));
 
 jest.mock('../Shared/ProvisioningAwareFolderPicker', () => ({
-  ProvisioningAwareFolderPicker: jest.fn(({ onChange, value }) => (
-    <button type="button" data-testid="folder-picker" onClick={() => onChange('target-folder-uid')}>
-      {value || 'Select folder'}
-    </button>
+  ProvisioningAwareFolderPicker: jest.fn(({ onChange, value, repositoryTarget }) => (
+    <>
+      <button
+        type="button"
+        data-testid="folder-picker"
+        data-repository-target={repositoryTarget}
+        onClick={() => onChange('target-folder-uid')}
+      >
+        {value || 'Select folder'}
+      </button>
+      {repositoryTarget === 'folderless' && (
+        <button type="button" data-testid="folder-picker-root" onClick={() => onChange('')}>
+          Repository root
+        </button>
+      )}
+    </>
   )),
 }));
 
@@ -84,6 +96,14 @@ function resetJobStatusMock() {
     </div>
   ));
 }
+
+const folderlessRepository: RepositoryView = {
+  name: 'folderless-repo',
+  type: 'github',
+  title: 'Folderless Repository',
+  target: 'folderless',
+  workflows: ['branch', 'write'],
+};
 
 function setup(
   repository: RepositoryView | null,
@@ -173,11 +193,12 @@ describe('BulkMoveProvisionedResource', () => {
   });
 
   it('renders the move warning, form elements, and buttons', async () => {
-    setup(null);
+    setup(folderlessRepository);
 
     expect(await screen.findByText(/This will move selected folders and their descendants/)).toBeInTheDocument();
     expect(screen.getByTestId('affected-folder-contents')).toBeInTheDocument();
     expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
+    expect(screen.getByTestId('folder-picker')).toHaveAttribute('data-repository-target', 'folderless');
     expect(screen.getByRole('button', { name: /Move/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
   });
@@ -220,6 +241,22 @@ describe('BulkMoveProvisionedResource', () => {
 
     expect(await screen.findByTestId('job-status')).toBeInTheDocument();
     expect(screen.getByText(/Job Status - move - success/)).toBeInTheDocument();
+  });
+
+  it('moves folderless repository resources to the repository root path', async () => {
+    const { user, mockCreateBulkJob } = setup(folderlessRepository);
+
+    await user.click(screen.getByTestId('folder-picker-root'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      folderlessRepository,
+      expect.objectContaining({
+        move: expect.objectContaining({
+          targetPath: '/',
+        }),
+      })
+    );
   });
 
   it('handles move errors', async () => {

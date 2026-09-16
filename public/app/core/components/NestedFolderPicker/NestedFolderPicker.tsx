@@ -50,6 +50,9 @@ export interface NestedFolderPickerProps {
   /* Custom root folder item, default is "Dashboards" */
   rootFolderItem?: DashboardsTreeItem;
 
+  /* Only show folders that match this predicate. The root and loading placeholders are always retained. */
+  folderFilter?: (folder: DashboardViewItem) => boolean;
+
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
   permission?: 'view' | 'edit';
 
@@ -88,6 +91,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   rootFolderUID,
   rootFolderItem,
+  folderFilter,
   permission = 'edit',
   onChange,
   id,
@@ -256,20 +260,24 @@ export function NestedFolderPicker({
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
       const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems(fullTree, excludeUIDs);
+      const filteredTree = filterBrowseItems(fullTree, folderFilter, rootFolderItem?.item.uid ?? '');
+      return filterExcludedItems(filteredTree, excludeUIDs);
     } else {
-      flatTree = searchResultsToTreeItems(searchResults?.items || []);
+      const searchItems = folderFilter ? (searchResults?.items || []).filter(folderFilter) : searchResults?.items || [];
+      flatTree = searchResultsToTreeItems(searchItems);
       return filterExcludedItems(flatTree, excludeUIDs);
     }
   }, [
     browseFlatTree,
     excludeUIDs,
+    folderFilter,
     isBrowsing,
     searchResults?.items,
     showRootFolder,
     teamFolderTreeItems,
     starredFolderTreeItems,
     rootFolderUID,
+    rootFolderItem?.item.uid,
   ]);
 
   const isItemLoaded = useCallback(
@@ -408,6 +416,20 @@ export function NestedFolderPicker({
         />
       </fieldset>
     </>
+  );
+}
+
+function filterBrowseItems(
+  items: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>>,
+  folderFilter: ((folder: DashboardViewItem) => boolean) | undefined,
+  rootFolderUID: string
+) {
+  if (!folderFilter) {
+    return items;
+  }
+
+  return items.filter(
+    ({ item, level }) => item.kind === 'ui' || (level === 0 && item.uid === rootFolderUID) || folderFilter(item)
   );
 }
 
