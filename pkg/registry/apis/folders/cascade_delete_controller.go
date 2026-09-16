@@ -19,8 +19,10 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -160,6 +162,17 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 	if err != nil {
 		return err
 	}
+
+	// The informer/workqueue context carries no requester or claims (unlike an HTTP request context),
+	// but c.searcher's internal search/index calls require them. Run as a service identity for the
+	// whole reconcile, same as cascade_delete_storage.go's synchronous cascade does -- there isn't a
+	// specific end user to run this as anyway, since deletion is deferred/asynchronous by the time
+	// this runs.
+	nsInfo, err := claims.ParseNamespace(namespace)
+	if err != nil {
+		return fmt.Errorf("parse namespace %q: %w", namespace, err)
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 
 	obj, err := c.folders.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {

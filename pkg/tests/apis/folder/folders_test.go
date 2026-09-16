@@ -89,10 +89,12 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"verbs": [
 						"create",
 						"delete",
+						"deletecollection",
 						"get",
 						"list",
 						"patch",
-						"update"
+						"update",
+						"watch"
 					]
 				},
 				{
@@ -313,6 +315,9 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"spec": {
 			  "title": "Test",
 			  "description": ""
+			},
+			"status": {
+			  "cascadeDelete": {"remaining": 0}
 			}}`
 
 		// Get should return the same result
