@@ -1716,6 +1716,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -4620,11 +4623,15 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit document",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
-      "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "load-error-title": "Couldn't load this document",
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display this document.",
+      "tab-contributing": "Contributing",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -12250,6 +12257,10 @@
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
   },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
   },
@@ -16686,10 +16697,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",
