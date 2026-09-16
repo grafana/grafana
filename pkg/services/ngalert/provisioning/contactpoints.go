@@ -131,7 +131,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
 	for _, recv := range res {
 		for _, gr := range recv.Integrations {
-			if gr.Config.Version != schema.V1 {
+			if !isV1IntegrationVersion(string(gr.Config.Version)) {
 				continue
 			}
 			if !q.Decrypt {
