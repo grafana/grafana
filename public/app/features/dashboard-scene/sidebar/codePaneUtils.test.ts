@@ -18,16 +18,8 @@ jest.mock('../../dashboard/api/utils', () => ({
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: { sidebar: {} } })),
 }));
-
-jest.mock('@grafana/scenes', () => {
-  const actual = jest.requireActual('@grafana/scenes');
-  return {
-    ...actual,
-    sceneUtils: { ...actual.sceneUtils, cloneSceneObjectState: (state: unknown) => state },
-  };
-});
 
 jest.mock('../../dashboard/api/v2', () => ({
   getK8sV2DashboardApiConfig: () => ({
@@ -39,16 +31,6 @@ jest.mock('../../dashboard/api/v2', () => ({
 
 function buildDashboard(uid?: string): DashboardScene {
   return { state: { uid } } as unknown as DashboardScene;
-}
-
-function buildApplyDashboard(uid?: string): DashboardScene {
-  return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {}, body: { editModeChanged: jest.fn() } },
-    serializer: { metadata: {}, getK8SMetadata: () => ({}) },
-    onEnterEditMode: jest.fn(),
-    setState: jest.fn(),
-    publishEvent: jest.fn(),
-  } as unknown as DashboardScene;
 }
 
 describe('getDashboardResourceText', () => {
@@ -181,6 +163,23 @@ describe('getDashboardDiffTexts', () => {
 });
 
 describe('applyJsonToDashboard', () => {
+  function buildApplyDashboard(uid?: string): DashboardScene {
+    return {
+      state: {
+        uid,
+        key: 'key-1',
+        isEditing: true,
+        meta: {},
+        body: { editModeChanged: jest.fn() },
+        sidebar: {},
+      },
+      serializer: { metadata: {}, getK8SMetadata: () => ({}) },
+      onEnterEditMode: jest.fn(),
+      setState: jest.fn(),
+      publishEvent: jest.fn(),
+    } as unknown as DashboardScene;
+  }
+
   it('rejects an unexpected kind', () => {
     const result = applyJsonToDashboard(buildApplyDashboard('abc-123'), JSON.stringify({ kind: 'Folder', spec: {} }));
     expect(result.success).toBe(false);
@@ -250,5 +249,16 @@ describe('applyJsonToDashboard', () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- reach into the test double's mock
     const editModeChanged = (dashboard.state.body as unknown as { editModeChanged: jest.Mock }).editModeChanged;
     expect(editModeChanged).toHaveBeenCalledWith(true);
+  });
+
+  // Regression: the rebuild swaps in a fresh sidebar, which closed the "Edit as code" pane the
+  // user was typing in. The live sidebar has to survive the swap for the pane to stay open.
+  it('leaves the sidebar out of the applied state so the live one survives', () => {
+    const dashboard = buildApplyDashboard('abc-123');
+    const text = getDashboardResourceText(buildDashboard('abc-123'));
+
+    applyJsonToDashboard(dashboard, text);
+
+    expect(jest.mocked(dashboard.setState).mock.calls[0][0]).not.toHaveProperty('sidebar');
   });
 });
