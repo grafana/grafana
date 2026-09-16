@@ -12,9 +12,11 @@ import { ManagePermissionsDrawer } from 'app/features/alerting/unified/component
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
+import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction, isInUse, isInsufficientPermissions } from '../../hooks/abilities/types';
+import { hasLegacyIntegrations } from '../../utils/notifier-versions';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -37,7 +39,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
   const isProvisioned = isProvisionedResource(provenance);
-  const hasLegacyIntegration = integrations.some(({ version }) => version?.startsWith('v0'));
+  const { data: notifiers } = useIntegrationTypeSchemas();
+  const hasLegacyIntegration = hasLegacyIntegrations(contactPoint, notifiers);
 
   // Entity-scoped ability checks
   const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
@@ -116,7 +119,6 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
             icon="download-alt"
             label={t('alerting.contact-point-header.export-label-export', 'Export')}
             ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
-            className={hasLegacyIntegration ? styles.disabledExport : undefined}
             disabled={!exportAbility.granted || hasLegacyIntegration}
             data-testid="export"
             onClick={() => openExportDrawer(name)}
@@ -313,8 +315,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
     borderTopLeftRadius: `${theme.shape.radius.lg}`,
     borderTopRightRadius: `${theme.shape.radius.lg}`,
-  }),
-  disabledExport: css({
-    opacity: theme.colors.action.disabledOpacity,
   }),
 });
