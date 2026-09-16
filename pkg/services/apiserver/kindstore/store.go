@@ -102,6 +102,12 @@ func New(
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {
+	// Resource() defaults an omitted plural to the kind name plus "s", so only a
+	// missing kind name leaves nothing to build a REST path from: it would
+	// register the resource as a bare "s" and shadow whatever else lands there.
+	if kind.Kind == "" {
+		return nil, fmt.Errorf("manifest kind in %s is missing a kind name", gvk.GroupVersion())
+	}
 	if opts.StorageOptsGetter == nil {
 		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
 	}

@@ -177,14 +177,10 @@ func TestGetAPIRoutesWithoutManifest(t *testing.T) {
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v0alpha1"}))
 }
 
-// A kind with no plural has no REST path to hang subresource routes off, so it
-// would mount routes under an empty resource segment. manifestRoutes does not
-// guard against that itself because it cannot be reached: storage is installed
-// before the custom routes are (builder.InstallAPIs, then
-// AugmentWebServicesWithCustomRoutes), and kindstore.New refuses the kind. This
-// pins that ordering -- if routes ever move ahead of storage, the guard has to
-// come back.
-func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
+// A kind with no plural still has a REST path to hang subresource routes off:
+// Resource() defaults the plural to the kind name plus "s", and routes key off
+// the same helper that storage does, so both land on the same segment.
+func TestKindsWithoutPluralUseTheDefaultedResource(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:  "NoPlural",
@@ -195,9 +191,13 @@ func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
 	})
 	b := testBuilder(t, manifest)
 	info, opts := testAPIGroupOptions(t, b)
+	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 
-	require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts),
-		"kind NoPlural is missing a plural name")
+	var paths []string
+	for _, r := range b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}).Namespace {
+		paths = append(paths, r.Path)
+	}
+	require.Contains(t, paths, "noplurals/{name}/orphan")
 }
 
 func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {

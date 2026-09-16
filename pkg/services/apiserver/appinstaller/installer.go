@@ -265,9 +265,6 @@ func registerStorageOptions(
 	registered := make(map[string]struct{})
 	for _, v := range md.Versions {
 		for _, k := range v.Kinds {
-			if k.Plural == "" {
-				continue
-			}
 			gr := schema.GroupResource{
 				Group:    md.Group,
 				Resource: k.Resource(),

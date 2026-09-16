@@ -217,6 +217,29 @@ func TestRegisterStorageOptions(t *testing.T) {
 		assert.Contains(t, called, schema.GroupResource{Group: "test.grafana.app", Resource: "bars"})
 	})
 
+	// The kind is served under the defaulted plural, so its options have to be
+	// asked for under that same name -- skipping it left the resource on
+	// whatever defaults the getter happened to hold.
+	t.Run("asks for options under the defaulted plural", func(t *testing.T) {
+		var called []schema.GroupResource
+		installer := &mockAppInstallerWithStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest: makeManifest("test.grafana.app",
+				app.ManifestVersionKind{Kind: "Foo"},
+			),
+			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
+				called = append(called, gr)
+				return &apistore.StorageOptions{EnableFolderSupport: true}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		require.Equal(t, []schema.GroupResource{
+			{Group: "test.grafana.app", Resource: "foos"},
+		}, called)
+	})
+
 	t.Run("calls provider once when same resource appears in multiple versions", func(t *testing.T) {
 		callCount := 0
 		installer := &mockAppInstallerWithStorageOpts{
