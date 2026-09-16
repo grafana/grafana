@@ -25,6 +25,7 @@ import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
+import { resolveOverviewCard } from './Overview/solutionGroups';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
@@ -56,22 +57,22 @@ function HomepageViewTracker({ onView }: { onView: () => void }) {
   return null;
 }
 
-function HomepageSolutionSections() {
-  const solutions = useHomepageSolutions();
-
-  return (
-    <>
-      <Recommendations solutions={solutions} />
-      <Overview solutions={solutions.solutions} />
-    </>
-  );
-}
-
 export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const solutions = useHomepageSolutions();
+  // Placement is the slow part of the page and needs nothing from the extensions gating the
+  // sections: start it at mount so it runs under the skeleton. Its facts are memoized on the
+  // solution or TTL-cached, so the overview's own placement re-reads settled promises when it mounts.
+  useEffect(() => {
+    if (redesignEnabled) {
+      for (const solution of solutions.solutions) {
+        void resolveOverviewCard(solution);
+      }
+    }
+  }, [redesignEnabled, solutions]);
 
   const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,
@@ -173,7 +174,8 @@ export default function HomePage() {
                     ),
                   })}
 
-                  <HomepageSolutionSections />
+                  <Recommendations solutions={solutions} />
+                  <Overview solutions={solutions.solutions} />
 
                   <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}

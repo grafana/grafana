@@ -19,6 +19,7 @@ import {
   resolveKubernetesDatasource,
   resetKubernetesPrometheusResolution,
 } from './kubernetesData';
+import { resetProbeHealth } from './probeUtils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -86,11 +87,13 @@ beforeEach(() => {
   mockCreateQueryRunner.mockReset();
   mockGetDataSourceInstanceList.mockReset();
   healthGet.mockReset();
-  // Health pre-filter: every candidate healthy unless a test overrides by uid.
+  // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
   window.localStorage.clear();
   resetKubernetesPrometheusResolution();
+  // The /health cache is module-level and shared across scans; a cached OK would leak between tests.
+  resetProbeHealth();
   dataByUid = {};
   probeErrorUids = new Set();
   probeHangUids = new Set();

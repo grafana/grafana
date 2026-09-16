@@ -121,12 +121,15 @@ describe('Step1AlertmanagerResources', () => {
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
@@ -161,7 +164,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(datasourceRadio).not.toBeChecked();
     });
 
-    it('should render YAML file upload field when YAML source selected', () => {
+    it('should render YAML file upload field when YAML source selected', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -169,7 +172,81 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/alertmanager config yaml/i)).toBeInTheDocument();
-      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+      // FileDropzone's own hidden <small> caption carries the same text, so target the visible one.
+      expect(screen.getByText(/accepted file types: \.yaml, \.yml/i, { selector: ':not(small)' })).toBeInTheDocument();
+      // FileDropzone is lazy-loaded (React.lazy/Suspense) — wait for it to mount.
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('accepts a YAML file upload and displays it as a removable row', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove am\.yaml/i })).toBeInTheDocument();
+      // The dropzone itself stays put, so a new drop can still replace the file.
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a file with a non-YAML extension', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['{}'], 'config.json', { type: 'application/json' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('config.json')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['hello'], 'notes.txt', { type: 'text/plain' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('removes the YAML file when its remove button is clicked', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('am.yaml')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
+
+      expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
     });
 
     it('should render datasource picker when datasource source selected', () => {
@@ -185,7 +262,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
     });
 
-    it('should render the notification templates uploader for the YAML source', () => {
+    it('should render the notification templates uploader for the YAML source', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -193,7 +270,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should NOT render the templates uploader for the datasource source', () => {
@@ -215,7 +292,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       // The dropzone's file input inherits the Field id, so its label resolves to it
-      const input = screen.getByLabelText(/notification templates/i);
+      const input = await screen.findByLabelText(/notification templates/i);
 
       await user.upload(input, [
         new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),

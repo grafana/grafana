@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -23,6 +24,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
@@ -41,6 +43,7 @@ var (
 	_ appsdkapiserver.AppInstaller        = (*AppInstaller)(nil)
 	_ appinstaller.AuthorizerProvider     = (*AppInstaller)(nil)
 	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStatusProvider   = (*AppInstaller)(nil)
 	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
 )
 
@@ -228,6 +231,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return rulesequence.Authorize(ctx, authz, a)
 			case search.RouteResource:
 				return search.Authorize(ctx, authz, a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
@@ -235,6 +240,12 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	// Config is a per-org singleton with no folder concept; the rules-app
+	// group's other kinds (AlertRule, RecordingRule, RuleSequence) all live in
+	// folders, so this must be scoped per-kind rather than blanket-true.
+	if gr == config.ResourceInfo.GroupResource() {
+		return &apistore.StorageOptions{}
+	}
 	return &apistore.StorageOptions{
 		EnableFolderSupport: true,
 	}
@@ -249,7 +260,27 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case rulesequence.ResourceInfo.GroupVersionResource():
 		return nil
+	case config.ResourceInfo.GroupVersionResource():
+		// Config has no legacy backend — returning nil makes the apiserver serve
+		// it directly from unified storage (no dual writer).
+		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
+	}
+}
+
+// GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
+// kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
+// legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
+// via the shared rule store.
+func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
+	namespacer := reqns.GetNamespaceMapper(a.cfg)
+	switch gvr {
+	case recordingrule.ResourceInfo.GroupVersionResource():
+		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+	case alertrule.ResourceInfo.GroupVersionResource():
+		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+	default:
+		return nil
 	}
 }

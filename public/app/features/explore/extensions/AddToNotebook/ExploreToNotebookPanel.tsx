@@ -34,6 +34,8 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       buildPanel={buildPanel}
       onDismiss={onClose}
       entryPoint={NOTEBOOK_ENTRY_POINT.EXPLORE}
+      // Explore builds its panel from the pane's queries, so there is no library panel to send.
+      isLibraryPanel={false}
     />
   );
 }

@@ -1,17 +1,6 @@
-import { getFolderIsEmpty, getSelectedFolderUIDs } from './utils';
+import { getFolderIsEmpty } from './utils';
 
 describe('browse-dashboards utils', () => {
-  describe('getSelectedFolderUIDs', () => {
-    it('returns only the UIDs of folders that are selected', () => {
-      const selection = { folder: { 'folder-a': true, 'folder-b': false, 'folder-c': true } };
-      expect(getSelectedFolderUIDs(selection)).toEqual(['folder-a', 'folder-c']);
-    });
-
-    it('returns an empty array when nothing is selected', () => {
-      expect(getSelectedFolderUIDs({ folder: {} })).toEqual([]);
-    });
-  });
-
   describe('getFolderIsEmpty', () => {
     const selection = { folder: { 'folder-a': true }, dashboard: {} };
 
