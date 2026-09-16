@@ -36,6 +36,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -72,6 +73,19 @@ const (
 
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	// GVK identifies the kind this storage serves, including the version.
+	//
+	// It cannot be derived: the object generic.RESTOptionsGetter passes alongside
+	// the GroupResource comes from NewFunc, whose TypeMeta is empty for every
+	// typed kind, and asking the Scheme for it is a guess when one Go type is
+	// registered under several versions (v1beta1 and v1 dashboards, folders).
+	// So it has to be configured, and only by a caller that knows the version --
+	// [RESTOptionsGetter.RegisterOptions] is keyed by GroupResource and shared by
+	// every version of a resource, so options registered there must leave it
+	// empty. Use [RESTOptionsGetter.WithStorageOptions] to set it.
+	GVK schema.GroupVersionKind
+
+	// Direct access to the schema (used for encode/decode)
 	Scheme *runtime.Scheme
 
 	// Required to force unique constraints
@@ -152,7 +166,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	configProvider RestConfigProvider,
+	configProvider RestConfigProvider, // needed to talk to folder service -- ??? can we use the storage client directly?
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{

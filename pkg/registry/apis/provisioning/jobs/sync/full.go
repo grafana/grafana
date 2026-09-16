@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -183,6 +184,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 }
 
 // applyChange applies a single resource or folder change, handling delete/create/update and recording progress.
+// A file create blocked by quota returns true without recording a result, so it can be retried after other writes finish.
 // folderMoves lists the stable-UID folder relocations in this batch so the
 // folder-path ensure can tolerate the same UID temporarily existing at both its
 // old and new path — but only for the current folder and its relocating ancestors
@@ -198,13 +200,13 @@ func applyChange(
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
 	folderMoves []folderMove,
-) {
+) bool {
 	if ctx.Err() != nil {
-		return
+		return false
 	}
 
 	if shouldSkipChange(ctx, change, progress, tracer) {
-		return
+		return false
 	}
 
 	if change.Action == repository.FileActionDeleted {
@@ -216,7 +218,7 @@ func applyChange(
 			progress.Record(deleteCtx, result)
 			deleteSpan.RecordError(result.Error())
 			deleteSpan.End()
-			return
+			return false
 		}
 
 		versionlessGVR := schema.GroupVersionResource{
@@ -233,7 +235,7 @@ func applyChange(
 				WithKind(versionlessGVR.Resource) // could not find a kind
 			progress.Record(deleteCtx, resultBuilder.Build())
 			deleteSpan.End()
-			return
+			return false
 		}
 
 		resultBuilder.WithName(change.Existing.Name).
@@ -254,7 +256,7 @@ func applyChange(
 		}
 		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
-		return
+		return false
 	}
 
 	// Handle folders based on action type
@@ -288,22 +290,17 @@ func applyChange(
 			ensureFolderSpan.End()
 			progress.Record(ctx, resultBuilder.Build())
 
-			return
+			return false
 		}
 
 		resultBuilder.WithName(folder)
 		progress.Record(ensureFolderCtx, resultBuilder.Build())
 		ensureFolderSpan.End()
-		return
+		return false
 	}
 
 	if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
-		progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
-			WithAction(change.Action).
-			WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
-			AsSkipped().
-			Build())
-		return
+		return true
 	}
 
 	// Create the result builder before the write so its duration reflects the
@@ -337,12 +334,16 @@ func applyChange(
 	}
 	resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
+		if change.Action == repository.FileActionCreated && utils.IsForbiddenManagerKindChangeError(err) {
+			quotaTracker.Release()
+		}
 		writeSpan.RecordError(err)
 		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 	}
 
 	progress.Record(writeCtx, resultBuilder.Build())
 	writeSpan.End()
+	return false
 }
 
 // instrumentedFullSyncPhase records timing metrics around a full-sync phase.
@@ -703,41 +704,56 @@ func applyResourcesInParallel(
 
 	sem := make(chan struct{}, maxSyncWorkers)
 	var wg sync.WaitGroup
+	quotaBlocked := make([]bool, len(resources))
 
 loop:
-	for _, change := range resources {
-		if err := progress.TooManyErrors(); err != nil {
+	for i, change := range resources {
+		if progress.TooManyErrors() != nil || ctx.Err() != nil {
 			break
 		}
-		if ctx.Err() != nil {
-			break
-		}
-
-		// Acquire semaphore slot (blocks if max workers reached)
 		select {
 		case sem <- struct{}{}:
 		case <-ctx.Done():
 			break loop
 		}
-
-		wg.Add(1)
-		go func(change ResourceFileChange) {
-			defer wg.Done()
+		wg.Go(func() {
 			defer func() { <-sem }()
-
-			wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-				// Non-folder changes never ensure a folder path, so no relocating set is needed.
-				applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
-			})
-		}(change)
+			// A previous worker may have failed while this task waited for a slot.
+			if progress.TooManyErrors() == nil && ctx.Err() == nil {
+				wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
+					quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+				})
+			}
+		})
 	}
-
 	wg.Wait()
+
+	// These files were blocked by quota before any write was attempted. Recheck
+	// quota after active writes finish; if capacity is available, attempt the first
+	// write. Keep this pass ordered so a manager-kind rejection can free capacity
+	// for the next file. Files still blocked receive a quota warning without I/O.
+	for i, blocked := range quotaBlocked {
+		if !blocked {
+			continue
+		}
+		if progress.TooManyErrors() != nil || ctx.Err() != nil {
+			break
+		}
+		change := resources[i]
+		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
+			blocked = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+		})
+		if blocked {
+			progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
+				AsSkipped().
+				Build())
+		}
+	}
 
 	if err := progress.TooManyErrors(); err != nil {
 		return err
 	}
-
 	return ctx.Err()
 }
 

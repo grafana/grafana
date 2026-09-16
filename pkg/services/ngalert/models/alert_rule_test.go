@@ -1082,15 +1082,16 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"IsPaused":       {},
 		"Record":         {},
 		"FolderFullpath": {},
+		"K8sStatus":      {},
 	}
 
 	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
 	for range 1000 {
@@ -1125,15 +1126,16 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"For":                         {},
 		"NotificationSettings":        {},
 		"FolderFullpath":              {},
+		"K8sStatus":                   {},
 	}
 
 	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
 	for range 1000 {

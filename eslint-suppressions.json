@@ -33,11 +33,6 @@
       "count": 4
     }
   },
-  "packages/grafana-data/src/datetime/moment_wrapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/events/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -1031,11 +1026,6 @@
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 5
-    }
-  },
-  "public/app/features/alerting/state/ThresholdMapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/alerting/state/alertDef.ts": {
@@ -2393,11 +2383,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/services/ReportRenderReadinessObserver.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/state/DashboardMigrator.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 10
@@ -3103,11 +3088,6 @@
     }
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/valueMatchersUI.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/calculateHeatmap/editor/helper.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
