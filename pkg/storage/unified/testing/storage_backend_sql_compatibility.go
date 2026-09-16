@@ -67,7 +67,6 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMod
 
 		kvOpts.RvManager = rvManager
 	case SQLKVBackendModeLeases:
-		kvOpts.EnableKVLeases = true
 		kvOpts.Holder = "test-holder-" + uuid.NewString()
 	case SQLKVBackendModeOptimisticLocking:
 	default:
