@@ -1,4 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
+import type { E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import v2DashboardWithTabsForSlug from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
@@ -99,7 +100,7 @@ test.describe(
       try {
         await flows.dashboards.importTestDashboard(
           page,
-          selectors,
+          selectors as unknown as E2ESelectorGroups,
           'url-sync-tabs-test',
           JSON.stringify(v2DashboardWithTabsForSlug)
         );
