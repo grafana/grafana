@@ -1646,11 +1646,6 @@
       "count": 2
     }
   },
-  "public/app/features/annotations/utils/savedQueryUtils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/FieldRenderer.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
