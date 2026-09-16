@@ -189,11 +189,28 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
+  // Reducing an action is asynchronous, so actions have to be queued to avoid running a reducer
+  // on a state that is being modified by a previous action. Without it actions dispatched while
+  // "init" is still awaiting the datasource would operate on an empty, uninitialized state.
+  let queue: Promise<unknown> = Promise.resolve();
 
-  const dispatch = async (action: AnyAction) => {
-    state = await reducer(action, state);
-    onChange(state);
+  const dispatch = (action: AnyAction) => {
+    const result = queue.then(async () => {
+      // All actions except "init" require an initialized state. They are dropped instead of
+      // throwing in case they are dispatched before "init" was dispatched at all.
+      if (!actions.init.match(action) && state.target === undefined) {
+        return;
+      }
+
+      state = await reducer(action, state);
+      onChange(state);
+    });
+
+    // Keep the queue alive when an action fails so subsequent actions are still reduced.
+    queue = result.catch(() => {});
+
+    return result;
   };
 
-  return dispatch as Dispatch<AnyAction>;
+  return dispatch as unknown as Dispatch<AnyAction>;
 };
