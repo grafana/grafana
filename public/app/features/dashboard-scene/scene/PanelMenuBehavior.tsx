@@ -73,23 +73,20 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       return;
     }
 
-    // A plan preview is a fully static surface: allowlist to View rather than guard each item
-    // (Edit, Get help/Inspect, Copy, legend/style, plugin extensions, ...) individually -- Edit
-    // slipped through the previous per-item guards entirely, and subtraction only ever closes
-    // items we thought of. View is safe to keep: unlike editPanel/editview, the viewPanel branch
-    // in URL sync never triggers edit mode. It does open the ordinary view-panel side pane (its
-    // header and "Back to dashboard" button, not a bare panel) -- but that pane's interactive
-    // sections are gated on the plugin's viewPanelOptions, which no in-tree plugin sets today, and
-    // that gate is not conditioned on isPlanning(), so a plugin that adopts it later would surface
-    // toggles here without anyone having thought about the preview case.
-    if (dashboard.isPlanning()) {
-      menu.setState({ items: [getViewMenuItem(panel)] });
-      return;
-    }
-
     const isEditingPanel = Boolean(dashboard.state.editPanel);
     if (!isEditingPanel) {
-      items.push(getViewMenuItem(panel));
+      items.push({
+        text: t('panel.header-menu.view', `View`),
+        iconClassName: 'eye',
+        shortcut: 'v',
+        href: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: panel.getPathId(),
+          editPanel: undefined,
+        }),
+        onClick: () => {
+          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+        },
+      });
     }
 
     if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
@@ -430,21 +427,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
-}
-
-function getViewMenuItem(panel: VizPanel): PanelMenuItem {
-  return {
-    text: t('panel.header-menu.view', `View`),
-    iconClassName: 'eye',
-    shortcut: 'v',
-    href: locationUtil.getUrlForPartial(locationService.getLocation(), {
-      viewPanel: panel.getPathId(),
-      editPanel: undefined,
-    }),
-    onClick: () => {
-      DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
-    },
-  };
 }
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
