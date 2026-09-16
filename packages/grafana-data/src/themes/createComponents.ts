@@ -24,19 +24,11 @@ const ThemeTableColorsInputSchema = z.object({
     .describe('Existing hover background for TableRT and other table consumers.')
     .optional(),
   rowSelected: z.string().describe('Existing selection background for TableRT.').optional(),
-  background: z.string().describe('Opaque background for body rows and frozen cells.').optional(),
-  backgroundOnCanvas: z
-    .string()
-    .describe('Opaque backing surface when the surrounding panel has no background.')
-    .optional(),
   headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
-  headerBorder: z.string().describe('Opaque header cell dividers.').optional(),
-  border: z.string().describe('Opaque body and footer dividers.').optional(),
   rowStripedBackground: z
     .string()
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
     .optional(),
-  rowHoverBackgroundSolid: z.string().describe('Opaque hover surface for an unstriped row.').optional(),
   rowHoverOverlay: z
     .string()
     .describe(
@@ -48,9 +40,6 @@ const ThemeTableColorsInputSchema = z.object({
     .string()
     .describe('Opaque background for a hovered selected row when not using the hover overlay.')
     .optional(),
-  headerDraggingBackground: z.string().describe('Opaque background of a header being dragged.').optional(),
-  headerDragTargetBackground: z.string().describe('Opaque background of a header that is a drop target.').optional(),
-  cellSelectionBorder: z.string().describe('Outline of the focused cell.').optional(),
 });
 
 type ThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -392,18 +381,10 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
   return {
     rowHoverBackground: colors.action.hover,
     rowSelected: colors.action.selected,
-    background,
-    backgroundOnCanvas: colors.background.canvas,
     headerBackground,
-    headerBorder: onBackground(colors.secondary.shade, headerBackground).toHexString(),
-    border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
-    rowHoverBackgroundSolid: onBackground(rowHoverOverlay, background).toHexString(),
     rowHoverOverlay,
     rowSelectedBackground,
     rowSelectedHoverBackground: emphasize(rowSelectedBackground, 0.05),
-    headerDraggingBackground: emphasize(headerBackground, 0.1),
-    headerDragTargetBackground: emphasize(headerBackground, 0.05),
-    cellSelectionBorder: colors.info.transparent,
   };
 }
