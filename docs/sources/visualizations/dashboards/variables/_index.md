@@ -63,7 +63,7 @@ Grafana supports two broad kinds of variables:
   - **Dashboard-scoped variables**: Variables that you create new in a dashboard. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
   - **Cross-dashboard variables**: Variables already defined by your organization that you can use across dashboards either globally or by folder. For configuration steps, refer to [Cross-dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/cross-dashboard-variables/).
 
-- **Built-in variables**: Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
+- **Built-in variables**: Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/).
 
 ## Choose a variable type
 
@@ -138,7 +138,7 @@ The following dashboards in Grafana Play provide examples of template variables:
 Use the following topics based on what you want to do next:
 
 - To create dashboard-specific variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
-- To use built-in variables for time ranges, users, organizations, or query intervals, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/).
+- To use built-in variables for time ranges, users, organizations, or query intervals, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/).
 - To configure chained variables, multi-property variables, or regular expression filtering, refer to [Advanced variable usage](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/).
 - To control how Grafana interpolates variable values, refer to [Variable syntax](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/).
 - To reorder, clone, delete, or inspect variable dependencies, refer to [Manage and inspect variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/inspect-variable/).
