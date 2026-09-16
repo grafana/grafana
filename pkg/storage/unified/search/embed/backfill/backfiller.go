@@ -443,6 +443,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 
 	items, err := builder.Extract(ctx, key, iter.Value(), folderTitle)
+	if errors.Is(err, embed.ErrSkip) {
+		statusLabel = "skipped_extract"
+		return nil
+	}
 	if err != nil {
 		// Extract is deterministic over stored bytes; failures are permanent.
 		b.skipPermanentItem("extract", namespace, group, res, name, err)
