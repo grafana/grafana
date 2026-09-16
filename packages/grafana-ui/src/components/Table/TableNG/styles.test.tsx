@@ -107,35 +107,36 @@ describe('table zebra colors', () => {
   });
 
   it.each([
-    ['dark', 'rgba(255, 255, 255, 0.12)'],
-    ['light', 'rgba(0, 0, 0, 0.12)'],
-    ['gildedgrove', 'rgba(254, 172, 52, 0.12)'],
+    ['dark', '#34363a'],
+    ['light', '#e0e0e0'],
+    ['gildedgrove', '#3B3527'],
     ['visual_refresh_dark', '#282d33'],
     ['visual_refresh_light', '#e4e3e2'],
-  ])('uses the %s hover fill for striped and selected rows', (id, overlay) => {
-    const { rowHoverBackground, selectedRowHoverBackground, gridClass } = gridVarsFor(getThemeById(id), {
+  ])('uses the %s hover background for striped rows', (id, hoverBackground) => {
+    const theme = getThemeById(id);
+    const { rowHoverBackground, selectedRowHoverBackground, gridClass } = gridVarsFor(theme, {
       zebraStriping: true,
       tableRefreshEnabled: true,
     });
 
-    expect(rowHoverBackground).toBe('var(--rdg-row-background-color)');
-    expect(selectedRowHoverBackground).toBe('var(--rdg-row-selected-background-color)');
+    expect(rowHoverBackground).toBe(hoverBackground);
+    expect(selectedRowHoverBackground).toBe(theme.colors.emphasize(theme.components.table.rowSelectedBackground, 0.05));
     const rule = hoverRuleFor(gridClass);
-    expect(rule?.style.getPropertyValue('background-image')).toBe(`linear-gradient(${overlay}, ${overlay})`);
+    expect(rule?.style.getPropertyValue('background-color')).toBe(hoverBackground);
     expect(rule?.selectorText).toBe(
-      `.${gridClass} .rdg-row:not(.rdg-summary-row, .table-ng-row-nested):hover>.rdg-cell`
+      `.${gridClass} .rdg-row:not(.rdg-summary-row, .table-ng-row-nested, [aria-selected='true']):hover>.rdg-cell`
     );
   });
 
   it.each([false, true])(
-    'honors custom stripe and overlay tokens in a transparent panel with visualDesignRefresh=%s',
+    'honors custom stripe and hover tokens in a transparent panel with visualDesignRefresh=%s',
     (visualDesignRefresh) => {
       const theme = createTheme({
         colors: { mode: 'dark', background: { canvas: '#123456', page: '#123456' } },
         components: {
           table: {
             rowStripedBackground: '#345678',
-            rowHoverOverlay: 'rgba(12, 34, 56, 0.2)',
+            rowHoverBackground: '#56789a',
           },
         },
       });
@@ -147,9 +148,7 @@ describe('table zebra colors', () => {
 
       expect(rowBackground).toBe('#123456');
       expect(rowBackgrounds[1]).toBe('rgb(52, 86, 120)');
-      expect(hoverRuleFor(gridClass)?.style.getPropertyValue('background-image')).toBe(
-        'linear-gradient(rgba(12, 34, 56, 0.2), rgba(12, 34, 56, 0.2))'
-      );
+      expect(hoverRuleFor(gridClass)?.style.getPropertyValue('background-color')).toBe('#56789a');
     }
   );
 

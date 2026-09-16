@@ -89,12 +89,6 @@ export const getGridStyles = memoize(
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
 
-    // Preserve each row's underlying surface when the stripe hover overlay is active.
-    const rowHoverBackgroundColor = zebraStriping ? 'var(--rdg-row-background-color)' : table.rowHoverSurface;
-    const selectedRowHoverColor = zebraStriping
-      ? 'var(--rdg-row-selected-background-color)'
-      : table.rowSelectedHoverBackground;
-
     return {
       grid: css({
         '--rdg-background-color': bgColor,
@@ -110,9 +104,9 @@ export const getGridStyles = memoize(
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        '--rdg-row-hover-background-color': rowHoverBackgroundColor,
+        '--rdg-row-hover-background-color': table.rowHoverBackground,
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
-        '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
+        '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
         // give the pagination controls their room back, so the grid and the pager together still fit
         // the panel (see getPaginationChromeHeight)
@@ -184,11 +178,11 @@ export const getGridStyles = memoize(
           },
         }),
 
-        // Overlay cells so striped and selected rows can use the theme's hover fill, including frozen
-        // cells. Nested containers must be excluded: hovering their children also hovers them.
+        // Repeat the hover surface on striped cells, including frozen cells. Nested containers must
+        // be excluded because hovering their children also hovers the expansion container.
         ...(zebraStriping && {
-          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}):hover > .rdg-cell`]: {
-            backgroundImage: `linear-gradient(${table.rowHoverOverlay}, ${table.rowHoverOverlay})`,
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell`]: {
+            backgroundColor: table.rowHoverBackground,
           },
         }),
 

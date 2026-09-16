@@ -1,7 +1,7 @@
 import { mergeWith } from 'lodash';
 import * as z from 'zod';
 
-import { emphasize, onBackground } from './colorManipulator';
+import { onBackground } from './colorManipulator';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
@@ -19,10 +19,7 @@ interface TagColors {
 }
 
 const ThemeTableColorsInputSchema = z.object({
-  rowHoverBackground: z
-    .string()
-    .describe('Existing hover background for TableRT and other table consumers.')
-    .optional(),
+  rowHoverBackground: z.string().describe('Opaque background for a hovered, unselected row.').optional(),
   rowSelected: z.string().describe('Existing selection background for TableRT.').optional(),
   headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
   border: z.string().describe('Opaque body and footer dividers.').optional(),
@@ -30,18 +27,7 @@ const ThemeTableColorsInputSchema = z.object({
     .string()
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
     .optional(),
-  rowHoverSurface: z.string().describe('Opaque hover surface for an unstriped row.').optional(),
-  rowHoverOverlay: z
-    .string()
-    .describe(
-      'Hover fill composited over plain, striped or selected rows; themes may use an opaque or translucent color.'
-    )
-    .optional(),
   rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
-  rowSelectedHoverBackground: z
-    .string()
-    .describe('Opaque background for a hovered selected row when not using the hover overlay.')
-    .optional(),
 });
 
 type ThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -379,16 +365,14 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
       ? onBackground(colors.warning.main, background).darken(37).toHexString()
       : onBackground(colors.warning.main, background).lighten(25).toHexString();
   const rowHoverOverlay = colors.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+  const rowHoverBackground = onBackground(rowHoverOverlay, background).toHexString();
 
   return {
-    rowHoverBackground: colors.action.hover,
+    rowHoverBackground,
     rowSelected: colors.action.selected,
     headerBackground,
     border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
-    rowHoverSurface: onBackground(rowHoverOverlay, background).toHexString(),
-    rowHoverOverlay,
     rowSelectedBackground,
-    rowSelectedHoverBackground: emphasize(rowSelectedBackground, 0.05),
   };
 }
