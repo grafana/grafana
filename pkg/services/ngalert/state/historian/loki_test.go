@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"slices"
@@ -107,6 +108,25 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.Equal(t, data.Labels{"instance": "server-1"}, entry.EvalMatches[0].Labels)
 			require.NotNil(t, entry.EvalMatches[0].Value)
 			require.Equal(t, 42.0, *entry.EvalMatches[0].Value)
+		})
+
+		t.Run("includes classic condition matches with special values", func(t *testing.T) {
+			nan, inf, ninf := math.NaN(), math.Inf(1), math.Inf(-1)
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				EvalMatches: []state.EvaluationMatch{
+					{RefID: "B0", Metric: "nan", Value: &nan},
+					{RefID: "B1", Metric: "inf", Value: &inf},
+					{RefID: "B2", Metric: "ninf", Value: &ninf},
+				},
+			})
+
+			entry := requireSingleEntry(t, StatesToStream(createTestRule(), states, nil, log.NewNopLogger()))
+
+			require.Len(t, entry.EvalMatches, 3)
+			require.True(t, math.IsNaN(*entry.EvalMatches[0].Value))
+			require.True(t, math.IsInf(*entry.EvalMatches[1].Value, 1))
+			require.True(t, math.IsInf(*entry.EvalMatches[2].Value, -1))
 		})
 
 		t.Run("keeps matches tied to each evaluation transition", func(t *testing.T) {

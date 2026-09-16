@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -33,6 +34,63 @@ type EvaluationMatch struct {
 	Metric string      `json:"metric"`
 	Labels data.Labels `json:"labels"`
 	Value  *float64    `json:"value,string"`
+}
+
+func (m EvaluationMatch) MarshalJSON() ([]byte, error) {
+	var value *string
+	if m.Value != nil {
+		formatted := strconv.FormatFloat(*m.Value, 'f', -1, 64)
+		value = &formatted
+	}
+	return json.Marshal(struct {
+		RefID  string      `json:"refId"`
+		Metric string      `json:"metric"`
+		Labels data.Labels `json:"labels"`
+		Value  *string     `json:"value"`
+	}{
+		RefID:  m.RefID,
+		Metric: m.Metric,
+		Labels: m.Labels,
+		Value:  value,
+	})
+}
+
+func (m *EvaluationMatch) UnmarshalJSON(rawData []byte) error {
+	var raw struct {
+		RefID  string          `json:"refId"`
+		Metric string          `json:"metric"`
+		Labels data.Labels     `json:"labels"`
+		Value  json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(rawData, &raw); err != nil {
+		return err
+	}
+
+	m.RefID = raw.RefID
+	m.Metric = raw.Metric
+	m.Labels = raw.Labels
+	if len(raw.Value) == 0 || string(raw.Value) == "null" {
+		m.Value = nil
+		return nil
+	}
+
+	var value float64
+	var text string
+	if err := json.Unmarshal(raw.Value, &text); err == nil {
+		if text == "" {
+			m.Value = nil
+			return nil
+		}
+		parsed, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return err
+		}
+		value = parsed
+	} else if err := json.Unmarshal(raw.Value, &value); err != nil {
+		return err
+	}
+	m.Value = &value
+	return nil
 }
 
 type State struct {
