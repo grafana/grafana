@@ -1,6 +1,7 @@
 import { customAlphabet } from 'nanoid';
 
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -122,6 +123,10 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         return;
       }
 
+      // Panel cells are built synchronously below, and their data provider reads the panel metas map
+      // to decide whether a panel takes queries at all.
+      await getPanelPluginMetasMap();
+
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
       const scene = transformNotebookToScene(structuredClone(notebook));
@@ -160,10 +165,16 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
    * uid and this notebook has none.
    */
-  public newNotebook(): void {
+  public async newNotebook(): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
-    // with whichever one the page was previously asked for.
+    // with whichever one the page was previously asked for. Bumped before the await, or a load
+    // starting during it would not be superseded.
     this.requestSeq++;
+
+    // The blank notebook holds no panels itself, but this route loads nothing else, and the first
+    // visualization block someone inserts is built synchronously by the layout manager with no
+    // await of its own.
+    await getPanelPluginMetasMap();
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),

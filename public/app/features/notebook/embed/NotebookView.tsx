@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -125,7 +125,31 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
+/**
+ * Waits for the panel plugin metas before building anything. A draft is built synchronously, and a
+ * host can render one on a route where nothing has loaded them: without the map, a panel cell that
+ * takes no queries would be given a query runner. Splitting the wait from the build below is what
+ * keeps that build a one-shot — the inner component mounts once, with the metas already in hand.
+ */
+function DraftNotebookView(props: DraftNotebookViewProps) {
+  const { value: panelMetas, error } = usePanelPluginMetasMap();
+
+  if (error) {
+    return <NotebookViewError error={{ message: error.message }} />;
+  }
+
+  if (!panelMetas) {
+    return (
+      <Centered>
+        <PageLoader />
+      </Centered>
+    );
+  }
+
+  return <DraftNotebookDocument {...props} />;
+}
+
+function DraftNotebookDocument({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
