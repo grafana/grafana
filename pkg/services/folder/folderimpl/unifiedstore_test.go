@@ -274,7 +274,6 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -292,18 +291,19 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
 			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Fields: []*resourcepb.ResourceSearchField{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
-			},
-			Rows: []*resourcepb.ResourceSearchRow{
-				{
-					Key:    &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				{
-					Key:    &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
+					{
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
 				},
 			},
 			TotalHits: 1,
@@ -337,7 +337,6 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -383,7 +382,6 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -517,7 +515,6 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -1605,18 +1602,16 @@ func TestGetFoldersMetadata(t *testing.T) {
 
 	expectSearchAll := func(mockCli *client.MockK8sHandler) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
-			Offset:       0,
+			Options: &resourcepb.ListOptions{},
+			Limit:   searchPageSize,
+			Offset:  0,
 		}).Return(searchResponse, nil).Once()
 		// searchAllFolders pages until an empty page, so it issues a trailing
 		// Search past the last hit (offset = number of hits returned above).
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
-			Offset:       int64(len(searchResponse.Results.Rows)),
+			Options: &resourcepb.ListOptions{},
+			Limit:   searchPageSize,
+			Offset:  int64(len(searchResponse.Results.Rows)),
 		}).Return(emptyResponse, nil).Once()
 	}
 
