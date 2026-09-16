@@ -97,6 +97,7 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
+    | "grafana.configFromQueryDynamicName"
     | "grafana.thresholdsInterpolation"
     | "grafana.pluginPathNesting"
     | "grafana.unifiedDataSourcePicker"
