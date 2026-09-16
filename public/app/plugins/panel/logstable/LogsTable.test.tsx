@@ -35,6 +35,7 @@ import { getPanelData } from './testsUtils';
 
 jest.mock('app/features/logs/utils', () => ({
   ...jest.requireActual('app/features/logs/utils'),
+  copyLogs: jest.fn(),
   downloadLogs: jest.fn(),
 }));
 
