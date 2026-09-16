@@ -757,8 +757,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // All save entry points, including keyboard shortcuts and exit-edit confirmation,
-    // share this guard to keep unbuilt plans from being saved.
+    // Keeps the drawer from opening on an unbuilt plan. The guarantee that a plan can never
+    // actually persist lives at the real chokepoint, `onSaveDashboard` in useSaveDashboard.ts —
+    // some callers (e.g. JsonModelEditView) invoke that directly without going through this drawer.
     if (!this.isPlanningActionAllowed('save-dashboard')) {
       return;
     }
