@@ -4,25 +4,26 @@ import { CoreApp, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, InlineField, InlineFieldRow, Input, Select, TextLink } from '@grafana/ui';
 
-import { type ExpressionQuery, type ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
+import { type ExpressionQuerySettings, type ReduceExpressionQuery, toReduceReducerId } from '../schemas/reduce';
+import { ReducerMode, reducerModes, reducerTypes } from '../types';
 
 interface Props {
   app?: CoreApp;
   labelWidth?: number | 'auto';
   refIds: Array<SelectableValue<string>>;
-  query: ExpressionQuery;
-  onChange: (query: ExpressionQuery) => void;
+  query: ReduceExpressionQuery;
+  onChange: (query: ReduceExpressionQuery) => void;
 }
 
 export const Reduce = ({ labelWidth = 'auto', onChange, app, refIds, query }: Props) => {
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
-    onChange({ ...query, expression: value.value });
+    onChange({ ...query, expression: value.value ?? '' });
   };
 
   const onSelectReducer = (value: SelectableValue<string>) => {
-    onChange({ ...query, reducer: value.value });
+    onChange({ ...query, reducer: toReduceReducerId(value.value) });
   };
 
   const onSettingsChanged = (settings: ExpressionQuerySettings) => {

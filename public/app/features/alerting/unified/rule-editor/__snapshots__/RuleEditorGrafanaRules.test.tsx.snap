@@ -71,25 +71,6 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -113,19 +94,6 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {

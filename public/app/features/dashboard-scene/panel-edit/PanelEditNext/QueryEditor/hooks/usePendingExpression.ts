@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { type ExpressionQueryType } from 'app/features/expressions/types';
-import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 
 import { type PendingExpression } from '../QueryEditorContext';
 
@@ -27,11 +26,7 @@ export function usePendingExpression({ addQuery, onCardSelectionChange }: UsePen
       const insertAfterRefId = pendingExpression?.insertAfter;
       setPendingExpressionState(null);
 
-      const baseQuery = expressionDatasource.newQuery();
-      const queryWithType = { ...baseQuery, type };
-      const queryWithDefaults = getDefaults(queryWithType);
-
-      const newRefId = addQuery(queryWithDefaults, insertAfterRefId);
+      const newRefId = addQuery(expressionDatasource.newQuery({ type }), insertAfterRefId);
       if (newRefId) {
         onCardSelectionChange(newRefId, null);
       }

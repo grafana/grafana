@@ -20,7 +20,14 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import {
+  type ExpressionQuery,
+  encodeExpressionQuery,
+  parseExpressionQuery,
+} from 'app/features/expressions/schemas/expressionQuery';
+import { makeReduceExpression, makeThresholdExpression } from 'app/features/expressions/schemas/factories';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -38,7 +45,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { type LokiQuery } from '../../../loki-helpers/types';
-import { EvalFunction } from '../../state/alertDef';
 import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
@@ -196,7 +202,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        data: queries.map(fixBothInstantAndRangeQuery),
+        data: queries.map(fixBothInstantAndRangeQuery).map(encodeExpressionModel),
         is_paused: Boolean(isPaused),
 
         // Alerting rule specific
@@ -221,7 +227,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        data: queries.map(fixBothInstantAndRangeQuery),
+        data: queries.map(fixBothInstantAndRangeQuery).map(encodeExpressionModel),
         is_paused: Boolean(isPaused),
 
         // Recording rule specific
@@ -339,7 +345,7 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
-  const normalizedRule = fixMissingRefIdsInExpressionModel(rule);
+  const normalizedRule = parseExpressionModels(fixMissingRefIdsInExpressionModel(rule));
 
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(normalizedRule);
 
@@ -487,11 +493,41 @@ export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: 
   });
 }
 
+/**
+ * Reads a saved rule's expressions through the expression schemas, so the rest of the app gets
+ * them in one shape: fields older versions left out are filled in, and fields we do not know about
+ * are passed along untouched.
+ *
+ * An expression we cannot read is left exactly as it was - `setQueryEditorSettings` already deals
+ * with those, including sorting out which query is the condition.
+ */
+export function parseExpressionModels<T extends RulerRuleDTO>(rule: T): T {
+  if (!rulerRuleType.grafana.rule(rule)) {
+    return rule;
+  }
+
+  return produce(rule, (draft) => {
+    draft.grafana_alert.data.forEach((query, index) => {
+      if (!isExpressionQuery(query.model)) {
+        return;
+      }
+
+      const parsed = parseExpressionQuery(query.model);
+
+      if (parsed) {
+        draft.grafana_alert.data[index] = { ...query, model: parsed };
+      }
+    });
+  });
+}
+
 export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace: string): RuleFormValues {
   const isGrafanaRecordingRule = rulerRuleType.grafana.recordingRule(rule);
   const defaultFormValues = getDefaultFormValues(isGrafanaRecordingRule ? RuleFormType.grafanaRecording : undefined);
 
-  const ga = rule.grafana_alert;
+  const normalizedRule = parseExpressionModels(fixMissingRefIdsInExpressionModel(rule));
+
+  const ga = normalizedRule.grafana_alert;
   const duration = rule.for;
   const keepFiringFor = rule.keep_firing_for;
   const annotations = rule.annotations;
@@ -612,70 +648,27 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   ];
 };
 
+/** What the expression models themselves carry as their data source. */
+const expressionModelDatasource = {
+  uid: ExpressionDatasourceUID,
+  type: ExpressionDatasourceRef.type,
+};
+
 export const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
   // If a third parameter is provided, use it as the source query refId, otherwise default to 'A'
   const sourceRefId = refIds.length === 3 ? refIds[2] : 'A';
 
-  const reduceExpression: ExpressionQuery = {
-    refId: refIds[0],
-    type: ExpressionQueryType.reduce,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    reducer: 'last',
-    expression: sourceRefId,
-  };
+  const reduceExpression = makeReduceExpression(
+    { refId: refOne, datasource: expressionModelDatasource },
+    { expression: sourceRefId, reducer: 'last' }
+  );
 
-  const thresholdExpression: ExpressionQuery = {
-    refId: refTwo,
-    type: ExpressionQueryType.threshold,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [0],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [refTwo],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    expression: refOne,
-  };
+  const thresholdExpression = makeThresholdExpression(
+    { refId: refTwo, datasource: expressionModelDatasource },
+    { expression: refOne }
+  );
 
   return [
     {
@@ -694,35 +687,10 @@ export const getDefaultExpressions = (...refIds: [string, string] | [string, str
 };
 
 const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<ExpressionQuery>> => {
-  const reduceExpression: ExpressionQuery = {
-    refId: refOne,
-    type: ExpressionQueryType.reduce,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    reducer: 'last',
-    expression: 'A',
-  };
+  const reduceExpression = makeReduceExpression(
+    { refId: refOne, datasource: expressionModelDatasource },
+    { expression: 'A', reducer: 'last' }
+  );
 
   return [
     {
@@ -948,6 +916,25 @@ function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number):
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+/**
+ * Writes an expression back out the way the backend wants it: `settings` left out rather than sent
+ * as null, the `$` put back, and unknown fields carried through. Data queries are left alone.
+ */
+export function encodeExpressionModel(query: AlertQuery): AlertQuery {
+  if (!isExpressionQuery(query.model)) {
+    return query;
+  }
+
+  const parsed = parseExpressionQuery(query.model);
+
+  // Nothing we can read, so nothing to re-encode; send it on as-is rather than dropping it.
+  if (!parsed) {
+    return query;
+  }
+
+  return { ...query, model: encodeExpressionQuery(parsed) };
 }
 
 export function fixBothInstantAndRangeQuery(query: AlertQuery) {

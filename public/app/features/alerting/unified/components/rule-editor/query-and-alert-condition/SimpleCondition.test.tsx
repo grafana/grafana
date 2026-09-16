@@ -2,10 +2,9 @@ import { render, screen } from 'test/test-utils';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
+import { type ExpressionQuery, parseExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { mockReduceExpression, mockThresholdExpression } from '../../../mocks';
 import { type SimpleCondition } from '../../../types/rule-form';
 
 import { SimpleConditionEditor } from './SimpleCondition';
@@ -15,128 +14,101 @@ const defaultSimpleCondition: SimpleCondition = {
   evaluator: { params: [0], type: EvalFunction.IsAbove },
 };
 
-function buildReduceExpressionWithConditions(
-  conditionOverrides?: Array<Partial<ClassicCondition>>
-): AlertQuery<ExpressionQuery> {
-  const conditions = conditionOverrides?.map((override) => ({
-    type: 'query' as const,
-    evaluator: { params: [0], type: EvalFunction.IsAbove },
-    query: { params: ['A'] },
-    ...override,
-  }));
+/**
+ * Builds a query the way the editor receives one: a raw model off the API, read through the same
+ * parse the rest of the app uses. The odd shapes below are all things real saved rules contain.
+ */
+function savedExpression(refId: string, model: unknown): AlertQuery<ExpressionQuery> {
+  const parsed = parseExpressionQuery(model);
 
-  return mockReduceExpression({
-    expression: 'A',
-    conditions: conditions as ClassicCondition[],
-  });
+  if (!parsed) {
+    throw new Error('fixture did not parse');
+  }
+
+  return { refId, queryType: 'expression', datasourceUid: '__expr__', model: parsed };
+}
+
+const threshold = savedExpression('C', {
+  type: 'threshold',
+  refId: 'C',
+  expression: 'B',
+  conditions: [{ evaluator: { type: 'gt', params: [0] } }],
+});
+
+function renderEditor(expressionQueries: Array<AlertQuery<ExpressionQuery>>, dispatch = jest.fn()) {
+  return render(
+    <SimpleConditionEditor
+      simpleCondition={defaultSimpleCondition}
+      onChange={jest.fn()}
+      expressionQueriesList={expressionQueries}
+      dispatch={dispatch}
+    />
+  );
 }
 
 describe('SimpleConditionEditor', () => {
-  it('should render without crashing when reduce expression conditions have no reducer object', () => {
-    const expressionQueries = [buildReduceExpressionWithConditions([{}]), mockThresholdExpression({ expression: 'B' })];
+  it('renders a reduce and threshold pair', () => {
+    const reduce = savedExpression('B', { type: 'reduce', refId: 'B', expression: 'A', reducer: 'last' });
 
-    expect(() =>
-      render(
-        <SimpleConditionEditor
-          simpleCondition={defaultSimpleCondition}
-          onChange={jest.fn()}
-          expressionQueriesList={expressionQueries}
-          dispatch={jest.fn()}
-        />
-      )
-    ).not.toThrow();
-  });
-
-  it('should render without crashing when reduce expression has empty conditions array', () => {
-    const expressionQueries = [
-      mockReduceExpression({ expression: 'A', conditions: [] }),
-      mockThresholdExpression({ expression: 'B' }),
-    ];
-
-    expect(() =>
-      render(
-        <SimpleConditionEditor
-          simpleCondition={defaultSimpleCondition}
-          onChange={jest.fn()}
-          expressionQueriesList={expressionQueries}
-          dispatch={jest.fn()}
-        />
-      )
-    ).not.toThrow();
-  });
-
-  it('should render without crashing when reduce expression has no conditions', () => {
-    const expressionQueries = [mockReduceExpression({ expression: 'A' }), mockThresholdExpression({ expression: 'B' })];
-
-    expect(() =>
-      render(
-        <SimpleConditionEditor
-          simpleCondition={defaultSimpleCondition}
-          onChange={jest.fn()}
-          expressionQueriesList={expressionQueries}
-          dispatch={jest.fn()}
-        />
-      )
-    ).not.toThrow();
-  });
-
-  it('should dispatch updated expression when changing reducer with missing conditions[0].reducer', async () => {
-    const dispatch = jest.fn();
-    const expressionQueries = [buildReduceExpressionWithConditions([{}]), mockThresholdExpression({ expression: 'B' })];
-
-    const { user } = render(
-      <SimpleConditionEditor
-        simpleCondition={defaultSimpleCondition}
-        onChange={jest.fn()}
-        expressionQueriesList={expressionQueries}
-        dispatch={dispatch}
-      />
-    );
-
-    // The WHEN select renders a react-select input — there is only one combobox in this component
-    const whenSelect = screen.getByRole('combobox');
-    await user.click(whenSelect);
-
-    const meanOption = await screen.findByText('Mean');
-    await user.click(meanOption);
-
-    // Verify dispatch was called — no crash occurred and the expression was updated
-    expect(dispatch).toHaveBeenCalled();
-  });
-
-  it('should render without crashing when threshold expression has empty conditions', () => {
-    const expressionQueries = [
-      mockReduceExpression({ expression: 'A' }),
-      mockThresholdExpression({ expression: 'B', conditions: [] }),
-    ];
-
-    expect(() =>
-      render(
-        <SimpleConditionEditor
-          simpleCondition={defaultSimpleCondition}
-          onChange={jest.fn()}
-          expressionQueriesList={expressionQueries}
-          dispatch={jest.fn()}
-        />
-      )
-    ).not.toThrow();
-  });
-
-  it('should render and function correctly with fully-populated expression data', () => {
-    const expressionQueries = [
-      buildReduceExpressionWithConditions([{ reducer: { params: [], type: 'last' } }]),
-      mockThresholdExpression({ expression: 'B' }),
-    ];
-
-    render(
-      <SimpleConditionEditor
-        simpleCondition={defaultSimpleCondition}
-        onChange={jest.fn()}
-        expressionQueriesList={expressionQueries}
-        dispatch={jest.fn()}
-      />
-    );
+    renderEditor([reduce, threshold]);
 
     expect(screen.getByText('Alert condition')).toBeInTheDocument();
+  });
+
+  it('renders when the saved reduce carries the leftover conditions array older versions wrote', () => {
+    const reduce = savedExpression('B', {
+      type: 'reduce',
+      refId: 'B',
+      expression: 'A',
+      reducer: 'last',
+      // Never read by anything, but plenty of saved rules have it - including ones where the
+      // condition has no reducer of its own.
+      conditions: [{ type: 'query', evaluator: { params: [0], type: 'gt' }, query: { params: ['A'] } }],
+    });
+
+    expect(() => renderEditor([reduce, threshold])).not.toThrow();
+  });
+
+  it('renders when the saved reduce has an empty conditions array', () => {
+    const reduce = savedExpression('B', {
+      type: 'reduce',
+      refId: 'B',
+      expression: 'A',
+      reducer: 'last',
+      conditions: [],
+    });
+
+    expect(() => renderEditor([reduce, threshold])).not.toThrow();
+  });
+
+  it('renders when the saved reduce has no reducer at all', () => {
+    const reduce = savedExpression('B', { type: 'reduce', refId: 'B', expression: 'A' });
+
+    expect(() => renderEditor([reduce, threshold])).not.toThrow();
+  });
+
+  it('renders when the saved threshold has no conditions', () => {
+    const emptyThreshold = savedExpression('C', {
+      type: 'threshold',
+      refId: 'C',
+      expression: 'B',
+      conditions: [],
+    });
+    const reduce = savedExpression('B', { type: 'reduce', refId: 'B', expression: 'A', reducer: 'last' });
+
+    expect(() => renderEditor([reduce, emptyThreshold])).not.toThrow();
+  });
+
+  it('dispatches an update when the reducer is changed', async () => {
+    const dispatch = jest.fn();
+    const reduce = savedExpression('B', { type: 'reduce', refId: 'B', expression: 'A', reducer: 'last' });
+
+    const { user } = renderEditor([reduce, threshold], dispatch);
+
+    // The WHEN select renders a react-select input — there is only one combobox in this component
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('Mean'));
+
+    expect(dispatch).toHaveBeenCalled();
   });
 });

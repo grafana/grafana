@@ -6,13 +6,15 @@ import {
   type DataSourcePluginMeta,
   type PluginExtensionLink,
   PluginExtensionTypes,
-  ReducerID,
 } from '@grafana/data';
 import { type DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { type NotifiersState, type ReceiversState } from 'app/features/alerting/unified/types/alerting';
-import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import type { ReduceExpressionQuery } from 'app/features/expressions/schemas/reduce';
+import type { ResampleExpressionQuery } from 'app/features/expressions/schemas/resample';
+import { type ThresholdExpressionQuery, defaultThresholdCondition } from 'app/features/expressions/schemas/threshold';
+import { ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import {
   type AlertManagerCortexConfig,
   AlertState,
@@ -758,37 +760,47 @@ export const mockDataQuery = (partial: Partial<AlertDataQuery> = {}): AlertQuery
   model: { refId: 'A', ...partial },
 });
 
-export const mockReduceExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+export const mockReduceExpression = (
+  partial: Partial<ReduceExpressionQuery> = {}
+): AlertQuery<ReduceExpressionQuery> => ({
   refId: 'B',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
     refId: 'B',
+    expression: 'A',
     settings: { mode: ReducerMode.Strict },
-    reducer: ReducerID.last,
+    reducer: 'last',
     ...partial,
   },
 });
 
-export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+export const mockThresholdExpression = (
+  partial: Partial<ThresholdExpressionQuery> = {}
+): AlertQuery<ThresholdExpressionQuery> => ({
   refId: 'C',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
     refId: 'C',
+    expression: 'B',
+    conditions: [structuredClone(defaultThresholdCondition)],
     ...partial,
   },
 });
 
-export const mockResampleExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+export const mockResampleExpression = (
+  partial: Partial<ResampleExpressionQuery> = {}
+): AlertQuery<ResampleExpressionQuery> => ({
   refId: 'B',
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.resample,
     refId: 'B',
+    expression: 'A',
     window: '10s',
     downsampler: 'mean',
     upsampler: 'fillna',

@@ -1,84 +1,16 @@
-import { ReducerID } from '@grafana/data';
-
 import { EvalFunction } from '../../alerting/state/alertDef';
 import { isReducerType } from '../guards';
-import {
-  type ClassicCondition,
-  type ExpressionQuery,
-  ExpressionQueryType,
-  ReducerMode,
-  type ReducerType,
-} from '../types';
-
-export const getDefaults = (query: ExpressionQuery) => {
-  switch (query.type) {
-    case ExpressionQueryType.reduce:
-      if (!query.reducer) {
-        query.reducer = ReducerID.mean;
-      }
-
-      break;
-
-    case ExpressionQueryType.resample:
-      if (!query.downsampler) {
-        query.downsampler = ReducerID.mean;
-      }
-
-      if (!query.upsampler) {
-        query.upsampler = 'fillna';
-      }
-
-      query.reducer = undefined;
-      break;
-
-    case ExpressionQueryType.math:
-      query.expression = undefined;
-      break;
-
-    case ExpressionQueryType.classic:
-      if (!query.conditions) {
-        query.conditions = [defaultCondition];
-      } else {
-        // API-loaded rules may have conditions without a reducer object (e.g. provisioned
-        // rules or rules created by older versions). Backfill with the default reducer
-        // to prevent downstream components from crashing on undefined access.
-        for (const condition of query.conditions) {
-          if (!condition.reducer) {
-            condition.reducer = { params: [], type: 'avg' };
-          }
-        }
-      }
-
-      break;
-
-    default:
-      query.reducer = undefined;
-  }
-
-  return query;
-};
-
-export const defaultCondition: ClassicCondition = {
-  type: 'query',
-  reducer: {
-    params: [],
-    type: 'avg',
-  },
-  operator: {
-    type: 'and',
-  },
-  query: { params: [] },
-  evaluator: {
-    params: [0, 0],
-    type: EvalFunction.IsAbove,
-  },
-};
+import type { ClassicReducerId } from '../schemas/common';
+import type { ExpressionQuery } from '../schemas/expressionQuery';
+import type { ReduceExpressionQuery } from '../schemas/reduce';
+import type { ThresholdExpressionQuery } from '../schemas/threshold';
+import { ExpressionQueryType, ReducerMode } from '../types';
 
 /**
- * Returns the ReducerType if the value is a valid ReducerType, otherwise undefined
+ * Returns the reducer id if the value is one a classic condition accepts, otherwise undefined
  * @param value string
  */
-export function getReducerType(value: string): ReducerType | undefined {
+export function getReducerType(value: string): ClassicReducerId | undefined {
   if (isReducerType(value)) {
     return value;
   }
@@ -94,11 +26,11 @@ export function isStrictReducer(expressionModel: ExpressionQuery): boolean {
   return mode === ReducerMode.Strict || mode === undefined;
 }
 
-export function isReducerExpression(expressionModel: ExpressionQuery) {
+export function isReducerExpression(expressionModel: ExpressionQuery): expressionModel is ReduceExpressionQuery {
   return expressionModel.type === ExpressionQueryType.reduce;
 }
 
-export function isThresholdExpression(expressionModel: ExpressionQuery) {
+export function isThresholdExpression(expressionModel: ExpressionQuery): expressionModel is ThresholdExpressionQuery {
   return expressionModel.type === ExpressionQueryType.threshold;
 }
 
