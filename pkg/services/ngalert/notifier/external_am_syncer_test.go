@@ -768,7 +768,11 @@ func TestSyncExternalAMs_ProxyLocal404ClassifiedAsFetchFailure(t *testing.T) {
 	// 404 (plain text, see the sibling test above) — that's what fetchMimirConfig
 	// tells the two apart on.
 	proxy := newFakeDatasourceProxy()
-	proxy.setResponse("mimir-uid", http.StatusNotFound, []byte(`{"message":"Unable to find datasource plugin","traceID":""}`))
+	// The exact bytes ReqContext.JsonApiErr(404, "Unable to find datasource
+	// plugin", err) produces in a non-PROD build (indented, trailing
+	// newline) — captured from a real call, not hand-typed, so this stays
+	// honest about the real encoder's output shape.
+	proxy.setResponse("mimir-uid", http.StatusNotFound, []byte("{\n  \"message\": \"Unable to find datasource plugin\",\n  \"traceID\": \"\"\n}\n"))
 
 	ds := makeMimirDS("mimir-uid", 1)
 	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
@@ -784,6 +788,51 @@ func TestSyncExternalAMs_ProxyLocal404ClassifiedAsFetchFailure(t *testing.T) {
 	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "proxy-local 404 must not write history")
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
+}
+
+func TestProxyErrorMessage(t *testing.T) {
+	cases := []struct {
+		name    string
+		body    string
+		wantOK  bool
+		wantMsg string
+	}{
+		{
+			name:    "real JsonApiErr envelope (captured from an actual call, indented)",
+			body:    "{\n  \"message\": \"Unable to find datasource plugin\",\n  \"traceID\": \"\"\n}\n",
+			wantOK:  true,
+			wantMsg: "Unable to find datasource plugin",
+		},
+		{
+			name:   "real JsonApiErr envelope, compact",
+			body:   `{"message":"Access denied to datasource","traceID":"abc123"}`,
+			wantOK: true, wantMsg: "Access denied to datasource",
+		},
+		{
+			name:   "Mimir's real plain-text 404 body",
+			body:   "alertmanager storage object not found",
+			wantOK: false,
+		},
+		{
+			name:   "empty body",
+			body:   "",
+			wantOK: false,
+		},
+		{
+			name:   "valid JSON without a message field",
+			body:   `{"error":"not found"}`,
+			wantOK: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			msg, ok := proxyErrorMessage([]byte(tc.body))
+			assert.Equal(t, tc.wantOK, ok)
+			if tc.wantOK {
+				assert.Equal(t, tc.wantMsg, msg)
+			}
+		})
+	}
 }
 
 func TestSyncExternalAMs_InvalidConfigClassifiedOnMetric(t *testing.T) {
