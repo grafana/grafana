@@ -70,7 +70,7 @@ export function getFocusStyles(theme: GrafanaTheme2) {
     boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px ${boxShadowPlacement}px ${theme.colors.accent.main}`,
     transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
     transitionDuration: '0.2s',
-    transitionProperty: 'outline, outline-offset, box-shadow',
+    transitionProperty: 'box-shadow',
   };
 }
 
