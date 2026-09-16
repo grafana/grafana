@@ -93,7 +93,7 @@ You can also click the add **Add variable** icon at the top of the dashboard (pl
 1. Enter a **Name** for the variable.
 1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
-   If you don't enter a display name, then the drop-down list label is the variable name.
+   If you leave this empty, then the variable name is used.
 
 1. (Optional) In the **Description** field, enter a description of the variable. The description appears as an info icon tooltip next to the variable name on the dashboard.
 
