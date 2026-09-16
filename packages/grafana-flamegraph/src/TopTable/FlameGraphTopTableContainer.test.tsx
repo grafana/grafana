@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -7,7 +7,7 @@ import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
-import { ColorScheme } from '../types';
+import { ColorScheme, ColorSchemeDiff } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
@@ -91,6 +91,216 @@ describe('FlameGraphTopTableContainer', () => {
   });
 });
 
+describe('FlameGraphTopTableContainer with "other" data', () => {
+  // A minimal flame graph whose "other" node aggregates the truncated part: self and total are both 3, while
+  // the smallest node in the whole graph (lib, total: 2) is the truncation threshold.
+  const dataWithOther = createDataFrame({
+    fields: [
+      { name: 'level', values: [0, 1, 1, 1] },
+      { name: 'value', values: [10, 5, 3, 2] },
+      { name: 'self', values: [0, 5, 3, 2] },
+      { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+    ],
+  });
+
+  const setup = () => {
+    const container = new FlameGraphDataContainer(dataWithOther, { collapsing: true });
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    const renderResult = render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    return { renderResult, mocks: { onSearch, onSandwich } };
+  };
+
+  it('should render a note about the truncated "other" data instead of a row', async () => {
+    mockTableSize();
+    setup();
+
+    // "other" is no longer rendered as a row in the table.
+    expect(screen.queryByText('other')).not.toBeInTheDocument();
+    expect(screen.getByText('app')).toBeInTheDocument();
+    expect(screen.getByText('lib')).toBeInTheDocument();
+
+    // Instead a note is rendered below the table, explaining what "other" is. 3 is the total that was truncated
+    // into "other" and 2 the minimum total in the flame graph (the truncation threshold).
+    const note = screen.getByTestId('topTable-other-note');
+    expect(note.textContent).toContain('has been truncated');
+    expect(note.textContent).toContain('represented by "other" in the flamegraph');
+    expect(within(note).getByText('3')).toBeInTheDocument();
+    expect(within(note).getByText('2')).toBeInTheDocument();
+  });
+
+  it('should render the truncated totals with the value unit in the note', async () => {
+    mockTableSize();
+    // Same shape as dataWithOther but the value field is scaled so the display processor emits an SI suffix
+    // ("3 K"/"2 K"). The note must include that suffix, otherwise "3" and "2" are ambiguous.
+    const dataWithOtherAndUnit = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10000, 5000, 3000, 2000], config: { unit: 'short' } },
+        { name: 'self', values: [0, 5000, 3000, 2000], config: { unit: 'short' } },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(dataWithOtherAndUnit, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    expect(within(note).getByText('3 K')).toBeInTheDocument();
+    expect(within(note).getByText('2 K')).toBeInTheDocument();
+  });
+
+  it('should not let nested "other" leftovers lower the truncation threshold', async () => {
+    mockTableSize();
+    // A level-2 "other" leftover (1) sits under "lib". It aggregates children that fell below the cutoff, so it is
+    // itself smaller than the real truncation threshold (lib, total: 2) and must be excluded from the minimum.
+    const dataWithNestedOther = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1, 2] },
+        { name: 'value', values: [10, 5, 3, 2, 1] },
+        { name: 'self', values: [0, 5, 3, 2, 1] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib', 'other'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(dataWithNestedOther, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total aggregates both "other" nodes (3 + 1).
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    // The threshold stays the minimum among the real (non-"other") nodes, i.e. lib with total 2.
+    expect(within(note).getByText('2')).toBeInTheDocument();
+    expect(within(note).queryByText('1')).not.toBeInTheDocument();
+  });
+
+  it('should account for both sides of a diff flamegraph in the truncation note', async () => {
+    mockTableSize();
+    // A diff flamegraph whose "other" node aggregates truncated stacktraces from both profiles. The smallest real
+    // node ("lib") exists only in the comparison profile, so its baseline total is 0 - a baseline-only minimum
+    // would wrongly report the truncation threshold as 0.
+    const diffDataWithOther = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [8, 5, 3, 0] },
+        { name: 'valueRight', values: [11, 5, 4, 2] },
+        { name: 'self', values: [0, 5, 3, 0] },
+        { name: 'selfRight', values: [0, 5, 4, 2] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(diffDataWithOther, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorSchemeDiff.DiffColorBlind}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total is shown for the baseline (3) and the comparison (4) side.
+    expect(within(note).getByText('3')).toBeInTheDocument();
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    // The threshold is the smallest dominant (larger of the two) side among the real nodes - lib exists only in
+    // the comparison profile (baseline 0), so its dominant side is 2, not the 0 of the side where it doesn't exist.
+    expect(within(note).getByText('2')).toBeInTheDocument();
+    expect(within(note).queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('should use the dominant side of a diff node as the truncation threshold', async () => {
+    mockTableSize();
+    // A function that is large in the comparison profile and tiny in the baseline (app: 100 vs 1) is kept by the
+    // cutoff because of its comparison side. Its tiny baseline total must not drag the reported truncation
+    // threshold down - the threshold is the smallest dominant side among the real nodes (lib: 4).
+    const diffDataWithAsymmetricNode = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [9, 1, 5, 4] },
+        { name: 'valueRight', values: [12, 100, 6, 4] },
+        { name: 'self', values: [0, 1, 5, 4] },
+        { name: 'selfRight', values: [0, 100, 6, 4] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(diffDataWithAsymmetricNode, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorSchemeDiff.DiffColorBlind}
+      />
+    );
+
+    const note = screen.getByTestId('topTable-other-note');
+    // The truncated total is shown for the baseline (5) and the comparison (6) side.
+    expect(within(note).getByText('5')).toBeInTheDocument();
+    expect(within(note).getByText('6')).toBeInTheDocument();
+    // The threshold is the smallest dominant side (lib: 4), not app's tiny baseline total of 1.
+    expect(within(note).getByText('4')).toBeInTheDocument();
+    expect(within(note).queryByText('1')).not.toBeInTheDocument();
+  });
+
+  it('should render search and sandwich buttons for "other" in the note', async () => {
+    mockTableSize();
+    const { mocks } = setup();
+
+    await userEvents.click(screen.getByRole('button', { name: 'Search for "other"' }));
+    expect(mocks.onSearch).toHaveBeenCalledWith('other');
+
+    await userEvents.click(screen.getByRole('button', { name: 'Show "other" in sandwich view' }));
+    expect(mocks.onSandwich).toHaveBeenCalledWith('other');
+  });
+
+  it('should not render the truncation note when there is no "other" data', async () => {
+    mockTableSize();
+    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    expect(screen.queryByTestId('topTable-other-note')).not.toBeInTheDocument();
+  });
+});
 describe('FlameGraphTopTableContainer with useTableNG', () => {
   const setup = (props?: { tableRefreshEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
@@ -245,13 +455,14 @@ describe('buildFilteredTable', () => {
 
     const result = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(result.table).toEqual({
       '0': { self: 1, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(result.otherEntry).toBeUndefined();
   });
 
   it('should sum values for duplicate labels', () => {
@@ -262,7 +473,7 @@ describe('buildFilteredTable', () => {
 
     const result = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(result.table).toEqual({
       '0': { self: 0, total: 6, totalRight: 0 },
       '1': { self: 6, total: 6, totalRight: 0 },
     });
@@ -278,7 +489,7 @@ describe('buildFilteredTable', () => {
     const matchedLabels = new Set(['1', '3']);
     const result = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({
+    expect(result.table).toEqual({
       '1': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
     });
@@ -294,7 +505,7 @@ describe('buildFilteredTable', () => {
     const matchedLabels = new Set<string>();
     const result = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(result.table).toEqual({});
   });
 
   it('should handle data with no matches', () => {
@@ -307,7 +518,7 @@ describe('buildFilteredTable', () => {
     const matchedLabels = new Set(['9']);
     const result = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(result.table).toEqual({});
   });
 
   it('should work without matchedLabels filter', () => {
@@ -318,7 +529,7 @@ describe('buildFilteredTable', () => {
 
     const result = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(result.table).toEqual({
       '0': { self: 0, total: 3, totalRight: 0 },
       '1': { self: 3, total: 3, totalRight: 0 },
     });
@@ -333,12 +544,50 @@ describe('buildFilteredTable', () => {
 
     const result = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(result.table).toEqual({
       '0': { self: 4, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+
+  describe('with "other" data', () => {
+    // A minimal flame graph whose "other" node aggregates the truncated part: self and total are both 3, while
+    // the smallest node in the whole graph (lib, total: 2) is the truncation threshold.
+    const dataWithOther = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10, 5, 3, 2] },
+        { name: 'self', values: [0, 5, 3, 2] },
+        { name: 'label', values: ['total', 'app', 'other', 'lib'] },
+      ],
+    });
+    const containerWithOther = () => new FlameGraphDataContainer(dataWithOther, { collapsing: true });
+
+    it('should extract "other" into otherEntry instead of a table row', () => {
+      const result = buildFilteredTable(containerWithOther());
+
+      // The root node stays a regular row; only "other" is pulled out.
+      expect(result.table).toEqual({
+        total: { self: 0, total: 10, totalRight: 0 },
+        app: { self: 5, total: 5, totalRight: 0 },
+        lib: { self: 2, total: 2, totalRight: 0 },
+      });
+      expect(result.otherEntry).toEqual({ self: 3, total: 3, totalRight: 0 });
+    });
+
+    it('should respect matchedLabels for the "other" entry', () => {
+      // When the "other" node itself doesn't match the active search, it's not surfaced at all.
+      const filteredOut = buildFilteredTable(containerWithOther(), new Set(['app']));
+      expect(filteredOut.table).toEqual({ app: { self: 5, total: 5, totalRight: 0 } });
+      expect(filteredOut.otherEntry).toBeUndefined();
+
+      // When it does match, it's still not a table row but is returned separately.
+      const matched = buildFilteredTable(containerWithOther(), new Set(['other']));
+      expect(matched.table).toEqual({});
+      expect(matched.otherEntry).toEqual({ self: 3, total: 3, totalRight: 0 });
     });
   });
 });
