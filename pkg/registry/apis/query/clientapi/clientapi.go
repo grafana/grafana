@@ -33,8 +33,8 @@ type Instance interface {
 	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (QueryDataClient, error)
 	// fetch information on the grafana instance (e.g. feature toggles)
 	GetSettings() InstanceConfigurationSettings
-	GetLogger() log.Logger // returns the instance's logger. this logs instance-specific data too
-	ReportMetrics()        // some metrics are only reported at the end
+	GetLogLabels() []any // instance specific attributes
+	ReportMetrics()      // some metrics are only reported at the end
 }
 
 type InstanceProvider interface {
