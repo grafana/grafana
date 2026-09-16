@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "datasources.azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
+    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
@@ -86,6 +87,7 @@ declare module "@openfeature/core" {
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"
+    | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
@@ -106,8 +108,11 @@ declare module "@openfeature/core" {
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
-    | "datasources.gatewayGuardrails";
+    | "datasources.gatewayGuardrails"
+    | "grafana.pluginExtensionReactElementProps"
+    | "grafana.logDetailsDisplayedFieldControls";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
-  export type ObjectFlagKey = never;
+  export type ObjectFlagKey =
+    | "grafana.mtFallback";
 }

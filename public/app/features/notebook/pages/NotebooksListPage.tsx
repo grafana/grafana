@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -11,6 +12,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 import { notebookNewEditUrl } from '../urls';
@@ -32,6 +35,7 @@ export function NotebooksListPage() {
     isFiltered,
     searchQuery,
     setSearchQuery,
+    debouncedSearch,
     createdByMe,
     setCreatedByMe,
     canFilterByMe,
@@ -44,6 +48,35 @@ export function NotebooksListPage() {
     filterKey,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
+
+  /**
+   * The filters the last report went out for, seeded so arriving at the page reports nothing.
+   * The diff checks tagFilter by identity on purpose: addTagFilter returns the same array when it
+   * dedupes, so re-clicking a tag already filtered reports nothing.
+   */
+  const previousFilters = useRef({ search: debouncedSearch.trim(), createdByMe, tagFilter });
+
+  useEffect(() => {
+    // Trimmed, as the request, isFiltered and filterKey all read it. Typing a space alone leaves
+    // the filter where it was, so it is not a change to report.
+    const search = debouncedSearch.trim();
+    const previous = previousFilters.current;
+    previousFilters.current = { search, createdByMe, tagFilter };
+
+    // The whole filter set, not only the control that changed, so one event says which filters the
+    // reader had on at once. A zero here also says which way the change went.
+    const filters = { queryLength: search.length, tagCount: tagFilter.length, createdByMe };
+
+    // As the filter commits, without waiting for its results. The event says that somebody
+    // filtered, and a failed request does not make that less true.
+    if (search !== previous.search) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.SEARCH, filters);
+    } else if (tagFilter !== previous.tagFilter) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.TAG, filters);
+    } else if (createdByMe !== previous.createdByMe) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.CREATED_BY_ME, filters);
+    }
+  }, [debouncedSearch, tagFilter, createdByMe]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;

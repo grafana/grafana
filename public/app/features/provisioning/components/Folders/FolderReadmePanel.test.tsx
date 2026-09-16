@@ -1,3 +1,4 @@
+import mermaid from 'mermaid';
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
@@ -15,6 +16,13 @@ import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
 
+// mermaid is a heavy browser-only library; mock the module so tests can assert the
+// rendered diagram wiring without pulling in its full runtime.
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: { initialize: jest.fn(), parse: jest.fn().mockResolvedValue(true), render: jest.fn() },
+}));
+
 setupProvisioningMswServer();
 
 // The resource listing is fetched lazily on link click; stub the endpoint per test.
@@ -23,6 +31,7 @@ function setResources(items: ResourceListItem[]) {
 }
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
+const mockMermaidRender = jest.mocked(mermaid.render);
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
@@ -70,6 +79,7 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>', diagramType: 'flowchart' });
   });
 
   afterEach(() => {
@@ -390,5 +400,33 @@ describe('FolderReadmePanel', () => {
     // DOMPurify strips the dangerous elements
     expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
+  });
+
+  // The renderer itself is covered in core/utils/mermaid.test.ts and
+  // core/hooks/useMermaidDiagrams.test.ts; this only checks the README is wired to it.
+  it('renders a ```mermaid fenced block as a diagram', async () => {
+    setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
+
+    setup();
+
+    expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
+    expect(screen.getByText('Flow')).toBeInTheDocument();
+    // The source code block is replaced by the rendered diagram.
+    expect(screen.queryByText('graph TD; A-->B;')).not.toBeInTheDocument();
+  });
+
+  it('keeps the diagram and does not draw again when the panel re-renders with the same README', async () => {
+    setReadmeResult({ markdownContent: '## Flow\n\n```mermaid\ngraph TD; A-->B;\n```' });
+
+    const { rerender } = setup();
+    await screen.findByTestId('mermaid-svg');
+    const drawCalls = mockMermaidRender.mock.calls.length;
+
+    rerender(<FolderReadmePanel folderUID="test-folder" />);
+    // Let any effect the re-render might have queued settle before asserting.
+    await act(async () => {});
+
+    expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
+    expect(mockMermaidRender).toHaveBeenCalledTimes(drawCalls);
   });
 });

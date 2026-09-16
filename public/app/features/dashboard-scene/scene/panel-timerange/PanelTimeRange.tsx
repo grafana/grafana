@@ -9,18 +9,15 @@ import {
   rangeUtil,
   type TimeRange,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   type ExtraQueryDescriptor,
-  getCompareSeriesRefId,
   type SceneComponentProps,
   type SceneDataQuery,
   sceneGraph,
   type SceneTimeRangeLike,
   type SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
-  timeShiftAlignmentProcessor,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
@@ -29,8 +26,9 @@ import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { getCompareOptions, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
-import { getCompareTimeRange } from './utils';
+import { PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
+import { getCompareExtraQueries, shouldRerunCompare } from './timeCompare/getCompareExtraQueries';
+import { getCompareTimeInfoText } from './timeCompare/options';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;
@@ -107,40 +105,23 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
   }
 
   // Get a time shifted request to compare with the primary request.
+  // This function name has special handling in scenes, which is why we wrap the util
   public getExtraQueries(request: DataQueryRequest): ExtraQueryDescriptor[] {
-    const extraQueries: ExtraQueryDescriptor[] = [];
-    const compareRange = getCompareTimeRange(request.range, this.state.compareWith);
-    if (!compareRange) {
-      return extraQueries;
-    }
-
-    const targets = request.targets
-      .filter((query: SceneDataQuery) => query.timeRangeCompare !== false)
-      .map((query) => ({
-        ...query,
-        // Distinct from the primary request so query caches and panels don't collide on identity.
-        refId: getCompareSeriesRefId(query.refId),
-      }));
-    if (targets.length) {
-      extraQueries.push({
-        req: {
-          ...request,
-          targets,
-          range: compareRange,
-          // Must match compare range; inheriting primary rangeRaw (to: 'now') enables Prometheus incremental cache incorrectly.
-          rangeRaw: compareRange.raw,
-        },
-        processor: timeShiftAlignmentProcessor,
-      });
-    }
-    return extraQueries;
+    return getCompareExtraQueries(request, this.state.compareWith);
   }
 
-  // The query runner should rerun the comparison query if the compareWith value has changed and there are queries that haven't opted out of TWC
+  // The query runner should rerun the comparison query if the compareWith value has changed and there are queries that haven't opted out of time compare
+  // This function name has special handling in scenes, which is why we wrap the util
   public shouldRerun(prev: PanelTimeRangeState, next: PanelTimeRangeState, queries: SceneDataQuery[]): boolean {
-    return (
-      prev.compareWith !== next.compareWith && queries.find((query) => query.timeRangeCompare !== false) !== undefined
-    );
+    return shouldRerunCompare(prev.compareWith, next.compareWith, queries);
+  }
+
+  /**
+   * The panel never owns a fiscal year start; it always rounds against the dashboard's setting.
+   * Mirrors how the base class resolves the time zone from the ancestor time range.
+   */
+  private getFiscalYearStartMonth(): number | undefined {
+    return this.getAncestorTimeRange().state.fiscalYearStartMonth;
   }
 
   public onTimeRangeChange(timeRange: TimeRange): void {
@@ -149,9 +130,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     if (timeShift) {
       const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
       const reverseShift = '+' + timeShiftInterpolated;
+      const fiscalYearStartMonth = this.getFiscalYearStartMonth();
 
-      const from = dateMath.parseDateMath(reverseShift, timeRange.from, false);
-      const to = dateMath.parseDateMath(reverseShift, timeRange.to, true);
+      const from = dateMath.parseDateMath(reverseShift, timeRange.from, false, fiscalYearStartMonth);
+      const to = dateMath.parseDateMath(reverseShift, timeRange.to, true, fiscalYearStartMonth);
 
       if (from && to) {
         this.getAncestorTimeRange().onTimeRangeChange({
@@ -184,9 +166,10 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
         const timezone = this.getTimeZone();
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
         newTimeData.timeRange = {
-          from: dateMath.toDateTime(timeFromInfo.from, { timezone })!,
-          to: dateMath.toDateTime(timeFromInfo.to, { timezone })!,
+          from: dateMath.toDateTime(timeFromInfo.from, { timezone, fiscalYearStartMonth })!,
+          to: dateMath.toDateTime(timeFromInfo.to, { timezone, fiscalYearStartMonth })!,
           raw: { from: timeFromInfo.from, to: timeFromInfo.to },
         };
         infoBlocks.push(timeFromInfo.display);
@@ -207,12 +190,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
       if (rangeUtil.isRelativeTimeRange(newTimeData.timeRange.raw)) {
         const timezone = this.getTimeZone();
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
 
         const rawFromShifted = `${newTimeData.timeRange.raw.from}${shift}`;
         const rawToShifted = `${newTimeData.timeRange.raw.to}${shift}`;
 
-        const from = dateMath.toDateTime(rawFromShifted, { timezone });
-        const to = dateMath.toDateTime(rawToShifted, { timezone, roundUp: true });
+        const from = dateMath.toDateTime(rawFromShifted, { timezone, fiscalYearStartMonth });
+        const to = dateMath.toDateTime(rawToShifted, { timezone, fiscalYearStartMonth, roundUp: true });
 
         if (!from || !to) {
           newTimeData.timeInfo = 'invalid timeshift';
@@ -225,8 +209,9 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
           raw: { from: rawFromShifted, to: rawToShifted },
         };
       } else {
-        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false);
-        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true);
+        const fiscalYearStartMonth = this.getFiscalYearStartMonth();
+        const from = dateMath.parseDateMath(shift, newTimeData.timeRange.from, false, fiscalYearStartMonth);
+        const to = dateMath.parseDateMath(shift, newTimeData.timeRange.to, true, fiscalYearStartMonth);
 
         if (!from || !to) {
           newTimeData.timeInfo = 'invalid timeshift';
@@ -238,13 +223,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     }
 
     if (compareWith) {
-      const option = getCompareOptions().find((x) => x.value === compareWith);
-      const text = option
-        ? t('dashboard.panel.time-range-settings.compared-to', 'compared to {{option}}', {
-            option: option.label.toLowerCase(),
-          })
-        : '';
-      infoBlocks.push(text);
+      infoBlocks.push(getCompareTimeInfoText(compareWith));
     }
 
     newTimeData.timeInfo = upperFirst(infoBlocks.join(' + '));

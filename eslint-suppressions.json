@@ -33,11 +33,6 @@
       "count": 4
     }
   },
-  "packages/grafana-data/src/datetime/moment_wrapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/events/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -766,11 +761,6 @@
       "count": 1
     }
   },
-  "public/app/api/clients/folder/v1beta1/hooks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 9
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 4
@@ -830,11 +820,6 @@
   "public/app/core/components/Login/LoginForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
-    }
-  },
-  "public/app/core/components/NestedFolderPicker/useFoldersQuery.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
@@ -1031,11 +1016,6 @@
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 5
-    }
-  },
-  "public/app/features/alerting/state/ThresholdMapper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/alerting/state/alertDef.ts": {
@@ -1681,23 +1661,8 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/api/services.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/RestoreModal.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/utils/dashboards.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2389,11 +2354,6 @@
     }
   },
   "public/app/features/dashboard/services/DashboardLoaderSrv.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/services/ReportRenderReadinessObserver.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -3103,11 +3063,6 @@
     }
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/valueMatchersUI.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/calculateHeatmap/editor/helper.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
