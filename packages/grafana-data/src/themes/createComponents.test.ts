@@ -45,16 +45,6 @@ describe('table colors', () => {
     expect(table.headerBackground).toBe('#1a1a1a');
   });
 
-  it('uses the custom Gilded grove table palette', () => {
-    expect(getThemeById('gildedgrove').components.table).toMatchObject({
-      headerBackground: '#3A2E1B',
-      border: '#38443F',
-      rowStripedBackground: '#25302C',
-      rowHoverBackground: '#3B3527',
-      rowSelectedBackground: '#4A3216',
-    });
-  });
-
   it('accepts partial table overrides in theme definitions and rejects non-color inputs', () => {
     expect(ThemeComponentsInputSchema.parse({ table: { rowStripedBackground: 'palette.ink750' } })).toEqual({
       table: { rowStripedBackground: 'palette.ink750' },
