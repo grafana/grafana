@@ -71,6 +71,7 @@ export const ConfirmModal = ({
   disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const confirmPromptRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -79,12 +80,13 @@ export const ConfirmModal = ({
       title={title}
       isOpen={isOpen}
       onDismiss={onDismiss}
-      initialFocus={confirmationText && !disabled ? confirmPromptRef : undefined}
+      initialFocus={confirmationText && !disabled ? confirmPromptRef : confirmButtonRef}
     >
       <ConfirmContent
         body={body}
         description={description}
         confirmButtonLabel={confirmText}
+        confirmButtonRef={confirmButtonRef}
         confirmButtonVariant={confirmButtonVariant ?? confirmVariant}
         dismissButtonLabel={dismissText}
         dismissButtonVariant={dismissVariant}
