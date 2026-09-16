@@ -11,6 +11,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { OpenInExploreButton } from './OpenInExploreButton';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -99,6 +100,7 @@ function PanelCell({
 
   return (
     <Stack direction="column" gap={1}>
+      <OpenInExploreButton panel={panel} />
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
