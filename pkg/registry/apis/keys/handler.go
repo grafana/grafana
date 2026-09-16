@@ -2,8 +2,8 @@
 // POST /apis/{group}/{version}/{resource}/list-keys.
 //
 // It reads identities out of unified storage without fetching object bodies, so a
-// controller can take a state-of-the-world snapshot cheaply. Served at two scopes:
-// namespaced, and cluster-wide for a caller whose identity covers every namespace.
+// controller can take a state-of-the-world snapshot cheaply. Served namespaced,
+// and cluster-wide for the service identity.
 //
 // POST rather than GET because GET would permanently shadow an object of that
 // name, and nothing is registered for POST on {resource}/{name}.
@@ -87,8 +87,7 @@ func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
 }
 
 // ListKeysInNamespaceFor returns the POST handler for one kind's namespaced keys
-// endpoint. Storage authorizes the requested namespace against the caller's own,
-// so this serves a tenant-scoped identity that the cluster-wide form refuses.
+// endpoint. Open to any caller permitted to list the kind there.
 func (h *Handler) ListKeysInNamespaceFor(kind kindRef) http.HandlerFunc {
 	return h.listKeys(kind, true)
 }
@@ -111,9 +110,7 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 				return
 			}
 			span.SetAttributes(attribute.String("keys.namespace", namespace))
-		}
-
-		if err := h.requireServiceIdentity(ctx, kind, namespace); err != nil {
+		} else if err := h.requireClusterWideServiceIdentity(ctx, kind); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
@@ -139,11 +136,9 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 
 		if opts.ResourceVersion != "" {
 			rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-			// A negative version parses but is not a version. Both backends read
-			// anything <= 0 as unset and serve the latest snapshot, so forwarding
-			// it would quietly answer a different question than the one asked.
-			// Zero is left alone: Kubernetes gives it the meaning "any version",
-			// which is what serving the latest snapshot does.
+			// A negative version parses but both backends read anything <= 0 as
+			// unset and serve the latest, so it would answer a different question.
+			// Zero is left alone: Kubernetes reads it as "any version".
 			if err != nil || rv < 0 {
 				errhttp.Write(ctx, apierrors.NewBadRequest(
 					fmt.Sprintf("invalid resourceVersion: %q", opts.ResourceVersion)), w)
@@ -174,26 +169,24 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 
 const wildcardNamespace = "*"
 
-// namespaceFrom resolves the path namespace the namespaced route was mounted with.
+// namespaceFrom resolves the namespace the route was mounted with.
 func namespaceFrom(ctx context.Context) (string, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok || namespace == "" {
 		return "", apierrors.NewBadRequest("namespace is required")
 	}
-	// About what the endpoint offers, not who the caller is: a wildcard here would
-	// reach the backend as a namespace literally named "*". Cluster-wide reads have
-	// their own route.
+	// A wildcard would reach the backend as a namespace literally named "*".
+	// Cluster-wide reads have their own route.
 	if namespace == wildcardNamespace {
 		return "", apierrors.NewBadRequest("listing keys across namespaces is not supported on the namespaced endpoint")
 	}
 	return namespace, nil
 }
 
-// requireServiceIdentity accepts only the service identity. An empty namespace
-// means the cluster-wide read, which spans every namespace and so additionally
-// requires an identity scoped to "*". For a namespaced read the namespace itself
-// is authorized by storage, against the caller's own.
-func (h *Handler) requireServiceIdentity(ctx context.Context, kind kindRef, namespace string) error {
+// requireClusterWideServiceIdentity guards the cross-namespace read: a narrower
+// caller would get a partial page plus a mismatch, not a clean refusal. The
+// namespaced route needs none, being a subset of a normal LIST there.
+func (h *Handler) requireClusterWideServiceIdentity(ctx context.Context, kind kindRef) error {
 	gr := schema.GroupResource{Group: kind.group, Resource: kind.resource}
 
 	info, ok := claims.AuthInfoFrom(ctx)
@@ -201,21 +194,19 @@ func (h *Handler) requireServiceIdentity(ctx context.Context, kind kindRef, name
 		return apierrors.NewUnauthorized("no identity found for request")
 	}
 	if !identity.IsServiceIdentity(ctx) {
-		h.log.FromContext(ctx).Warn("refused list-keys: not the service identity",
-			"group", kind.group, "resource", kind.resource, "namespace", namespace,
+		h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: not the service identity",
+			"group", kind.group, "resource", kind.resource,
 			"identityType", info.GetIdentityType())
 		return apierrors.NewForbidden(gr, "",
 			fmt.Errorf("listing keys is only available to the service identity, got %q", info.GetIdentityType()),
 		)
 	}
-	if namespace == "" {
-		if ns := info.GetNamespace(); ns != wildcardNamespace {
-			h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: identity is not scoped to all namespaces",
-				"group", kind.group, "resource", kind.resource, "identityNamespace", ns)
-			return apierrors.NewForbidden(gr, "",
-				fmt.Errorf("listing keys across namespaces requires an identity scoped to %q, got %q", wildcardNamespace, ns),
-			)
-		}
+	if ns := info.GetNamespace(); ns != wildcardNamespace {
+		h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: identity is not scoped to all namespaces",
+			"group", kind.group, "resource", kind.resource, "identityNamespace", ns)
+		return apierrors.NewForbidden(gr, "",
+			fmt.Errorf("listing keys across namespaces requires an identity scoped to %q, got %q", wildcardNamespace, ns),
+		)
 	}
 	return nil
 }
@@ -235,6 +226,7 @@ var unsupportedListOptions = []unsupportedListOption{
 	{"sendInitialEvents", func(o *metav1.ListOptions) bool { return o.SendInitialEvents != nil }},
 	{"timeoutSeconds", func(o *metav1.ListOptions) bool { return o.TimeoutSeconds != nil }},
 	{"resourceVersionMatch", func(o *metav1.ListOptions) bool { return o.ResourceVersionMatch != "" }},
+	{"shardSelector", func(o *metav1.ListOptions) bool { return o.ShardSelector != "" }},
 }
 
 // An empty body means all defaults.

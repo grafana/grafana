@@ -51,10 +51,9 @@ func (h *Handler) ListKeysRoute(group, version, resourceName, kindName string) R
 	}
 }
 
-// ListKeysInNamespaceRoute returns the namespaced list-keys route. The path is the
-// same; the host mounts it under .../namespaces/{namespace}/ so the namespace
-// reaches the handler as a request attribute rather than a body field, which keeps
-// it visible to the authorization chain and the audit log.
+// ListKeysInNamespaceRoute returns the namespaced list-keys route. Same path; the
+// host mounts it under .../namespaces/{namespace}/, so the namespace arrives as a
+// request attribute and stays visible to the authorizer and the audit log.
 func (h *Handler) ListKeysInNamespaceRoute(group, version, resourceName, kindName string) Route {
 	kind := kindRef{group: group, version: version, resource: resourceName}
 	return Route{
@@ -88,7 +87,7 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 	var params []*spec3.Parameter
 	if namespaced {
 		scope = "in a namespace"
-		requires = "Requires a service identity permitted to read that namespace."
+		requires = "Requires permission to list the kind in that namespace."
 		params = []*spec3.Parameter{
 			{
 				ParameterProps: spec3.ParameterProps{

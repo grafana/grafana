@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -146,8 +147,7 @@ func TestListKeys_TranslatesListOptions(t *testing.T) {
 		"limit only":                {body: `{"limit":5}`, wantLimit: 5},
 		"continue token":            {body: `{"continue":"tok"}`, wantToken: "tok"},
 		"resource version":          {body: `{"resourceVersion":"999"}`, wantRV: 999},
-		// Kubernetes gives "0" the meaning "any version", which is what serving
-		// the latest snapshot does, so it is accepted rather than refused.
+		// Kubernetes reads "0" as "any version", which is what latest gives.
 		"resource version zero": {body: `{"resourceVersion":"0"}`, wantRV: 0},
 		"all three": {
 			body:      `{"continue":"tok","resourceVersion":"999","limit":5}`,
@@ -184,10 +184,10 @@ func TestListKeys_RejectsUnsupportedListOptions(t *testing.T) {
 		"unknown field":        `{"nonsense":true}`,
 		"wrong kind":           `{"kind":"SearchQuery"}`,
 		"bad resourceVersion":  `{"resourceVersion":"not-a-number"}`,
-		// Parses, but both backends read any value <= 0 as unset and serve the
-		// latest snapshot, so forwarding it would answer a different question.
+		// Parses, but both backends read <= 0 as unset and serve the latest.
 		"negative resourceVersion": `{"resourceVersion":"-1"}`,
 		"two objects":              `{}{}`,
+		"shardSelector":            `{"shardSelector":"shard-1"}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
@@ -369,9 +369,8 @@ func TestListKeys_ReportsPerItemNamespace(t *testing.T) {
 	assert.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-two", "ccc": "ns-two"}, byName)
 }
 
-// Drives the namespaced route as the apiserver would: the namespace arrives in the
-// request context, the way request_handler puts it there for a namespace-mounted
-// route, not as a body field.
+// Drives the namespaced route as the apiserver does: namespace in the context,
+// where request_handler puts it for a namespace-mounted route.
 func doNamespaced(t *testing.T, store *fakeStore, ident claims.AuthInfo, namespace, body string) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -430,8 +429,8 @@ func TestListKeysInNamespace_RejectsUnusableNamespaces(t *testing.T) {
 	}
 }
 
-// The point of the namespaced route: a tenant-scoped identity may use it, while the
-// cluster-wide route still refuses it. Storage authorizes the namespace itself.
+// A tenant-scoped identity may use the namespaced route; the cluster-wide one
+// still refuses it.
 func TestListKeys_TenantScopedIdentityIsNamespacedOnly(t *testing.T) {
 	ident := func() *identity.StaticRequester {
 		i := serviceIdentity()
@@ -462,4 +461,59 @@ func TestListKeys_ForbiddenNamesTheResource(t *testing.T) {
 	require.NotNil(t, status.Details)
 	assert.Equal(t, testGroup, status.Details.Group)
 	assert.Equal(t, testResource, status.Details.Kind)
+}
+
+// No identity gate on the namespaced route: it returns a subset of a normal LIST
+// there, so withholding it would deny an optimization rather than protect data.
+func TestListKeysInNamespace_ServesAnyPermittedIdentity(t *testing.T) {
+	for name, typ := range map[string]claims.IdentityType{
+		"user":            claims.TypeUser,
+		"service account": claims.TypeServiceAccount,
+		"access policy":   claims.TypeAccessPolicy,
+		"api key":         claims.TypeAPIKey,
+	} {
+		t.Run(name, func(t *testing.T) {
+			store := &fakeStore{}
+			ident := &identity.StaticRequester{Type: typ, Namespace: "stacks-1234"}
+
+			rec := doNamespaced(t, store, ident, "stacks-1234", `{}`)
+			require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+			require.Len(t, store.calls, 1)
+			assert.Equal(t, "stacks-1234", store.calls[0].Options.Key.Namespace)
+		})
+	}
+
+	// The cluster-wide route still refuses every one of them.
+	for name, typ := range map[string]claims.IdentityType{
+		"user":          claims.TypeUser,
+		"access policy": claims.TypeAccessPolicy,
+	} {
+		t.Run("cluster-wide refuses "+name, func(t *testing.T) {
+			store := &fakeStore{}
+			rec := do(t, store, &identity.StaticRequester{Type: typ, Namespace: "stacks-1234"}, `{}`)
+			require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+			assert.Empty(t, store.calls)
+		})
+	}
+}
+
+// Every field must be honored or refused by name, so one added upstream fails here
+// rather than being silently accepted. ShardSelector was, until this test existed.
+func TestListKeys_EveryListOptionIsAccountedFor(t *testing.T) {
+	// Read by the handler; TypeMeta is validated separately.
+	honored := map[string]bool{
+		"Limit": true, "Continue": true, "ResourceVersion": true, "TypeMeta": true,
+	}
+	named := map[string]bool{}
+	for _, opt := range unsupportedListOptions {
+		named[strings.ToUpper(opt.name[:1])+opt.name[1:]] = true
+	}
+
+	typ := reflect.TypeOf(metav1.ListOptions{})
+	for i := range typ.NumField() {
+		name := typ.Field(i).Name
+		assert.True(t, honored[name] || named[name],
+			"ListOptions.%s is neither honored nor refused by name; decide which and update the handler", name)
+	}
 }
