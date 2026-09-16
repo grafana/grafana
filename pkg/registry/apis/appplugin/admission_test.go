@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -64,9 +65,11 @@ func TestBuilderAdmissionDispatch(t *testing.T) {
 			Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 		},
 	}, client, kindstore.Options{
-		Scheme:              scheme,
-		OptsGetter:          apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
-		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
+		Scheme: scheme,
+		StorageOptsGetter: builder.APIGroupOptions{
+			Scheme:     scheme,
+			OptsGetter: apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		}.StorageOptsGetter,
 	}, nil)
 	require.NoError(t, err)
 
