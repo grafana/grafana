@@ -30,7 +30,7 @@ func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("router: discovery request to %s returned status %d", baseURL, resp.StatusCode)
 	}

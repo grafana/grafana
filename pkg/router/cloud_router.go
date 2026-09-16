@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -111,6 +112,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		if targetCfg.Audience == "" {
 			return nil, fmt.Errorf("%s: %s.audience is required when %s.url is set", cloudRouterSection, targetCfg.Name, targetCfg.Name)
 		}
+		tlsCfg, err := buildAggregateTLSConfig(targetCfg.CAFile, targetCfg.InsecureSkipVerify)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
+		}
 		restCfg := &rest.Config{
 			Host: targetCfg.URL,
 			// A fresh clone per target, not the process-global
@@ -123,7 +128,12 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 			// is the base RoundTripper and WrapTransport layers on top of it
 			// (rest.TransportFor -> transport.New -> HTTPWrappersForConfig), so
 			// the CAP-token exchange below still applies.
-			Transport:     newAggregateBaseTransport(),
+			//
+			// TLS is set directly on this transport (not via
+			// rest.Config.TLSClientConfig) because client-go's transport.New
+			// rejects a config with both a custom Transport and any
+			// TLSClientConfig field set.
+			Transport:     newAggregateBaseTransport(tlsCfg),
 			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace),
 			Timeout:       defaultAggregateDiscoveryTimeout,
 		}
@@ -466,10 +476,38 @@ const aggregateMaxIdleConnsPerHost = 100
 // newAggregateBaseTransport returns a fresh base transport for one aggregate
 // target. Called once per target so no two targets share a connection pool,
 // and none of them shares the process-global http.DefaultTransport.
-func newAggregateBaseTransport() *http.Transport {
+func newAggregateBaseTransport(tlsCfg *tls.Config) *http.Transport {
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	t.MaxIdleConnsPerHost = aggregateMaxIdleConnsPerHost
+	t.TLSClientConfig = tlsCfg
 	return t
+}
+
+// buildAggregateTLSConfig builds the TLS config for one aggregate target from
+// its per-target ca_file/insecure settings. insecure wins over caFile if both
+// are set, matching transportFor's precedence for forward backends.
+func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) {
+	// nosemgrep: problem-based-packs.insecure-transport.go-stdlib.bypass-tls-verification.bypass-tls-verification
+	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
+	switch {
+	case insecure:
+		// Operator-gated via <name>.insecure, same trust model as
+		// apiserver_insecure for the appmanifest apiserver: only enable for a
+		// target reached over a link that's actually trusted, since this
+		// disables both CA and hostname verification (MITM exposure).
+		tlsCfg.InsecureSkipVerify = true // #nosec G402 -- operator-gated, trusted-link only
+	case caFile != "":
+		caData, err := os.ReadFile(caFile) // #nosec G304 -- operator-supplied config path, not user input
+		if err != nil {
+			return nil, fmt.Errorf("reading ca_file %q: %w", caFile, err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(caData) {
+			return nil, fmt.Errorf("invalid CA PEM data in ca_file %q", caFile)
+		}
+		tlsCfg.RootCAs = pool
+	}
+	return tlsCfg, nil
 }
 
 func (l *cloudLoader) combineByName(manifests []v1alpha2.AppManifest, backends []v1alpha2.RouteBackend) []Backend {

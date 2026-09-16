@@ -15,10 +15,12 @@ import (
 // parseAggregateTargets ("baas_apiserver", "cloud_app_platform_apiserver"),
 // not a user-chosen label -- there is no dynamic list, only these two.
 type aggregateTargetConfig struct {
-	Name          string
-	URL           string
-	Audience      string
-	GroupPatterns []string
+	Name               string
+	URL                string
+	Audience           string
+	GroupPatterns      []string
+	CAFile             string
+	InsecureSkipVerify bool
 }
 
 // aggregateTargetNames are the only two upstream apiservers this router
@@ -29,9 +31,13 @@ var aggregateTargetNames = []string{"baas_apiserver", "cloud_app_platform_apiser
 
 // parseAggregateTargets reads the two fixed aggregate-apiserver targets from
 // the cloud_router section using dotted key names (<name>.url,
-// <name>.group_regex, <name>.audience). A target is included in the result
-// only if its .url key is set; group_regex is optional (nil means "match
-// every group", not "match nothing" -- see matchesAnyPattern).
+// <name>.group_regex, <name>.audience, <name>.ca_file, <name>.insecure). A
+// target is included in the result only if its .url key is set; group_regex
+// is optional (nil means "match every group", not "match nothing" -- see
+// matchesAnyPattern). ca_file/insecure mirror the naming of the
+// appmanifest apiserver's apiserver_ca_file/apiserver_insecure keys, but are
+// per-target since each aggregate target can be a different remote apiserver
+// with its own CA.
 func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
 	for _, name := range aggregateTargetNames {
@@ -40,10 +46,12 @@ func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetCo
 			continue
 		}
 		targets = append(targets, aggregateTargetConfig{
-			Name:          name,
-			URL:           url,
-			Audience:      section.Key(name + ".audience").MustString(""),
-			GroupPatterns: splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
+			Name:               name,
+			URL:                url,
+			Audience:           section.Key(name + ".audience").MustString(""),
+			GroupPatterns:      splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
+			CAFile:             section.Key(name + ".ca_file").MustString(""),
+			InsecureSkipVerify: section.Key(name + ".insecure").MustBool(false),
 		})
 	}
 	return targets, nil

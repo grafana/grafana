@@ -51,6 +51,8 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(list)
 		default:
 			w.WriteHeader(http.StatusOK)
+			// #nosec G705 -- test-only upstream stub reflecting the request path back so
+			// the assertion below can confirm proxying reached it; never rendered by a browser.
 			_, _ = w.Write([]byte("proxied:" + r.URL.Path))
 		}
 	}))

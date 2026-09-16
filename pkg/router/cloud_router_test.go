@@ -2,9 +2,17 @@ package router
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -194,8 +202,8 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 // none of them shares the default's (MaxIdleConnsPerHost=2) pool with the
 // rest of the process.
 func TestNewAggregateBaseTransport_IsPerCallClone(t *testing.T) {
-	first := newAggregateBaseTransport()
-	second := newAggregateBaseTransport()
+	first := newAggregateBaseTransport(nil)
+	second := newAggregateBaseTransport(nil)
 
 	require.NotSame(t, http.DefaultTransport.(*http.Transport), first)
 	require.NotSame(t, first, second)
@@ -203,6 +211,66 @@ func TestNewAggregateBaseTransport_IsPerCallClone(t *testing.T) {
 	// 0 means net/http's DefaultMaxIdleConnsPerHost (2) -- the global default
 	// transport must be left exactly as it was.
 	require.Zero(t, http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost, "the global default must be left untouched")
+}
+
+func TestBuildAggregateTLSConfig(t *testing.T) {
+	t.Run("neither set yields a plain config", func(t *testing.T) {
+		tlsCfg, err := buildAggregateTLSConfig("", false)
+		require.NoError(t, err)
+		require.False(t, tlsCfg.InsecureSkipVerify)
+		require.Nil(t, tlsCfg.RootCAs)
+	})
+
+	t.Run("insecure wins over ca_file", func(t *testing.T) {
+		tlsCfg, err := buildAggregateTLSConfig("/does/not/exist.crt", true)
+		require.NoError(t, err)
+		require.True(t, tlsCfg.InsecureSkipVerify)
+		require.Nil(t, tlsCfg.RootCAs)
+	})
+
+	t.Run("missing ca_file errors", func(t *testing.T) {
+		_, err := buildAggregateTLSConfig("/does/not/exist.crt", false)
+		require.ErrorContains(t, err, "reading ca_file")
+	})
+
+	t.Run("ca_file with invalid PEM errors", func(t *testing.T) {
+		caFile := filepath.Join(t.TempDir(), "ca.crt")
+		require.NoError(t, os.WriteFile(caFile, []byte("not a cert"), 0o600))
+
+		_, err := buildAggregateTLSConfig(caFile, false)
+		require.ErrorContains(t, err, "invalid CA PEM data")
+	})
+
+	t.Run("ca_file with valid PEM populates RootCAs", func(t *testing.T) {
+		caFile := filepath.Join(t.TempDir(), "ca.crt")
+		require.NoError(t, os.WriteFile(caFile, generateSelfSignedCAPEM(t), 0o600))
+
+		tlsCfg, err := buildAggregateTLSConfig(caFile, false)
+		require.NoError(t, err)
+		require.False(t, tlsCfg.InsecureSkipVerify)
+		require.NotNil(t, tlsCfg.RootCAs)
+	})
+}
+
+// generateSelfSignedCAPEM builds a throwaway self-signed CA cert in PEM form,
+// just to exercise AppendCertsFromPEM's success path in
+// TestBuildAggregateTLSConfig -- no relation to any real CA.
+func generateSelfSignedCAPEM(t *testing.T) []byte {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "test-ca"},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		IsCA:         true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
 
 // TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients checks the

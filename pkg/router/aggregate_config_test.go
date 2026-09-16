@@ -84,6 +84,32 @@ func TestParseAggregateTargets(t *testing.T) {
 	require.Empty(t, byName["cloud_app_platform_apiserver"].GroupPatterns)
 }
 
+func TestParseAggregateTargets_TLSSettingsArePerTarget(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"baas_apiserver.url":                    "https://baas.example.invalid",
+		"baas_apiserver.audience":               "baas",
+		"baas_apiserver.ca_file":                "/etc/certs/baas-ca.crt",
+		"cloud_app_platform_apiserver.url":      "https://cap.example.invalid",
+		"cloud_app_platform_apiserver.audience": "cloud-app-platform",
+		"cloud_app_platform_apiserver.insecure": "true",
+	})
+	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
+
+	targets, err := parseAggregateTargets(section)
+	require.NoError(t, err)
+
+	byName := map[string]aggregateTargetConfig{}
+	for _, target := range targets {
+		byName[target.Name] = target
+	}
+
+	require.Equal(t, "/etc/certs/baas-ca.crt", byName["baas_apiserver"].CAFile)
+	require.False(t, byName["baas_apiserver"].InsecureSkipVerify)
+
+	require.Empty(t, byName["cloud_app_platform_apiserver"].CAFile)
+	require.True(t, byName["cloud_app_platform_apiserver"].InsecureSkipVerify)
+}
+
 func TestParseAggregateTargets_NoneConfigured(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
