@@ -92,19 +92,22 @@ jobs:
 
       - name: Check whether Meticulous should run
         id: meticulous-eligibility
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          run=true
-          author=$(git show -s --format=%an "$GITHUB_SHA")
-          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$author" = "renovate-sh-app[bot]" ]; then
-            run=false
-            # Preserve the Renovate classification after its PR has been merged.
-            if gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[].labels[].name' | grep -Fxq 'ci/meticulous'; then
-              run=true
-            fi
-          fi
-          echo "run=$run" | tee -a "$GITHUB_OUTPUT"
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            const author = context.payload.head_commit?.author?.name;
+            if (context.eventName === 'push' && author === 'renovate-sh-app[bot]') {
+              // Preserve the Renovate classification after its PR has been merged.
+              const { data: pullRequests } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                ...context.repo,
+                commit_sha: context.sha,
+              });
+              run = pullRequests.some((pullRequest) =>
+                pullRequest.labels.some((label) => label.name === 'ci/meticulous')
+              );
+            }
+            core.setOutput('run', run);
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
