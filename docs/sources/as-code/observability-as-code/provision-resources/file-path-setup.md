@@ -217,7 +217,7 @@ The following configuration parameters are available:
 | `spec.type`                 | Repository type. Set to `local` for file provisioning                          |
 | `spec.local.path`           | Path to the directory that holds your dashboards, within a permitted path      |
 | `spec.sync.enabled`         | Enable synchronization (true/false)                                            |
-| `spec.sync.intervalSeconds` | Sync interval in seconds                                                        |
+| `spec.sync.intervalSeconds` | Sync interval in seconds                                                       |
 | `spec.sync.target`          | Where to place synced dashboards (`folder` or `folderless`)                    |
 | `spec.workflows`            | Enabled workflows: `write` (direct changes). Leave empty for a read-only mount |
 
