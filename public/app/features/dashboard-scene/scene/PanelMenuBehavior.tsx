@@ -47,6 +47,7 @@ import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -165,15 +166,20 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    items.push({
-      type: 'submenu',
-      text: t('panel.header-menu.share', 'Share'),
-      iconClassName: 'share-alt',
-      subMenu,
-      onClick: (e) => {
-        e.preventDefault();
-      },
-    });
+    // Share has no isEditing check anywhere in its chain (this menu item, or the 'p e'/'p s'
+    // keyboard shortcuts) — it's reachable during planning by construction, and would let a
+    // placeholder's synthetic sample data leave the preview as if it were real.
+    if (!refuseWhilePlanning(dashboard)) {
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        subMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -236,10 +242,14 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
+    // Gated only by config/RBAC, not isEditing or a query check — for a query-less placeholder,
+    // onCreateAlert either throws (a confusing error toast) or navigates to a blank alert form, so
+    // hide the item rather than let the click fail.
     const isCreateAlertMenuOptionAvailable =
       config.unifiedAlertingEnabled &&
       contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-      contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate);
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate) &&
+      !refuseWhilePlanning(dashboard);
 
     if (isCreateAlertMenuOptionAvailable) {
       moreSubMenu.push({
@@ -298,7 +308,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       items.push(exploreMenuItem);
     }
 
-    items.push(getInspectMenuItem(plugin, panel, dashboard));
+    // The menu item and the 'i' keyboard shortcut are both unconditional otherwise.
+    if (!refuseWhilePlanning(dashboard)) {
+      items.push(getInspectMenuItem(plugin, panel, dashboard));
+    }
 
     if (config.featureToggles.panelTimeSettings) {
       items.push({

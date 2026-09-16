@@ -128,6 +128,32 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
   });
 
+  describe('while planning', () => {
+    // None of Share/Inspect/alert-rule creation check isEditing anywhere in their own chain
+    // (see refuseWhilePlanning) -- each is reachable during a plan preview by construction.
+    // Explore needs no guard here: tryGetExploreUrlForPanel already returns undefined for a
+    // panel with no query runner, so getExploreMenuItem is never even built for a placeholder.
+    it('hides Share, Inspect and the alert-rule option', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+      scene.setState({
+        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Share')).toBeUndefined();
+      expect(menu.state.items?.find((i) => i.text === 'Inspect')).toBeUndefined();
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
+    });
+  });
+
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
       getObservablePluginLinksMock.mockReturnValue(

@@ -814,6 +814,34 @@ const updateMetadataAnnotationsPayloadSchema = z
   })
   .strict();
 
+const renderPlanPanelSchema = z.object({
+  title: z.string().describe('Panel title'),
+  vizType: z.string().describe('Visualization plugin id (e.g. "timeseries", "piechart", "table")'),
+});
+
+const renderPlanSectionSchema = z.object({
+  title: z.string().describe('Row or tab title'),
+  panels: z.array(renderPlanPanelSchema).describe('Panels in this row/tab, rendered as query-less placeholders'),
+});
+
+const renderPlanVariableSchema = z.object({
+  name: z.string().describe('Variable name'),
+  query: z.string().describe('Comma-separated sample values, e.g. "prod,staging,dev"'),
+});
+
+const renderPlanPayloadSchema = z.object({
+  planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
+  title: z.string().describe('Dashboard title the plan proposes'),
+  description: z.string().optional().describe('Dashboard description the plan proposes'),
+  layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
+  sections: z.array(renderPlanSectionSchema).describe('The plan’s rows or tabs, each with its own panels'),
+  variables: z.array(renderPlanVariableSchema).optional().describe('Stand-in variables to preview alongside the plan'),
+});
+
+const endPlanningPayloadSchema = z.object({
+  planId: z.string().describe('The plan being previewed. END_PLANNING is refused if this does not match.'),
+});
+
 /**
  * Per-command payload schemas, accessible via DashboardMutationAPI.getPayloadSchema().
  *
@@ -863,4 +891,8 @@ export const payloads = {
   updateMetadataAnnotations: updateMetadataAnnotationsPayloadSchema.describe(
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
+  renderPlan: renderPlanPayloadSchema.describe(
+    'Preview a dashboard plan: renders query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+  ),
+  endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
 };

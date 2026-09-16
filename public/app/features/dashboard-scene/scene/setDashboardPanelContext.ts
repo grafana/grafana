@@ -17,6 +17,7 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -65,6 +66,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    // An immediate backend write, reachable by the ordinary drag-to-annotate gesture regardless
+    // of edit mode — canAddAnnotations() below has no isEditing check either, so this is the real
+    // chokepoint.
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       dashboardUID: dashboard.state.uid,
@@ -86,6 +94,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
@@ -106,6 +118,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
+    if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
+      return;
+    }
+
     await annotationServer().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
