@@ -207,9 +207,8 @@ type ExternalAMSyncer struct {
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. proxy routes the config
-// fetch through Grafana's datasource proxy service (*datasourceproxy.DataSourceProxyService
-// in production; a fake in tests), which owns transport, auth and egress
-// validation for the request — the syncer no longer needs its own. Nil
+// fetch through Grafana's datasource proxy service, which owns transport,
+// auth and egress validation — the syncer no longer needs its own. Nil
 // clientGenerator/namespaceMapper (test paths) skips status writes.
 func NewExternalAMSyncer(
 	datasourceService datasources.DataSourceService,
@@ -685,12 +684,9 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 }
 
 // fetchMimirConfig fetches the alertmanager configuration from a Mimir/Cortex
-// datasource, routed through the datasource proxy service so TLS, basic auth,
-// bearer tokens, custom headers and OAuth pass-through configured on the
-// datasource are all honoured, and the same egress allow/deny-list validation
-// the user-driven proxy runs applies here too. Returns the FNV-1a hash of the
-// raw response body alongside the parsed value; callers use the hash for
-// cross-tick dedup without needing to keep the body bytes around.
+// datasource, routed through the datasource proxy service. Returns the FNV-1a
+// hash of the raw response body alongside the parsed value; callers use the
+// hash for cross-tick dedup without needing to keep the body bytes around.
 func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, uint64, error) {
 	// The config endpoint is /api/v1/alerts on the datasource; no Accept header
 	// (Mimir serves YAML there by default).

@@ -68,10 +68,7 @@ func NewRulerFetcher(proxy dsproxyfetch.Proxy, logger log.Logger) *RulerFetcher 
 // and the FNV-1a hash of the raw body (for cross-tick dedup). Any non-2xx
 // (including a 404) is a fetch failure — the ruler config list API returns 200
 // with an empty object when there are no rule groups, so a 404 is never "no
-// rules"; a 2xx body that is not a rule-config object (unparseable, empty or null) yields ErrNotARuler. The GET is routed through the datasource
-// proxy service, which loads the datasource by UID, access-checks SignedInUser,
-// validates egress, and derives the upstream path from the request URL
-// (/api/datasources/proxy/uid/<uid>/config/v1/rules -> config/v1/rules).
+// rules"; a 2xx body that isn't a rule-config object yields ErrNotARuler.
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
 	// Mimir serves the ruler config API as YAML.
 	res, err := dsproxyfetch.Get(ctx, f.proxy, f.logger, ds, "config/v1/rules", rulerSyncLogin, "application/yaml")

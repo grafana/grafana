@@ -1,11 +1,7 @@
-// Package dsproxyfetch is the shared plumbing external sync workers (the
-// external ruler syncer, the external Alertmanager syncer) use to pull
-// upstream config through Grafana's datasource proxy service instead of
-// managing their own HTTP transport. Routing through the proxy means the
-// datasource's configured auth/TLS/headers are honoured and the same
-// egress allow/deny-list validation the user-driven proxy runs applies to
-// the sync worker too, so callers no longer need their own transport or
-// request validator.
+// Package dsproxyfetch lets background sync workers (the external ruler and
+// Alertmanager syncers) fetch config through Grafana's datasource proxy
+// instead of managing their own HTTP transport, so datasource auth and
+// egress validation are handled the same way as for user-driven requests.
 package dsproxyfetch
 
 import (
@@ -61,10 +57,7 @@ func Get(ctx context.Context, proxy Proxy, logger log.Logger, ds *datasources.Da
 		req.Header.Set("Accept", accept)
 	}
 
-	// Capture the proxied reply in-memory (mirrors AlertingProxy.withReq in
-	// api/util.go): response.NormalResponse records status/body and the wrapper
-	// adds the CloseNotify method web.NewResponseWriter requires. SignedInUser is
-	// the org-scoped service identity the proxy access-checks.
+	// Capture the proxied reply in-memory, mirroring AlertingProxy.withReq (api/util.go).
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	c := &contextmodel.ReqContext{
 		Context: &web.Context{
@@ -72,9 +65,7 @@ func Get(ctx context.Context, proxy Proxy, logger log.Logger, ds *datasources.Da
 			Resp: web.NewResponseWriter(req.Method, &closeNotifierResponseWriter{resp}),
 		},
 		SignedInUser: serviceIdentityUser(ds.OrgID, login),
-		// The proxy calls ReqContext.JsonApiErr on failures (datasource lookup,
-		// access, plugin load), which logs via Logger when err != nil — it must be
-		// non-nil or that call panics (and this runs in a background goroutine).
+		// Must be non-nil — the proxy panics on a nil Logger when it errors.
 		Logger: logger,
 	}
 
@@ -83,9 +74,8 @@ func Get(ctx context.Context, proxy Proxy, logger log.Logger, ds *datasources.Da
 	return Result{Status: resp.Status(), Body: resp.Body()}, nil
 }
 
-// closeNotifierResponseWriter adapts the in-memory response.NormalResponse to
-// what web.NewResponseWriter expects, adding CloseNotify. Mirrors the
-// safeMacaronWrapper used by AlertingProxy (api/util.go).
+// closeNotifierResponseWriter adds the CloseNotify method web.NewResponseWriter
+// requires; mirrors AlertingProxy's safeMacaronWrapper (api/util.go).
 type closeNotifierResponseWriter struct {
 	http.ResponseWriter
 }
@@ -94,10 +84,9 @@ func (w *closeNotifierResponseWriter) CloseNotify() <-chan bool {
 	return make(chan bool)
 }
 
-// serviceIdentityUser builds the *user.SignedInUser the datasource proxy
-// access-checks. The ReqContext requires a *user.SignedInUser, which
-// identity.WithServiceIdentity does not provide, so mirror it here carrying the
-// datasource query/read permissions the proxy's access check requires.
+// serviceIdentityUser builds the *user.SignedInUser ReqContext requires —
+// identity.WithServiceIdentity doesn't provide one — carrying the datasource
+// query/read permissions the proxy's access check needs.
 func serviceIdentityUser(orgID int64, login string) *user.SignedInUser {
 	return &user.SignedInUser{
 		OrgID:          orgID,

@@ -126,9 +126,7 @@ func TestGet_PassesThroughNon2xxStatusAndBody(t *testing.T) {
 }
 
 func TestGet_ProxyErrorPathDoesNotPanic(t *testing.T) {
-	// The real proxy calls ReqContext.JsonApiErr on failures (datasource lookup,
-	// access, plugin load), which logs via c.Logger; Get must supply a non-nil
-	// logger or that call panics.
+	// JsonApiErr logs via c.Logger; Get must supply a non-nil logger or it panics.
 	proxy := &fakeProxy{apiErrStatus: http.StatusForbidden, apiErr: errors.New("access denied")}
 
 	res, err := Get(context.Background(), proxy, log.NewNopLogger(), testDS(), "path", "login", "")

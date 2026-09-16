@@ -208,10 +208,9 @@ func (f *fakeConfigClient) SubresourceRequest(_ context.Context, _ resource.Iden
 // syncExternalAMs can call SaveAndApplyExtraConfiguration without tripping on a
 // missing primary config. The feature flag is enabled (when requested) only after
 // bootstrap so the bootstrap call to syncExternalAMs is a no-op and does not
-// trigger admin-config-store mock expectations. proxy stands in for the datasource
-// proxy service the AM syncer fetches through; tests that never reach the fetch
-// path (flag off, no UID, admin-config lookup error) can pass an empty
-// newFakeDatasourceProxy().
+// trigger admin-config-store mock expectations. proxy stands in for the
+// datasource proxy; pass an empty newFakeDatasourceProxy() when the test
+// never reaches the fetch path.
 func buildSyncTestMOA(
 	t *testing.T,
 	adminCfg *fakeConfigClient,
@@ -289,9 +288,8 @@ func assertNoExtraConfigSaved(t *testing.T, cs *fakeConfigStore, orgID int64) {
 	assert.Empty(t, cfg.ExtraConfigs, "no ExtraConfig should have been saved")
 }
 
-// makeMimirDS returns a minimal Alertmanager/Mimir datasource for testing. The
-// syncer fetches through the (fake) datasource proxy keyed by UID — ds.URL is
-// never read by the fetch path, so it's not part of this fixture.
+// makeMimirDS returns a minimal Alertmanager/Mimir datasource for testing;
+// ds.URL isn't read by the fetch path so it's omitted here.
 func makeMimirDS(uid string, orgID int64) *datasources.DataSource {
 	jd := simplejson.New()
 	jd.Set("implementation", "mimir")
@@ -303,11 +301,9 @@ func makeMimirDS(uid string, orgID int64) *datasources.DataSource {
 	}
 }
 
-// fakeDatasourceProxy stands in for *datasourceproxy.DataSourceProxyService,
-// simulating a per-datasource-UID proxied HTTP response so these tests don't
-// need a real datasource proxy stack or a live HTTP server. Mirrors the fake
-// in rulesync/fetch_test.go, extended to route by UID since a single sync tick
-// here can fetch from several datasources at once.
+// fakeDatasourceProxy stands in for *datasourceproxy.DataSourceProxyService.
+// Mirrors the fake in rulesync/fetch_test.go, extended to route by UID since
+// one sync tick can fetch from several datasources at once.
 type fakeDatasourceProxy struct {
 	mu    sync.Mutex
 	byUID map[string]fakeProxyResponse
