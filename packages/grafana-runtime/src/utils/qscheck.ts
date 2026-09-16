@@ -83,6 +83,17 @@ export function isQueryServiceCompatible(datasources: DSSettings[], allowedTypes
   return true;
 }
 
+// A streaming query is only safe when every datasource in a mixed request has
+// been explicitly enabled. Query-service compatibility is checked separately.
+export function areDatasourceTypesAllowed(datasources: DSSettings[], allowedTypes: unknown): boolean {
+  if (datasources.length === 0) {
+    return false;
+  }
+
+  const at = parseAllowedTypes(allowedTypes);
+  return areDataSourceTypesAllowed(datasources, new Set(at.types));
+}
+
 function areDataSourceTypesAllowed(datasources: DSSettings[], allowedTypes: Set<string>): boolean {
   for (const ds of datasources) {
     if (!allowedTypes.has(ds.type)) {
