@@ -525,17 +525,17 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		return nil, err
 	}
 
+	s.cancelMutex.Lock()
+	// Create context out the span context to ensure the trace is propagated.
+	// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
+	asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+	asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
+	s.setCancelFunc(cancelFunc)
+
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
-		s.cancelMutex.Lock()
 		defer s.cancelMutex.Unlock()
 		defer s.clearCancelFunc()
-
-		// Create context out the span context to ensure the trace is propagated.
-		// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
-		asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
-		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
-		s.setCancelFunc(cancelFunc)
 
 		asyncCtx, asyncSpan := s.tracer.Start(asyncCtx, "CloudMigrationService.CreateSnapshotAsync")
 		defer asyncSpan.End()
@@ -634,7 +634,22 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
 	// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
 	// and anybody is interested in the status.
-	go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+	if snapshot.ShouldQueryGMS() {
+		if s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
+			s.cancelMutex.Lock()
+			asyncSyncCtx, cancelFunc := context.WithCancel(asyncSyncCtx)
+			s.setCancelFunc(cancelFunc)
+
+			go func() {
+				defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
+				defer s.cancelMutex.Unlock()
+				defer s.clearCancelFunc()
+				s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+			}()
+		} else {
+			s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+		}
+	}
 
 	return snapshot, nil
 }
@@ -649,24 +664,6 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 		attribute.String("snapshotUID", snapshot.UID),
 	)
 	defer span.End()
-
-	// Ensure only one in-flight sync running
-	if !s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
-		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-		return
-	}
-	defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
-
-	if !snapshot.ShouldQueryGMS() {
-		return
-	}
-
-	s.cancelMutex.Lock()
-	defer s.cancelMutex.Unlock()
-	defer s.clearCancelFunc()
-
-	ctx, cancelFunc := context.WithCancel(ctx)
-	s.setCancelFunc(cancelFunc)
 
 	updatedSnapshot, err := syncStatus(ctx, session, snapshot)
 	if err != nil {
@@ -753,17 +750,17 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 		return err
 	}
 
+	s.cancelMutex.Lock()
+	// Create context out the span context to ensure the trace is propagated.
+	// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
+	asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+	asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
+	s.setCancelFunc(cancelFunc)
+
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
-		s.cancelMutex.Lock()
 		defer s.cancelMutex.Unlock()
 		defer s.clearCancelFunc()
-
-		// Create context out the span context to ensure the trace is propagated.
-		// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
-		asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
-		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
-		s.setCancelFunc(cancelFunc)
 
 		asyncCtx, asyncSpan := s.tracer.Start(asyncCtx, "CloudMigrationService.UploadSnapshot")
 		defer asyncSpan.End()
