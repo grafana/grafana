@@ -192,7 +192,6 @@ describe('TableDataGrid', () => {
             border: '#345678',
             rowHoverBackground: '#56789a',
             rowSelectedBackground: '#6789ab',
-            rowSelectedHoverBackground: '#789abc',
           },
         },
       });
@@ -209,7 +208,9 @@ describe('TableDataGrid', () => {
       expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe('#345678');
       expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe('#56789a');
       expect(grid.getPropertyValue('--rdg-row-selected-background-color')).toBe('#6789ab');
-      expect(grid.getPropertyValue('--rdg-row-selected-hover-background-color')).toBe('#789abc');
+      expect(grid.getPropertyValue('--rdg-row-selected-hover-background-color')).toBe(
+        theme.colors.emphasize('#6789ab', 0.05)
+      );
       expect(grid.getPropertyValue('--rdg-selection-color')).toBe('#89abcd');
       expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe('#456789');
     });
