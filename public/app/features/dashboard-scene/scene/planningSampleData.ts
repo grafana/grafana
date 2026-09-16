@@ -66,7 +66,7 @@ const WINDOW_MS = 60 * 60 * 1000;
  * the title too, so a "p99 latency" panel shows milliseconds and an "error
  * rate" panel shows a mostly-flat line with a spike.
  */
-export function buildMockPanelViz(title: string, viz: PlanVisualization): MockPanelViz {
+function buildMockPanelViz(title: string, viz: PlanVisualization): MockPanelViz {
   const random = seededRandom(title);
   const signal = inferSignal(title);
   const series = buildFrames(viz.data, signal, random);
