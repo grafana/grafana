@@ -3,7 +3,7 @@ import type * as z from 'zod';
 import { startPlanningSession, endPlanningSession } from '../../scene/planningSession';
 
 import { payloads } from './schemas';
-import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+import { requiresEdit, type MutationCommand } from './types';
 
 export const startPlanningCommand: MutationCommand<z.infer<typeof payloads.startPlanning>> = {
   name: 'START_PLANNING',
@@ -11,7 +11,10 @@ export const startPlanningCommand: MutationCommand<z.infer<typeof payloads.start
   payloadSchema: payloads.startPlanning,
   permission: requiresEdit,
   handler: async (payload, { scene }) => {
-    enterEditModeIfNeeded(scene);
+    // Deliberately does not call enterEditModeIfNeeded: the preview is a static, view-mode
+    // surface, never edit mode. Setting `planning` state here first is what makes every
+    // subsequent scaffold command's own enterEditModeIfNeeded call (ADD_PANEL, ADD_ROW, ADD_TAB,
+    // ...) see isPlanning() and skip entering edit mode too.
     startPlanningSession(scene, payload);
     return { success: true, changes: [], data: { planId: payload.planId } };
   },

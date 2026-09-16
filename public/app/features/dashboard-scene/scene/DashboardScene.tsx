@@ -1202,9 +1202,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   /**
-   * True while an unbuilt dashboard plan is being previewed on this scene. Planning is a sub-state
-   * of edit mode: the scene is editable so the user can rearrange the plan, but the dashboard-level
-   * actions that assume a real dashboard (save, settings, sharing) are withheld until they build it.
+   * True while an unbuilt dashboard plan is being previewed on this scene. The preview is a
+   * static, view-mode surface: it never enters edit mode, so there is no exit-edit-mode dance and
+   * no `_initialState` snapshot to restore later. `enterEditModeIfNeeded` (mutation-api/commands/
+   * types.ts) checks this to skip entering edit mode for every scaffold command while planning.
    */
   public isPlanning(): boolean {
     return this.state.planning !== undefined;

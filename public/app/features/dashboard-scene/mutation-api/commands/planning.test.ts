@@ -41,11 +41,11 @@ setPluginImportUtils({
 // two activated scenes coexist (see SaveDashboardDrawer.test.tsx for the same pattern).
 let cleanUpPreviousScene = () => {};
 
-function setup() {
+function setup({ isEditing = true }: { isEditing?: boolean } = {}) {
   cleanUpPreviousScene();
   const scene = new DashboardScene({
     title: 'Preview',
-    isEditing: true,
+    isEditing,
     meta: { canEdit: true },
     body: DefaultGridLayoutManager.fromVizPanels([]),
     $variables: new SceneVariableSet({ variables: [] }),
@@ -69,6 +69,29 @@ beforeEach(() => {
 afterEach(() => {
   config.featureToggles.dashboardNewLayouts = flag;
   jest.restoreAllMocks();
+});
+
+it('never enters edit mode: a preview starting in view mode stays in view mode through scaffolding', async () => {
+  // The preview is a static, view-mode surface with no editing controls and no exit-edit-mode
+  // dance to undo later. startPlanningCommand deliberately never calls enterEditModeIfNeeded, and
+  // setting `planning` state first means every scaffold command after it (which does call
+  // enterEditModeIfNeeded) sees isPlanning() and skips entering edit mode too.
+  const { scene, client } = setup({ isEditing: false });
+  const enterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+  expect((await client.execute(start)).success).toBe(true);
+  expect(scene.state.isEditing).toBe(false);
+  expect(enterEditMode).not.toHaveBeenCalled();
+
+  const added = await client.execute({
+    type: 'ADD_PANEL',
+    planId: 'plan-1',
+    payload: { panel: { kind: 'Panel', spec: panel } },
+  });
+  expect(added.success).toBe(true);
+  expect(scene.state.isEditing).toBe(false);
+  expect(enterEditMode).not.toHaveBeenCalled();
+  expect(scene.state.body.getVizPanels()).toHaveLength(1);
 });
 
 it('enters planning, generates sample data, reads it through the API and retains panels on build', async () => {

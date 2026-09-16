@@ -106,11 +106,19 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 /**
  * Enter edit mode if the dashboard is not already editing.
  * Call this at the top of any command handler that modifies the dashboard.
+ *
+ * Skipped while a plan is being previewed: the preview is a static, view-mode surface with no
+ * editing controls and no exit-edit-mode dance to undo it later, so scaffolding it must not flip
+ * `isEditing` at all. `startPlanningCommand` doesn't call this function in the first place, and
+ * every command after it (ADD_PANEL, ADD_ROW, ADD_TAB, ...) sees `planning` state already set and
+ * skips the entry here too.
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
-  if (!scene.state.isEditing) {
+  if (!scene.state.isEditing && !scene.isPlanning()) {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless of
+  // whether onEnterEditMode ran above, including while planning.
   scene.activateSidebar();
 }

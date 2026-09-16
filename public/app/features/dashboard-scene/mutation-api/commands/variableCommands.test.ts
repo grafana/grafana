@@ -20,6 +20,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -282,6 +283,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -318,6 +320,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -351,6 +354,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
