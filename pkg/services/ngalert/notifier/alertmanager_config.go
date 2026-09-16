@@ -400,8 +400,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
 	if err != nil {
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			return merge.MergeResult{}, err
 		}
 		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)

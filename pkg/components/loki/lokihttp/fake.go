@@ -20,14 +20,11 @@ func NewFake() *Fake {
 		wg:      &sync.WaitGroup{},
 	}
 
-	c.wg.Add(1)
-
-	go func() {
+	c.wg.Go(func() {
 		entry := <-c.entries
 		c.Labels = entry.Labels
 		c.Entry = entry.Line
-		c.wg.Done()
-	}()
+	})
 
 	return c
 }

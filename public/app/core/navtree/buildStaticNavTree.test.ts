@@ -5,33 +5,56 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
+import { addNavEntries, clearRegisteredNavEntries } from './registry';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
+const ALERT_RULES_READER = [AccessControlAction.AlertingRuleRead];
 
 describe('buildStaticNavTree', () => {
   describe('sections', () => {
     it('builds the minimal tree for a user with no permissions', () => {
       setup();
-      // cfg is an attachment-parent shell here; pruneEmptyNavSections removes it
+      // Connections and cfg are attachment-parent shells here; pruneEmptyNavSections removes them
       const tree = buildStaticNavTree();
 
-      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.cfg, NavID.profile, NavID.help]);
+      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.connections, NavID.cfg, NavID.profile, NavID.help]);
     });
 
     it('orders sections by sort weight', () => {
-      setup({ permissions: DASHBOARD_READER });
+      setup({
+        permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER, AccessControlAction.DataSourcesExplore],
+      });
 
       expect(ids(buildStaticNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
         NavID.dashboards,
+        NavID.explore,
+        NavID.drilldown,
+        NavID.alerting,
+        NavID.connections,
         NavID.cfg,
         NavID.profile,
         NavID.help,
       ]);
+    });
+
+    it('places notebooks after drilldown when the flag is on and the user can read dashboards', () => {
+      const dashboardReader = [AccessControlAction.DashboardsRead, AccessControlAction.DataSourcesExplore];
+      setup({ permissions: dashboardReader, openFeatureFlags: { 'dashboard.notebooks': true } });
+
+      const treeIds = ids(buildStaticNavTree());
+      expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
+
+      setup({ permissions: dashboardReader });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
+
+      // Notebooks reuse dashboard RBAC; without dashboards:read there is no entry
+      setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
+      expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
     it('omits signed-in-only sections for anonymous users', () => {
@@ -148,6 +171,117 @@ describe('buildStaticNavTree', () => {
     );
   });
 
+  describe('alerting section', () => {
+    it('is omitted when unified alerting is disabled', () => {
+      setup({ permissions: ALERT_RULES_READER, config: { unifiedAlertingEnabled: false } });
+
+      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+    });
+
+    it('shows the history item only when state history queries are served by Loki', () => {
+      const history = () => findById(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [], 'alerts-history');
+      const withStateHistory = (stateHistory?: { backend?: string; primary?: string }) => {
+        setup({ permissions: ALERT_RULES_READER });
+        config.unifiedAlerting = { ...config.unifiedAlerting, stateHistory };
+      };
+
+      withStateHistory({ backend: 'loki' });
+      expect(history()).toBeDefined();
+
+      withStateHistory({ backend: 'multiple', primary: 'loki' });
+      expect(history()).toBeDefined();
+
+      withStateHistory({ backend: 'multiple', primary: 'annotations' });
+      expect(history()).toBeUndefined();
+
+      withStateHistory({ backend: 'annotations' });
+      expect(history()).toBeUndefined();
+
+      withStateHistory(undefined);
+      expect(history()).toBeUndefined();
+    });
+
+    it('is omitted when no alerting child is accessible', () => {
+      setup();
+      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+    });
+
+    it('uses legacy ids without the V2 navigation toggle', () => {
+      setup({
+        permissions: [
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingNotificationsRead,
+          AccessControlAction.AlertingInstanceRead,
+        ],
+      });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+        'alert-list',
+        'receivers',
+        'am-routes',
+        'silences',
+        'groups',
+      ]);
+    });
+
+    it('groups notification items and renames rules under V2 navigation', () => {
+      setup({
+        permissions: [
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingNotificationsRead,
+          AccessControlAction.AlertingInstanceRead,
+        ],
+        featureToggles: { alertingNavigationV2: true },
+      });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+        'alert-rules',
+        'notification-config',
+        'silences',
+        'groups',
+      ]);
+    });
+
+    it('hides alert groups under V2 with triage but keeps alert activity', () => {
+      setup({
+        permissions: [AccessControlAction.AlertingInstanceRead],
+        featureToggles: { alertingNavigationV2: true, alertingTriage: true },
+      });
+
+      const children = ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
+      expect(children).toContain('alert-activity');
+      expect(children).not.toContain('groups');
+    });
+
+    it('adds admin-only items for org admins', () => {
+      setup({ permissions: ALERT_RULES_READER, orgRole: 'Admin' });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toContain('alerting-admin');
+    });
+  });
+
+  describe('connections section', () => {
+    it('is always present as a plugin attachment parent', () => {
+      setup();
+      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+    });
+
+    it('adds datasource children with configuration page access', () => {
+      setup({ permissions: [AccessControlAction.DataSourcesRead, AccessControlAction.DataSourcesWrite] });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.connections)?.children ?? [])).toEqual([
+        'connections-add-new-connection',
+        'connections-datasources',
+      ]);
+    });
+
+    it('withholds datasource children on read-only access', () => {
+      setup({ permissions: [AccessControlAction.DataSourcesRead] });
+
+      expect(findById(buildStaticNavTree(), NavID.connections)?.children).toEqual([]);
+    });
+  });
+
   describe('administration section', () => {
     it('always contains the subsection shells so plugin pages and enterprise items can inject into them', () => {
       setup();
@@ -255,17 +389,38 @@ describe('buildStaticNavTree', () => {
 });
 
 describe('pruneEmptyNavSections', () => {
-  it('removes empty cfg/access and cfg shells like the server does', () => {
+  it('removes empty connections, cfg/access and cfg shells like the server does', () => {
     setup();
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
     expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
   });
 
-  it('keeps sections that gained children', () => {
-    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+  // Drilldown's children are the drilldown apps, so with none attached the
+  // server drops the section (RemoveEmptyDrilldownSection) rather than leaving
+  // a top-level item that opens an empty landing page.
+  it('removes the drilldown shell when no drilldown apps attached', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore] });
     const tree = pruneEmptyNavSections(buildStaticNavTree());
 
+    expect(findById(buildStaticNavTree(), NavID.drilldown)).toBeDefined();
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    // Explore is a leaf, not an attachment shell, so it survives
+    expect(findById(tree, NavID.explore)).toBeDefined();
+  });
+
+  it('keeps sections that gained children', () => {
+    setup({
+      orgRole: 'Admin',
+      permissions: [
+        AccessControlAction.DataSourcesRead,
+        AccessControlAction.DataSourcesWrite,
+        AccessControlAction.OrgUsersRead,
+      ],
+    });
+    const tree = pruneEmptyNavSections(buildStaticNavTree());
+
+    expect(ids(tree)).toContain(NavID.connections);
     expect(ids(tree)).toContain(NavID.cfg);
     const cfg = findById(tree, NavID.cfg);
     expect(ids(cfg?.children ?? [])).toContain(NavID.cfgAccess);
@@ -298,5 +453,79 @@ describe('sortNavTree', () => {
 
     expect(ids(sorted)).toEqual(['a', 'b', 'c', 'd']);
     expect(ids(nodes)).toEqual(['c', 'a', 'd', 'b']);
+  });
+});
+
+describe('registered nav entries', () => {
+  afterEach(() => {
+    clearRegisteredNavEntries();
+  });
+
+  it('appends registered items into their parent section', () => {
+    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { build: () => ({ text: 'Announcement banner', id: 'banner-settings' }) },
+    });
+
+    const general = findById(buildStaticNavTree(), NavID.cfgGeneral);
+    expect(ids(general?.children ?? [])).toContain('banner-settings');
+  });
+
+  it('appends root-level entries to the top of the tree', () => {
+    setup();
+    addNavEntries({
+      parentId: NavID.root,
+      entry: { build: () => ({ text: 'Enterprise thing', id: 'enterprise-thing', sortWeight: 1 }) },
+    });
+
+    expect(ids(buildStaticNavTree())).toContain('enterprise-thing');
+  });
+
+  it('respects the entry gate', () => {
+    setup({ orgRole: 'Admin' });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { when: () => false, build: () => ({ text: 'Hidden', id: 'hidden-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'hidden-entry')).toBeUndefined();
+  });
+
+  it('warns and skips entries whose parent does not exist', () => {
+    setup();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    addNavEntries({
+      parentId: 'no-such-section',
+      entry: { build: () => ({ text: 'Orphan', id: 'orphan-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'orphan-entry')).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith('[navtree] registered nav entry parent not found', 'no-such-section');
+    warn.mockRestore();
+  });
+
+  // The gates run inside configureStore, so an entry that throws must not take
+  // the rest of the tree — and navIndex — down with it
+  it('drops an entry whose gate throws and keeps the rest of the tree', () => {
+    setup({ permissions: DASHBOARD_READER });
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    addNavEntries({
+      parentId: NavID.dashboards,
+      entry: {
+        when: () => {
+          throw new Error('missing config');
+        },
+        build: () => ({ text: 'Exploding', id: 'exploding-entry' }),
+      },
+    });
+
+    const tree = buildStaticNavTree();
+
+    expect(findById(tree, 'exploding-entry')).toBeUndefined();
+    expect(findById(tree, NavID.dashboards)).toBeDefined();
+    expect(findById(tree, NavID.home)).toBeDefined();
+    expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
+    error.mockRestore();
   });
 });

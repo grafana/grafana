@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Zeigen Sie einen Verlauf aller Warnereignisse an, die von Ihren von Grafana verwalteten Warnregeln generiert wurden. Es werden alle Warnereignisse angezeigt, unabhängig davon, ob Stummschaltungen oder Stummschaltungszeiträume festgelegt sind.",
         "notifications": "Zeigen Sie einen Verlauf aller Benachrichtigungen an, die von Ihren von Grafana verwalteten Warnregeln gesendet wurden."
@@ -3242,14 +3245,19 @@
         "action-disable": "Synchronisierung deaktivieren",
         "add-datasource-link": "Mimir-Datenquelle hinzufügen",
         "badge-active": "Aktiv",
+        "badge-failing": "",
         "badge-not-configured": "Nicht konfiguriert",
         "badge-operator-managed": "Verwaltet von Operator",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Synchronisieren Sie die Warnungskonfiguration kontinuierlich aus einer Datenquelle von Mimir oder Cortex Alertmanager in Grafana.",
         "disable-confirm-action": "Synchronisierung deaktivieren",
         "disable-confirm-body": "Durch die Deaktivierung wird die kontinuierliche Synchronisierung von der Datenquelle {{uid}} beendet. Sie können sie später durch erneute Auswahl einer Datenquelle wieder aktivieren.",
         "disable-confirm-body-generic": "Durch die Deaktivierung wird die kontinuierliche Synchronisierung beendet. Sie können sie später durch erneute Auswahl einer Datenquelle wieder aktivieren.",
         "disable-confirm-title": "Automatische Synchronisierung von Mimir Alertmanager deaktivieren?",
         "disable-success": "Automatische Synchronisierung von Mimir Alertmanager deaktiviert",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Dieser Wert wird durch den Schlüssel <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini festgelegt und kann über die Benutzeroberfläche nicht geändert werden. Bearbeiten Sie die Konfigurationsdatei und starten Sie Grafana neu oder entfernen Sie den Schlüssel, um die Synchronisierung von hier zu verwalten.",
@@ -3268,6 +3276,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Konfiguration der automatischen Synchronisierung"
       },
       "import": {
@@ -3305,6 +3314,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -3349,7 +3360,7 @@
         "policy-tree-routes_other": ""
       },
       "tabs": {
-        "alert-managers": "Warnungsmanager",
+        "alert-managers": "",
         "import": "Import"
       }
     },
@@ -5739,15 +5750,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Verschieben von {{typeName}}",
-      "panel-background": "Panel-Hintergrund ändern",
-      "panel-description": "Panel-Beschreibung ändern",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Änderungen am Panel",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. Wiederholungen pro Zeile",
       "panel-preset": "Panel-Voreinstellung anwenden",
       "panel-repeat-direction": "Richtung wiederholen",
       "panel-repeat-variable": "Panel-Wiederholung durch",
-      "panel-title": "Panel-Titel ändern",
+      "panel-title": "",
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "row-title": "Zeilentitel ändern",
@@ -6023,7 +6034,6 @@
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
       "tags": "",
-      "tags-custom-value": "",
       "tags-placeholder": "",
       "time": "Zeit",
       "title-edit": "",
@@ -6313,6 +6323,19 @@
         "title-controls-menu": "",
         "title-hidden": ""
       },
+      "cross-dashboard-variables": {
+        "description": "",
+        "empty-folder": "",
+        "empty-global": "",
+        "folder-section": "",
+        "global-section": "",
+        "load-error": "",
+        "pane-header": "",
+        "select-all-folder": "",
+        "select-all-global": "",
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "annotations": "Anmerkungen",
         "description": "Beschreibung",
@@ -6416,17 +6439,6 @@
           "empty": "(leer)",
           "no-title": "<kein Titel>"
         }
-      },
-      "predefined-variables": {
-        "all": "Alles",
-        "description": "",
-        "folder": "Ordner",
-        "global": "Global",
-        "label": "Vordefinierte Variablen",
-        "none": "Keine",
-        "pane-header": "Vordefinierte Variablen",
-        "title": "Vordefinierte Variablen",
-        "tooltip": "Wählen Sie, welche globalen Variablen und Ordnervariablen dieses Dashboard erhält"
       },
       "redo": "Wiederherstellen",
       "row": {
@@ -6701,6 +6713,10 @@
       },
       "title-delete": "Möchten Sie {{name}} löschen?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Suche löschen",
       "no-transformations-found": "Keine Transformationen gefunden",
@@ -6751,6 +6767,12 @@
     "view-panel": {
       "back-to-dashboard": "Zurück zum Dashboard",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7043,6 +7065,10 @@
       "recommendation": "Sobald die Funktion wieder aktiviert ist, werden Ihre Dashboards normal in ihrem Format von Dynamic Dashboard dargestellt. Daher empfehlen wir Ihnen dringend, keine Änderungen an diesen Dashboards vorzunehmen, bis die Funktion wieder aktiviert ist, da Änderungen, die im klassischen Modus vorgenommen werden, zu unerwarteten Ergebnissen führen können. Alternativ können Sie mithilfe der Option „Als Kopie speichern“ im Menü „Dashboard speichern“ eine Kopie des Dashboards speichern.",
       "save-warning": "Jedes Dashboard, das als Dynamic Dashboard erstellt oder dazu konvertiert wurde, wird als klassisches Dashboard geöffnet. Durch das Speichern des Dashboards könnten bereits eingerichtete Funktionen von Dynamic Dashboard verloren gehen."
     },
+    "cross-dashboard-variables": {
+      "label-all": "",
+      "label-none": ""
+    },
     "custom-variable-form": {
       "custom-options": "Benutzerdefinierte Optionen",
       "json-values-tooltip": "Stellen Sie eine JSON-Datei bereit, die ein Array von Objekten darstellt, wobei jedes Objekt eine beliebige Anzahl an Eigenschaften haben kann.<br/>Weitere Informationen finden Sie in <4>unserer Dokumentation</4>.",
@@ -7085,6 +7111,12 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
+      "branch-gone-body": "",
+      "branch-gone-discard": "",
+      "branch-gone-refresh-body": "",
+      "branch-gone-save": "",
+      "branch-gone-save-changes": "",
+      "branch-gone-title": "",
       "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
     },
     "dashboard-scene": {
@@ -7514,13 +7546,6 @@
       },
       "title-close": "Schließen"
     },
-    "predefined-variables": {
-      "label-all": "Alles",
-      "label-custom": "Benutzerdefiniert",
-      "label-folder": "Ordner",
-      "label-global": "Global",
-      "label-none": "Keine"
-    },
     "provisioned-controls-section": {
       "label": "Von der Datenquelle bereitgestellt",
       "tooltip": "Vom {{pluginName}}-Plugin hinzugefügt",
@@ -7639,6 +7664,10 @@
       "required": "Erforderlich"
     },
     "save-dashboard-drawer": {
+      "folder-repo-missing-body": "",
+      "folder-repo-missing-title": "",
+      "save-to-database": "",
+      "save-to-git": "",
       "tabs": {
         "label-changes": "Änderungen",
         "label-details": "Details",
@@ -7751,6 +7780,9 @@
         "text-no-save": "Einige Änderungen wurden nicht gespeichert. Sie haben keine Berechtigung zum Speichern. Möchten Sie die Änderungen verwerfen und das Original freigeben?",
         "title": "Nicht gespeicherte Änderungen"
       }
+    },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
     },
     "suggested-dashboard-banner": {
       "body": "Nicht das, wonach Sie suchen? Sehen Sie sich <2>andere vorgeschlagene Dashboards</2> an oder <6>erstellen Sie ein neues Dashboard von Grund auf</6>.",
@@ -8006,6 +8038,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Änderungen speichern",
       "save-button-disabled-tooltip": "Validierungsfehler vor dem Speichern beheben",
       "save-button-disabled-tooltip-yaml": "Das Dokument weist Validierungsfehler auf. Wechseln Sie zu JSON, um die Inline-Fehlerdetails anzuzeigen.",
@@ -8399,7 +8432,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fester Wert"
       },
-      "label": "Skalar",
+      "label-field": "",
       "label-limit": "Limit",
       "label-value": "Wert",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden",
@@ -8632,6 +8665,16 @@
       "title-table": "Tabelle",
       "title-traces": "Traces"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8683,7 +8726,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Wert öffnen in"
+      "open-value-in": "Wert öffnen in",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9125,6 +9169,7 @@
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
+      "error-indicator": "",
       "errors": "Fehler",
       "errors-tooltip": "Wählt Spannen aus, in denen der Status „Fehler“ ist.",
       "export-started": "Export gestartet",
@@ -9142,11 +9187,17 @@
       "share-export-json": "Als JSON exportieren",
       "share-group": "",
       "share-tooltip": "",
+      "spans": "",
       "start-time": "Startzeitpunkt",
+      "success-indicator": "",
       "target": "Ziel",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "Trace-ID",
-      "url": "URL"
+      "url": "URL",
+      "warning-indicator": ""
     },
     "trace-view": {
       "adaptive-traces-restored": {
@@ -9160,6 +9211,10 @@
       "aria-label-copy": "In die Zwischenablage kopieren",
       "attribute-plugin-promo": {
         "learn-more": "Mehr erfahren"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability zeigt visuelle erklärende Pläne, Warteereignisse und Abfragebeispiele und hilft Ihnen so, über Trace-Spannen hinaus Probleme zu diagnostizieren.",
@@ -10655,7 +10710,6 @@
       "ariaLabel-panel-loading": "Panel-Ladebalken",
       "ariaLabel-panel-status": "Panel-Status",
       "errors-and-notices": "Fehler und Hinweise",
-      "inspect-errors-notices": "Inspizieren",
       "tooltip-cancel": "Abfrage abbrechen",
       "tooltip-cancel-loading": "Abfrage abbrechen",
       "tooltip-stop-streaming": "Streaming anhalten",
@@ -10737,9 +10791,13 @@
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
       "cell-inspect-tooltip": "Wert prüfen",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "In Zwischenablage kopieren",
       "csv-counts": "Zeilen:{{rows}}, Spalten:{{columns}}",
       "csv-placeholder": "CSV hier eingeben …",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Alle angezeigten Werte zum Filter hinzufügen",
         "blanks": "(Leerzeichen)",
@@ -11387,9 +11445,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12490,6 +12546,9 @@
       "subtitle": "Regeln, die festlegen, ob eine Warnung ausgelöst wird",
       "title": "Warnregeln"
     },
+    "alerting-notification-config": {
+      "subtitle": ""
+    },
     "alerting-receivers": {
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
@@ -12559,6 +12618,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
+      "subtitle": "",
       "title": "Neue Warnregel"
     },
     "create-dashboard": {
@@ -12593,6 +12653,10 @@
     },
     "explore": {
       "title": "Entdecken"
+    },
+    "extensions": {
+      "subtitle": "",
+      "title": ""
     },
     "frontend": {
       "subtitle": "Erhalten Sie echte Einblicke in die Benutzerüberwachung",
@@ -12674,6 +12738,10 @@
       "subtitle": "",
       "title": ""
     },
+    "observability": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12704,6 +12772,10 @@
     },
     "profiles": {
       "title": "Profile"
+    },
+    "provisioning": {
+      "subtitle": "",
+      "title": ""
     },
     "recently-deleted": {
       "subtitle": "",
@@ -13039,7 +13111,6 @@
       "create-name-required": "",
       "create-name-taken": "",
       "create-tags": "",
-      "create-tags-custom-value": "",
       "create-tags-help": "",
       "create-tags-placeholder": "",
       "created-by-me": "",
@@ -13059,7 +13130,6 @@
       "submit": "",
       "success": "",
       "success-link": "",
-      "tag-label": "",
       "tag-placeholder": "",
       "target-description": "",
       "target-existing": "",
@@ -13080,9 +13150,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -13110,6 +13178,7 @@
       "empty-body": "",
       "empty-title": "",
       "empty-title-read-only": "",
+      "filter-by-tag": "",
       "load-error": "",
       "loading": "",
       "new-notebook": "",
@@ -13126,6 +13195,7 @@
         "title": "",
         "updated": ""
       },
+      "tag-filter-placeholder": "",
       "unknown-author": "",
       "count_one": "",
       "count_other": "",
@@ -13175,7 +13245,9 @@
   },
   "options-ui": {
     "color": {
-      "clear-tooltip": "Einstellungen löschen"
+      "clear-tooltip": "Einstellungen löschen",
+      "swatch-aria-label": "",
+      "swatch-placeholder-aria-label": ""
     },
     "field-color": {
       "color-by-label": "Farbreihe nach"
@@ -15509,7 +15581,7 @@
   },
   "reduce": {
     "strictMode": {
-      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</ 9>",
+      "description": "Wenn <1>Strengen Modus reduzieren</1> verwendet wird, resultiert die Funktion <3>fill(null)</3> (InfluxQL) in <6>NaN</6>. <9>Weitere Details finden Sie in der Dokumentation.</9>",
       "title": "Verhalten im strengen Modus"
     }
   },
@@ -16589,6 +16661,7 @@
       "tooltip-bold": "Fett",
       "tooltip-bullet-list": "Aufzählungsliste",
       "tooltip-checklist": "Checkliste",
+      "tooltip-diagram": "",
       "tooltip-heading": "Überschrift",
       "tooltip-insert-variable": "Variable einfügen",
       "tooltip-italic": "Kursiv",
@@ -16602,12 +16675,21 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
     },
+    "pagination": {
+      "summary": ""
+    },
     "render": {
-      "handlebars-error": "",
-      "truncated": ""
+      "handlebars-error": ""
     },
     "render-mode": {
       "once": "",
@@ -16773,6 +16855,8 @@
       "name-faceted-filter": "Reihensichtbarkeit"
     },
     "line-style-editor": {
+      "description-dash-pattern": "",
+      "label-dash-pattern": "",
       "line-fill-options": {
         "label-accessible": "Zugänglich",
         "label-dash": "Strich",
@@ -16823,6 +16907,10 @@
       "bar-stacked": "Balkendiagramm – gestapelt",
       "bar-stacked-percent": "Balkendiagramm – gestapelt nach Prozentsatz",
       "line": "Liniendiagramm"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Zeitzone hinzufügen",

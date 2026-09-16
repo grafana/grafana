@@ -1,7 +1,8 @@
+import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
-import { type Count, varPreLine } from 'uwrap';
+import { type Count, type uWrap, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -20,7 +21,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
-import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
+import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -35,18 +36,30 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
-import { CELL_HORIZONTAL_CHROME, COLUMN, HEADER_ICON_SPACE, TABLE } from './constants';
-import { type TextAlign } from './styles';
 import {
-  type TableRow,
-  type ColumnTypes,
-  type FrameToRowsConverter,
-  type Comparator,
-  type TypographyCtx,
-  type MeasureCellHeight,
-  type MeasureCellHeightEntry,
-  type FilterType,
-  type GetActionsFunctionLocal,
+  CELL_HORIZONTAL_CHROME,
+  COLUMN,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_ICON_SPACE,
+  HEADER_MENU_SPACE,
+  HEADER_TOOLTIP_SPACE,
+  LAST_COLUMN_CLASS,
+  TABLE,
+} from './constants';
+import type { TextAlign } from './styles';
+import type {
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  MeasureCellHeight,
+  MeasureCellHeightEntry,
+  FilterType,
+  GetActionsFunctionLocal,
+  TableColumn,
+  FromFieldsResult,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -234,7 +247,7 @@ export function createTypographyContext(
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. 1234567890 ALL CAPS TO HELP WITH MEASUREMENT.";
   const txtWidth = ctx.measureText(txt).width;
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
-  const { count } = varPreLine(ctx);
+  const uwrap = varPreLine(ctx);
 
   return {
     ctx,
@@ -242,7 +255,34 @@ export function createTypographyContext(
     letterSpacing,
     avgCharWidth,
     estimateHeight: getTextHeightEstimator(avgCharWidth),
-    measureHeight: getTextHeightMeasurerFromUwrapCount(count),
+    measureHeight: getTextHeightMeasurerFromUwrapCount(uwrap.count),
+    measureWidth: createFitWidthMeasurer(ctx, uwrap),
+  };
+}
+
+/**
+ * @internal The narrowest width at which the line counter agrees the text fits on one line.
+ *
+ * Not `measureText(text).width`: that is kerned end to end, while uwrap sums its own per-character
+ * widths and so reads most strings ~1px wider. Size a column to the kerned number and uwrap wraps
+ * the label anyway. uwrap doesn't export its width table, so it arbitrates instead: start from the
+ * kerned width, which never over-shoots, and nudge up until `test` agrees. Cheap enough for the
+ * handful of labels a header has, but it is work per call — not for every cell.
+ */
+export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: uWrap): (text: string) => number {
+  return (text: string) => {
+    let widest = 0;
+    // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
+    // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
+    // regardless, so measure them separately: the widest is what the whole string needs.
+    for (const segment of text.split('\n')) {
+      let width = Math.ceil(ctx.measureText(segment).width);
+      while (test(segment, width)) {
+        width++;
+      }
+      widest = Math.max(widest, width);
+    }
+    return widest;
   };
 }
 
@@ -430,6 +470,8 @@ export function buildCellHeightMeasurers(
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
+      // kerned whole-string width, deliberately: the pill measurer lays pills out itself rather than
+      // handing the text to the line counter, so a pill is as wide as the browser draws it.
       return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
     },
   } as const;
@@ -1262,8 +1304,22 @@ export interface ContentAwareColWidthsOptions {
    */
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  /**
+   * Whether the table renders a header row. When it doesn't, the header label is not a lower bound on
+   * the column, so it is left out of the measurement entirely. Defaults to true.
+   */
+  hasHeader?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
+  /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
+  tableRefreshEnabled?: boolean;
+  /**
+   * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
+   * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
+   */
+  filter?: FilterType;
+  /** The first column carries extra inline-start padding to line up with the panel title. */
+  noPanelPadding?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1371,13 +1427,51 @@ function measureInlineRunWidth(
  * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
  * that shifts every other column's share of the leftover space).
  */
-function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSortable: boolean): number {
-  let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
-  headerWidth += CELL_HORIZONTAL_CHROME;
-  headerWidth += field.config?.custom?.filterable ? HEADER_ICON_SPACE : 0;
-  headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
-  return headerWidth;
+export interface HeaderAffordanceOptions {
+  showTypeIcons: boolean;
+  tableRefreshEnabled: boolean;
+  /** Whether a filter is currently active on this column — only the refreshed header marks that. */
+  isFiltered: boolean;
+}
+
+/**
+ * @internal Horizontal space the header's affordances take beside the label.
+ *
+ * The single description of what sits next to a header's text, so the two paths that care can't
+ * drift: `measureHeaderWidth` adds it when sizing an auto column, and `useHeaderHeight` subtracts it
+ * to find the room a wrapped label has.
+ */
+export function getHeaderAffordanceWidth(
+  field: Field,
+  { showTypeIcons, tableRefreshEnabled, isFiltered }: HeaderAffordanceOptions
+): number {
+  const isFilterable = field.config.custom?.filterable ?? false;
+  let width = 0;
+  width += showTypeIcons ? HEADER_ICON_SPACE : 0;
+  // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
+  // gain a line (shifting the whole grid down) the moment it's sorted.
+  width += isSortableField(field) ? HEADER_ICON_SPACE : 0;
+  // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
+  // is there for as long as the option is set rather than only while some state holds.
+  width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  if (tableRefreshEnabled) {
+    // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
+    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
+    width += isFilterable ? HEADER_MENU_SPACE : 0;
+    // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
+    // only exists while the filter holds, so its space is reserved only then (the widths recompute
+    // when the filter changes).
+    width += isFiltered ? HEADER_ICON_SPACE : 0;
+  } else {
+    // the classic header renders its filter icon inline whenever the column is filterable, whether
+    // or not a filter is currently active.
+    width += isFilterable ? HEADER_ICON_SPACE : 0;
+  }
+  return width;
+}
+
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, opts: HeaderAffordanceOptions): number {
+  return ctx.measureWidth(getDisplayName(field)) + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts);
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
@@ -1417,6 +1511,8 @@ function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
     if (value != null) {
       valueText = FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
     }
+    // kerned whole-string widths, deliberately: footer text is `nowrap` and never line-counted, so
+    // unlike a header label it wants the width the browser draws, not the width uwrap would assume.
     const rowWidth =
       headerCtx.ctx.measureText(label).width + FOOTER_LABEL_GAP + headerCtx.ctx.measureText(valueText).width;
     widest = Math.max(widest, rowWidth);
@@ -1546,7 +1642,8 @@ function growthWeight(type: FieldType): number {
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
  * that exact width. Every other ("auto") column is sized to fit its content:
  *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
- *      graphical cells, whichever applies, unioned with its header label width;
+ *      graphical cells, whichever applies, unioned with its header label width (skipped when the
+ *      header row is hidden);
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
  *   3. then, if the auto columns don't fill the available width, the leftover is distributed by a
  *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
@@ -1562,7 +1659,17 @@ function growthWeight(type: FieldType): number {
 export function computeContentAwareColWidths(
   fields: Field[],
   availWidth: number,
-  { typographyCtx, headerTypographyCtx, showTypeIcons = false, getActions, sampleSize }: ContentAwareColWidthsOptions
+  {
+    typographyCtx,
+    headerTypographyCtx,
+    showTypeIcons = false,
+    hasHeader = true,
+    getActions,
+    tableRefreshEnabled = false,
+    filter,
+    sampleSize,
+    noPanelPadding = false,
+  }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
   let definedWidth = 0;
@@ -1589,10 +1696,24 @@ export function computeContentAwareColWidths(
   let contentTotal = 0;
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
+  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
+  // rather than the key: nested columns share one width, so any active filter widens the column.
+  const filteredKeys = new Set(
+    Object.values(filter ?? {})
+      .filter((entry) => entry.filtered != null)
+      .map((entry) => entry.displayName)
+  );
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons, isSortableField(field));
+    // A hidden header row has no label to fit, so it doesn't bound the column at all.
+    const headerWidth = hasHeader
+      ? measureHeaderWidth(field, headerTypographyCtx, {
+          showTypeIcons,
+          tableRefreshEnabled,
+          isFiltered: filteredKeys.has(getDisplayName(field)),
+        })
+      : 0;
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds
     // it, wrapping adds height instead. Registered measurer picks pill/link/action/graphical; default is text.
@@ -1606,9 +1727,12 @@ export function computeContentAwareColWidths(
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
     const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth, footerWidth), floor), cap);
+    // The first column's extra padding is chrome, not content, so it's added after the cap rather
+    // than eating into the room the content was measured to need.
+    const extraPadding = noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0;
 
-    contentWidths.set(i, clamped);
-    contentTotal += clamped;
+    contentWidths.set(i, clamped + extraPadding);
+    contentTotal += clamped + extraPadding;
   }
 
   // Distribute leftover space by growthWeight × √(content width): a column with more content grows
@@ -1642,6 +1766,44 @@ export function computeContentAwareColWidths(
   }
 
   return widths;
+}
+
+type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null | undefined);
+
+const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
+  typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
+
+// react-data-grid types these fields `readonly` for callers building a column once; here we're
+// intentionally mutating an already-built one in place, so we cast that guard away locally.
+type MutableColumnClasses = {
+  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
+};
+
+const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
+  const mutable: MutableColumnClasses = column;
+  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
+  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
+  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
+};
+
+/**
+ * @internal
+ * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
+ * finished column list, after any programmatically injected columns (the nested table's row
+ * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
+ *
+ * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
+ * freshly built by the caller right before this call, so there's nothing else holding a reference
+ * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
+ * already makes elsewhere for the nested expander column.
+ */
+export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
+  const { columns } = fromFieldsResult;
+  if (columns.length === 0) {
+    return;
+  }
+  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
+  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

@@ -29,9 +29,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1026,6 +1028,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
 			enforceSortCapability: enforce,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1108,6 +1111,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			fields:                resource.StandardSearchFields(),
 			enforceSortCapability: true,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
 		require.Nil(t, errResult)
@@ -2359,8 +2363,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 
@@ -2390,10 +2393,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	var rebuilds, updates, searches atomic.Int64
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			for ctx.Err() == nil {
 				select {
 				case <-ctx.Done():
@@ -2432,18 +2432,16 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 				require.Equal(t, int64(10), resp.TotalHits)
 				searches.Add(1)
 			}
-		}()
+		})
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for ctx.Err() == nil {
 			_, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
 			rebuilds.Add(1)
 		}
-	}()
+	})
 
 	time.Sleep(5 * time.Second)
 	cancel()
@@ -2476,10 +2474,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	const searchConcurrency = 25
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			prevRV := int64(0)
 			for ctx.Err() == nil {
 				// We use t.Context() here to avoid getting errors from context cancellation.
@@ -2493,7 +2488,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 				updatedRVs[rv]++
 				mu.Unlock()
 			}
-		}()
+		})
 	}
 
 	time.Sleep(1 * time.Second)
@@ -2534,10 +2529,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
 	for range searchConcurrency {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			var collectedRVs []int64
 			for ctx.Err() == nil {
 				attemptedUpdates.Add(1)
@@ -2559,7 +2551,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 				// (We get measurements from update function, but check is done on times inside updater)
 				require.GreaterOrEqual(t, collectedRVs[i], collectedRVs[i-1]+(9*int64(minInterval/time.Millisecond)/10))
 			}
-		}()
+		})
 	}
 
 	// Run updates and searches for this time.
@@ -3077,4 +3069,46 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
 	}, scores(scopeQuery(textQuery, true, 0)))
+}
+
+func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
+	searcher := func(candidates, authorized int64) (*batchAuthzSearcher, *logtest.Fake) {
+		fake := &logtest.Fake{}
+		s := &batchAuthzSearcher{
+			namespace: "stacks-1",
+			group:     "dashboard.grafana.app",
+			resources: map[string]string{"dashboards": utils.VerbGet},
+			log:       fake,
+		}
+		s.candidates.Store(candidates)
+		s.authorized.Store(authorized)
+		return s, fake
+	}
+
+	t.Run("candidates found and none authorized", func(t *testing.T) {
+		s, fake := searcher(3, 0)
+		s.logIfNothingAuthorized()
+
+		require.Equal(t, 1, fake.WarnLogs.Calls)
+		require.Equal(t, "Search matched documents but none passed the permission check", fake.WarnLogs.Message)
+		require.Equal(t, []any{
+			"namespace", "stacks-1",
+			"group", "dashboard.grafana.app",
+			"resources", "dashboards",
+			"candidates", int64(3),
+			"authorized", int64(0),
+		}, fake.WarnLogs.Ctx)
+	})
+
+	t.Run("nothing matched", func(t *testing.T) {
+		s, fake := searcher(0, 0)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
+
+	t.Run("some results authorized", func(t *testing.T) {
+		s, fake := searcher(3, 1)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
 }

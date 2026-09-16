@@ -829,7 +829,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
           apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
-          readOnly: ds.readOnly,
           isDefault: ds.isDefault ?? false,
         }),
     };

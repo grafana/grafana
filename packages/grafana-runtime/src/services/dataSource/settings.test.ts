@@ -1066,7 +1066,6 @@ describe('instanceSettings', () => {
             apiVersion: fixtures.Alpha.apiVersion,
             name: fixtures.Alpha.name,
             meta: fixtures.Alpha.meta,
-            readOnly: fixtures.Alpha.readOnly,
             isDefault: fixtures.Alpha.isDefault ?? false,
           },
         ]);
