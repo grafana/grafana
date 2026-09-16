@@ -27,6 +27,13 @@ The **Dashboards > Variables** page lists cross-dashboard variables, showing whi
 
 <!-- TODO: screenshot here -->
 
+When you add them to a dashboard, only the cross-dashboard variables that share the same scope as your dashboard are available for you to select.
+In the following image, the :
+
+<!-- TODO: screenshot here -->
+
+In the exampl
+
 ## Create cross-dashboard variables
 
 To create cross-dashboard variables, follow the these steps:
@@ -76,3 +83,6 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Exit edit**.
+
+You can't edit the settings of these variables on the dashboard like other variables.
+You can only update their values or remove them from the dashboard in the **Cross-dashboard variables** section of the sidebar.
