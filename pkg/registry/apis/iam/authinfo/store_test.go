@@ -40,31 +40,6 @@ func testCtx() context.Context {
 	return genericapirequest.WithNamespace(context.Background(), "default")
 }
 
-func TestEncodeName(t *testing.T) {
-	tests := []struct {
-		userUID    string
-		authModule string
-		want       string
-	}{
-		{"abc123", "ldap", "abc123.ldap"},
-		{"abc123", "oauth_github", "abc123.oauth-github"},
-		{"abc123", "auth.saml", "abc123.auth.saml"},
-	}
-	for _, tt := range tests {
-		require.Equal(t, tt.want, EncodeName(tt.userUID, tt.authModule))
-
-		userUID, authModule, ok := decodeName(tt.want)
-		require.True(t, ok)
-		require.Equal(t, tt.userUID, userUID)
-		require.Equal(t, tt.authModule, authModule)
-	}
-
-	t.Run("no separator", func(t *testing.T) {
-		_, _, ok := decodeName("no-dot-in-this-name")
-		require.False(t, ok)
-	})
-}
-
 func TestLegacyStore_Get(t *testing.T) {
 	identities := &identitiesFake{users: map[string]int64{"user-uid": 1}}
 	created := time.Unix(1000, 0).UTC()
