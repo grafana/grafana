@@ -1220,7 +1220,7 @@
             },
             "rowSelected": {
               "type": "string",
-              "description": "Existing selection background for TableRT."
+              "description": "Deprecated: use colors.action.selected. This property will be removed in Grafana 14."
             },
             "headerBackground": {
               "type": "string",
@@ -1233,10 +1233,6 @@
             "rowStripedBackground": {
               "type": "string",
               "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
-            },
-            "rowSelectedBackground": {
-              "type": "string",
-              "description": "Opaque background for a selected row."
             }
           },
           "additionalProperties": false
