@@ -39,7 +39,7 @@ import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
 import { type DryRunState, type DryRunValidationResult } from '../types';
 
-import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
+import { canRunDryRun, findDuplicateTemplateFileName, isStep1Valid, validatePolicyTreeName } from './utils';
 
 const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
 
@@ -163,12 +163,14 @@ export function Step1Content({
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
   // Whether we have enough data to run a dry-run validation
-  const canRunDryRun =
-    !autoSyncActive &&
-    Boolean(policyTreeName) &&
-    validatePolicyTreeName(policyTreeName) === true &&
-    !duplicateTemplateFileName &&
-    hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
+  const canRunDryRunNow = canRunDryRun({
+    policyTreeName,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
+  });
 
   // Closes the gate immediately, before the debounce below fires — otherwise Next stays enabled
   // on the previous value's stale result for the whole 500ms debounce window.
@@ -183,12 +185,12 @@ export function Step1Content({
     policyTreeName,
   ]);
 
-  // Debounced, and keyed on policyTreeName too: canRunDryRun alone can stay true across an edit to an
+  // Debounced, and keyed on policyTreeName too: canRunDryRunNow alone can stay true across an edit to an
   // already-valid name, so keying only on it would validate a stale value. Resets any previous result
   // once the step becomes unrunnable, so a stale success can't stick.
   useDebounce(
     () => {
-      if (canRunDryRun) {
+      if (canRunDryRunNow) {
         onTriggerDryRun();
       } else {
         onResetDryRun();
@@ -196,7 +198,7 @@ export function Step1Content({
     },
     500,
     [
-      canRunDryRun,
+      canRunDryRunNow,
       onTriggerDryRun,
       onResetDryRun,
       notificationsSource,
@@ -480,7 +482,7 @@ export function Step1Content({
       </Box>
 
       {/* Validation Status */}
-      {canRunDryRun && dryRunState && dryRunState !== 'idle' && (
+      {canRunDryRunNow && dryRunState && dryRunState !== 'idle' && (
         <ValidationStatus state={dryRunState} result={dryRunResult} />
       )}
     </Stack>

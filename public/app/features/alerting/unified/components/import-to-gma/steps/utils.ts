@@ -93,6 +93,19 @@ export function isStep1Valid(params: Step1ValidationParams): boolean {
   return hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
 }
 
+/**
+ * Whether Step 1's current form values are complete enough to run a dry-run validation.
+ * Auto-sync always returns false: it mirrors the source directly and has no staged config to
+ * validate, unlike isStep1Valid, which treats a selected Auto-sync datasource as sufficient on
+ * its own.
+ */
+export function canRunDryRun(params: Step1ValidationParams): boolean {
+  if (isAutoSyncSelected(params.autoSyncNotificationsEnabled, params.notificationsSource)) {
+    return false;
+  }
+  return isStep1Valid({ ...params, autoSyncNotificationsEnabled: false });
+}
+
 export interface Step2ValidationParams {
   rulesSource: 'yaml' | 'datasource';
   rulesYamlFile: File | null;
