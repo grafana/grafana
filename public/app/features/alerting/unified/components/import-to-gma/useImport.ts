@@ -10,7 +10,13 @@ import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { findDuplicateTemplateFileName } from './steps/utils';
-import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
+import type {
+  ConvertAlertmanagerResponse,
+  DryRunState,
+  DryRunValidationResult,
+  MergeStats,
+  PromoteStatsSummary,
+} from './types';
 
 interface ParsedAlertmanagerYaml {
   alertmanagerConfig: string;
@@ -349,6 +355,25 @@ export function deriveDryRunResult(
     return dryRunData;
   }
   return undefined;
+}
+
+/** Derives the UI-facing dry-run state from a mutation's async state (isLoading/result/error). */
+export function deriveDryRunState(
+  isLoading: boolean,
+  result: DryRunValidationResult | undefined,
+  error: string | undefined
+): DryRunState {
+  if (isLoading) {
+    return 'loading';
+  }
+  if (error || (result && !result.valid)) {
+    return 'error';
+  }
+  if (result?.valid) {
+    const hasRenames = result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0;
+    return hasRenames ? 'warning' : 'success';
+  }
+  return 'idle';
 }
 
 /**

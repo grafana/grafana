@@ -9,6 +9,7 @@ import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import {
   buildRoutingParams,
   deriveDryRunResult,
+  deriveDryRunState,
   mergeTemplateFiles,
   parseDryRunResponse,
   readTemplateFiles,
@@ -156,6 +157,58 @@ describe('deriveDryRunResult', () => {
 
     expect(result?.valid).toBe(false);
     expect(result?.error).toBe('duplicate template "dupe.tmpl"');
+  });
+});
+
+describe('deriveDryRunState', () => {
+  const validResult = {
+    valid: true,
+    error: undefined,
+    renamedReceivers: [],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+  const renamedResult = {
+    valid: true,
+    error: undefined,
+    renamedReceivers: [{ originalName: 'default', newName: 'default-2' }],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+  const invalidResult = {
+    valid: false,
+    error: 'boom',
+    renamedReceivers: [],
+    renamedTimeIntervals: [],
+    stats: undefined,
+  };
+
+  it('is loading whenever the mutation is loading, regardless of stale result or error', () => {
+    expect(deriveDryRunState(true, undefined, undefined)).toBe('loading');
+    expect(deriveDryRunState(true, validResult, undefined)).toBe('loading');
+    expect(deriveDryRunState(true, undefined, 'boom')).toBe('loading');
+  });
+
+  it('is idle when there is neither a result nor an error', () => {
+    expect(deriveDryRunState(false, undefined, undefined)).toBe('idle');
+  });
+
+  it('is success for a valid result with no renamed resources', () => {
+    expect(deriveDryRunState(false, validResult, undefined)).toBe('success');
+  });
+
+  it('is warning for a valid result that renamed resources', () => {
+    expect(deriveDryRunState(false, renamedResult, undefined)).toBe('warning');
+  });
+
+  it('is error for an invalid result', () => {
+    expect(deriveDryRunState(false, invalidResult, undefined)).toBe('error');
+  });
+
+  // Regression: the same stale-result precedence deriveDryRunResult guards against — an error
+  // must win even if a previous successful result is still sitting in `result`.
+  it('is error when an error is present alongside a stale successful result', () => {
+    expect(deriveDryRunState(false, validResult, 'boom')).toBe('error');
   });
 });
 

@@ -74,3 +74,6 @@ export interface DryRunValidationResult {
   /** Counts of resources that would be merged (present on a promote dry-run) */
   stats?: PromoteStatsSummary;
 }
+
+/** UI state for a dry-run validation, derived from the underlying mutation's async state. */
+export type DryRunState = 'idle' | 'loading' | 'success' | 'warning' | 'error';

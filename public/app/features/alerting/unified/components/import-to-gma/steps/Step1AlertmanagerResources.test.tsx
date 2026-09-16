@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
@@ -22,7 +22,7 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../ImportToGMA';
-import { useDryRunNotifications } from '../useImport';
+import { deriveDryRunState, useDryRunNotifications } from '../useImport';
 
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
@@ -108,6 +108,34 @@ function DryRunLoopHarness() {
   }, [getValues, runDryRun]);
 
   return <Step1Content canImport dryRunState="idle" onTriggerDryRun={onTriggerDryRun} onResetDryRun={reset} />;
+}
+
+// Uses ImportToGMA.tsx's real dryRunState derivation (deriveDryRunState) and Step1Wrapper's
+// dryRunPassed check against the real hook state, so the "next-disabled" probe reflects the
+// actual production gating formula rather than a stand-in.
+function NextGatingHarness() {
+  const { runDryRun, reset, isLoading, result, error } = useDryRunNotifications();
+  const { getValues } = useFormContext<ImportFormValues>();
+  const onTriggerDryRun = useCallback(() => {
+    const values = getValues();
+    runDryRun({
+      source: values.notificationsSource,
+      datasourceName: values.notificationsDatasourceName ?? undefined,
+      yamlFile: values.notificationsYamlFile,
+      templateFiles: values.notificationsTemplateFiles,
+      configIdentifier: values.policyTreeName,
+    });
+  }, [getValues, runDryRun]);
+
+  const dryRunState = useMemo(() => deriveDryRunState(isLoading, result, error), [isLoading, result, error]);
+  const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
+
+  return (
+    <>
+      <Step1Content canImport dryRunState={dryRunState} onTriggerDryRun={onTriggerDryRun} onResetDryRun={reset} />
+      <div data-testid="next-disabled">{String(!dryRunPassed)}</div>
+    </>
+  );
 }
 
 describe('Step1AlertmanagerResources', () => {
@@ -523,6 +551,37 @@ describe('Step1AlertmanagerResources', () => {
       expect(input).toHaveFocus(); // no blur happened
 
       await waitFor(() => expect(receivedIdentifiers).toContain('prometheus-prod2'));
+    });
+
+    // Regression test: editing an already-valid name must close the gate immediately, not only
+    // once the debounced re-run resolves.
+    it('keeps the Next-equivalent gate disabled while re-validating an edited but still-valid name', async () => {
+      const user = userEvent.setup();
+      server.use(http.post('/api/convert/api/v1/alerts', () => HttpResponse.json({ status: 'success' })));
+
+      render(
+        <TestWrapper
+          defaultValues={{
+            policyTreeName: 'prometheus-prod',
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <NextGatingHarness />
+        </TestWrapper>
+      );
+
+      await waitFor(() => expect(screen.getByTestId('next-disabled')).toHaveTextContent('false'));
+
+      const input = screen.getByPlaceholderText(/prometheus-prod/i);
+      await user.type(input, '2');
+      expect(input).toHaveFocus(); // no blur happened
+
+      expect(screen.getByTestId('next-disabled')).toHaveTextContent('true');
+
+      await waitFor(() => expect(screen.getByTestId('next-disabled')).toHaveTextContent('false'));
     });
 
     // isStep1Valid recomputes from the live value every render, so it needs no debounce fix like above.

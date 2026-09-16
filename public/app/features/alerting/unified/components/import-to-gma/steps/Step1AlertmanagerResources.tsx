@@ -37,7 +37,7 @@ import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
-import { type DryRunValidationResult } from '../types';
+import { type DryRunState, type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
 
@@ -99,7 +99,7 @@ interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
   /** Dry-run validation state */
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   /** Dry-run validation result */
   dryRunResult?: DryRunValidationResult;
   /** Callback to trigger dry-run validation */
@@ -169,6 +169,19 @@ export function Step1Content({
     validatePolicyTreeName(policyTreeName) === true &&
     !duplicateTemplateFileName &&
     hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
+
+  // Closes the gate immediately, before the debounce below fires — otherwise Next stays enabled
+  // on the previous value's stale result for the whole 500ms debounce window.
+  useEffect(() => {
+    onResetDryRun();
+  }, [
+    onResetDryRun,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    notificationsTemplateFiles,
+    policyTreeName,
+  ]);
 
   // Debounced, and keyed on policyTreeName too: canRunDryRun alone can stay true across an edit to an
   // already-valid name, so keying only on it would validate a stale value. Resets any previous result

@@ -59,10 +59,11 @@ import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './W
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { type DryRunValidationResult } from './types';
+import { type DryRunState, type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
+  deriveDryRunState,
   filterRulerRulesConfig,
   useDryRunNotifications,
   useImportNotifications,
@@ -212,19 +213,10 @@ function ImportWizardContent() {
   } = useDryRunNotifications();
 
   // Derive dry-run UI state from RTK Query state
-  const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
-    if (isDryRunLoading) {
-      return 'loading';
-    }
-    if (dryRunError || (dryRunResult && !dryRunResult.valid)) {
-      return 'error';
-    }
-    if (dryRunResult?.valid) {
-      const hasRenames = dryRunResult.renamedReceivers.length > 0 || dryRunResult.renamedTimeIntervals.length > 0;
-      return hasRenames ? 'warning' : 'success';
-    }
-    return 'idle';
-  }, [isDryRunLoading, dryRunError, dryRunResult]);
+  const dryRunState = useMemo(
+    () => deriveDryRunState(isDryRunLoading, dryRunResult, dryRunError),
+    [isDryRunLoading, dryRunResult, dryRunError]
+  );
 
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
@@ -589,7 +581,7 @@ interface Step1WrapperProps {
   onNext: () => boolean;
   onSkip: () => void;
   onCancel: () => void;
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
   onResetDryRun: () => void;
