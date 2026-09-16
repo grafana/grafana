@@ -1,7 +1,48 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { generateUniqueTitle, getIsLazy } from './utils';
+import { DashboardScene } from '../DashboardScene';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+
+import { changeLayoutTo, generateUniqueTitle, getIsLazy } from './utils';
+
+describe('changeLayoutTo', () => {
+  function buildRowsScene() {
+    const row = new RowItem({ title: 'Overview', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+    const body = new RowsLayoutManager({ rows: [row] });
+    const scene = new DashboardScene({ title: 'test', isEditing: true, meta: { canEdit: true }, body });
+    scene.activate();
+    return { scene, body };
+  }
+
+  it('converts the layout type when not planning', () => {
+    const { scene, body } = buildRowsScene();
+
+    // skipUndo=true: bypasses the edit-history event, which nothing in this minimal scene
+    // subscribes to. The normal UI path (DashboardLayoutSelector) omits it and relies on
+    // DashboardScene's own real activation to run perform() on the published event.
+    changeLayoutTo(body, TabsLayoutManager.descriptor, true);
+
+    expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+  });
+
+  it('refuses to convert the layout type while a plan is being previewed', () => {
+    const { scene, body } = buildRowsScene();
+    scene.setState({
+      planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 0, onBuild: () => {}, onDismiss: () => {} },
+    });
+
+    changeLayoutTo(body, TabsLayoutManager.descriptor, true);
+
+    // toBeInstanceOf rather than toBe(body): comparing a live scene object on a failing
+    // assertion crashes Jest's worker over IPC (see T9). Nothing else in this test could produce
+    // a different RowsLayoutManager, so this is equivalent to asserting identity here.
+    expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+  });
+});
 
 describe('getIsLazy', () => {
   const originalUser = contextSrv.user;

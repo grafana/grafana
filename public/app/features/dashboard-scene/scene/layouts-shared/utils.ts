@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react';
 
+import { t } from '@grafana/i18n';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { dispatch } from 'app/store/store';
 
+import { findDashboardSceneFor } from '../../utils/utils';
 import { type RowItem } from '../layout-rows/RowItem';
 import { type TabItem } from '../layout-tabs/TabItem';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -87,6 +92,23 @@ export function changeLayoutTo(
   layoutItem: LayoutRegistryItem,
   skipUndo?: boolean
 ) {
+  // The real guarantee, not just the sidebar selector's rendered state — see
+  // 'change-layout-type' in planningPolicy.ts for why a layout-type conversion during
+  // planning is unsafe (it breaks endPlanningSession's identity-based cleanup).
+  if (findDashboardSceneFor(currentManager)?.isPlanningActionAllowed('change-layout-type') === false) {
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          t(
+            'dashboard-scene.layouts-shared.change-layout-blocked-while-planning',
+            'Cannot change the layout type while previewing a dashboard plan. Build or dismiss the plan first.'
+          )
+        )
+      )
+    );
+    return;
+  }
+
   switchLayoutOnParent(currentManager, layoutItem.createFromLayout(currentManager), skipUndo);
 }
 

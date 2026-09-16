@@ -13,6 +13,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { changeLayoutTo } from '../../scene/layouts-shared/utils';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { deactivatePlanningSession } from '../../scene/planningSession';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -227,6 +228,51 @@ it('removes scaffolded variables and panels when discarded', async () => {
   );
   expect(scene.state.body.getVizPanels()).toEqual([]);
   expect(sceneGraph.getVariables(scene).state.variables).toEqual([]);
+});
+
+it('refuses to convert the root layout type while planning, so Dismiss still cleans up the scaffold', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_ROW',
+        planId: 'plan-1',
+        payload: { row: { kind: 'RowsLayoutRow', spec: { title: 'Overview' } }, parentPath: '/' },
+      })
+    ).success
+  ).toBe(true);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_PANEL',
+        planId: 'plan-1',
+        payload: { parentPath: '/rows/0', panel: { kind: 'Panel', spec: panel } },
+      })
+    ).success
+  ).toBe(true);
+  expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['CPU usage']);
+
+  const body = scene.state.body;
+  if (!(body instanceof RowsLayoutManager)) {
+    throw new Error('Expected rows layout');
+  }
+
+  // The layout toggle a user could reach from the dashboard-properties sidebar during this same
+  // preview. If it converted, endPlanningSession's identity-based cleanup below would find
+  // nothing to remove (see planningPolicy.ts's 'change-layout-type' comment) and Dismiss would
+  // leave the scaffolded panel behind as ordinary, saveable dashboard content.
+  changeLayoutTo(body, TabsLayoutManager.descriptor, true);
+  // toBeInstanceOf rather than toBe(body): comparing a live scene object on a failing assertion
+  // crashes Jest's worker over IPC (see T9). Nothing else here could produce a different
+  // RowsLayoutManager, so this is equivalent to asserting identity.
+  expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+    true
+  );
+
+  expect(scene.state.body.getVizPanels()).toEqual([]);
 });
 
 it('reshapes samples when visualization changes through UPDATE_PANEL', async () => {

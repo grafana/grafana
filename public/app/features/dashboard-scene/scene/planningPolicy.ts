@@ -38,7 +38,9 @@ export type PlanningAction =
   | 'add-variable'
   | 'remove-variable'
   | 'rename-variable'
-  | 'move-variable';
+  | 'move-variable'
+  // Converting a layout's type (e.g. Rows <-> Tabs), not moving/resizing within one.
+  | 'change-layout-type';
 
 /**
  * Actions withheld while a plan is being previewed.
@@ -93,6 +95,15 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   'remove-variable',
   'rename-variable',
   'move-variable',
+
+  // endPlanningSession removes the plan's own rows/tabs/panels by tracked object identity
+  // (see trackPlanningSection's doc comment), specifically so reordering cannot redirect
+  // removal to another section. Converting a layout's type rebuilds the tree with new
+  // section/panel instances, so the tracked identities no longer match anything live —
+  // cleanup on Dismiss then silently finds nothing to remove, while the "planning ended"
+  // signal still fires, leaving the plan's placeholder scaffolding behind as an ordinary,
+  // saveable dashboard with no visible sign anything went wrong.
+  'change-layout-type',
 ]);
 
 /**
