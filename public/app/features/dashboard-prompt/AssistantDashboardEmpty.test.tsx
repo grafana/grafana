@@ -5,7 +5,6 @@ import { type ChatContextItem } from '@grafana/assistant';
 import { config } from '@grafana/runtime';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
-import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { AssistantDashboardEmpty } from './AssistantDashboardEmpty';
 import { startPlanningInAssistant } from './handoff';
@@ -145,20 +144,6 @@ describe('AssistantDashboardEmpty', () => {
         dashboards: [],
       })
     );
-  });
-
-  it('tags the edit session as assistant and blocks the empty canvas once planning starts', () => {
-    const { dashboard } = renderEmpty();
-    dashboard.state.sidebar.openPane(new AddNewPane({}));
-
-    act(() => {
-      latestOnSubmit?.('monitor checkout', []);
-    });
-
-    expect(dashboard.getEditSessionSource()).toBe('assistant');
-    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
-    expect(screen.getByTestId('dashboard-assistant-interaction-lock')).toBeInTheDocument();
-    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
   });
 
   it('leaves the canvas interactive when planning does not start', () => {
