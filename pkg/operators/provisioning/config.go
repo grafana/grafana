@@ -631,6 +631,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 		MaxBulkFetchSize:    provisioningSec.Key("max_bulk_fetch_size").MustInt64(setting.ProvisioningMaxBulkFetchSizeDefault),
 		MaxRefsSize:         provisioningSec.Key("max_refs_size").MustInt64(setting.ProvisioningMaxRefsSizeDefault),
 		MaxPushResponseSize: provisioningSec.Key("max_push_response_size").MustInt64(setting.ProvisioningMaxPushResponseSizeDefault),
+		MaxDecodedFileSize:  provisioningSec.Key("max_decoded_file_size").MustInt64(setting.ProvisioningMaxDecodedFileSizeDefault),
 	}
 
 	extras := make([]repository.Extra, 0)

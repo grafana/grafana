@@ -66,6 +66,14 @@ type Limits struct {
 	MaxRefsSize int64
 	// MaxPushResponseSize caps the git-receive-pack reply to a push.
 	MaxPushResponseSize int64
+	// MaxDecodedFileSize caps the *decoded* (inflated) size of a single git
+	// object, bounding post-decompression memory so a compressible payload
+	// that fits under the wire caps cannot inflate to gigabytes (a
+	// decompression bomb). Unlike the wire caps above, a non-positive value
+	// does NOT disable the check: it leaves nanogit's built-in default
+	// (10 MiB) in force, so decoded-size protection is never fully off. A
+	// positive value raises or lowers that ceiling.
+	MaxDecodedFileSize int64
 }
 
 // toOptions converts the configured limits into nanogit's options. Any
@@ -86,9 +94,13 @@ func (l Limits) toOptions() (options.Limits, bool) {
 		MultiObjectFetchMaxBytes:    clamp(l.MaxBulkFetchSize),
 		RefsMetadataMaxBytes:        clamp(l.MaxRefsSize),
 		ReceivePackResponseMaxBytes: clamp(l.MaxPushResponseSize),
+		// A non-positive value keeps nanogit's built-in decoded-object default,
+		// so clamping to 0 is the correct "unset" behavior here too.
+		MaxObjectDecodedBytes: clamp(l.MaxDecodedFileSize),
 	}
 	set := opts.SingleObjectFetchMaxBytes > 0 || opts.MultiObjectFetchMaxBytes > 0 ||
-		opts.RefsMetadataMaxBytes > 0 || opts.ReceivePackResponseMaxBytes > 0
+		opts.RefsMetadataMaxBytes > 0 || opts.ReceivePackResponseMaxBytes > 0 ||
+		opts.MaxObjectDecodedBytes > 0
 	return opts, set
 }
 
@@ -1278,6 +1290,16 @@ func mapNanogitError(err error) error {
 	if errors.As(err, &tooLarge) {
 		return apierrors.NewRequestEntityTooLargeError(
 			fmt.Sprintf("git response for %s operation exceeded the %d byte limit", tooLarge.Op, tooLarge.Limit),
+		)
+	}
+
+	// nanogit rejected an object whose decoded (inflated) size exceeds the
+	// decoded-object cap — a decompression bomb defense that fires before the
+	// object is allocated. Surface it as a 413 like the wire-size limits.
+	var objectTooLarge *protocol.ObjectTooLargeError
+	if errors.As(err, &objectTooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git object decoded size %d bytes exceeded the %d byte limit", objectTooLarge.Size, objectTooLarge.Limit),
 		)
 	}
 

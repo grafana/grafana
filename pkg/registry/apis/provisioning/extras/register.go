@@ -48,6 +48,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 		MaxBulkFetchSize:    cfg.ProvisioningMaxBulkFetchSize,
 		MaxRefsSize:         cfg.ProvisioningMaxRefsSize,
 		MaxPushResponseSize: cfg.ProvisioningMaxPushResponseSize,
+		MaxDecodedFileSize:  cfg.ProvisioningMaxDecodedFileSize,
 	}
 	return []repository.Extra{
 		local.Extra(

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/nanogit/options"
+	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/client"
 )
 
@@ -84,6 +85,17 @@ func TestMapNanogitError_ResponseTooLarge(t *testing.T) {
 	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
 }
 
+// TestMapNanogitError_ObjectTooLarge verifies that nanogit's decoded-object
+// cap error (the decompression-bomb defense) is surfaced as a 413.
+func TestMapNanogitError_ObjectTooLarge(t *testing.T) {
+	got := mapNanogitError(&protocol.ObjectTooLargeError{Size: 1 << 30, Limit: 10 << 20})
+	require.Error(t, got)
+
+	var statusErr apierrors.APIStatus
+	require.True(t, errors.As(got, &statusErr), "mapped error should implement APIStatus interface")
+	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
+}
+
 // TestCheckHTTPError_ResponseTooLarge verifies that a capped operation's 413
 // surfaces as a 413 TestResults rather than falling through to the generic 400
 // that Test() returns for unrecognized errors.
@@ -133,6 +145,7 @@ func TestLimits_toOptions(t *testing.T) {
 				MaxBulkFetchSize:    1024 * 1024 * 1024,
 				MaxRefsSize:         10 * 1024 * 1024,
 				MaxPushResponseSize: 10 * 1024 * 1024,
+				MaxDecodedFileSize:  20 * 1024 * 1024,
 			},
 			want: options.Limits{
 				// max_file_size + wire-overhead headroom (see singleObjectWireCap).
@@ -140,6 +153,7 @@ func TestLimits_toOptions(t *testing.T) {
 				MultiObjectFetchMaxBytes:    1024 * 1024 * 1024,
 				RefsMetadataMaxBytes:        10 * 1024 * 1024,
 				ReceivePackResponseMaxBytes: 10 * 1024 * 1024,
+				MaxObjectDecodedBytes:       20 * 1024 * 1024,
 			},
 			wantSet: true,
 		},
@@ -155,6 +169,22 @@ func TestLimits_toOptions(t *testing.T) {
 				SingleObjectFetchMaxBytes:   singleObjectWireCap(1024),
 				ReceivePackResponseMaxBytes: 2048,
 			},
+			wantSet: true,
+		},
+		{
+			// A non-positive decoded cap clamps to 0, which nanogit reads as
+			// "keep the built-in default" — so it must not, on its own, mark the
+			// options as set.
+			name:    "non-positive decoded cap stays 0 and unset",
+			limits:  Limits{MaxDecodedFileSize: -1},
+			want:    options.Limits{},
+			wantSet: false,
+		},
+		{
+			// A positive decoded cap alone must still install the options.
+			name:    "decoded cap alone marks options set",
+			limits:  Limits{MaxDecodedFileSize: 15 * 1024 * 1024},
+			want:    options.Limits{MaxObjectDecodedBytes: 15 * 1024 * 1024},
 			wantSet: true,
 		},
 	}
