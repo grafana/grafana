@@ -124,11 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
       visualRefreshEnabled && {
-        background: theme.colors.background.primary,
         border: `1px solid ${theme.colors.border.weak}`,
-        '&:hover': {
-          background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-        },
       }
     ),
     pluginType: css({
