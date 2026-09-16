@@ -111,8 +111,6 @@ export function buildVizPanelState(
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
-    options,
-    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     // An empty/absent version means the caller didn't pin one (it's optional in
     // the spec); leave pluginVersion undefined so the panel uses the running
     // plugin's current version rather than migrating against a bogus value.
@@ -125,7 +123,12 @@ export function buildVizPanelState(
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
+    // Spread before options/fieldConfig below: this only supplies a synthetic $data series so a
+    // query-less placeholder has something to render. The spec's own options/fieldConfig are the
+    // assistant's planned visualization settings and must win, not be clobbered by the sample's.
     ...(buildOptions.withoutQueries ? getPlanningPanelData(panel.spec.title, panel.spec.vizConfig.group) : {}),
+    options,
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
   };
 
   // Set up Angular migration handler if migration data is present
