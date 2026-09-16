@@ -93,9 +93,15 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.editview = undefined;
     }
 
-    // Handle view panel state
-    if (typeof values.viewPanel === 'string') {
+    // Handle view panel state. Guarded like editview/editPanel/shareView below: a preview
+    // panel has no dropdown menu at all (see renderPlan.ts), but a hand-typed ?viewPanel=
+    // reaches the same interactive view-panel side pane directly, bypassing that. Its Quick
+    // toggles section is gated on the plugin's viewPanelOptions, not on isPlanning() -- the
+    // same reachable-without-isEditing shape as the other three routes here.
+    if (typeof values.viewPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       update.viewPanel = values.viewPanel;
+    } else if (typeof values.viewPanel === 'string') {
+      update.viewPanel = undefined;
     } else if (viewPanel && values.viewPanel === null) {
       update.viewPanel = undefined;
     }
@@ -148,10 +154,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    // Share is already one of the four guarded actions (its menu submenu and keyboard shortcuts
-    // are guarded in PanelMenuBehavior.tsx/keyboardShortcuts.ts) -- this is a third route to the
-    // same action, not a new one. `?shareView=snapshot` in particular would let a placeholder's
-    // synthetic sample data leave the preview as a durable, real-looking artifact.
+    // Share is already guarded elsewhere (its keyboard shortcuts in keyboardShortcuts.ts; its
+    // menu submenu route is closed structurally, since a preview panel has no menu at all -- see
+    // renderPlan.ts) -- this URL param is a third route to the same action, not a new one.
+    // `?shareView=snapshot` in particular would let a placeholder's synthetic sample data leave
+    // the preview as a durable, real-looking artifact.
     if (typeof values.shareView === 'string' && !refuseWhilePlanning(this._scene)) {
       update.shareView = values.shareView;
       update.overlay = new ShareDrawer({

@@ -329,8 +329,9 @@ describe('DashboardSceneUrlSync', () => {
     });
 
     it('does not open the share drawer from a shareView url param', () => {
-      // Share is already one of the four guarded actions (its menu submenu and keyboard
-      // shortcuts) -- this is a third route to the same action, not a new one.
+      // Share is already guarded elsewhere (its keyboard shortcuts; its menu submenu route is
+      // closed structurally, since a preview panel has no menu at all) -- this is a third route
+      // to the same action, not a new one.
       const scene = buildTestScene();
       scene.setState({ planning });
 
@@ -338,6 +339,19 @@ describe('DashboardSceneUrlSync', () => {
 
       expect(scene.state.overlay).toBeUndefined();
       expect(scene.state.shareView).toBeUndefined();
+    });
+
+    it('does not open the view-panel pane from a viewPanel url param', () => {
+      // Preview panels have no dropdown menu at all (see renderPlan.ts), so View is not
+      // reachable through the menu -- but a hand-typed ?viewPanel= reaches the same interactive
+      // side pane directly. Its Quick toggles section is plugin-gated, not isPlanning()-gated, so
+      // this needs the same guard as editview/editPanel/shareView above.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+
+      expect(scene.state.viewPanel).toBeUndefined();
     });
   });
 });
