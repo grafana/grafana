@@ -2362,8 +2362,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 

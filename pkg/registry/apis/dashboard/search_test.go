@@ -431,6 +431,56 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
+	t.Run("uses field value results for permission lookups", func(t *testing.T) {
+		folderField := []*resourcepb.ResourceSearchField{{
+			Name: resource.SEARCH_FIELD_FOLDER,
+			Type: resourcepb.ResourceSearchField_STRING,
+		}}
+		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       folderField,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:    &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"private-folder"}}},
+					},
+					{
+						Key:    &resourcepb.ResourceKey{Name: "dashboard-public", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"public-folder"}}},
+					},
+				},
+			},
+			{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       folderField,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key:    &resourcepb.ResourceKey{Name: "public-folder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+				}},
+			},
+		}}
+		searchHandler := SearchHandler{client: mockClient}
+		requester := &user.SignedInUser{
+			Namespace: "test",
+			OrgID:     1,
+			Permissions: map[int64]map[string][]string{1: {
+				dashboards.ActionDashboardsRead: {
+					"dashboards:uid:dashboard-private",
+					"dashboards:uid:dashboard-public",
+				},
+			}},
+		}
+
+		shared, err := searchHandler.getDashboardsUIDsSharedWithUser(t.Context(), requester, dashboardaccess.PERMISSION_VIEW)
+		require.NoError(t, err)
+		require.Equal(t, []string{"dashboard-private"}, shared)
+		require.Len(t, mockClient.MockCalls, 2)
+		for _, request := range mockClient.MockCalls {
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		}
+	})
+
 	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
 		mockClient := &MockClient{}
 
