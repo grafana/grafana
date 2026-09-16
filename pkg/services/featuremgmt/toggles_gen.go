@@ -986,6 +986,10 @@ const (
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
 
+	// FlagReportingLegacyServiceUsesK8SClient
+	// Redirect legacy report service to use the Kubernetes client wrapper
+	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
+
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
