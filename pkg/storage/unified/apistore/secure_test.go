@@ -295,10 +295,15 @@ func TestSecureLifecycle(t *testing.T) {
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
+		obj.SetFinalizers([]string{"cleanup"})
+
+		err := handleSecureValuesDelete(context.Background(), secureStore, obj)
+		require.NoError(t, err)
 		sv, err := obj.GetSecureValues()
 		require.NoError(t, err)
-		require.Len(t, sv, 1)
+		require.Len(t, sv, 1, "secure values should remain until finalizers complete")
 
+		obj.SetFinalizers(nil)
 		owner := utils.ToObjectReference(obj)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(nil).Once()
