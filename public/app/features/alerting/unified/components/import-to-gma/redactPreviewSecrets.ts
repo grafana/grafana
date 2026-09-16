@@ -14,7 +14,11 @@ const SECRET_FIELD_NAMES = new Set([
   'credentials',
   'credentials_file',
   'client_secret',
+  'client_secret_file',
+  'client_certificate_key',
+  'client_certificate_key_file',
   'api_key',
+  'api_key_file',
   'api_secret',
   // Public endpoint for most providers, but Slack's `api_url` is its incoming-webhook URL — a
   // bearer credential — and the name alone can't tell the two apart.
@@ -24,15 +28,48 @@ const SECRET_FIELD_NAMES = new Set([
   'secret_key',
   'access_key',
   'webhook_url',
+  'webhook_url_file',
   'bot_token',
+  'user_key',
+  'user_key_file',
+  'token',
+  'token_file',
+  'auth_password_file',
   'smtp_auth_password',
+  'smtp_auth_password_file',
   'smtp_auth_secret',
   'slack_api_url',
   'victorops_api_key',
+  'victorops_api_key_file',
   'opsgenie_api_key',
+  'opsgenie_api_key_file',
   'wechat_api_secret',
-  'token',
 ]);
+
+// Same field name, different secret-ness depending on which receiver or config block it's under —
+// name alone can't disambiguate, so these are only redacted when the immediate parent key matches.
+const WEBHOOK_URL_KEYS = new Set(['url', 'url_file']);
+const TLS_KEY_KEYS = new Set(['key', 'key_file']);
+
+function isSecretField(keyName: string | undefined, path: readonly string[]): boolean {
+  if (keyName === undefined) {
+    return false;
+  }
+  if (SECRET_FIELD_NAMES.has(keyName)) {
+    return true;
+  }
+  const parentKey = path.length >= 2 ? path[path.length - 2] : undefined;
+  if (WEBHOOK_URL_KEYS.has(keyName) && parentKey === 'webhook_configs') {
+    return true;
+  }
+  if (TLS_KEY_KEYS.has(keyName) && parentKey?.endsWith('tls_config')) {
+    return true;
+  }
+  if (keyName === 'secrets' && path.includes('http_headers')) {
+    return true;
+  }
+  return false;
+}
 
 // Below this length, and with whitespace allowed, we'd start flagging prose and template
 // placeholders instead of tokens; real secrets we've seen run well past it. False positives on a
@@ -82,15 +119,19 @@ function looksLikeSecretValue(value: string): boolean {
   return looksLikeCredentialUrl(value) || looksLikeHighEntropyToken(value);
 }
 
-function redactNode(node: unknown, keyName?: string): unknown {
+function redactNode(node: unknown, keyName: string | undefined, path: readonly string[]): unknown {
+  if (isSecretField(keyName, path)) {
+    return REDACTED_VALUE;
+  }
   if (Array.isArray(node)) {
-    return node.map((item) => redactNode(item));
+    return node.map((item) => redactNode(item, undefined, path));
   }
   if (node !== null && typeof node === 'object') {
-    return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, redactNode(value, key)]));
+    return Object.fromEntries(
+      Object.entries(node).map(([key, value]) => [key, redactNode(value, key, [...path, key])])
+    );
   }
-  const matchesKnownSecretKey = keyName !== undefined && SECRET_FIELD_NAMES.has(keyName);
-  if (matchesKnownSecretKey || (typeof node === 'string' && looksLikeSecretValue(node))) {
+  if (typeof node === 'string' && looksLikeSecretValue(node)) {
     return REDACTED_VALUE;
   }
   return node;
@@ -104,7 +145,7 @@ export function redactPreviewSecrets(rawContent: string, format: 'yaml' | 'json'
     throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
   }
 
-  const redacted = redactNode(parsed);
+  const redacted = redactNode(parsed, undefined, []);
 
   return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
 }

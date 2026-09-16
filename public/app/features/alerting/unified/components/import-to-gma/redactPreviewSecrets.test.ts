@@ -140,4 +140,109 @@ receivers:
 
     expect(result).not.toContain('dXNlcjpwYXNzMTIz==');
   });
+
+  it('redacts a short, lowercase Pushover user_key that has no high-entropy shape', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    pushover_configs:
+      - user_key: a1b2c3d4e5f6
+        title: Incident notice
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('a1b2c3d4e5f6');
+    expect(result).toContain('title: Incident notice');
+  });
+
+  it('leaves a Pushover supplementary url untouched, unlike webhook_configs url', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    pushover_configs:
+      - user_key: a1b2c3d4e5f6
+        url: https://example.com/link-to-incident
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).toContain('https://example.com/link-to-incident');
+  });
+
+  it('redacts a webhook_configs url with no high-entropy segment', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('https://hooks.example.com/notify');
+  });
+
+  it('redacts a short http header secret regardless of shape', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          http_headers:
+            X-Api-Key:
+              secrets:
+                - shortsecret1
+              values:
+                - public-label
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('shortsecret1');
+    expect(result).toContain('public-label');
+  });
+
+  it('redacts a multiline TLS private key', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          tls_config:
+            cert: |
+              -----BEGIN CERTIFICATE-----
+              FAKE-TEST-FIXTURE-NOT-A-REAL-CERT-0000000000000000000000
+              -----END CERTIFICATE-----
+            key: |
+              -----BEGIN PRIVATE KEY-----
+              FAKE-TEST-FIXTURE-NOT-A-REAL-KEY-0000000000000000000000
+              -----END PRIVATE KEY-----
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('FAKE-TEST-FIXTURE-NOT-A-REAL-KEY-0000000000000000000000');
+    expect(result).toContain('FAKE-TEST-FIXTURE-NOT-A-REAL-CERT-0000000000000000000000');
+  });
+
+  it('redacts an inline OAuth2 client certificate key', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          oauth2:
+            client_id: my-client
+            client_certificate_key: FAKE-CLIENT-CERT-KEY-PLACEHOLDER
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('FAKE-CLIENT-CERT-KEY-PLACEHOLDER');
+    expect(result).toContain('client_id: my-client');
+  });
 });
