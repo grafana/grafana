@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from 'react';
 
 import {
   type AnnotationEventUIModel,
@@ -6,6 +6,7 @@ import {
   type DashboardCursorSync,
   type DataFrame,
   type DataLinkPostProcessor,
+  type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
@@ -13,6 +14,35 @@ import {
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+
+/** Per-viewer transformations applied after the panel's saved transformations. @alpha */
+export interface AdHocTransformationsApi {
+  /** Returns a stable reference until `set` is called. */
+  get(): readonly DataTransformerConfig[];
+
+  /** Replaces the stage. Pass `[]` to clear it. */
+  set(transformations: DataTransformerConfig[]): void;
+
+  /**
+   * Returns the raw frames that entered this stage, including fields removed by its transformations.
+   */
+  getSourceSeries(): readonly DataFrame[];
+
+  /** Registers a listener that runs whenever `set` replaces the transformation stage. */
+  subscribe(callback: () => void): () => void;
+}
+
+/** Reactive view of the panel host's per-viewer transformation stage. @alpha */
+export interface AdHocTransformationsState {
+  /** Transformations currently applied after the panel's saved transformations. */
+  transformations: readonly DataTransformerConfig[];
+
+  /** Raw frames entering the ad-hoc stage, including fields removed by its transformations. */
+  sourceSeries: readonly DataFrame[];
+
+  /** Replaces the ad-hoc stage. Pass `[]` to clear it. */
+  setTransformations(transformations: DataTransformerConfig[]): void;
+}
 
 /** @alpha */
 export interface PanelContext {
@@ -98,6 +128,9 @@ export interface PanelContext {
    * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
+
+  /** Present when the panel host supports ad-hoc transformations. @alpha */
+  adHocTransformations?: AdHocTransformationsApi;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
@@ -114,3 +147,26 @@ export const PanelContextProvider = PanelContextRoot.Provider;
  * @alpha
  */
 export const usePanelContext = () => useContext(PanelContextRoot);
+
+/**
+ * Returns the current per-viewer transformations and re-renders when the panel host changes them.
+ * Returns `undefined` when the panel host does not support ad-hoc transformations.
+ *
+ * @alpha
+ */
+export function useAdHocTransformations(): AdHocTransformationsState | undefined {
+  const api = usePanelContext().adHocTransformations;
+  const subscribe = useCallback((onChange: () => void) => (api ? api.subscribe(onChange) : () => {}), [api]);
+  const getSnapshot = useCallback(() => api?.get(), [api]);
+  const transformations = useSyncExternalStore(subscribe, getSnapshot);
+  const sourceSeries = api?.getSourceSeries();
+  const setTransformations = useCallback(
+    (nextTransformations: DataTransformerConfig[]) => api?.set(nextTransformations),
+    [api]
+  );
+
+  return useMemo(
+    () => (transformations && sourceSeries ? { transformations, sourceSeries, setTransformations } : undefined),
+    [transformations, sourceSeries, setTransformations]
+  );
+}

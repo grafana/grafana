@@ -29,6 +29,7 @@ import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
+import { getAdHocTransformations } from './AdHocTransformations';
 import { type DashboardScene } from './DashboardScene';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
 
@@ -47,6 +48,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     enumerable: true,
     configurable: true,
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
+  });
+
+  // Library panels acquire $data after this context is created.
+  Object.defineProperty(context, 'adHocTransformations', {
+    enumerable: true,
+    configurable: true,
+    get: () => getAdHocTransformations(vizPanel),
   });
 
   context.canAddAnnotations = () => {

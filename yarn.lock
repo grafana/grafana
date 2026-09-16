@@ -7451,7 +7451,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/tree@npm:1.5.3, @rc-component/tree@npm:~1.5.0":
+"@rc-component/tree@npm:1.5.3":
   version: 1.5.3
   resolution: "@rc-component/tree@npm:1.5.3"
   dependencies:
@@ -7463,6 +7463,21 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 10/6d44a5479407f100d79e0577854136f0a596b80b5b122a99d48d9e173e7da2393ffe1c6d83c4b8a2a10661457134ba4ebd0da9b508a6027c0dace0d1e4731244
+  languageName: node
+  linkType: hard
+
+"@rc-component/tree@npm:~1.5.0":
+  version: 1.5.0
+  resolution: "@rc-component/tree@npm:1.5.0"
+  dependencies:
+    "@rc-component/motion": "npm:^1.0.0"
+    "@rc-component/util": "npm:^1.11.1"
+    "@rc-component/virtual-list": "npm:^1.2.0"
+    clsx: "npm:^2.1.1"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 10/1cbccb10a5ccfbfd89b3702073ca379c11c1383ac343228022c7c00db34a778c482953d138d5b578fe0130c9f94c2a19e8cb1ed01477b3420fd280eec40d5940
   languageName: node
   linkType: hard
 
