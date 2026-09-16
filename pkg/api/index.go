@@ -100,6 +100,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	// With the client-built nav tree the frontend only needs the items it cannot
 	// know about (enterprise index-data hooks add theirs to the empty root below,
@@ -193,6 +194,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
