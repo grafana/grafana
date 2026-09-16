@@ -3,12 +3,11 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -25,10 +24,9 @@ import (
 const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-jobqueue-controller")
+	logger := log.NewSlogLogger("provisioning-jobqueue-controller")
 	logger.Info("Starting provisioning job queue controller")
+	ctx = logging.Context(ctx, logger)
 
 	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
