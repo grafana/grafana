@@ -1,6 +1,6 @@
 import { FieldType } from '@grafana/data';
 
-import { getPlanningPanelData } from './planningSampleData';
+import { getPlanningPanelData, getPlanningVariableValues } from './planningSampleData';
 
 it.each([
   ['timeseries', [FieldType.time, FieldType.number, FieldType.number, FieldType.number]],
@@ -18,4 +18,11 @@ it('keeps samples stable for the same title and uses the signal unit', () => {
     second.$data.state.data?.series[0].fields[1].values
   );
   expect(first.fieldConfig.defaults.unit).toBe('percentunit');
+});
+
+it('generates a non-empty list of generic sample values for a stand-in variable', () => {
+  const values = getPlanningVariableValues();
+
+  expect(values.length).toBeGreaterThan(0);
+  expect(new Set(values).size).toBe(values.length);
 });

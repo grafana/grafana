@@ -1,12 +1,14 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { type CustomVariable, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
+
+import { renderPlanContractFixture } from './renderPlanContractFixture';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -75,15 +77,20 @@ describe('RENDER_PLAN', () => {
     ]);
   });
 
-  it('renders stand-in variables alongside the plan', async () => {
+  it('renders stand-in variables alongside the plan, with generated sample values', async () => {
+    // The plan names only the variable, not what its values should look like -- generating
+    // plausible values is the same job as the panel sample data, so it happens here rather than
+    // being reconstructed on the caller's side.
     const { scene, client } = setup();
 
     await client.execute({
       type: 'RENDER_PLAN',
-      payload: { ...plan, variables: [{ name: 'env', query: 'prod,staging' }] },
+      payload: { ...plan, variables: ['env'] },
     });
 
-    expect(scene.state.$variables?.state.variables.map((v) => v.state.name)).toEqual(['env']);
+    const variable = scene.state.$variables?.state.variables[0];
+    expect(variable?.state.name).toBe('env');
+    expect((variable as CustomVariable).state.query.length).toBeGreaterThan(0);
   });
 
   it('refuses when the scene is no longer open', async () => {
@@ -109,5 +116,60 @@ describe('RENDER_PLAN', () => {
 
     expect(() => stalePlanning?.onBuild()).not.toThrow();
     expect(scene.state.planning?.planId).toBe('plan-2');
+  });
+
+  it("CONTRACT: accepts and renders the fixture payload the assistant's mapper is expected to produce", async () => {
+    // See renderPlanContractFixture.ts -- the assistant repo asserts its mapper produces exactly
+    // this object from its own DashboardPlan shape. This is core's half: that RENDER_PLAN accepts
+    // it and renders it correctly. A schema change on either side that isn't mirrored on the
+    // other shows up here as a failing assertion, not as a runtime rejection.
+    const { scene, client } = setup();
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: renderPlanContractFixture });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.title).toBe(renderPlanContractFixture.title);
+    expect(scene.state.description).toBe(renderPlanContractFixture.description);
+    expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+    expect((scene.state.body as RowsLayoutManager).state.rows.map((r) => r.state.title)).toEqual(
+      renderPlanContractFixture.sections.map((s) => s.title)
+    );
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(
+      renderPlanContractFixture.sections.flatMap((s) => s.panels.map((p) => p.title))
+    );
+    expect(scene.state.$variables?.state.variables.map((v) => v.state.name)).toEqual(
+      renderPlanContractFixture.variables
+    );
+  });
+});
+
+describe('other mutation commands, while a plan preview is active', () => {
+  // Oscar's decision: stop enterEditModeIfNeeded from flipping the scene into edit mode on behalf
+  // of an unrelated command, but let the other ~30 mutation commands still run against the
+  // preview without it. Confirmed here, against a real scene and real layout managers rather than
+  // by reasoning about it: ADD_PANEL applies correctly -- title, key, and layout position are all
+  // as expected -- with isEditing staying false throughout.
+  it('ADD_PANEL still adds a panel correctly, without entering edit mode', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: plan });
+    expect(scene.state.isEditing).toBeFalsy();
+
+    const result = await client.execute({
+      type: 'ADD_PANEL',
+      payload: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            title: 'New panel',
+            vizConfig: { group: 'timeseries', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+          },
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.isEditing).toBeFalsy();
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toContain('New panel');
   });
 });

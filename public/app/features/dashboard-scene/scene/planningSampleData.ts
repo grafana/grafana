@@ -538,3 +538,14 @@ export function getPlanningPanelData(title: string, pluginId: string) {
   const sample = buildMockPanelViz(title, { pluginId, data });
   return { $data: new SceneDataNode({ data: sample.data }), options: sample.options, fieldConfig: sample.fieldConfig };
 }
+
+/**
+ * A few generic sample values for a stand-in variable in a plan preview -- the same job as the
+ * panel sample data above (making a query-less preview look plausible), for a variable that has
+ * no real datasource behind it yet. Deliberately generic rather than name-derived: a plan names
+ * only the variable (e.g. "cluster"), not what its values should look like, and generic
+ * placeholders are honest about being a preview rather than guessing real-looking ones.
+ */
+export function getPlanningVariableValues(): string[] {
+  return ['value-1', 'value-2', 'value-3'];
+}

@@ -23,7 +23,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
-import { getPlanningPanelData } from '../../scene/planningSampleData';
+import { getPlanningPanelData, getPlanningVariableValues } from '../../scene/planningSampleData';
 import { buildVizPanel } from '../../serialization/layoutSerializers/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
@@ -91,7 +91,7 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
             });
 
       const variables: SceneVariable[] = (payload.variables ?? []).map(
-        (v) => new CustomVariable({ name: v.name, query: v.query })
+        (name) => new CustomVariable({ name, query: getPlanningVariableValues().join(',') })
       );
 
       const { planId } = payload;

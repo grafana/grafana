@@ -824,18 +824,19 @@ const renderPlanSectionSchema = z.object({
   panels: z.array(renderPlanPanelSchema).describe('Panels in this row/tab, rendered as query-less placeholders'),
 });
 
-const renderPlanVariableSchema = z.object({
-  name: z.string().describe('Variable name'),
-  query: z.string().describe('Comma-separated sample values, e.g. "prod,staging,dev"'),
-});
-
 const renderPlanPayloadSchema = z.object({
   planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
   title: z.string().describe('Dashboard title the plan proposes'),
   description: z.string().optional().describe('Dashboard description the plan proposes'),
   layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
   sections: z.array(renderPlanSectionSchema).describe('The plan’s rows or tabs, each with its own panels'),
-  variables: z.array(renderPlanVariableSchema).optional().describe('Stand-in variables to preview alongside the plan'),
+  variables: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
+        'the plan names only the variable, not what its values should look like.'
+    ),
 });
 
 const endPlanningPayloadSchema = z.object({
