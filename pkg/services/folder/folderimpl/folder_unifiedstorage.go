@@ -179,9 +179,7 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			Fields: []*resourcepb.Requirement{},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit:        folderSearchLimit,
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+		Limit: folderSearchLimit}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resourcepb.Requirement{{
@@ -268,9 +266,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 				},
 			},
 		},
-		Limit:        folderSearchLimit,
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+		Limit: folderSearchLimit}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
@@ -330,9 +326,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 			},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit:        folderSearchLimit,
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+		Limit: folderSearchLimit}
 
 	if parentUID != nil {
 		req := []*resourcepb.Requirement{{
@@ -535,9 +529,7 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 				},
 			},
 		},
-		Limit:        folderSearchLimit,
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+		Limit: folderSearchLimit}
 
 	hits, err := dashboardsearch.SearchAll(ctx, orgID, request, s.variableK8sClient.Search)
 	if err != nil {
@@ -628,9 +620,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					},
 				},
 			},
-			Limit:        folderSearchLimit,
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		}
+			Limit: folderSearchLimit}
 
 		hits, err := dashboardsearch.SearchAll(ctx, cmd.OrgID, request, s.dashboardK8sClient.Search)
 		if err != nil {

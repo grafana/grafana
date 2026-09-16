@@ -1689,6 +1689,11 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf = {
   lt?: number;
   lte?: number;
 };
+export type ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf = {
+  field: string;
+  negate?: boolean;
+  pattern: string;
+};
 export type ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf = {
   /** boost is a future per-leaf score multiplier. Setting it is rejected. */
   boost?: number;
@@ -1702,6 +1707,7 @@ export type ListAlertRuleSearchRulesV0Alpha1SearchWhereNode = {
   not?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
   or?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
   range?: ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf;
+  regex?: ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf;
   text?: ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf;
 };
 export type ListAlertRuleSearchRulesV0Alpha1RequestBody = {
@@ -1997,6 +2003,11 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchRangeLeaf = {
   lt?: number;
   lte?: number;
 };
+export type ListRecordingRuleSearchRulesV0Alpha1SearchRegexLeaf = {
+  field: string;
+  negate?: boolean;
+  pattern: string;
+};
 export type ListRecordingRuleSearchRulesV0Alpha1SearchTextLeaf = {
   /** boost is a future per-leaf score multiplier. Setting it is rejected. */
   boost?: number;
@@ -2010,6 +2021,7 @@ export type ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode = {
   not?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode;
   or?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode[];
   range?: ListRecordingRuleSearchRulesV0Alpha1SearchRangeLeaf;
+  regex?: ListRecordingRuleSearchRulesV0Alpha1SearchRegexLeaf;
   text?: ListRecordingRuleSearchRulesV0Alpha1SearchTextLeaf;
 };
 export type ListRecordingRuleSearchRulesV0Alpha1RequestBody = {

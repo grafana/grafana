@@ -85,6 +85,51 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Equal(t, "slack receiver", cps[1].Name)
 	})
 
+	t.Run("GET does not return v0 contact points", func(t *testing.T) {
+		cfg := createEncryptedConfigWithIntegrationVersion(t, secretsService, "UID1", schema.V0mimir1)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, fakes.NewFakeAlertmanagerConfigStore(cfg))
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "UID2", cps[0].UID)
+	})
+
+	t.Run("PUT does not update v0 contact points", func(t *testing.T) {
+		cfg := createEncryptedConfigWithIntegrationVersion(t, secretsService, "UID1", schema.V0mimir1)
+		configStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
+		contactPoint := createTestEmailContactPoint()
+		contactPoint.UID = "UID1"
+		contactPoint.Name = "grafana-default-email"
+
+		err := sut.UpdateContactPoint(context.Background(), 1, adminUser, contactPoint, models.ProvenanceNone)
+
+		require.ErrorIs(t, err, ErrNotFound)
+		require.Nil(t, configStore.LastSaveCommand)
+	})
+
+	t.Run("DELETE does not delete v0 contact points", func(t *testing.T) {
+		cfg := createEncryptedConfigWithIntegrationVersion(t, secretsService, "UID1", schema.V0mimir1)
+		configStore := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
+
+		err := sut.DeleteContactPoint(context.Background(), 1, adminUser, "UID1")
+
+		require.ErrorIs(t, err, ErrNotFound)
+		require.Nil(t, configStore.LastSaveCommand)
+	})
+
+	t.Run("DELETE of a missing contact point is idempotent", func(t *testing.T) {
+		configStore := fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService))
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
+
+		for range 2 {
+			require.NoError(t, sut.DeleteContactPoint(context.Background(), 1, adminUser, "missing"))
+		}
+	})
+
 	t.Run("service returns empty list when org has no Alertmanager config", func(t *testing.T) {
 		cfgStore := fakes.NewFakeAlertmanagerConfigStore("")
 		cfgStore.GetFn = func(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
@@ -1029,6 +1074,32 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
 	)
+}
+
+func createEncryptedConfigWithIntegrationVersion(
+	t *testing.T,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	uid string,
+	version schema.Version,
+) string {
+	t.Helper()
+	cfg, err := notifier.Load([]byte(createEncryptedConfig(t, secretService)))
+	require.NoError(t, err)
+
+	found := false
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			if integration.UID == uid {
+				integration.Version = string(version)
+				found = true
+			}
+		}
+	}
+	require.True(t, found)
+
+	raw, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+	require.NoError(t, err)
+	return string(raw)
 }
 
 func createTestContactPoint() definitions.EmbeddedContactPoint {
