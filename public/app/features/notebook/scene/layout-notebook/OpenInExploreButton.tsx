@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { LinkButton, Stack } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
@@ -12,10 +12,24 @@ import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/url
  * chrome would throw without a DashboardScene ancestor.
  */
 export function OpenInExploreButton({ panel }: { panel: VizPanel }) {
-  const [url, setUrl] = useState<string>();
+  // A library panel starts with no $data and installs its runner asynchronously, with a setState on
+  // the panel — so this subscription is what brings the link with it. Resolving the runner here also
+  // keeps the hook count fixed: subscribing to it conditionally would run more hooks on the render
+  // after it arrives than on the one before.
+  panel.useState();
+
   const queryRunner = getQueryRunnerFor(panel);
+  if (!queryRunner) {
+    return null;
+  }
+
+  return <ExploreLink panel={panel} queryRunner={queryRunner} />;
+}
+
+function ExploreLink({ panel, queryRunner }: { panel: VizPanel; queryRunner: SceneQueryRunner }) {
+  const [url, setUrl] = useState<string>();
   // setQueryRunnerQueries mutates the runner rather than replacing it, so this tracks query edits.
-  const { queries } = queryRunner?.useState() ?? { queries: [] };
+  const { queries } = queryRunner.useState();
   const timeRange = sceneGraph.getTimeRange(panel).useState().value;
 
   useEffect(() => {
@@ -33,7 +47,7 @@ export function OpenInExploreButton({ panel }: { panel: VizPanel }) {
     };
   }, [panel, queries, timeRange]);
 
-  // No access to Explore, no query runner, or no queries — nothing to open, so nothing to show.
+  // No access to Explore, or a panel that takes no queries — nothing to open, so nothing to show.
   if (!url) {
     return null;
   }

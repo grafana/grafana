@@ -2,7 +2,7 @@ import { act } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataQuery } from '@grafana/data';
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -75,9 +75,28 @@ function buildPanel({ queries, timeFrom }: { queries?: Array<Record<string, unkn
   return { panel, runner, scene };
 }
 
+/**
+ * A cell holding a panel that has no query runner yet — the shape a library panel has until
+ * LibraryPanelBehavior finishes loading and installs `$data` with a setState on the panel.
+ */
+function buildPanelWithoutRunner() {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+  const cell = new NotebookCellItem({ elementName: 'query-1', source: 'user', body: panel });
+
+  new NotebookScene({
+    title: 'Test notebook',
+    body: new NotebookLayoutManager({ cells: [cell] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+
+  return { panel };
+}
+
 beforeEach(() => {
   jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
-  mockGetExploreUrl.mockReset().mockResolvedValue('/explore?panes=%7B%7D&schemaVersion=1');
+  mockGetExploreUrl.mockReset().mockResolvedValue('/explore?first');
 });
 
 afterEach(() => {
@@ -91,7 +110,7 @@ describe('OpenInExploreButton', () => {
     render(<OpenInExploreButton panel={panel} />);
 
     const link = await screen.findByRole('link', { name: 'Explore' });
-    expect(link).toHaveAttribute('href', '/explore?panes=%7B%7D&schemaVersion=1');
+    expect(link).toHaveAttribute('href', '/explore?first');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
@@ -133,25 +152,49 @@ describe('OpenInExploreButton', () => {
     const { panel, runner } = buildPanel({ queries: [{ expr: 'up' }] });
 
     render(<OpenInExploreButton panel={panel} />);
-    await waitFor(() => expect(mockGetExploreUrl).toHaveBeenCalled());
+    expect(await screen.findByRole('link', { name: 'Explore' })).toHaveAttribute('href', '/explore?first');
 
-    mockGetExploreUrl.mockClear();
+    // A distinct url, so this asserts the rebuilt one reaches the anchor rather than just that the
+    // builder ran again.
+    mockGetExploreUrl.mockResolvedValue('/explore?second');
     act(() => setQueryRunnerQueries(runner, [{ ...runner.state.queries[0], expr: 'down' } as DataQuery]));
 
     await waitFor(() =>
-      expect(mockGetExploreUrl).toHaveBeenCalledWith(
-        expect.objectContaining({ queries: [expect.objectContaining({ expr: 'down' })] })
-      )
+      expect(screen.getByRole('link', { name: 'Explore' })).toHaveAttribute('href', '/explore?second')
+    );
+    expect(mockGetExploreUrl).toHaveBeenLastCalledWith(
+      expect.objectContaining({ queries: [expect.objectContaining({ expr: 'down' })] })
     );
   });
 
+  // A library panel has no query runner until it loads, and installs one with a setState on the
+  // panel. Without a subscription to the panel the link never arrives — and the next render from
+  // anywhere else then runs more hooks than the first one did.
+  it('picks up a query runner installed after the first render', async () => {
+    const { panel } = buildPanelWithoutRunner();
+
+    const { rerender } = render(<OpenInExploreButton panel={panel} />);
+    expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
+
+    act(() => {
+      panel.setState({ $data: new SceneQueryRunner({ datasource: { uid: 'prom' }, queries: [{ refId: 'A' }] }) });
+    });
+    // Stands in for anything else re-rendering the cell: a time-range change, an edit-mode toggle, a
+    // drag. NotebookCellFrame is not memoized, so any of them reaches this component.
+    rerender(<OpenInExploreButton panel={panel} />);
+
+    expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+  });
+
   it('renders nothing for a reader without access to Explore', async () => {
-    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+    const hasAccess = jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
     const { panel } = buildPanel();
 
     render(<OpenInExploreButton panel={panel} />);
 
-    await waitFor(() => expect(mockGetExploreUrl).not.toHaveBeenCalled());
+    // Waited on before the negatives below: those hold trivially until the effect has run.
+    await waitFor(() => expect(hasAccess).toHaveBeenCalled());
+    expect(mockGetExploreUrl).not.toHaveBeenCalled();
     expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
   });
 });
