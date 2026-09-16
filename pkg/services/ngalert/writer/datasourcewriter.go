@@ -121,6 +121,12 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 		return nil, err
 	}
 
+	// Amazon Managed Prometheus workspaces expose a dedicated remote-write endpoint
+	// directly under the workspace URL.
+	if ds.Type == datasources.DS_AMAZON_PROMETHEUS {
+		return u.JoinPath("/api/v1/remote_write"), nil
+	}
+
 	if getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
@@ -176,8 +182,8 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	if ds.Type != datasources.DS_PROMETHEUS {
-		return nil, errors.New("can only write to data sources of type prometheus")
+	if ds.Type != datasources.DS_PROMETHEUS && ds.Type != datasources.DS_AMAZON_PROMETHEUS {
+		return nil, errors.New("can only write to data sources of type prometheus or amazon-managed prometheus")
 	}
 
 	is, err := adapters.ModelToInstanceSettings(ds, w.decrypt)
@@ -241,6 +247,7 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			BasicAuth:    ho.BasicAuth,
 			Header:       headers,
 			ProxyOptions: ho.ProxyOptions,
+			SigV4:        ho.SigV4,
 		},
 		Timeout:     w.cfg.Timeout,
 		BackendType: backend,
