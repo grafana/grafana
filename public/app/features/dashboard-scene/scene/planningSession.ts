@@ -37,6 +37,19 @@ export function startPlanningSession(
   scene.setState({ planning: { ...plan, onBuild: () => notify('build'), onDismiss: () => notify('dismiss') } });
 }
 
+/**
+ * Record a row/tab created while planning, so `endPlanningSession` can consider removing it on
+ * Dismiss.
+ *
+ * Planning does not require an empty dashboard: `ADD_ROW`/`ADD_TAB` (see `addRow.ts`/`addTab.ts`)
+ * wrap a non-empty target layout inside the new section instead of replacing it, so a plan can
+ * scaffold a row/tab around pre-existing panels on a real dashboard. Without tracking which
+ * sections the plan itself created, Dismiss would have no way to tell "a section the plan added
+ * and left empty after removing its own panels" (safe to remove — otherwise it is stray
+ * scaffolding on the user's dashboard) from "a section that happened to wrap real content" (must
+ * stay). `endPlanningSession` only ever removes a *tracked* section, and only once it is empty, so
+ * pre-existing content that a tracked section wraps is never touched.
+ */
 export function trackPlanningSection(scene: DashboardScene, section: RowItem | TabItem) {
   sessions.get(scene)?.sections.add(section);
 }

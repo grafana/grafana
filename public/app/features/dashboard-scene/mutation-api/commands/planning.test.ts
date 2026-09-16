@@ -350,6 +350,63 @@ it.each(['row', 'tab'] as const)(
   }
 );
 
+it.each(['row', 'tab'] as const)(
+  'keeps a %s wrapping pre-existing content but removes an empty plan-only sibling on discard',
+  async (kind) => {
+    // Planning is not empty-dashboard-only: ADD_ROW/ADD_TAB wrap non-empty content instead of
+    // replacing it (see trackPlanningSection's doc comment). This is why tracking a section is not
+    // enough on its own — endPlanningSession also has to check emptiness before removing a tracked
+    // section, or it would delete the real content this test wraps.
+    const { scene, client } = setup();
+    const existing = new VizPanel({ title: 'Existing panel', pluginId: 'text', key: 'panel-1' });
+    scene.setState({ body: DefaultGridLayoutManager.fromVizPanels([existing]) });
+    await client.execute(start);
+
+    // Wraps the existing panel: tracked, but never empty, so it must survive discard.
+    const wrapType = kind === 'row' ? 'ADD_ROW' : 'ADD_TAB';
+    expect(
+      (
+        await client.execute({
+          type: wrapType,
+          planId: 'plan-1',
+          payload: {
+            parentPath: '/',
+            [kind]: { kind: kind === 'row' ? 'RowsLayoutRow' : 'TabsLayoutTab', spec: { title: 'Wraps existing' } },
+          },
+        })
+      ).success
+    ).toBe(true);
+
+    // A second, plan-only section with nothing in it: tracked, and empty, so it must be removed.
+    expect(
+      (
+        await client.execute({
+          type: wrapType,
+          planId: 'plan-1',
+          payload: {
+            parentPath: '/',
+            [kind]: { kind: kind === 'row' ? 'RowsLayoutRow' : 'TabsLayoutTab', spec: { title: 'Plan-only' } },
+          },
+        })
+      ).success
+    ).toBe(true);
+
+    expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+      true
+    );
+
+    const body = scene.state.body;
+    const titles =
+      body instanceof RowsLayoutManager
+        ? body.state.rows.map((row) => row.state.title)
+        : body instanceof TabsLayoutManager
+          ? body.state.tabs.map((tab) => tab.state.title)
+          : [];
+    expect(titles).toEqual(['Wraps existing']);
+    expect(scene.state.body.getVizPanels()).toEqual([existing]);
+  }
+);
+
 it('preserves an existing empty section and its variables inside a planning wrapper', async () => {
   const { scene, client } = setup();
   const variable = new CustomVariable({ name: 'service', query: 'production' });
