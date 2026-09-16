@@ -23,9 +23,7 @@
       "border": "palette.neutral300",
       "borderEmphasis": "palette.neutral350",
       "text": "palette.neutral800",
-      "contrastText": "palette.neutral800",
-      "subtleBackground": "palette.neutral300",
-      "subtleBorder": "palette.neutral350"
+      "contrastText": "palette.neutral800"
     },
     "tertiary": {
       "main": "palette.violet500",
@@ -53,9 +51,9 @@
       "mainEmphasis": "palette.red900",
       "text": "palette.red700",
       "textEmphasis": "palette.red800",
-      "background": "palette.red200",
+      "background": "palette.red100",
       "backgroundEmphasis": "palette.red100",
-      "border": "palette.red200",
+      "border": "palette.red100",
       "borderEmphasis": "palette.red300",
       "subtleBackground": "palette.red50",
       "subtleBorder": "palette.red100"
@@ -65,9 +63,9 @@
       "mainEmphasis": "palette.amber900",
       "text": "palette.amber700",
       "textEmphasis": "palette.amber800",
-      "background": "palette.amber200",
+      "background": "palette.amber100",
       "backgroundEmphasis": "palette.amber100",
-      "border": "palette.amber200",
+      "border": "palette.amber100",
       "borderEmphasis": "palette.amber300",
       "subtleBackground": "palette.amber50",
       "subtleBorder": "palette.amber100"
@@ -77,9 +75,9 @@
       "mainEmphasis": "palette.sage900",
       "text": "palette.sage700",
       "textEmphasis": "palette.sage800",
-      "background": "palette.sage200",
+      "background": "palette.sage100",
       "backgroundEmphasis": "palette.sage100",
-      "border": "palette.sage200",
+      "border": "palette.sage100",
       "borderEmphasis": "palette.sage300",
       "subtleBackground": "palette.sage50",
       "subtleBorder": "palette.sage100"
@@ -89,9 +87,9 @@
       "mainEmphasis": "palette.blue900",
       "text": "palette.blue700",
       "textEmphasis": "palette.blue800",
-      "background": "palette.blue200",
+      "background": "palette.blue100",
       "backgroundEmphasis": "palette.blue100",
-      "border": "palette.blue200",
+      "border": "palette.blue100",
       "borderEmphasis": "palette.blue300",
       "subtleBackground": "palette.blue50",
       "subtleBorder": "palette.blue100"

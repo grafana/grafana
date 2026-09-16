@@ -472,11 +472,13 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       hoverBackgroundColor = darkenForHover(backgroundColor);
     }
 
-    // Semantic colors' solid fill has a saturated background, so it needs the lighter
-    // textEmphasis shade for contrast instead of the base text color used elsewhere.
+    // Semantic colors' solid fill has a saturated background, so it needs a stronger-contrast
+    // shade than the base text color used elsewhere. In dark mode that's the lighter textEmphasis
+    // (*200); in light mode, color.text (*700, e.g. red700 #812f2d) reads better against the *100
+    // background than textEmphasis (*800) while still giving comfortable contrast (5.9:1+).
     if (fill === 'solid' && SEMANTIC_SOLID_COLOR_NAMES.includes(color.name)) {
-      textColor = color.textEmphasis;
-      hoverTextColor = color.textEmphasis;
+      textColor = theme.colors.mode === 'light' ? color.text : color.textEmphasis;
+      hoverTextColor = textColor;
       hoverBackgroundColor = darkenForHover(backgroundColor);
     }
   }

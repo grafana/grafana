@@ -24,8 +24,8 @@
       "borderEmphasis": "palette.ink600",
       "text": "palette.ink200",
       "contrastText": "palette.ink100",
-      "subtleBackground": "palette.ink650",
-      "subtleBorder": "palette.ink600"
+      "subtleBackground": "palette.ink800",
+      "subtleBorder": "palette.ink700"
     },
     "tertiary": {
       "main": "palette.violet500",
