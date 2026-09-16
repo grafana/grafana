@@ -190,7 +190,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 			groupVersions: []schema.GroupVersion{{Group: "test.example.com", Version: "v1"}},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 	})
 
 	t.Run("registers options for resources where provider returns non-nil", func(t *testing.T) {
@@ -211,7 +211,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 			},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
 		require.Len(t, called, 2)
 		assert.Contains(t, called, schema.GroupResource{Group: "test.grafana.app", Resource: enabledResource})
@@ -236,7 +236,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 			},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
 		assert.Equal(t, 1, callCount)
 	})
@@ -318,7 +318,7 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 			},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
 		assert.ElementsMatch(t, []schema.GroupVersionResource{v1, v2}, asked,
 			"both versions are asked, and the plural is lower-cased into the resource name")
@@ -343,7 +343,7 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 			},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
 		assert.Equal(t, []schema.GroupResource{{Group: group, Resource: "foos"}}, unversioned,
 			"only the declined version consults the GroupResource provider")
@@ -351,12 +351,33 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		assert.False(t, scoped(t, reg, v2), "the declined version resolves through the shared getter")
 	})
 
+	// A provider naming a version its resource does not serve is a config error,
+	// not something to paper over: it would store objects under an apiVersion no
+	// served version accounts for.
+	t.Run("a GVK outside the registered group version fails startup", func(t *testing.T) {
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+				return &apistore.StorageOptions{
+					GVK: schema.GroupVersionKind{Group: group, Version: "v9alpha1", Kind: "Foo"},
+				}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		err := registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "v9alpha1")
+		require.False(t, scoped(t, reg, v1), "a rejected app registers nothing at all")
+	})
+
 	t.Run("an installer with neither provider registers nothing", func(t *testing.T) {
 		installer := &mockAppInstaller{
 			groupVersions: []schema.GroupVersion{{Group: group, Version: "v1alpha1"}},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 		assert.False(t, scoped(t, reg, v1))
 	})
 }

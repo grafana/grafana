@@ -1,10 +1,8 @@
 package apistore
 
 import (
-	"context"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -41,8 +39,8 @@ func TestForResource(t *testing.T) {
 
 	t.Run("versions of one resource keep their own options", func(t *testing.T) {
 		r := newGetter()
-		r.RegisterVersionedOptions(v1, StorageOptions{GVK: v1.GroupVersion().WithKind("Thing"), RequireFolder: true})
-		r.RegisterVersionedOptions(v2, StorageOptions{GVK: v2.GroupVersion().WithKind("Thing")})
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{GVK: v1.GroupVersion().WithKind("Thing"), RequireFolder: true}))
+		require.NoError(t, r.RegisterVersionedOptions(v2, StorageOptions{GVK: v2.GroupVersion().WithKind("Thing")}))
 
 		first := resolvedOptions(t, r.ForResource(v1), gr)
 		second := resolvedOptions(t, r.ForResource(v2), gr)
@@ -56,7 +54,7 @@ func TestForResource(t *testing.T) {
 	t.Run("a GVR with nothing registered falls back to the shared getter", func(t *testing.T) {
 		r := newGetter()
 		r.RegisterOptions(gr, StorageOptions{MaximumNameLength: 40})
-		r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true})
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
 
 		require.Same(t, r, r.ForResource(v2), "no versioned entry means no scoping")
 		require.Equal(t, 40, resolvedOptions(t, r.ForResource(v2), gr).MaximumNameLength)
@@ -73,14 +71,14 @@ func TestForResource(t *testing.T) {
 	// the apiVersion writes persist under.
 	t.Run("the key completes a GVK that names only a Kind", func(t *testing.T) {
 		r := newGetter()
-		r.RegisterVersionedOptions(v1, StorageOptions{GVK: schema.GroupVersionKind{Kind: "Thing"}})
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{GVK: schema.GroupVersionKind{Kind: "Thing"}}))
 
 		require.Equal(t, v1.GroupVersion().WithKind("Thing"), resolvedOptions(t, r.ForResource(v1), gr).GVK)
 	})
 
 	t.Run("an empty GVK is completed to the key's kindless GVK", func(t *testing.T) {
 		r := newGetter()
-		r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true})
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
 
 		got := resolvedOptions(t, r.ForResource(v1), gr).GVK
 		require.Equal(t, group, got.Group)
@@ -88,15 +86,15 @@ func TestForResource(t *testing.T) {
 		require.Empty(t, got.Kind, "only the caller knows the kind name")
 	})
 
-	// A store deliberately shared across versions persists as one of them, so a
-	// mismatch is kept rather than rewritten. It is logged, not silently applied.
-	t.Run("an explicit GVK is kept even when it disagrees with the key", func(t *testing.T) {
+	// A contradicting GVK is refused outright, so nothing is registered and the
+	// resource keeps falling through to the shared getter.
+	t.Run("a GVK that disagrees with the key registers nothing", func(t *testing.T) {
 		r := newGetter()
-		declared := schema.GroupVersionKind{Group: group, Version: "v0alpha1", Kind: "Thing"}
-		r.RegisterVersionedOptions(v1, StorageOptions{GVK: declared})
-
-		require.Equal(t, declared, resolvedOptions(t, r.ForResource(v1), gr).GVK,
-			"the caller's version survives; only omissions are filled in")
+		err := r.RegisterVersionedOptions(v1, StorageOptions{
+			GVK: schema.GroupVersionKind{Group: group, Version: "v0alpha1", Kind: "Thing"},
+		})
+		require.Error(t, err)
+		require.Same(t, r, r.ForResource(v1), "a rejected registration leaves no entry behind")
 	})
 
 	t.Run("an unregistered getter scopes nothing", func(t *testing.T) {
@@ -108,7 +106,7 @@ func TestForResource(t *testing.T) {
 	// group or version cannot pick up these options.
 	t.Run("the key is the whole GVR", func(t *testing.T) {
 		r := newGetter()
-		r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true})
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
 
 		other := schema.GroupVersionResource{Group: "other.grafana.app", Version: "v1alpha1", Resource: "things"}
 		require.Same(t, r, r.ForResource(other))
@@ -121,7 +119,7 @@ func TestForResourceSharesTheParentConfig(t *testing.T) {
 	r := NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 	gr := schema.GroupResource{Group: "example.grafana.app", Resource: "things"}
 	gvr := gr.WithVersion("v1alpha1")
-	r.RegisterVersionedOptions(gvr, StorageOptions{RequireFolder: true})
+	require.NoError(t, r.RegisterVersionedOptions(gvr, StorageOptions{RequireFolder: true}))
 
 	shared, err := r.GetRESTOptions(gr, nil)
 	require.NoError(t, err)
@@ -133,59 +131,35 @@ func TestForResourceSharesTheParentConfig(t *testing.T) {
 	require.Equal(t, shared.CountMetricPollPeriod, scoped.CountMetricPollPeriod)
 }
 
-// warnCapturingLogger records Warn calls so the mismatch warning is verified
-// rather than assumed. Everything else embeds NoOpLogger.
-type warnCapturingLogger struct {
-	logging.NoOpLogger
-	warnings []string
-}
-
-func (l *warnCapturingLogger) Warn(msg string, _ ...any) {
-	l.warnings = append(l.warnings, msg)
-}
-
-func (l *warnCapturingLogger) With(_ ...any) logging.Logger               { return l }
-func (l *warnCapturingLogger) WithContext(context.Context) logging.Logger { return l }
-
-// A GVK that contradicts its key persists writes under a version the storage
-// does not serve, so registering one has to be noisy.
-func TestRegisterVersionedOptionsWarnsOnGVKMismatch(t *testing.T) {
+// A GVK contradicting its key would persist writes under a version the storage
+// does not serve, so the registration is refused rather than adjusted.
+func TestRegisterVersionedOptionsRejectsGVKMismatch(t *testing.T) {
 	const group = "example.grafana.app"
 	gvr := schema.GroupResource{Group: group, Resource: "things"}.WithVersion("v1alpha1")
 
-	register := func(t *testing.T, opts StorageOptions) []string {
+	register := func(t *testing.T, gvk schema.GroupVersionKind) error {
 		t.Helper()
-		capture := &warnCapturingLogger{}
-		previous := logging.DefaultLogger
-		logging.DefaultLogger = capture
-		t.Cleanup(func() { logging.DefaultLogger = previous })
-
-		NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil).
-			RegisterVersionedOptions(gvr, opts)
-		return capture.warnings
+		return NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil).
+			RegisterVersionedOptions(gvr, StorageOptions{GVK: gvk})
 	}
 
-	t.Run("a matching GVK is silent", func(t *testing.T) {
-		require.Empty(t, register(t, StorageOptions{GVK: gvr.GroupVersion().WithKind("Thing")}))
+	t.Run("a matching GVK is accepted", func(t *testing.T) {
+		require.NoError(t, register(t, gvr.GroupVersion().WithKind("Thing")))
 	})
 
-	t.Run("an omitted group and version are filled in, not warned about", func(t *testing.T) {
-		require.Empty(t, register(t, StorageOptions{GVK: schema.GroupVersionKind{Kind: "Thing"}}))
-		require.Empty(t, register(t, StorageOptions{}))
+	t.Run("an omitted group and version are filled in, not rejected", func(t *testing.T) {
+		require.NoError(t, register(t, schema.GroupVersionKind{Kind: "Thing"}))
+		require.NoError(t, register(t, schema.GroupVersionKind{}))
 	})
 
-	t.Run("a contradicting version warns", func(t *testing.T) {
-		warnings := register(t, StorageOptions{
-			GVK: schema.GroupVersionKind{Group: group, Version: "v2alpha1", Kind: "Thing"},
-		})
-		require.Len(t, warnings, 1)
-		require.Contains(t, warnings[0], "outside the resource they are registered for")
+	t.Run("a contradicting version is rejected", func(t *testing.T) {
+		err := register(t, schema.GroupVersionKind{Group: group, Version: "v2alpha1", Kind: "Thing"})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "outside the group version they are registered for")
+		require.Contains(t, err.Error(), gvr.String(), "the message names the resource that was rejected")
 	})
 
-	t.Run("a contradicting group warns", func(t *testing.T) {
-		warnings := register(t, StorageOptions{
-			GVK: schema.GroupVersionKind{Group: "other.grafana.app", Version: "v1alpha1", Kind: "Thing"},
-		})
-		require.Len(t, warnings, 1)
+	t.Run("a contradicting group is rejected", func(t *testing.T) {
+		require.Error(t, register(t, schema.GroupVersionKind{Group: "other.grafana.app", Version: "v1alpha1", Kind: "Thing"}))
 	})
 }

@@ -188,7 +188,9 @@ func InstallAPIs(
 		// Register per-resource storage options (e.g. folder support).
 		// Must happen before InstallAPIs so the RESTOptionsGetter has
 		// the options when it creates the underlying storage.
-		registerStorageOptions(installer, restOpsGetter, logger)
+		if err := registerStorageOptions(installer, restOpsGetter, logger); err != nil {
+			return fmt.Errorf("failed to register storage options for app %s: %w", installer.ManifestData().AppName, err)
+		}
 
 		wrapper := &serverWrapper{
 			ctx:               ctx,
@@ -263,21 +265,25 @@ func createPostStartHook(
 // through RESTOptionsGetter.ForResource, so each served version gets its own.
 // Unversioned options are keyed by GroupResource, which every version of a kind
 // shares; a resource is registered once and later versions add nothing.
+//
+// An error means the app declared options that cannot be served -- a config
+// error worth failing startup over, since the alternative is storing objects
+// under a kind nothing accounts for.
 func registerStorageOptions(
 	installer appsdkapiserver.AppInstaller,
 	restOpsGetter generic.RESTOptionsGetter,
 	logger logging.Logger,
-) {
+) error {
 	provider, _ := installer.(StorageOptionsProvider)
 	versionedProvider, _ := installer.(VersionedStorageOptionsProvider)
 	if provider == nil && versionedProvider == nil {
-		return
+		return nil
 	}
 	reg, ok := restOpsGetter.(*apistore.RESTOptionsGetter)
 	if !ok {
 		logger.Warn("StorageOptionsProvider is implemented but RESTOptionsGetter is not the expected type, storage options will not be applied",
 			"app", installer.ManifestData().AppName)
-		return
+		return nil
 	}
 	md := installer.ManifestData()
 	registered := make(map[schema.GroupResource]struct{})
@@ -291,8 +297,11 @@ func registerStorageOptions(
 				Resource: strings.ToLower(k.Plural),
 			}
 			if versionedProvider != nil {
-				if opts := versionedProvider.GetVersionedStorageOptions(gr.WithVersion(v.Name)); opts != nil {
-					reg.RegisterVersionedOptions(gr.WithVersion(v.Name), *opts)
+				gvr := gr.WithVersion(v.Name)
+				if opts := versionedProvider.GetVersionedStorageOptions(gvr); opts != nil {
+					if err := reg.RegisterVersionedOptions(gvr, *opts); err != nil {
+						return err // the caller names the app
+					}
 					continue
 				}
 			}
@@ -308,4 +317,5 @@ func registerStorageOptions(
 			}
 		}
 	}
+	return nil
 }

@@ -3,6 +3,7 @@
 package apistore
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -17,7 +18,6 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
@@ -65,16 +65,19 @@ func (r *RESTOptionsGetter) WithStorageOptions(opts StorageOptions) generic.REST
 // only has to give [StorageOptions.GVK] a Kind; the rest is filled in from gvr.
 // That matters because an omitted version is not inert: it decides the
 // apiVersion writes are persisted under.
-func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionResource, opts StorageOptions) {
-	// A GVK that disagrees with its key says this storage persists as a version
-	// it does not serve. That is legitimate for a store deliberately shared
-	// across versions, but such a store has one set of options rather than one
-	// per version, so here it is much more likely a mistake. Keep what the
-	// caller asked for and say so, rather than silently changing it.
+//
+// A GVK that contradicts the key is rejected, so callers have to handle the
+// error rather than register storage that would persist the wrong kind.
+func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionResource, opts StorageOptions) error {
+	// A GVK disagreeing with its key says this storage persists as something it
+	// does not serve, which would write objects under an apiVersion no served
+	// version accounts for. There is no safe way to continue: honouring the GVK
+	// stores the wrong kind, and overriding it ignores what the caller asked
+	// for. Fail at startup instead, while it is still only a config error.
 	if (opts.GVK.Group != "" && opts.GVK.Group != gvr.Group) ||
 		(opts.GVK.Version != "" && opts.GVK.Version != gvr.Version) {
-		logging.DefaultLogger.Warn("storage options declare a GVK outside the resource they are registered for; writes will persist under the declared version",
-			"resource", gvr.String(), "gvk", opts.GVK.String())
+		return fmt.Errorf("storage options for %s declare GVK %s, which is outside the group version they are registered for",
+			gvr.String(), opts.GVK.String())
 	}
 	if opts.GVK.Group == "" {
 		opts.GVK.Group = gvr.Group
@@ -83,6 +86,7 @@ func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionReso
 		opts.GVK.Version = gvr.Version
 	}
 	r.versioned[gvr] = opts
+	return nil
 }
 
 // ForResource implements the app-sdk's optional RESTOptionsGetterForResource, so
