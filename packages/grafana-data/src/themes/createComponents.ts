@@ -40,6 +40,7 @@ const ThemeTableColorsInputSchema = z.object({
     .string()
     .describe('Opaque background for a hovered selected row when not using the hover overlay.')
     .optional(),
+  cellSelectionBorder: z.string().describe('Outline of the focused cell.').optional(),
 });
 
 type ThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -386,5 +387,6 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     rowHoverOverlay,
     rowSelectedBackground,
     rowSelectedHoverBackground: emphasize(rowSelectedBackground, 0.05),
+    cellSelectionBorder: colors.info.transparent,
   };
 }

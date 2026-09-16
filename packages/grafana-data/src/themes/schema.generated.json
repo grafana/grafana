@@ -1241,6 +1241,10 @@
             "rowSelectedHoverBackground": {
               "type": "string",
               "description": "Opaque background for a hovered selected row when not using the hover overlay."
+            },
+            "cellSelectionBorder": {
+              "type": "string",
+              "description": "Outline of the focused cell."
             }
           },
           "additionalProperties": false
