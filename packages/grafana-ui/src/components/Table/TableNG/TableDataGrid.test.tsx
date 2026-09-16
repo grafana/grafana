@@ -74,6 +74,21 @@ describe('TableDataGrid', () => {
       const classic = window.getComputedStyle(screen.getByRole('grid'));
       expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
     });
+
+    it('disables the grid tabular-nums until table.refresh, then lets it stand', () => {
+      // The beta.61 grid roots `font-variant-numeric: tabular-nums`. It's part of the refreshed
+      // experience, so off-toggle we override it back to `normal`; on-toggle we leave the grid's own
+      // rule in place (unset here, since the grid's stylesheet isn't loaded in jsdom).
+      const { unmount } = render(<TableDataGrid {...makeProps()} />);
+      const classic = window.getComputedStyle(screen.getByRole('grid'));
+      expect(classic.getPropertyValue('font-variant-numeric')).toBe('normal');
+
+      unmount();
+
+      render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const refreshed = window.getComputedStyle(screen.getByRole('grid'));
+      expect(refreshed.getPropertyValue('font-variant-numeric')).toBe('');
+    });
   });
 
   describe('DataGrid prop pass-through', () => {

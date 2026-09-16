@@ -47,6 +47,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  isShiftTabToHeader,
   markEdgeColumns,
 } from './utils';
 
@@ -342,9 +343,9 @@ export function TableFlat(props: TableNGProps) {
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {

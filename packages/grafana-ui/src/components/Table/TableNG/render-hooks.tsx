@@ -573,7 +573,7 @@ function buildColumnsFromFields(
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
           }}
         />
       ),
