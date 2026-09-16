@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -135,6 +135,63 @@ describe('RENDER_PLAN', () => {
 
     expect(result.success).toBe(true);
     expect(scene.state.isEditing).toBeFalsy();
+  });
+
+  describe('the rendered grid cannot actually be dragged or resized', () => {
+    // DefaultGridLayoutManager.fromVizPanels hardcodes isDraggable/isResizable true at
+    // construction; the only place either ever flips false is editModeChanged, which runs on an
+    // edit-mode *transition*. Assert behaviour (isDraggable(), getDragHooks()) rather than the raw
+    // state flag, so a future change that re-enables dragging some other way still fails this.
+    function getGrid(scene: DashboardScene) {
+      const rows = (scene.state.body as RowsLayoutManager).state.rows;
+      return (rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+    }
+
+    it('on the marker path, where the scene never entered edit mode at all', async () => {
+      const { scene, client } = setup();
+      expect(scene.state.isEditing).toBeFalsy();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      expect(grid.isDraggable()).toBe(false);
+      expect(grid.getDragHooks()).toEqual({});
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('on the fallback path, where the scene entered edit mode before RENDER_PLAN ran', async () => {
+      const { scene, client } = setup();
+      scene.onEnterEditMode();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      expect(grid.isDraggable()).toBe(false);
+      expect(grid.getDragHooks()).toEqual({});
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
+      // With dashboardNewLayouts on, DefaultGridLayoutManager.editModeChanged does the actual
+      // isDraggable/isResizable correction inside a setTimeout(..., 10) rather than synchronously
+      // (to avoid grid animation jank) -- assert it lands after that delay, not that it is
+      // already true the same tick, so this test can't pass for the wrong reason.
+      const originalToggle = config.featureToggles.dashboardNewLayouts;
+      config.featureToggles.dashboardNewLayouts = true;
+      try {
+        const { scene, client } = setup();
+
+        await client.execute({ type: 'RENDER_PLAN', payload: plan });
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        const grid = getGrid(scene);
+        expect(grid.isDraggable()).toBe(false);
+        expect(grid.getDragHooks()).toEqual({});
+        expect(grid.state.isResizable).toBe(false);
+      } finally {
+        config.featureToggles.dashboardNewLayouts = originalToggle;
+      }
+    });
   });
 
   describe('precondition: refuses any target that is not a blank, unsaved dashboard', () => {

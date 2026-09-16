@@ -171,6 +171,26 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         },
       });
 
+      // DefaultGridLayoutManager.fromVizPanels/createEmpty construct their SceneGridLayout with
+      // isDraggable/isResizable hardcoded true; the only place either ever flips false is
+      // editModeChanged, which runs on an edit-mode *transition*. On the marker path (wasEditing
+      // false) there is no transition to fire it, so without this call the new body would stay
+      // draggable/resizable despite the scene never entering edit mode -- correct-looking panel
+      // menus (which read isEditing) over a grid that still behaves like edit mode.
+      //
+      // Go through editModeChanged rather than setting the two flags ourselves: it is the sync
+      // point edit mode already uses for everything in this family, and it cascades through
+      // TabsLayoutManager/RowsLayoutManager to their inner grids, so it picks up any other state
+      // in the same family for free instead of fixing only the two symptoms found so far.
+      //
+      // Called on both paths, not only the marker one: on the wasEditing path below,
+      // exitEditModeConfirmed already calls this itself as its last step (on what is by then this
+      // same new body), so this call is redundant there rather than wrong. Confirmed empirically,
+      // not just by reading exitEditModeConfirmed: temporarily removing this line left the
+      // "on the fallback path" test in renderPlan.test.ts passing and only the "on the marker
+      // path" test failing.
+      body.editModeChanged?.(false);
+
       if (wasEditing) {
         // Same pattern DashboardScene.onRestore already uses: install the new content via
         // setState above, then exit edit mode without restoring the snapshot onEnterEditMode
