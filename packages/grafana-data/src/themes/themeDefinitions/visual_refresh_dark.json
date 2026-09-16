@@ -125,10 +125,9 @@
       "border": "palette.ink700",
       "rowStripedBackground": "palette.ink750",
       "rowHoverSurface": "palette.ink650",
-      "rowHoverOverlay": "hsl(from palette.white h s l / 0.12)",
+      "rowHoverOverlay": "palette.ink650",
       "rowSelectedBackground": "palette.black",
-      "rowSelectedHoverBackground": "palette.ink900",
-      "cellSelectionBorder": "hsl(from palette.blue500 h s l / 0.15)"
+      "rowSelectedHoverBackground": "palette.ink900"
     },
     "card": {
       "background": "palette.ink850",
