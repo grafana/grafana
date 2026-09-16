@@ -296,6 +296,10 @@ func (s *Store) applyUpdate(ctx context.Context, client *iamv0alpha1.AuthInfoCli
 		existing.Spec.ExternalUID = &externalUID
 	}
 
+	// Bump Created on every update, matching the legacy store.
+	now := time.Now().UnixMilli()
+	existing.Spec.Created = &now
+
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		return nil

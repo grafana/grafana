@@ -456,18 +456,20 @@ func TestStore_UpdateAuthInfo(t *testing.T) {
 
 	cases := []testCase{
 		{
-			name: "updates authID",
+			name: "updates authID and bumps Created",
 			cmd:  &login.UpdateAuthInfoCommand{UserId: 42, AuthModule: "oauth_github", AuthId: "new-id"},
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				switch {
 				case strings.Contains(r.URL.Path, "/users"):
 					usersResponse(t, w, "user-uid")
 				case r.Method == http.MethodGet:
-					writeJSON(t, w, authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "old-id", time.Now()))
+					writeJSON(t, w, authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "old-id", time.Now().Add(-time.Hour)))
 				case r.Method == http.MethodPut:
 					var obj iamv0alpha1.AuthInfo
 					require.NoError(t, json.NewDecoder(r.Body).Decode(&obj))
 					assert.Equal(t, "new-id", obj.Spec.AuthID)
+					require.NotNil(t, obj.Spec.Created)
+					assert.WithinDuration(t, time.Now(), time.UnixMilli(*obj.Spec.Created), 10*time.Second)
 					writeJSON(t, w, obj)
 				default:
 					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
