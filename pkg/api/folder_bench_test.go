@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	serviceaccountstest "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
@@ -426,8 +427,9 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
+	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
@@ -458,7 +460,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starClient := starapi.NewMockK8sClients(b)

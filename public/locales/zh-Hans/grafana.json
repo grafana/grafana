@@ -3222,14 +3222,19 @@
         "action-disable": "禁用同步",
         "add-datasource-link": "添加 Mimir 数据源",
         "badge-active": "活跃",
+        "badge-failing": "",
         "badge-not-configured": "未配置",
         "badge-operator-managed": "由操作员管理",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "将警报配置从 Mimir 或 Cortex Alertmanager 数据源持续同步到 Grafana。",
         "disable-confirm-action": "禁用同步",
         "disable-confirm-body": "禁用此项将停止从数据源 {{uid}} 进行持续同步。您以后可以通过再次选择数据源来重新启用。",
         "disable-confirm-body-generic": "禁用此项将停止持续同步。您以后可以通过再次选择数据源来重新启用。",
         "disable-confirm-title": "要禁用 Mimir Alertmanager 自动同步吗？",
         "disable-success": "Mimir Alertmanager 自动同步已禁用",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 密钥设置，无法通过 UI 更改。编辑配置文件并重新启动 Grafana，或移除密钥以从此处管理同步。",
@@ -3248,6 +3253,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "自动同步配置"
       },
       "import": {
@@ -3285,6 +3291,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5708,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "移动{{typeName}}",
-      "panel-background": "更改面板背景",
-      "panel-description": "更改面板描述",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "面板更改",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-preset": "应用面板预设",
       "panel-repeat-direction": "重复方向",
       "panel-repeat-variable": "面板重复方式",
-      "panel-title": "更改面板标题",
+      "panel-title": "",
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "row-title": "更改行标题",
@@ -6662,6 +6670,10 @@
       },
       "title-delete": "要删除{{name}}吗？"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "清除搜索",
       "no-transformations-found": "未找到转换",
@@ -6711,6 +6723,12 @@
     "view-panel": {
       "back-to-dashboard": "回到数据面板",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8597,6 +8615,16 @@
       "title-raw-prometheus": "原始 Prometheus",
       "title-table": "表格",
       "title-traces": "跟踪"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11346,8 +11374,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13033,9 +13060,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",

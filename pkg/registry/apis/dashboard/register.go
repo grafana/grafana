@@ -532,7 +532,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 				Values:   []string{name},
 			}},
 		},
-		Limit: 1,
+		Fields:       []string{resource.SEARCH_FIELD_NAME}, // Avoid default fields; only TotalHits is used.
+		Limit:        1,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err != nil {
 		return fmt.Errorf("check library panel connections: %w", err)
@@ -976,7 +978,11 @@ func validateDashboardTags(obj runtime.Object) error {
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+// dashboardStorageOpts are the unified storage options every dashboard version
+// shares. storageForVersion pairs them with the GVK of the version it installs,
+// so each version persists as itself rather than as whichever registration the
+// scheme happened to report first (v1beta1 and v1 share one Go type).
+func (b *DashboardsAPIBuilder) dashboardStorageOpts(opts builder.APIGroupOptions) apistore.StorageOptions {
 	storageOpts := apistore.StorageOptions{
 		Scheme:               opts.Scheme,
 		Index:                b.unified,
@@ -990,21 +996,25 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
+	return storageOpts
+}
 
-	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
-
-	// Library panels live inside folders, so the unified storage backend must accept the
-	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
-	// a separate registration from dashboards; without it they default to
-	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
-	// into a managed folder) is rejected with "folders are not supported". The folder is
-	// optional (panels may live at the root), so RequireFolder stays false.
-	opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+// libraryPanelStorageOpts configures library panel storage.
+//
+// Library panels live inside folders, so the unified storage backend must accept the
+// grafana.app/folder annotation. Without it they default to EnableFolderSupport=false
+// and any folder-scoped write (e.g. provisioning syncing a panel into a managed folder)
+// is rejected with "folders are not supported". The folder is optional (panels may live
+// at the root), so RequireFolder stays false.
+func (b *DashboardsAPIBuilder) libraryPanelStorageOpts(opts builder.APIGroupOptions) apistore.StorageOptions {
+	return apistore.StorageOptions{
 		Scheme:              opts.Scheme,
 		Index:               b.unified,
 		EnableFolderSupport: true,
-	})
+	}
+}
 
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
@@ -1184,7 +1194,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	apiVersion := dashboards.GroupVersion().Version
 	apiGroupInfo.VersionedResourcesStorageMap[apiVersion] = storage
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards,
+		opts.StorageOptsGetterFor(dashboards, b.dashboardStorageOpts(opts)))
 	if err != nil {
 		return err
 	}
@@ -1207,7 +1218,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels,
+				opts.StorageOptsGetterFor(*libraryPanels, b.libraryPanelStorageOpts(opts)))
 			if storeErr != nil {
 				return storeErr
 			}
@@ -1253,7 +1265,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 
 		// status.missing preserves legacy model fields that have no typed spec field.
-		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels,
+			opts.StorageOptsGetterFor(*libraryPanels, b.libraryPanelStorageOpts(opts)))
 		if err != nil {
 			return err
 		}
