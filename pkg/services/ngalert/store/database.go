@@ -18,9 +18,6 @@ import (
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
 
-// AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
-const AlertDefinitionMaxTitleLength = 190
-
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
@@ -35,14 +32,12 @@ type AlertingStore interface {
 
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
-	Cfg              setting.UnifiedAlertingSettings
-	FeatureToggles   featuremgmt.FeatureToggles
-	SQLStore         db.DB
-	Logger           log.Logger
-	FolderService    folder.Service
-	DashboardService dashboards.DashboardService
-	AccessControl    accesscontrol.AccessControl
-	Bus              bus.Bus
+	Cfg            setting.UnifiedAlertingSettings
+	FeatureToggles featuremgmt.FeatureToggles
+	SQLStore       db.DB
+	Logger         log.Logger
+	AccessControl  accesscontrol.AccessControl
+	Bus            bus.Bus
 }
 
 func ProvideDBStore(
@@ -55,27 +50,12 @@ func ProvideDBStore(
 	bus bus.Bus,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		FeatureToggles:   featureToggles,
-		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
-		FolderService:    folderService,
-		DashboardService: dashboards,
-		AccessControl:    ac,
-		Bus:              bus,
-	}
-	if err := folderService.RegisterService(store); err != nil {
-		return nil, err
+		Cfg:            cfg.UnifiedAlerting,
+		FeatureToggles: featureToggles,
+		SQLStore:       sqlstore,
+		Logger:         log.New("ngalert.dbstore"),
+		AccessControl:  ac,
+		Bus:            bus,
 	}
 	return &store, nil
-}
-
-// RuleChangeEvent is published via DBSession.PublishAfterCommit, so subscribers observe it only
-// once the rule write has committed and can safely read the new state back.
-type RuleChangeEvent struct {
-	RuleKeys []models.AlertRuleKey
-	// FolderKeys is the deduplicated set of folders affected by this change. For an update that
-	// moves a rule between folders it holds both the old and the new folder, so subscribers can
-	// re-evaluate each.
-	FolderKeys []models.FolderKey
 }
