@@ -2706,3 +2706,27 @@ type testEnv struct {
 	secrets          *secretsFakes.MockService
 	reloadables      map[string]ssosettings.Reloadable
 }
+
+type reloadableWithDefaults struct {
+	*ssosettingstests.MockReloadable
+	*ssosettingstests.MockDefaultsProvider
+}
+
+func TestService_RegisterReloadable_DefaultsProvider(t *testing.T) {
+	env := setupTestEnv(t, true, true, false)
+
+	defaultsMock := ssosettingstests.NewMockDefaultsProvider(t)
+	defaults := map[string]any{"setting_1": "value_1"}
+	defaultsMock.On("Defaults").Return(defaults)
+	reloadable := &reloadableWithDefaults{
+		MockReloadable:       ssosettingstests.NewMockReloadable(t),
+		MockDefaultsProvider: defaultsMock,
+	}
+	env.service.RegisterReloadable("providerWithDefaults", reloadable)
+	require.Equal(t, defaults, env.service.GetDefaults("providerWithDefaults"))
+
+	env.service.RegisterReloadable("providerWithoutDefaults", ssosettingstests.NewMockReloadable(t))
+	require.Nil(t, env.service.GetDefaults("providerWithoutDefaults"))
+
+	require.Nil(t, env.service.GetDefaults("providerNotRegistered"))
+}

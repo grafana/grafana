@@ -18,10 +18,15 @@ import (
 type fakeStoredLister struct {
 	settings []*ssomodels.SSOSettings
 	err      error
+	defaults map[string]map[string]any
 }
 
 func (f *fakeStoredLister) ListStored(context.Context) ([]*ssomodels.SSOSettings, error) {
 	return f.settings, f.err
+}
+
+func (f *fakeStoredLister) GetDefaults(provider string) map[string]any {
+	return f.defaults[provider]
 }
 
 type fakeWriter struct {
@@ -90,4 +95,58 @@ func TestSSOSettingsBackfill_PropagatesReadError(t *testing.T) {
 	b := &SSOSettingsBackfill{reader: reader, writer: newFakeWriter(), namespace: "stacks-11", log: log.New("test")}
 
 	require.Error(t, b.backfill(context.Background()))
+}
+
+func TestSSOSettingsBackfill_Defaults(t *testing.T) {
+	reader := &fakeStoredLister{
+		settings: []*ssomodels.SSOSettings{
+			{Provider: "myProvider", Settings: map[string]any{
+				// Overrides of fields with default values
+				"setting_1": false,
+				"setting_2": "email",
+				// Empty fields should be overridden by default value
+				"setting_4": "",
+				// Should be passed through unchanged.
+				"setting_6": "value",
+			}},
+		},
+		defaults: map[string]map[string]any{
+			"myProvider": {
+				"setting_1": true,
+				"setting_2": "mail",
+				"setting_3": "mail",
+				"setting_4": "default",
+				"setting_5": false,
+			},
+		},
+	}
+	writer := newFakeWriter()
+	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+
+	require.NoError(t, b.backfill(context.Background()))
+
+	// Explicit values are preserved
+	assert.Equal(t, "false", writer.upserts["auth.myProvider|setting_1"])
+	assert.Equal(t, "email", writer.upserts["auth.myProvider|setting_2"])
+	assert.Equal(t, "value", writer.upserts["auth.myProvider|setting_6"])
+	// Absent or empty fields are backfilled with their default value
+	assert.Equal(t, "mail", writer.upserts["auth.myProvider|setting_3"])
+	assert.Equal(t, "default", writer.upserts["auth.myProvider|setting_4"])
+	assert.Equal(t, "false", writer.upserts["auth.myProvider|setting_5"])
+}
+
+func TestSSOSettingsBackfill_NoDefaultsRegistered(t *testing.T) {
+	// If the provider does not register any default values, only the explicit settings should
+	// be backfilled.
+	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
+		{Provider: "myProvider", Settings: map[string]any{"setting_1": "value_1", "setting_2": "value_2"}},
+	}}
+	writer := newFakeWriter()
+	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+
+	require.NoError(t, b.backfill(context.Background()))
+
+	assert.Equal(t, "value_1", writer.upserts["auth.myProvider|setting_1"])
+	assert.Equal(t, "value_2", writer.upserts["auth.myProvider|setting_2"])
+	assert.Len(t, writer.upserts, 2)
 }
