@@ -1284,6 +1284,9 @@ func (service *AlertRuleService) ensureNamespace(ctx context.Context, user ident
 	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
 	}
+	if folder.IsRootFolderUID(namespaceUID) {
+		return fmt.Errorf("%w: folderUID cannot be the root folder", models.ErrAlertRuleFailedValidation)
+	}
 
 	if service.folderService == nil {
 		// folder service is nil when this is called during file provisioning,
