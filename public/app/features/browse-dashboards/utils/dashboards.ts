@@ -68,12 +68,12 @@ export function isNonSelectableVirtualFolder(uid: string): boolean {
   );
 }
 
-// Single gate for the starred-folders feature: the OpenFeature flag and the app-platform folder API
-// (`foldersAppPlatformAPI`), which renders the virtual root in the browse list.
+// Single gate for the starred-folders feature: its own flag and the app-platform folder API, which
+// renders the virtual root in the browse list.
 export function starredFoldersEnabled(): boolean {
   return (
     getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaStarredFolders, false) &&
-    Boolean(config.featureToggles.foldersAppPlatformAPI)
+    getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)
   );
 }
 
