@@ -29,6 +29,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       [FieldConfigProperty.Actions]: {
         hideFromDefaults: false,
       },
+      [FieldConfigProperty.DisplayName]: {
+        // A defaults-level display name renames every column to the same thing, which breaks the
+        // table. Panels that already have one keep the editor so the value stays visible and can be
+        // cleared; everyone else is steered to a per-column override or a Rename transformation.
+        showIf: (defaults) => Boolean(defaults.displayName),
+      },
       [FieldConfigProperty.NoValue]: {
         settings: {
           placeholder: getTableNoValuePlaceholder(),

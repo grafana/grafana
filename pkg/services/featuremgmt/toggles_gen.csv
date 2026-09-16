@@ -24,6 +24,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
 2026-07-14,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
+2026-09-08,alerting.ruleStatusSync,experimental,@grafana/alerting-squad,false,false,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-05-22,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -44,6 +45,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-30,snapshots.kubernetesSnapshots,experimental,@grafana/sharing-squad,false,false,false
 2026-07-21,libraryelements.kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
+2026-09-09,kubernetesFolderCountsLegacyStorage,experimental,@grafana/search-and-storage,false,true,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
@@ -61,6 +63,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
+2026-09-10,datasourcesApiServerEnableProxyEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasourcesApiserverEnableResourceEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/data-sources-plugins,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
@@ -145,7 +148,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-08-29,exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 2024-10-14,appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 2024-09-09,groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
-2024-09-26,alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 2024-09-23,useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 2024-09-26,rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 2024-10-04,pluginsSriChecks,GA,@grafana/grafana-catalog,false,false,false
@@ -185,7 +187,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2026-05-22,grafana.assetSriChecks,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-03-14,alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
@@ -355,6 +356,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-29,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-24,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-10,table.refresh,experimental,@grafana/dataviz-squad,false,false,true
+2026-09-11,table.refreshNewFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-11,table.inspectDataTableNG,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-05,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -391,3 +393,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-09,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-03,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-09,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
+2026-08-12,alerting.folderHasRulesLabel,experimental,@grafana/alerting-squad,false,false,false
+2026-09-15,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
@@ -11,7 +10,8 @@ import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
-import { catchTemplateError, interpolateTemplate } from '../renderContent';
+import { TextNGHtmlView } from '../TextNGHtmlView';
+import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
@@ -37,6 +37,10 @@ export interface TextNGEditorProps {
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
   renderMode?: RenderMode;
+  rowWindow?: RowWindow;
+  frameSelector?: ReactNode;
+  pagination?: ReactNode;
+  previewRef?: Ref<HTMLDivElement>;
   series?: DataFrame[];
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
@@ -71,6 +75,10 @@ export function TextNGEditor({
   showLineNumbers,
   codeLanguage,
   renderMode,
+  rowWindow,
+  frameSelector,
+  pagination,
+  previewRef,
   series,
   replaceVariables,
   suggestions,
@@ -144,10 +152,13 @@ export function TextNGEditor({
     () =>
       catchTemplateError(() =>
         showPreview
-          ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
+          ? interpolateTemplate(
+              { content: previewSource, mode, series, renderMode, rowWindow, format },
+              replaceVariables
+            )
           : ''
       ),
-    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
+    [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
 
   const previewHtml = useMemo(
@@ -222,6 +233,7 @@ export function TextNGEditor({
 
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
+  const footerPagination = showPreview ? pagination : null;
 
   const renderOutput = (testId: string) => {
     if (previewError) {
@@ -238,12 +250,7 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <DangerouslySetHtmlContent
-        allowRerender
-        html={previewHtml}
-        className={cx('markdown-html', styles.fullHeight)}
-        data-testid={testId}
-      />
+      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
     );
   };
 
@@ -289,6 +296,7 @@ export function TextNGEditor({
         )}
         {showPreview && (
           <div
+            ref={previewRef}
             className={cx(
               styles.pane,
               styles.previewPane,
@@ -301,10 +309,13 @@ export function TextNGEditor({
         )}
       </div>
 
-      {isCode && (
+      {(isCode || frameSelector || footerPagination) && (
         <TextNGEditorFooter
+          showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
+          frameSelector={frameSelector}
+          pagination={footerPagination}
         />
       )}
     </div>

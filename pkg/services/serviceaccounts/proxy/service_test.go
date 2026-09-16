@@ -173,6 +173,27 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		}
 	})
 
+	t.Run("should decorate service accounts retrieved by UID", func(t *testing.T) {
+		serviceMock.ExpectedServiceAccountProfiles = []*sa.ServiceAccountProfileDTO{
+			{
+				Name:  "my-service-account",
+				Login: "sa-1-my-service-account",
+			},
+			{
+				Name:  sa.ExtSvcPrefix + "grafana-app",
+				Login: sa.ExtSvcLoginPrefix(autoAssignOrgID) + "grafana-app",
+			},
+		}
+
+		serviceAccounts, err := svc.RetrieveServiceAccountsByUIDs(context.Background(), autoAssignOrgID, []string{"sa-1", "sa-2"})
+		require.NoError(t, err)
+		require.Len(t, serviceAccounts, 2)
+		require.False(t, serviceAccounts[0].IsExternal)
+		require.Equal(t, "my-service-account", serviceAccounts[0].RequiredBy)
+		require.True(t, serviceAccounts[1].IsExternal)
+		require.Equal(t, "grafana-app", serviceAccounts[1].RequiredBy)
+	})
+
 	t.Run("should flag external service accounts correctly", func(t *testing.T) {
 		serviceMock.ExpectedSearchOrgServiceAccountsResult = &sa.SearchOrgServiceAccountsResult{
 			TotalCount: 2,

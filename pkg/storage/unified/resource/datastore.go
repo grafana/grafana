@@ -559,10 +559,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 
 		// Process keys in batches
 		for i := 0; i < len(keys); i += dataBatchSize {
-			end := i + dataBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
+			end := min(i+dataBatchSize, len(keys))
 			batch := keys[i:end]
 
 			// Convert DataKeys to string keys and create a mapping
