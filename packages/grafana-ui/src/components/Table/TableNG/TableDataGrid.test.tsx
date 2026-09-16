@@ -64,8 +64,9 @@ describe('TableDataGrid', () => {
       const radius = createTheme().shape.radius.default;
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
       const refreshed = window.getComputedStyle(screen.getByRole('grid'));
-      expect(refreshed.getPropertyValue('border-start-start-radius')).toBe(radius);
-      expect(refreshed.getPropertyValue('border-start-end-radius')).toBe(radius);
+      expect(refreshed.getPropertyValue('--table-header-corner-radius')).toBe(radius);
+      expect(refreshed.getPropertyValue('border-start-start-radius')).toBe('var(--table-header-corner-radius)');
+      expect(refreshed.getPropertyValue('border-start-end-radius')).toBe('var(--table-header-corner-radius)');
 
       unmount();
 
@@ -73,6 +74,18 @@ describe('TableDataGrid', () => {
       render(<TableDataGrid {...makeProps()} />);
       const classic = window.getComputedStyle(screen.getByRole('grid'));
       expect(classic.getPropertyValue('border-start-start-radius')).toBe('');
+    });
+
+    it('uses the surrounding panel corner radius when it has no panel padding', () => {
+      const radius = createTheme().shape.radius.default;
+      render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true, noPanelPadding: true })} />);
+
+      const grid = window.getComputedStyle(screen.getByRole('grid'));
+      expect(grid.getPropertyValue('--table-header-corner-radius')).toBe(
+        `var(--grafana-panel-content-corner-radius, ${radius})`
+      );
+      expect(grid.getPropertyValue('border-start-start-radius')).toBe('var(--table-header-corner-radius)');
+      expect(grid.getPropertyValue('border-start-end-radius')).toBe('var(--table-header-corner-radius)');
     });
 
     it.each([

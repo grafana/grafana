@@ -80,8 +80,9 @@ export const getGridStyles = memoize(
       : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
-    // sizes both the masks' boxes and the arc they cut, so the two can't drift
-    const cornerRadius = theme.shape.radius.default;
+    // Each grid sets this variable itself so nested grids reset to their own radius instead of
+    // inheriting an outer table's panel-matching override.
+    const cornerRadius = 'var(--table-header-corner-radius)';
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
@@ -98,6 +99,9 @@ export const getGridStyles = memoize(
 
         '--rdg-selection-color': theme.colors.action.selectedBorder,
         '--rdg-selection-width': '0.5px',
+        '--table-header-corner-radius': noPanelPadding
+          ? `var(--grafana-panel-content-corner-radius, ${theme.shape.radius.default})`
+          : theme.shape.radius.default,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -185,8 +189,8 @@ export const getGridStyles = memoize(
           // transparent, so a row scrolling under the sticky header painted straight through it.
           // This grid is the scroll container, so rounding it clips everything it scrolls — the rows
           // included — and the panel shows through the corner instead of a row's background.
-          borderStartStartRadius: theme.shape.radius.default,
-          borderStartEndRadius: theme.shape.radius.default,
+          borderStartStartRadius: cornerRadius,
+          borderStartEndRadius: cornerRadius,
           '.rdg-header-row > .rdg-cell': {
             // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
             // row scrolled underneath it shows through — invisible before this commit, since the

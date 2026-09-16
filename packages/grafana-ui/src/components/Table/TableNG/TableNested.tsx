@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -69,6 +69,7 @@ import {
 
 const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
+type NestedGridStyle = CSSProperties & { '--table-header-corner-radius': string };
 
 export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
   const {
@@ -347,6 +348,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const showPagination = enablePagination && numRows > 0;
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
+  const nestedGridStyle = useMemo<NestedGridStyle>(
+    () => ({ '--table-header-corner-radius': theme.shape.radius.default }),
+    [theme.shape.radius.default]
+  );
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -528,6 +533,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
             <DataGrid<TableRow, TableSummaryRow>
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
+              // Nested tables are inset, so reset the panel-matching value inherited from the outer grid.
+              style={nestedGridStyle}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
               bottomSummaryRows={hasNestedFooter ? [{}] : undefined}
@@ -570,6 +577,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       nestedColWidths,
       nestedResizeHandler,
       handleNestedColumnWidthsChange,
+      nestedGridStyle,
     ]
   );
 

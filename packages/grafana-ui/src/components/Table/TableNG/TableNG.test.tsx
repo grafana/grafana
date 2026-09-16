@@ -757,6 +757,21 @@ describe('TableNG', () => {
       }
     });
 
+    it('keeps the table radius on nested grids when the outer grid follows the panel radius', async () => {
+      const radius = createTheme().shape.radius.default;
+      const { container } = render(
+        <TableNG data={createNestedDataFrame()} width={800} height={600} tableRefreshEnabled noPanelPadding />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      expect(
+        window.getComputedStyle(screen.getByRole('treegrid')).getPropertyValue('--table-header-corner-radius')
+      ).toBe(`var(--grafana-panel-content-corner-radius, ${radius})`);
+      expect(window.getComputedStyle(screen.getByRole('grid')).getPropertyValue('--table-header-corner-radius')).toBe(
+        radius
+      );
+    });
+
     it.each([
       ['dark', false, 'medium'],
       ['dark', true, 'table'],
