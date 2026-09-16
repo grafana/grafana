@@ -67,8 +67,8 @@ const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?:
       backgroundColor: transparent
         ? 'transparent'
         : theme.flags.visualDesignRefresh
-          ? theme.colors.background.secondary
-          : theme.colors.background.primary,
+          ? theme.colors.background.tertiary
+          : theme.colors.background.secondary,
       height: theme.spacing(theme.components.height.md),
       lineHeight: theme.spacing(theme.components.height.md),
       marginRight: theme.spacing(0.5),
