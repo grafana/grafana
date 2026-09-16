@@ -7,6 +7,7 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
@@ -662,10 +663,10 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  *
  * **Details:**
  * - flag key: `grafana.mtFallback`
- * - default value: `false`
+ * - default value: `{}`
  */
-export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.mtFallback", false, options).value;
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
 };
 
 /**
