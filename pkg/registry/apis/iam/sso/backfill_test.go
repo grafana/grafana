@@ -173,8 +173,8 @@ func TestSSOSettingsBackfill_PrunesStaleRows(t *testing.T) {
 
 	require.NoError(t, b.backfill(context.Background()))
 
-	assert.Equal(t, []string{"auth.github|removed_key"}, mt.deleted)
-	assert.Equal(t, "abc", mt.upserts["auth.github|client_id"])
+	assert.Equal(t, []string{"auth.myProvider|removed_key"}, mt.deleted)
+	assert.Equal(t, "abc", mt.upserts["auth.myProvider|client_id"])
 	assert.Equal(t, "default_1", mt.upserts["auth.myProvider|providerDefaultSetting_1"])
 }
 
