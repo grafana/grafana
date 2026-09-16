@@ -129,9 +129,9 @@ describe('table zebra colors', () => {
     'honors custom stripe and overlay tokens in a transparent panel with visualDesignRefresh=%s',
     (visualDesignRefresh) => {
       const theme = createTheme({
+        colors: { mode: 'dark', background: { canvas: '#123456', page: '#123456' } },
         components: {
           table: {
-            backgroundOnCanvas: '#123456',
             rowStripedBackground: '#345678',
             rowHoverOverlay: 'rgba(12, 34, 56, 0.2)',
           },
