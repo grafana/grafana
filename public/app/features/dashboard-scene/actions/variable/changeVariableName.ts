@@ -9,6 +9,8 @@ import {
 } from '../../settings/variables/utils';
 import { edit } from '../utils/edit';
 
+import { refuseVariableWhilePlanning } from './refuseVariableWhilePlanning';
+
 interface ChangeVariableNameActionProps {
   source: SceneVariable;
   oldValue: SceneVariable['state']['name'];
@@ -16,6 +18,10 @@ interface ChangeVariableNameActionProps {
 }
 
 export function changeVariableName({ source, oldValue, newValue }: ChangeVariableNameActionProps) {
+  if (refuseVariableWhilePlanning(source, 'rename-variable')) {
+    return;
+  }
+
   // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
   const snapshots = snapshotVariableSetsAlongPath(source);
 

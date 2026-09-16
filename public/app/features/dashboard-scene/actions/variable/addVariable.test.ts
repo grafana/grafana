@@ -62,4 +62,20 @@ describe('addVariable', () => {
 
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(dashboard);
   });
+
+  it('refuses to add a variable while a plan is being previewed', () => {
+    const existing = new CustomVariable({ name: 'existing', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [existing] });
+    const dashboard = buildScene(variableSet);
+    dashboard.setState({
+      planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 0, onBuild: () => {}, onDismiss: () => {} },
+    });
+
+    const newVariable = new CustomVariable({ name: 'added', query: 'c,d' });
+    addVariable({ source: variableSet, addedObject: newVariable });
+
+    // Compares names rather than toEqual/toBe on the live SceneVariable array: a failure there
+    // would crash Jest's worker trying to relay the circular scene object over IPC (see T9).
+    expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['existing']);
+  });
 });

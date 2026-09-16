@@ -7,9 +7,16 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
+import { refuseVariableWhilePlanning } from '../../actions/variable/refuseVariableWhilePlanning';
 import { removeVariable } from '../../actions/variable/removeVariable';
 
 export function confirmDeleteVariable(variable: SceneVariable) {
+  // Skip the confirm dialog entirely rather than showing one whose "Delete" would just refuse —
+  // removeVariable() below is the actual guarantee, checked again there for every other caller.
+  if (refuseVariableWhilePlanning(variable, 'remove-variable')) {
+    return;
+  }
+
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
@@ -59,6 +66,10 @@ export function createDragEndHandler(
   return (result: DropResult) => {
     const { source, destination } = result;
     if (!destination) {
+      return;
+    }
+
+    if (refuseVariableWhilePlanning(variableSet, 'move-variable')) {
       return;
     }
 
