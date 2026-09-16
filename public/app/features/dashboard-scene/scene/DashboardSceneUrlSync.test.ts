@@ -327,6 +327,18 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.isEditing).toBe(false);
       expect(onEnterEditMode).not.toHaveBeenCalled();
     });
+
+    it('does not open the share drawer from a shareView url param', () => {
+      // Share is already one of the four guarded actions (its menu submenu and keyboard
+      // shortcuts) -- this is a third route to the same action, not a new one.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ shareView: 'snapshot' });
+
+      expect(scene.state.overlay).toBeUndefined();
+      expect(scene.state.shareView).toBeUndefined();
+    });
   });
 });
 

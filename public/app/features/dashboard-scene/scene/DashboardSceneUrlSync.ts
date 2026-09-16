@@ -148,11 +148,17 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    if (typeof values.shareView === 'string') {
+    // Share is already one of the four guarded actions (its menu submenu and keyboard shortcuts
+    // are guarded in PanelMenuBehavior.tsx/keyboardShortcuts.ts) -- this is a third route to the
+    // same action, not a new one. `?shareView=snapshot` in particular would let a placeholder's
+    // synthetic sample data leave the preview as a durable, real-looking artifact.
+    if (typeof values.shareView === 'string' && !refuseWhilePlanning(this._scene)) {
       update.shareView = values.shareView;
       update.overlay = new ShareDrawer({
         shareView: values.shareView,
       });
+    } else if (typeof values.shareView === 'string') {
+      update.shareView = undefined;
     } else if (shareView && values.shareView === null) {
       update.overlay = undefined;
       update.shareView = undefined;
