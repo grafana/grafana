@@ -16,9 +16,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/registry/generic"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -27,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -409,6 +415,8 @@ func TestValidateLibraryPanelDeleteChecksUnifiedReferences(t *testing.T) {
 			}
 			require.NotNil(t, captured)
 			require.Equal(t, int64(1), captured.Limit)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, captured.ResultFormat)
+			require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, captured.Fields)
 			require.Equal(t, "stacks-1", captured.Options.Key.Namespace)
 			require.Equal(t, dashv0.DASHBOARD_RESOURCE, captured.Options.Key.Resource)
 			require.Equal(t, builders.DASHBOARD_LIBRARY_PANEL_REFERENCE, captured.Options.Fields[0].Key)
@@ -496,7 +504,8 @@ func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
 // commonMultiVersionTypes are known-safe exceptions to assertNoTypeSpansMultipleGVKs: k8s bookkeeping
 // types every group-version registers by convention (never round-trip through Storage.Create), plus
 // v1beta1's documented type aliases to v1 (Dashboard's StorageOptions sets Scheme, so it never takes
-// the codec path anyway; DashboardWithAccessInfo is a read-only /dto response, also never written).
+// the codec path, and declares a per-version GVK, so the shared type cannot resolve to the wrong
+// version either; DashboardWithAccessInfo is a read-only /dto response, also never written).
 // Add here on exception basis with a description.
 var commonMultiVersionTypes = func() map[reflect.Type]bool {
 	m := map[reflect.Type]bool{}
@@ -546,4 +555,87 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 				"order-fallback, so preferred_api_version would now silently pick the persisted version "+
 				"for this type instead of only ordering API discovery", typ, gvks)
 	}
+}
+
+// gvkRecorder captures the GVK each store's storage options declare.
+type gvkRecorder struct {
+	recorded []apistore.StorageOptions
+}
+
+func (r *gvkRecorder) GetRESTOptions(schema.GroupResource, runtime.Object) (generic.RESTOptions, error) {
+	return generic.RESTOptions{}, nil
+}
+
+func (r *gvkRecorder) WithStorageOptions(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+	r.recorded = append(r.recorded, opts)
+	return r
+}
+
+// Every dashboard version installs its own store against the one shared
+// GroupResource, so the version a store persists as can only come from its
+// declared GVK. It matters most for v1beta1 and v1: they are the same Go type
+// (see commonMultiVersionTypes), so the scheme reports both GVKs for it and
+// checkGVK's fallback would resolve either store to whichever InstallSchema
+// registered first -- v1beta1, for both of them.
+func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
+	recorder := &gvkRecorder{}
+	opts := apiserverbuilder.APIGroupOptions{
+		Scheme:     runtime.NewScheme(),
+		OptsGetter: recorder,
+	}
+	// Standalone keeps dashboardStorageOpts off the feature toggles and the
+	// legacy permission service, which a bare builder does not have.
+	b := &DashboardsAPIBuilder{isStandalone: true}
+
+	for _, info := range []utils.ResourceInfo{
+		dashv0.DashboardResourceInfo,
+		dashv1beta1.DashboardResourceInfo,
+		dashv1.DashboardResourceInfo,
+		dashv2alpha1.DashboardResourceInfo,
+		dashv2beta1.DashboardResourceInfo,
+		dashv2.DashboardResourceInfo,
+	} {
+		opts.StorageOptsGetterFor(info, b.dashboardStorageOpts(opts))
+	}
+
+	got := make([]schema.GroupVersionKind, 0, len(recorder.recorded))
+	for _, so := range recorder.recorded {
+		got = append(got, so.GVK)
+		// The options every version shares must survive being paired per version.
+		require.True(t, so.EnableFolderSupport, "%s lost folder support", so.GVK)
+		require.Equal(t, apistore.DeprecatedID_Required, so.DeprecatedInternalID, "%s lost the internal ID", so.GVK)
+		require.NotNil(t, so.Permissions, "%s lost its default permission setter", so.GVK)
+		require.Same(t, opts.Scheme, so.Scheme)
+	}
+
+	group := dashv0.DashboardResourceInfo.GroupResource().Group
+	require.Equal(t, []schema.GroupVersionKind{
+		{Group: group, Version: "v0alpha1", Kind: "Dashboard"},
+		{Group: group, Version: "v1beta1", Kind: "Dashboard"},
+		{Group: group, Version: "v1", Kind: "Dashboard"},
+		{Group: group, Version: "v2alpha1", Kind: "Dashboard"},
+		{Group: group, Version: "v2beta1", Kind: "Dashboard"},
+		{Group: group, Version: "v2", Kind: "Dashboard"},
+	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
+}
+
+// Library panels are keyed by their own GroupResource and served only in
+// v0alpha1, so their store declares that kind rather than a dashboard one.
+func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
+	recorder := &gvkRecorder{}
+	opts := apiserverbuilder.APIGroupOptions{
+		Scheme:     runtime.NewScheme(),
+		OptsGetter: recorder,
+	}
+	b := &DashboardsAPIBuilder{}
+
+	info := dashv0.LibraryPanelResourceInfo
+	opts.StorageOptsGetterFor(info, b.libraryPanelStorageOpts(opts))
+
+	require.Len(t, recorder.recorded, 1)
+	so := recorder.recorded[0]
+	require.Equal(t, info.GroupVersionKind(), so.GVK)
+	require.Equal(t, "LibraryPanel", so.GVK.Kind)
+	require.True(t, so.EnableFolderSupport, "panels are synced into managed folders")
+	require.False(t, so.RequireFolder, "panels may live at the root")
 }

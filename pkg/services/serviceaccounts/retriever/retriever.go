@@ -43,3 +43,7 @@ func ProvideService(
 func (s *Service) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return s.store.RetrieveServiceAccount(ctx, query)
 }
+
+func (s *Service) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return s.store.RetrieveServiceAccountsByUIDs(ctx, orgID, uids)
+}

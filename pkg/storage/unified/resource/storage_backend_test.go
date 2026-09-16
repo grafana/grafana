@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,6 +78,32 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 		_ = kvBackend.Stop(ctx)
 	})
 	return kvBackend
+}
+
+func TestNewLeaseHolder(t *testing.T) {
+	t.Run("prefers the configured instance ID", func(t *testing.T) {
+		const instanceID = "storage-instance"
+		holder := newLeaseHolder(instanceID)
+
+		require.Equal(t, instanceID, requireValidLeaseHolderUUID(t, holder))
+	})
+
+	t.Run("defaults when no instance ID is configured", func(t *testing.T) {
+		holder := newLeaseHolder("")
+
+		require.NotEmpty(t, requireValidLeaseHolderUUID(t, holder))
+	})
+}
+
+func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
+	t.Helper()
+	uuidLength := len(uuid.Nil.String())
+	require.Greater(t, len(holder), uuidLength+1)
+	separatorIndex := len(holder) - uuidLength - 1
+	require.Equal(t, byte('-'), holder[separatorIndex])
+	_, err := uuid.Parse(holder[separatorIndex+1:])
+	require.NoError(t, err)
+	return holder[:separatorIndex]
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -225,28 +253,52 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NotEmpty(t, record.DeletedAt)
 }
 
-// TestKvStorageBackend_Accessors verifies that KV() returns the configured
-// store and that LeaseManager() reflects whether EnableKVLeases is set.
-// These accessors let other subsystems (e.g. KV-backed search snapshots)
-// share the backend's KV store and lease manager rather than opening
-// their own.
+// TestKvStorageBackend_Accessors verifies that other subsystems can share the
+// backend's KV store and lease manager rather than opening their own.
 func TestKvStorageBackend_Accessors(t *testing.T) {
 	t.Run("KV returns configured store", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
 		assert.Same(t, backend.kv, backend.KV())
 	})
 
-	t.Run("LeaseManager is nil when leases are disabled", func(t *testing.T) {
+	t.Run("LeaseManager is always available", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
-		assert.Nil(t, backend.LeaseManager())
+		assert.NotNil(t, backend.LeaseManager())
 	})
 
-	t.Run("LeaseManager is non-nil when leases are enabled", func(t *testing.T) {
+	t.Run("uses a caller-supplied holder", func(t *testing.T) {
+		const holder = "test-holder"
 		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
-			o.EnableKVLeases = true
-			o.Holder = "test-holder"
+			o.Holder = holder
 		})
-		assert.NotNil(t, backend.LeaseManager())
+
+		const leaseName = "configured-holder"
+		acquired, err := backend.LeaseManager().Acquire(t.Context(), leaseName)
+		require.NoError(t, err)
+
+		var leaseKey string
+		for key, err := range backend.KV().Keys(t.Context(), kv.LeasesSection, kv.ListOptions{
+			StartKey: leaseName + "~",
+			EndKey:   kv.PrefixRangeEnd(leaseName + "~"),
+			Limit:    1,
+		}) {
+			require.NoError(t, err)
+			leaseKey = key
+		}
+		require.NotEmpty(t, leaseKey)
+
+		reader, err := backend.KV().Get(t.Context(), kv.LeasesSection, leaseKey)
+		require.NoError(t, err)
+		data, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+
+		var metadata struct {
+			Holder string `json:"holder"`
+		}
+		require.NoError(t, json.Unmarshal(data, &metadata))
+		assert.Equal(t, holder, metadata.Holder)
+		require.NoError(t, backend.LeaseManager().Release(t.Context(), acquired))
 	})
 }
 

@@ -47,7 +47,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       queryParams: new URLSearchParams({ editPanel: MARKDOWN_PANEL }),
     });
 
-    // In edit mode v2 replaces the panel body with the inline editor, which opens on Preview.
+    // In edit mode v2 replaces the panel body with the inline editor, which opens on Split.
     const preview = page.getByTestId('TextNGEditor-preview');
     await expect(preview).toBeVisible();
     await expect(preview.locator('h2').first()).toBeVisible();
@@ -95,11 +95,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     const preview = page.getByTestId('TextNGEditor-preview');
     const writableEditor = editor.locator('.cm-editor');
 
-    // Preview is the default view: rendered output only, no editable surface.
-    await expect(preview).toBeVisible();
-    await expect(writableEditor).toHaveCount(0);
-
-    await page.getByRole('radio', { name: 'Split' }).click();
+    // Split is the default view: editable surface and rendered output together.
+    await expect(page.getByRole('radio', { name: 'Split' })).toBeChecked();
     await expect(writableEditor).toBeVisible();
     await expect(preview).toBeVisible();
 
@@ -110,6 +107,10 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     await page.getByRole('radio', { name: 'Preview' }).click();
     await expect(preview).toBeVisible();
     await expect(writableEditor).toHaveCount(0);
+
+    await page.getByRole('radio', { name: 'Split' }).click();
+    await expect(writableEditor).toBeVisible();
+    await expect(preview).toBeVisible();
   });
 
   test('can switch between modes in panel editor', async ({ gotoDashboardPage, page }) => {

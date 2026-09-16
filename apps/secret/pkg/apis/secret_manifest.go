@@ -33,6 +33,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "SecureValues",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 				},
 
 				{
@@ -40,6 +43,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "Keepers",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
