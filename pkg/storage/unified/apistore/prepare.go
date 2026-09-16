@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -410,31 +410,51 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	return utils.MetaAccessor(raw)
 }
 
+// checkGVK completes obj's group+version+kind when the object does not carry a
+// full one of its own. [Storage.encode] writes whatever GVK the object holds, so
+// an incomplete one would otherwise persist without an apiVersion.
+//
+// A configured [StorageOptions.GVK] answers this exactly. The Scheme fallback
+// only guesses: it reports every GVK the Go type is registered under, and for a
+// type shared across versions (v1beta1 and v1 dashboards, folders) the first one
+// in this resource's group need not be the version being served. It stays only
+// for resources that do not declare a GVK yet.
 func (s *Storage) checkGVK(obj runtime.Object) error {
-	if s.opts.Scheme == nil {
-		return nil // we can not do anything
-	}
-
 	// Ensure group+version+kind are configured
 	info := obj.GetObjectKind()
 	gvk := info.GroupVersionKind()
-	if gvk.Group == "" || gvk.Kind == "" || gvk.Version == "" {
-		gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
-		if err != nil {
-			return fmt.Errorf("unknown object kind %w", err)
+	if gvk.Group != "" && gvk.Kind != "" && gvk.Version != "" {
+		return nil
+	}
+
+	if !s.opts.GVK.Empty() {
+		gvk.Group = s.opts.GVK.Group
+		gvk.Kind = s.opts.GVK.Kind
+		if gvk.Version == "" {
+			gvk.Version = s.opts.GVK.Version
 		}
-		for _, v := range gvks {
-			if v.Group != s.gr.Group {
-				continue // skip values not in this group
-			}
-			gvk.Group = v.Group
-			gvk.Kind = v.Kind
-			if gvk.Version == "" {
-				gvk.Version = v.Version
-			}
-			info.SetGroupVersionKind(gvk)
-			return nil
+		info.SetGroupVersionKind(gvk)
+		return nil
+	}
+
+	if s.opts.Scheme == nil {
+		return nil // we can not do anything
+	}
+	gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
+	if err != nil {
+		return fmt.Errorf("unknown object kind %w", err)
+	}
+	for _, v := range gvks {
+		if v.Group != s.gr.Group {
+			continue // skip values not in this group
 		}
+		gvk.Group = v.Group
+		gvk.Kind = v.Kind
+		if gvk.Version == "" {
+			gvk.Version = v.Version
+		}
+		info.SetGroupVersionKind(gvk)
+		return nil
 	}
 	return nil
 }
@@ -443,7 +463,11 @@ func (s *Storage) checkGVK(obj runtime.Object) error {
 // true on create and on non-deletion updates; deletion-related updates pass false so an object already
 // stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
 func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
-	if s.opts.Scheme == nil {
+	// Encoding the object directly needs the kind it is stored as. A declared GVK
+	// settles that on its own; the Scheme is what resources that declare no GVK
+	// still fall back to, and this half of the condition goes away with
+	// StorageOptions.Scheme.
+	if s.opts.GVK.Empty() && s.opts.Scheme == nil {
 		return s.encodeViaCodec(obj, buf, enforceCap)
 	}
 	if err := s.checkGVK(obj); err != nil {

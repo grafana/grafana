@@ -38,15 +38,14 @@ const ClusterScope = "Cluster"
 type Options struct {
 	// Scheme the kind is registered in.
 	Scheme *runtime.Scheme
-	// OptsGetter resolves the backing storage.
-	OptsGetter generic.RESTOptionsGetter
-	// StorageOptsRegister declares a resource's storage options, and has to be
-	// called before OptsGetter resolves that resource.
-	StorageOptsRegister apistore.StorageOptionsRegister
-	// FolderScopedResources is each resource's folder scope resolved across
-	// every served version, as [FolderScopedResources] computes it. A resource
-	// missing from the map falls back to the kind's own declaration.
-	FolderScopedResources map[string]bool
+	// StorageOptsGetter resolves the backing storage for the one
+	// group+version+resource being installed, given the options this kind needs.
+	// Callers inside an API group pass builder.APIGroupOptions.StorageOptsGetter.
+	//
+	// It is a function rather than a plain RESTOptionsGetter so a kind's storage
+	// cannot be completed without its options: they used to be declared through a
+	// separate by-GroupResource registration that every version of a kind shared.
+	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -55,35 +54,6 @@ func IsFolderScoped(kind app.ManifestVersionKind) bool {
 	}
 	// namespaced resources are folder scoped by default
 	return kind.FolderScoped == nil || *kind.FolderScoped
-}
-
-// FolderScopedResources resolves each resource's folder scope across every
-// served version of the manifest.
-//
-// Storage options are keyed by GroupResource, which carries no version, so all
-// versions of a kind share one registration and whichever registered last would
-// otherwise decide for the rest. A resource is folder scoped when any served
-// version says so: a write through a version that dropped the requirement would
-// store an object with no folder, which the versions that require one cannot
-// account for.
-func FolderScopedResources(manifest *app.ManifestData) map[string]bool {
-	if manifest == nil {
-		return nil
-	}
-	out := map[string]bool{}
-	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-		for _, kind := range version.Kinds {
-			if kind.Plural == "" {
-				continue // New refuses these, so they have no resource
-			}
-			resource := strings.ToLower(kind.Plural)
-			out[resource] = out[resource] || IsFolderScoped(kind)
-		}
-	}
-	return out
 }
 
 // Store applies a manifest kind's storage and REST strategies.
@@ -136,6 +106,9 @@ func New(
 	// code can omit it, and an empty resource name registers an unreachable path.
 	if kind.Plural == "" {
 		return nil, fmt.Errorf("kind %s is missing a plural name", gvk.Kind)
+	}
+	if opts.StorageOptsGetter == nil {
+		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
 	}
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
@@ -194,12 +167,11 @@ func New(
 	}
 	wrap.fieldManager = fieldManager
 
-	// Register before CompleteWithOptions resolves this resource.
+	// Scoped to this group+version+resource, so a kind that changes its folder
+	// scope between versions gets what each version declared.
 	folder := IsFolderScoped(kind)
-	if resolved, ok := opts.FolderScopedResources[gr.Resource]; ok {
-		folder = resolved
-	}
-	opts.StorageOptsRegister(gr, apistore.StorageOptions{
+	optsGetter := opts.StorageOptsGetter(apistore.StorageOptions{
+		GVK:                  gvk,
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
@@ -231,7 +203,7 @@ func New(
 	}
 	wrap.Store = store
 	if err := store.CompleteWithOptions(&generic.StoreOptions{
-		RESTOptions: opts.OptsGetter,
+		RESTOptions: optsGetter,
 		AttrFunc:    grafanaregistry.GetAttrs,
 	}); err != nil {
 		return nil, err
