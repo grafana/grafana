@@ -768,8 +768,7 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 				ev.attempts--
 				return lowestFailedRv, unfinished(i), successes, true
 			}
-			var retryErr *embedder.RetryableError
-			if errors.As(err, &retryErr) {
+			if retryErr, ok := errors.AsType[*embedder.RetryableError](err); ok {
 				s.backoffEmbedding(ctx, ev, retryErr)
 				lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 				return lowestFailedRv, unfinished(i + 1), successes, true

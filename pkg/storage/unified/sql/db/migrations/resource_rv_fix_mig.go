@@ -529,24 +529,25 @@ func updateHistoryRVs(sess *xorm.Session, batch []rvUpdateEntry) error {
 
 	var rvCase strings.Builder
 	rvCase.WriteString("CASE guid")
-	keyPathCase := "CASE guid"
+	var keyPathCase strings.Builder
+	keyPathCase.WriteString("CASE guid")
 	guidList := make([]string, 0, len(batch))
 
 	for _, u := range batch {
 		quotedGUID := fmt.Sprintf("'%s'", u.guid)
 		rvCase.WriteString(fmt.Sprintf(" WHEN %s THEN %d", quotedGUID, u.newRV))
-		keyPathCase += fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, u.keyPath)
+		keyPathCase.WriteString(fmt.Sprintf(" WHEN %s THEN '%s'", quotedGUID, u.keyPath))
 		guidList = append(guidList, quotedGUID)
 	}
 
 	rvCase.WriteString(" END")
-	keyPathCase += " END"
+	keyPathCase.WriteString(" END")
 
 	sql := fmt.Sprintf(`
 		UPDATE resource_history
 		SET resource_version = %s, key_path = %s
 		WHERE guid IN (%s)`,
-		rvCase.String(), keyPathCase, strings.Join(guidList, ", "),
+		rvCase.String(), keyPathCase.String(), strings.Join(guidList, ", "),
 	)
 
 	if _, err := sess.Exec(sql); err != nil {
