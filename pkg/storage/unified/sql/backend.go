@@ -8,7 +8,6 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -232,13 +230,6 @@ func NewStorageBackend(
 		kvBackendOpts.RvManager = rvManager
 	}
 
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
-	}
-
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
@@ -257,13 +248,6 @@ func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disabl
 	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
-	}
-
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
 	}
@@ -280,24 +264,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
-}
-
-// ResolveLeaseHolder builds a stable-per-process identifier used for KV
-// lease ownership. Exported so other unified-storage backend wirings
-// (e.g. the enterprise unified-kv-grpc backend) can produce the same
-// holder format without duplicating the logic.
-func ResolveLeaseHolder(cfg *setting.Cfg) string {
-	id := "unknown"
-	if cfg.InstanceID != "" {
-		id = cfg.InstanceID
-	}
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		id = hostname
-	}
-
-	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {
