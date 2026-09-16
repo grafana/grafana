@@ -8,7 +8,8 @@ import { AppEvents, type PanelData, type SelectableValue, LoadingState } from '@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Button, Field, Select, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { appEvents } from 'app/core/app_events';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -148,14 +149,14 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
+            <CodeMirrorEditor
+              height={`${height}px`}
               language="json"
-              showLineNumbers={true}
-              showMiniMap={text.length > 100}
+              aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
+              basicSetup={{ lineNumbers: true }}
               value={text || ''}
               readOnly={!isPanelJSON}
+              onChange={setText}
               onBlur={setText}
             />
           )}

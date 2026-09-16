@@ -18,7 +18,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -281,7 +282,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     this.state.onClose();
   }
 
-  public onCodeEditorBlur = (value: string) => {
+  public onJsonTextChange = (value: string) => {
     this.setState({ jsonText: value });
   };
 
@@ -341,15 +342,15 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
+            <CodeMirrorEditor
+              height={`${height}px`}
               language="json"
-              showLineNumbers={true}
-              showMiniMap={jsonText.length > 100}
+              aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
+              basicSetup={{ lineNumbers: true }}
               value={jsonText}
               readOnly={!model.isEditable()}
-              onBlur={model.onCodeEditorBlur}
+              onChange={model.onJsonTextChange}
+              onBlur={model.onJsonTextChange}
             />
           )}
         </AutoSizer>
