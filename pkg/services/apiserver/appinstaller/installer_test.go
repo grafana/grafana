@@ -261,6 +261,14 @@ type mockAppInstallerWithVersionedStorageOpts struct {
 	manifest         *app.ManifestData
 	getOpts          func(schema.GroupResource) *apistore.StorageOptions
 	getVersionedOpts func(schema.GroupVersionResource) *apistore.StorageOptions
+	// installedWith records the getter InstallAPIs handed this installer, which is
+	// the one the app-sdk will resolve every store's options through.
+	installedWith generic.RESTOptionsGetter
+}
+
+func (m *mockAppInstallerWithVersionedStorageOpts) InstallAPIs(_ appsdkapiserver.GenericAPIServer, optsGetter generic.RESTOptionsGetter) error {
+	m.installedWith = optsGetter
+	return nil
 }
 
 func (m *mockAppInstallerWithVersionedStorageOpts) ManifestData() *app.ManifestData {
@@ -294,18 +302,29 @@ func twoVersionManifest(group string) *app.ManifestData {
 	}
 }
 
+// resolvesPerVersion reports whether getter answers gvr with storage options of
+// its own, resolved exactly the way the app-sdk installer resolves it: assert the
+// getter to RESTOptionsGetterForResource, ask ForResource for the GVR whose store
+// is about to be built, and read back nil or the receiver itself as "nothing
+// registered for this version".
+//
+// Going through the SDK interface rather than calling ForResource directly is
+// what ties these tests to the path that actually runs. A versioned registration
+// has no other reader, and the SDK falls back to using the getter unchanged when
+// the assertion fails -- so a drifted interface would leave every registration
+// unread with no build failure to say so.
+func resolvesPerVersion(t *testing.T, getter generic.RESTOptionsGetter, gvr schema.GroupVersionResource) bool {
+	t.Helper()
+	forResource, ok := getter.(appsdkapiserver.RESTOptionsGetterForResource)
+	require.True(t, ok, "the app-sdk installer would not recognise %T, and would build every store with unscoped options", getter)
+	scoped := forResource.ForResource(gvr)
+	return scoped != nil && scoped != getter
+}
+
 func TestRegisterVersionedStorageOptions(t *testing.T) {
 	const group = "test.grafana.app"
 	v1 := schema.GroupVersionResource{Group: group, Version: "v1alpha1", Resource: "foos"}
 	v2 := schema.GroupVersionResource{Group: group, Version: "v2alpha1", Resource: "foos"}
-
-	// ForResource returns the getter itself for a GVR with nothing registered,
-	// and a distinct scoped getter for one that has -- which is how a caller
-	// outside apistore can tell whether a registration took.
-	scoped := func(t *testing.T, reg *apistore.RESTOptionsGetter, gvr schema.GroupVersionResource) bool {
-		t.Helper()
-		return reg.ForResource(gvr) != generic.RESTOptionsGetter(reg)
-	}
 
 	// apistore refuses a registration whose GVK has no Kind, and a provider that
 	// only cares about folder scope has no reason to name one. The installer fills
@@ -323,8 +342,8 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
-		assert.True(t, scoped(t, reg, v1))
-		assert.True(t, scoped(t, reg, v2))
+		assert.True(t, resolvesPerVersion(t, reg, v1))
+		assert.True(t, resolvesPerVersion(t, reg, v2))
 	})
 
 	// The provider hands back a pointer, which it is free to keep. Filling the
@@ -359,8 +378,8 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 
 		assert.ElementsMatch(t, []schema.GroupVersionResource{v1, v2}, asked,
 			"both versions are asked, and the plural is lower-cased into the resource name")
-		assert.True(t, scoped(t, reg, v1))
-		assert.True(t, scoped(t, reg, v2), "the second version is not skipped as a duplicate")
+		assert.True(t, resolvesPerVersion(t, reg, v1))
+		assert.True(t, resolvesPerVersion(t, reg, v2), "the second version is not skipped as a duplicate")
 	})
 
 	t.Run("a declined version falls back to the unversioned provider", func(t *testing.T) {
@@ -384,8 +403,8 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 
 		assert.Equal(t, []schema.GroupResource{{Group: group, Resource: "foos"}}, unversioned,
 			"only the declined version consults the GroupResource provider")
-		assert.True(t, scoped(t, reg, v1), "the accepted version got its own entry")
-		assert.False(t, scoped(t, reg, v2), "the declined version resolves through the shared getter")
+		assert.True(t, resolvesPerVersion(t, reg, v1), "the accepted version got its own entry")
+		assert.False(t, resolvesPerVersion(t, reg, v2), "the declined version resolves through the shared getter")
 	})
 
 	// A provider naming a version its resource does not serve is a config error,
@@ -406,7 +425,7 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "v9alpha1")
-		require.False(t, scoped(t, reg, v1), "a rejected app registers nothing at all")
+		require.False(t, resolvesPerVersion(t, reg, v1), "a rejected app registers nothing at all")
 	})
 
 	t.Run("an installer with neither provider registers nothing", func(t *testing.T) {
@@ -415,6 +434,46 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
-		assert.False(t, scoped(t, reg, v1))
+		assert.False(t, resolvesPerVersion(t, reg, v1))
 	})
+}
+
+// The registrations only reach storage if the getter they were written on is the
+// same one InstallAPIs hands the app-sdk installer -- registering on one getter
+// and installing with another would leave the versioned map unread, and every
+// version of a kind back on the single answer keyed by GroupResource.
+func TestInstallAPIsInstallsWithTheRegisteredGetter(t *testing.T) {
+	const group = "test.grafana.app"
+	v1 := schema.GroupVersionResource{Group: group, Version: "v1alpha1", Resource: "foos"}
+	v2 := schema.GroupVersionResource{Group: group, Version: "v2alpha1", Resource: "foos"}
+
+	installer := &mockAppInstallerWithVersionedStorageOpts{
+		mockAppInstaller: &mockAppInstaller{groupVersions: []schema.GroupVersion{{Group: group, Version: "v1alpha1"}}},
+		manifest:         twoVersionManifest(group),
+		getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+			if gvr.Version != "v1alpha1" {
+				return nil // only one version opts in
+			}
+			return &apistore.StorageOptions{EnableFolderSupport: true, RequireFolder: true}
+		},
+	}
+	reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+
+	require.NoError(t, InstallAPIs(
+		context.Background(),
+		[]appsdkapiserver.AppInstaller{installer},
+		nil, // GenericAPIServer, only reached once an installer installs a group
+		reg,
+		nil, // storage options
+		nil, // dual write service
+		nil, // builder metrics
+		nil, // api resource config
+	))
+
+	require.Same(t, reg, installer.installedWith,
+		"the app-sdk resolves options through the getter it is installed with, so it has to be the one registerStorageOptions wrote to")
+	assert.True(t, resolvesPerVersion(t, installer.installedWith, v1),
+		"the version that opted in resolves to its own options through the getter the app-sdk was given")
+	assert.False(t, resolvesPerVersion(t, installer.installedWith, v2),
+		"the version that declined still falls through to the shared getter")
 }

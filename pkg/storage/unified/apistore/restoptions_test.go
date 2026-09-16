@@ -3,10 +3,19 @@ package apistore
 import (
 	"testing"
 
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 )
+
+// ForResource exists for exactly one caller: the app-sdk installer, which
+// type-asserts the getter it is handed to this interface and builds storage with
+// the getter unchanged when the assertion fails. Nothing in Grafana calls
+// ForResource itself, so a drifted signature would not break the build -- it
+// would silently stop every registration below from reaching storage, and each
+// resource would go back to sharing one answer across its versions.
+var _ appsdkapiserver.RESTOptionsGetterForResource = (*RESTOptionsGetter)(nil)
 
 // resolvedOptions reports the StorageOptions a getter would build storage with.
 // The by-GroupResource map and the scoped getters are separate code paths, so
