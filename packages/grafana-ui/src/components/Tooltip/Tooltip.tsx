@@ -2,6 +2,7 @@ import {
   arrow,
   autoUpdate,
   FloatingArrow,
+  FloatingFocusManager,
   offset,
   useDismiss,
   useFloating,
@@ -14,6 +15,7 @@ import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, u
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
@@ -32,13 +34,21 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
+  /**
+   * Traps focus inside the tooltip content and lets keyboard users Tab from the trigger into it,
+   * with Escape returning focus to the trigger. Opt into this for content with its own focusable
+   * elements (buttons, links) — without it, Tab from the trigger skips over the content entirely,
+   * since it's portaled and isn't part of the trigger's natural tab order. A visually-hidden
+   * dismiss control is also rendered, for touch screen reader users who have no Escape key.
+   */
+  trapFocus?: boolean;
 }
 
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
  */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content, trapFocus }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
@@ -106,29 +116,41 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
         })}
         {isOpen && (
           <Portal>
-            <div
-              ref={refs.setFloating}
-              style={floatingStyles}
-              data-testid={selectors.components.Tooltip.container}
-              id={tooltipId}
-              role="tooltip"
-              className={style.container}
-              {...getFloatingProps()}
+            {/* `disabled` makes this a no-op passthrough when `trapFocus` isn't set, so every
+                other Tooltip usage renders exactly as before. */}
+            <FloatingFocusManager
+              context={context}
+              disabled={!trapFocus}
+              order={['reference', 'content']}
+              initialFocus={-1}
+              visuallyHiddenDismiss={trapFocus ? t('grafana-ui.tooltip.dismiss', 'Dismiss') : undefined}
             >
-              <FloatingArrow
-                strokeWidth={0.3}
-                stroke={style.borderColor}
-                width={8}
-                height={4}
-                tipRadius={2}
-                className={style.arrow}
-                ref={arrowRef}
-                context={context}
-              />
-              {typeof content === 'string' && content}
-              {isValidElement(content) && cloneElement(content)}
-              {contentIsFunction && content({})}
-            </div>
+              <div
+                ref={refs.setFloating}
+                style={floatingStyles}
+                data-testid={selectors.components.Tooltip.container}
+                id={tooltipId}
+                // `role="tooltip"` is for non-interactive content only; content with its own
+                // focusable elements (which is what `trapFocus` is for) shouldn't use it.
+                role={trapFocus ? undefined : 'tooltip'}
+                className={style.container}
+                {...getFloatingProps()}
+              >
+                <FloatingArrow
+                  strokeWidth={0.3}
+                  stroke={style.borderColor}
+                  width={8}
+                  height={4}
+                  tipRadius={2}
+                  className={style.arrow}
+                  ref={arrowRef}
+                  context={context}
+                />
+                {typeof content === 'string' && content}
+                {isValidElement(content) && cloneElement(content)}
+                {contentIsFunction && content({})}
+              </div>
+            </FloatingFocusManager>
           </Portal>
         )}
       </>
