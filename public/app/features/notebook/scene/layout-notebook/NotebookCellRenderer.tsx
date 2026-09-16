@@ -317,6 +317,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+    // Inert on screen — only read by a print/PDF layout (e.g. the headless render behind "Export as
+    // PDF"), where a panel split across a page boundary is a chart cut in half rather than a
+    // document that just paginated normally.
+    breakInside: 'avoid',
+    pageBreakInside: 'avoid',
   }),
   content: css({
     padding: theme.spacing(1, 0),

@@ -13,6 +13,14 @@ export const NOTEBOOK_EDIT_PARAM = 'edit';
 export const NOTEBOOK_EDIT_PARAM_ON = 'true';
 
 /**
+ * `?pdfLayout=true` asks the page to lay itself out as a portrait document rather than a screen —
+ * see `isNotebookPdfLayoutUrl` below for why this is the notebook's own param and not the render
+ * pipeline's `encoding=pdf`.
+ */
+export const NOTEBOOK_PDF_LAYOUT_PARAM = 'pdfLayout';
+export const NOTEBOOK_PDF_LAYOUT_PARAM_ON = 'true';
+
+/**
  * The blank-notebook route. Nothing exists behind it: the page renders an empty notebook and the
  * resource is only created once there is something to save.
  */
@@ -79,4 +87,24 @@ export function isNotebookEditUrl(): boolean {
   const search = new URLSearchParams(locationService.getLocation().search);
 
   return search.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON;
+}
+
+/**
+ * Whether the url asks this page to lay itself out as a portrait document rather than a screen —
+ * set by the PDF export (see openNotebookPdf), and reaching the page because Grafana builds the
+ * headless browser's target url from the whole `/render/...` request's raw query string, the same
+ * way `kiosk`/`hideNav` arrive.
+ *
+ * Deliberately a param this feature owns, rather than reading the render pipeline's own
+ * `encoding=pdf`: that one belongs to the transport (`pkg/api/render.go` reads it to pick a render
+ * type), and a page that keys its layout off it would break the moment that signalling changes.
+ * Grafana's own reporting does the same thing, sending its `pdf.*` layout params alongside
+ * `encoding` rather than inferring one from the other.
+ *
+ * Matched exactly against 'true', for the same reason `isNotebookEditUrl` is.
+ */
+export function isNotebookPdfLayoutUrl(): boolean {
+  const search = new URLSearchParams(locationService.getLocation().search);
+
+  return search.get(NOTEBOOK_PDF_LAYOUT_PARAM) === NOTEBOOK_PDF_LAYOUT_PARAM_ON;
 }

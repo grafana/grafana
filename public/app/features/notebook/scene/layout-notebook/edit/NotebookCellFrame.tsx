@@ -22,7 +22,12 @@ import { NotebookCellAddButton } from './NotebookCellAddButton';
  */
 const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
 
-const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
+/**
+ * Hand-written for the same reason as the class above, and exported because the PDF export reaches
+ * it from a global rule (see NotebookScene): a cell needs its own vertical inset in a paginated
+ * document, so that whichever cell happens to begin a page is not flush against the paper's edge.
+ */
+export const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
 export type NotebookCellDropIndicator = 'top' | 'bottom';

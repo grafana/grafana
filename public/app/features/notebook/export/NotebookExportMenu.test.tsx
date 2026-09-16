@@ -9,11 +9,18 @@ import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '.
 
 import { NotebookExportMenu } from './NotebookExportMenu';
 import { downloadMarkdown } from './downloadMarkdown';
+import { navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
 
 jest.mock('./downloadMarkdown', () => ({ downloadMarkdown: jest.fn() }));
+jest.mock('./openNotebookPdf', () => ({
+  openBlankNotebookPdfTab: jest.fn(),
+  navigateToNotebookPdf: jest.fn(),
+}));
 jest.mock('../analytics/main', () => ({ NotebookAnalytics: { exported: jest.fn() } }));
 
 const mockDownloadMarkdown = jest.mocked(downloadMarkdown);
+const mockOpenBlankNotebookPdfTab = jest.mocked(openBlankNotebookPdfTab);
+const mockNavigateToNotebookPdf = jest.mocked(navigateToNotebookPdf);
 const mockExported = jest.mocked(NotebookAnalytics.exported);
 
 function buildSpec(): NotebookSpec {
@@ -21,6 +28,9 @@ function buildSpec(): NotebookSpec {
     ...defaultNotebookSpec(),
     title: 'Q2 latency regression',
     tags: [],
+    // A range that differs from whatever the schema default is, so a PDF-export test asserting on
+    // it actually proves the current range reached the render call, not just some coincidence.
+    timeSettings: { ...defaultNotebookSpec().timeSettings, from: 'now-3h', to: 'now' },
     elements: { md: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: 'Findings' } } } } },
     layout: {
       kind: 'NotebookLayout',
@@ -52,6 +62,7 @@ function setup(
 describe('NotebookExportMenu', () => {
   const originalAppUrl = config.appUrl;
   const originalClipboard = navigator.clipboard;
+  const originalRendererAvailable = config.rendererAvailable;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -65,10 +76,12 @@ describe('NotebookExportMenu', () => {
     // notebookShareUrl resolves the share link against config.appUrl; jest leaves it unset, and
     // `new URL(path, undefined)` throws, which the menu would report as an export failure.
     config.appUrl = 'https://host/';
+    config.rendererAvailable = false;
   });
 
   afterEach(() => {
     config.appUrl = originalAppUrl;
+    config.rendererAvailable = originalRendererAvailable;
   });
 
   it('offers the export actions', () => {
@@ -76,6 +89,60 @@ describe('NotebookExportMenu', () => {
 
     expect(screen.getByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
+  });
+
+  it('hides the PDF export when no renderer is configured', () => {
+    setup(async () => buildSpec());
+
+    expect(screen.queryByRole('menuitem', { name: 'Export as PDF' })).not.toBeInTheDocument();
+  });
+
+  it('offers the PDF export once a renderer is configured, carrying the current time range', async () => {
+    config.rendererAvailable = true;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the mock never reads anything else off it
+    const tab = {} as unknown as Window;
+    mockOpenBlankNotebookPdfTab.mockReturnValue(tab);
+    const { user } = setup(async () => buildSpec());
+
+    await user.click(screen.getByRole('menuitem', { name: 'Export as PDF' }));
+
+    // Opened synchronously, within the click, before the spec (which the row menu fetches) resolves
+    // — a window.open after that await could outlast the click's transient user activation.
+    expect(mockOpenBlankNotebookPdfTab).toHaveBeenCalled();
+
+    // The spec resolves before the handler navigates, so this only settles after a tick.
+    await waitFor(() => {
+      expect(mockNavigateToNotebookPdf).toHaveBeenCalledWith(
+        tab,
+        'nb1',
+        expect.objectContaining({ from: 'now-3h', to: 'now' })
+      );
+    });
+  });
+
+  it('reports a blocked popup instead of doing nothing', async () => {
+    config.rendererAvailable = true;
+    mockOpenBlankNotebookPdfTab.mockReturnValue(null);
+    const { user } = setup(async () => buildSpec());
+
+    await user.click(screen.getByRole('menuitem', { name: 'Export as PDF' }));
+
+    expect(await screen.findByText('Your browser blocked the PDF export tab')).toBeInTheDocument();
+    expect(mockNavigateToNotebookPdf).not.toHaveBeenCalled();
+  });
+
+  it('closes the placeholder tab and reports failure when the notebook cannot be loaded', async () => {
+    config.rendererAvailable = true;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only .close is read
+    const tab = { close: jest.fn() } as unknown as Window;
+    mockOpenBlankNotebookPdfTab.mockReturnValue(tab);
+    const { user } = setup(async () => undefined);
+
+    await user.click(screen.getByRole('menuitem', { name: 'Export as PDF' }));
+
+    expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
+    expect(mockNavigateToNotebookPdf).not.toHaveBeenCalled();
+    expect(tab.close).toHaveBeenCalled();
   });
 
   it('copies the notebook as markdown', async () => {

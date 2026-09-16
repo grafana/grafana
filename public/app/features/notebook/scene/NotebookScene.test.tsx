@@ -1,6 +1,7 @@
 import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
-import { act, render, screen } from 'test/test-utils';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -29,6 +30,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
+import { KioskMode } from 'app/types/dashboard';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
@@ -131,6 +133,89 @@ describe('NotebookScene', () => {
     activate(scene);
 
     expect(scene.state.refreshPicker.isActive).toBe(false);
+  });
+
+  describe('PDF export render', () => {
+    // Reads the live CSSOM rather than each <style> tag's textContent: emotion's "speedy" insertion
+    // mode writes rules straight to the sheet via insertRule, leaving textContent empty. Matched on
+    // the `html,body` selector specifically (stylis drops the space after the comma), since the
+    // container's own (always-present, inert-until-actually-printed) `@media print` rule also sets
+    // a max-width, and a plain substring check on the value alone would not tell the two apart.
+    function hasGlobalPortraitOverride(): boolean {
+      const rules = Array.from(document.styleSheets).flatMap((sheet) => {
+        try {
+          return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+        } catch {
+          return [];
+        }
+      });
+
+      return (
+        // Full page width, with the inset as padding and a background of its own: a real `@page`
+        // margin would leave a bare-paper band around a canvas that is deliberately not white, so
+        // the colour has to reach the sheet's edge and the inset has to come from inside it.
+        rules.some(
+          (rule) =>
+            rule.includes('html,body') &&
+            rule.includes('210mm') &&
+            rule.includes('12mm') &&
+            /background:\s*#/.test(rule)
+        ) &&
+        rules.some((rule) => rule.startsWith('@page') && rule.includes('210mm 297mm')) &&
+        // Page's own card, flattened: its border would read as a stray rule across the document.
+        rules.some((rule) => rule.includes('page-wrapper') && rule.includes('border')) &&
+        // Per-cell inset, which is what keeps the cell after a page break off the paper's edge —
+        // the body's own padding is spent at the start and end of the flow, not per page.
+        rules.some((rule) => rule.includes('notebook-cell-content') && rule.includes('padding')) &&
+        // The document column's reading-width inset, dropped so it does not stack with the page's.
+        rules.some((rule) => rule.includes('notebook-document') && rule.includes('padding'))
+      );
+    }
+
+    // Ordered before the positive case below: emotion's Global cache is not torn down between
+    // renders within a test file, so once a test injects the rule it stays in document.styleSheets
+    // for the rest of the suite. Harmless in production — a PDF render is a fresh, throwaway headless
+    // tab that never coexists with a normal view in the same document — but it means this negative
+    // assertion only means something run first.
+    it('leaves html/body alone outside of a PDF export render', () => {
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(<scene.Component model={scene} />);
+
+      expect(hasGlobalPortraitOverride()).toBe(false);
+    });
+
+    // `pdfLayout` reaches the page off the whole `/render/...` request's raw query string (see
+    // openNotebookPdf / isNotebookPdfLayoutUrl). A plain `@media print` rule would not be enough
+    // here: the renderer captures the page as it already sits rather than through a print-emulated
+    // pass, so html/body have to shrink for real.
+    //
+    // The url has to be seeded through `historyOptions` rather than a `setLocationService` call
+    // before this render: the flag is read synchronously while rendering, but `render` from
+    // test-utils builds and installs its own fresh location service as part of that same call,
+    // discarding anything set beforehand.
+    it('constrains html/body to a portrait width', () => {
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(<scene.Component model={scene} />, { historyOptions: { initialEntries: ['/notebooks/nb1?pdfLayout=true'] } });
+
+      expect(hasGlobalPortraitOverride()).toBe(true);
+    });
+
+    // Unlike kiosk mode, which a real full-screen display might still want the time range visible
+    // for, a PDF export never wants either: the range is meaningless once printed and a refresh
+    // button on a static document does nothing.
+    it('hides the time range and refresh controls', () => {
+      const scene = buildScene(false);
+      activate(scene);
+
+      render(<scene.Component model={scene} />, { historyOptions: { initialEntries: ['/notebooks/nb1?pdfLayout=true'] } });
+
+      expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('edit mode', () => {
@@ -503,6 +588,26 @@ describe('NotebookScene', () => {
       expect(scene.state.isEditing).toBeUndefined();
       expect(screen.getByText('Save failed')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+
+    // A PDF export renders the notebook headlessly with kiosk mode on, so editing affordances that
+    // mean nothing in an exported document must not show up in the capture.
+    it('hides save status, the edit toggle and history controls when kiosk mode is full', () => {
+      const scene = buildScene(false, 'nb1');
+      activate(scene);
+      act(() => scene.onEnterEditMode());
+      act(() =>
+        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
+      );
+
+      const context = getGrafanaContextMock();
+      context.chrome.update({ kioskMode: KioskMode.Full });
+      const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: context });
+      render(<scene.Component model={scene} />, { wrapper });
+
+      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
     });
 
     it('records history for a body replaced before activation', () => {

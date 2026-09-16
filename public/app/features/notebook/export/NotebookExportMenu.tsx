@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -10,6 +11,7 @@ import { notebookShareUrl } from '../urls';
 import { copyToClipboard } from './copyToClipboard';
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
+import { navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
 
 interface Props {
   uid: string;
@@ -71,6 +73,30 @@ export function NotebookExportMenu({ uid, getSpec, source }: Props) {
     }
   };
 
+  // Opens a new tab rather than downloading, matching dashboards' PDF export. The tab has to open
+  // before the spec load below, not after: the row menu's getSpec fetches over the network, and a
+  // window.open past that await can easily outlast the click's transient user activation and get
+  // treated as an unrequested popup. The spec itself is still needed — not for its content, but
+  // because transformNotebookSceneToSaveModel captures whatever time range is currently on screen,
+  // including one a reader picked that was never saved — without it the render would fall back to
+  // the notebook's last-saved range instead.
+  const onExportPdf = async () => {
+    const tab = openBlankNotebookPdfTab();
+    if (!tab) {
+      notifyApp.error(t('notebooks.export.pdf-popup-blocked', 'Your browser blocked the PDF export tab'));
+      return;
+    }
+
+    try {
+      const spec = await loadSpec();
+      navigateToNotebookPdf(tab, uid, spec.timeSettings);
+    } catch (error) {
+      // Otherwise the reader is left staring at a tab that never goes anywhere.
+      tab.close();
+      reportFailure();
+    }
+  };
+
   return (
     <>
       <Menu.Item label={t('notebooks.export.copy-markdown', 'Copy as Markdown')} icon="copy" onClick={onCopy} />
@@ -79,6 +105,11 @@ export function NotebookExportMenu({ uid, getSpec, source }: Props) {
         icon="download-alt"
         onClick={onDownload}
       />
+      {/* Hidden rather than disabled: PDF export needs a headless renderer to be configured, and a
+          plain dropdown item has no room for the explanatory alert a disabled state would need. */}
+      {config.rendererAvailable && (
+        <Menu.Item label={t('notebooks.export.pdf', 'Export as PDF')} icon="file-alt" onClick={onExportPdf} />
+      )}
     </>
   );
 }
