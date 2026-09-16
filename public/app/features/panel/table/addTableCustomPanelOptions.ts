@@ -47,6 +47,18 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       // that controls it is only offered there.
       showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
     })
+    .addBooleanSwitch({
+      path: 'showColumnsSidebar',
+      name: t('table.name-show-columns-sidebar', 'Show columns sidebar'),
+      description: t(
+        'table.description-show-columns-sidebar',
+        'Open the column management sidebar with the panel, rather than from a column menu'
+      ),
+      category,
+      showIf: () =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
     .addNumberInput({
       path: 'maxRowHeight',
       name: t('table.name-max-height', 'Max row height'),
