@@ -166,6 +166,40 @@ describe('Sparkline', () => {
     expect(onHover).toHaveBeenCalledWith(null);
   });
 
+  // A data refresh can swap the series while the mouse is held still; uPlot won't re-fire the
+  // cursor, so an active hover must be cleared to avoid surfacing a value tied to the old data.
+  it('clears an active hover when the sparkline series changes', async () => {
+    const onHover = jest.fn();
+    const { rerender } = render(
+      <Sparkline width={WIDTH} height={HEIGHT} theme={createTheme()} sparkline={makeSparkline()} onHover={onHover} />
+    );
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
+
+    const emit = prepareConfigSpy.mock.calls[0][5] as (hover: sparklineUtils.SparklineHoverInfo | null) => void;
+    act(() => emit({ index: 1, value: 20, display: '20', left: 5, top: 6 }));
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20' });
+
+    onHover.mockClear();
+    rerender(
+      <Sparkline
+        width={WIDTH}
+        height={HEIGHT}
+        theme={createTheme()}
+        sparkline={makeSparkline({
+          y: {
+            name: 'y',
+            values: [9, 8, 7, 6, 5],
+            type: FieldType.number,
+            config: {},
+            state: { range: { min: 5, max: 9, delta: 4 } },
+          },
+        })}
+        onHover={onHover}
+      />
+    );
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
   it('leaves the cursor disabled when no hover props are passed', async () => {
     await mountAndGetPlot(makeSparkline());
 
