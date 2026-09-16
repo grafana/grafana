@@ -20,19 +20,23 @@ This helps ensure consistent use of variables across your organization, as well 
 
 You can scope cross-dashboard variables in two ways:
 
-- **Globally**: Variables are available to all dashboards in the organization.
-- **By folder**: Variables are only available to the dashboards in the same folder as the variable.
+- **Globally**: Available to all dashboards in the organization.
+- **By folder**: Available only to the dashboards in the same folder as the variable.
 
-The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder:
-
-<!-- TODO: screenshot here -->
-
-When you add them to a dashboard, only the cross-dashboard variables that share the same scope as your dashboard are available for you to select.
-In the following image, the :
+The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder.
+In the following image, there are variables in "Core metrics" and "Grafana Cloud" folders and then a number of variables that aren't in any folders; these ones are global:
 
 <!-- TODO: screenshot here -->
 
-In the exampl
+When you add cross-dashboard variables to a dashboard, only the ones that share the same scope as your dashboard are available for you to select.
+
+For example, in the preceding image, there was a variable in the "Core metrics" folder.
+The following image shows a dashboard in the "Core metrics" folder.
+As a result, the variable in the "Core metrics" folder is available to that dashboard, as well as all the global variables:
+
+<!-- TODO: screenshot here -->
+
+Variables in other folders aren't available to that dashboard.
 
 ## Create cross-dashboard variables
 
