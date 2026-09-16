@@ -532,9 +532,9 @@ func (*unencodableObject) GetObjectKind() schema.ObjectKind { return schema.Empt
 func (o *unencodableObject) DeepCopyObject() runtime.Object { return o }
 
 // Which kinds get the generic search endpoints is decided by searchroutes, so a
-// manifest kind is enrolled on the same terms whether this builder serves it or
-// a custom resource definition does. These are that package's rules, asserted
-// here because mounting them is this builder's job.
+// manifest kind is treated the same whether this builder serves it or a custom
+// resource definition does. These are that package's rules, asserted here
+// because mounting them is this builder's job.
 func TestSearchRouteGates(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 
@@ -560,7 +560,7 @@ func TestSearchRouteGates(t *testing.T) {
 		return out
 	}
 
-	t.Run("enabled, an enrolled kind is served", func(t *testing.T) {
+	t.Run("enabled, the kind is served", func(t *testing.T) {
 		require.Equal(t, []string{"testkinds/search"},
 			searchPaths(newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})))
 	})
@@ -569,10 +569,12 @@ func TestSearchRouteGates(t *testing.T) {
 		require.Empty(t, searchPaths(newBuilder(AppPluginRunnerOptions{})))
 	})
 
-	t.Run("a kind declaring no search fields is not enrolled", func(t *testing.T) {
+	// Search over the fields every resource has works without declared fields,
+	// so declaring none is not a reason to withhold the endpoint.
+	t.Run("a kind declaring no search fields is still served", func(t *testing.T) {
 		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
 		b.manifest.Versions[1].Kinds[0].SearchFields = nil
-		require.Empty(t, searchPaths(b))
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(b))
 	})
 
 	t.Run("a kind can opt out of the endpoint it declared fields for", func(t *testing.T) {
