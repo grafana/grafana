@@ -15,13 +15,7 @@ import { getHomeNode } from './sections/home.navEntry';
 import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
-import {
-  appendIntoSection,
-  applyAppSubUrl,
-  buildEntries,
-  type NavEntryBuilder,
-  sortNavTree,
-} from './utils';
+import { appendIntoSection, applyAppSubUrl, buildEntries, type NavEntryBuilder, sortNavTree } from './utils';
 
 /**
  * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree

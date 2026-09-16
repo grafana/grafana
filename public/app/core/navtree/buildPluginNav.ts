@@ -16,13 +16,12 @@ import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
+  appendIntoSection,
   applyAppSubUrl,
-  findNavById,
   pluginPageId,
   pruneEmptyNavSections,
   sortNavTree,
   standalonePluginPageIdFromText,
-  updateNavById,
 } from './utils';
 
 const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
@@ -187,17 +186,11 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
   const navConfig = appNavConfigFor(app.id);
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
-  if (sectionId === NavID.root) {
-    return [...tree, appLink];
-  }
-
   const sectionChildren = navConfig?.hoistPages ? hoistAppPages(appLink, navConfig.hoistPages) : [appLink];
 
-  if (findNavById(tree, sectionId)) {
-    return updateNavById(tree, sectionId, (section) => ({
-      ...section,
-      children: [...(section.children ?? []), ...sectionChildren],
-    }));
+  const placed = appendIntoSection(tree, sectionId, sectionChildren);
+  if (placed) {
+    return placed;
   }
 
   const shellConfig = PLUGIN_SECTION_SHELLS[sectionId];

@@ -60,7 +60,7 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
 }
 
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
-function updateNavById(
+export function updateNavById(
   nodes: NavModelItem[],
   id: string,
   update: (node: NavModelItem) => NavModelItem
