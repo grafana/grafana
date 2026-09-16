@@ -51,7 +51,7 @@ The clone is disposed and the canonical data restored when the proposal is rever
 3. The inline session requests a typed proposal. It can instead show a clarification, an error, or a bounded handoff to Assistant; stale completions are ignored.
 4. Core validates the proposal through the adapter, passes it through normal query-editor props, and starts the isolated panel preview.
 5. Accept clears the preview, commits the proposal through the ordinary query update path, and runs the query. Close, Escape, and Assistant handoff clear the inline session and revert an active preview; Stop cancels ongoing generation and reverts any preview while retaining the session context.
-6. Switching query rows or datasources invalidates the registered adapter before the next surface render and clears the transaction. The datasource cleanup still disposes its editor resources.
+6. Switching query rows or resolved datasource instances synchronously excludes both the registered adapter and any proposal from the previous identity before effect cleanup clears the transaction. Datasource variables trigger a fresh resolution when their selected value changes. The datasource cleanup still disposes its editor resources.
 7. A genuine editor change, an explicit query run, or a canonical-query change clears the transaction and prevents stale proposal or preview data from overwriting newer query state.
 
 Only one transaction is owned by a given query row. Cross-row session coordination is intentionally outside this experiment.
