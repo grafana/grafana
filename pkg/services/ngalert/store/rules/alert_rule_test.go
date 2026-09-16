@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"context"
@@ -642,7 +642,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
-	protoInstanceStore := ProtoInstanceDBStore{
+	protoInstanceStore := store.ProtoInstanceDBStore{
 		SQLStore:       sqlStore,
 		Logger:         logger,
 		FeatureToggles: featuremgmt.WithFeatures(),

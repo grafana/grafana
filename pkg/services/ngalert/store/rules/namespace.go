@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user
-func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
+func (st RuleStore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:            orgID,
 		WithFullpath:     true,
@@ -34,7 +34,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+func (st RuleStore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
 	if folder.IsRootFolderUID(uid) {
 		return nil, folder.ErrAPIInvalidUID
 	}
@@ -50,7 +50,7 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 }
 
 // GetNamespaceChildren gets namespace (folder) children (first level) by its UID.
-func (st DBstore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error) {
+func (st RuleStore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error) {
 	q := &folder.GetChildrenQuery{
 		UID:          uid,
 		OrgID:        orgID,
@@ -72,7 +72,7 @@ func (st DBstore) GetNamespaceChildren(ctx context.Context, uid string, orgID in
 }
 
 // GetNamespaceByTitle gets namespace by its title in the specified folder.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
+func (st RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
 	folders, err := st.GetNamespaceChildren(ctx, parentUID, orgID, user)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, title string, orgID i
 //
 // To avoid race conditions when two concurrent requests try to create the same folder,
 // we create folders with a deterministic UID based on the parent UID, title, and organization ID.
-func (st DBstore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+func (st RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
 	if len(title) == 0 {
 		return nil, false, fmt.Errorf("title is empty")
 	}
