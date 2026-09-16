@@ -125,7 +125,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
 	}
 
 	opts := &unitest.TestOptions{

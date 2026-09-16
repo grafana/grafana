@@ -68,9 +68,7 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  // Adding or removing a query toggles the frame picker, which changes the tree
-  // shape and remounts the editor, so its view mode is held here instead.
-  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
+  const [view, setView] = useState<ViewMode>('split');
 
   const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
     usePagination({
@@ -177,8 +175,7 @@ export function TextNGPanel(props: Props) {
   ) : null;
 
   const panel = isEditing ? (
-    // Show the rendered content while the editor chunk loads; the editor
-    // opens in Preview view, so the content stays in place.
+    // Rendered content, while the editor chunk loads.
     <Suspense
       fallback={
         <EditorLoadingFallback

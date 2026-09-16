@@ -356,19 +356,16 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		b.group, b.pluginJSON.ID,
 	)
 
-	if opts.StorageOptsRegister == nil {
-		return fmt.Errorf("apps require storage opts")
+	if opts.OptsGetter == nil {
+		return fmt.Errorf("apps require a storage options getter")
 	}
-	opts.StorageOptsRegister(settingsRI.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: false,
-		Scheme:              opts.Scheme,
-	})
 
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
 	// Share one settings store across all versions.
 	var settingsStorage rest.Storage
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI,
+		opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{EnableFolderSupport: false}))
 	if err != nil {
 		return err
 	}
@@ -384,10 +381,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, b.group, b.manifest)
-
-	// Resolved once for the whole manifest: storage options are keyed by
-	// resource, so every version of a kind has to register the same answer.
-	folderScoped := kindstore.FolderScopedResources(b.manifest)
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
@@ -419,10 +412,8 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 				for _, kind := range v.Kinds {
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
-						Scheme:                opts.Scheme,
-						OptsGetter:            opts.OptsGetter,
-						StorageOptsRegister:   opts.StorageOptsRegister,
-						FolderScopedResources: folderScoped,
+						Scheme:            opts.Scheme,
+						StorageOptsGetter: opts.StorageOptsGetter,
 					}, defs)
 					if err != nil {
 						return err
