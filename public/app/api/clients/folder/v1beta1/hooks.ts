@@ -29,7 +29,7 @@ import {
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -545,7 +545,7 @@ function useRefreshFolders() {
 
   return (options: { parentsOf?: string[]; childrenOf?: string }) => {
     if (options.parentsOf) {
-      dispatch(refreshParents(options.parentsOf));
+      dispatch(refreshParents({ kind: 'folder', uids: options.parentsOf }));
     }
     // Refetch children even if we passed in `childrenOf: undefined`, as this corresponds to the root folder
     if (options.childrenOf || 'childrenOf' in options) {
@@ -559,9 +559,9 @@ function useRefreshFolders() {
   };
 }
 
-export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>) {
-  const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
-  const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
+export function useGetAffectedItems(selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>) {
+  const folderUIDs = getSelectedUIDs(selectedItems, 'folder');
+  const dashboardUIDs = getSelectedUIDs(selectedItems, 'dashboard');
 
   // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
   // nested folders but both are good enough to report whether folder is empty or not.
