@@ -50,6 +50,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+  report-settings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/report-settings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/report-settings/
   send-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
@@ -151,7 +156,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Takes you to **Reporting** in a new browser tab and opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **[Report settings](ref:report-settings)** - Takes you to **Reporting** in a new browser tab and opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -182,7 +187,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **[Report settings](ref:report-settings)** - Opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -312,6 +317,9 @@ If you selected a PDF attachment, configure the following formatting options:
 | Show template variables         | Click the checkbox to show dashboard variables. This option is only displayed if the report contains variables. |
 | [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. _Public preview only._ |
 <!-- prettier-ignore-end -->
+
+These options apply to one report.
+To choose which items appear in the PDF header and footer for every report in your organization, refer to [Reporting settings](ref:report-settings).
 
 ##### Layout and orientation
 
