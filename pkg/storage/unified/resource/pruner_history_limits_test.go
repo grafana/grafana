@@ -22,6 +22,20 @@ func TestLookupPrunerHistoryLimit(t *testing.T) {
 			expected:                3,
 		},
 		{
+			name:                    "retains recent active job revisions",
+			group:                   "provisioning.grafana.app",
+			resource:                "jobs",
+			dashboardVersionsToKeep: 20,
+			expected:                3,
+		},
+		{
+			name:                    "retains only the latest historic job revision",
+			group:                   "provisioning.grafana.app",
+			resource:                "historicjobs",
+			dashboardVersionsToKeep: 20,
+			expected:                1,
+		},
+		{
 			name:                    "returns configured limit for dashboards",
 			group:                   "dashboard.grafana.app",
 			resource:                "dashboards",
