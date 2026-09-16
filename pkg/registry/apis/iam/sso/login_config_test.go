@@ -114,4 +114,5 @@ func TestTruthy(t *testing.T) {
 	}
 }
 
-func ptr(m grafanarest.DualWriterMode) *grafanarest.DualWriterMode { return &m }
+//go:fix inline
+func ptr(m grafanarest.DualWriterMode) *grafanarest.DualWriterMode { return new(m) }

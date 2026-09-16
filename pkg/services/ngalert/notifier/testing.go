@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -177,7 +178,7 @@ func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *mod
 	}
 
 	// Iterate backwards to find the latest config first.
-	for i := len(orgConfigs) - 1; i >= 0; i-- {
+	for _, orgConfig := range slices.Backward(orgConfigs) {
 		for _, config := range orgConfigs {
 			if config.ConfigurationHash == cmd.ConfigurationHash {
 				config.LastApplied = time.Now().UTC().Unix()
