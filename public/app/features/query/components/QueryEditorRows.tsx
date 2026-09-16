@@ -54,7 +54,7 @@ export interface Props {
   panelRef?: SceneObjectRef<VizPanel>;
   /** refId of a row to scroll into view once it renders (e.g. a freshly added query). */
   scrollToRefId?: string;
-  /** Called after the row identified by scrollToRefId has been scrolled into view. */
+  /** Called as soon as the row identified by scrollToRefId starts scrolling into view. */
   onScrollIntoView?: () => void;
 }
 
