@@ -6,7 +6,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
@@ -65,10 +65,24 @@ function setMetas(metas: PluginMetasResponse | null) {
   logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
 }
 
+/**
+ * Boot data is the synchronous source for panel metas while plugins.useMTPlugins is off. The
+ * multi-tenant frontend service sends no panels at all, so under that flag the cache can only come
+ * from the plugin meta API and callers have to wait for it.
+ * @returns true when the cache was populated from boot data
+ */
+function seedFromBootData(): boolean {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return false;
+  }
+
+  // eslint-disable-next-line @grafana/no-config-panels
+  setPanelsAndAliases(config.panels);
+  return true;
+}
+
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    // eslint-disable-next-line @grafana/no-config-panels
-    setPanelsAndAliases(config.panels);
+  if (seedFromBootData()) {
     logPluginMetaDebug('PluginMeta: initializing panel plugins cache with bootdata values', {});
     return;
   }
@@ -106,13 +120,19 @@ export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
  * Get a map of panel plugins keyed by plugin id.
  * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the panel plugins have been initialized.
  * In other cases, getPanelPluginMetasMap() should be used instead to ensure the panel plugins have been initialized before accessing them.
- * @throws Error if the panel plugins have not been initialized yet
- * @returns a map of panel plugins keyed by plugin id
+ * @returns a map of panel plugins keyed by plugin id, empty when a multi-tenant caller ran ahead of initialization
  */
 export function getPanelPluginMetasMapSync(): PanelPluginMetas {
-  if (!initialized() && process.env.NODE_ENV === 'development') {
-    throw new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!');
+  // An empty map here is a bug in the caller, not a degraded mode: skipDataQuery reads as false, so
+  // panels that take no queries get a query runner. Reported with a stack rather than thrown,
+  // because these callers build scenes during render and a throw takes the whole page down.
+  if (!initialized() && !seedFromBootData()) {
+    logPluginMetaError(
+      'PluginMeta: getPanelPluginMetasMapSync() was called before the panel plugins map was initialized',
+      new Error('Panel plugin metas not initialized')
+    );
   }
+
   return structuredClone(panels);
 }
 
