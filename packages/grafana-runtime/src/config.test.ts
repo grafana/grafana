@@ -51,6 +51,20 @@ describe('GrafanaBootConfig legacy feature toggle handling', () => {
 
       expect(warnSpy.mock.calls[0][0]).toContain('will stop resolving');
     });
+
+    it('raises a warning alert rather than an error', () => {
+      const config = createConfig();
+
+      void config.featureToggles.panelTitleSearch;
+
+      expect(publishSpy).toHaveBeenCalledWith({
+        type: AppEvents.alertWarning.name,
+        payload: [
+          'Legacy feature toggle read: "panelTitleSearch"',
+          'Use OpenFeature instead, or remove the legacy toggle entirely.',
+        ],
+      });
+    });
   });
 
   describe('block', () => {
@@ -76,10 +90,10 @@ describe('GrafanaBootConfig legacy feature toggle handling', () => {
       expect(warnSpy.mock.calls[0][0]).toContain('"panelTitleSearch"');
       expect(publishSpy).toHaveBeenCalledTimes(2);
       expect(publishSpy).toHaveBeenNthCalledWith(1, {
-        type: AppEvents.alertWarning.name,
+        type: AppEvents.alertError.name,
         payload: [
-          'Legacy feature toggle read: "panelTitleSearch"',
-          'Use OpenFeature instead, or remove the legacy toggle entirely.',
+          'Legacy feature toggle blocked: "panelTitleSearch"',
+          'The read was blocked and resolved to undefined. Use OpenFeature instead, or remove the legacy toggle entirely.',
         ],
       });
     });

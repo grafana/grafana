@@ -20,15 +20,36 @@ export function getLegacyFeatureToggleMode(): LegacyFeatureToggleMode {
   return 'off';
 }
 
+const MIGRATION_GUIDANCE = 'Use OpenFeature instead, or remove the legacy toggle entirely.';
+
+function legacyFeatureToggleAlert(property: string, blocking: boolean) {
+  if (blocking) {
+    return {
+      type: AppEvents.alertError.name,
+      payload: [
+        `Legacy feature toggle blocked: "${property}"`,
+        `The read was blocked and resolved to undefined. ${MIGRATION_GUIDANCE}`,
+      ],
+    };
+  }
+
+  return {
+    type: AppEvents.alertWarning.name,
+    payload: [`Legacy feature toggle read: "${property}"`, MIGRATION_GUIDANCE],
+  };
+}
+
 /**
  * Returns a proxy over the legacy feature toggle map which, once per toggle accessed, logs a
- * warning and raises a warning alert — and in `block` mode resolves the read to undefined.
+ * warning and raises an alert — a warning in `log` mode, and an error in `block` mode, where the
+ * read also resolves to undefined.
  */
 export function reportOrBlockLegacyFeatureToggles(
   featureToggles: FeatureToggles,
   mode: Exclude<LegacyFeatureToggleMode, 'off'>
 ): FeatureToggles {
   const reportedFeatureToggles = new Set<string>();
+  const blocking = mode === 'block';
 
   return new Proxy(featureToggles, {
     get(target, property, receiver) {
@@ -41,26 +62,20 @@ export function reportOrBlockLegacyFeatureToggles(
         reportedFeatureToggles.add(property);
 
         // The stack makes the call site findable.
-        const resolution = mode === 'block' ? 'and now resolves to undefined' : 'and will stop resolving';
+        const resolution = blocking ? 'and now resolves to undefined' : 'and will stop resolving';
         console.warn(
-          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated ${resolution}. Use OpenFeature instead, or remove the legacy toggle entirely.`,
+          `[Deprecation warning] Reading "${property}" from config.featureToggles is deprecated ${resolution}. ${MIGRATION_GUIDANCE}`,
           new Error().stack
         );
 
         // Reads that happen before the app event bus is wired up have nowhere to publish, and must
         // not throw from inside a get trap — the console warning above covers that case.
         try {
-          getAppEvents().publish({
-            type: AppEvents.alertWarning.name,
-            payload: [
-              `Legacy feature toggle read: "${property}"`,
-              'Use OpenFeature instead, or remove the legacy toggle entirely.',
-            ],
-          });
+          getAppEvents().publish(legacyFeatureToggleAlert(property, blocking));
         } catch {}
       }
 
-      if (mode === 'block') {
+      if (blocking) {
         return undefined;
       }
 
