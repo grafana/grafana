@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
+  AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
@@ -214,6 +216,17 @@ export const FlagKeys = {
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
+ *
+ * **Details:**
+ * - flag key: `alerting.dataSourceManagedRouteProxy`
+ * - default value: `false`
+ */
+export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
 
 /**
  * Enable manually starting an Assistant investigation from the alert instance drawer.
