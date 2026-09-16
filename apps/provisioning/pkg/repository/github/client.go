@@ -16,6 +16,8 @@ type Client interface {
 	// Webhooks
 	repository.WebhookClient
 
+	repository.BranchProtectionClient
+
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)
 	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
