@@ -4082,6 +4082,25 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field",
+          "pattern"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": [
@@ -4214,6 +4233,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchTextLeaf"
@@ -4442,6 +4464,25 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": [
+          "field",
+          "pattern"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": [
@@ -4574,6 +4615,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf"

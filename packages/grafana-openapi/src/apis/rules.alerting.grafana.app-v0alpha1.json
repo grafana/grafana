@@ -3752,6 +3752,22 @@
           }
         }
       },
+      "ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "ListAlertRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": ["resource"],
@@ -3867,6 +3883,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchTextLeaf"
@@ -4064,6 +4083,22 @@
           }
         }
       },
+      "ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "ListRecordingRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": ["resource"],
@@ -4179,6 +4214,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf"
