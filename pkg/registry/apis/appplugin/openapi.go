@@ -175,10 +175,11 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 			}
 			gvk.Kind = kind.Kind
 			name := kindstore.OpenAPIName(gvk)
+			resource := kind.Resource()
 			ref := spec.MustCreateRef("#/components/schemas/" + name)
-			base := root + "namespaces/{namespace}/" + strings.ToLower(kind.Plural)
+			base := root + "namespaces/{namespace}/" + resource
 			if kind.Scope == kindstore.ClusterScope {
-				base = root + strings.ToLower(kind.Plural)
+				base = root + resource
 			}
 
 			info.kind = &kind
