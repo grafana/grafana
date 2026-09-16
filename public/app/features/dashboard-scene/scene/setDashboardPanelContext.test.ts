@@ -8,7 +8,14 @@ import {
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  sceneGraph,
+  SceneQueryRunner,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
@@ -17,6 +24,12 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { findVizPanelByKey } from '../utils/utils';
 
+import { DashboardScene } from './DashboardScene';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
 jest.mock('../../annotations/isAnnotationApiAvailable');
@@ -372,6 +385,51 @@ describe('setDashboardPanelContext', () => {
       const variables = sceneGraph.getVariables(scene);
       const adhocVars = variables.state.variables.filter((v) => v.state.type === 'adhoc');
       expect(adhocVars.length).toBe(1);
+    });
+  });
+
+  describe('onAddAdHocFilter with a section-local filter variable', () => {
+    function buildRowScopedScene() {
+      const rowFilters = new AdHocFiltersVariable({ name: 'Filters', datasource: { uid: 'my-ds-uid' }, filters: [] });
+      const dashboardFilters = new AdHocFiltersVariable({
+        name: 'Filters',
+        datasource: { uid: 'my-ds-uid' },
+        filters: [],
+      });
+
+      const vizPanel = new VizPanel({
+        key: 'panel-4',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ datasource: { uid: 'my-ds-uid' }, queries: [{ refId: 'A' }] }),
+      });
+
+      const row = new RowItem({
+        $variables: new SceneVariableSet({ variables: [rowFilters] }),
+        layout: new AutoGridLayoutManager({
+          layout: new AutoGridLayout({ children: [new AutoGridItem({ body: vizPanel })] }),
+        }),
+      });
+
+      new DashboardScene({
+        uid: 'dash-1',
+        title: 'hello',
+        $variables: new SceneVariableSet({ variables: [dashboardFilters] }),
+        body: new RowsLayoutManager({ rows: [row] }),
+      });
+
+      const context: PanelContext = { eventBus: new EventBusSrv(), eventsScope: 'global' };
+      setDashboardPanelContext(vizPanel, context);
+
+      return { rowFilters, dashboardFilters, context };
+    }
+
+    it('adds the filter to the row-local variable instead of the dashboard-global one', async () => {
+      const { rowFilters, dashboardFilters, context } = buildRowScopedScene();
+
+      await context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+
+      expect(rowFilters.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
+      expect(dashboardFilters.state.filters).toEqual([]);
     });
   });
 
