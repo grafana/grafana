@@ -63,15 +63,15 @@ func TestSearchFallback(t *testing.T) {
 
 			searchHandler.DoSearch(rr, req)
 
+			var searchRequest *resourcepb.ResourceSearchRequest
 			if tt.expectUnified {
-				if mockClient.LastSearchRequest == nil {
-					t.Fatalf("expected Unified Search to be called, but it was not")
-				}
+				searchRequest = mockClient.LastSearchRequest
+				require.NotNil(t, searchRequest, "expected Unified Search to be called")
 			} else {
-				if mockLegacyClient.LastSearchRequest == nil {
-					t.Fatalf("expected Legacy Search to be called, but it was not")
-				}
+				searchRequest = mockLegacyClient.LastSearchRequest
+				require.NotNil(t, searchRequest, "expected Legacy Search to be called")
 			}
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchRequest.ResultFormat)
 		})
 	}
 }
@@ -589,6 +589,60 @@ func TestParseResults(t *testing.T) {
 		assert.Empty(t, sparse.ExternalAuthModules)
 		assert.Zero(t, sparse.Created)
 		assert.Zero(t, sparse.InternalId)
+	})
+
+	t.Run("maps all field-value results and carries totals/score", func(t *testing.T) {
+		resp := &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			QueryCost:    1.5,
+			MaxScore:     2.5,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_EMAIL, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_LOGIN, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_LAST_SEEN_AT, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: builders.USER_ROLE, Type: resourcepb.ResourceSearchField_STRING},
+				{Name: builders.USER_DISABLED, Type: resourcepb.ResourceSearchField_BOOLEAN},
+				{Name: builders.USER_EXTERNAL_AUTH_MODULES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+				{Name: resource.SEARCH_FIELD_CREATED, Type: resourcepb.ResourceSearchField_INT64},
+				{Name: legacyIDField, Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key: &resourcepb.ResourceKey{Name: "uid-1"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"John Doe"}},
+					{FieldIndex: 1, StringValues: []string{"jdoe@example.com"}},
+					{FieldIndex: 2, StringValues: []string{"jdoe"}},
+					{FieldIndex: 3, Int64Values: []int64{lastSeen}},
+					{FieldIndex: 4, StringValues: []string{"Admin"}},
+					{FieldIndex: 5, BooleanValues: []bool{true}},
+					{FieldIndex: 6, StringValues: []string{"authproxy", "ldap"}},
+					{FieldIndex: 7, Int64Values: []int64{created}},
+					{FieldIndex: 8, StringValues: []string{"42"}},
+				},
+			}},
+		}
+
+		sr, err := ParseResults(resp)
+		require.NoError(t, err)
+		require.Len(t, sr.Hits, 1)
+		assert.Equal(t, int64(1), sr.TotalHits)
+		assert.Equal(t, 1.5, sr.QueryCost)
+		assert.Equal(t, 2.5, sr.MaxScore)
+
+		hit := sr.Hits[0]
+		assert.Equal(t, "uid-1", hit.Name)
+		assert.Equal(t, "John Doe", hit.Title)
+		assert.Equal(t, "jdoe@example.com", hit.Email)
+		assert.Equal(t, "jdoe", hit.Login)
+		assert.Equal(t, "Admin", hit.Role)
+		assert.Equal(t, lastSeen, hit.LastSeenAt)
+		assert.NotEmpty(t, hit.LastSeenAtAge)
+		assert.True(t, hit.Disabled)
+		assert.Equal(t, []string{"authproxy", "ldap"}, hit.ExternalAuthModules)
+		assert.Equal(t, created, hit.Created)
+		assert.Equal(t, int64(42), hit.InternalId)
 	})
 
 	t.Run("only requested columns are populated", func(t *testing.T) {
