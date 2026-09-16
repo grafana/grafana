@@ -3222,14 +3222,19 @@
         "action-disable": "同期を無効にする",
         "add-datasource-link": "Mimirデータソースを追加",
         "badge-active": "有効化",
+        "badge-failing": "",
         "badge-not-configured": "未設定",
         "badge-operator-managed": "オペレーターによって管理されています",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "MimirまたはCortex AlertmanagerデータソースからGrafanaへアラート設定を継続的に同期します。",
         "disable-confirm-action": "同期を無効にする",
         "disable-confirm-body": "無効にすると、データソース{{uid}}との継続的な同期が停止します。後でデータソースを再度選択すると、再び有効にできます。",
         "disable-confirm-body-generic": "無効にすると、継続的な同期が停止します。後でデータソースを再度選択すると、再び有効にできます。",
         "disable-confirm-title": "Mimir Alertmanagerの自動同期を無効にしますか？",
         "disable-success": "Mimir Alertmanagerの自動同期を無効にしました",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "この値はgrafana.iniの<1>[unified_alerting] external_alertmanager_uid</1>キーで設定されており、UIから変更することはできません。設定ファイルを編集してGrafanaを再起動するか、キーを削除すると、ここから同期を管理できるようになります。",
@@ -3248,6 +3253,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "自動同期の設定"
       },
       "import": {
@@ -3285,6 +3291,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5700,15 +5708,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "{{typeName}}を移動",
-      "panel-background": "パネルの背景を変更",
-      "panel-description": "パネルの説明を変更",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "パネルの変更",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "行あたりの最大繰り返し回数",
       "panel-preset": "パネルプリセットを適用",
       "panel-repeat-direction": "方向を繰り返す",
       "panel-repeat-variable": "パネルの繰り返し",
-      "panel-title": "パネルのタイトルを変更",
+      "panel-title": "",
       "paste-panel": "パネルを貼り付け",
       "remove": "{{typeName}}を削除",
       "row-title": "行のタイトルを変更",
@@ -6662,6 +6670,10 @@
       },
       "title-delete": "{{name}}を削除しますか？"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "検索をクリア",
       "no-transformations-found": "変換が見つかりません",
@@ -6711,6 +6723,12 @@
     "view-panel": {
       "back-to-dashboard": "ダッシュボードに戻る",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -8597,6 +8615,16 @@
       "title-raw-prometheus": "Prometheusのローデータ",
       "title-table": "テーブル",
       "title-traces": "トレース"
+    },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11346,8 +11374,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13033,9 +13060,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
