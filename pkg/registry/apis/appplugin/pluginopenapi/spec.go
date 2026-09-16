@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // Options are the parts of a running server's configuration that are visible in
@@ -148,10 +147,9 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 	// group has to be installed even though no request is ever served.
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 	if err := b.UpdateAPIGroupInfo(&apiGroupInfo, builder.APIGroupOptions{
-		Scheme:              scheme,
-		OptsGetter:          serverConfig.RESTOptionsGetter,
-		MetricsRegister:     prometheus.NewRegistry(),
-		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
+		Scheme:          scheme,
+		OptsGetter:      serverConfig.RESTOptionsGetter,
+		MetricsRegister: prometheus.NewRegistry(),
 	}); err != nil {
 		return nil, err
 	}

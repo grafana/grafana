@@ -409,6 +409,8 @@ type ResourceServerOptions struct {
 
 	QuotasConfig QuotasConfig
 
+	SearchBackedListConfig SearchBackedListConfig
+
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
@@ -586,6 +588,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		storageEnabled:                 true,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
+		searchBackedListResources:      opts.SearchBackedListConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -666,22 +669,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log              log.Logger
-	backend          StorageBackend
-	vectorBackend    vector.VectorBackend
-	bulkBatchOptions BulkBatchOptions
-	blob             BlobSupport
-	secure           secrets.InlineSecureValueSupport
-	search           *searchServer
-	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
-	access           claims.AccessClient
-	writeHooks       WriteAccessHooks
-	now              func() int64
-	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics   *StorageMetrics
-	overridesService *OverridesService
-	quotasConfig     QuotasConfig
+	log                       log.Logger
+	backend                   StorageBackend
+	vectorBackend             vector.VectorBackend
+	bulkBatchOptions          BulkBatchOptions
+	blob                      BlobSupport
+	secure                    secrets.InlineSecureValueSupport
+	search                    *searchServer
+	searchClient              resourcepb.ResourceIndexClient
+	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
+	access                    claims.AccessClient
+	writeHooks                WriteAccessHooks
+	now                       func() int64
+	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics            *StorageMetrics
+	overridesService          *OverridesService
+	quotasConfig              QuotasConfig
+	searchBackedListResources SearchBackedListConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1631,7 +1635,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	req = filterSelectors(req)
 
-	if s.useSelectorSearch(req) {
+	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource

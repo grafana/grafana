@@ -2383,11 +2383,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/services/ReportRenderReadinessObserver.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/state/DashboardMigrator.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 10
@@ -3093,11 +3088,6 @@
     }
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/valueMatchersUI.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/calculateHeatmap/editor/helper.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
