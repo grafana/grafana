@@ -40,7 +40,7 @@ export interface Props {
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
-  const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
+  const { openPane, selectionContext, outlinePane, autoOpenPane } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
@@ -177,6 +177,26 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             />
           )}
           <Sidebar.Divider />
+          {isEditing && (
+            <Sidebar.Button
+              icon={autoOpenPane ? 'unlock' : 'lock'}
+              active={!autoOpenPane}
+              // Sidebar.Button derives aria-expanded from active, which is wrong for a toggle
+              aria-expanded={undefined}
+              aria-pressed={!autoOpenPane}
+              onClick={() => sidebar.setAutoOpenPane(!autoOpenPane)}
+              title={t('dashboard.sidebar.lock.title', 'Lock')}
+              tooltip={
+                autoOpenPane
+                  ? t('dashboard.sidebar.lock.tooltip-unlocked', 'Selecting elements on the canvas opens the sidebar')
+                  : t(
+                      'dashboard.sidebar.lock.tooltip-locked',
+                      'Selecting elements on the canvas does not open the sidebar'
+                    )
+              }
+              data-testid="dashboard-sidebar-lock-toggle"
+            />
+          )}
           <Sidebar.Button
             icon={'arrow-to-right'}
             onClick={onClickHideSidebar}
