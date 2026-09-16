@@ -74,14 +74,14 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		expectedName := authinfo.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
-		require.Equal(t, userUID, createdSpec["userRef"].(map[string]interface{})["name"])
+		createdSpec := created.Object["spec"].(map[string]any)
+		require.Equal(t, userUID, createdSpec["userRef"].(map[string]any)["name"])
 		require.Equal(t, "ldap", createdSpec["authModule"])
 		require.Equal(t, "cn=test,dc=example,dc=com", createdSpec["authID"])
 
 		fetched, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
 		require.NoError(t, err)
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "cn=test,dc=example,dc=com", fetchedSpec["authID"])
 
 		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
@@ -92,15 +92,15 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.Equal(t, expectedName, list.Items[0].GetName())
 
 		toUpdate := fetched.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["authID"] = "cn=updated,dc=example,dc=com"
+		toUpdate.Object["spec"].(map[string]any)["authID"] = "cn=updated,dc=example,dc=com"
 		updated, err := authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.NoError(t, err)
-		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec := updated.Object["spec"].(map[string]any)
 		require.Equal(t, "cn=updated,dc=example,dc=com", updatedSpec["authID"])
 
 		fetchedAfter, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "cn=updated,dc=example,dc=com", fetchedAfter.Object["spec"].(map[string]interface{})["authID"])
+		require.Equal(t, "cn=updated,dc=example,dc=com", fetchedAfter.Object["spec"].(map[string]any)["authID"])
 	})
 
 	t.Run("should not create authinfo for a non-existent user", func(t *testing.T) {
@@ -142,7 +142,7 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.NoError(t, err)
 
 		toUpdate := created.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = otherUserUID
+		toUpdate.Object["spec"].(map[string]any)["userRef"].(map[string]any)["name"] = otherUserUID
 		_, err = authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
@@ -151,7 +151,7 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.Contains(t, statusErr.ErrStatus.Message, "immutable")
 
 		toUpdate = created.DeepCopy()
-		toUpdate.Object["spec"].(map[string]interface{})["authModule"] = "oauth_github"
+		toUpdate.Object["spec"].(map[string]any)["authModule"] = "oauth_github"
 		_, err = authInfoClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		require.ErrorAs(t, err, &statusErr)
@@ -290,7 +290,7 @@ func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, emai
 
 	obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
 	obj.SetName(login)
-	spec := obj.Object["spec"].(map[string]interface{})
+	spec := obj.Object["spec"].(map[string]any)
 	spec["login"] = login
 	spec["email"] = email
 	obj.Object["spec"] = spec
@@ -310,8 +310,8 @@ func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, emai
 func createAuthInfoObject(helper *apis.K8sTestHelper, userUID, authModule, authID string) *unstructured.Unstructured {
 	obj := helper.LoadYAMLOrJSONFile("../testdata/authinfo-test-create-v0.yaml")
 	obj.SetName(authinfo.EncodeName(userUID, authModule))
-	obj.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = userUID
-	obj.Object["spec"].(map[string]interface{})["authModule"] = authModule
-	obj.Object["spec"].(map[string]interface{})["authID"] = authID
+	obj.Object["spec"].(map[string]any)["userRef"].(map[string]any)["name"] = userUID
+	obj.Object["spec"].(map[string]any)["authModule"] = authModule
+	obj.Object["spec"].(map[string]any)["authID"] = authID
 	return obj
 }

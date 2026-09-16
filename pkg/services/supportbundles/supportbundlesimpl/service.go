@@ -175,8 +175,8 @@ func (s *Service) cleanup(ctx context.Context) {
 	}
 }
 
-func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	count, err := s.store.StatsCount(ctx)
 	if err != nil {

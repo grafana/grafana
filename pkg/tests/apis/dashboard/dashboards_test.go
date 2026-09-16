@@ -53,7 +53,7 @@ func runDashboardTest(t *testing.T, gvr schema.GroupVersionResource) {
 		require.Empty(t, rsp.Items)
 
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"spec": map[string]any{
 					"title":         "Test empty dashboard",
 					"schemaVersion": 42,
@@ -593,7 +593,7 @@ func TestIntegrationListPagination(t *testing.T) {
 			createdNames := make([]string, 0, totalDashboards)
 			for i := range totalDashboards {
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"spec": map[string]any{
 							"title":         fmt.Sprintf("Pagination test dashboard %d", i),
 							"schemaVersion": 42,
@@ -672,7 +672,7 @@ func TestIntegrationListPagination(t *testing.T) {
 
 			// Create a dashboard
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"spec": map[string]any{
 						"title":         "History pagination test dashboard",
 						"schemaVersion": 42,
@@ -694,7 +694,7 @@ func TestIntegrationListPagination(t *testing.T) {
 				require.NoError(t, err)
 
 				// Update title
-				spec := current.Object["spec"].(map[string]interface{})
+				spec := current.Object["spec"].(map[string]any)
 				spec["title"] = fmt.Sprintf("History pagination test dashboard v%d", i+1)
 				current.Object["spec"] = spec
 
@@ -931,8 +931,8 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
 
 	t.Run("non-provisioned dashboard can be deleted", func(t *testing.T) {
-		dash := &unstructured.Unstructured{Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		dash := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{
 				"title":         "gd-test-regular",
 				"schemaVersion": 42,
 			},
@@ -949,8 +949,8 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 	})
 
 	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
-		dash := &unstructured.Unstructured{Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		dash := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{
 				"title":         "gd-test-provisioned",
 				"schemaVersion": 42,
 			},

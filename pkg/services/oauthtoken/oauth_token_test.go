@@ -54,7 +54,7 @@ var (
 		TokenType:   "Bearer",
 	}
 
-	unexpiredTokenWithoutRefreshWithIDToken = unexpiredTokenWithoutRefresh.WithExtra(map[string]interface{}{
+	unexpiredTokenWithoutRefreshWithIDToken = unexpiredTokenWithoutRefresh.WithExtra(map[string]any{
 		"id_token": UNEXPIRED_ID_TOKEN,
 	})
 
@@ -65,7 +65,7 @@ var (
 		TokenType:    "Bearer",
 	}
 
-	unexpiredTokenWithIDToken = unexpiredToken.WithExtra(map[string]interface{}{
+	unexpiredTokenWithIDToken = unexpiredToken.WithExtra(map[string]any{
 		"id_token": UNEXPIRED_ID_TOKEN,
 	})
 

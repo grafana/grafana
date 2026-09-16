@@ -1438,7 +1438,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 
 	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
 		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"metadata": map[string]any{
 					"name":      name,
 					"namespace": obj.GetNamespace(),
@@ -1462,7 +1462,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	}
 
 	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"metadata": map[string]any{
 				"name":      name,
 				"namespace": obj.GetNamespace(),

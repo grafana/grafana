@@ -1438,8 +1438,8 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		title := "Test Dashboard"
 		now := metav1.Now()
 		item := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"spec": map[string]interface{}{
+			Object: map[string]any{
+				"spec": map[string]any{
 					"title":   title,
 					"version": int64(1),
 				},
@@ -1471,7 +1471,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 
 	t.Run("returns error if spec is missing", func(t *testing.T) {
 		item := &unstructured.Unstructured{
-			Object: map[string]interface{}{},
+			Object: map[string]any{},
 		}
 		_, err := dr.UnstructuredToLegacyDashboard(context.Background(), item, int64(123))
 		assert.Error(t, err)
@@ -2202,8 +2202,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
 						opts.Continue == ""
 				})).Return(&unstructured.UnstructuredList{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"resourceVersion": "101",
 						},
 					},
@@ -2215,8 +2215,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
 						opts.Continue == ""
 				})).Return(&unstructured.UnstructuredList{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"resourceVersion": "201",
 						},
 					},
@@ -2276,8 +2276,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
 						opts.Continue == ""
 				})).Return(&unstructured.UnstructuredList{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"resourceVersion": "200",
 							"continue":        "next-token",
 						},
@@ -2290,8 +2290,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 					return opts.LabelSelector == utils.LabelKeyGetTrash+"=true" &&
 						opts.Continue == "next-token"
 				})).Return(&unstructured.UnstructuredList{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"resourceVersion": "200",
 						},
 					},
@@ -2400,15 +2400,15 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 func createTestUnstructuredDashboard(uid, title string, resourceVersion string) unstructured.Unstructured {
 	return unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
 			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":              uid,
 				"deletionTimestamp": "2023-01-01T00:00:00Z",
 				"resourceVersion":   resourceVersion,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": title,
 			},
 		},

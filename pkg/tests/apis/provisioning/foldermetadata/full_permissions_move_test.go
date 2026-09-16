@@ -129,7 +129,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 	// It is a brand-new resource; the old ACL entries do not transfer.
 	newPlainPerms := common.FolderPermissions(t, helper, newPlainUID)
 	for _, p := range newPlainPerms {
-		entry, ok := p.(map[string]interface{})
+		entry, ok := p.(map[string]any)
 		if !ok {
 			continue
 		}

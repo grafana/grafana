@@ -29,7 +29,7 @@ type IntValue struct {
 }
 
 // UnmarshalYAML converts YAML into an *IntValue
-func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (val *IntValue) UnmarshalYAML(unmarshal func(any) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ type Int64Value struct {
 }
 
 // UnmarshalYAML converts YAML into an *Int64Value
-func (val *Int64Value) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (val *Int64Value) UnmarshalYAML(unmarshal func(any) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ type StringValue struct {
 }
 
 // UnmarshalYAML converts YAML into an *StringValue
-func (val *StringValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (val *StringValue) UnmarshalYAML(unmarshal func(any) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ type BoolValue struct {
 }
 
 // UnmarshalYAML converts YAML into an *BoolValue
-func (val *BoolValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (val *BoolValue) UnmarshalYAML(unmarshal func(any) error) error {
 	interpolated, err := getInterpolated(unmarshal)
 	if err != nil {
 		return err
@@ -127,19 +127,19 @@ func (val *BoolValue) Value() bool {
 // JSONValue represents a string value in a YAML
 // config that can be overridden by environment variables
 type JSONValue struct {
-	value map[string]interface{}
-	Raw   map[string]interface{}
+	value map[string]any
+	Raw   map[string]any
 }
 
 // UnmarshalYAML converts YAML into an *JSONValue
-func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	unmarshaled := make(map[string]interface{})
+func (val *JSONValue) UnmarshalYAML(unmarshal func(any) error) error {
+	unmarshaled := make(map[string]any)
 	err := unmarshal(unmarshaled)
 	if err != nil {
 		return err
 	}
-	interpolated := make(map[string]interface{})
-	raw := make(map[string]interface{})
+	interpolated := make(map[string]any)
+	raw := make(map[string]any)
 	for key, val := range unmarshaled {
 		interpolated[key], raw[key], err = transformInterface(val)
 		if err != nil {
@@ -153,7 +153,7 @@ func (val *JSONValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // Value returns the wrapped JSON value as map[string]interface{}
-func (val *JSONValue) Value() map[string]interface{} {
+func (val *JSONValue) Value() map[string]any {
 	return val.value
 }
 
@@ -165,7 +165,7 @@ type StringMapValue struct {
 }
 
 // UnmarshalYAML converts YAML into an *StringMapValue
-func (val *StringMapValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (val *StringMapValue) UnmarshalYAML(unmarshal func(any) error) error {
 	unmarshaled := make(map[string]string)
 	err := unmarshal(unmarshaled)
 	if err != nil {
@@ -193,24 +193,24 @@ func (val *StringMapValue) Value() map[string]string {
 // config that can be overridden by environment variables
 
 type JSONSliceValue struct {
-	value []map[string]interface{}
-	Raw   []map[string]interface{}
+	value []map[string]any
+	Raw   []map[string]any
 }
 
 // UnmarshalYAML converts YAML into an *JSONSliceValue
-func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	unmarshaled := make([]interface{}, 0)
+func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(any) error) error {
+	unmarshaled := make([]any, 0)
 	err := unmarshal(&unmarshaled)
 	if err != nil {
 		return err
 	}
-	interpolated := make([]map[string]interface{}, 0)
-	raw := make([]map[string]interface{}, 0)
+	interpolated := make([]map[string]any, 0)
+	raw := make([]map[string]any, 0)
 
 	for _, v := range unmarshaled {
-		i := make(map[string]interface{})
-		r := make(map[string]interface{})
-		for key, val := range v.(map[string]interface{}) {
+		i := make(map[string]any)
+		r := make(map[string]any)
+		for key, val := range v.(map[string]any) {
 			i[key], r[key], err = transformInterface(val)
 			if err != nil {
 				return err
@@ -226,7 +226,7 @@ func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 }
 
 // Value returns the wrapped []interface{} value
-func (val *JSONSliceValue) Value() []map[string]interface{} {
+func (val *JSONSliceValue) Value() []map[string]any {
 	return val.value
 }
 
@@ -234,7 +234,7 @@ func (val *JSONSliceValue) Value() []map[string]interface{} {
 // slices and the actual interpolation is done on all simple string values in the structure. It returns a copy of any
 // map or slice value instead of modifying them in place and also return value without interpolation but with converted
 // type as a second value.
-func transformInterface(i interface{}) (interface{}, interface{}, error) {
+func transformInterface(i any) (any, any, error) {
 	typeOf := reflect.TypeOf(i)
 
 	if typeOf == nil {
@@ -243,9 +243,9 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 
 	switch typeOf.Kind() {
 	case reflect.Slice:
-		return transformSlice(i.([]interface{}))
+		return transformSlice(i.([]any))
 	case reflect.Map:
-		return transformMap(i.(map[string]interface{}))
+		return transformMap(i.(map[string]any))
 	case reflect.String:
 		return interpolateIfaceValue(i.(string))
 	default:
@@ -254,9 +254,9 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 	}
 }
 
-func transformSlice(i []interface{}) (interface{}, interface{}, error) {
-	transformedSlice := make([]interface{}, 0, len(i))
-	rawSlice := make([]interface{}, 0, len(i))
+func transformSlice(i []any) (any, any, error) {
+	transformedSlice := make([]any, 0, len(i))
+	rawSlice := make([]any, 0, len(i))
 	for _, val := range i {
 		transformed, raw, err := transformInterface(val)
 		if err != nil {
@@ -268,9 +268,9 @@ func transformSlice(i []interface{}) (interface{}, interface{}, error) {
 	return transformedSlice, rawSlice, nil
 }
 
-func transformMap(i map[string]interface{}) (interface{}, interface{}, error) {
-	transformed := make(map[string]interface{})
-	raw := make(map[string]interface{})
+func transformMap(i map[string]any) (any, any, error) {
+	transformed := make(map[string]any)
+	raw := make(map[string]any)
 	for key, val := range i {
 		var err error
 		transformed[key], raw[key], err = transformInterface(val)
@@ -281,7 +281,7 @@ func transformMap(i map[string]interface{}) (interface{}, interface{}, error) {
 	return transformed, raw, nil
 }
 
-func interpolateIfaceValue(val string) (interface{}, string, error) {
+func interpolateIfaceValue(val string) (any, string, error) {
 	parts := strings.Split(val, "$$")
 	if len(parts) > 1 {
 		return interpolateValue(val)
@@ -333,7 +333,7 @@ type interpolated struct {
 
 // getInterpolated unmarshals the value as string and runs interpolation on it. It is the responsibility of each
 // value type to convert this string value to appropriate type.
-func getInterpolated(unmarshal func(interface{}) error) (*interpolated, error) {
+func getInterpolated(unmarshal func(any) error) (*interpolated, error) {
 	var veryRaw string
 	err := unmarshal(&veryRaw)
 	if err != nil {

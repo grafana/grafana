@@ -20,12 +20,12 @@ var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			r, ok := obj.(*model.TemplateGroup)
 			if !ok {
 				return nil, fmt.Errorf("expected resource or info")
 			}
-			return []interface{}{
+			return []any{
 				r.Name,
 			}, nil
 		},

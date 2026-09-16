@@ -43,11 +43,11 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 
 func LegacyCreateCommandToUnstructured(cmd dtos.CreateShortURLCmd) unstructured.Unstructured {
 	obj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
+		Object: map[string]any{
+			"metadata": map[string]any{
 				"name": cmd.UID,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"path": cmd.Path,
 			},
 		},

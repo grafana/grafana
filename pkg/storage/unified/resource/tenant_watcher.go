@@ -260,10 +260,10 @@ func (tw *TenantWatcher) startInformer(ctx context.Context, resync time.Duration
 	informer := tw.factory.ForResource(tenantGVR).Informer()
 
 	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			tw.handleTenant(ctx, obj.(*unstructured.Unstructured))
 		},
-		UpdateFunc: func(_, newObj interface{}) {
+		UpdateFunc: func(_, newObj any) {
 			tw.handleTenant(ctx, newObj.(*unstructured.Unstructured))
 		},
 	})

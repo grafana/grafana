@@ -781,7 +781,7 @@ func makeReceiverInUseErr(usedByRoutes bool, rules []models.AlertRuleKey) error 
 
 func makeErrReceiverVersionConflict(current *models.Receiver, desiredVersion string) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Version":        desiredVersion,
 			"CurrentVersion": current.Version,
 			"Name":           current.Name,
@@ -809,7 +809,7 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 }
 
 func makeErrReceiverOrigin(r *models.Receiver, action string) error {
-	return models.ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": r.Name}})
+	return models.ErrReceiverOrigin.Build(errutil.TemplateData{Public: map[string]any{"Action": action, "Name": r.Name}})
 }
 
 func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {

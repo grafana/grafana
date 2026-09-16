@@ -54,7 +54,7 @@ func (r *subCountREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *subCountREST) ProducesObject(verb string) interface{} {
+func (r *subCountREST) ProducesObject(verb string) any {
 	return &folders.DescendantCounts{}
 }
 

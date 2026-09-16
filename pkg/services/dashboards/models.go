@@ -137,7 +137,7 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 func parseK8sDashboard(data *simplejson.Json) *Dashboard {
 	dash := &Dashboard{}
 
-	dataMap, ok := data.Interface().(map[string]interface{})
+	dataMap, ok := data.Interface().(map[string]any)
 	if !ok {
 		return dash
 	}

@@ -440,9 +440,9 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			ctx := context.Background()
 			alphaObj, err := userClient.Resource.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
 			require.NoError(t, err)
-			alphaSpec := alphaObj.Object["spec"].(map[string]interface{})
-			alphaSpec["externalAuthInfo"] = []interface{}{
-				map[string]interface{}{"module": "ldap", "authID": "alpha-ldap"},
+			alphaSpec := alphaObj.Object["spec"].(map[string]any)
+			alphaSpec["externalAuthInfo"] = []any{
+				map[string]any{"module": "ldap", "authID": "alpha-ldap"},
 			}
 			alphaObj.Object["spec"] = alphaSpec
 			_, err = userClient.Resource.Update(ctx, alphaObj, metav1.UpdateOptions{})
@@ -568,7 +568,6 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				{"email-asc", true},
 				{"email-desc", false},
 			} {
-				tc := tc
 				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
 					rsp := apis.DoRequest(helper, apis.RequestParams{
 						User:   helper.Org1.Admin,

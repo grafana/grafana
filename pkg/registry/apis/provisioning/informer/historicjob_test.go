@@ -21,15 +21,15 @@ type addRecorder struct {
 	names []string
 }
 
-func (r *addRecorder) OnAdd(obj interface{}, _ bool) {
+func (r *addRecorder) OnAdd(obj any, _ bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if m, ok := obj.(metav1.Object); ok {
 		r.names = append(r.names, m.GetName())
 	}
 }
-func (r *addRecorder) OnUpdate(_, _ interface{}) {}
-func (r *addRecorder) OnDelete(_ interface{})    {}
+func (r *addRecorder) OnUpdate(_, _ any) {}
+func (r *addRecorder) OnDelete(_ any)    {}
 
 func (r *addRecorder) got() []string {
 	r.mu.Lock()

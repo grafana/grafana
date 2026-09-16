@@ -61,7 +61,7 @@ func TestDBTime_Scan_VariousInputs(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		input       interface{}
+		input       any
 		wantTime    time.Time
 		wantIsZero  bool
 		expectError bool

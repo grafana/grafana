@@ -337,7 +337,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	}
 
 	obj = &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"spec": map[string]any{
 				"title": folder.Title,
 			},

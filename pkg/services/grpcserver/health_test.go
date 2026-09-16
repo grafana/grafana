@@ -315,7 +315,7 @@ func (f *fakeHealthWatchServer) waitForSends(t *testing.T, n int) {
 	}
 }
 
-func (f *fakeHealthWatchServer) RecvMsg(m interface{}) error {
+func (f *fakeHealthWatchServer) RecvMsg(m any) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.healthChecks) == 0 {
@@ -325,7 +325,7 @@ func (f *fakeHealthWatchServer) RecvMsg(m interface{}) error {
 	return nil
 }
 
-func (f *fakeHealthWatchServer) SendMsg(m interface{}) error {
+func (f *fakeHealthWatchServer) SendMsg(m any) error {
 	return errors.New("not implemented")
 }
 

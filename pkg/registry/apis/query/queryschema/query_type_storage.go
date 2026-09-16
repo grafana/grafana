@@ -111,7 +111,7 @@ func (r *queryValidationREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (r *queryValidationREST) ProducesObject(verb string) interface{} {
+func (r *queryValidationREST) ProducesObject(verb string) any {
 	return &dsV0.QueryDataRequest{}
 }
 

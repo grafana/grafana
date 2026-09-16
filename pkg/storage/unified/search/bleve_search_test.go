@@ -1549,7 +1549,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 				Doc: &resource.IndexableDocument{
 					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc1"},
 					Title: "Document 1",
-					Fields: map[string]interface{}{
+					Fields: map[string]any{
 						"field1": 1,
 						"field2": "value1",
 					},
@@ -1566,7 +1566,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc2"},
 					Title: "Document 2",
 					Tags:  []string{"tag2", "tag3"},
-					Fields: map[string]interface{}{
+					Fields: map[string]any{
 						"field1": 2,
 						"field2": "value2",
 					},

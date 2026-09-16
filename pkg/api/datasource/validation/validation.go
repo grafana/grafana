@@ -91,7 +91,7 @@ func ValidateURL(typeName, urlStr string) (*url.URL, error) {
 }
 
 type DebugOnlyLogger interface {
-	Debug(msg string, args ...interface{})
+	Debug(msg string, args ...any)
 }
 
 // ParseURL tries to parse an URL string into a URL object.

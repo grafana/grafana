@@ -19,10 +19,10 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 	repoName := "test-v1beta1-repo"
 
 	t.Run("create repository via v1beta1", func(t *testing.T) {
-		repo := map[string]interface{}{
+		repo := map[string]any{
 			"apiVersion": "provisioning.grafana.app/v1beta1",
 			"kind":       "Repository",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      repoName,
 				"namespace": "default",
 				"finalizers": []string{
@@ -30,14 +30,14 @@ func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
 					"cleanup",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": "Test v1beta1 Repository",
 				"type":  "local",
-				"local": map[string]interface{}{
+				"local": map[string]any{
 					"path": helper.ProvisioningPath,
 				},
 				"workflows": []string{"write"},
-				"sync": map[string]interface{}{
+				"sync": map[string]any{
 					"enabled":         false,
 					"target":          "folder",
 					"intervalSeconds": 60,

@@ -1604,7 +1604,7 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
 			Subject:     "[FIRING:1] EmailAlert (default)",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Title":   "[FIRING:1] EmailAlert (default)",
 				"Message": "",
 				"Status":  "firing",

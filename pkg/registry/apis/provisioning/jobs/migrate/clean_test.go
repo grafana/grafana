@@ -105,10 +105,10 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		mockDynamicClient := &mockDynamicInterface{
 			items: []unstructured.Unstructured{
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "folder.grafana.app/v1alpha1",
 						"kind":       "Folder",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "test-folder",
 						},
 					},
@@ -148,22 +148,22 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		mockDynamicClient := &mockDynamicInterface{
 			items: []unstructured.Unstructured{
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "folder.grafana.app/v1alpha1",
 						"kind":       "Folder",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "unprovisioned-folder",
 							// No manager annotations - this is unprovisioned
 						},
 					},
 				},
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "dashboard.grafana.app/v1alpha1",
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "provisioned-dashboard",
-							"annotations": map[string]interface{}{
+							"annotations": map[string]any{
 								"grafana.app/managerKind": "repo",
 								"grafana.app/managerId":   "test-repo",
 							},
@@ -171,10 +171,10 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 					},
 				},
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "dashboard.grafana.app/v1alpha1",
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "unprovisioned-dashboard",
 							// No manager annotations - this is unprovisioned
 						},
@@ -230,12 +230,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		mockDynamicClient := &mockDynamicInterface{
 			items: []unstructured.Unstructured{
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "dashboard.grafana.app/v1alpha1",
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "repo-managed-dashboard",
-							"annotations": map[string]interface{}{
+							"annotations": map[string]any{
 								"grafana.app/managerKind": "repo",
 								"grafana.app/managerId":   "my-repo",
 							},
@@ -243,12 +243,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 					},
 				},
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "folder.grafana.app/v1alpha1",
 						"kind":       "Folder",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "file-provisioned-folder",
-							"annotations": map[string]interface{}{
+							"annotations": map[string]any{
 								"grafana.app/managerKind": "classic-file-provisioning",
 								"grafana.app/managerId":   "file-provisioner",
 							},
@@ -300,12 +300,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		mockDynamicClient := &mockDynamicInterface{
 			items: []unstructured.Unstructured{
 				{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "dashboard.grafana.app/v1alpha1",
 						"kind":       "Dashboard",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name": "classic-managed-dashboard",
-							"annotations": map[string]interface{}{
+							"annotations": map[string]any{
 								// Manager kind is set, but there is no manager identity.
 								"grafana.app/managedBy": "classic-converted-prometheus",
 							},

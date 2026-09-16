@@ -50,7 +50,7 @@ func TestIntegrationPluginChildren(t *testing.T) {
 	requireChildPlugin(t, child, "1.0.0")
 
 	updatedParent := created.DeepCopy()
-	updatedParent.Object["spec"] = map[string]interface{}{
+	updatedParent.Object["spec"] = map[string]any{
 		"id":      parentPluginID,
 		"version": "2.0.0",
 	}
@@ -77,7 +77,7 @@ func TestIntegrationPluginChildren(t *testing.T) {
 
 	currentParent, err := client.Resource.Get(ctx, parentPluginID, metav1.GetOptions{})
 	require.NoError(t, err)
-	currentParent.Object["spec"] = map[string]interface{}{
+	currentParent.Object["spec"] = map[string]any{
 		"id":      parentPluginID,
 		"version": "3.0.0",
 	}
@@ -100,7 +100,7 @@ func TestIntegrationPluginChildren(t *testing.T) {
 func requireChildPlugin(t *testing.T, child *unstructured.Unstructured, version string) {
 	t.Helper()
 
-	spec, ok := child.Object["spec"].(map[string]interface{})
+	spec, ok := child.Object["spec"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, childPluginID, spec["id"])
 	require.Equal(t, version, spec["version"])

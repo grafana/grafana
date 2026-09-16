@@ -114,9 +114,9 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 					Name:    "Test Snapshot RBAC",
 					Expires: 3600,
 					Dashboard: &common.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"title":         "Test Dashboard RBAC",
-							"panels":        []interface{}{},
+							"panels":        []any{},
 							"schemaVersion": 39,
 						},
 					},
@@ -156,7 +156,7 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 					User:   helper.Org1.None,
 					Method: http.MethodDelete,
 					Path:   path,
-				}, &map[string]interface{}{})
+				}, &map[string]any{})
 
 				assert.Equal(t, http.StatusForbidden, rsp.Response.StatusCode, "user without snapshots:delete should get 403")
 			})
@@ -189,7 +189,7 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				assert.Equal(t, createResp.Key, got.GetName())
 
 				// Verify deleteKey is NOT in the spec
-				spec := got.Object["spec"].(map[string]interface{})
+				spec := got.Object["spec"].(map[string]any)
 				_, hasDeleteKey := spec["deleteKey"]
 				assert.False(t, hasDeleteKey, "deleteKey should NOT be present in spec")
 			})
@@ -279,12 +279,12 @@ func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns s
 		Name:    "Test Snapshot",
 		Expires: 3600,
 		Dashboard: &common.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"title":         "Test Dashboard",
-				"panels":        []interface{}{},
+				"panels":        []any{},
 				"uid":           "a-valid-uid",
 				"schemaVersion": 39,
-				"time": map[string]interface{}{
+				"time": map[string]any{
 					"from": "now-6h",
 					"to":   "now",
 				},
@@ -327,14 +327,14 @@ func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, ns string) {
 	})
 
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": dashv1.DashboardResourceInfo.GroupVersion().String(),
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      "a-valid-uid",
 				"namespace": ns,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":         "Test Dashboard",
 				"schemaVersion": 42,
 			},

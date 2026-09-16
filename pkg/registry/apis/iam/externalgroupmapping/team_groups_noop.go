@@ -46,7 +46,7 @@ func (s *NoopTeamGroupsREST) ProducesMIMETypes(verb string) []string {
 }
 
 // ProducesObject implements rest.StorageMetadata.
-func (s *NoopTeamGroupsREST) ProducesObject(verb string) interface{} {
+func (s *NoopTeamGroupsREST) ProducesObject(verb string) any {
 	return s.New()
 }
 

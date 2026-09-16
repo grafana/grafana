@@ -16,7 +16,7 @@ import (
 var errorUnsupportedMediaType = errutil.UnsupportedMediaType("alerting.unsupportedMediaType")
 
 // parseJSONOrYAML unmarshals body into target based on content-type, defaulting to YAML
-func parseJSONOrYAML(ctx *contextmodel.ReqContext, target interface{}) error {
+func parseJSONOrYAML(ctx *contextmodel.ReqContext, target any) error {
 	var m string
 
 	body, err := io.ReadAll(ctx.Req.Body)

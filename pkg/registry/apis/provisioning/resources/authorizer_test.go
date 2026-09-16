@@ -54,8 +54,8 @@ func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder stri
 
 	parsed := &ParsedResource{
 		Obj: &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-dashboard",
 				},
 			},
@@ -69,10 +69,10 @@ func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder stri
 
 	if hasExisting {
 		parsed.Existing = &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-dashboard",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": existingFolder,
 					},
 				},

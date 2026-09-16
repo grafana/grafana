@@ -275,7 +275,7 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	}
 
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"spec": map[string]any{
 				"title":         "Dashboard with owner references",
 				"schemaVersion": 42,
@@ -356,7 +356,7 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	// Create a dashboard as admin user
 	dashboardUID := "created-by-test-dash"
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"spec": map[string]any{
 				"title":         "Dashboard created by admin",
 				"schemaVersion": 42,

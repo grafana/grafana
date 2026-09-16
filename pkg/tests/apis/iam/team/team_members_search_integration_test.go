@@ -105,9 +105,9 @@ func doTeamMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	}
 
 	// Add all 5 users to team1 via spec.members (admin, not external).
-	members := make([]interface{}, 0, len(users))
+	members := make([]any, 0, len(users))
 	for _, u := range users {
-		members = append(members, map[string]interface{}{
+		members = append(members, map[string]any{
 			"kind":       "User",
 			"name":       u.GetName(),
 			"permission": "admin",

@@ -33,8 +33,8 @@ func TestCheckResourceOwnership(t *testing.T) {
 		{
 			name: "existing resource with no manager - deny operation",
 			existingResource: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name": "test-resource",
 					},
 				},
@@ -49,10 +49,10 @@ func TestCheckResourceOwnership(t *testing.T) {
 		{
 			name: "same manager - allow operation",
 			existingResource: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name": "test-resource",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeyManagerKind:     "repo",
 							utils.AnnoKeyManagerIdentity: "repo-1",
 						},
@@ -68,10 +68,10 @@ func TestCheckResourceOwnership(t *testing.T) {
 		{
 			name: "different manager but allows edits - allow operation",
 			existingResource: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name": "test-resource",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeyManagerKind:        "repo",
 							utils.AnnoKeyManagerIdentity:    "repo-1",
 							utils.AnnoKeyManagerAllowsEdits: "true",
@@ -88,10 +88,10 @@ func TestCheckResourceOwnership(t *testing.T) {
 		{
 			name: "different manager and doesn't allow edits - deny operation",
 			existingResource: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name": "test-resource",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeyManagerKind:     "repo",
 							utils.AnnoKeyManagerIdentity: "repo-1",
 						},
@@ -108,10 +108,10 @@ func TestCheckResourceOwnership(t *testing.T) {
 		{
 			name: "different manager types - deny operation",
 			existingResource: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name": "test-resource",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeyManagerKind:     "terraform",
 							utils.AnnoKeyManagerIdentity: "tf-stacks-1",
 						},
@@ -149,10 +149,10 @@ func TestCheckResourceOwnership_TakeoverAllowlist(t *testing.T) {
 	}
 
 	unmanagedResource := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "dash-abc",
 			},
 		},

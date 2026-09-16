@@ -238,9 +238,9 @@ func requireFolderMetadataUID(t *testing.T, path, expectedUID string) {
 	t.Helper()
 	data, err := os.ReadFile(path) //nolint:gosec
 	require.NoError(t, err, "reading %s", path)
-	var obj map[string]interface{}
+	var obj map[string]any
 	require.NoError(t, json.Unmarshal(data, &obj), "parsing %s", path)
-	meta, _ := obj["metadata"].(map[string]interface{})
+	meta, _ := obj["metadata"].(map[string]any)
 	name, _ := meta["name"].(string)
 	require.Equal(t, expectedUID, name, "unexpected UID in %s — job must not overwrite existing _folder.json", path)
 }

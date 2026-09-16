@@ -61,21 +61,21 @@ func TestIntegrationAnnotations(t *testing.T) {
 	savedFolder := createFolder(t, grafanaListedAddr, "Test Folder")
 	dash1 := createDashboard(t, grafanaListedAddr, "Dashboard 1", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
 	dash2 := createDashboard(t, grafanaListedAddr, "Dashboard 2", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
-	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]any{
 		"dashboardId": dash1.ID,
 		"panelId":     1,
 		"text":        "Dashboard 1 annotation",
 		"time":        1234567890000,
 	})
 
-	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]any{
 		"dashboardId": dash2.ID,
 		"panelId":     1,
 		"text":        "Dashboard 2 annotation",
 		"time":        1234567890000,
 	})
 
-	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+	createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]any{
 		"text": "Organization annotation",
 		"time": 1234567890000,
 	})
@@ -92,7 +92,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 1)
@@ -109,7 +109,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 1)
@@ -117,7 +117,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	})
 
 	t.Run("access control tests", func(t *testing.T) {
-		viewPermissions := []map[string]interface{}{
+		viewPermissions := []map[string]any{
 			{
 				"permission": 1,
 				"userId":     noneUserID,
@@ -166,7 +166,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 2)
@@ -182,14 +182,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 3)
 		})
 
 		dash3 := createDashboard(t, grafanaListedAddr, "Dashboard 3", 0, "")
-		createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+		createAnnotation(t, grafanaListedAddr, "admin", "admin", map[string]any{
 			"dashboardId": dash3.ID,
 			"panelId":     1,
 			"text":        "Dashboard 3 annotation",
@@ -206,7 +206,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 2)
@@ -222,14 +222,14 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = resp.Body.Close()
 			require.NoError(t, err)
 
-			var annotations []interface{}
+			var annotations []any
 			err = json.Unmarshal(body, &annotations)
 			require.NoError(t, err)
 			assert.Len(t, annotations, 2)
 		})
 
 		t.Run("should allow editor to create org annotations", func(t *testing.T) {
-			annotationPayload := map[string]interface{}{
+			annotationPayload := map[string]any{
 				"text": "Test annotations",
 				"time": 1234567890000,
 			}
@@ -245,7 +245,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("should deny viewer from creating org annotations", func(t *testing.T) {
-			annotationPayload := map[string]interface{}{
+			annotationPayload := map[string]any{
 				"text": "Test annotation",
 				"time": 1234567890000,
 			}
@@ -262,7 +262,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("should allow editor to create dashboard annotations", func(t *testing.T) {
-			annotationPayload := map[string]interface{}{
+			annotationPayload := map[string]any{
 				"dashboardId": dash3.ID,
 				"panelId":     1,
 				"text":        "Test annotations",
@@ -280,7 +280,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("should deny viewer from creating dashboard annotations", func(t *testing.T) {
-			annotationPayload := map[string]interface{}{
+			annotationPayload := map[string]any{
 				"dashboardId": dash3.ID,
 				"panelId":     1,
 				"text":        "Test annotation",
@@ -300,7 +300,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	})
 }
 
-func createAnnotation(t *testing.T, grafanaListedAddr string, username, password string, payload map[string]interface{}) {
+func createAnnotation(t *testing.T, grafanaListedAddr string, username, password string, payload map[string]any) {
 	t.Helper()
 
 	payloadBytes, err := json.Marshal(payload)
@@ -314,10 +314,10 @@ func createAnnotation(t *testing.T, grafanaListedAddr string, username, password
 	require.NoError(t, err)
 }
 
-func setDashboardPermissions(t *testing.T, grafanaListedAddr string, dashboardUID string, permissions []map[string]interface{}) {
+func setDashboardPermissions(t *testing.T, grafanaListedAddr string, dashboardUID string, permissions []map[string]any) {
 	t.Helper()
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"items": permissions,
 	}
 
@@ -337,10 +337,10 @@ func setDashboardPermissions(t *testing.T, grafanaListedAddr string, dashboardUI
 	require.NoError(t, err)
 }
 
-func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]any) {
 	t.Helper()
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"items": permissions,
 	}
 
@@ -391,8 +391,8 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 	t.Helper()
 
 	buf := &bytes.Buffer{}
-	err := json.NewEncoder(buf).Encode(map[string]interface{}{
-		"dashboard": map[string]interface{}{
+	err := json.NewEncoder(buf).Encode(map[string]any{
+		"dashboard": map[string]any{
 			"title": title,
 		},
 		"folderId":  folderID,

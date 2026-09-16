@@ -346,13 +346,13 @@ func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var wrapper map[string]interface{}
+		var wrapper map[string]any
 		require.NoError(t, json.Unmarshal(body, &wrapper))
 
 		assert.Equal(t, "renamed/", wrapper["path"], "response path should be the target directory")
 		assert.Equal(t, branchName, wrapper["ref"], "response ref should match the requested branch")
 
-		resource, ok := wrapper["resource"].(map[string]interface{})
+		resource, ok := wrapper["resource"].(map[string]any)
 		require.True(t, ok, "response should contain resource object")
 		assert.Equal(t, "move", resource["action"], "resource action should be 'move'")
 
@@ -402,7 +402,7 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 		// Verify our expected files are present
 		paths := make([]string, 0, len(items))
 		for _, item := range items {
-			itemMap := item.(map[string]interface{})
+			itemMap := item.(map[string]any)
 			if path, ok := itemMap["path"].(string); ok {
 				paths = append(paths, path)
 			}

@@ -19,7 +19,7 @@ import (
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
-type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
+type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]any) error
 
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
@@ -123,7 +123,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	// Update sync status at start using granular JSON patch operations
 	// Only patch fields that are actually being set to avoid overwriting with zero values
-	patchOperations := []map[string]interface{}{
+	patchOperations := []map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/status/sync/state",
@@ -206,7 +206,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage(ctx, "update status and stats")
-	patchOperations = []map[string]interface{}{
+	patchOperations = []map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/status/sync",
@@ -228,7 +228,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
 	case len(stats.Managed) == 1:
 		repoStats = stats.Managed[0].Stats
-		patchOperations = append(patchOperations, map[string]interface{}{
+		patchOperations = append(patchOperations, map[string]any{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": repoStats,

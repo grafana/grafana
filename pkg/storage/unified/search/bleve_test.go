@@ -1569,7 +1569,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "filesystem-index")
 	require.NoError(t, copyable.CopyTo(bleve.FileSystemDirectory(destDir)))
 
-	copied, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	copied, err := bleve.OpenUsing(destDir, map[string]any{"bolt_timeout": boltTimeout})
 	require.NoError(t, err)
 	defer func() { require.NoError(t, copied.Close()) }()
 

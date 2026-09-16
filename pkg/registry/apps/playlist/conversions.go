@@ -18,8 +18,8 @@ func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.U
 		})
 	}
 	obj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
+		Object: map[string]any{
+			"spec": map[string]any{
 				"title":    cmd.Name,
 				"interval": cmd.Interval,
 				"items":    items,

@@ -40,7 +40,7 @@ func (r *subAccessREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *subAccessREST) ProducesObject(verb string) interface{} {
+func (r *subAccessREST) ProducesObject(verb string) any {
 	return &foldersV1.FolderAccessInfo{}
 }
 

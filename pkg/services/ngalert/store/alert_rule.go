@@ -171,7 +171,7 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 			"UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN (%s)",
 			strings.Join(in, ","),
 		)
-		args := make([]interface{}, 0, 3+len(namespaceUIDsArgs))
+		args := make([]any, 0, 3+len(namespaceUIDsArgs))
 		args = append(args, sql, now, orgID)
 		args = append(args, namespaceUIDsArgs...)
 
@@ -1370,7 +1370,7 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 
 	if len(query.DataSourceUIDs) > 0 {
 		orConditions := make([]string, 0, len(query.DataSourceUIDs))
-		orParams := make([]interface{}, 0, len(query.DataSourceUIDs))
+		orParams := make([]any, 0, len(query.DataSourceUIDs))
 		for _, dsUID := range query.DataSourceUIDs {
 			// The 'data' column holds the alert definition as JSON. The data source's UID is in the 'datasourceUid' field.
 			// Instead of trying to parse that JSON, we can do a simple text search.

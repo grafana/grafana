@@ -58,8 +58,8 @@ func TestIntegrationProvisioning_CrossFolderWriteDeniedWithoutDestinationAccess(
 	// Viewer org role does not include Editor, so the fallback will not override the denial.
 	_, code, err := common.PostHelper(t, *helper.K8sTestHelper,
 		"/api/folders/inner-a-uid/permissions",
-		map[string]interface{}{
-			"items": []map[string]interface{}{
+		map[string]any{
+			"items": []map[string]any{
 				{"userId": viewerUserID, "permission": common.FolderPermissionEdit},
 			},
 		},

@@ -17,17 +17,17 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 	helper := sharedHelper(t)
 
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Job",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      "test-job-conflict",
 				"namespace": "default",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"action":     string(provisioning.JobActionPull),
 				"repository": "test-repo",
-				"pull": map[string]interface{}{
+				"pull": map[string]any{
 					"incremental": false,
 				},
 			},

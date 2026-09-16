@@ -1677,14 +1677,14 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 		} else if mockCfg.shouldUseDynamicConfig {
 			// Create a mock SCIM config with the desired settings
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "scim.grafana.com/v0alpha1",
 					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "test-config",
 						"namespace": "default",
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"enableUserSync":            mockCfg.userSyncEnabled,
 						"enableGroupSync":           false, // Not used for this test
 						"rejectNonProvisionedUsers": mockCfg.nonProvisionedUsersRejected,
@@ -1946,14 +1946,14 @@ func TestUserSync_NamespaceMappingLogic(t *testing.T) {
 
 			// Set up a successful SCIM config response
 			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "scim.grafana.com/v0alpha1",
 					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name":      "default",
 						"namespace": tt.expectedNamespace,
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"enableUserSync":  true,
 						"enableGroupSync": false,
 					},

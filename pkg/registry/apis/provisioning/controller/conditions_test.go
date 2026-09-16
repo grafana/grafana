@@ -336,7 +336,7 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 // patch ops to the existing conditions so assertions can verify the logical
 // outcome regardless of whether the function emits a whole-array replace or
 // per-condition ops.
-func applyConditionPatchOps(t *testing.T, existing []metav1.Condition, ops []map[string]interface{}) []metav1.Condition {
+func applyConditionPatchOps(t *testing.T, existing []metav1.Condition, ops []map[string]any) []metav1.Condition {
 	t.Helper()
 	conditions := make([]metav1.Condition, len(existing))
 	copy(conditions, existing)

@@ -9,11 +9,11 @@ import (
 )
 
 // IterFunc only use by Iterate
-type IterFunc func(idx int, bean interface{}) error
+type IterFunc func(idx int, bean any) error
 
 // Rows return sql.Rows compatible Rows obj, as a forward Iterator object for iterating record by record, bean's non-empty fields
 // are conditions.
-func (session *Session) Rows(bean interface{}) (*Rows, error) {
+func (session *Session) Rows(bean any) (*Rows, error) {
 	rows, err := newRows(session, bean)
 	if err != nil {
 		// A successful query clears the statement itself, a failed one before the query does not.
@@ -25,7 +25,7 @@ func (session *Session) Rows(bean interface{}) (*Rows, error) {
 // Iterate record by record handle records from table, condiBeans's non-empty fields
 // are conditions. beans could be []Struct, []*Struct, map[int64]Struct
 // map[int64]*Struct
-func (session *Session) Iterate(bean interface{}, fun IterFunc) error {
+func (session *Session) Iterate(bean any, fun IterFunc) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -69,7 +69,7 @@ func (session *Session) BufferSize(size int) *Session {
 	return session
 }
 
-func (session *Session) bufferIterate(bean interface{}, fun IterFunc) error {
+func (session *Session) bufferIterate(bean any, fun IterFunc) error {
 	var bufferSize = session.statement.bufferSize
 	var pLimitN = session.statement.LimitN
 	if pLimitN != nil && bufferSize > *pLimitN {

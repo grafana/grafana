@@ -26,12 +26,12 @@ var ExternalNameResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Host", Type: "string", Format: "string", Description: "The service host"},
 			{Name: "Created At", Type: "date"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			m, ok := obj.(*ExternalName)
 			if !ok {
 				return nil, fmt.Errorf("expected external name")
 			}
-			return []interface{}{
+			return []any{
 				m.Name,
 				m.Spec.Host,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),

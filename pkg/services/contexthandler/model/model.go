@@ -68,7 +68,7 @@ func (ctx *ReqContext) IsPublicDashboardView() bool {
 }
 
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
-	resp := make(map[string]interface{})
+	resp := make(map[string]any)
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 
 	if err != nil {
@@ -107,7 +107,7 @@ func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error)
 }
 
 func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error) {
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	statusResponse := status
 
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)

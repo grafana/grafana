@@ -107,7 +107,7 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 	}
 
 	// Return as items array in K8s list format
-	response := map[string]interface{}{
+	response := map[string]any{
 		"apiVersion": v1beta1.GroupVersion.String(),
 		"kind":       "IntegrationTypeSchemaList",
 		"metadata":   map[string]any{},

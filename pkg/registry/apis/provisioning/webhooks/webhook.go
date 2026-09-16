@@ -360,7 +360,7 @@ func webhookAttribution(event repository.WebhookEvent, repo repository.WebhookRe
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.
 type statusPatcher interface {
-	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
+	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]any) error
 }
 
 // updateLastEvent updates the last event time for the webhook

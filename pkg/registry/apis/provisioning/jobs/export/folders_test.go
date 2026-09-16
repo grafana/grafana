@@ -376,10 +376,10 @@ func TestExportFolders(t *testing.T) {
 func TestFolderMetaAccessor(t *testing.T) {
 	t.Run("should skip folders from another manager", func(t *testing.T) {
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-folder",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"folder.grafana.app/uid": "test-folder-uid",
 					},
 				},
@@ -419,10 +419,10 @@ func TestFolderMetaAccessor(t *testing.T) {
 	})
 	t.Run("should skip if current repo is the manager", func(t *testing.T) {
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-folder",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"folder.grafana.app/uid": "test-folder-uid",
 					},
 				},
@@ -460,7 +460,7 @@ func TestFolderMetaAccessor(t *testing.T) {
 		t.Skip("skipping this test for now as we cannot make it invalid")
 
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				// make it invalid
 			},
 		}
@@ -483,10 +483,10 @@ func TestFolderMetaAccessor(t *testing.T) {
 	})
 	t.Run("should skip if managed by any other manager", func(t *testing.T) {
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-folder",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"folder.grafana.app/uid": "test-folder-uid",
 					},
 				},
@@ -526,10 +526,10 @@ func TestFolderMetaAccessor(t *testing.T) {
 		// Classic shim kinds are reported as managed without an identity.
 		// Such a folder must still be skipped, since it is owned elsewhere.
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test-folder",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"folder.grafana.app/uid": "test-folder-uid",
 					},
 				},

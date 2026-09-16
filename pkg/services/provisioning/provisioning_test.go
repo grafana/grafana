@@ -266,7 +266,7 @@ func setup(t *testing.T) *serviceTestStruct {
 	serviceTest.waitTimeout = time.Second
 
 	pollChangesChannel := make(chan context.Context)
-	serviceStopped := make(chan interface{})
+	serviceStopped := make(chan any)
 
 	serviceTest.mock = dashboards.NewDashboardProvisionerMock()
 	serviceTest.mock.PollChangesFunc = func(ctx context.Context) {

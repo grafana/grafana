@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]any) {
 	t.Helper()
 
-	permissionPayload := map[string]interface{}{
+	permissionPayload := map[string]any{
 		"items": permissions,
 	}
 
@@ -304,7 +304,7 @@ func TestIntegrationNestedFolders(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, http.StatusOK, destResp.Code())
 				// downgrade to viewer on destination folder
-				setFolderPermissions(t, grafanaListedAddr, destResp.Payload.UID, []map[string]interface{}{
+				setFolderPermissions(t, grafanaListedAddr, destResp.Payload.UID, []map[string]any{
 					{
 						"userId":     editorUser,
 						"permission": 1,
@@ -380,7 +380,7 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, folder2Resp.Code())
-		setFolderPermissions(t, grafanaListedAddr, folder2Resp.Payload.UID, []map[string]interface{}{
+		setFolderPermissions(t, grafanaListedAddr, folder2Resp.Payload.UID, []map[string]any{
 			{
 				"userId":     noneUser,
 				"permission": 1,
@@ -578,7 +578,7 @@ func TestIntegrationFineGrainedPermissions(t *testing.T) {
 	require.Equal(t, http.StatusOK, grandchildResp.Code())
 
 	// only grant access to the child folder, should then get child & grandchildren folders
-	setFolderPermissions(t, grafanaListedAddr, childResp.Payload.UID, []map[string]interface{}{
+	setFolderPermissions(t, grafanaListedAddr, childResp.Payload.UID, []map[string]any{
 		{
 			"userId":     noneUser,
 			"permission": 1,

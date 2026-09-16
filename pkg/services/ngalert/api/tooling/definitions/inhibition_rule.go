@@ -14,7 +14,7 @@ type InhibitionRule struct {
 	Provenance  Provenance `json:"provenance,omitempty"`
 }
 
-func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (ir *InhibitionRule) UnmarshalYAML(unmarshal func(any) error) error {
 	// First, manually unmarshal our own fields
 	var temp struct {
 		Name       string     `yaml:"name"`

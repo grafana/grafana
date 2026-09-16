@@ -87,13 +87,13 @@ func TestIntegrationFolderOwnerRefs_UnprovisionedFolders(t *testing.T) {
 
 	t.Run("should set ownerReferences on unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "test-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unmanaged Folder",
 				},
 			},

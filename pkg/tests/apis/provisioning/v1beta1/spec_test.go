@@ -61,15 +61,15 @@ func TestIntegrationV1Beta1OpenAPISchema(t *testing.T) {
 	require.NoError(t, err, "should be able to get raw response")
 
 	// Parse the OpenAPI document
-	var openAPIDoc map[string]interface{}
+	var openAPIDoc map[string]any
 	err = json.Unmarshal(body, &openAPIDoc)
 	require.NoError(t, err, "should be able to parse OpenAPI document")
 
 	// Verify components/schemas exist
-	components, ok := openAPIDoc["components"].(map[string]interface{})
+	components, ok := openAPIDoc["components"].(map[string]any)
 	require.True(t, ok, "components should exist in OpenAPI doc")
 
-	schemas, ok := components["schemas"].(map[string]interface{})
+	schemas, ok := components["schemas"].(map[string]any)
 	require.True(t, ok, "schemas should exist in components")
 
 	// Verify that v1beta1 schemas exist (and no v0alpha1 schemas)

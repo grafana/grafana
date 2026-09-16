@@ -282,7 +282,7 @@ func (dr *DashboardServiceImpl) cleanupOrganizationK8sDashboards(ctx context.Con
 			}
 		}
 
-		meta, _ := data.Object["metadata"].(map[string]interface{})
+		meta, _ := data.Object["metadata"].(map[string]any)
 		continueToken, _ = meta["continue"].(string)
 		if continueToken == "" {
 			break
@@ -363,7 +363,7 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 			continue
 		}
 
-		meta, _ := item.Object["metadata"].(map[string]interface{})
+		meta, _ := item.Object["metadata"].(map[string]any)
 		deletionTimestamp, _ := meta["deletionTimestamp"].(string)
 		resourceVersion, _ := meta["resourceVersion"].(string)
 
@@ -2379,10 +2379,10 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	}
 
 	finalObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{},
+		Object: map[string]any{},
 	}
 
-	obj := map[string]interface{}{}
+	obj := map[string]any{}
 	body, err := cmd.Dashboard.ToDB()
 	if err != nil {
 		return finalObj, err

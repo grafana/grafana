@@ -108,7 +108,7 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 			Rules:    []apimodels.PostableExtendedRuleNode{restrictedRule},
 		}
 		adminClient.PostRulesGroup(t, restrictedFolderUID, &restrictedGroup, false)
-		setFolderPermissions(t, grafanaListedAddr, restrictedFolderUID, []map[string]interface{}{
+		setFolderPermissions(t, grafanaListedAddr, restrictedFolderUID, []map[string]any{
 			{
 				"userId":     1,
 				"permission": 4,
@@ -154,7 +154,7 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 		adminClient.PostRulesGroup(t, childFolderUID, &childGroup, false)
 
 		// allow admin to access parent folder
-		setFolderPermissions(t, grafanaListedAddr, parentFolderUID, []map[string]interface{}{
+		setFolderPermissions(t, grafanaListedAddr, parentFolderUID, []map[string]any{
 			{
 				"userId":     1,
 				"permission": 4,
@@ -369,7 +369,7 @@ func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 			},
 		}
 		adminClient.ConvertPrometheusPostRuleGroups(t, dsUID, restrictedPrometheusRules, headers)
-		setFolderPermissions(t, grafanaListedAddr, restrictedFolderUID, []map[string]interface{}{
+		setFolderPermissions(t, grafanaListedAddr, restrictedFolderUID, []map[string]any{
 			{
 				"userId":     1,
 				"permission": 4,
@@ -463,10 +463,10 @@ func createTestAlertRule(title, folderUID string) apimodels.PostableExtendedRule
 	}
 }
 
-func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]any) {
 	t.Helper()
 
-	permissionPayload := map[string]interface{}{
+	permissionPayload := map[string]any{
 		"items": permissions,
 	}
 

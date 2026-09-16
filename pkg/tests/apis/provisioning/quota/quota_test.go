@@ -43,9 +43,9 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			}
 
 			// Find the Quota condition
-			var quotaCondition map[string]interface{}
+			var quotaCondition map[string]any
 			for _, c := range conditions {
-				cond, ok := c.(map[string]interface{})
+				cond, ok := c.(map[string]any)
 				if !ok {
 					continue
 				}
@@ -106,9 +106,9 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			}
 
 			// Find the Quota condition
-			var quotaCondition map[string]interface{}
+			var quotaCondition map[string]any
 			for _, c := range conditions {
-				cond, ok := c.(map[string]interface{})
+				cond, ok := c.(map[string]any)
 				if !ok {
 					continue
 				}
@@ -163,9 +163,9 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			}
 
 			// Find the Quota condition
-			var quotaCondition map[string]interface{}
+			var quotaCondition map[string]any
 			for _, c := range conditions {
-				cond, ok := c.(map[string]interface{})
+				cond, ok := c.(map[string]any)
 				if !ok {
 					continue
 				}
@@ -187,12 +187,12 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 }
 
 // unstructuredNestedSlice gets a nested slice from an unstructured object
-func unstructuredNestedSlice(obj map[string]interface{}, fields ...string) ([]interface{}, bool, error) {
+func unstructuredNestedSlice(obj map[string]any, fields ...string) ([]any, bool, error) {
 	val, found, err := nestedField(obj, fields...)
 	if !found || err != nil {
 		return nil, found, err
 	}
-	slice, ok := val.([]interface{})
+	slice, ok := val.([]any)
 	if !ok {
 		return nil, false, nil
 	}
@@ -200,10 +200,10 @@ func unstructuredNestedSlice(obj map[string]interface{}, fields ...string) ([]in
 }
 
 // nestedField returns the value of a nested field
-func nestedField(obj map[string]interface{}, fields ...string) (interface{}, bool, error) {
-	var val interface{} = obj
+func nestedField(obj map[string]any, fields ...string) (any, bool, error) {
+	var val any = obj
 	for _, field := range fields {
-		m, ok := val.(map[string]interface{})
+		m, ok := val.(map[string]any)
 		if !ok {
 			return nil, false, nil
 		}
@@ -251,7 +251,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 				return
 			}
 
-			quotaMap, ok := quota.(map[string]interface{})
+			quotaMap, ok := quota.(map[string]any)
 			if !ok {
 				collect.Errorf("quota status is not a map")
 				return
@@ -312,7 +312,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 				return
 			}
 
-			quotaMap, ok := quota.(map[string]interface{})
+			quotaMap, ok := quota.(map[string]any)
 			if !ok {
 				collect.Errorf("quota status is not a map")
 				return

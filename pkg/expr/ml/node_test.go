@@ -11,9 +11,9 @@ import (
 func TestUnmarshalCommand(t *testing.T) {
 	appURL := "https://grafana.com"
 
-	updateJson := func(cmd string, f func(m map[string]interface{})) func(t *testing.T) []byte {
+	updateJson := func(cmd string, f func(m map[string]any)) func(t *testing.T) []byte {
 		return func(t *testing.T) []byte {
-			var d map[string]interface{}
+			var d map[string]any
 			require.NoError(t, json.UnmarshalFromString(cmd, &d))
 			f(d)
 			data, err := json.Marshal(d)
@@ -31,14 +31,14 @@ func TestUnmarshalCommand(t *testing.T) {
 		require.Equal(t, OutlierCommandConfiguration{
 			DatasourceType: "prometheus",
 			DatasourceUID:  "a4ce599c-4c93-44b9-be5b-76385b8c01be",
-			QueryParams: map[string]interface{}{
+			QueryParams: map[string]any{
 				"expr":  "go_goroutines{}",
 				"range": true,
 				"refId": "A",
 			},
-			Algorithm: map[string]interface{}{
+			Algorithm: map[string]any{
 				"name": "dbscan",
-				"config": map[string]interface{}{
+				"config": map[string]any{
 					"epsilon": 7.667,
 				},
 				"sensitivity": 0.83,
@@ -47,7 +47,7 @@ func TestUnmarshalCommand(t *testing.T) {
 		}, outlier.config)
 	})
 	t.Run("should fallback to default if 'intervalMs' is not specified", func(t *testing.T) {
-		data := updateJson(outlierQuery, func(m map[string]interface{}) {
+		data := updateJson(outlierQuery, func(m map[string]any) {
 			delete(m, "intervalMs")
 		})(t)
 		cmd, err := UnmarshalCommand(data, appURL)
@@ -63,22 +63,22 @@ func TestUnmarshalCommand(t *testing.T) {
 		}{
 			{
 				name: "field 'type' is missing",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
 					delete(cmd, "type")
 				}),
 				err: "required field 'type' is not specified or empty.  Should be one of [outlier]",
 			},
 			{
 				name: "field 'type' is not known",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
 					cmd["type"] = uuid.NewString()
 				}),
 				err: "unsupported command type. Should be one of [outlier]",
 			},
 			{
 				name: "field 'type' is not string",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cmd["type"] = map[string]interface{}{
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
+					cmd["type"] = map[string]any{
 						"data": 1,
 					}
 				}),
@@ -86,46 +86,46 @@ func TestUnmarshalCommand(t *testing.T) {
 			},
 			{
 				name: "field 'config' is missing",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
 					delete(cmd, "config")
 				}),
 				err: "required field 'config' is not specified",
 			},
 			{
 				name: "field 'intervalMs' is not number",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
 					cmd["intervalMs"] = "test"
 				}),
 				err: "failed to unmarshal Machine learning command",
 			},
 			{
 				name: "field 'config.datasource_uid' is not specified",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cfg := cmd["config"].(map[string]interface{})
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
+					cfg := cmd["config"].(map[string]any)
 					delete(cfg, "datasource_uid")
 				}),
 				err: "required field `config.datasource_uid` is not specified",
 			},
 			{
 				name: "field 'config.algorithm' is not specified",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cfg := cmd["config"].(map[string]interface{})
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
+					cfg := cmd["config"].(map[string]any)
 					delete(cfg, "algorithm")
 				}),
 				err: "required field `config.algorithm` is not specified",
 			},
 			{
 				name: "field 'config.response_type' is not specified",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cfg := cmd["config"].(map[string]interface{})
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
+					cfg := cmd["config"].(map[string]any)
 					delete(cfg, "response_type")
 				}),
 				err: "required field `config.response_type` is not specified",
 			},
 			{
 				name: "fields 'config.query' and 'config.query_params' are not specified",
-				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cfg := cmd["config"].(map[string]interface{})
+				config: updateJson(outlierQuery, func(cmd map[string]any) {
+					cfg := cmd["config"].(map[string]any)
 					delete(cfg, "query")
 					delete(cfg, "query_params")
 				}),

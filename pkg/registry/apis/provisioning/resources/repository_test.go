@@ -44,11 +44,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "dashboards/test-dashboard.json",
 						},
 					},
@@ -69,11 +69,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "folders",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-folder",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "folders/test-folder",
 						},
 					},
@@ -135,8 +135,8 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						// No annotations
@@ -158,11 +158,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":        "test-dashboard",
 						"namespace":   "test-namespace",
-						"annotations": map[string]interface{}{},
+						"annotations": map[string]any{},
 					},
 				},
 			},
@@ -181,11 +181,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "", // Empty path
 						},
 					},
@@ -206,11 +206,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "nested-dashboard",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "team-a/subfolder/nested-dashboard.json",
 						},
 					},
@@ -231,11 +231,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "folders",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-folder",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "folders/test-folder", // No trailing slash
 						},
 					},
@@ -256,11 +256,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "folders",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-folder-2",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "folders/test-folder-2/", // Already has trailing slash
 						},
 					},
@@ -281,11 +281,11 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				Resource: "dashboards",
 			},
 			resourceObj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
 						},
 					},

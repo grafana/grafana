@@ -99,7 +99,7 @@ func ErrConditionNotExist(given string, existing []string) error {
 
 func ErrReceiverInvalid(err error) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Reason": err.Error(),
 		},
 		Error: err,
@@ -127,7 +127,7 @@ func MakeErrRouteInvalidFormat(err error) error {
 
 func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Version":        desiredVersion,
 			"CurrentVersion": currentVersion,
 			"Name":           name,
@@ -137,13 +137,13 @@ func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) er
 }
 
 func MakeErrRouteOrigin(routeName, action string) error {
-	return ErrRouteOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": routeName}})
+	return ErrRouteOrigin.Build(errutil.TemplateData{Public: map[string]any{"Action": action, "Name": routeName}})
 }
 
 // MakeErrInhibitionRuleInvalid creates an error with the ErrInhibitionRuleInvalid template
 func MakeErrInhibitionRuleInvalid(err error) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Error": err.Error(),
 		},
 		Error: err,
@@ -154,6 +154,6 @@ func MakeErrInhibitionRuleInvalid(err error) error {
 
 func MakeErrInhibitionRuleOrigin(uid, action string) error {
 	return ErrInhibitionRuleOrigin.Build(errutil.TemplateData{
-		Public: map[string]interface{}{"Action": action, "UID": uid},
+		Public: map[string]any{"Action": action, "UID": uid},
 	})
 }

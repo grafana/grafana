@@ -102,15 +102,15 @@ func TestComputeFullPath(t *testing.T) {
 }
 
 func TestToFolderLegacyCounts(t *testing.T) {
-	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
-		items := make([]interface{}, 0, len(stats))
+	counts := func(stats ...map[string]any) *unstructured.Unstructured {
+		items := make([]any, 0, len(stats))
 		for _, s := range stats {
 			items = append(items, s)
 		}
-		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
+		return &unstructured.Unstructured{Object: map[string]any{"counts": items}}
 	}
-	stat := func(group, res string, count int64) map[string]interface{} {
-		return map[string]interface{}{"group": group, "resource": res, "count": count}
+	stat := func(group, res string, count int64) map[string]any {
+		return map[string]any{"group": group, "resource": res, "count": count}
 	}
 
 	testCases := []struct {
@@ -176,32 +176,32 @@ func TestGetParents(t *testing.T) {
 
 	t.Run("should return list of parent folders of a given folder uid", func(t *testing.T) {
 		mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":        "parentone",
-					"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+					"annotations": map[string]any{"grafana.app/folder": "parenttwo"},
 				},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":        "parenttwo",
-					"annotations": map[string]interface{}{"grafana.app/folder": "parentthree"},
+					"annotations": map[string]any{"grafana.app/folder": "parentthree"},
 				},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "parentthree", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":        "parentthree",
-					"annotations": map[string]interface{}{"grafana.app/folder": "parentfour"},
+					"annotations": map[string]any{"grafana.app/folder": "parentfour"},
 				},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "parentfour", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "parentfour",
 				},
 			},
@@ -220,18 +220,18 @@ func TestGetParents(t *testing.T) {
 
 	t.Run("should stop if user doesnt have access to the parent folder", func(t *testing.T) {
 		mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":        "parentone",
-					"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+					"annotations": map[string]any{"grafana.app/folder": "parenttwo"},
 				},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name":        "parenttwo",
-					"annotations": map[string]interface{}{"grafana.app/folder": "parentthree"},
+					"annotations": map[string]any{"grafana.app/folder": "parentthree"},
 				},
 			},
 		}, nil).Once()
@@ -309,18 +309,18 @@ func TestGetChildren(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder1"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder1"},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder2", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder2"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder2"},
 			},
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder3", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder3"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder3"},
 			},
 		}, nil).Once()
 
@@ -420,8 +420,8 @@ func TestGetChildren(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder2", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder2"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder2"},
 			},
 		}, nil).Once()
 
@@ -460,8 +460,8 @@ func TestGetChildren(t *testing.T) {
 			TotalHits: 0,
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder"},
 			},
 		}, nil)
 
@@ -500,8 +500,8 @@ func TestGetChildren(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, accesscontrol.K6FolderUID, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": accesscontrol.K6FolderUID},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": accesscontrol.K6FolderUID},
 			},
 		}, nil)
 
@@ -554,8 +554,8 @@ func TestGetChildren(t *testing.T) {
 		}, nil).Once()
 		// only get the parent folder in this request
 		mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "folder1"},
+			Object: map[string]any{
+				"metadata": map[string]any{"name": "folder1"},
 			},
 		}, nil).Once()
 
@@ -600,23 +600,23 @@ func TestGetFolders(t *testing.T) {
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder1",
 									"uid":  "folder1",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder1",
 								},
 							},
 						},
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder2",
 									"uid":  "folder2",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder2",
 								},
 							},
@@ -656,34 +656,34 @@ func TestGetFolders(t *testing.T) {
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder1",
 									"uid":  "folder1",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder1",
 								},
 							},
 						},
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder2",
 									"uid":  "folder2",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder2",
 								},
 							},
 						},
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder3",
 									"uid":  "folder3",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder3",
 								},
 							},
@@ -793,8 +793,8 @@ func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents [
 // existence, not field fidelity.
 func expectGetFolder(mockCli *client.MockK8sHandler, uid string, orgID int64) {
 	mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{"name": uid},
+		Object: map[string]any{
+			"metadata": map[string]any{"name": uid},
 		},
 	}, nil).Once()
 }
@@ -1353,23 +1353,23 @@ func TestList(t *testing.T) {
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder1",
 									"uid":  "folder1",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder1",
 								},
 							},
 						},
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder2",
 									"uid":  "folder2",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder2",
 								},
 							},
@@ -1380,23 +1380,23 @@ func TestList(t *testing.T) {
 			want: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
 					{
-						Object: map[string]interface{}{
-							"metadata": map[string]interface{}{
+						Object: map[string]any{
+							"metadata": map[string]any{
 								"name": "folder1",
 								"uid":  "folder1",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title": "folder1",
 							},
 						},
 					},
 					{
-						Object: map[string]interface{}{
-							"metadata": map[string]interface{}{
+						Object: map[string]any{
+							"metadata": map[string]any{
 								"name": "folder2",
 								"uid":  "folder2",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title": "folder2",
 							},
 						},
@@ -1421,23 +1421,23 @@ func TestList(t *testing.T) {
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder1",
 									"uid":  "folder1",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder1",
 								},
 							},
 						},
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder2",
 									"uid":  "folder2",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder2",
 								},
 							},
@@ -1448,12 +1448,12 @@ func TestList(t *testing.T) {
 			want: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
 					{
-						Object: map[string]interface{}{
-							"metadata": map[string]interface{}{
+						Object: map[string]any{
+							"metadata": map[string]any{
 								"name": "folder1",
 								"uid":  "folder1",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title": "folder1",
 							},
 						},
@@ -1477,19 +1477,19 @@ func TestList(t *testing.T) {
 					Limit:    1,
 					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"continue": "continue-token",
 						},
 					},
 					Items: []unstructured.Unstructured{
 						{
-							Object: map[string]interface{}{
-								"metadata": map[string]interface{}{
+							Object: map[string]any{
+								"metadata": map[string]any{
 									"name": "folder1",
 									"uid":  "folder1",
 								},
-								"spec": map[string]interface{}{
+								"spec": map[string]any{
 									"title": "folder1",
 								},
 							},
@@ -1500,12 +1500,12 @@ func TestList(t *testing.T) {
 			want: &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
 					{
-						Object: map[string]interface{}{
-							"metadata": map[string]interface{}{
+						Object: map[string]any{
+							"metadata": map[string]any{
 								"name": "folder1",
 								"uid":  "folder1",
 							},
-							"spec": map[string]interface{}{
+							"spec": map[string]any{
 								"title": "folder1",
 							},
 						},

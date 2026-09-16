@@ -78,7 +78,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
+		createdSpec := created.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Service Account 1", createdSpec["title"])
 		require.Equal(t, false, createdSpec["disabled"])
 		require.Empty(t, createdSpec["plugin"])
@@ -93,7 +93,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Service Account 1", fetchedSpec["title"])
 		require.Equal(t, false, fetchedSpec["disabled"])
 		require.Empty(t, fetchedSpec["plugin"])
@@ -212,7 +212,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
-		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec := updated.Object["spec"].(map[string]any)
 		require.Equal(t, "Updated Service Account 1", updatedSpec["title"])
 		require.Equal(t, "Editor", updatedSpec["role"])
 		require.Equal(t, true, updatedSpec["disabled"])
@@ -234,7 +234,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		fetched, err := saClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Updated Service Account 1", fetchedSpec["title"])
 		require.Equal(t, "Editor", fetchedSpec["role"])
 		require.Equal(t, true, fetchedSpec["disabled"])
@@ -319,7 +319,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
-		createdSpec := created.Object["spec"].(map[string]interface{})
+		createdSpec := created.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Service Account with GenerateName", createdSpec["title"])
 		require.Equal(t, false, createdSpec["disabled"])
 		require.Empty(t, createdSpec["plugin"])
@@ -335,7 +335,7 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
-		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
+		fetchedSpec := fetched.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Service Account with GenerateName", fetchedSpec["title"])
 		require.Equal(t, false, fetchedSpec["disabled"])
 		require.Empty(t, fetchedSpec["plugin"])
@@ -437,7 +437,7 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 		require.NoError(t, err)
 		require.NotNil(t, sa)
 
-		saSpec := sa.Object["spec"].(map[string]interface{})
+		saSpec := sa.Object["spec"].(map[string]any)
 		require.Equal(t, "Test Service Account 2", saSpec["title"])
 		require.Equal(t, false, saSpec["disabled"])
 		require.Empty(t, saSpec["plugin"])

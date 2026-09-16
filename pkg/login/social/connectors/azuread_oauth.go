@@ -383,7 +383,7 @@ func fetchAzureADToken(ctx context.Context, log log.Logger, tokenURL string, par
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
 	}
 
-	var rawResponse interface{}
+	var rawResponse any
 	if err := json.Unmarshal(body, &rawResponse); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal raw response body: %w", err)
 	}

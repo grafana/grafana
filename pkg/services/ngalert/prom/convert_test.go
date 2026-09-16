@@ -538,7 +538,7 @@ func TestCreateMathNode(t *testing.T) {
 	require.Equal(t, string(expr.QueryTypeMath), node.QueryType)
 	require.Equal(t, "prometheus_math", node.RefID)
 
-	var model map[string]interface{}
+	var model map[string]any
 	err = json.Unmarshal(node.Model, &model)
 	require.NoError(t, err)
 
@@ -546,7 +546,7 @@ func TestCreateMathNode(t *testing.T) {
 	require.Equal(t, string(expr.QueryTypeMath), model["type"])
 	require.Equal(t, "is_number($query) || is_nan($query) || is_inf($query)", model["expression"])
 
-	ds := model["datasource"].(map[string]interface{})
+	ds := model["datasource"].(map[string]any)
 	require.Equal(t, expr.DatasourceUID, ds["name"])
 	require.Equal(t, expr.DatasourceType, ds["type"])
 	require.Equal(t, expr.DatasourceUID, ds["uid"])
@@ -560,25 +560,25 @@ func TestCreateThresholdNode(t *testing.T) {
 	require.Equal(t, string(expr.QueryTypeThreshold), node.QueryType)
 	require.Equal(t, "threshold", node.RefID)
 
-	var model map[string]interface{}
+	var model map[string]any
 	err = json.Unmarshal(node.Model, &model)
 	require.NoError(t, err)
 
 	require.Equal(t, "threshold", model["refId"])
 	require.Equal(t, string(expr.QueryTypeThreshold), model["type"])
 
-	ds := model["datasource"].(map[string]interface{})
+	ds := model["datasource"].(map[string]any)
 	require.Equal(t, expr.DatasourceUID, ds["name"])
 	require.Equal(t, expr.DatasourceType, ds["type"])
 	require.Equal(t, expr.DatasourceUID, ds["uid"])
 
-	conditions := model["conditions"].([]interface{})
+	conditions := model["conditions"].([]any)
 	require.Len(t, conditions, 1)
 
-	condition := conditions[0].(map[string]interface{})
-	evaluator := condition["evaluator"].(map[string]interface{})
+	condition := conditions[0].(map[string]any)
+	evaluator := condition["evaluator"].(map[string]any)
 	require.Equal(t, string(expr.ThresholdIsAbove), evaluator["type"])
-	require.Equal(t, []interface{}{float64(0)}, evaluator["params"])
+	require.Equal(t, []any{float64(0)}, evaluator["params"])
 }
 
 func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
@@ -613,7 +613,7 @@ func TestPrometheusRulesToGrafana_NodesInRules(t *testing.T) {
 		require.Equal(t, "prometheus_math", result.Rules[0].Data[1].RefID)
 		require.Equal(t, string(expr.QueryTypeMath), result.Rules[0].Data[1].QueryType)
 		// Check that the math expression is valid
-		var model map[string]interface{}
+		var model map[string]any
 		err = json.Unmarshal(result.Rules[0].Data[1].Model, &model)
 		require.NoError(t, err)
 		require.Equal(t, "is_number($query) || is_nan($query) || is_inf($query)", model["expression"])

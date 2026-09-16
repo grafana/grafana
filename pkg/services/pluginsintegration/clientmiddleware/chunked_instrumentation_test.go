@@ -47,7 +47,7 @@ func TestErrorRecordingChunkedWriterForwardsOnChunk(t *testing.T) {
 	raw := &fakeRawChunkWriter{}
 	w := &errorRecordingChunkedWriter{ChunkedDataWriter: raw}
 
-	receiver, ok := interface{}(w).(chunked.RawChunkReceiver)
+	receiver, ok := any(w).(chunked.RawChunkReceiver)
 	require.True(t, ok, "wrapper must satisfy chunked.RawChunkReceiver")
 
 	require.NoError(t, receiver.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "A"}))

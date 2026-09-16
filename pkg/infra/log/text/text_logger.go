@@ -19,7 +19,7 @@ func NewTextLogger(w io.Writer) gokitlog.Logger {
 	return &textLogger{w}
 }
 
-func (l textLogger) Log(keyvals ...interface{}) error {
+func (l textLogger) Log(keyvals ...any) error {
 	for i, val := range keyvals {
 		switch val.(type) {
 		case nil, string, []byte, encoding.TextMarshaler, error, fmt.Stringer: // supported natively by gokit.

@@ -53,7 +53,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	orgPayload := map[string]interface{}{
+	orgPayload := map[string]any{
 		"name": "Org B",
 	}
 	orgPayloadBytes, err := json.Marshal(orgPayload)
@@ -113,8 +113,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    123412321,
 				"title": "Expect error",
 			},
@@ -126,8 +126,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with existing ID from org A in org B", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"title": "Expect error",
 			},
@@ -139,8 +139,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with same UID in org A and org B, should be okay", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInFolder.UID,
 				"title": "Saved dash in folder",
 			},
@@ -152,8 +152,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When creating a dashboard in General folder with same name as dashboard in other folder", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"title": "Saved dash in folder",
 			},
 		})
@@ -163,8 +163,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 	})
 	t.Run("When creating a dashboard in other folder with same name as dashboard in General folder", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInFolder,
 				"title": "Dash with existing uid in other org",
 			},
@@ -181,8 +181,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard without id and uid and unique title in folder", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"title": "Unique",
 			},
 		})
@@ -193,8 +193,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with id 0", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    0,
 				"title": "Dash with zero id",
 			},
@@ -206,8 +206,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard in non-existing folder", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"title": "no folder",
 			},
 			"folderUid": "non-existing-folder",
@@ -219,8 +219,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with incorrect version but no overwrite", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"uid":     savedDashInFolder.UID,
 				"version": 1,
 			},
@@ -233,8 +233,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with current version and overwrite is true", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"uid":     savedDashInFolder.UID,
 				"version": savedDashInFolder.Version,
 				"title":   "Saved dash in folder",
@@ -248,8 +248,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with no version set and title set to a folder title", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInFolder.UID,
 				"title": "Saved folder",
 			},
@@ -263,8 +263,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with an already used legacy ID", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   "new-uid",
 				"title": "Updated title",
@@ -279,8 +279,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When updating a dashboard already using that uid", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    savedDashInFolder.ID,
 				"uid":   savedDashInFolder.UID,
 				"title": "Dashboard with existing UID",
@@ -295,8 +295,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When updating id with a dashboard already using that uid", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   savedDashInGeneralFolder.UID,
 				"title": "Updated title",
@@ -311,8 +311,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When trying to update to a folder", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   savedDashInFolder.UID,
 				"title": "Updated title",
@@ -331,11 +331,11 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	// Obs: in legacy, the dashboard request would fail
 	// After the dashboard is created, the user can see that there is an error with the library panel and can remove them manually
 	t.Run("When creating a dashboard that references a non-existent library panel", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]any{
+			"dashboard": map[string]any{
 				"title": "Bad dashboard",
-				"panels": []interface{}{
-					map[string]interface{}{
+				"panels": []any{
+					map[string]any{
 						"gridPos": map[string]int{"h": 0, "w": 0, "x": 0, "y": 0},
 						"libraryPanel": map[string]string{
 							"name": "Bad panel",
@@ -1010,8 +1010,8 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 	t.Helper()
 
 	buf := &bytes.Buffer{}
-	err := json.NewEncoder(buf).Encode(map[string]interface{}{
-		"dashboard": map[string]interface{}{
+	err := json.NewEncoder(buf).Encode(map[string]any{
+		"dashboard": map[string]any{
 			"title": title,
 		},
 		"folderId":  folderID,
@@ -1055,7 +1055,7 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 	}
 }
 
-func postDashboard(t *testing.T, grafanaListedAddr, user, password string, payload map[string]interface{}) (*http.Response, error) {
+func postDashboard(t *testing.T, grafanaListedAddr, user, password string, payload map[string]any) (*http.Response, error) {
 	t.Helper()
 
 	payloadBytes, err := json.Marshal(payload)
@@ -1091,8 +1091,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
 
 	t.Run("When creating a new dashboard in the General folder, requires create permissions scoped to the general folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"title": "Dash",
 			},
 			"overwrite": true,
@@ -1117,8 +1117,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("When creating a new dashboard in other folder, requires create permissions scoped to the other folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"title": "Dash",
 			},
 			"folderUid": otherSavedFolder.UID,
@@ -1139,8 +1139,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("When creating a new dashboard by existing UID in folder, requires write permissions on the existing dashboard", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInFolder.UID,
 				"title": "New dash",
 			},
@@ -1162,8 +1162,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("When moving a dashboard by existing uid to other folder from General folder, requires dashboard creation permissions on the destination folder and write access to the dashboard", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInGeneralFolder.UID,
 				"title": "Dash",
 			},
@@ -1185,8 +1185,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("When moving a dashboard by existing uid to the General folder from other folder, requires dashboard creation permissions on the general folder and write access to the dashboard", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"uid":   savedDashInFolder.UID,
 				"title": "Dash",
 			},
@@ -1208,10 +1208,10 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("RBAC tests", func(t *testing.T) {
-		setFolderPermissions := func(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+		setFolderPermissions := func(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]any) {
 			t.Helper()
 
-			permissionPayload := map[string]interface{}{
+			permissionPayload := map[string]any{
 				"items": permissions,
 			}
 
@@ -1226,7 +1226,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		searchDashboards := func(t *testing.T, grafanaListedAddr string, userLogin, userPassword string) []map[string]interface{} {
+		searchDashboards := func(t *testing.T, grafanaListedAddr string, userLogin, userPassword string) []map[string]any {
 			t.Helper()
 
 			u := fmt.Sprintf("http://%s:%s@%s/api/search?type=dash-db", userLogin, userPassword, grafanaListedAddr)
@@ -1235,7 +1235,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 			defer resp.Body.Close() // nolint:errcheck
 
-			var results []map[string]interface{}
+			var results []map[string]any
 			err = json.NewDecoder(resp.Body).Decode(&results)
 			require.NoError(t, err)
 
@@ -1254,7 +1254,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 		createDashboard(t, grafanaListedAddr, "dashboard in parent", parentFolder.ID, parentFolder.UID) // nolint:staticcheck
 		createDashboard(t, grafanaListedAddr, "dashboard in child", childFolder.ID, childFolder.UID)    // nolint:staticcheck
 
-		viewPermissions := []map[string]interface{}{
+		viewPermissions := []map[string]any{
 			{
 				"permission": 1,
 				"userId":     noneUserID,
@@ -1281,7 +1281,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 
 		t.Run("it should return parent folder when user has permission to read parent folder but no permission to read child folder", func(t *testing.T) {
 			setFolderPermissions(t, grafanaListedAddr, parentFolder.UID, viewPermissions)
-			setFolderPermissions(t, grafanaListedAddr, childFolder.UID, []map[string]interface{}{})
+			setFolderPermissions(t, grafanaListedAddr, childFolder.UID, []map[string]any{})
 
 			results := searchDashboards(t, grafanaListedAddr, "noneuser", "noneuser")
 
@@ -1305,10 +1305,10 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 				Password:       "restricteduser",
 				IsAdmin:        false,
 			})
-			setDashboardPermissions := func(t *testing.T, grafanaListedAddr string, dashboardUID string, permissions []map[string]interface{}) {
+			setDashboardPermissions := func(t *testing.T, grafanaListedAddr string, dashboardUID string, permissions []map[string]any) {
 				t.Helper()
 
-				permissionPayload := map[string]interface{}{
+				permissionPayload := map[string]any{
 					"items": permissions,
 				}
 
@@ -1327,7 +1327,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 				err = resp.Body.Close()
 				require.NoError(t, err)
 			}
-			editPermissions := []map[string]interface{}{
+			editPermissions := []map[string]any{
 				{
 					"permission": 2,
 					"userId":     restrictedUserID,
@@ -1344,8 +1344,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// but can edit the dashboard
-			dashboardPayload := map[string]interface{}{
-				"dashboard": map[string]interface{}{
+			dashboardPayload := map[string]any{
+				"dashboard": map[string]any{
 					"uid":   testDash.UID,
 					"title": "Updated title by restricted user",
 				},
@@ -1372,8 +1372,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// and cannot edit the dashboard
-			dashboardPayload := map[string]interface{}{
-				"dashboard": map[string]interface{}{
+			dashboardPayload := map[string]any{
+				"dashboard": map[string]any{
 					"uid":   testDash.UID,
 					"title": "Updated title by restricted user",
 				},
@@ -1395,7 +1395,7 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 				IsAdmin:        false,
 			})
 			testFolder := createFolder(t, grafanaListedAddr, "folder with inherited permissions")
-			editFolderPermissions := []map[string]interface{}{
+			editFolderPermissions := []map[string]any{
 				{
 					"permission": 2,
 					"userId":     inheritedPermissionsUserID,
@@ -1413,8 +1413,8 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			// and can edit the dashboard by inheriting permissions from the folder
-			dashboardPayload := map[string]interface{}{
-				"dashboard": map[string]interface{}{
+			dashboardPayload := map[string]any{
+				"dashboard": map[string]any{
 					"uid":   testDash.UID,
 					"title": "Updated title via inherited permissions",
 				},

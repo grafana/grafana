@@ -81,12 +81,12 @@ func (s *ShortURLAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 				{Name: "Path", Type: "string", Format: "string", Description: "The url path"},
 				{Name: "Last Seen At", Type: "number"},
 			},
-			Reader: func(obj any) ([]interface{}, error) {
+			Reader: func(obj any) ([]any, error) {
 				m, ok := obj.(*shorturl.ShortURL)
 				if !ok {
 					return nil, fmt.Errorf("expected shorturl")
 				}
-				return []interface{}{
+				return []any{
 					m.Name,
 					m.Spec.Path,
 					m.Status.LastSeenAt,

@@ -98,7 +98,7 @@ func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) 
 
 func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	userAuths := []login.UserAuth{}
-	params := make([]interface{}, 0, len(query.UserIDs))
+	params := make([]any, 0, len(query.UserIDs))
 	for _, id := range query.UserIDs {
 		params = append(params, id)
 	}

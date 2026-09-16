@@ -448,17 +448,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "server admin can release repo-managed folder",
 			auth: serverAdmin,
 			obj: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"generation": int64(1),
 					},
 				},
 			},
 			old: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
+				Object: map[string]any{
+					"metadata": map[string]any{
 						"generation": int64(2),
-						"annotations": map[string]interface{}{
+						"annotations": map[string]any{
 							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 							utils.AnnoKeyManagerIdentity: "my-repo",
 						},

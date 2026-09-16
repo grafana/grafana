@@ -46,7 +46,7 @@ func (r pageQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *PageQuery) (string, []interface{}, error) {
+func buildPageQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *PageQuery) (string, []any, error) {
 	req := pageQueryTemplate{
 		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
@@ -82,7 +82,7 @@ func (l latestUpdateTemplate) Validate() error {
 	return nil
 }
 
-func buildLatestUpdateQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scopePatterns []string) (string, []interface{}, error) {
+func buildLatestUpdateQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, scopePatterns []string) (string, []any, error) {
 	req := latestUpdateTemplate{
 		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
 		OrgID:           orgID,
@@ -119,7 +119,7 @@ func (r listResourcePermissionsQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery, withDatasourceType bool) (string, []interface{}, error) {
+func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery, withDatasourceType bool) (string, []any, error) {
 	req := listResourcePermissionsQueryTemplate{
 		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
@@ -248,7 +248,7 @@ func (r deleteResourcePermissionsQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildDeleteResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *DeleteResourcePermissionsQuery) (string, []interface{}, error) {
+func buildDeleteResourcePermissionsQueryFromTemplate(sql *legacysql.LegacyDatabaseHelper, query *DeleteResourcePermissionsQuery) (string, []any, error) {
 	req := deleteResourcePermissionsQueryTemplate{
 		SQLTemplate:        sqltemplate.New(sql.DialectForDriver()),
 		Query:              query,

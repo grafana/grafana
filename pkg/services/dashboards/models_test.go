@@ -89,21 +89,21 @@ func TestSlugifyTitle(t *testing.T) {
 
 func TestParseK8sDashboard(t *testing.T) {
 	t.Run("should parse valid K8s dashboard with all fields", func(t *testing.T) {
-		data := simplejson.NewFromAny(map[string]interface{}{
+		data := simplejson.NewFromAny(map[string]any{
 			"apiVersion": "dashboard.grafana.app/v2alpha1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":       "test-dashboard-uid",
 				"namespace":  "org-123",
 				"generation": int64(5),
-				"labels": map[string]interface{}{
+				"labels": map[string]any{
 					"grafana.app/deprecatedInternalID": "456",
 				},
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					"grafana.app/folder": "test-folder-uid",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":  "Test Dashboard",
 				"gnetId": float64(12345),
 			},

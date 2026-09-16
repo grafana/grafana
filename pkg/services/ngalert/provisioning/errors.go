@@ -53,7 +53,7 @@ var (
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
 func MakeErrTimeIntervalInvalid(err error) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Error": err.Error(),
 		},
 		Error: err,
@@ -100,7 +100,7 @@ func truncateRuleUIDs(uids []string) string {
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
 func MakeErrTemplateInvalid(err error) error {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"Error": err.Error(),
 		},
 		Error: err,
@@ -137,11 +137,11 @@ func MakeErrContactPointUidExists(uid, name string) error {
 }
 
 func makeErrTemplateOrigin(t v1.TemplateGroup, action string) error {
-	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Title}})
+	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]any{"Action": action, "Name": t.Title}})
 }
 
 func makeErrMuteTimeIntervalOrigin(mt v1.TimeInterval, action string) error {
 	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
-		Public: map[string]interface{}{"Action": action, "Name": mt.Title},
+		Public: map[string]any{"Action": action, "Name": mt.Title},
 	})
 }

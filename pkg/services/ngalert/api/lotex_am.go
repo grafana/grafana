@@ -66,7 +66,7 @@ func (am *LotexAM) withAMReq(
 	endpoint string,
 	pathParams []string,
 	body io.Reader,
-	extractor func(*response.NormalResponse) (interface{}, error),
+	extractor func(*response.NormalResponse) (any, error),
 	headers map[string]string,
 ) response.Response {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
@@ -95,7 +95,7 @@ func (am *LotexAM) withAMReq(
 		return ErrResp(http.StatusBadRequest, fmt.Errorf("unsupported endpoint \"%s\" for Alert Manager implementation \"%s\"", endpoint, impl), "")
 	}
 
-	iPathParams := make([]interface{}, len(pathParams))
+	iPathParams := make([]any, len(pathParams))
 	for idx, value := range pathParams {
 		iPathParams[idx] = value
 	}

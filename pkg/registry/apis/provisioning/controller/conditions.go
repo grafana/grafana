@@ -19,7 +19,7 @@ import (
 // reconcile running with a stale informer cache can overwrite the PullStatus the
 // sync worker just wrote). Emitting per-condition ops (`add /-` for new types,
 // `replace /<index>` for changed types) leaves unrelated conditions untouched.
-func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
+func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]any {
 	// When the conditions array has never been initialized, a single whole-array
 	// replace both creates the array and seeds it. JSON Patch `add /path/-` requires
 	// the target array to already exist.
@@ -27,7 +27,7 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 		return buildInitialConditionsPatch(generation, newConditions)
 	}
 
-	var ops []map[string]interface{}
+	var ops []map[string]any
 
 	for _, newCondition := range newConditions {
 		newCondition.ObservedGeneration = generation
@@ -40,7 +40,7 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 			if newCondition.LastTransitionTime.IsZero() {
 				newCondition.LastTransitionTime = metav1.Now()
 			}
-			ops = append(ops, map[string]interface{}{
+			ops = append(ops, map[string]any{
 				"op":    "add",
 				"path":  "/status/conditions/-",
 				"value": newCondition,
@@ -63,7 +63,7 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 		}
 
 		index := indexOfConditionType(existingConditions, newCondition.Type)
-		ops = append(ops, map[string]interface{}{
+		ops = append(ops, map[string]any{
 			"op":    "replace",
 			"path":  fmt.Sprintf("/status/conditions/%d", index),
 			"value": newCondition,
@@ -79,7 +79,7 @@ func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 // buildInitialConditionsPatch is used when the conditions array is empty or nil.
 // A single whole-array replace creates the array with all new conditions applied
 // through meta.SetStatusCondition so LastTransitionTime is handled correctly.
-func buildInitialConditionsPatch(generation int64, newConditions []metav1.Condition) []map[string]interface{} {
+func buildInitialConditionsPatch(generation int64, newConditions []metav1.Condition) []map[string]any {
 	if len(newConditions) == 0 {
 		return nil
 	}
@@ -90,7 +90,7 @@ func buildInitialConditionsPatch(generation int64, newConditions []metav1.Condit
 		meta.SetStatusCondition(&conditions, newCondition)
 	}
 
-	return []map[string]interface{}{
+	return []map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/status/conditions",

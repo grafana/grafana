@@ -756,7 +756,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
 
 		// Now try to enable sync on the second repo - this should fail due to parent/child conflict
-		created.Object["spec"].(map[string]interface{})["sync"].(map[string]interface{})["enabled"] = true
+		created.Object["spec"].(map[string]any)["sync"].(map[string]any)["enabled"] = true
 		_, err = helper.Repositories.Resource.Update(t.Context(), created, metav1.UpdateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Enabling sync should fail due to parent/child path conflict")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())

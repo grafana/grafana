@@ -15,7 +15,7 @@ import (
 	"xorm.io/builder"
 )
 
-func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
+func (session *Session) genQuerySQL(sqlOrArgs ...any) (string, []any, error) {
 	if len(sqlOrArgs) > 0 {
 		return convertSQLOrArgs(sqlOrArgs...)
 	}
@@ -78,7 +78,7 @@ func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interfa
 }
 
 // Query runs a raw sql and return records as []map[string][]byte
-func (session *Session) Query(sqlOrArgs ...interface{}) ([]map[string][]byte, error) {
+func (session *Session) Query(sqlOrArgs ...any) ([]map[string][]byte, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -142,9 +142,9 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 
 func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string, err error) {
 	result := make(map[string]string)
-	scanResultContainers := make([]interface{}, len(fields))
+	scanResultContainers := make([]any, len(fields))
 	for i := range fields {
-		var scanResultContainer interface{}
+		var scanResultContainer any
 		scanResultContainers[i] = &scanResultContainer
 	}
 	if err := rows.Scan(scanResultContainers...); err != nil {
@@ -170,9 +170,9 @@ func row2mapStr(rows *core.Rows, fields []string) (resultsMap map[string]string,
 
 func row2sliceStr(rows *core.Rows, fields []string) (results []string, err error) {
 	result := make([]string, 0, len(fields))
-	scanResultContainers := make([]interface{}, len(fields))
+	scanResultContainers := make([]any, len(fields))
 	for i := range fields {
-		var scanResultContainer interface{}
+		var scanResultContainer any
 		scanResultContainers[i] = &scanResultContainer
 	}
 	if err := rows.Scan(scanResultContainers...); err != nil {
@@ -235,7 +235,7 @@ func rows2SliceString(rows *core.Rows) (resultsSlice [][]string, err error) {
 }
 
 // QueryString runs a raw sql and return records as []map[string]string
-func (session *Session) QueryString(sqlOrArgs ...interface{}) ([]map[string]string, error) {
+func (session *Session) QueryString(sqlOrArgs ...any) ([]map[string]string, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -257,7 +257,7 @@ func (session *Session) QueryString(sqlOrArgs ...interface{}) ([]map[string]stri
 }
 
 // QuerySliceString runs a raw sql and return records as [][]string
-func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, error) {
+func (session *Session) QuerySliceString(sqlOrArgs ...any) ([][]string, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -278,11 +278,11 @@ func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, 
 	return rows2SliceString(rows)
 }
 
-func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]interface{}, err error) {
-	resultsMap = make(map[string]interface{}, len(fields))
-	scanResultContainers := make([]interface{}, len(fields))
+func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]any, err error) {
+	resultsMap = make(map[string]any, len(fields))
+	scanResultContainers := make([]any, len(fields))
 	for i := range fields {
-		var scanResultContainer interface{}
+		var scanResultContainer any
 		scanResultContainers[i] = &scanResultContainer
 	}
 	if err := rows.Scan(scanResultContainers...); err != nil {
@@ -295,7 +295,7 @@ func row2mapInterface(rows *core.Rows, fields []string) (resultsMap map[string]i
 	return
 }
 
-func rows2Interfaces(rows *core.Rows) (resultsSlice []map[string]interface{}, err error) {
+func rows2Interfaces(rows *core.Rows) (resultsSlice []map[string]any, err error) {
 	fields, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -315,7 +315,7 @@ func rows2Interfaces(rows *core.Rows) (resultsSlice []map[string]interface{}, er
 }
 
 // QueryInterface runs a raw sql and return records as []map[string]interface{}
-func (session *Session) QueryInterface(sqlOrArgs ...interface{}) ([]map[string]interface{}, error) {
+func (session *Session) QueryInterface(sqlOrArgs ...any) ([]map[string]any, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}

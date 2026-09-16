@@ -57,7 +57,7 @@ func (s *FakeReceiverAccessService[T]) Reset() {
 }
 
 func (s *FakeReceiverAccessService[T]) HasList(ctx context.Context, user identity.Requester) (bool, error) {
-	s.Calls = append(s.Calls, Call{"HasList", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"HasList", []any{ctx, user}})
 	if s.HasListFunc != nil {
 		return s.HasListFunc(ctx, user)
 	}
@@ -65,7 +65,7 @@ func (s *FakeReceiverAccessService[T]) HasList(ctx context.Context, user identit
 }
 
 func (s *FakeReceiverAccessService[T]) FilterRead(ctx context.Context, user identity.Requester, receivers ...T) ([]T, error) {
-	s.Calls = append(s.Calls, Call{"FilterRead", []interface{}{ctx, user, receivers}})
+	s.Calls = append(s.Calls, Call{"FilterRead", []any{ctx, user, receivers}})
 	if s.FilterReadFunc != nil {
 		return s.FilterReadFunc(ctx, user, receivers...)
 	}
@@ -73,7 +73,7 @@ func (s *FakeReceiverAccessService[T]) FilterRead(ctx context.Context, user iden
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeRead(ctx context.Context, user identity.Requester, receiver T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeRead", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"AuthorizeRead", []any{ctx, user, receiver}})
 	if s.AuthorizeReadFunc != nil {
 		return s.AuthorizeReadFunc(ctx, user, receiver)
 	}
@@ -81,7 +81,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeRead(ctx context.Context, user i
 }
 
 func (s *FakeReceiverAccessService[T]) HasRead(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
-	s.Calls = append(s.Calls, Call{"HasRead", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"HasRead", []any{ctx, user, receiver}})
 	if s.HasReadFunc != nil {
 		return s.HasReadFunc(ctx, user, receiver)
 	}
@@ -89,7 +89,7 @@ func (s *FakeReceiverAccessService[T]) HasRead(ctx context.Context, user identit
 }
 
 func (s *FakeReceiverAccessService[T]) FilterReadDecrypted(ctx context.Context, user identity.Requester, receivers ...T) ([]T, error) {
-	s.Calls = append(s.Calls, Call{"FilterReadDecrypted", []interface{}{ctx, user, receivers}})
+	s.Calls = append(s.Calls, Call{"FilterReadDecrypted", []any{ctx, user, receivers}})
 	if s.FilterReadDecryptedFunc != nil {
 		return s.FilterReadDecryptedFunc(ctx, user, receivers...)
 	}
@@ -97,7 +97,7 @@ func (s *FakeReceiverAccessService[T]) FilterReadDecrypted(ctx context.Context, 
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeReadDecrypted(ctx context.Context, user identity.Requester, receiver T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeReadDecrypted", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"AuthorizeReadDecrypted", []any{ctx, user, receiver}})
 	if s.AuthorizeReadDecryptedFunc != nil {
 		return s.AuthorizeReadDecryptedFunc(ctx, user, receiver)
 	}
@@ -105,7 +105,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeReadDecrypted(ctx context.Contex
 }
 
 func (s *FakeReceiverAccessService[T]) HasReadDecrypted(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
-	s.Calls = append(s.Calls, Call{"HasReadDecrypted", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"HasReadDecrypted", []any{ctx, user, receiver}})
 	if s.HasReadDecryptedFunc != nil {
 		return s.HasReadDecryptedFunc(ctx, user, receiver)
 	}
@@ -113,7 +113,7 @@ func (s *FakeReceiverAccessService[T]) HasReadDecrypted(ctx context.Context, use
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeUpdate(ctx context.Context, user identity.Requester, receiver T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeUpdate", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"AuthorizeUpdate", []any{ctx, user, receiver}})
 	if s.AuthorizeUpdateFunc != nil {
 		return s.AuthorizeUpdateFunc(ctx, user, receiver)
 	}
@@ -121,7 +121,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeUpdate(ctx context.Context, user
 }
 
 func (s *FakeReceiverAccessService[T]) HasUpdateProtected(ctx context.Context, user identity.Requester, receiver T) (bool, error) {
-	s.Calls = append(s.Calls, Call{"HasUpdateProtected", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"HasUpdateProtected", []any{ctx, user, receiver}})
 	if s.HasUpdateProtectedFunc != nil {
 		return s.HasUpdateProtectedFunc(ctx, user, receiver)
 	}
@@ -129,7 +129,7 @@ func (s *FakeReceiverAccessService[T]) HasUpdateProtected(ctx context.Context, u
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeUpdateProtected", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"AuthorizeUpdateProtected", []any{ctx, user, receiver}})
 	if s.AuthorizeUpdateProtectedFunc != nil {
 		return s.AuthorizeUpdateProtectedFunc(ctx, user, receiver)
 	}
@@ -137,7 +137,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeUpdateProtected(ctx context.Cont
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeCreate(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeCreate", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeCreate", []any{ctx, user}})
 	if s.AuthorizeCreateFunc != nil {
 		return s.AuthorizeCreateFunc(ctx, user)
 	}
@@ -145,7 +145,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeCreate(ctx context.Context, user
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeTestAll(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeTestAll", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeTestAll", []any{ctx, user}})
 	if s.AuthorizeTestAllFunc != nil {
 		return s.AuthorizeTestAllFunc(ctx, user)
 	}
@@ -153,7 +153,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeTestAll(ctx context.Context, use
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeTest(ctx context.Context, user identity.Requester, receiver T) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeTest", []interface{}{ctx, user, receiver}})
+	s.Calls = append(s.Calls, Call{"AuthorizeTest", []any{ctx, user, receiver}})
 	if s.AuthorizeTestFunc != nil {
 		return s.AuthorizeTestFunc(ctx, user, receiver)
 	}
@@ -161,7 +161,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeTest(ctx context.Context, user i
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeTestByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeTestByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeTestByUID", []any{ctx, user, uid}})
 	if s.AuthorizeTestByUIDFunc != nil {
 		return s.AuthorizeTestByUIDFunc(ctx, user, uid)
 	}
@@ -169,7 +169,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeTestByUID(ctx context.Context, u
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeTestNew(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeTestNew", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeTestNew", []any{ctx, user}})
 	if s.AuthorizeTestNewFunc != nil {
 		return s.AuthorizeTestNewFunc(ctx, user)
 	}
@@ -177,7 +177,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeTestNew(ctx context.Context, use
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeDeleteByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeDeleteByUID", []any{ctx, user, uid}})
 	if s.AuthorizeDeleteByUIDFunc != nil {
 		return s.AuthorizeDeleteByUIDFunc(ctx, user, uid)
 	}
@@ -185,7 +185,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeDeleteByUID(ctx context.Context,
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeReadByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeReadByUID", []any{ctx, user, uid}})
 	if s.AuthorizeReadByUIDFunc != nil {
 		return s.AuthorizeReadByUIDFunc(ctx, user, uid)
 	}
@@ -193,7 +193,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeReadByUID(ctx context.Context, u
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeUpdateByUID", []interface{}{ctx, user, uid}})
+	s.Calls = append(s.Calls, Call{"AuthorizeUpdateByUID", []any{ctx, user, uid}})
 	if s.AuthorizeUpdateByUIDFunc != nil {
 		return s.AuthorizeUpdateByUIDFunc(ctx, user, uid)
 	}
@@ -201,7 +201,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeUpdateByUID(ctx context.Context,
 }
 
 func (s *FakeReceiverAccessService[T]) AuthorizeReadSome(ctx context.Context, user identity.Requester) error {
-	s.Calls = append(s.Calls, Call{"AuthorizeReadSome", []interface{}{ctx, user}})
+	s.Calls = append(s.Calls, Call{"AuthorizeReadSome", []any{ctx, user}})
 	if s.AuthorizeReadSomeFunc != nil {
 		return s.AuthorizeReadSomeFunc(ctx, user)
 	}
@@ -209,7 +209,7 @@ func (s *FakeReceiverAccessService[T]) AuthorizeReadSome(ctx context.Context, us
 }
 
 func (s *FakeReceiverAccessService[T]) Access(ctx context.Context, user identity.Requester, receivers ...T) (map[string]models.ReceiverPermissionSet, error) {
-	s.Calls = append(s.Calls, Call{"Access", []interface{}{ctx, user, receivers}})
+	s.Calls = append(s.Calls, Call{"Access", []any{ctx, user, receivers}})
 	if s.AccessFunc != nil {
 		return s.AccessFunc(ctx, user, receivers...)
 	}

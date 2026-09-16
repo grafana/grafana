@@ -111,7 +111,7 @@ var GeneralGMSError = errutil.NewBase(
 // MakeGeneralGMSError is for errors returned from the GMS engine that we have not make a more specific error for.
 func MakeGeneralGMSError(err *GoMySQLServerError, refID string) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 		},
 		Error: err,
@@ -131,7 +131,7 @@ var InputLimitExceededError = errutil.NewBase(
 
 func MakeInputLimitExceededError(refID string, inputLimit int64) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":      refID,
 			"inputLimit": inputLimit,
 		},
@@ -156,7 +156,7 @@ func MakeDuplicateStringColumnError(examples []string) CategorizedError {
 	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
 
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"examples": exampleStr,
 			"count":    len(examples),
 		},
@@ -189,7 +189,7 @@ var TimeoutError = errutil.NewBase(
 // MakeTimeOutError creates an error for when a query times out because it took longer that the configured timeout.
 func MakeTimeOutError(err error, refID string, timeout time.Duration) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":   refID,
 			"timeout": timeout.String(),
 		},
@@ -213,7 +213,7 @@ var CancelError = errutil.NewBase(
 // Users won't see this error in the browser, rather an empty response when the browser cancels the connection.
 func MakeCancelError(err error, refID string) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 		},
 
@@ -236,7 +236,7 @@ var TableNotFoundError = errutil.NewBase(
 // does not exist.
 func MakeTableNotFoundError(refID, table string) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 			"table": table,
 		},
@@ -258,7 +258,7 @@ var DependencyError = errutil.NewBase(
 
 func MakeSQLDependencyError(refID, depRefID string) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":    refID,
 			"depRefId": depRefID,
 		},
@@ -284,7 +284,7 @@ func MakeInputConvertError(err error, refID string, forRefIDs map[string]struct{
 		forRefIdsSlice = append(forRefIdsSlice, k)
 	}
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":    refID,
 			"forRefID": forRefIdsSlice,
 			"dsType":   dsType,
@@ -308,7 +308,7 @@ var ErrEmptySQLQuery = errutil.NewBase(
 // does not exist.
 func MakeErrEmptyQuery(refID string) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 		},
 
@@ -329,7 +329,7 @@ var ErrInvalidQuery = errutil.NewBase(
 
 func MakeErrInvalidQuery(refID string, err error) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 			"error": err.Error(),
 		},
@@ -356,7 +356,7 @@ func MakeBlockedNodeOrFuncError(refID, token string, isFunction bool) Categorize
 		tokenType = "function"
 	}
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":     refID,
 			"token":     token,
 			"tokenType": tokenType,
@@ -380,7 +380,7 @@ var ColumnNotFoundError = errutil.NewBase(
 
 func MakeColumnNotFoundError(refID string, err error) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 		},
 
@@ -401,7 +401,7 @@ var QueryTooLongError = errutil.NewBase(
 
 func MakeQueryTooLongError(refID string, queryLengthLimit int64) CategorizedError {
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":            refID,
 			"queryLengthLimit": queryLengthLimit,
 		},

@@ -41,7 +41,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should skip non-create/update operations",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id": float64(123),
 					},
 				},
@@ -53,7 +53,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v0 should extract id and set as label",
 			inputObj: &dashv0.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id": float64(123),
 					},
 				},
@@ -65,7 +65,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v0 should not fail with invalid schema",
 			inputObj: &dashv0.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":       float64(123),
 						"revision": "revision-is-a-number",
 					},
@@ -78,7 +78,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should fail with invalid schema",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":       float64(123),
 						"revision": "revision-is-a-number",
 					},
@@ -91,7 +91,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should not fail with invalid schema and FieldValidationIgnore is set",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":       float64(123),
 						"revision": "revision-is-a-number",
 					},
@@ -106,7 +106,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should migrate dashboard to the latest version, if possible, and set as label",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":            float64(456),
 						"schemaVersion": schemaversion.MIN_VERSION,
 					},
@@ -120,7 +120,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should error mutation hook if migration fails",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":            float64(456),
 						"schemaVersion": schemaversion.MIN_VERSION - 1,
 					},
@@ -133,7 +133,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should not error mutation hook if migration fails and FieldValidationIgnore is set",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"id":            float64(456),
 						"schemaVersion": schemaversion.MIN_VERSION - 1,
 					},
@@ -168,11 +168,11 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v0 should strip BOMs from dashboard spec",
 			inputObj: &dashv0.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"title":       "\ufeffDashboard Title",
 						"description": "Description\ufeffwith BOM",
-						"panels": []interface{}{
-							map[string]interface{}{
+						"panels": []any{
+							map[string]any{
 								"title": "\ufeffPanel 1",
 								"type":  "graph",
 							},
@@ -190,12 +190,12 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v1 should strip BOMs from dashboard spec",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"title":         "\ufeffDashboard Title",
 						"description":   "Description\ufeffwith BOM",
 						"schemaVersion": schemaversion.LATEST_VERSION,
-						"panels": []interface{}{
-							map[string]interface{}{
+						"panels": []any{
+							map[string]any{
 								"title": "\ufeffPanel 1",
 								"type":  "graph",
 							},
@@ -239,7 +239,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "v0 should strip BOMs during UPDATE operation (simulating PATCH)",
 			inputObj: &dashv0.Dashboard{
 				Spec: common.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"title":       "\ufeffDashboard Title",
 						"description": "Description\ufeffwith BOM",
 					},
@@ -363,10 +363,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 						require.NotContains(t, description, "\ufeff", "description should not contain BOMs")
 
 						if tt.expectedPanelTitle != "" {
-							panels, ok := v.Spec.Object["panels"].([]interface{})
+							panels, ok := v.Spec.Object["panels"].([]any)
 							require.True(t, ok, "panels should be a slice")
 							require.NotEmpty(t, panels, "panels should not be empty")
-							panel, ok := panels[0].(map[string]interface{})
+							panel, ok := panels[0].(map[string]any)
 							require.True(t, ok, "panel should be a map")
 							panelTitle, _ := panel["title"].(string)
 							require.Equal(t, tt.expectedPanelTitle, panelTitle, "panel title should have BOMs stripped")
@@ -391,10 +391,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 						require.NotContains(t, description, "\ufeff", "description should not contain BOMs")
 
 						if tt.expectedPanelTitle != "" {
-							panels, ok := v.Spec.Object["panels"].([]interface{})
+							panels, ok := v.Spec.Object["panels"].([]any)
 							require.True(t, ok, "panels should be a slice")
 							require.NotEmpty(t, panels, "panels should not be empty")
-							panel, ok := panels[0].(map[string]interface{})
+							panel, ok := panels[0].(map[string]any)
 							require.True(t, ok, "panel should be a map")
 							panelTitle, _ := panel["title"].(string)
 							require.Equal(t, tt.expectedPanelTitle, panelTitle, "panel title should have BOMs stripped")

@@ -728,7 +728,7 @@ func (h *ProvisioningTestHelper) logRepositoryFiles(t *testing.T, repoName strin
 }
 
 // logRepositoryObject recursively logs repository file structure from API response
-func (h *ProvisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]interface{}, prefix string, currentPath string) {
+func (h *ProvisioningTestHelper) logRepositoryObject(t *testing.T, obj map[string]any, prefix string, currentPath string) {
 	t.Helper()
 
 	if obj == nil {
@@ -751,15 +751,15 @@ func (h *ProvisioningTestHelper) logRepositoryObject(t *testing.T, obj map[strin
 		}
 
 		switch v := value.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			t.Logf("%s├── %s/", prefix, key)
 			h.logRepositoryObject(t, v, prefix+"  ", newPath)
-		case []interface{}:
+		case []any:
 			// Handle lists (like items array)
 			if key == "items" && len(v) > 0 {
 				t.Logf("%s%d items:", prefix, len(v))
 				for i, item := range v {
-					if itemMap, ok := item.(map[string]interface{}); ok {
+					if itemMap, ok := item.(map[string]any); ok {
 						// Try to get the actual file path from the item
 						if pathVal, exists := itemMap["path"]; exists {
 							t.Logf("%s├── %v", prefix, pathVal)
@@ -1940,7 +1940,7 @@ func (e *SharedEnv) RunTestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func MustNestedString(obj map[string]interface{}, fields ...string) string {
+func MustNestedString(obj map[string]any, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1948,7 +1948,7 @@ func MustNestedString(obj map[string]interface{}, fields ...string) string {
 	return v
 }
 
-func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+func mustNestedBool(obj map[string]any, fields ...string) (bool, bool) {
 	v, found, err := unstructured.NestedBool(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1957,7 +1957,7 @@ func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
 	return v, found
 }
 
-func MustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
+func MustNestedStringSlice(obj map[string]any, fields ...string) []string {
 	v, _, err := unstructured.NestedStringSlice(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1965,7 +1965,7 @@ func MustNestedStringSlice(obj map[string]interface{}, fields ...string) []strin
 	return v
 }
 
-func mustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
+func mustNestedInt64(obj map[string]any, fields ...string) (int64, bool) {
 	v, found, err := unstructured.NestedInt64(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -2370,8 +2370,8 @@ func (h *ProvisioningTestHelper) UpdateGithubConnection(
 func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
 	t.Helper()
 
-	objectSpec := connection.Object["spec"].(map[string]interface{})
-	githubObj := objectSpec["github"].(map[string]interface{})
+	objectSpec := connection.Object["spec"].(map[string]any)
+	githubObj := objectSpec["github"].(map[string]any)
 	appID := githubObj["appID"].(string)
 	id, err := strconv.ParseInt(appID, 10, 64)
 	if err != nil {
@@ -2469,11 +2469,11 @@ func (h *ProvisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 	return nil
 }
 
-func PostHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+func PostHelper(t *testing.T, helper apis.K8sTestHelper, path string, body any, user apis.User) (map[string]any, int, error) {
 	return requestHelper(t, helper, http.MethodPost, path, body, user)
 }
 
-func PatchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+func PatchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body any, user apis.User) (map[string]any, int, error) {
 	return requestHelper(t, helper, http.MethodPatch, path, body, user)
 }
 
@@ -2492,9 +2492,9 @@ func requestHelper(
 	helper apis.K8sTestHelper,
 	method string,
 	path string,
-	body interface{},
+	body any,
 	user apis.User,
-) (map[string]interface{}, int, error) {
+) (map[string]any, int, error) {
 	bodyJSON, err := json.Marshal(body)
 	require.NoError(t, err)
 
@@ -2507,7 +2507,7 @@ func requestHelper(
 	}, &struct{}{})
 
 	if resp.Response.StatusCode != http.StatusOK {
-		res := map[string]interface{}{}
+		res := map[string]any{}
 		err := json.Unmarshal(resp.Body, &res)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
@@ -2516,7 +2516,7 @@ func requestHelper(
 		return res, resp.Response.StatusCode, fmt.Errorf("failure when making request: %s", resp.Response.Status)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	err = json.Unmarshal(resp.Body, &result)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
@@ -2983,7 +2983,7 @@ func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.
 
 // DashboardJSON generates a valid dashboard JSON payload for testing.
 func DashboardJSON(uid, title string, version int) []byte {
-	dashboard := map[string]interface{}{
+	dashboard := map[string]any{
 		"uid":           uid,
 		"title":         title,
 		"tags":          []string{},
@@ -2991,7 +2991,7 @@ func DashboardJSON(uid, title string, version int) []byte {
 		"schemaVersion": 39,
 		"version":       version,
 		"refresh":       "",
-		"panels":        []interface{}{},
+		"panels":        []any{},
 	}
 	data, _ := json.MarshalIndent(dashboard, "", "\t")
 	return data
@@ -3004,7 +3004,7 @@ func DashboardJSON(uid, title string, version int) []byte {
 // exercise the action-specific fallback ("Create <name>" / "Update <name>"
 // / "Delete <name>").
 func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string) *unstructured.Unstructured {
-	annotations := map[string]interface{}{
+	annotations := map[string]any{
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 		utils.AnnoKeyManagerIdentity: repoName,
 		utils.AnnoKeySourcePath:      sourcePath,
@@ -3013,14 +3013,14 @@ func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string)
 		annotations[utils.AnnoKeyMessage] = message
 	}
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": apiVersion,
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":        name,
 				"annotations": annotations,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":         name,
 				"schemaVersion": 41,
 			},
@@ -3033,21 +3033,21 @@ func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string)
 // claimed. A generated name is used so multiple folders can coexist; pass a
 // non-empty parentUID to nest the folder beneath another.
 func NewUnmanagedFolder(title, parentUID string) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"generateName": "unmanaged-folder-",
 		"namespace":    "default",
 	}
 	if parentUID != "" {
-		metadata["annotations"] = map[string]interface{}{
+		metadata["annotations"] = map[string]any{
 			utils.AnnoKeyFolder: parentUID,
 		}
 	}
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata":   metadata,
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title": title,
 			},
 		},
@@ -3058,21 +3058,21 @@ func NewUnmanagedFolder(title, parentUID string) *unstructured.Unstructured {
 // annotations. A generated name is used; pass a non-empty folderUID to place it
 // inside a folder.
 func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Unstructured {
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"generateName": "unmanaged-dash-",
 		"namespace":    "default",
 	}
 	if folderUID != "" {
-		metadata["annotations"] = map[string]interface{}{
+		metadata["annotations"] = map[string]any{
 			utils.AnnoKeyFolder: folderUID,
 		}
 	}
 	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": apiVersion,
 			"kind":       "Dashboard",
 			"metadata":   metadata,
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":         title,
 				"schemaVersion": 41,
 			},
@@ -3086,7 +3086,7 @@ func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Un
 func (h *ProvisioningTestHelper) CreateUnmanagedFolderWithName(t *testing.T, name, title, parentUID string) {
 	t.Helper()
 	folder := NewUnmanagedFolder(title, parentUID)
-	metadata := folder.Object["metadata"].(map[string]interface{})
+	metadata := folder.Object["metadata"].(map[string]any)
 	delete(metadata, "generateName")
 	metadata["name"] = name
 	_, err := h.Folders.Resource.Create(t.Context(), folder, metav1.CreateOptions{})
@@ -3489,7 +3489,7 @@ func (h *GitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
 
 		ready := false
 		for _, cond := range conditions {
-			condMap := cond.(map[string]interface{})
+			condMap := cond.(map[string]any)
 			condType, _ := condMap["type"].(string)
 			condStatus, _ := condMap["status"].(string)
 			condReason, _ := condMap["reason"].(string)
@@ -3513,9 +3513,9 @@ func (h *GitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
 func (h *GitTestHelper) SyncAndWait(t *testing.T, repoName string) {
 	t.Helper()
 
-	jobSpec := map[string]interface{}{
+	jobSpec := map[string]any{
 		"action": "pull",
-		"pull":   map[string]interface{}{},
+		"pull":   map[string]any{},
 	}
 
 	jobJSON, err := json.Marshal(jobSpec)
@@ -3708,7 +3708,7 @@ func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
 // RESTDo performs a REST request against the provisioning API and returns the
 // response as an unstructured map. The subpath is appended to
 // /apis/provisioning.grafana.app/<version>/namespaces/<namespace>/.
-func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]interface{}) (map[string]interface{}, error) {
+func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ...map[string]any) (map[string]any, error) {
 	ns := h.Namespace
 	if ns == "" {
 		ns = "default"
@@ -3734,7 +3734,7 @@ func (h *ProvisioningTestHelper) RESTDo(method, version, subpath string, body ..
 		return nil, err
 	}
 
-	var obj map[string]interface{}
+	var obj map[string]any
 	if err := json.Unmarshal(raw, &obj); err != nil {
 		return nil, err
 	}

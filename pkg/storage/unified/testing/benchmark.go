@@ -401,7 +401,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 					},
 					Title: fmt.Sprintf("Document %d", jobID),
 					Tags:  []string{"tag1", "tag2"},
-					Fields: map[string]interface{}{
+					Fields: map[string]any{
 						"field1": jobID,
 						"field2": fmt.Sprintf("value-%d", jobID),
 					},

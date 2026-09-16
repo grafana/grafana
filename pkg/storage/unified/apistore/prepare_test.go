@@ -347,7 +347,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 				Name: "test",
 			},
 			Spec: dashv1.DashboardSpec{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"hello": "world",
 				},
 			},
@@ -1078,12 +1078,12 @@ func newCapCodec(t *testing.T, versions ...schema.GroupVersion) runtime.Codec {
 	s.AddKnownTypeWithName(versions[0].WithKind("Widget"), &capWidgetV1{})
 	s.AddKnownTypeWithName(versions[1].WithKind("Widget"), &capWidgetV2{})
 
-	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV1)(nil), func(a, b interface{}, _ conversion.Scope) error {
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV1)(nil), func(a, b any, _ conversion.Scope) error {
 		in, out := a.(*capWidget), b.(*capWidgetV1)
 		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
 		return nil
 	}))
-	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV2)(nil), func(a, b interface{}, _ conversion.Scope) error {
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV2)(nil), func(a, b any, _ conversion.Scope) error {
 		in, out := a.(*capWidget), b.(*capWidgetV2)
 		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
 		return nil

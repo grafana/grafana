@@ -47,10 +47,10 @@ func (r *dashboardResolver) getID(ctx context.Context, orgID int64, uid string) 
 		return toQueryResult(id, nil)
 	}
 
-	id, err, _ := r.singleflight.Do(key, func() (interface{}, error) {
+	id, err, _ := r.singleflight.Do(key, func() (any, error) {
 		r.log.Debug("Dashboard cache miss, querying dashboards", "dashboardUID", uid)
 
-		var result interface{}
+		var result any
 		query := &dashboards.GetDashboardQuery{
 			UID:   uid,
 			OrgID: orgID,
@@ -87,7 +87,7 @@ func maxDuration(a, b time.Duration) time.Duration {
 	return b
 }
 
-func toQueryResult(cacheVal interface{}, err error) (int64, error) {
+func toQueryResult(cacheVal any, err error) (int64, error) {
 	if err != nil {
 		return 0, err
 	}

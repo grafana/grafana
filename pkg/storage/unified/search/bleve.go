@@ -1402,7 +1402,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 		return nil, "", "", fmt.Errorf("copying index to filesystem: %w", err)
 	}
 
-	fileIndex, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	fileIndex, err := bleve.OpenUsing(indexDir, map[string]any{"bolt_timeout": boltTimeout})
 	if err != nil {
 		return nil, "", "", fmt.Errorf("opening promoted filesystem index: %w", err)
 	}
@@ -1695,7 +1695,7 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 		indexName := ent.Name()
 		indexDir := filepath.Join(resourceDir, indexName)
-		idx, err := bleve.OpenUsing(indexDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+		idx, err := bleve.OpenUsing(indexDir, map[string]any{"bolt_timeout": boltTimeout})
 		if err != nil {
 			// On timeout, the file probably is locked by another process.
 			// This indicates a setup issue that should be fixed rather than worked around by creating a new index file.

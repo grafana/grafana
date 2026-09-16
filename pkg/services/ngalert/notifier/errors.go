@@ -23,7 +23,7 @@ func makeProtectedFieldsAuthzError(err error, diff map[string][]schema.Integrati
 		return err
 	}
 	if authzErr.PublicPayload == nil {
-		authzErr.PublicPayload = map[string]interface{}{}
+		authzErr.PublicPayload = map[string]any{}
 	}
 	fields := make(map[string][]string, len(diff))
 	for field, paths := range diff {

@@ -113,7 +113,7 @@ func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, er
 	return user, nil
 }
 
-func UnaryClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func UnaryClientInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	ctx, err := wrapContext(ctx)
 	if err != nil {
 		return err

@@ -48,7 +48,7 @@ func (r *subQueryREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
 }
 
-func (r *subQueryREST) ProducesObject(verb string) interface{} {
+func (r *subQueryREST) ProducesObject(verb string) any {
 	return &dsV0.QueryDataResponse{}
 }
 

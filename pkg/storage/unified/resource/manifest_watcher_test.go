@@ -68,23 +68,23 @@ func TestManifestWatcher_AuthUsesAuthorizationHeader(t *testing.T) {
 // testAppManifestObj builds an unstructured AppManifest (v1alpha2) with one
 // version declaring a single kind and the given search fields.
 func testAppManifestObj(name, appName, group, kind string, searchFields ...string) *unstructured.Unstructured {
-	sfs := make([]interface{}, 0, len(searchFields))
+	sfs := make([]any, 0, len(searchFields))
 	for _, f := range searchFields {
-		sfs = append(sfs, map[string]interface{}{"name": f, "type": "string"})
+		sfs = append(sfs, map[string]any{"name": f, "type": "string"})
 	}
-	return &unstructured.Unstructured{Object: map[string]interface{}{
+	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "apps.grafana.app/v1alpha2",
 		"kind":       "AppManifest",
-		"metadata":   map[string]interface{}{"name": name},
-		"spec": map[string]interface{}{
+		"metadata":   map[string]any{"name": name},
+		"spec": map[string]any{
 			"appName": appName,
 			"group":   group,
-			"versions": []interface{}{
-				map[string]interface{}{
+			"versions": []any{
+				map[string]any{
 					"name":   "v1",
 					"served": true,
-					"kinds": []interface{}{
-						map[string]interface{}{
+					"kinds": []any{
+						map[string]any{
 							"kind":         kind,
 							"plural":       strings.ToLower(kind) + "s",
 							"searchFields": sfs,
@@ -236,10 +236,10 @@ func TestManifestWatcher_KeepsPreviousManifestOnParseFailure(t *testing.T) {
 
 	// The same object comes back broken (no spec). Because we already know it,
 	// the previous version is kept rather than dropped.
-	broken := unstructured.Unstructured{Object: map[string]interface{}{
+	broken := unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "apps.grafana.app/v1alpha2",
 		"kind":       "AppManifest",
-		"metadata":   map[string]interface{}{"name": "m-dashboards"},
+		"metadata":   map[string]any{"name": "m-dashboards"},
 	}}
 	client.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, &unstructured.UnstructuredList{Items: []unstructured.Unstructured{broken}}, nil
@@ -270,10 +270,10 @@ func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
 	require.Equal(t, 1, calls)
 
 	// "B" now fails to convert; keep-previous must retain it via the current key.
-	broken := unstructured.Unstructured{Object: map[string]interface{}{
+	broken := unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "apps.grafana.app/v1alpha2",
 		"kind":       "AppManifest",
-		"metadata":   map[string]interface{}{"name": "B"},
+		"metadata":   map[string]any{"name": "B"},
 	}}
 	client.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, &unstructured.UnstructuredList{Items: []unstructured.Unstructured{broken}}, nil
@@ -283,10 +283,10 @@ func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
 }
 
 func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
-	bad := &unstructured.Unstructured{Object: map[string]interface{}{
+	bad := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "apps.grafana.app/v1alpha2",
 		"kind":       "AppManifest",
-		"metadata":   map[string]interface{}{"name": "m-bad"},
+		"metadata":   map[string]any{"name": "m-bad"},
 		// no spec
 	}}
 	client := fakeManifestClient(

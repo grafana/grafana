@@ -664,7 +664,7 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		key, ok := models.RuleKeyFromContext(ctx)
 		if !ok {
 			return nil, false

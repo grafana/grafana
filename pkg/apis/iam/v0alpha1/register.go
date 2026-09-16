@@ -29,12 +29,12 @@ var SSOSettingResourceInfo = utils.NewResourceInfo(
 			{Name: "Enabled", Type: "boolean"},
 			{Name: "Created At", Type: "string", Format: "date"},
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			m, ok := obj.(*SSOSetting)
 			if !ok {
 				return nil, fmt.Errorf("expected sso setting")
 			}
-			return []interface{}{
+			return []any{
 				m.Name,
 				m.Spec.Source,
 				m.Spec.Settings.GetNestedBool("enabled"),

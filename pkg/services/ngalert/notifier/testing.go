@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -177,7 +178,7 @@ func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *mod
 	}
 
 	// Iterate backwards to find the latest config first.
-	for i := len(orgConfigs) - 1; i >= 0; i-- {
+	for _, orgConfig := range slices.Backward(orgConfigs) {
 		for _, config := range orgConfigs {
 			if config.ConfigurationHash == cmd.ConfigurationHash {
 				config.LastApplied = time.Now().UTC().Unix()
@@ -422,7 +423,7 @@ func decodeFlushLogState(r io.Reader) (flushLogState, error) {
 
 type call struct {
 	Method string
-	Args   []interface{}
+	Args   []any
 }
 
 type fakeAlertRuleNotificationStore struct {
@@ -435,7 +436,7 @@ type fakeAlertRuleNotificationStore struct {
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	call := call{
 		Method: "RenameReceiverInNotificationSettings",
-		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
+		Args:   []any{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
 	}
 	f.Calls = append(f.Calls, call)
 
@@ -450,7 +451,7 @@ func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ct
 func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
 	call := call{
 		Method: "ListContactPointRoutings",
-		Args:   []interface{}{ctx, q},
+		Args:   []any{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 

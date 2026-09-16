@@ -44,7 +44,7 @@ func (t DBTime) String() string {
 	return t.Format(t.wireLayout())
 }
 
-func (t *DBTime) Scan(value interface{}) error {
+func (t *DBTime) Scan(value any) error {
 	if value == nil {
 		t.Time = time.Time{}
 		return nil

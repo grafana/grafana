@@ -90,13 +90,13 @@ func TestIntegrationPlugins(t *testing.T) {
 		created, err := client.Resource.Create(ctx, plugin, metav1.CreateOptions{})
 		require.NoError(t, err)
 		updatedSpec := created.DeepCopy()
-		updatedSpec.Object["spec"] = map[string]interface{}{
+		updatedSpec.Object["spec"] = map[string]any{
 			"version": "2.0.0",
 		}
 		updated, err := client.Resource.Update(ctx, updatedSpec, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
-		require.Equal(t, "2.0.0", updated.Object["spec"].(map[string]interface{})["version"])
+		require.Equal(t, "2.0.0", updated.Object["spec"].(map[string]any)["version"])
 	})
 
 	t.Run("list plugin installs", func(t *testing.T) {

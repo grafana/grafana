@@ -189,20 +189,20 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 	// same sourcePath. This simulates a corrupt state left by a previous
 	// Grafana version.
 	orphanObj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v1beta1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      "orphan-dash",
 				"namespace": "default",
-				"annotations": map[string]interface{}{
+				"annotations": map[string]any{
 					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 					utils.AnnoKeyManagerIdentity: repoName,
 					utils.AnnoKeySourcePath:      "dashboard.json",
 					utils.AnnoKeySourceChecksum:  "stale-checksum",
 				},
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"title":         "Orphan Dashboard",
 				"schemaVersion": 41,
 			},

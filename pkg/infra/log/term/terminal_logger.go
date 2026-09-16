@@ -43,7 +43,7 @@ func NewTerminalLogger(w io.Writer) gokitlog.Logger {
 	return &terminalLogger{w}
 }
 
-func (l terminalLogger) Log(keyvals ...interface{}) error {
+func (l terminalLogger) Log(keyvals ...any) error {
 	r := getRecord(keyvals)
 
 	b := &bytes.Buffer{}
@@ -73,17 +73,17 @@ type record struct {
 	time    time.Time
 	level   level.Value
 	color   int
-	keyvals []interface{}
+	keyvals []any
 }
 
-func getRecord(keyvals ...interface{}) *record {
+func getRecord(keyvals ...any) *record {
 	r := &record{
 		color:   0,
 		level:   level.InfoValue(),
-		keyvals: []interface{}{},
+		keyvals: []any{},
 	}
 
-	keyvals = keyvals[0].([]interface{})
+	keyvals = keyvals[0].([]any)
 
 	if len(keyvals) == 0 {
 		return nil
@@ -156,7 +156,7 @@ func getRecord(keyvals ...interface{}) *record {
 	return r
 }
 
-func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
+func logfmt(buf *bytes.Buffer, ctx []any, color int) {
 	for i := 0; i < len(ctx); i += 2 {
 		if i != 0 {
 			buf.WriteByte(' ')
@@ -181,7 +181,7 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 	buf.WriteByte('\n')
 }
 
-func formatShared(value interface{}) (result interface{}) {
+func formatShared(value any) (result any) {
 	defer func() {
 		if err := recover(); err != nil {
 			if v := reflect.ValueOf(value); v.Kind() == reflect.Pointer && v.IsNil() {
@@ -208,7 +208,7 @@ func formatShared(value interface{}) (result interface{}) {
 }
 
 // formatValue formats a value for serialization
-func formatLogfmtValue(value interface{}) string {
+func formatLogfmtValue(value any) string {
 	if value == nil {
 		return "nil"
 	}
@@ -237,7 +237,7 @@ func formatLogfmtValue(value interface{}) string {
 }
 
 var stringBufPool = sync.Pool{
-	New: func() interface{} { return new(bytes.Buffer) },
+	New: func() any { return new(bytes.Buffer) },
 }
 
 func escapeString(s string) string {

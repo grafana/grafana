@@ -102,7 +102,7 @@ func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Re
 	config := runtimeconfig.Config{
 		ReloadPeriod: opts.ReloadPeriod,
 		LoadPath:     []string{opts.FilePath},
-		Loader: func(r io.Reader) (interface{}, error) {
+		Loader: func(r io.Reader) (any, error) {
 			var raw struct {
 				Overrides map[string]NamespaceOverrides `yaml:"overrides"`
 			}

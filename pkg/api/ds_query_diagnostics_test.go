@@ -190,7 +190,7 @@ func diagHARResponse() *backend.QueryDataResponse {
 	r := backend.NewQueryDataResponse()
 	r.Responses["A"] = backend.DataResponse{Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1}))}}
 	capture := data.NewFrame("")
-	capture.Meta = &data.FrameMeta{Custom: map[string]interface{}{
+	capture.Meta = &data.FrameMeta{Custom: map[string]any{
 		"har": `{"log":{"entries":[{"request":{"method":"GET","url":"http://x/api"},"response":{"status":200}}]}}`,
 	}}
 	r.Responses["__har__A"] = backend.DataResponse{Frames: data.Frames{capture}}
@@ -380,7 +380,7 @@ func TestQueryDiagnostics_externalPluginSwallowedError_bundlesIt(t *testing.T) {
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 			r := diagHARResponse()
-			r.Responses["__har__A"].Frames[0].Meta.Custom.(map[string]interface{})["queryError"] = "dial tcp: connection refused"
+			r.Responses["__har__A"].Frames[0].Meta.Custom.(map[string]any)["queryError"] = "dial tcp: connection refused"
 			return r, nil
 		})
 	hs := &HTTPServer{queryDataService: fakeQuery}

@@ -44,7 +44,7 @@ import "reflect"
 // See more about this Go gotcha at:
 // https://go.dev/doc/faq#nil_error
 // https://medium.com/@moksh.9/go-gotcha-when-nil-isnt-really-nil-ddf632720001
-func IsInterfaceNil(i interface{}) bool {
+func IsInterfaceNil(i any) bool {
 	iv := reflect.ValueOf(i)
 	if !iv.IsValid() {
 		return true

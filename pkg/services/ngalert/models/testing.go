@@ -1574,7 +1574,7 @@ func (n IntegrationMutators) WithInvalidConfig(integrationType schema.Integratio
 		if !ok {
 			panic(fmt.Sprintf("unknown integration type: %s", integrationType))
 		}
-		c.Settings = map[string]interface{}{}
+		c.Settings = map[string]any{}
 		c.SecureSettings = map[string]string{}
 		if integrationType == webex.Type {
 			// Webex passes validation without any settings but should fail with an unparsable URL.

@@ -265,17 +265,17 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 
 	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      name,
 					"namespace": "default",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/managerId": managerIdentity,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -367,12 +367,12 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				obj := &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
+					Object: map[string]any{
+						"metadata": map[string]any{
 							"name":        name,
-							"annotations": map[string]interface{}{},
+							"annotations": map[string]any{},
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"title": "Some Title",
 						},
 					},
@@ -696,15 +696,15 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 
 	unmanagedFolder := func(name, title string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":        name,
 					"namespace":   "default",
-					"annotations": map[string]interface{}{},
+					"annotations": map[string]any{},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -1223,22 +1223,22 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 	ctx := context.Background()
 
 	managedFolder := func(name, title, managerIdentity, sourcePath string) *unstructured.Unstructured {
-		annotations := map[string]interface{}{
+		annotations := map[string]any{
 			"grafana.app/managerId": managerIdentity,
 		}
 		if sourcePath != "" {
 			annotations["grafana.app/sourcePath"] = sourcePath
 		}
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":        name,
 					"namespace":   "default",
 					"annotations": annotations,
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -1565,7 +1565,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 	}
 
 	managedFolderWithChecksum := func(name, title, managerIdentity, sourcePath, checksum string) *unstructured.Unstructured {
-		annotations := map[string]interface{}{
+		annotations := map[string]any{
 			"grafana.app/managerId": managerIdentity,
 		}
 		if sourcePath != "" {
@@ -1575,15 +1575,15 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			annotations["grafana.app/sourceChecksum"] = checksum
 		}
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":        name,
 					"namespace":   "default",
 					"annotations": annotations,
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -1738,7 +1738,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 	}
 
 	managedFolderWithParent := func(name, title, managerIdentity, parent, sourcePath string) *unstructured.Unstructured {
-		annotations := map[string]interface{}{
+		annotations := map[string]any{
 			"grafana.app/managerId": managerIdentity,
 		}
 		if parent != "" {
@@ -1748,15 +1748,15 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			annotations["grafana.app/sourcePath"] = sourcePath
 		}
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":        name,
 					"namespace":   "default",
 					"annotations": annotations,
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -1970,17 +1970,17 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 
 	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      name,
 					"namespace": "default",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/managerId": managerIdentity,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},
@@ -2332,8 +2332,8 @@ func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
 					Return(&repository.FileInfo{Data: folderJSON(metadataUID, folder.uid), Hash: folder.uid + "-hash"}, nil).Maybe()
 
 				tree.Add(Folder{ID: folder.uid, Title: folder.uid, Path: folder.oldPath, MetadataHash: folder.uid + "-hash"}, folder.parent)
-				obj := &unstructured.Unstructured{Object: map[string]interface{}{
-					"spec": map[string]interface{}{"title": folder.uid},
+				obj := &unstructured.Unstructured{Object: map[string]any{
+					"spec": map[string]any{"title": folder.uid},
 				}}
 				obj.SetAPIVersion(FolderKind.GroupVersion().String())
 				obj.SetKind(FolderKind.Kind)
@@ -2682,19 +2682,19 @@ func TestRenameFolderPath(t *testing.T) {
 
 	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      name,
 					"namespace": "default",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/managedBy":  "repo",
 						"grafana.app/managerId":  managerIdentity,
 						"grafana.app/sourcePath": "",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": title,
 				},
 			},

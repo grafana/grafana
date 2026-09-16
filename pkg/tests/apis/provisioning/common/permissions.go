@@ -31,16 +31,16 @@ type RolePermission struct {
 // succeeds.
 func SetFolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUID string, items ...RolePermission) {
 	t.Helper()
-	entries := make([]map[string]interface{}, 0, len(items))
+	entries := make([]map[string]any, 0, len(items))
 	for _, item := range items {
-		entries = append(entries, map[string]interface{}{
+		entries = append(entries, map[string]any{
 			"role":       item.Role,
 			"permission": item.Permission,
 		})
 	}
 	_, code, err := PostHelper(t, *helper.K8sTestHelper,
 		fmt.Sprintf("/api/folders/%s/permissions", folderUID),
-		map[string]interface{}{"items": entries},
+		map[string]any{"items": entries},
 		helper.Org1.Admin)
 	require.NoError(t, err, "setting permissions on folder %q should succeed", folderUID)
 	require.Equal(t, http.StatusOK, code)
@@ -50,12 +50,12 @@ func SetFolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUI
 // mappings is identical between want and got. Entry ordering and non-role
 // fields (which may legitimately change after a move, such as internal
 // parent-folder references) are ignored.
-func RequireRolePermissionSetEqual(t *testing.T, want, got []interface{}) {
+func RequireRolePermissionSetEqual(t *testing.T, want, got []any) {
 	t.Helper()
-	extractRoleMap := func(perms []interface{}) map[string]int {
+	extractRoleMap := func(perms []any) map[string]int {
 		m := make(map[string]int)
 		for _, p := range perms {
-			entry, ok := p.(map[string]interface{})
+			entry, ok := p.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -89,7 +89,7 @@ func RequireFolderAccessible(t *testing.T, helper *ProvisioningTestHelper, folde
 // folder permissions API using admin credentials. It fails the test if the
 // request does not return 200. The entries are returned as decoded JSON objects
 // (the endpoint returns more fields than the assertions here inspect).
-func FolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUID string) []interface{} {
+func FolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUID string) []any {
 	t.Helper()
 	perms, code, err := fetchFolderPermissions(folderAddr(helper), folderUID)
 	require.NoError(t, err, "GET folder permissions for %q", folderUID)
@@ -99,7 +99,7 @@ func FolderPermissions(t *testing.T, helper *ProvisioningTestHelper, folderUID s
 
 // RequirePermissionContainsRole asserts that perms contains at least one entry
 // matching the given built-in role and numeric permission level.
-func RequirePermissionContainsRole(t *testing.T, perms []interface{}, role string, permission int) {
+func RequirePermissionContainsRole(t *testing.T, perms []any, role string, permission int) {
 	t.Helper()
 	require.Truef(t, permissionsContainRole(perms, role, permission),
 		"expected role=%q permission=%d in ACL entries; got: %v", role, permission, perms)
@@ -107,7 +107,7 @@ func RequirePermissionContainsRole(t *testing.T, perms []interface{}, role strin
 
 // RequirePermissionLacksRole asserts that perms contains NO entry matching the
 // given built-in role and numeric permission level.
-func RequirePermissionLacksRole(t *testing.T, perms []interface{}, role string, permission int) {
+func RequirePermissionLacksRole(t *testing.T, perms []any, role string, permission int) {
 	t.Helper()
 	require.Falsef(t, permissionsContainRole(perms, role, permission),
 		"did not expect role=%q permission=%d in ACL entries; got: %v", role, permission, perms)
@@ -160,7 +160,7 @@ func folderAddr(helper *ProvisioningTestHelper) string {
 
 // fetchFolderPermissions performs the raw GET against the legacy folder
 // permissions API and decodes the ACL entries.
-func fetchFolderPermissions(addr, folderUID string) ([]interface{}, int, error) {
+func fetchFolderPermissions(addr, folderUID string) ([]any, int, error) {
 	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", addr, folderUID)
 	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
@@ -170,7 +170,7 @@ func fetchFolderPermissions(addr, folderUID string) ([]interface{}, int, error) 
 	if resp.StatusCode != http.StatusOK {
 		return nil, resp.StatusCode, nil
 	}
-	var perms []interface{}
+	var perms []any
 	if err := json.NewDecoder(resp.Body).Decode(&perms); err != nil {
 		return nil, resp.StatusCode, fmt.Errorf("decode permissions response for %q: %w", folderUID, err)
 	}
@@ -179,9 +179,9 @@ func fetchFolderPermissions(addr, folderUID string) ([]interface{}, int, error) 
 
 // permissionsContainRole reports whether perms has an entry matching the given
 // built-in role and numeric permission level. JSON numbers decode as float64.
-func permissionsContainRole(perms []interface{}, role string, permission int) bool {
+func permissionsContainRole(perms []any, role string, permission int) bool {
 	for _, p := range perms {
-		entry, ok := p.(map[string]interface{})
+		entry, ok := p.(map[string]any)
 		if !ok {
 			continue
 		}

@@ -33,7 +33,7 @@ type ConnectionHealthResultWithPatchOps struct {
 	TestResults    *provisioning.TestResults
 	HealthStatus   provisioning.HealthStatus
 	ReadyCondition metav1.Condition
-	PatchOps       []map[string]interface{}
+	PatchOps       []map[string]any
 }
 
 //go:generate mockery --name=ConnectionTester --structname=MockConnectionTester --inpackage --filename connection_tester_mock.go --with-expecter
@@ -153,9 +153,9 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		return ConnectionHealthResultWithPatchOps{}, fmt.Errorf("health check failed: %w", err)
 	}
 
-	var patchOps []map[string]interface{}
+	var patchOps []map[string]any
 	if hc.hasHealthStatusChanged(conn.Status.Health, newHealthStatus) {
-		patchOps = []map[string]interface{}{{
+		patchOps = []map[string]any{{
 			"op":    "replace",
 			"path":  "/status/health",
 			"value": newHealthStatus,

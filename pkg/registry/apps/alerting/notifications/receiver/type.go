@@ -21,10 +21,10 @@ var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
 		},
-		Reader: func(obj any) ([]interface{}, error) {
+		Reader: func(obj any) ([]any, error) {
 			r, ok := obj.(*model.Receiver)
 			if ok {
-				return []interface{}{
+				return []any{
 					r.Name,
 					r.Spec.Title,
 					// r.Spec, //TODO implement formatting for Spec, same as UI?

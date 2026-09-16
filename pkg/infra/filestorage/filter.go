@@ -61,12 +61,12 @@ type radixTreePathFilter struct {
 
 func (r *radixTreePathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	denyConditions := make([]string, 0)
-	denyArgs := make([]interface{}, 0)
+	denyArgs := make([]any, 0)
 
 	allowConditions := make([]string, 0)
-	allowArgs := make([]interface{}, 0)
+	allowArgs := make([]any, 0)
 
-	r.tree.Walk(func(path string, v interface{}) bool {
+	r.tree.Walk(func(path string, v any) bool {
 		switch v.(treeValue) {
 		case treeValueAllowedPrefix:
 			allowConditions = append(allowConditions, "LOWER(PATH) LIKE ?")
@@ -113,7 +113,7 @@ func (r *radixTreePathFilter) asSQLFilter() accesscontrol.SQLFilter {
 
 func (r *radixTreePathFilter) ToString() string {
 	builder := strings.Builder{}
-	r.tree.Walk(func(s string, v interface{}) bool {
+	r.tree.Walk(func(s string, v any) bool {
 		if builder.Len() != 0 {
 			builder.WriteString("\n")
 		}
@@ -141,7 +141,7 @@ func (r *radixTreePathFilter) IsAllowed(path string) bool {
 
 	allowed := false
 	denied := false
-	r.tree.WalkPath(path, func(s string, v interface{}) bool {
+	r.tree.WalkPath(path, func(s string, v any) bool {
 		if v == treeValueDisallowedPrefix || (s == path && v == treeValueDisallowedPath) {
 			denied = true
 			return true
@@ -173,7 +173,7 @@ func createRadixTree(allowedPrefixes []string, allowedPaths []string, disallowed
 
 	for _, allowedPath := range allowedPaths {
 		isDenied := false
-		tree.WalkPath(allowedPath, func(s string, v interface{}) bool {
+		tree.WalkPath(allowedPath, func(s string, v any) bool {
 			if v == treeValueDisallowedPrefix || s == allowedPath {
 				isDenied = true
 				return true
@@ -188,7 +188,7 @@ func createRadixTree(allowedPrefixes []string, allowedPaths []string, disallowed
 
 	for _, allowedPrefix := range allowedPrefixes {
 		isDenied := false
-		tree.WalkPath(allowedPrefix, func(s string, v interface{}) bool {
+		tree.WalkPath(allowedPrefix, func(s string, v any) bool {
 			if v == treeValueDisallowedPrefix {
 				isDenied = true
 				return true
@@ -232,7 +232,7 @@ func (m allOfPathFilter) ToString() string {
 func (m allOfPathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	queries := make([]string, 0, len(m.filters))
 
-	args := make([]interface{}, 0, len(m.filters))
+	args := make([]any, 0, len(m.filters))
 	for _, filter := range m.filters {
 		sqlFilter := filter.asSQLFilter()
 		queries = append(queries, "("+sqlFilter.Where+")")

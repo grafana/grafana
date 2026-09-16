@@ -325,13 +325,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					// Rules API returns array of rule objects
-					rules := []map[string]interface{}{
+					rules := []map[string]any{
 						{
 							"type":                "pull_request",
 							"ruleset_source_type": "Repository",
 							"ruleset_source":      "test-owner/test-repo",
 							"ruleset_id":          1,
-							"parameters":          map[string]interface{}{},
+							"parameters":          map[string]any{},
 						},
 					}
 					w.WriteHeader(http.StatusOK)
@@ -377,13 +377,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					// Rules API returns non-blocking rules
-					rules := []map[string]interface{}{
+					rules := []map[string]any{
 						{
 							"type":                "required_status_checks",
 							"ruleset_source_type": "Repository",
 							"ruleset_source":      "test-owner/test-repo",
 							"ruleset_id":          2,
-							"parameters":          map[string]interface{}{},
+							"parameters":          map[string]any{},
 						},
 					}
 					w.WriteHeader(http.StatusOK)
@@ -426,13 +426,13 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					// Rules API returns pull_request rule
-					rules := []map[string]interface{}{
+					rules := []map[string]any{
 						{
 							"type":                "pull_request",
 							"ruleset_source_type": "Repository",
 							"ruleset_source":      "test-owner/test-repo",
 							"ruleset_id":          3,
-							"parameters":          map[string]interface{}{},
+							"parameters":          map[string]any{},
 						},
 					}
 					w.WriteHeader(http.StatusOK)
@@ -480,7 +480,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					// Rules API does not return disabled rulesets (empty array)
-					rules := []interface{}{}
+					rules := []any{}
 					w.WriteHeader(http.StatusOK)
 					require.NoError(t, json.NewEncoder(w).Encode(rules))
 				}),
@@ -524,7 +524,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					// Rules API returns only rules matching the queried branch (none in this case)
-					rules := []interface{}{}
+					rules := []any{}
 					w.WriteHeader(http.StatusOK)
 					require.NoError(t, json.NewEncoder(w).Encode(rules))
 				}),

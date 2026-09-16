@@ -36,7 +36,7 @@ func (r *subParentsREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *subParentsREST) ProducesObject(verb string) interface{} {
+func (r *subParentsREST) ProducesObject(verb string) any {
 	return &folders.FolderInfoList{}
 }
 

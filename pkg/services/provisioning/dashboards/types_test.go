@@ -21,14 +21,14 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      "test-dashboard-uid",
 					"namespace": "default",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})
@@ -51,13 +51,13 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "test-dashboard-uid",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})
@@ -75,14 +75,14 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      "test-dashboard-uid",
 					"namespace": "org-123",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})
@@ -101,17 +101,17 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      "test-dashboard-uid",
 					"namespace": "default",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": folderUID,
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})
@@ -128,17 +128,17 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      "test-dashboard-uid",
 					"namespace": "default",
-					"annotations": map[string]interface{}{
+					"annotations": map[string]any{
 						"grafana.app/folder": "different-folder-uid",
 					},
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})
@@ -155,14 +155,14 @@ func TestCreateDashboardJSON(t *testing.T) {
 				OrgID: 1,
 			}
 
-			dashboardJSON := simplejson.NewFromAny(map[string]interface{}{
+			dashboardJSON := simplejson.NewFromAny(map[string]any{
 				"apiVersion": "dashboard.grafana.app/v2alpha1",
 				"kind":       "Dashboard",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name":      "test-dashboard-uid",
 					"namespace": "default",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Test Dashboard",
 				},
 			})

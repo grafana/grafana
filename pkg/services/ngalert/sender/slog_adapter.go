@@ -17,9 +17,9 @@ type SlogAdapter struct {
 }
 
 // Log implements the Log method to satisfy the log.Logger interface.
-func (s *SlogAdapter) Log(keyvals ...interface{}) error {
+func (s *SlogAdapter) Log(keyvals ...any) error {
 	msg := ""
-	args := []interface{}{}
+	args := []any{}
 
 	// Extract message and attributes (customize as needed).
 	if len(keyvals) > 0 {
@@ -44,7 +44,7 @@ func (h *InfraLoggerHandler) Enabled(_ context.Context, level slog.Level) bool {
 func (h *InfraLoggerHandler) Handle(_ context.Context, record slog.Record) error {
 	// Build the log message
 	msg := record.Message
-	args := []interface{}{}
+	args := []any{}
 	record.Attrs(func(a slog.Attr) bool {
 		args = append(args, a.Key, a.Value.Any())
 		return true

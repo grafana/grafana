@@ -50,7 +50,7 @@ func (r *deleteKeyREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *deleteKeyREST) ProducesObject(verb string) interface{} {
+func (r *deleteKeyREST) ProducesObject(verb string) any {
 	return r.New()
 }
 

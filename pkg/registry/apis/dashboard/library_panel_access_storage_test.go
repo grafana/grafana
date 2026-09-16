@@ -172,21 +172,21 @@ func (s *recordingLibraryPanelStorage) Delete(context.Context, string, rest.Vali
 }
 
 func testLibraryPanel(name, folder string) *unstructured.Unstructured {
-	return &unstructured.Unstructured{Object: map[string]interface{}{
+	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "dashboard.grafana.app/v0alpha1",
 		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": name,
-			"annotations": map[string]interface{}{
+			"annotations": map[string]any{
 				utils.AnnoKeyFolder: folder,
 			},
 		},
-		"spec": map[string]interface{}{
+		"spec": map[string]any{
 			"type":        "text",
 			"title":       "Panel",
 			"panelTitle":  "Panel",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
+			"options":     map[string]any{},
+			"fieldConfig": map[string]any{},
 		},
 	}}
 }

@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 
 	var dashboardInstanceCount int64
 	for _, instanceStat := range instanceStats {
-		stat := instanceStat.(map[string]interface{})
+		stat := instanceStat.(map[string]any)
 		group, _, _ := unstructured.NestedString(stat, "group")
 		resource, _, _ := unstructured.NestedString(stat, "resource")
 		if group == "dashboard.grafana.app" && resource == "dashboards" {
@@ -76,14 +76,14 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 	var totalManagedDashboards int64
 	foundRepo := false
 	for _, manager := range managedStats {
-		managerObj := manager.(map[string]interface{})
+		managerObj := manager.(map[string]any)
 		identity, _, _ := unstructured.NestedString(managerObj, "id")
 
 		if identity == repo {
 			foundRepo = true
 			stats, _, _ := unstructured.NestedSlice(managerObj, "stats")
 			for _, statObj := range stats {
-				stat := statObj.(map[string]interface{})
+				stat := statObj.(map[string]any)
 				group, _, _ := unstructured.NestedString(stat, "group")
 				resource, _, _ := unstructured.NestedString(stat, "resource")
 				if group == "dashboard.grafana.app" && resource == "dashboards" {
@@ -105,7 +105,7 @@ func TestIntegrationProvisioning_Stats(t *testing.T) {
 
 	var unmanagedDashboardCount int64
 	for _, unmanagedStat := range unmanagedStats {
-		stat := unmanagedStat.(map[string]interface{})
+		stat := unmanagedStat.(map[string]any)
 		group, _, _ := unstructured.NestedString(stat, "group")
 		resource, _, _ := unstructured.NestedString(stat, "resource")
 		if group == "dashboard.grafana.app" && resource == "dashboards" {

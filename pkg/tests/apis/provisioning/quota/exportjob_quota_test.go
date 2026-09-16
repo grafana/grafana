@@ -126,13 +126,13 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		folderNames := []string{"export-test-folder-1", "export-test-folder-2"}
 		for i, name := range folderNames {
 			folderObj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 					"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-					"metadata": map[string]interface{}{
+					"metadata": map[string]any{
 						"name": name,
 					},
-					"spec": map[string]interface{}{
+					"spec": map[string]any{
 						"title": fmt.Sprintf("Export Test Folder %d", i+1),
 					},
 				},

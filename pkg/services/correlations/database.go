@@ -237,7 +237,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			_, err = session.
 				Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).
 				Table("correlation").
-				Update(map[string]interface{}{"target_uid": nil})
+				Update(map[string]any{"target_uid": nil})
 			if err != nil {
 				return err
 			}

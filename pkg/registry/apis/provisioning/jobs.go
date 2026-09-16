@@ -200,12 +200,12 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 
 	if spec.Pull != nil {
 		err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
-			map[string]interface{}{
+			map[string]any{
 				"op":    "replace",
 				"path":  "/status/sync/state",
 				"value": provisioning.JobStatePending,
 			},
-			map[string]interface{}{
+			map[string]any{
 				"op":    "replace",
 				"path":  "/status/sync/started",
 				"value": int64(0),

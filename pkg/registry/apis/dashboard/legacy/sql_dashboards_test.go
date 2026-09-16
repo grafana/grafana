@@ -63,7 +63,7 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, uid, row.Dash.Name)
 		require.Equal(t, version, row.RV) // rv should be the dashboard version
 		require.Equal(t, common.Unstructured{
-			Object: map[string]interface{}{"key": "value"},
+			Object: map[string]any{"key": "value"},
 		}, row.Dash.Spec)
 		require.Equal(t, "default", row.Dash.Namespace)
 		require.Equal(t, &continueToken{orgId: int64(1), id: id}, row.token)
@@ -168,7 +168,7 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "Migrated Dashboard", row.Dash.Spec.Object["title"])
 		require.Equal(t, migrationVersion, row.RV) // Should use COALESCEd dashboard table version
 		require.Equal(t, common.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"migration": "data",
 				"title":     "Migrated Dashboard",
 			},
@@ -221,17 +221,17 @@ func TestScanRow(t *testing.T) {
 		panels, exists := row.Dash.Spec.Object["panels"]
 		require.True(t, exists, "panels property should exist")
 
-		panelsSlice, ok := panels.([]interface{})
+		panelsSlice, ok := panels.([]any)
 		require.True(t, ok, "panels should be a slice")
 		require.Len(t, panelsSlice, 1, "panels should have exactly one element")
 
-		panel, ok := panelsSlice[0].(map[string]interface{})
+		panel, ok := panelsSlice[0].(map[string]any)
 		require.True(t, ok, "panel should be a map")
 
 		options, exists := panel["options"]
 		require.True(t, exists, "panel should have options property")
 
-		optionsMap, ok := options.(map[string]interface{})
+		optionsMap, ok := options.(map[string]any)
 		require.True(t, ok, "options should be a map")
 
 		content, exists := optionsMap["content"]
@@ -261,7 +261,7 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		p := basePanel
 		p.Name = "Test Panel"
 		p.Type = "graph"
-		model := map[string]interface{}{
+		model := map[string]any{
 			"title":       "Test Panel",
 			"type":        "table",
 			"description": "desc from db",
@@ -282,7 +282,7 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		p.Name = "Test Panel"
 		// Ensure there's a time difference greater than 1 second to trigger updated metadata
 		p.Updated = p.Created.Add(2 * time.Second)
-		model := map[string]interface{}{
+		model := map[string]any{
 			"title":       "Test Panel",
 			"type":        "graph",
 			"description": "desc from db",
@@ -306,7 +306,7 @@ func TestParseLibraryPanelRow(t *testing.T) {
 	t.Run("panel title in dashboard vs library panel title is set correctly", func(t *testing.T) {
 		p := basePanel
 		p.Name = "Database Name"
-		model := map[string]interface{}{
+		model := map[string]any{
 			"title":       "Model Title",
 			"type":        "graph",
 			"description": "desc from db",
@@ -325,11 +325,11 @@ func TestParseLibraryPanelRow(t *testing.T) {
 	t.Run("typed fields are not retained in status missing", func(t *testing.T) {
 		p := basePanel
 		p.Name = "Test Panel"
-		modelBytes, err := json.Marshal(map[string]interface{}{
+		modelBytes, err := json.Marshal(map[string]any{
 			"title":       "Panel title",
 			"type":        "graph",
 			"description": "desc from db",
-			"links":       []interface{}{map[string]interface{}{"title": "Link"}},
+			"links":       []any{map[string]any{"title": "Link"}},
 			"transparent": true,
 		})
 		require.NoError(t, err)
@@ -347,7 +347,7 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		// Set CreatedBy and UpdatedBy to NULL (Invalid)
 		p.CreatedBy = sql.NullString{String: "", Valid: false}
 		p.UpdatedBy = sql.NullString{String: "", Valid: false}
-		model := map[string]interface{}{
+		model := map[string]any{
 			"title":       "Test Panel",
 			"type":        "graph",
 			"description": "desc from db",
@@ -380,7 +380,7 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		p.UpdatedBy = sql.NullString{String: "", Valid: false}
 		// Make sure there's a time difference to trigger the update logic
 		p.Updated = p.Created.Add(10 * time.Second)
-		model := map[string]interface{}{
+		model := map[string]any{
 			"title":       "Test Panel",
 			"type":        "graph",
 			"description": "desc from db",

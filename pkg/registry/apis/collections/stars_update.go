@@ -46,7 +46,7 @@ func (r *starsREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *starsREST) ProducesObject(verb string) interface{} {
+func (r *starsREST) ProducesObject(verb string) any {
 	return &collections.Stars{}
 }
 

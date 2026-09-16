@@ -35,10 +35,10 @@ import (
 // newDashboardUnstructured builds a minimal unstructured dashboard with optional annotations.
 func newDashboardUnstructured(name string, annotations map[string]string) *unstructured.Unstructured {
 	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/v1beta1",
 			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      name,
 				"namespace": "stacks-123",
 			},
@@ -529,7 +529,7 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if commonMultiVersionTypes[typ] {
 			continue
 		}
-		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		obj, ok := reflect.TypeAssert[runtime.Object](reflect.New(typ))
 		if !ok {
 			continue
 		}

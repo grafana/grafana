@@ -51,7 +51,7 @@ func (r *dashboardREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *dashboardREST) ProducesObject(verb string) interface{} {
+func (r *dashboardREST) ProducesObject(verb string) any {
 	return r.New()
 }
 

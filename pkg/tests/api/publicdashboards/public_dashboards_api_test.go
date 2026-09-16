@@ -43,10 +43,10 @@ func TestPublicDashboardsAPI(t *testing.T) {
 	adminClient := createHTTPClient(grafanaListedAddr, adminUsername, "admin")
 
 	t.Run("should create, get, update, and delete public dashboard", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"title": "Test Dashboard",
-				"panels": []map[string]interface{}{
+				"panels": []map[string]any{
 					{
 						"id":    1,
 						"type":  "stat",
@@ -61,15 +61,15 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		payloadBytes, err := json.Marshal(dashboardPayload)
 		require.NoError(t, err)
 
-		var dashboardResult map[string]interface{}
+		var dashboardResult map[string]any
 		createDashboardResp := doRequest(t, adminClient, "POST", "/api/dashboards/db", payloadBytes, &dashboardResult)
 		require.Equal(t, 200, createDashboardResp.StatusCode)
 
 		dashboardUID := dashboardResult["uid"].(string)
 
-		var listResult map[string]interface{}
+		var listResult map[string]any
 		doRequest(t, adminClient, "GET", "/api/dashboards/public-dashboards", nil, &listResult)
-		publicDashboardPayload := map[string]interface{}{
+		publicDashboardPayload := map[string]any{
 			"isEnabled":            true,
 			"annotationsEnabled":   false,
 			"timeSelectionEnabled": true,
@@ -80,7 +80,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		createURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUID)
-		var publicDashboard map[string]interface{}
+		var publicDashboard map[string]any
 		createResp := doRequest(t, adminClient, "POST", createURL, payloadBytes, &publicDashboard)
 		require.Equal(t, 200, createResp.StatusCode)
 		assert.Equal(t, true, publicDashboard["isEnabled"])
@@ -95,19 +95,19 @@ func TestPublicDashboardsAPI(t *testing.T) {
 
 		// get the public dashboard
 		getURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUID)
-		var retrievedPD map[string]interface{}
+		var retrievedPD map[string]any
 		getResp := doRequest(t, adminClient, "GET", getURL, nil, &retrievedPD)
 		require.Equal(t, 200, getResp.StatusCode)
 
 		// view the public dashboard
 		viewURL := fmt.Sprintf("/api/public/dashboards/%s", accessToken)
-		var dashboardData map[string]interface{}
+		var dashboardData map[string]any
 		viewResp := doRequest(t, adminClient, "GET", viewURL, nil, &dashboardData)
 		require.Equal(t, 200, viewResp.StatusCode)
-		assert.Equal(t, "Test Dashboard", dashboardData["dashboard"].(map[string]interface{})["title"])
-		assert.Equal(t, "Test Panel", dashboardData["dashboard"].(map[string]interface{})["panels"].([]interface{})[0].(map[string]interface{})["title"])
+		assert.Equal(t, "Test Dashboard", dashboardData["dashboard"].(map[string]any)["title"])
+		assert.Equal(t, "Test Panel", dashboardData["dashboard"].(map[string]any)["panels"].([]any)[0].(map[string]any)["title"])
 
-		updatePayload := map[string]interface{}{
+		updatePayload := map[string]any{
 			"isEnabled":            false,
 			"annotationsEnabled":   true,
 			"timeSelectionEnabled": false,
@@ -116,7 +116,7 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		updateBytes, err := json.Marshal(updatePayload)
 		require.NoError(t, err)
 		updateURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", dashboardUID, publicDashboardUID)
-		var updatedPD map[string]interface{}
+		var updatedPD map[string]any
 		updateResp := doRequest(t, adminClient, "PATCH", updateURL, updateBytes, &updatedPD)
 		require.Equal(t, 200, updateResp.StatusCode)
 		assert.Equal(t, false, updatedPD["isEnabled"])
@@ -125,19 +125,19 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		assert.Equal(t, "email", updatedPD["share"])
 
 		deleteURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", dashboardUID, publicDashboardUID)
-		var deleteResult map[string]interface{}
+		var deleteResult map[string]any
 		deleteResp := doRequest(t, adminClient, "DELETE", deleteURL, nil, &deleteResult)
 		require.Equal(t, 200, deleteResp.StatusCode)
-		var getAfterDeleteResult map[string]interface{}
+		var getAfterDeleteResult map[string]any
 		getAfterDeleteResp := doRequest(t, adminClient, "GET", getURL, nil, &getAfterDeleteResult)
 		require.Equal(t, 404, getAfterDeleteResp.StatusCode)
 	})
 
 	t.Run("should list public dashboards", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"title": "Test Dashboard for List",
-				"panels": []map[string]interface{}{
+				"panels": []map[string]any{
 					{
 						"id":    1,
 						"type":  "stat",
@@ -152,12 +152,12 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		payloadBytes, err := json.Marshal(dashboardPayload)
 		require.NoError(t, err)
 
-		var dashboardResult map[string]interface{}
+		var dashboardResult map[string]any
 		createDashboardResp := doRequest(t, adminClient, "POST", "/api/dashboards/db", payloadBytes, &dashboardResult)
 		require.Equal(t, 200, createDashboardResp.StatusCode)
 		dashboardUID := dashboardResult["uid"].(string)
 
-		publicDashboardPayload := map[string]interface{}{
+		publicDashboardPayload := map[string]any{
 			"isEnabled":            true,
 			"annotationsEnabled":   false,
 			"timeSelectionEnabled": true,
@@ -168,29 +168,29 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		createURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUID)
-		var createResult map[string]interface{}
+		var createResult map[string]any
 		createResp := doRequest(t, adminClient, "POST", createURL, payloadBytes, &createResult)
 		require.Equal(t, 200, createResp.StatusCode)
 
-		var listData map[string]interface{}
+		var listData map[string]any
 		listResp := doRequest(t, adminClient, "GET", "/api/dashboards/public-dashboards", nil, &listData)
 		require.Equal(t, 200, listResp.StatusCode)
 		assert.NotEmpty(t, listData["publicDashboards"])
-		publicDashboards := listData["publicDashboards"].([]interface{})
+		publicDashboards := listData["publicDashboards"].([]any)
 		assert.GreaterOrEqual(t, len(publicDashboards), 1)
 	})
 
 	t.Run("should handle invalid access token", func(t *testing.T) {
-		var viewResult map[string]interface{}
+		var viewResult map[string]any
 		viewResp := doRequest(t, adminClient, "GET", "/api/public/dashboards/invalid-token", nil, &viewResult)
 		require.Equal(t, 400, viewResp.StatusCode)
 	})
 
 	t.Run("should handle disabled public dashboard", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
-			"dashboard": map[string]interface{}{
+		dashboardPayload := map[string]any{
+			"dashboard": map[string]any{
 				"title": "Test Dashboard Disabled",
-				"panels": []map[string]interface{}{
+				"panels": []map[string]any{
 					{
 						"id":    1,
 						"type":  "stat",
@@ -205,12 +205,12 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		payloadBytes, err := json.Marshal(dashboardPayload)
 		require.NoError(t, err)
 
-		var dashboardResult map[string]interface{}
+		var dashboardResult map[string]any
 		createDashboardResp := doRequest(t, adminClient, "POST", "/api/dashboards/db", payloadBytes, &dashboardResult)
 		require.Equal(t, 200, createDashboardResp.StatusCode)
 
 		dashboardUID := dashboardResult["uid"].(string)
-		publicDashboardPayload := map[string]interface{}{
+		publicDashboardPayload := map[string]any{
 			"isEnabled":            false,
 			"annotationsEnabled":   false,
 			"timeSelectionEnabled": true,
@@ -221,23 +221,23 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		require.NoError(t, err)
 
 		createURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUID)
-		var publicDashboard map[string]interface{}
+		var publicDashboard map[string]any
 		createResp := doRequest(t, adminClient, "POST", createURL, payloadBytes, &publicDashboard)
 		require.Equal(t, 200, createResp.StatusCode)
 		accessToken := publicDashboard["accessToken"].(string)
 
-		var viewResult map[string]interface{}
+		var viewResult map[string]any
 		viewResp := doRequest(t, adminClient, "GET", fmt.Sprintf("/api/public/dashboards/%s", accessToken), nil, &viewResult)
 		require.Equal(t, 403, viewResp.StatusCode)
 	})
 
 	t.Run("permission test", func(t *testing.T) {
-		dashboards := []map[string]interface{}{
+		dashboards := []map[string]any{
 			{
-				"dashboard": map[string]interface{}{
+				"dashboard": map[string]any{
 					"title": "test",
 					"uid":   "9S6TmO67z",
-					"panels": []map[string]interface{}{
+					"panels": []map[string]any{
 						{
 							"id":    1,
 							"type":  "stat",
@@ -249,10 +249,10 @@ func TestPublicDashboardsAPI(t *testing.T) {
 				"overwrite": false,
 			},
 			{
-				"dashboard": map[string]interface{}{
+				"dashboard": map[string]any{
 					"title": "my first dashboard",
 					"uid":   "1S6TmO67z",
-					"panels": []map[string]interface{}{
+					"panels": []map[string]any{
 						{
 							"id":    1,
 							"type":  "stat",
@@ -264,10 +264,10 @@ func TestPublicDashboardsAPI(t *testing.T) {
 				"overwrite": false,
 			},
 			{
-				"dashboard": map[string]interface{}{
+				"dashboard": map[string]any{
 					"title": "my second dashboard",
 					"uid":   "2S6TmO67z",
-					"panels": []map[string]interface{}{
+					"panels": []map[string]any{
 						{
 							"id":    1,
 							"type":  "stat",
@@ -279,10 +279,10 @@ func TestPublicDashboardsAPI(t *testing.T) {
 				"overwrite": false,
 			},
 			{
-				"dashboard": map[string]interface{}{
+				"dashboard": map[string]any{
 					"title": "my zero dashboard",
 					"uid":   "0S6TmO67z",
-					"panels": []map[string]interface{}{
+					"panels": []map[string]any{
 						{
 							"id":    1,
 							"type":  "stat",
@@ -302,13 +302,13 @@ func TestPublicDashboardsAPI(t *testing.T) {
 			payloadBytes, err := json.Marshal(dashboardPayload)
 			require.NoError(t, err)
 
-			var dashboardResult map[string]interface{}
+			var dashboardResult map[string]any
 			createDashboardResp := doRequest(t, adminClient, "POST", "/api/dashboards/db", payloadBytes, &dashboardResult)
 			require.Equal(t, 200, createDashboardResp.StatusCode)
 			dashboardUIDs[i] = dashboardResult["uid"].(string)
 
 			isEnabled := i != 1
-			publicDashboardPayload := map[string]interface{}{
+			publicDashboardPayload := map[string]any{
 				"isEnabled":            isEnabled,
 				"annotationsEnabled":   false,
 				"timeSelectionEnabled": true,
@@ -319,14 +319,14 @@ func TestPublicDashboardsAPI(t *testing.T) {
 			require.NoError(t, err)
 
 			createURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUIDs[i])
-			var publicDashboard map[string]interface{}
+			var publicDashboard map[string]any
 			createResp := doRequest(t, adminClient, "POST", createURL, payloadBytes, &publicDashboard)
 			require.Equal(t, 200, createResp.StatusCode)
 			publicDashboardUIDs[i] = publicDashboard["uid"].(string)
 		}
 
 		t.Run("admin user should see all dashboards", func(t *testing.T) {
-			var listData map[string]interface{}
+			var listData map[string]any
 			listResp := doRequest(t, adminClient, "GET", "/api/dashboards/public-dashboards?page=1&perpage=50", nil, &listData)
 			require.Equal(t, 200, listResp.StatusCode)
 
@@ -343,18 +343,18 @@ func TestPublicDashboardsAPI(t *testing.T) {
 				IsAdmin:        false,
 			})
 			limitedUserClient := createHTTPClient(grafanaListedAddr, limitedUserUsername, "password")
-			permissionPayload := map[string]interface{}{
+			permissionPayload := map[string]any{
 				"permission": "View",
 			}
 			permissionBytes, err := json.Marshal(permissionPayload)
 			require.NoError(t, err)
 
 			permissionURL := fmt.Sprintf("/api/access-control/dashboards/9S6TmO67z/users/%d", limitedUserID)
-			var permissionResult map[string]interface{}
+			var permissionResult map[string]any
 			permissionResp := doRequest(t, adminClient, "POST", permissionURL, permissionBytes, &permissionResult)
 			require.Equal(t, 200, permissionResp.StatusCode)
 
-			var listData map[string]interface{}
+			var listData map[string]any
 			listResp := doRequest(t, limitedUserClient, "GET", "/api/dashboards/public-dashboards?page=1&perpage=50", nil, &listData)
 			require.Equal(t, 200, listResp.StatusCode)
 
@@ -363,19 +363,19 @@ func TestPublicDashboardsAPI(t *testing.T) {
 		})
 
 		t.Run("pagination should work correctly", func(t *testing.T) {
-			var listData map[string]interface{}
+			var listData map[string]any
 			listResp := doRequest(t, adminClient, "GET", "/api/dashboards/public-dashboards?page=1&perpage=2", nil, &listData)
 			require.Equal(t, 200, listResp.StatusCode)
 			assert.NotEmpty(t, listData["publicDashboards"])
-			publicDashboards := listData["publicDashboards"].([]interface{})
+			publicDashboards := listData["publicDashboards"].([]any)
 			assert.Equal(t, 2, len(publicDashboards))
 			totalCount := int64(listData["totalCount"].(float64))
 			assert.GreaterOrEqual(t, totalCount, int64(4))
 
-			var listDataPage2 map[string]interface{}
+			var listDataPage2 map[string]any
 			listRespPage2 := doRequest(t, adminClient, "GET", "/api/dashboards/public-dashboards?page=2&perpage=2", nil, &listDataPage2)
 			require.Equal(t, 200, listRespPage2.StatusCode)
-			publicDashboardsPage2 := listDataPage2["publicDashboards"].([]interface{})
+			publicDashboardsPage2 := listDataPage2["publicDashboards"].([]any)
 			assert.Equal(t, 2, len(publicDashboardsPage2))
 		})
 	})
@@ -403,7 +403,7 @@ type httpResponse struct {
 	Body       []byte
 }
 
-func doRequest(t *testing.T, client *httpClient, method, path string, body []byte, result interface{}) httpResponse {
+func doRequest(t *testing.T, client *httpClient, method, path string, body []byte, result any) httpResponse {
 	t.Helper()
 
 	var req *http.Request

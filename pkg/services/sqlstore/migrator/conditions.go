@@ -1,7 +1,7 @@
 package migrator
 
 type MigrationCondition interface {
-	SQL(dialect Dialect) (string, []interface{})
+	SQL(dialect Dialect) (string, []any)
 	IsFulfilled(results []map[string][]byte) bool
 }
 
@@ -23,7 +23,7 @@ type IfIndexExistsCondition struct {
 	IndexName string
 }
 
-func (c *IfIndexExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfIndexExistsCondition) SQL(dialect Dialect) (string, []any) {
 	return dialect.IndexCheckSQL(c.TableName, c.IndexName)
 }
 
@@ -33,7 +33,7 @@ type IfIndexNotExistsCondition struct {
 	IndexName string
 }
 
-func (c *IfIndexNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfIndexNotExistsCondition) SQL(dialect Dialect) (string, []any) {
 	return dialect.IndexCheckSQL(c.TableName, c.IndexName)
 }
 
@@ -43,7 +43,7 @@ type IfColumnNotExistsCondition struct {
 	ColumnName string
 }
 
-func (c *IfColumnNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfColumnNotExistsCondition) SQL(dialect Dialect) (string, []any) {
 	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
 }
 
@@ -53,7 +53,7 @@ type IfColumnExistsCondition struct {
 	ColumnName string
 }
 
-func (c *IfColumnExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfColumnExistsCondition) SQL(dialect Dialect) (string, []any) {
 	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
 }
 
@@ -63,10 +63,10 @@ type IfPrimaryKeyNotExistsCondition struct {
 	ColumnName string
 }
 
-func (c *IfPrimaryKeyNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+func (c *IfPrimaryKeyNotExistsCondition) SQL(dialect Dialect) (string, []any) {
 	// only use it with mysql
 	if dialect.DriverName() == "mysql" {
-		return "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME=? AND COLUMN_KEY='PRI'", []interface{}{c.TableName}
+		return "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME=? AND COLUMN_KEY='PRI'", []any{c.TableName}
 	}
 
 	return "", nil

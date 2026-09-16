@@ -138,7 +138,7 @@ func TestIntegrationProvisioning_ExportJob_SkipsSLOManagedResources(t *testing.T
 
 	const sloDashboard = "grafana_slo_app-slodash"
 	sloDash := common.NewUnmanagedDashboard("dashboard.grafana.app/v1", "slo-dashboard", "")
-	sloMeta, ok := sloDash.Object["metadata"].(map[string]interface{})
+	sloMeta, ok := sloDash.Object["metadata"].(map[string]any)
 	require.True(t, ok, "dashboard metadata should be a map")
 	delete(sloMeta, "generateName")
 	sloMeta["name"] = sloDashboard

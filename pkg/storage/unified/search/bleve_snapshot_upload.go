@@ -145,7 +145,7 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	// Read RV/build info from the staged snapshot instead of the live index so
 	// the uploaded metadata matches the copied snapshot contents even if the live
 	// index advanced while CopyTo was running.
-	snapshotIdx, err := bleve.OpenUsing(stagingDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	snapshotIdx, err := bleve.OpenUsing(stagingDir, map[string]any{"bolt_timeout": boltTimeout})
 	if err != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("opening staged snapshot: %w", err)
 	}

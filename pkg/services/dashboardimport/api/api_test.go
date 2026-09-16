@@ -344,7 +344,7 @@ func TestInterpolateDashboardAPI(t *testing.T) {
 				capturedReq = req
 				result := simplejson.New()
 				result.Set("title", "Community Dashboard")
-				result.Set("panels", []interface{}{})
+				result.Set("panels", []any{})
 				return result, nil
 			},
 		}
@@ -357,8 +357,8 @@ func TestInterpolateDashboardAPI(t *testing.T) {
 		// Create a test dashboard with datasource that needs interpolation
 		testDashboard := simplejson.New()
 		testDashboard.Set("title", "Test Community Dashboard")
-		testDashboard.Set("panels", []interface{}{
-			map[string]interface{}{
+		testDashboard.Set("panels", []any{
+			map[string]any{
 				"datasource": "${DS_PROMETHEUS}",
 			},
 		})
@@ -421,10 +421,10 @@ func TestInterpolateDashboardAPI(t *testing.T) {
 			interpolateDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
 				result := simplejson.New()
 				result.Set("title", "Test Dashboard")
-				result.Set("__elements", map[string]interface{}{"test": "value"})
-				result.Set("__inputs", []interface{}{})
-				result.Set("__requires", []interface{}{})
-				result.Set("panels", []interface{}{})
+				result.Set("__elements", map[string]any{"test": "value"})
+				result.Set("__inputs", []any{})
+				result.Set("__requires", []any{})
+				result.Set("panels", []any{})
 				return result, nil
 			},
 		}
@@ -452,7 +452,7 @@ func TestInterpolateDashboardAPI(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Parse response body and verify internal fields are removed
-		var responseBody map[string]interface{}
+		var responseBody map[string]any
 		err = json.NewDecoder(resp.Body).Decode(&responseBody)
 		require.NoError(t, err)
 		require.Equal(t, "Test Dashboard", responseBody["title"])

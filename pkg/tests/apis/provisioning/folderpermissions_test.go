@@ -26,8 +26,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
 		provisionedFolders := helper.RequireRepoFolderCount(t, repoName, 3)
 
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
+		permissionsPayload := map[string]any{
+			"items": []map[string]any{
 				{
 					"role":       "Viewer",
 					"permission": common.FolderPermissionView,
@@ -70,13 +70,13 @@ func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 
 	t.Run("should update permissions for unmanaged folder", func(t *testing.T) {
 		unmanagedFolder := &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
 				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"generateName": "test-folder-",
 				},
-				"spec": map[string]interface{}{
+				"spec": map[string]any{
 					"title": "Unmanaged Folder",
 				},
 			},

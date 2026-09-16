@@ -143,7 +143,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 		// The new folder must NOT carry the Viewer permission from the old object.
 		newPlainPerms := common.FolderPermissions(t, helper.ProvisioningTestHelper, newPlainUID)
 		for _, p := range newPlainPerms {
-			entry, ok := p.(map[string]interface{})
+			entry, ok := p.(map[string]any)
 			if !ok {
 				continue
 			}

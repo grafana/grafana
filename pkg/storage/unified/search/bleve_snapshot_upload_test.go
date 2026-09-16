@@ -64,7 +64,7 @@ func TestSnapshotIndex_CreatesUsableCopy(t *testing.T) {
 	destDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, be.snapshotIndex(src.index, destDir))
 
-	copied, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
+	copied, err := bleve.OpenUsing(destDir, map[string]any{"bolt_timeout": boltTimeout})
 	require.NoError(t, err)
 	defer func() { _ = copied.Close() }()
 

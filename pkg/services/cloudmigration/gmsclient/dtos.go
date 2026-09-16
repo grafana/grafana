@@ -12,7 +12,7 @@ type MigrateDataRequestItemDTO struct {
 	Type  MigrateDataType `json:"type"`
 	RefID string          `json:"refId"`
 	Name  string          `json:"name"`
-	Data  interface{}     `json:"data"`
+	Data  any             `json:"data"`
 }
 
 type ItemStatus string

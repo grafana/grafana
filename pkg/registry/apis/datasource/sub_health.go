@@ -43,7 +43,7 @@ func (r *subHealthREST) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *subHealthREST) ProducesObject(verb string) interface{} {
+func (r *subHealthREST) ProducesObject(verb string) any {
 	return &datasource.HealthCheckResult{}
 }
 

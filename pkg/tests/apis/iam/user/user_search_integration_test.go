@@ -614,7 +614,7 @@ func verifyOrder(t *testing.T, hits []iamv0.GetSearchUsersUserHit, expectedValue
 func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, lastSeen time.Time, mode rest.DualWriterMode) {
 	if mode < rest.Mode4 {
 		err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.Table("user").Where("login = ?", login).Update(map[string]interface{}{
+			_, err := sess.Table("user").Where("login = ?", login).Update(map[string]any{
 				"last_seen_at": lastSeen,
 			})
 			return err

@@ -320,8 +320,8 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 	}
 
 	t.Run("Returns query data even when the query is hidden", func(t *testing.T) {
-		hiddenQuery := map[string]interface{}{
-			"datasource": map[string]interface{}{
+		hiddenQuery := map[string]any{
+			"datasource": map[string]any{
 				"name": "Expression",
 				"type": "__expr__",
 				"uid":  "__expr__",
@@ -329,13 +329,13 @@ func TestIntegrationGetQueryDataResponse(t *testing.T) {
 			"hide":  true,
 			"refId": "A",
 		}
-		customPanels := []interface{}{
-			map[string]interface{}{
+		customPanels := []any{
+			map[string]any{
 				"id": 1,
-				"datasource": map[string]interface{}{
+				"datasource": map[string]any{
 					"uid": "ds1",
 				},
-				"targets": []interface{}{hiddenQuery},
+				"targets": []any{hiddenQuery},
 			}}
 
 		dashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
@@ -817,8 +817,8 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 
 		require.Equal(
 			t,
-			simplejson.NewFromAny(map[string]interface{}{
-				"datasource": map[string]interface{}{
+			simplejson.NewFromAny(map[string]any{
+				"datasource": map[string]any{
 					"type": "mysql",
 					"uid":  "ds1",
 				},
@@ -832,8 +832,8 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 
 		require.Equal(
 			t,
-			simplejson.NewFromAny(map[string]interface{}{
-				"datasource": map[string]interface{}{
+			simplejson.NewFromAny(map[string]any{
+				"datasource": map[string]any{
 					"type": "prometheus",
 					"uid":  "ds2",
 				},
@@ -858,29 +858,29 @@ func TestIntegrationBuildMetricRequest(t *testing.T) {
 	})
 
 	t.Run("metric request built with hidden query", func(t *testing.T) {
-		hiddenQuery := map[string]interface{}{
-			"datasource": map[string]interface{}{
+		hiddenQuery := map[string]any{
+			"datasource": map[string]any{
 				"type": "mysql",
 				"uid":  "ds1",
 			},
 			"hide":  true,
 			"refId": "A",
 		}
-		nonHiddenQuery := map[string]interface{}{
-			"datasource": map[string]interface{}{
+		nonHiddenQuery := map[string]any{
+			"datasource": map[string]any{
 				"type": "prometheus",
 				"uid":  "ds2",
 			},
 			"refId": "B",
 		}
 
-		customPanels := []interface{}{
-			map[string]interface{}{
+		customPanels := []any{
+			map[string]any{
 				"id": 1,
-				"datasource": map[string]interface{}{
+				"datasource": map[string]any{
 					"uid": "ds1",
 				},
-				"targets": []interface{}{hiddenQuery, nonHiddenQuery},
+				"targets": []any{hiddenQuery, nonHiddenQuery},
 			}}
 
 		publicDashboard := createTestDashboard(t, "testDashWithHiddenQuery", 1, "", true, []map[string]any{}, customPanels)
@@ -1162,8 +1162,8 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 }
 
 func TestBuildTimeSettings(t *testing.T) {
-	var defaultDashboardData = simplejson.NewFromAny(map[string]interface{}{
-		"time": map[string]interface{}{
+	var defaultDashboardData = simplejson.NewFromAny(map[string]any{
+		"time": map[string]any{
 			"from": "2022-09-01T00:00:00.000Z", "to": "2022-09-01T12:00:00.000Z",
 		},
 		"timezone": "America/Argentina/Mendoza",
@@ -1383,8 +1383,8 @@ func getStartAndEndOfTheDayBefore(fakeNow time.Time, timezoneName string) (time.
 }
 
 func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
-	return simplejson.NewFromAny(map[string]interface{}{
-		"time": map[string]interface{}{
+	return simplejson.NewFromAny(map[string]any{
+		"time": map[string]any{
 			"from": from, "to": to,
 		},
 		"timezone": timezone,
@@ -1393,17 +1393,17 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 
 func TestSanitizeDataV2(t *testing.T) {
 	t.Run("removes expr, query, rawSql from query specs", func(t *testing.T) {
-		data := simplejson.NewFromAny(map[string]interface{}{
-			"elements": map[string]interface{}{
-				"panel-1": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"data": map[string]interface{}{
-							"spec": map[string]interface{}{
-								"queries": []interface{}{
-									map[string]interface{}{
-										"spec": map[string]interface{}{
-											"query": map[string]interface{}{
-												"spec": map[string]interface{}{
+		data := simplejson.NewFromAny(map[string]any{
+			"elements": map[string]any{
+				"panel-1": map[string]any{
+					"spec": map[string]any{
+						"data": map[string]any{
+							"spec": map[string]any{
+								"queries": []any{
+									map[string]any{
+										"spec": map[string]any{
+											"query": map[string]any{
+												"spec": map[string]any{
 													"expr":       "go_goroutines{job=\"grafana\"}",
 													"refId":      "A",
 													"datasource": "prometheus",
@@ -1411,10 +1411,10 @@ func TestSanitizeDataV2(t *testing.T) {
 											},
 										},
 									},
-									map[string]interface{}{
-										"spec": map[string]interface{}{
-											"query": map[string]interface{}{
-												"spec": map[string]interface{}{
+									map[string]any{
+										"spec": map[string]any{
+											"query": map[string]any{
+												"spec": map[string]any{
 													"rawSql": "SELECT * FROM metrics",
 													"refId":  "B",
 													"format": "time_series",
@@ -1427,15 +1427,15 @@ func TestSanitizeDataV2(t *testing.T) {
 						},
 					},
 				},
-				"panel-2": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"data": map[string]interface{}{
-							"spec": map[string]interface{}{
-								"queries": []interface{}{
-									map[string]interface{}{
-										"spec": map[string]interface{}{
-											"query": map[string]interface{}{
-												"spec": map[string]interface{}{
+				"panel-2": map[string]any{
+					"spec": map[string]any{
+						"data": map[string]any{
+							"spec": map[string]any{
+								"queries": []any{
+									map[string]any{
+										"spec": map[string]any{
+											"query": map[string]any{
+												"spec": map[string]any{
 													"query": "buckets()",
 													"refId": "A",
 												},
@@ -1477,12 +1477,12 @@ func TestSanitizeDataV2(t *testing.T) {
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
-		data := simplejson.NewFromAny(map[string]interface{}{
-			"elements": map[string]interface{}{
-				"panel-1": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"data": map[string]interface{}{
-							"spec": map[string]interface{}{},
+		data := simplejson.NewFromAny(map[string]any{
+			"elements": map[string]any{
+				"panel-1": map[string]any{
+					"spec": map[string]any{
+						"data": map[string]any{
+							"spec": map[string]any{},
 						},
 					},
 				},
@@ -1492,15 +1492,15 @@ func TestSanitizeDataV2(t *testing.T) {
 	})
 
 	t.Run("does not panic when spec.query is missing from a query entry", func(t *testing.T) {
-		data := simplejson.NewFromAny(map[string]interface{}{
-			"elements": map[string]interface{}{
-				"panel-1": map[string]interface{}{
-					"spec": map[string]interface{}{
-						"data": map[string]interface{}{
-							"spec": map[string]interface{}{
-								"queries": []interface{}{
-									map[string]interface{}{
-										"spec": map[string]interface{}{},
+		data := simplejson.NewFromAny(map[string]any{
+			"elements": map[string]any{
+				"panel-1": map[string]any{
+					"spec": map[string]any{
+						"data": map[string]any{
+							"spec": map[string]any{
+								"queries": []any{
+									map[string]any{
+										"spec": map[string]any{},
 									},
 								},
 							},
