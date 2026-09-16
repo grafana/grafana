@@ -3,6 +3,7 @@ import { config, setPluginImportUtils } from '@grafana/runtime';
 import { CustomVariable, sceneGraph, SceneVariableSet, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
+import { groupSelectionInto } from '../../actions/layout/groupSelectionInto';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -13,6 +14,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { addNewRowTo, addNewTabTo } from '../../scene/layouts-shared/addNew';
 import { changeLayoutTo } from '../../scene/layouts-shared/utils';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { deactivatePlanningSession } from '../../scene/planningSession';
@@ -361,6 +363,122 @@ it('warns when a tracked section survives only because of a hollow, untracked ch
   // "New tab" inside it) and nothing removes an untracked section. That's the known residual —
   // surfaced here as a warning rather than passing as if cleanup fully succeeded.
   expect(ended.warnings).toEqual(['Could not remove "Overview": it still contains an empty, untracked tab.']);
+});
+
+it('closes the Group-into-tab case completely once the new tab is tracked (T6)', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_ROW',
+        planId: 'plan-1',
+        payload: { row: { kind: 'RowsLayoutRow', spec: { title: 'Overview' } }, parentPath: '/' },
+      })
+    ).success
+  ).toBe(true);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_PANEL',
+        planId: 'plan-1',
+        payload: { parentPath: '/rows/0', panel: { kind: 'Panel', spec: panel } },
+      })
+    ).success
+  ).toBe(true);
+
+  const body = scene.state.body;
+  if (!(body instanceof RowsLayoutManager)) {
+    throw new Error('Expected rows layout');
+  }
+  const overview = body.state.rows[0];
+  const plannedPanel = overview.state.layout.getVizPanels()[0];
+
+  // Same "Group into tab" shape as the warning test above, but through the real
+  // groupSelectionInto() action this time, so the new tab is tracked.
+  groupSelectionInto({ source: overview.state.layout, items: [plannedPanel], target: 'tab' });
+
+  const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+  expect(ended.success).toBe(true);
+
+  // No residual: the panel is gone (badge rescan), the inner tab is now tracked and empty so it
+  // is removed, and removing it makes Overview itself empty too — same discard pass, since the
+  // removal loop processes tracked sections depth-first (deepest first).
+  expect(scene.state.body.getVizPanels()).toHaveLength(0);
+  expect(ended.warnings).toBeUndefined();
+  const finalBody = scene.state.body;
+  const rowCount = finalBody instanceof RowsLayoutManager ? finalBody.state.rows.length : -1;
+  expect(rowCount).toBe(0);
+});
+
+it('tracks and removes a row added via the "New row" action (addNewRowTo)', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+
+  // Mirrors what the sidebar's "New row" button / Add pane call directly, not through a
+  // mutation command — this is the untracked-creation gap T6 closes.
+  const row = addNewRowTo(scene.state.body);
+  if (!(row instanceof RowItem)) {
+    throw new Error('Expected a RowItem');
+  }
+
+  const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+  expect(ended.success).toBe(true);
+  expect(ended.warnings).toBeUndefined();
+
+  const body = scene.state.body;
+  const rowCount = body instanceof RowsLayoutManager ? body.state.rows.length : -1;
+  expect(rowCount).toBe(0);
+});
+
+it('tracks and removes a tab added via the "New Tab" action (addNewTabTo)', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+
+  const tab = addNewTabTo(scene.state.body);
+  expect(tab).toBeInstanceOf(TabItem);
+
+  const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+  expect(ended.success).toBe(true);
+  expect(ended.warnings).toBeUndefined();
+
+  const body = scene.state.body;
+  const tabCount = body instanceof TabsLayoutManager ? body.state.tabs.length : -1;
+  expect(tabCount).toBe(0);
+});
+
+it('tracks and removes a row that becomes empty after dragging a plan panel onto the rows canvas (draggedGridItemInside)', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (await client.execute({ type: 'ADD_PANEL', planId: 'plan-1', payload: { panel: { kind: 'Panel', spec: panel } } }))
+      .success
+  ).toBe(true);
+  const plannedPanel = scene.state.body.getVizPanels()[0];
+
+  const grid = scene.state.body;
+  if (!(grid instanceof DefaultGridLayoutManager)) {
+    throw new Error('Expected default grid layout');
+  }
+  grid.removePanel(plannedPanel);
+  plannedPanel.clearParent();
+
+  // Dragging the plan panel onto the rows canvas: draggedGridItemInside clones it (still
+  // carrying its PlanPlaceholderBadge, per T15) into a brand-new "New row". Before T6, that row
+  // was never tracked, so once T15 removes the cloned panel the empty wrapper was left behind.
+  const rowsManager = new RowsLayoutManager({ rows: [] });
+  scene.setState({ body: rowsManager });
+  rowsManager.draggedGridItemInside(new AutoGridItem({ body: plannedPanel }));
+  expect(scene.state.body.getVizPanels()).toHaveLength(1);
+
+  const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+  expect(ended.success).toBe(true);
+  expect(ended.warnings).toBeUndefined();
+
+  expect(scene.state.body.getVizPanels()).toHaveLength(0);
+  const finalBody = scene.state.body;
+  const rowCount = finalBody instanceof RowsLayoutManager ? finalBody.state.rows.length : -1;
+  expect(rowCount).toBe(0);
 });
 
 it('reshapes samples when visualization changes through UPDATE_PANEL', async () => {

@@ -46,6 +46,7 @@ import {
   mapIdToGridLayoutType,
   ungroupLayout,
 } from '../layouts-shared/utils';
+import { trackPlanningSection } from '../planningSession';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import {
@@ -137,6 +138,12 @@ export class RowsLayoutManager
 
     // Add the row to this layout
     this.setState({ rows: [...this.state.rows, newRow], isDropTarget: false });
+
+    // Records the new row with the active planning session, if any, so endPlanningSession can
+    // consider removing it on Dismiss (see trackPlanningSection's doc comment). A no-op outside
+    // planning.
+    const scene = getDashboardSceneFor(this);
+    trackPlanningSection(scene, newRow);
   }
 
   public getVizPanels(): VizPanel[] {
