@@ -666,22 +666,12 @@ func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, log
 	if cfg.IndexSnapshotBucketURL != "" {
 		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
 	}
-	if !cfg.EnableKVLeases {
-		return nil, fmt.Errorf("index_snapshot_storage_kv requires enable_kv_leases")
-	}
-
 	kvBackend, ok := backend.(resource.KVBackend)
 	if !ok {
 		return nil, fmt.Errorf("index_snapshot_storage_kv requires a KV-backed storage backend (got %T)", backend)
 	}
 
 	leaseMgr := kvBackend.LeaseManager()
-	if leaseMgr == nil {
-		// Defensive: enable_kv_leases above should already have triggered
-		// lease manager creation in the backend.
-		return nil, fmt.Errorf("storage backend has no lease manager; cannot use index_snapshot_storage_kv")
-	}
-
 	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
 		KV:               kvBackend.KV(),
 		LeaseManager:     leaseMgr,

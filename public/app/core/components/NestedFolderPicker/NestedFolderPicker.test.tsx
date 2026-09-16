@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -51,6 +51,12 @@ describe('NestedFolderPicker', () => {
   });
 
   beforeEach(() => {
+    // These tests were written against the legacy folder tree, so pin the flag off by default.
+    // The describes below that need the app-platform tree opt in explicitly.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
+
     const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
     useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
 
@@ -77,7 +83,10 @@ describe('NestedFolderPicker', () => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.resetAllMocks();
   });
 
@@ -339,14 +348,14 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('shows the starred folders virtual root with its selectable children', async () => {
@@ -389,14 +398,14 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
-    testWithFeatureToggles({ disable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: false });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('does not render starred folders (hard gate on the app-platform folder API)', async () => {

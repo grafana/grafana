@@ -1,6 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
 
@@ -13,6 +13,8 @@ import {
   type ResourceListItem,
   useLazyGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
+import { DIAGRAM_CLASS } from 'app/core/utils/mermaid';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -226,6 +228,7 @@ function RenderedMarkdown({
   repositoryType: RepositoryView['type'];
   syncFinished: number | undefined;
 }) {
+  const styles = useStyles2(getStyles);
   // Links to JSON/YAML files or folders are tagged during rewrite; the resource
   // listing is fetched lazily only when the user first clicks one of them.
   const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
@@ -342,7 +345,14 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
-  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
+  // React resets innerHTML whenever this object's identity changes, which would
+  // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
+  const innerHtml = useMemo(() => ({ __html: safe }), [safe]);
+  useMermaidDiagrams(containerRef, safe);
+
+  return (
+    <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} dangerouslySetInnerHTML={innerHtml} />
+  );
 }
 
 /**
@@ -446,5 +456,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
+  }),
+  // README diagrams are centered like on GitHub; the text panel keeps them left-aligned.
+  markdownBody: css({
+    [`.${DIAGRAM_CLASS}`]: {
+      display: 'flex',
+      justifyContent: 'center',
+    },
   }),
 });

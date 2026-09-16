@@ -23,9 +23,47 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
+var (
+	_ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
+	_ StorageOptionsGetter      = (*RESTOptionsGetter)(nil)
+	_ generic.RESTOptionsGetter = (*resourceOptionsGetter)(nil)
+)
 
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
+
+// StorageOptionsGetter is a RESTOptionsGetter whose storage options can be
+// resolved by the caller rather than looked up by GroupResource.
+//
+// It exists because generic.RESTOptionsGetter only passes a GroupResource, and
+// the runtime.Object it passes alongside is a zero object with no TypeMeta for
+// typed kinds -- so by the time the getter is asked, the version is gone. Every
+// store is built per group+version+resource though, and the getter is a value
+// the builder hands to that one CompleteWithOptions call, so options that ride
+// along with the getter can differ across versions of one resource.
+type StorageOptionsGetter interface {
+	generic.RESTOptionsGetter
+
+	// WithStorageOptions returns a getter that builds storage with opts for the
+	// single resource the caller is about to complete. Anything registered for
+	// that resource by [RESTOptionsGetter.RegisterOptions] is ignored.
+	WithStorageOptions(opts StorageOptions) generic.RESTOptionsGetter
+}
+
+func (r *RESTOptionsGetter) WithStorageOptions(opts StorageOptions) generic.RESTOptionsGetter {
+	return &resourceOptionsGetter{parent: r, opts: opts}
+}
+
+// resourceOptionsGetter serves one store's RESTOptions from options its caller
+// already resolved. Everything else -- client, codecs, secrets, version policy
+// -- stays on the parent, which is shared across the whole server.
+type resourceOptionsGetter struct {
+	parent *RESTOptionsGetter
+	opts   StorageOptions
+}
+
+func (g *resourceOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
+	return g.parent.restOptions(resource, g.opts)
+}
 
 type RESTOptionsGetter struct {
 	client         resource.ResourceClient
@@ -143,6 +181,9 @@ func NewRESTOptionsGetterForFileXX(path string,
 	), nil
 }
 
+// RegisterOptions declares a resource's storage options for every version that
+// serves it. Prefer [RESTOptionsGetter.WithStorageOptions] when versions of one
+// resource need to differ -- see [StorageOptionsGetter].
 func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts StorageOptions) {
 	r.options[gr.String()] = opts
 }
@@ -150,6 +191,14 @@ func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts Storag
 // TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
 // storage version for a resource. This is not currently used in this implementation.
 func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
+	return r.restOptions(resource, r.options[resource.String()])
+}
+
+// restOptions builds a resource's RESTOptions around an already resolved set of
+// StorageOptions, whether they came from the by-GroupResource map or from a
+// caller that knows the version. SecureValues and VersionPolicy are filled in
+// here so neither path can omit them.
+func (r *RESTOptionsGetter) restOptions(resource schema.GroupResource, opts StorageOptions) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "resource",
@@ -180,7 +229,6 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
 			opts.VersionPolicy = r.versionPolicy
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
