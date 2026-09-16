@@ -1,8 +1,10 @@
+import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
-import { optedInRoutePaths } from './unified/plugin-proxy/withRouteProxy';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -107,13 +109,27 @@ describe('alerting route guards', () => {
 });
 
 describe('data source managed route proxies', () => {
+  const unifiedAlertingEnabled = config.unifiedAlertingEnabled;
+
+  afterEach(() => {
+    config.unifiedAlertingEnabled = unifiedAlertingEnabled;
+    setTestFlags();
+  });
+
   it('gives every route that opted in an entry in the proxy table, and vice versa', async () => {
     // A route calling proxied() without a table entry hands nothing over; an entry for a route
     // that never opts in never runs. Both fail silently, which is why this is checked here.
-    getAlertingRoutes();
+    //
+    // A wrapped route is recognisable by the component proxied() swapped in, which saves keeping a
+    // list of the opted-in paths around in the app just so this test can read it.
+    config.unifiedAlertingEnabled = true;
+    setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
+    const wrapped = getAlertingRoutes()
+      .filter(({ component }) => component?.name === 'MaybeProxiedAlertingRoute')
+      .map(({ path }) => path);
     const { routeProxies } = await import('./unified/plugin-proxy/proxies');
 
-    expect([...optedInRoutePaths].sort()).toEqual(routeProxies.map(({ path }) => path).sort());
+    expect(wrapped.sort()).toEqual(routeProxies.map(({ path }) => path).sort());
   });
 
   it('points every table entry at a route that actually exists', async () => {

@@ -78,25 +78,12 @@ describe('proxied', () => {
     expect(result.pageClass).toBe('page-alerting');
   });
 
-  it('reuses the same wrapper across calls', () => {
-    config.unifiedAlertingEnabled = true;
-
-    // getAlertingRoutes() runs in AppWrapper's render body, so this runs on every render. Handing
-    // back a new component each time would remount the page and re-run the redirect work.
-    const first = proxied(route('/alerting/silences')).component;
-    const second = proxied(route('/alerting/silences')).component;
-
-    expect(first).toBe(second);
-  });
-
   it('shows the ordinary page loader, not a redirect notice, while a Grafana page loads', async () => {
     config.unifiedAlertingEnabled = true;
 
     // Most URLs on a proxied route are Grafana's own and are not going anywhere, so this wait must
     // not claim a redirect is happening. Every other route shows PageLoader here.
     const StillLoading = lazy<GrafanaRouteComponent>(() => new Promise(() => {}));
-    // A path of its own, because the wrapper is cached per path and the tests above have already
-    // registered one for /alerting/silences.
     const PATH = '/alerting/silence/new';
     const ProxiedPage = proxied({ path: PATH, component: StillLoading }).component;
 

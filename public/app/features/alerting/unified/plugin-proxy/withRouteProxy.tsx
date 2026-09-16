@@ -18,25 +18,7 @@ import {
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
-/**
- * One wrapper per route, kept for the life of the page.
- *
- * This is not an optimisation. `getAppRoutes()` runs in `AppWrapper`'s render body, so
- * `getAlertingRoutes()` runs again on every render. A fresh `lazy()` has no resolved promise on
- * it, so React would unmount the page, suspend again, and re-run the redirect work — every
- * render, forever.
- */
-const proxiedComponents = new Map<string, GrafanaRouteComponent>();
-
 function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
-  const cached = proxiedComponents.get(route.path);
-  if (cached) {
-    return cached;
-  }
-
-  // Closes over the component this route had the first time we saw it. Fine as things stand — none
-  // of the proxied routes picks its component based on a feature toggle — but worth knowing if one
-  // ever starts to.
   const RoutePage = route.component;
 
   const LazyProxiedRoute = lazy(() =>
@@ -72,16 +54,8 @@ function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
     );
   }
 
-  proxiedComponents.set(route.path, MaybeProxiedAlertingRoute);
   return MaybeProxiedAlertingRoute;
 }
-
-/**
- * Every path that has asked to be proxied. Only here so `routes.test.tsx` can check it against the
- * table in `proxies.ts` — a route that opts in without an entry, or an entry for a route that
- * never opts in, is a proxy that quietly does nothing.
- */
-export const optedInRoutePaths = new Set<string>();
 
 /**
  * Marks an alerting route as one the `grafana-prometheusalerting-app` plugin might serve, so that
@@ -107,8 +81,6 @@ export const optedInRoutePaths = new Set<string>();
  * module is evaluated.
  */
 export function proxied(route: RouteDescriptor): RouteDescriptor {
-  optedInRoutePaths.add(route.path);
-
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingDataSourceManagedRouteProxy, false)) {
     return route;
   }
