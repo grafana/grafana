@@ -1,7 +1,7 @@
 import { mergeWith } from 'lodash';
 import * as z from 'zod';
 
-import { emphasize, onBackground } from './colorManipulator';
+import { onBackground } from './colorManipulator';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
@@ -28,10 +28,6 @@ const ThemeTableColorsInputSchema = z.object({
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
     .optional(),
   rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
-  rowSelectedHoverBackground: z
-    .string()
-    .describe('Opaque background for a hovered selected row when not using the hover overlay.')
-    .optional(),
 });
 
 type ThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -378,6 +374,5 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
     rowSelectedBackground,
-    rowSelectedHoverBackground: emphasize(rowSelectedBackground, 0.05),
   };
 }

@@ -7,20 +7,19 @@ palette.
 
 ## Roles
 
-| Token                        | Usage                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `headerBackground`           | Header surface                                                              |
-| `border`                     | Body and footer dividers                                                    |
-| `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
-| `rowHoverBackground`         | Hovered, unselected row surface                                             |
-| `rowSelectedBackground`      | Selected row surface                                                        |
-| `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
+| Token                   | Usage                                                                       |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `headerBackground`      | Header surface                                                              |
+| `border`                | Body and footer dividers                                                    |
+| `rowStripedBackground`  | Alternating data rows; not headers, footers, or nested expansion containers |
+| `rowHoverBackground`    | Hovered, unselected row surface                                             |
+| `rowSelectedBackground` | Selected row surface                                                        |
 
 Background surfaces and dividers must be opaque where they cover field-configured
 cell backgrounds or scrolling content.
 
-Use the row hover background for plain and striped rows. Selected rows use their
-dedicated selected hover background.
+Use the row hover background for plain and striped rows. Consumers derive the hovered
+selection surface by emphasizing the selected row background.
 
 ## Inheritance and overrides
 
