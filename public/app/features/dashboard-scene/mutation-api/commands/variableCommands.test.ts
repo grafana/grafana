@@ -10,8 +10,10 @@ import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+function buildMockScene(
+  options: { editable?: boolean; isEditing?: boolean; isPlanning?: boolean } = {}
+): DashboardScene {
+  const { editable = true, isEditing = false, isPlanning = false } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
@@ -20,6 +22,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => isPlanning),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -253,6 +256,24 @@ describe('Variable mutation commands', () => {
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed, rather than silently no-op-ing', async () => {
+    // Its whole job is entering edit mode, and there is no sensible "run it anyway" the way the
+    // other ~30 commands can (enterEditModeIfNeeded just skips the flip for those, per Oscar's
+    // decision) -- silently succeeding without actually entering edit mode would be a lie to the
+    // caller, so this one refuses outright instead.
+    scene = buildMockScene({ editable: true, isPlanning: true });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'ENTER_EDIT_MODE',
+      payload: {},
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Cannot enter edit mode while a dashboard plan is being previewed');
+    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid payloads with a validation error', async () => {
     const result = await client.execute({
       type: 'ADD_VARIABLE',
@@ -304,6 +325,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -340,6 +362,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -373,6 +396,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),

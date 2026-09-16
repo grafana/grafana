@@ -20,6 +20,20 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
     const { scene } = context;
 
     try {
+      // enterEditModeIfNeeded (types.ts) skips entering edit mode for the other ~30 commands
+      // while a plan preview is active, letting them still mutate the preview without flipping
+      // it into edit mode. That doesn't resolve this command: its entire job is entering edit
+      // mode, and there is no sensible "run it anyway" -- silently succeeding without actually
+      // entering edit mode would be a lie to the caller. Refuse it outright instead, the way the
+      // other guarded routes do.
+      if (scene.isPlanning()) {
+        return {
+          success: false,
+          error: 'Cannot enter edit mode while a dashboard plan is being previewed.',
+          changes: [],
+        };
+      }
+
       const wasEditing = scene.state.isEditing ?? false;
 
       if (!wasEditing) {
