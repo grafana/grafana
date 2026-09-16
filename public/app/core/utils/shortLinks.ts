@@ -91,8 +91,6 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
 
 export const createAndCopyShortLink = async (path: string) => {
   try {
-    // The link is passed unresolved so the clipboard write is issued before it arrives — Safari
-    // refuses a write made after an await.
     await copyTextToClipboard(createShortLink(path));
     dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
   } catch (error) {

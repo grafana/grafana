@@ -105,10 +105,8 @@ describe('copyTextToClipboard', () => {
 
     const copied = copyTextToClipboard(text);
 
-    // The reason this accepts a promise at all: the write is already in flight while the text is
-    // pending, so it happens inside the click's user activation rather than after it.
     expect(write).toHaveBeenCalledTimes(1);
-    // The very same promise, not a resolved copy of it — awaiting first is what Safari refuses.
+    // The same promise, not a resolved copy of it.
     expect(clipboardItem.mock.calls[0][0]['text/plain']).toBe(text);
 
     resolveText('copy me');
