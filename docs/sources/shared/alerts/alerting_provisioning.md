@@ -322,6 +322,8 @@ Content-Type: application/json
 
 ### Contact points
 
+The contact point endpoints support only v1 integrations. `GET` requests omit integrations that use another version. `PUT` and `DELETE` requests for those integrations return `404 Not Found`.
+
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
 | DELETE | /api/v1/provisioning/contact-points/:uid   | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
