@@ -7,22 +7,19 @@ palette.
 
 ## Roles
 
-| Token                        | Usage                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `headerBackground`           | Header surface                                                              |
-| `border`                     | Body and footer dividers                                                    |
-| `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
-| `rowHoverSurface`            | Solid hover surface for an unstriped row                                    |
-| `rowHoverOverlay`            | Hover fill composited over a row's existing background                      |
-| `rowSelectedBackground`      | Selected row surface                                                        |
-| `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
+| Token                   | Usage                                                                       |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `headerBackground`      | Header surface                                                              |
+| `border`                | Body and footer dividers                                                    |
+| `rowStripedBackground`  | Alternating data rows; not headers, footers, or nested expansion containers |
+| `rowHoverBackground`    | Hovered, unselected row surface                                             |
+| `rowSelectedBackground` | Selected row surface                                                        |
 
 Background surfaces and dividers must be opaque where they cover field-configured
 cell backgrounds or scrolling content.
 
-Use the solid hover surface for plain rows and the hover overlay when striped and
-selected rows need their own hover treatment. The overlay may be opaque or translucent;
-consumers must not apply it to field-configured cell colors or nested tables.
+Use the row hover background for plain and striped rows. Consumers derive the hovered
+selection surface by emphasizing the selected row background.
 
 ## Inheritance and overrides
 

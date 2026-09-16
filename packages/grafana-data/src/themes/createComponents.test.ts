@@ -8,19 +8,12 @@ describe('table colors', () => {
     ['light', '#ececed', '#f4f5f5', '#e0e0e0'],
     ['visual_refresh_dark', '#202429', '#191d22', '#282d33'],
     ['visual_refresh_light', '#f0f0ef', '#f5f5f4', '#e4e3e2'],
-  ])('resolves the chosen surfaces for %s', (id, headerBackground, rowStripedBackground, rowHoverSurface) => {
+  ])('resolves the chosen surfaces for %s', (id, headerBackground, rowStripedBackground, rowHoverBackground) => {
     expect(getThemeById(id).components.table).toMatchObject({
       headerBackground,
       rowStripedBackground,
-      rowHoverSurface,
+      rowHoverBackground,
     });
-  });
-
-  it.each([
-    ['visual_refresh_dark', '#282d33'],
-    ['visual_refresh_light', '#e4e3e2'],
-  ])('resolves a direct palette color for the %s hover overlay', (id, rowHoverOverlay) => {
-    expect(getThemeById(id).components.table.rowHoverOverlay).toBe(rowHoverOverlay);
   });
 
   it('inherits custom theme surfaces and accents before applying partial table overrides', () => {
