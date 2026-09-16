@@ -116,6 +116,7 @@ describe('TableDataGrid', () => {
           mode: 'dark',
           background: { primary: '#123456' },
           secondary: { shade: '#456789' },
+          action: { selectedBorder: '#89abcd' },
         },
         components: {
           panel: { background: '#123456' },
@@ -125,7 +126,6 @@ describe('TableDataGrid', () => {
             rowHoverSurface: '#56789a',
             rowSelectedBackground: '#6789ab',
             rowSelectedHoverBackground: '#789abc',
-            cellSelectionBorder: '#89abcd',
           },
         },
       });
