@@ -519,7 +519,11 @@ describe('buildVizPanel', () => {
     // A 'timeseries' sample always sets legend.showLegend: false and infers a unit from the
     // title (see planningSampleData.ts). Picking planned values that disagree with both makes
     // any leak from the sample into the panel state visible in the assertions below.
-    function buildPlannedPanel(options: Record<string, unknown>, fieldConfig: FieldConfigSource): PanelKind {
+    function buildPlannedPanel(
+      options: Record<string, unknown>,
+      fieldConfig: FieldConfigSource,
+      group = 'timeseries'
+    ): PanelKind {
       const base = defaultPanelSpec();
       return {
         kind: 'Panel',
@@ -528,7 +532,7 @@ describe('buildVizPanel', () => {
           title: 'p99 latency',
           vizConfig: {
             ...base.vizConfig,
-            group: 'timeseries',
+            group,
             spec: { options, fieldConfig },
           },
         },
@@ -556,6 +560,22 @@ describe('buildVizPanel', () => {
       const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
 
       expect(viz.state.$data).toBeDefined();
+    });
+
+    it('keeps planned text-panel content instead of the sample placeholder note', () => {
+      // The original Bugbot report named this exact case: getPlanningPanelData's 'text' branch
+      // (planningSampleData.ts) returns { mode: 'markdown', content: '_Notes for this
+      // section._' } as its sample options, which would have clobbered a planned text panel's
+      // real markdown before the T5 fix.
+      const panel = buildPlannedPanel(
+        { mode: 'markdown', content: 'Real planned note' },
+        defaultFieldConfigSource(),
+        'text'
+      );
+
+      const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
+
+      expect(viz.state.options).toEqual({ mode: 'markdown', content: 'Real planned note' });
     });
   });
 });
