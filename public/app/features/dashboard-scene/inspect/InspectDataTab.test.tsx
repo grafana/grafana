@@ -96,10 +96,10 @@ describe('InspectDataTab', () => {
     await user.click(screen.getByText('Data options'));
     expect(screen.queryByText('Apply panel transformations')).not.toBeInTheDocument();
 
-    // A visualization switch, like a plugin finishing its load, changes what the supplier answers
-    // without the query re-running. Only the transformer sees it, so a tab watching the query result
-    // alone would go on offering the view it already had.
-    panel.setState({ pluginId: 'logs-table' });
+    // A visualization switch changes what the supplier answers without the query re-running. Only
+    // the transformer sees it, so a tab watching the query result alone would go on offering the
+    // view it already had.
+    await panel.changePluginType('logs-table');
 
     expect(await screen.findByText('Apply panel transformations')).toBeInTheDocument();
   });
