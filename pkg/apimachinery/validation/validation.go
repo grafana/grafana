@@ -63,9 +63,7 @@ func IsValidGrafanaName(name string) []string {
 }
 
 // reservedNames would collide with the subresource paths mounted next to an
-// object, for example .../folders/trash. list-keys is listed even though its route
-// is POST-only, so it does not collide today: it keeps the rule consistent and
-// safe if a POST is ever registered on {resource}/{name}.
+// object, for example .../folders/trash.
 var reservedNames = []string{"search", "trash", "history", "query", utils.ListKeysPathSegment}
 
 // IsReservedName checks if the name is one a new resource may not be saved under.

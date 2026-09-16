@@ -34,10 +34,37 @@ var errOffline = apierrors.NewServiceUnavailable("the plugin backend is not runn
 var _ resourcepb.ResourceIndexClient = offlineSearchClient{}
 var _ resourcepb.ResourceStoreClient = offlineStoreClient{}
 
-// offlineStoreClient allows list-keys routes to be registered without a resource
-// store. Registration only needs the client to exist; nothing calls it while
-// generating a spec, so the embedded nil interface is never reached.
-type offlineStoreClient struct{ resourcepb.ResourceStoreClient }
+// offlineStoreClient allows list-keys routes to be registered without connecting
+// to the resource store.
+type offlineStoreClient struct{}
+
+func (offlineStoreClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) Create(context.Context, *resourcepb.CreateRequest, ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) Delete(context.Context, *resourcepb.DeleteRequest, ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) List(context.Context, *resourcepb.ListRequest, ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) Watch(context.Context, *resourcepb.WatchRequest, ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
+	return nil, errOffline
+}
+
+func (offlineStoreClient) ListStoredResources(context.Context, *resourcepb.ListStoredResourcesRequest, ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
+	return nil, errOffline
+}
 
 // offlineSearchClient allows search and trash routes to be registered without
 // connecting to the search index.

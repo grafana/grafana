@@ -122,9 +122,10 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	}
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
 
-	keysRoot, keysNamespaced := b.keysRoutes(gv)
-	routes.Root = append(routes.Root, keysRoot...)
-	routes.Namespace = append(routes.Namespace, keysNamespaced...)
+	if keys := b.keysRoutes(gv); keys != nil {
+		routes.Root = append(routes.Root, keys.Root...)
+		routes.Namespace = append(routes.Namespace, keys.Namespace...)
+	}
 
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
@@ -208,17 +209,22 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 	return handlers, nil
 }
 
-// keysRoutes builds the list-keys endpoints for the kinds this version serves, at
-// both scopes. Delegated to keysroutes for the same reason as searchRoutes: which
-// kinds get the endpoint is decided in one place, so a plugin-served manifest and
-// the same manifest served as a CRD agree.
-func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) (root, namespaced []builder.APIRouteHandler) {
+// keysRoutes builds the generic list-keys endpoints for the kinds this version
+// serves, at both scopes.
+//
+// Delegated to keysroutes for the same reason as searchRoutes: which kinds get
+// the endpoint is not a decision this builder should be making on its own, so the
+// config toggle and the namespaced-kind rule are applied in one place and a
+// plugin-served manifest agrees with the same manifest served as a custom
+// resource definition.
+func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	if b.store == nil {
-		return nil, nil
+		return nil
 	}
 
-	// Matched to served versions by the manifest's own group, which is not always
-	// the group the plugin is served under. See apiGroupForPlugin.
+	// keysroutes matches manifests to served versions by the manifest's own
+	// group, which is not always the group the plugin is served under. See
+	// apiGroupForPlugin.
 	manifest := *b.manifest
 	manifest.Group = b.group
 
@@ -230,14 +236,15 @@ func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) (root, namespac
 		b.store,
 	)
 
+	routes := &builder.APIRoutes{}
 	for _, gvRoutes := range built {
 		if gvRoutes.GroupVersion != gv || gvRoutes.Routes == nil {
 			continue
 		}
-		root = append(root, gvRoutes.Routes.Root...)
-		namespaced = append(namespaced, gvRoutes.Routes.Namespace...)
+		routes.Root = append(routes.Root, gvRoutes.Routes.Root...)
+		routes.Namespace = append(routes.Namespace, gvRoutes.Routes.Namespace...)
 	}
-	return root, namespaced
+	return routes
 }
 
 // routeHandler forwards a manifest route to the plugin's v3 route service.
