@@ -313,6 +313,56 @@ it('still removes a plan panel after it is dragged into a new row, which clones 
   expect(scene.state.body.getVizPanels()).toHaveLength(0);
 });
 
+it('warns when a tracked section survives only because of a hollow, untracked child', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_ROW',
+        planId: 'plan-1',
+        payload: { row: { kind: 'RowsLayoutRow', spec: { title: 'Overview' } }, parentPath: '/' },
+      })
+    ).success
+  ).toBe(true);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_PANEL',
+        planId: 'plan-1',
+        payload: { parentPath: '/rows/0', panel: { kind: 'Panel', spec: panel } },
+      })
+    ).success
+  ).toBe(true);
+
+  const body = scene.state.body;
+  if (!(body instanceof RowsLayoutManager)) {
+    throw new Error('Expected rows layout');
+  }
+  const overview = body.state.rows[0];
+  const plannedPanel = overview.state.layout.getVizPanels()[0];
+
+  // Simulates "Group into tab" on the panel inside Overview: it moves into a brand-new
+  // TabsLayoutManager/TabItem that replaces Overview's own layout. Before T6, that new tab is
+  // never tracked by trackPlanningSection.
+  overview.state.layout.removePanel(plannedPanel);
+  const untrackedTab = new TabItem({
+    title: 'New tab',
+    layout: DefaultGridLayoutManager.fromVizPanels([plannedPanel]),
+  });
+  overview.setState({ layout: new TabsLayoutManager({ tabs: [untrackedTab] }) });
+
+  const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+  expect(ended.success).toBe(true);
+
+  // T15's badge rescan still finds and removes the panel, wherever it ended up.
+  expect(scene.state.body.getVizPanels()).toHaveLength(0);
+  // But Overview itself survives: it looks non-empty (it still has the untracked, now-panel-less
+  // "New tab" inside it) and nothing removes an untracked section. That's the known residual —
+  // surfaced here as a warning rather than passing as if cleanup fully succeeded.
+  expect(ended.warnings).toEqual(['Could not remove "Overview": it still contains an empty, untracked tab.']);
+});
+
 it('reshapes samples when visualization changes through UPDATE_PANEL', async () => {
   const { scene, client } = setup();
   await client.execute(start);
@@ -497,9 +547,11 @@ it.each(['row', 'tab'] as const)(
       ).success
     ).toBe(true);
 
-    expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
-      true
-    );
+    const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } });
+    expect(ended.success).toBe(true);
+    // No false positive: "Wraps existing" survives because of real content, not a hollow,
+    // untracked child, so this must not produce a T16 warning.
+    expect(ended.warnings).toBeUndefined();
 
     const body = scene.state.body;
     const titles =

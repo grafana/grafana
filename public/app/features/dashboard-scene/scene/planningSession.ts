@@ -8,6 +8,7 @@ import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { DashboardPlanningEvent } from './planningEvents';
+import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 
 interface PlanningSession {
   sections: Set<RowItem | TabItem>;
@@ -91,10 +92,31 @@ export function trackPlanningVariable(
   variables.add(variable);
 }
 
-export function endPlanningSession(scene: DashboardScene, planId: string, discard: boolean) {
+/**
+ * A layout with nothing genuine left in it: no panels anywhere in its own tree, recursively.
+ * Used to tell "this tracked section still wraps real content" (correct to keep) from "this
+ * tracked section is only non-empty because of a hollow, untracked child" (see the warning in
+ * the section-removal loop below) apart — both look identical to a plain non-empty check.
+ */
+function isHollow(layout: DashboardLayoutManager): boolean {
+  if (layout.getVizPanels().length > 0) {
+    return false;
+  }
+  if (layout instanceof RowsLayoutManager) {
+    return layout.state.rows.every((row) => isHollow(row.state.layout));
+  }
+  if (layout instanceof TabsLayoutManager) {
+    return layout.state.tabs.every((tab) => isHollow(tab.state.layout));
+  }
+  return true;
+}
+
+/** Returns any non-fatal warnings about scaffolding discard could not clean up. */
+export function endPlanningSession(scene: DashboardScene, planId: string, discard: boolean): string[] {
   if (scene.state.planning?.planId !== planId) {
     throw new Error('The preview dashboard is no longer open.');
   }
+  const warnings: string[] = [];
   const session = sessions.get(scene);
   if (discard && session) {
     // Tracked references (session.panels) handle the common case, but a layout-type conversion,
@@ -140,11 +162,28 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
       // A new section may wrap existing content or receive it during preview edits.
       // Remove only empty sections after the plan's own panels and variables are gone.
       const layout = section.state.layout;
-      if (
-        layout.getVizPanels().length > 0 ||
-        (layout instanceof RowsLayoutManager && layout.state.rows.length > 0) ||
-        (layout instanceof TabsLayoutManager && layout.state.tabs.length > 0)
-      ) {
+      if (layout.getVizPanels().length > 0) {
+        continue;
+      }
+      if (layout instanceof RowsLayoutManager && layout.state.rows.length > 0) {
+        // Real content survives here (correct, expected — see the wrap-preserving tests for
+        // this section) and looks identical, from this check alone, to a hollow, untracked
+        // child blocking removal for no good reason (e.g. an untracked "Group into tab" wrapper
+        // T15 has already emptied of panels). Distinguish the two with isHollow rather than
+        // staying silent on the second.
+        if (layout.state.rows.every((row) => isHollow(row.state.layout))) {
+          warnings.push(
+            `Could not remove "${section.state.title ?? section.state.key}": it still contains an empty, untracked row.`
+          );
+        }
+        continue;
+      }
+      if (layout instanceof TabsLayoutManager && layout.state.tabs.length > 0) {
+        if (layout.state.tabs.every((tab) => isHollow(tab.state.layout))) {
+          warnings.push(
+            `Could not remove "${section.state.title ?? section.state.key}": it still contains an empty, untracked tab.`
+          );
+        }
         continue;
       }
       const parent = section.parent;
@@ -157,6 +196,7 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
   }
   sessions.delete(scene);
   scene.setState({ planning: undefined });
+  return warnings;
 }
 
 export function deactivatePlanningSession(scene: DashboardScene) {

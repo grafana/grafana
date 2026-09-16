@@ -23,7 +23,7 @@ export const endPlanningCommand: MutationCommand<z.infer<typeof payloads.endPlan
   payloadSchema: payloads.endPlanning,
   permission: requiresEdit,
   handler: async ({ planId, discard }, { scene }) => {
-    endPlanningSession(scene, planId, discard);
-    return { success: true, changes: [] };
+    const warnings = endPlanningSession(scene, planId, discard);
+    return { success: true, changes: [], warnings: warnings.length > 0 ? warnings : undefined };
   },
 };
