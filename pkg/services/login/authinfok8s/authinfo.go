@@ -167,7 +167,7 @@ func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUs
 			return nil, err
 		}
 		if len(items) > 0 {
-			result[userID] = login.GetAuthProviderLabel(items[0].Spec.AuthModule)
+			result[userID] = items[0].Spec.AuthModule
 		}
 	}
 

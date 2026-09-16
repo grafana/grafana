@@ -286,7 +286,7 @@ func TestStore_GetUsersRecentlyUsedLabel(t *testing.T) {
 
 	cases := []testCase{
 		{
-			name:    "labels only users that have auth info, using the most recent module",
+			name:    "returns the raw auth module for users that have auth info, using the most recent one",
 			userIDs: []int64{1, 2},
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				switch {
@@ -308,7 +308,7 @@ func TestStore_GetUsersRecentlyUsedLabel(t *testing.T) {
 					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 				}
 			},
-			want: map[int64]string{1: login.GithubLabel},
+			want: map[int64]string{1: "oauth_github"},
 		},
 		{
 			name:    "empty map when no requested user has auth info",
