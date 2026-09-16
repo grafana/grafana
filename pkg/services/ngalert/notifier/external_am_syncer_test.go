@@ -641,6 +641,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
+	assert.Equal(t, 2, proxy.callCount("mimir-uid"), "dedup compares hashes after fetching, it doesn't skip the fetch itself")
 }
 
 func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {

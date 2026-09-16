@@ -40,9 +40,9 @@ func (f *fakeProxy) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, ds
 	f.gotUID = dsUID
 	f.gotPath = c.Req.URL.Path
 	f.gotAccept = c.Req.Header.Get("Accept")
-	f.gotUser = c.SignedInUser.Login
-	f.gotOrgID = c.SignedInUser.OrgID
-	f.gotPerms = c.SignedInUser.Permissions
+	f.gotUser = c.Login
+	f.gotOrgID = c.OrgID
+	f.gotPerms = c.Permissions
 
 	if f.apiErr != nil {
 		c.JsonApiErr(f.apiErrStatus, "proxy error", f.apiErr)
