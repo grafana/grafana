@@ -456,7 +456,7 @@ func TestStore_UpdateAuthInfo(t *testing.T) {
 
 	cases := []testCase{
 		{
-			name: "updates authID and clears externalUID",
+			name: "updates authID",
 			cmd:  &login.UpdateAuthInfoCommand{UserId: 42, AuthModule: "oauth_github", AuthId: "new-id"},
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				switch {
@@ -468,7 +468,50 @@ func TestStore_UpdateAuthInfo(t *testing.T) {
 					var obj iamv0alpha1.AuthInfo
 					require.NoError(t, json.NewDecoder(r.Body).Decode(&obj))
 					assert.Equal(t, "new-id", obj.Spec.AuthID)
-					assert.Nil(t, obj.Spec.ExternalUID)
+					writeJSON(t, w, obj)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+		},
+		{
+			name: "leaves an existing externalUID untouched when the command doesn't set one",
+			cmd:  &login.UpdateAuthInfoCommand{UserId: 42, AuthModule: "oauth_github", AuthId: "new-id"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case r.Method == http.MethodGet:
+					existingExternalUID := "scim-correlation-id"
+					item := authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "old-id", time.Now())
+					item.Spec.ExternalUID = &existingExternalUID
+					writeJSON(t, w, item)
+				case r.Method == http.MethodPut:
+					var obj iamv0alpha1.AuthInfo
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&obj))
+					assert.Equal(t, "new-id", obj.Spec.AuthID)
+					require.NotNil(t, obj.Spec.ExternalUID)
+					assert.Equal(t, "scim-correlation-id", *obj.Spec.ExternalUID)
+					writeJSON(t, w, obj)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+		},
+		{
+			name: "updates externalUID when the command sets one",
+			cmd:  &login.UpdateAuthInfoCommand{UserId: 42, AuthModule: "auth.saml", ExternalUID: "new-scim-id"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case r.Method == http.MethodGet:
+					writeJSON(t, w, authInfoItem("user-uid.auth.saml", "user-uid", "auth.saml", "", time.Now()))
+				case r.Method == http.MethodPut:
+					var obj iamv0alpha1.AuthInfo
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&obj))
+					require.NotNil(t, obj.Spec.ExternalUID)
+					assert.Equal(t, "new-scim-id", *obj.Spec.ExternalUID)
 					writeJSON(t, w, obj)
 				default:
 					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)

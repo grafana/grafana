@@ -291,9 +291,8 @@ func (s *Store) applyUpdate(ctx context.Context, client *iamv0alpha1.AuthInfoCli
 	}
 
 	existing.Spec.AuthID = authID
-	if externalUID == "" {
-		existing.Spec.ExternalUID = nil
-	} else {
+	// Only overwrite ExternalUID when the caller actually supplied one.
+	if externalUID != "" {
 		existing.Spec.ExternalUID = &externalUID
 	}
 
