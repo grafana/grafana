@@ -9,6 +9,8 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // NewAllowAuthorizer returns an authorizer that systematically allows access for resource requests.
@@ -87,9 +89,6 @@ func (a *GrafanaAuthorizer) Unregister(gv schema.GroupVersion) {
 	delete(a.apis, gv.String())
 }
 
-// ListKeysPathSegment is the final segment of the list-keys endpoint.
-const ListKeysPathSegment = "list-keys"
-
 // IsListKeysRequest reports whether attr is a call to a kind's list-keys endpoint.
 //
 // Exported because the multi-tenant apiserver has its own chain and has to apply
@@ -98,7 +97,7 @@ func IsListKeysRequest(attr authorizer.Attributes) bool {
 	if !attr.IsResourceRequest() || attr.GetVerb() != "create" || attr.GetSubresource() != "" {
 		return false
 	}
-	return attr.GetName() == ListKeysPathSegment
+	return attr.GetName() == utils.ListKeysPathSegment
 }
 
 // Authorize implements authorizer.Authorizer.

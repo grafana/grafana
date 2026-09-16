@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -52,7 +53,7 @@ const (
 )
 
 func testKind_() kindRef {
-	return kindRef{group: testGroup, version: testVersion, resource: testResource, kind: testKind}
+	return kindRef{group: testGroup, version: testVersion, resource: testResource}
 }
 
 // The identity a controller gets from identity.WithServiceIdentity, built the
@@ -360,4 +361,99 @@ func TestListKeys_ReportsPerItemNamespace(t *testing.T) {
 		byName[item.Name] = item.Namespace
 	}
 	assert.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-two", "ccc": "ns-two"}, byName)
+}
+
+// Drives the namespaced route as the apiserver would: the namespace arrives in the
+// request context, the way request_handler puts it there for a namespace-mounted
+// route, not as a body field.
+func doNamespaced(t *testing.T, store *fakeStore, ident claims.AuthInfo, namespace, body string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	h := NewHandler(store, noop.NewTracerProvider().Tracer("test"))
+	req := httptest.NewRequest(http.MethodPost, "/list-keys", strings.NewReader(body))
+
+	ctx := req.Context()
+	if ident != nil {
+		ctx = claims.WithAuthInfo(ctx, ident)
+	}
+	if namespace != "" {
+		ctx = request.WithNamespace(ctx, namespace)
+	}
+
+	rec := httptest.NewRecorder()
+	h.ListKeysInNamespaceFor(testKind_())(rec, req.WithContext(ctx))
+	return rec
+}
+
+// The namespace has to reach the storage key, or the request silently widens to
+// every namespace.
+func TestListKeysInNamespace_ScopesTheRequest(t *testing.T) {
+	store := &fakeStore{}
+	ident := serviceIdentity()
+	ident.Namespace = "stacks-1234"
+
+	rec := doNamespaced(t, store, ident, "stacks-1234", `{}`)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	require.Len(t, store.calls, 1)
+	assert.True(t, store.calls[0].KeysOnly)
+	assert.Equal(t, "stacks-1234", store.calls[0].Options.Key.Namespace)
+}
+
+func TestListKeysInNamespace_RejectsUnusableNamespaces(t *testing.T) {
+	for name, tc := range map[string]struct {
+		namespace  string
+		wantStatus int
+	}{
+		"a real namespace": {"stacks-1234", http.StatusOK},
+		"no namespace":     {"", http.StatusBadRequest},
+		"wildcard":         {"*", http.StatusBadRequest},
+	} {
+		t.Run(name, func(t *testing.T) {
+			store := &fakeStore{}
+			ident := serviceIdentity()
+			ident.Namespace = tc.namespace
+
+			rec := doNamespaced(t, store, ident, tc.namespace, `{}`)
+			require.Equal(t, tc.wantStatus, rec.Code, rec.Body.String())
+
+			if tc.wantStatus != http.StatusOK {
+				assert.Empty(t, store.calls, "a rejected namespace must not reach the store")
+			}
+		})
+	}
+}
+
+// The point of the namespaced route: a tenant-scoped identity may use it, while the
+// cluster-wide route still refuses it. Storage authorizes the namespace itself.
+func TestListKeys_TenantScopedIdentityIsNamespacedOnly(t *testing.T) {
+	ident := func() *identity.StaticRequester {
+		i := serviceIdentity()
+		i.Namespace = "stacks-1234"
+		return i
+	}
+
+	nsStore := &fakeStore{}
+	nsRec := doNamespaced(t, nsStore, ident(), "stacks-1234", `{}`)
+	require.Equal(t, http.StatusOK, nsRec.Code, nsRec.Body.String())
+	require.Len(t, nsStore.calls, 1)
+
+	clusterStore := &fakeStore{}
+	clusterRec := do(t, clusterStore, ident(), `{}`)
+	require.Equal(t, http.StatusForbidden, clusterRec.Code, clusterRec.Body.String())
+	assert.Empty(t, clusterStore.calls, "a refused caller must not reach the store")
+}
+
+// An empty GroupResource leaves the caller guessing which kind refused them.
+func TestListKeys_ForbiddenNamesTheResource(t *testing.T) {
+	user := &identity.StaticRequester{Type: claims.TypeUser, Namespace: "default"}
+
+	rec := do(t, &fakeStore{}, user, `{}`)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+
+	var status metav1.Status
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+	require.NotNil(t, status.Details)
+	assert.Equal(t, testGroup, status.Details.Group)
+	assert.Equal(t, testResource, status.Details.Kind)
 }

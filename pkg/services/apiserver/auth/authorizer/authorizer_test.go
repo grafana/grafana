@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Keys is cluster-scoped, so its path carries no namespace.
@@ -17,7 +19,7 @@ func TestIsListKeysRequest(t *testing.T) {
 	post := attributesFor(t, http.MethodPost, listKeysPath)
 	require.Equal(t, "create", post.GetVerb())
 	require.Equal(t, "dashboards", post.GetResource())
-	require.Equal(t, ListKeysPathSegment, post.GetName())
+	require.Equal(t, utils.ListKeysPathSegment, post.GetName())
 	assert.True(t, IsListKeysRequest(post))
 
 	// Creating a dashboard posts to the collection, so it carries no name and

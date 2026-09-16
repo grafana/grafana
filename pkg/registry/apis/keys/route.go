@@ -10,7 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns the endpoint on.
@@ -42,11 +42,25 @@ type Route struct {
 
 // ListKeysRoute returns the cluster-scoped list-keys route.
 func (h *Handler) ListKeysRoute(group, version, resourceName, kindName string) Route {
-	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
+	kind := kindRef{group: group, version: version, resource: resourceName}
 	return Route{
-		Path:    resourceName + "/" + grafanaauthorizer.ListKeysPathSegment,
-		Spec:    listKeysRouteSpec(kindName, version),
+		Path:    resourceName + "/" + utils.ListKeysPathSegment,
+		Spec:    listKeysRouteSpec(kindName, version, false),
 		Handler: h.ListKeysFor(kind),
+		Schemas: metaSchemas(listOptionsModel, partialListModel),
+	}
+}
+
+// ListKeysInNamespaceRoute returns the namespaced list-keys route. The path is the
+// same; the host mounts it under .../namespaces/{namespace}/ so the namespace
+// reaches the handler as a request attribute rather than a body field, which keeps
+// it visible to the authorization chain and the audit log.
+func (h *Handler) ListKeysInNamespaceRoute(group, version, resourceName, kindName string) Route {
+	kind := kindRef{group: group, version: version, resource: resourceName}
+	return Route{
+		Path:    resourceName + "/" + utils.ListKeysPathSegment,
+		Spec:    listKeysRouteSpec(kindName, version, true),
+		Handler: h.ListKeysInNamespaceFor(kind),
 		Schemas: metaSchemas(listOptionsModel, partialListModel),
 	}
 }
@@ -54,7 +68,10 @@ func (h *Handler) ListKeysRoute(group, version, resourceName, kindName string) R
 // The version is part of the name because the endpoint is mounted on every served
 // version and operation IDs must stay unique once the specs are merged. Starts
 // with a Kubernetes verb so the route builder does not prefix one.
-func listKeysOperationID(kindName, version string) string {
+func listKeysOperationID(kindName, version string, namespaced bool) string {
+	if namespaced {
+		return "listNamespaced" + kindName + "Keys" + capitalize(version)
+	}
 	return "list" + kindName + "Keys" + capitalize(version)
 }
 
@@ -65,15 +82,34 @@ func capitalize(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-func listKeysRouteSpec(kindName, version string) *spec3.PathProps {
+func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathProps {
+	scope := "across all namespaces"
+	requires := "Requires a service identity scoped to all namespaces."
+	var params []*spec3.Parameter
+	if namespaced {
+		scope = "in a namespace"
+		requires = "Requires a service identity permitted to read that namespace."
+		params = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "namespace",
+					In:          "path",
+					Required:    true,
+					Example:     "default",
+					Description: "workspace",
+					Schema:      spec.StringProperty(),
+				},
+			},
+		}
+	}
 	return &spec3.PathProps{
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
 				Tags:        []string{"Keys"},
-				OperationId: listKeysOperationID(kindName, version),
-				Description: "List " + kindName + " keys across all namespaces: namespace, name, " +
-					"folder and resourceVersion only, with no object bodies. Requires a service " +
-					"identity scoped to all namespaces.",
+				OperationId: listKeysOperationID(kindName, version, namespaced),
+				Description: "List " + kindName + " keys " + scope + ": namespace, name, " +
+					"folder and resourceVersion only, with no object bodies. " + requires,
+				Parameters: params,
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required: false,

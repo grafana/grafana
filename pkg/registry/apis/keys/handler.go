@@ -2,8 +2,8 @@
 // POST /apis/{group}/{version}/{resource}/list-keys.
 //
 // It reads identities out of unified storage without fetching object bodies, so a
-// controller can take a state-of-the-world snapshot cheaply. Cluster-scoped: one
-// call covers every namespace, so the caller's identity must cover them too.
+// controller can take a state-of-the-world snapshot cheaply. Served at two scopes:
+// namespaced, and cluster-wide for a caller whose identity covers every namespace.
 //
 // POST rather than GET because GET would permanently shadow an object of that
 // name, and nothing is registered for POST on {resource}/{name}.
@@ -23,6 +23,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -37,11 +38,13 @@ import (
 // ListOptions is small, so anything larger is a client bug or an attack.
 const maxRequestBody = 1 << 20 // 1 MiB
 
+// kindRef identifies the kind a route serves. Only group and resource reach the
+// storage key (which is group/resource/namespace/name); version serves the trace
+// attribute and the per-version operation ID.
 type kindRef struct {
 	group    string
 	version  string
 	resource string
-	kind     string
 }
 
 type Handler struct {
@@ -58,11 +61,11 @@ func NewHandler(store resourcepb.ResourceStoreClient, tracer trace.Tracer) *Hand
 	}
 }
 
-// ListKeysFor returns the POST handler for one kind's keys endpoint.
+// ListKeysFor returns the POST handler for one kind's cluster-wide keys endpoint.
 //
 // The response is a PartialObjectMetadataList carrying only namespace, name,
 // resourceVersion and the grafana.app/folder annotation. Nothing from the object
-// body is available, since no body is read — which is why this is its own endpoint
+// body is available, since no body is read, which is why this is its own endpoint
 // rather than content negotiation on the normal list, where clients are promised
 // complete metadata.
 //
@@ -80,6 +83,17 @@ func NewHandler(store resourcepb.ResourceStoreClient, tracer trace.Tracer) *Hand
 // served from legacy (dual-write mode 0-2) the result can be empty or stale while
 // the normal list returns real data.
 func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
+	return h.listKeys(kind, false)
+}
+
+// ListKeysInNamespaceFor returns the POST handler for one kind's namespaced keys
+// endpoint. Storage authorizes the requested namespace against the caller's own,
+// so this serves a tenant-scoped identity that the cluster-wide form refuses.
+func (h *Handler) ListKeysInNamespaceFor(kind kindRef) http.HandlerFunc {
+	return h.listKeys(kind, true)
+}
+
+func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := h.tracer.Start(r.Context(), "keys.v1.listKeys", trace.WithAttributes(
 			attribute.String("keys.group", kind.group),
@@ -88,7 +102,18 @@ func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
 		))
 		defer span.End()
 
-		if err := requireClusterWideServiceIdentity(ctx); err != nil {
+		// Empty for the cluster-wide route, which lists every namespace.
+		namespace := ""
+		if namespaced {
+			var err error
+			if namespace, err = namespaceFrom(ctx); err != nil {
+				errhttp.Write(ctx, err, w)
+				return
+			}
+			span.SetAttributes(attribute.String("keys.namespace", namespace))
+		}
+
+		if err := h.requireServiceIdentity(ctx, kind, namespace); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
@@ -105,8 +130,9 @@ func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
 			NextPageToken: opts.Continue,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    kind.group,
-					Resource: kind.resource,
+					Group:     kind.group,
+					Resource:  kind.resource,
+					Namespace: namespace,
 				},
 			},
 		}
@@ -125,6 +151,9 @@ func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
 		// AsErrorResult reads the structured result off the gRPC status details, so
 		// the reason and code survive the wire instead of collapsing to Internal.
 		if err != nil {
+			h.log.FromContext(ctx).Error("list-keys failed",
+				"group", kind.group, "resource", kind.resource,
+				"namespace", namespace, "error", err)
 			errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
 			return
 		}
@@ -138,24 +167,50 @@ func (h *Handler) ListKeysFor(kind kindRef) http.HandlerFunc {
 	}
 }
 
-// requireClusterWideServiceIdentity accepts only the service identity. The read
-// it performs is cluster-wide, so only the "*" namespace is allowed.
-func requireClusterWideServiceIdentity(ctx context.Context) error {
+const wildcardNamespace = "*"
+
+// namespaceFrom resolves the path namespace the namespaced route was mounted with.
+func namespaceFrom(ctx context.Context) (string, error) {
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok || namespace == "" {
+		return "", apierrors.NewBadRequest("namespace is required")
+	}
+	// About what the endpoint offers, not who the caller is: a wildcard here would
+	// reach the backend as a namespace literally named "*". Cluster-wide reads have
+	// their own route.
+	if namespace == wildcardNamespace {
+		return "", apierrors.NewBadRequest("listing keys across namespaces is not supported on the namespaced endpoint")
+	}
+	return namespace, nil
+}
+
+// requireServiceIdentity accepts only the service identity. An empty namespace
+// means the cluster-wide read, which spans every namespace and so additionally
+// requires an identity scoped to "*". For a namespaced read the namespace itself
+// is authorized by storage, against the caller's own.
+func (h *Handler) requireServiceIdentity(ctx context.Context, kind kindRef, namespace string) error {
+	gr := schema.GroupResource{Group: kind.group, Resource: kind.resource}
+
 	info, ok := claims.AuthInfoFrom(ctx)
 	if !ok || info == nil {
 		return apierrors.NewUnauthorized("no identity found for request")
 	}
 	if !identity.IsServiceIdentity(ctx) {
-		return apierrors.NewForbidden(
-			schema.GroupResource{}, "",
+		h.log.FromContext(ctx).Warn("refused list-keys: not the service identity",
+			"group", kind.group, "resource", kind.resource, "namespace", namespace,
+			"identityType", info.GetIdentityType())
+		return apierrors.NewForbidden(gr, "",
 			fmt.Errorf("listing keys is only available to the service identity, got %q", info.GetIdentityType()),
 		)
 	}
-	if ns := info.GetNamespace(); ns != "*" {
-		return apierrors.NewForbidden(
-			schema.GroupResource{}, "",
-			fmt.Errorf("listing keys is cluster-wide and requires an identity scoped to %q, got %q", "*", ns),
-		)
+	if namespace == "" {
+		if ns := info.GetNamespace(); ns != wildcardNamespace {
+			h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: identity is not scoped to all namespaces",
+				"group", kind.group, "resource", kind.resource, "identityNamespace", ns)
+			return apierrors.NewForbidden(gr, "",
+				fmt.Errorf("listing keys across namespaces requires an identity scoped to %q, got %q", wildcardNamespace, ns),
+			)
+		}
 	}
 	return nil
 }

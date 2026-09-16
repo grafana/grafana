@@ -92,3 +92,28 @@ func TestListKeysRoute_ParsesAsClusterScopedNamedCreate(t *testing.T) {
 	assert.Empty(t, info.Namespace, "cluster-scoped: no namespace in the path")
 	assert.Empty(t, info.Subresource, "a subresource would be a different endpoint")
 }
+
+func TestListKeysInNamespaceRoute_Shape(t *testing.T) {
+	h := NewHandler(&fakeStore{}, noop.NewTracerProvider().Tracer("test"))
+	r := h.ListKeysInNamespaceRoute(testGroup, testVersion, testResource, testKind)
+
+	// The same path: the host mounts it under .../namespaces/{namespace}/.
+	assert.Equal(t, "dashboards/list-keys", r.Path)
+	require.NotNil(t, r.Handler)
+	require.NotNil(t, r.Spec)
+	require.NotNil(t, r.Spec.Post, "the endpoint is a POST")
+
+	op := r.Spec.Post.OperationProps
+
+	// Operation IDs have to differ, or the merged per-version specs collide.
+	assert.Equal(t, "listNamespacedDashboardKeysV1beta1", op.OperationId)
+	assert.NotEqual(t, testRoute(t).Spec.Post.OperationProps.OperationId, op.OperationId)
+
+	// The namespace is a path parameter, so it has to be described.
+	require.Len(t, op.Parameters, 1)
+	assert.Equal(t, "namespace", op.Parameters[0].Name)
+	assert.Equal(t, "path", op.Parameters[0].In)
+	assert.True(t, op.Parameters[0].Required)
+
+	assert.Contains(t, op.Description, "in a namespace")
+}
