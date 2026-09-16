@@ -124,7 +124,8 @@
       "headerBackground": "palette.ink700",
       "border": "palette.ink700",
       "rowStripedBackground": "palette.ink750",
-      "rowHoverBackground": "palette.ink650"
+      "rowHoverBackground": "palette.ink650",
+      "rowSelectedBackground": "palette.black"
     },
     "card": {
       "background": "palette.ink850",

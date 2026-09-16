@@ -7,23 +7,19 @@ palette.
 
 ## Roles
 
-| Token                  | Usage                                                                       |
-| ---------------------- | --------------------------------------------------------------------------- |
-| `headerBackground`     | Header surface                                                              |
-| `border`               | Body and footer dividers                                                    |
-| `rowStripedBackground` | Alternating data rows; not headers, footers, or nested expansion containers |
-| `rowHoverBackground`   | Hovered, unselected row surface                                             |
+| Token                   | Usage                                                                       |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `headerBackground`      | Header surface                                                              |
+| `border`                | Body and footer dividers                                                    |
+| `rowStripedBackground`  | Alternating data rows; not headers, footers, or nested expansion containers |
+| `rowHoverBackground`    | Hovered, unselected row surface                                             |
+| `rowSelectedBackground` | Selected row surface                                                        |
 
 Background surfaces and dividers must be opaque where they cover field-configured
 cell backgrounds or scrolling content.
 
-Use the row hover background for plain and striped rows. Row selection comes from
-`theme.colors.action.selected`, and consumers derive its hover state with
-`theme.colors.emphasize`.
-
-`components.table.rowSelected` is deprecated in favor of `colors.action.selected` and
-will be removed in Grafana 14. It remains available for existing TableRT consumers and
-custom themes during the deprecation period.
+Use the row hover background for plain and striped rows. Consumers derive the hovered
+selection surface by emphasizing the selected row background.
 
 `components.table.rowSelected` is deprecated in favor of `colors.action.selected` and
 will be removed in Grafana 14. It remains available for existing TableRT consumers and

@@ -1233,6 +1233,10 @@
             "rowStripedBackground": {
               "type": "string",
               "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
+            },
+            "rowSelectedBackground": {
+              "type": "string",
+              "description": "Opaque background for a selected row."
             }
           },
           "additionalProperties": false

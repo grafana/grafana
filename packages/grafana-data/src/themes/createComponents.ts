@@ -30,6 +30,7 @@ const ThemeTableColorsInputSchema = z.object({
     .string()
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
     .optional(),
+  rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
 });
 
 type InferredThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
@@ -370,6 +371,10 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
 function createTableColors(colors: ThemeColors): ThemeTableColors {
   const background = colors.background.primary;
   const headerBackground = onBackground(colors.secondary.main, background).toHexString();
+  const rowSelectedBackground =
+    colors.mode === 'dark'
+      ? onBackground(colors.warning.main, background).darken(37).toHexString()
+      : onBackground(colors.warning.main, background).lighten(25).toHexString();
   const rowHoverOverlay = colors.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
   const rowHoverBackground = onBackground(rowHoverOverlay, background).toHexString();
 
@@ -379,5 +384,6 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     headerBackground,
     border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
+    rowSelectedBackground,
   };
 }
