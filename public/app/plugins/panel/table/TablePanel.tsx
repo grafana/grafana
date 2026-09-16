@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { type DataFrame, getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -5,11 +7,14 @@ import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Box, Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
+  useTableRefreshNewFeatures,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
+import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -41,6 +46,7 @@ export function TablePanel(props: Props) {
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -48,7 +54,14 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const rawMain = frames[currentIndex];
+  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
+  const main = useMemo(
+    () => (tableRefreshNewFeaturesEnabled ? withRefreshedTableCapabilities(rawMain) : rawMain),
+    [rawMain, tableRefreshNewFeaturesEnabled]
+  );
+
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -72,6 +85,8 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
