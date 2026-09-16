@@ -144,6 +144,14 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 			return
 		}
 
+		// Requests are proxied with the datasource credentials attached, so only the paths and
+		// methods the plugin needs may be forwarded.
+		if status, msg := validateResourceRequest(subDataSource, newPath, req.Method); status != 0 {
+			s.logger.Warn("Rejected resource call", "url", req.URL.String(), "method", req.Method, "reason", msg)
+			writeErrorResponse(rw, status, msg)
+			return
+		}
+
 		dsInfo, err := s.getDataSourceFromHTTPReq(req)
 		if err != nil {
 			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
