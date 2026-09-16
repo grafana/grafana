@@ -56,7 +56,11 @@ describe('createDragEndHandler', () => {
     expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['b', 'a']);
   });
 
-  it('refuses to reorder while a plan is being previewed', () => {
+  it('still reorders while a plan is being previewed', () => {
+    // Editing variables during a preview is a documented capability of this feature, not
+    // something to harden against — see planningPolicy.ts's comment on why move-variable is
+    // allowed (the assistant matches its own placeholders by a kind+query fingerprint, not
+    // position, so this cannot cause a placeholder mismatch at Build time).
     const a = new CustomVariable({ name: 'a', query: 'a' });
     const b = new CustomVariable({ name: 'b', query: 'b' });
     const variableSet = new SceneVariableSet({ variables: [a, b] });
@@ -68,6 +72,24 @@ describe('createDragEndHandler', () => {
     const onDragEnd = createDragEndHandler(variableSet, listIds, [a, b], [], [], 'Reorder', droppableToHide);
     onDragEnd(dropResult(0, 1));
 
-    expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['a', 'b']);
+    expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['b', 'a']);
+  });
+
+  it('leaves each variable type and query untouched by a reorder, so a reordered placeholder still matches its fingerprint', () => {
+    // Pins the property that makes move-variable safe to permit during planning: reordering only
+    // ever changes array order (and, when crossing lists, `hide`), never `type` or `query`, so a
+    // reordered placeholder still fingerprints identically at Build time.
+    const a = new CustomVariable({ name: 'a', query: 'a' });
+    const b = new CustomVariable({ name: 'b', query: 'b' });
+    const variableSet = new SceneVariableSet({ variables: [a, b] });
+    buildScene(variableSet);
+
+    const onDragEnd = createDragEndHandler(variableSet, listIds, [a, b], [], [], 'Reorder', droppableToHide);
+    onDragEnd(dropResult(0, 1));
+
+    expect(a.state.type).toBe('custom');
+    expect(a.state.query).toBe('a');
+    expect(b.state.type).toBe('custom');
+    expect(b.state.query).toBe('b');
   });
 });

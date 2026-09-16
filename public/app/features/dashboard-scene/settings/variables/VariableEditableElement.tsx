@@ -24,7 +24,6 @@ import { changeVariableHideValue } from '../../actions/variable/changeVariableHi
 import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
 import { changeVariableName } from '../../actions/variable/changeVariableName';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
-import { refuseVariableWhilePlanning } from '../../actions/variable/refuseVariableWhilePlanning';
 import { removeVariable } from '../../actions/variable/removeVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
@@ -283,14 +282,6 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
             }
 
             if (shouldSkip) {
-              return;
-            }
-
-            // onChange above already echoes each keystroke straight into variable.state.name for
-            // live input feedback, ahead of the commit below — so a refusal here has to revert
-            // that, not just skip committing, or the rename would silently stick anyway.
-            if (refuseVariableWhilePlanning(variable, 'rename-variable')) {
-              variable.setState({ name: oldName.current });
               return;
             }
 

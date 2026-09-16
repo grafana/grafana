@@ -63,7 +63,11 @@ describe('addVariable', () => {
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(dashboard);
   });
 
-  it('refuses to add a variable while a plan is being previewed', () => {
+  it('still adds a variable while a plan is being previewed', () => {
+    // Editing variables during a preview is a documented capability of this feature, not
+    // something to harden against — see planningPolicy.ts's comment on why add-variable is
+    // allowed (the assistant matches its own placeholders by a kind+query fingerprint, not
+    // position, so this cannot cause a placeholder mismatch at Build time).
     const existing = new CustomVariable({ name: 'existing', query: 'a,b' });
     const variableSet = new SceneVariableSet({ variables: [existing] });
     const dashboard = buildScene(variableSet);
@@ -76,6 +80,6 @@ describe('addVariable', () => {
 
     // Compares names rather than toEqual/toBe on the live SceneVariable array: a failure there
     // would crash Jest's worker trying to relay the circular scene object over IPC (see T9).
-    expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['existing']);
+    expect(variableSet.state.variables.map((v) => v.state.name)).toEqual(['existing', 'added']);
   });
 });

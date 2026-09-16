@@ -35,6 +35,17 @@ export type PlanningAction =
   | 'annotation'
   // User-driven edits to the variable list from the sidebar, not the plan's own placeholder
   // variables (those are added/removed through the mutation API and are not this action).
+  //
+  // All four are modelled but *permitted* while planning (absent from DENIED_WHILE_PLANNING
+  // below) — a deliberate decision, not an oversight: editing variables during a preview is a
+  // documented capability of this feature ("rearrange, rename, add or remove panels, ... edit
+  // repeats and variables"), and the assistant identifies its own placeholder variables by a
+  // kind+query fingerprint it searches every current variable for and consumes on match, not by
+  // position or count. Adding, renaming, removing or reordering a variable therefore cannot
+  // cause a real variable to be mistaken for a placeholder, or a placeholder to be missed, at
+  // Build time. Kept in this union rather than left unmodelled specifically so a future reader
+  // can tell "considered and allowed" apart from "never considered" (see the annotation gap this
+  // repo's chokepoint sweep found from the same absence).
   | 'add-variable'
   | 'remove-variable'
   | 'rename-variable'
@@ -82,17 +93,8 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   // built or discarded, so an annotation created during planning would outlive the preview it was
   // made on and could attach to an unrelated panel later.
   'annotation',
-
-  // The plan's own placeholder variables live in the same list as the dashboard's real ones. The
-  // assistant identifies its placeholders to replace them at Build time; letting the user add,
-  // remove, rename or reorder variables from the sidebar while that matching is in flight risks a
-  // real user variable being mistaken for a placeholder, or a placeholder surviving Build as if it
-  // were real. (The assistant additionally matches by kind+query rather than position, but core
-  // should not rely on that alone.)
-  'add-variable',
-  'remove-variable',
-  'rename-variable',
-  'move-variable',
+  // add-variable/remove-variable/rename-variable/move-variable are intentionally not here —
+  // see the comment on those members in PlanningAction above for why.
 ]);
 
 /**
