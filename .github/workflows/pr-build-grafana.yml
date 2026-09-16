@@ -228,20 +228,41 @@ jobs:
       statuses: read
 
     steps:
+      - name: Check whether Meticulous should run
+        id: meticulous-eligibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          run=true
+          if [ "$PR_AUTHOR" = "renovate-sh-app[bot]" ]; then
+            # Renovate applies labels after opening the PR, so read the current labels.
+            run=false
+            if gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.labels[].name' | grep -Fxq 'ci/meticulous'; then
+              run=true
+            fi
+          fi
+          echo "run=$run" | tee -a "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v6
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         with:
           persist-credentials: false
 
       - uses: grafana/shared-workflows/actions/login-to-gar@main
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
           environment: 'dev'
 
       - name: Pull image from GAR
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         run: docker pull "$IMAGE_TAG"
 
       - name: Get vault secrets
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -249,6 +270,7 @@ jobs:
             METICULOUS_API_TOKEN=meticulous-ui:api-token
 
       - name: Run Meticulous tests
+        if: steps.meticulous-eligibility.outputs.run == 'true'
         uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}

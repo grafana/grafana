@@ -43,8 +43,10 @@ jobs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
       public-commit: ${{ steps.output.outputs.public_commit }}
+      run-meticulous: ${{ steps.meticulous-eligibility.outputs.run }}
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -87,6 +89,22 @@ jobs:
             public_commit=$(git rev-parse HEAD)
           fi
           echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Check whether Meticulous should run
+        id: meticulous-eligibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=true
+          author=$(git show -s --format=%an "$GITHUB_SHA")
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$author" = "renovate-sh-app[bot]" ]; then
+            run=false
+            # Preserve the Renovate classification after its PR has been merged.
+            if gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[].labels[].name' | grep -Fxq 'ci/meticulous'; then
+              run=true
+            fi
+          fi
+          echo "run=$run" | tee -a "$GITHUB_OUTPUT"
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
@@ -906,11 +924,12 @@ jobs:
       environment: prod
       runs-on: ubuntu-x64-small
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana'
+    if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
     needs:
+      - setup
       - build-docker-linux-amd64
     permissions:
       actions: write
