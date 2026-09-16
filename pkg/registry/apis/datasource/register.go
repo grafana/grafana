@@ -291,11 +291,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:                    &ds,
 			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
-		// The declared GVK forces apistore to marshal with a matching group+version.
-		// This is required because we map the same go type (DataSourceConfig) across
-		// multiple api groups, and the default k8s codec picks the first one registered
-		// regardless of which group is set.
-		// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
 		optsGetter := opts.StorageOptsGetterFor(ds, apistore.StorageOptions{
 			Index: nil, // TODO, required to check that they are unique
 
