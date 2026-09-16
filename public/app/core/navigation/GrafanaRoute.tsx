@@ -2,10 +2,12 @@ import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+//import { useFlagGrafanaMtFallback } from '@grafana/runtime/internal';
 import { ErrorBoundary, PageLoader } from '@grafana/ui';
 import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 
+import { PageFallbackLoader } from '../components/PageLoader/PageFallbackLoader';
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
@@ -16,6 +18,10 @@ export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'locat
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
+  //const allowedUrlsList = useFlagGrafanaMtFallback();
+  //TODO use allowedUrlList values instead when the feature toggle is added to deployment-tools
+  const allowedList = ['/', '/dashboards', '/a/k6-app'];
+  const isUrlAllowed: Boolean = allowedList.includes(props.location.pathname);
 
   chrome.setMatchedRoute(props.route);
 
@@ -55,7 +61,11 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageLoader />}>
-            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            {isUrlAllowed ? (
+              <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            ) : (
+              <PageFallbackLoader />
+            )}
           </Suspense>
         );
       }}
