@@ -387,6 +387,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "kubernetesFolderCascadeDeleteAsync",
+			Description:  "PoC: async, finalizer-driven cascade deletion of a folder's subtree, done by a background controller instead of inline in the delete request. Stamps new folders with a cascade-delete finalizer on create; has no backfill for existing folders",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,

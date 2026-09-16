@@ -43,6 +43,27 @@ func setKubernetesFolderCascadeDeleteToggle(t *testing.T, enabled bool) {
 	t.Cleanup(featureFlagsProvider.Cleanup)
 }
 
+// setKubernetesFolderCascadeDeleteAsyncToggle scopes the kubernetesFolderCascadeDeleteAsync flag
+// to t; see setKubernetesFolderCascadeDeleteToggle above for the same per-test caveats.
+func setKubernetesFolderCascadeDeleteAsyncToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	variant := "off"
+	if enabled {
+		variant = "on"
+	}
+	featureFlagsProvider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesFolderCascadeDeleteAsync: {
+			Key:            featuremgmt.FlagKubernetesFolderCascadeDeleteAsync,
+			DefaultVariant: variant,
+			Variants: map[string]any{
+				"on":  true,
+				"off": false,
+			},
+		},
+	})
+	t.Cleanup(featureFlagsProvider.Cleanup)
+}
+
 func TestKubernetesFolderCascadeDeleteEnabled(t *testing.T) {
 	t.Run("disabled when toggle off", func(t *testing.T) {
 		setKubernetesFolderCascadeDeleteToggle(t, false)

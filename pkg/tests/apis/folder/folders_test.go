@@ -130,6 +130,17 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"verbs": [
 						"get"
 					]
+				},
+				{
+					"name": "folders/status",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"get",
+						"patch",
+						"update"
+					]
 				}
 			]
 		}`, string(v1Disco))
