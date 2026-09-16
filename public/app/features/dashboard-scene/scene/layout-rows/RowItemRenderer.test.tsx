@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,6 +27,22 @@ function renderRow({ collapse = false, title = 'My row', isEditing = false } = {
 }
 
 describe('RowItemRenderer', () => {
+  it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
+    renderRow({ collapse: false });
+
+    const header = document.querySelector('[data-dashboard-element-key="row-1"]');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute('data-dashboard-element-type', 'row');
+  });
+
+  it('stamps the row header when the row is collapsed', () => {
+    renderRow({ collapse: true });
+
+    const header = document.querySelector('[data-dashboard-element-key="row-1"]');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute('data-dashboard-element-type', 'row');
+  });
+
   it('exposes aria-expanded=true on the toggle button when the row is expanded', () => {
     const { row } = renderRow({ collapse: false });
 
@@ -65,8 +81,12 @@ describe('RowItemRenderer', () => {
     expect(await navigator.clipboard.readText()).toContain('drow=My-row');
   });
 
-  it('hides the copy link button while editing', () => {
+  it('hides the copy link button while editing', async () => {
     renderRow({ isEditing: true });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument();
+    });
 
     expect(screen.queryByRole('button', { name: 'Copy link to row' })).not.toBeInTheDocument();
   });

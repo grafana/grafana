@@ -1,27 +1,51 @@
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
-import {
-  API_GROUP,
-  API_VERSION,
-  type Config,
-  type ConfigCondition,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { API_GROUP, API_VERSION, type Config } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { CONFIG_SINGLETON_NAME } from 'app/features/alerting/unified/api/configApi';
-import { SYNCED_CONDITION_TYPE, SYNC_REASON_NOT_CONFIGURED } from 'app/features/alerting/unified/utils/autoSync';
+import {
+  type MERGE_COMMITTED_REASON,
+  SYNCED_CONDITION_TYPE,
+  SYNC_REASON_NOT_CONFIGURED,
+} from 'app/features/alerting/unified/utils/autoSync';
 
 // Config is the one notifications resource that only exists in v0alpha1, so this route is built from
 // that version's own constants rather than the shared ALERTING_API_SERVER_BASE_URL, which points at v1beta1.
 const CONFIG_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/configs/:name`;
 
-/** The subset of the worker's condition reasons tests need so far. */
-type SyncedConditionReason = typeof SYNC_REASON_NOT_CONFIGURED | 'SyncSucceeded' | 'MimirFetchFailed';
+/**
+ * Reasons the worker actually writes onto the condition. These are the PascalCase strings produced
+ * by SyncReason.ConditionReason() in external_am_syncer.go — NOT the snake_case Go enum values
+ * (`mimir_fetch`, …), which never leave the backend. The ones production code matches on come from
+ * the shared constants, so a handler and the code reading it cannot drift apart on the spelling.
+ */
+type SyncConditionReason =
+  | 'SyncSucceeded'
+  | typeof MERGE_COMMITTED_REASON
+  | typeof SYNC_REASON_NOT_CONFIGURED
+  | 'DatasourceLookupFailed'
+  | 'MimirFetchFailed'
+  | 'ValidationFailed'
+  | 'SaveFailed'
+  | 'IdentifierMismatch'
+  | 'NoUpstreamConfig'
+  | 'ConfigReadFailed'
+  | 'SyncFailed';
 
-const CONDITION_STATUS_BY_REASON: Record<SyncedConditionReason, ConfigCondition['status']> = {
-  SyncSucceeded: 'True',
-  NotConfigured: 'Unknown',
-  MimirFetchFailed: 'False',
+interface SyncConditionOptions {
+  status: 'True' | 'False' | 'Unknown';
+  reason: SyncConditionReason;
+  message?: string;
+}
+
+/** Ready-made conditions for the reasons tests reach for most, so call sites don't restate the status pairing. */
+export const SYNC_SUCCEEDED_CONDITION: SyncConditionOptions = { status: 'True', reason: 'SyncSucceeded' };
+/** The stale status stays after an ini key is removed; only the reason moves on to say so. */
+export const SYNC_NOT_CONFIGURED_CONDITION: SyncConditionOptions = {
+  status: 'Unknown',
+  reason: SYNC_REASON_NOT_CONFIGURED,
 };
+export const MIMIR_FETCH_FAILED_CONDITION: SyncConditionOptions = { status: 'False', reason: 'MimirFetchFailed' };
 
 interface AutoSyncConfigOptions {
   /** spec.externalAlertmanagerSync — the desired configuration. */
@@ -31,31 +55,34 @@ interface AutoSyncConfigOptions {
   /** 'ini' marks the org as operator-managed: the grafana.ini key wins and spec is dormant. */
   origin?: 'api' | 'ini';
   /**
-   * Defaults to what the worker would write for the other options. Pass 'NotConfigured' with
-   * `origin: 'ini'` for an org whose ini key was removed: the stale status stays, the reason moves on.
+   * The ExternalAlertmanagerSynced condition the worker recorded. Omit for a Config with no
+   * condition recorded yet — the state before the worker's first tick.
    */
-  syncedReason?: SyncedConditionReason;
+  condition?: SyncConditionOptions;
 }
 
 function buildAutoSyncConfig(name: string, options: AutoSyncConfigOptions = {}): Config {
-  const { specUid, statusUid, origin = 'api' } = options;
-  const syncedReason = options.syncedReason ?? (statusUid ? 'SyncSucceeded' : SYNC_REASON_NOT_CONFIGURED);
+  const { specUid, statusUid, origin = 'api', condition } = options;
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Config',
     metadata: { name, namespace: 'default', resourceVersion: '1' },
     spec: specUid ? { externalAlertmanagerSync: { datasourceUid: specUid } } : {},
     status: {
-      // The worker writes it every tick, so a seeded singleton always has this condition.
-      conditions: [
-        {
-          type: SYNCED_CONDITION_TYPE,
-          status: CONDITION_STATUS_BY_REASON[syncedReason],
-          reason: syncedReason,
-          lastTransitionTime: '2026-01-01T00:00:00Z',
-        },
-      ],
       ...(statusUid ? { externalAlertmanagerSync: { datasourceUid: statusUid, origin } } : {}),
+      ...(condition
+        ? {
+            conditions: [
+              {
+                type: SYNCED_CONDITION_TYPE,
+                status: condition.status,
+                reason: condition.reason,
+                ...(condition.message ? { message: condition.message } : {}),
+                lastTransitionTime: '2026-01-01T00:00:00Z',
+              },
+            ],
+          }
+        : {}),
     },
   };
 }
@@ -80,8 +107,9 @@ const configHandler = (options: AutoSyncConfigOptions = {}, onRequest?: () => vo
 
 /**
  * Override the Config GET to drive external Alertmanager auto-sync state — see
- * `AutoSyncConfigOptions`. The returned `requestSpy` fires on every GET, so a test can assert the
- * query was, or was not, made.
+ * `AutoSyncConfigOptions` for the spec/status/condition knobs. The returned `requestSpy` fires on
+ * every GET, so a test can assert the query was — or, when a permission gate should short-circuit
+ * it, was not — made.
  */
 export function setupAutoSyncConfig(server: SetupServer, options: AutoSyncConfigOptions = {}) {
   const requestSpy = jest.fn();
@@ -104,19 +132,13 @@ export function setupAutoSyncConfigAbsent(server: SetupServer) {
   return { requestSpy };
 }
 
-/**
- * Quotes the resource name on purpose: they catch i18next escaping the interpolated message.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
- */
+/** Quotes the resource name on purpose: they catch i18next escaping the interpolated message. */
 export const CONFIG_READ_FAILURE_MESSAGE =
   'Internal error occurred: failed to read config "default": etcdserver: request timed out';
 
 /**
  * Fail the Config GET with something other than a 404 — no amount of waiting fixes it. The
  * `requestSpy` lets a test installing this mid-flight confirm the failing read landed.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupAutoSyncConfigReadError(
   server: SetupServer,
@@ -146,8 +168,6 @@ interface PatchOperation {
  * Stateful Config handlers: PATCH applies to the stored object and GET serves it, so a refetch
  * observes the saved UID. Every write bumps `metadata.resourceVersion`, as a real apiserver does —
  * the UI must not pin it, since the worker bumps it every tick too.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupStatefulAutoSyncConfig(server: SetupServer, options: AutoSyncConfigOptions = {}) {
   let stored = buildAutoSyncConfig(CONFIG_SINGLETON_NAME, options);
@@ -180,8 +200,6 @@ export function setupStatefulAutoSyncConfig(server: SetupServer, options: AutoSy
  * rejection or a backend error. Admission always allows *clearing* the UID, even for an
  * ini-managed org (see config_validator.go), so this does not represent that case — use
  * `setupStatefulAutoSyncConfig` with `origin: 'ini'` for an ini-managed sync instead.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export function setupAutoSyncConfigWriteError(
   server: SetupServer,

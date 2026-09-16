@@ -156,7 +156,6 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconNam
  */
 export interface AnalyticsSettings {
   identifier: string;
-  intercomIdentifier?: string;
 }
 
 /**
@@ -322,7 +321,6 @@ export interface GrafanaConfig {
   pluginAdminEnabled: boolean;
   pluginAdminExternalManageEnabled: boolean;
   pluginCatalogHiddenPlugins: string[];
-  pluginCatalogManagedPlugins: string[];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL: string;

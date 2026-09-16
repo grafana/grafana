@@ -9,7 +9,7 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { codeCell, markdownCell, notebookSpec } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { updateNotebook } from './notebookResource';
+import { createNotebook, updateNotebook } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -125,5 +125,37 @@ describe('updateNotebook', () => {
     await expect(
       updateNotebook('nb-1', notebookSpec({ elements: { query: codeCell('up') }, cells: ['query'] }))
     ).rejects.toThrow();
+  });
+});
+
+describe('createNotebook', () => {
+  beforeEach(() => {
+    testStore = createTestStore();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('posts the notebook and returns the uid, url and generation the server assigned', async () => {
+    const spec = notebookSpec();
+    const fetch = fetchOf(savedNotebook(spec, 1));
+
+    const created = await createNotebook(spec);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0][0].method).toBe('POST');
+    // The generation is what lets a notebook created by autosave be reopened without its scene being
+    // rebuilt from a fetch, so it has to come back rather than being dropped here.
+    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1 });
+  });
+
+  it('leaves the generation unset when the response carries none', async () => {
+    const spec = notebookSpec();
+    const saved = savedNotebook(spec);
+    // The field is optional on the wire even though the helper always fills it in.
+    fetchOf({ ...saved, metadata: { ...saved.metadata, generation: undefined } });
+
+    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1' });
   });
 });

@@ -21,11 +21,14 @@ type TeamLBACRule struct {
 
 	// Spec is the spec of the TeamLBACRule
 	Spec TeamLBACRuleSpec `json:"spec" yaml:"spec"`
+
+	Status TeamLBACRuleStatus `json:"status" yaml:"status"`
 }
 
 func NewTeamLBACRule() *TeamLBACRule {
 	return &TeamLBACRule{
-		Spec: *NewTeamLBACRuleSpec(),
+		Spec:   *NewTeamLBACRuleSpec(),
+		Status: *NewTeamLBACRuleStatus(),
 	}
 }
 
@@ -43,11 +46,15 @@ func (o *TeamLBACRule) SetSpec(spec any) error {
 }
 
 func (o *TeamLBACRule) GetSubresources() map[string]any {
-	return map[string]any{}
+	return map[string]any{
+		"status": o.Status,
+	}
 }
 
 func (o *TeamLBACRule) GetSubresource(name string) (any, bool) {
 	switch name {
+	case "status":
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -55,6 +62,13 @@ func (o *TeamLBACRule) GetSubresource(name string) (any, bool) {
 
 func (o *TeamLBACRule) SetSubresource(name string, value any) error {
 	switch name {
+	case "status":
+		cast, ok := value.(TeamLBACRuleStatus)
+		if !ok {
+			return fmt.Errorf("cannot set status type %#v, not of type TeamLBACRuleStatus", value)
+		}
+		o.Status = cast
+		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -226,6 +240,7 @@ func (o *TeamLBACRule) DeepCopyInto(dst *TeamLBACRule) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
 }
 
 func (TeamLBACRule) OpenAPIModelName() string {
@@ -303,5 +318,17 @@ func (s *TeamLBACRuleSpec) DeepCopy() *TeamLBACRuleSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *TeamLBACRuleSpec) DeepCopyInto(dst *TeamLBACRuleSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of TeamLBACRuleStatus
+func (s *TeamLBACRuleStatus) DeepCopy() *TeamLBACRuleStatus {
+	cpy := &TeamLBACRuleStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies TeamLBACRuleStatus into another TeamLBACRuleStatus object
+func (s *TeamLBACRuleStatus) DeepCopyInto(dst *TeamLBACRuleStatus) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -50,8 +50,7 @@ type CurrentUser struct {
 }
 
 type AnalyticsSettings struct {
-	Identifier         string `json:"identifier"`
-	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
+	Identifier string `json:"identifier"`
 }
 
 type UserPermissionsMap map[string]bool

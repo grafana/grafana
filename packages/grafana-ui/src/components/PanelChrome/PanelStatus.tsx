@@ -76,11 +76,6 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         <span className={styles.popoverTitle}>
           {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
         </span>
-        {onInspect && (
-          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
-          </Button>
-        )}
       </div>
       <Stack direction="column" gap={1}>
         {sortedItems.map((item, index) => (
@@ -104,6 +99,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         size="sm"
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
+        onClick={onInspect}
       />
     </Tooltip>
   );

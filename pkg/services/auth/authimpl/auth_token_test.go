@@ -173,8 +173,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens", func(t *testing.T) {
-				userIds := []int64{}
-				for i := 0; i < 3; i++ {
+				userIds := make([]int64, 0, 3)
+				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					_, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
@@ -242,9 +242,9 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When revoking users tokens in a batch", func(t *testing.T) {
 			t.Run("Can revoke all users tokens and associated external sessions", func(t *testing.T) {
-				userIds := []int64{}
-				extSessionIds := []int64{}
-				for i := 0; i < 3; i++ {
+				userIds := make([]int64, 0, 3)
+				extSessionIds := make([]int64, 0, 3)
+				for i := range 3 {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
@@ -320,7 +320,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeFor[*auth.TokenExpiredError]())
 			require.Nil(t, notGood)
 
 			t.Run("should not find active token when expired", func(t *testing.T) {
@@ -357,7 +357,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			}
 
 			notGood, err := ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(&auth.TokenExpiredError{}))
+			require.Equal(t, reflect.TypeOf(err), reflect.TypeFor[*auth.TokenExpiredError]())
 			require.Nil(t, notGood)
 		})
 	})

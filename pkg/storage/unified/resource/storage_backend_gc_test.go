@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,6 +39,28 @@ func (p *partialDeleteKV) BatchDelete(ctx context.Context, section string, keys 
 		return errors.New("simulated partial batch delete failure")
 	}
 	return p.KV.BatchDelete(ctx, section, keys)
+}
+
+// scanFailureKV makes the garbage collection scan of one group fail. getGroupResources
+// probes the data section one key at a time, so only larger reads are treated as a scan.
+// onScan runs before the failure, which lets a test cancel the context at that point.
+type scanFailureKV struct {
+	KV
+	failPrefix string
+	err        error
+	onScan     func()
+}
+
+func (f *scanFailureKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if section == dataSection && opt.Limit > 1 && strings.HasPrefix(opt.StartKey, f.failPrefix) {
+		if f.onScan != nil {
+			f.onScan()
+		}
+		return func(yield func(string, error) bool) {
+			yield("", f.err)
+		}
+	}
+	return f.KV.Keys(ctx, section, opt)
 }
 
 // writeEventOption is a function that modifies writeEventOptions
@@ -848,4 +872,96 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
 	require.NoError(t, err)
 	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
+}
+
+func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
+
+	// writes a created and a deleted revision, both old enough to be collected
+	writeDeletedResource := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) {
+		t.Helper()
+		for _, action := range []kv.DataAction{DataActionCreated, DataActionDeleted} {
+			err := b.dataStore.Save(ctx, DataKey{
+				Namespace:       "namespace",
+				Group:           group,
+				Resource:        "resource",
+				Name:            "resource1",
+				Folder:          "folderuid",
+				ResourceVersion: b.snowflake.Generate().Int64(),
+				Action:          action,
+			}, bytes.NewReader([]byte("{}")))
+			require.NoError(t, err)
+		}
+	}
+
+	countKeys := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) int {
+		t.Helper()
+		it := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: group + "/resource/",
+			EndKey:   PrefixRangeEnd(group + "/resource/"),
+		})
+		count := 0
+		it(func(_ string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	t.Run("a failing group does not stop the groups after it", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		wrapped := &scanFailureKV{
+			KV:         setupBadgerKV(t),
+			failPrefix: "agroup/resource/",
+			err:        errors.New("simulated scan failure"),
+		}
+		b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+			opts.KvStore = wrapped
+		})
+
+		writeDeletedResource(t, ctx, b, "agroup")
+		writeDeletedResource(t, ctx, b, "bgroup")
+		require.Equal(t, 2, countKeys(t, ctx, b, "agroup"))
+		require.Equal(t, 2, countKeys(t, ctx, b, "bgroup"))
+
+		b.runGarbageCollection(ctx, time.Now().Add(time.Hour).UnixMicro())
+
+		require.Equal(t, 2, countKeys(t, ctx, b, "agroup"), "the failing group should be left alone")
+		require.Equal(t, 0, countKeys(t, ctx, b, "bgroup"), "the later group should still be collected")
+	})
+
+	t.Run("a cancelled context stops the cycle", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx, cancel := context.WithCancel(testutil.NewTestContext(t, time.Now().Add(30*time.Second)))
+		defer cancel()
+
+		wrapped := &scanFailureKV{
+			KV:         setupBadgerKV(t),
+			failPrefix: "agroup/resource/",
+			err:        context.Canceled,
+			onScan:     func() { cancel() },
+		}
+		b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+			opts.KvStore = wrapped
+		})
+
+		writeDeletedResource(t, ctx, b, "agroup")
+		writeDeletedResource(t, ctx, b, "bgroup")
+
+		b.runGarbageCollection(ctx, time.Now().Add(time.Hour).UnixMicro())
+
+		require.Equal(t, 2, countKeys(t, context.Background(), b, "bgroup"), "shutdown should stop the cycle")
+	})
 }

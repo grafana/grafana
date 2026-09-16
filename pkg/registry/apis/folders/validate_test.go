@@ -1175,6 +1175,25 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
+		name: "folder not empty - contains variables",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "variables",
+						Count:    4, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
 		name: "folder not empty - contains alertrules",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1480,7 +1499,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	makeFolders := func(n int) []folders.Folder {
 		out := make([]folders.Folder, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			out = append(out, folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        fmt.Sprintf("c%d", i),
@@ -1537,7 +1556,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 	const childCount = 1001
 
 	all := make([]folders.Folder, 0, childCount)
-	for i := 0; i < childCount; i++ {
+	for i := range childCount {
 		all = append(all, folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        fmt.Sprintf("c%d", i),
@@ -1617,13 +1636,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	total := int64(len(rows))
-	offset := req.Offset
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > total {
-		offset = total
-	}
+	offset := min(max(req.Offset, 0), total)
 	end := total
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit

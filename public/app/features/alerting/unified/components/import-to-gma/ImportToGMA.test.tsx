@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -7,7 +7,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
+import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
 
@@ -87,6 +93,8 @@ const server = setupMswServer();
 
 const mockReportInteraction = jest.mocked(reportInteraction);
 
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
 beforeEach(() => {
   mockReportInteraction.mockClear();
   // Default: the notifications import succeeds. Individual tests override this to force a failure.
@@ -95,7 +103,12 @@ beforeEach(() => {
     AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingProvisioningSetStatus,
+    // useAutoSyncConfiguration (saveAutoSync) gates its Config query on this permission.
+    AccessControlAction.ActionAlertingNotificationsConfigRead,
   ]);
+  // useAutoSyncConfiguration (called directly by the wizard for saveAutoSync) fires this
+  // unconditionally, independent of the mocked Step1Content above.
+  setupDatasourcesEndpoint(server, []);
   locationService.push('/');
 });
 
@@ -128,6 +141,17 @@ async function importWith(user: ReturnType<typeof render>['user']) {
   const dialog = await screen.findByRole('dialog');
   await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 }
+
+describe('ImportWizardGate — gating on mount', () => {
+  it('blocks the wizard when auto-sync is already active, even before the Config query resolves', async () => {
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+
+    render(<ImportWizardGate />);
+
+    expect(await screen.findByText(/auto-sync is enabled/i)).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /import notification resources/i })).not.toBeInTheDocument();
+  });
+});
 
 describe('ImportToGMA wizard — stage analytics', () => {
   it('tracks success and lands on the Import settings tab', async () => {
@@ -256,8 +280,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
   });
 
   it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 200);
+    const { patchSpy } = setupStatefulAutoSyncConfig(server);
     server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json({})));
 
     const { user } = render(<ImportWizardGate />);
@@ -290,12 +313,11 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything())
     );
-    expect(postState.lastPayload).toBeNull();
+    expect(patchSpy).not.toHaveBeenCalled();
   });
 
   it('calls saveAutoSync (not the staging import) and tracks success when Rules is skipped', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 200);
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     let stagingImportCalled = false;
     server.use(
       http.post(CONVERT_URL, () => {
@@ -313,7 +335,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
     expect(stagingImportCalled).toBe(false);
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
@@ -327,8 +349,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
   });
 
   it('enables auto-sync and imports rules together when Rules is completed instead of skipped', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 200);
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     let rulesImportCalled = false;
     server.use(
       // Confirmed via convertToGMAApi.ts: useConvertToGMAMutation (rules import) posts here,
@@ -350,14 +371,13 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
     expect(rulesImportCalled).toBe(true);
     await waitFor(() => expect(within(dialog).getByText(/alert rules were also imported/i)).toBeInTheDocument());
   });
 
   it('reports a Rules-specific failure — not an Auto-sync failure — when Rules import fails after Auto-sync already succeeded', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 200);
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     server.use(http.post('/api/convert/prometheus/config/v1/rules', () => new HttpResponse(null, { status: 500 })));
 
     const { user } = render(<ImportWizardGate />);
@@ -370,7 +390,7 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
 
     // Auto-sync's own save call succeeded even though the overall submit errors out below.
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
     await waitFor(() => expect(within(dialog).getByText(/rules import failed/i)).toBeInTheDocument());
     expect(within(dialog).queryByText(/failed to enable auto-sync/i)).not.toBeInTheDocument();
     await waitFor(() =>
@@ -382,8 +402,31 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
   });
 
   it('tracks an error and does not fall through to the staging import path when saveAutoSync fails', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 500);
+    setupStatefulAutoSyncConfig(server);
+    setupAutoSyncConfigWriteError(server, { code: 500, message: 'failed to save the configuration' });
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_import_to_gma_error',
+        expect.objectContaining({ notificationsSource: 'datasource' })
+      )
+    );
+    expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
+    expect(within(dialog).getByText(/failed to enable auto-sync/i)).toBeInTheDocument();
+  });
+
+  it('reports an error and does not fall through to the staging import path when the Config singleton has not been seeded yet', async () => {
+    // Humans can't create the Config singleton — this is the pre-seed state, not a write failure.
+    setupAutoSyncConfigAbsent(server);
 
     const { user } = render(<ImportWizardGate />);
     await advanceToRules(user);

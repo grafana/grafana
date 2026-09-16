@@ -5,7 +5,6 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-/** Wired up by a later PR in this migration's stack; not consumed yet. @lintignore */
 export const configApi = generatedAPI;
 
 /**

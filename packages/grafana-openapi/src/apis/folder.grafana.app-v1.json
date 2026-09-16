@@ -775,12 +775,7 @@
           "counts": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ResourceStats"
-                }
-              ]
+              "$ref": "#/components/schemas/ResourceStats"
             }
           },
           "kind": {
@@ -853,8 +848,7 @@
             "description": "AccessControl is a flat map of folder-domain action strings to bool, reflecting permissions after parent-chain inheritance has been resolved by the authorization system. Mirrors the shape of legacy dtos.Folder.AccessControl so clients can drop their dual call to /api/folders/{uid}?accesscontrol=true. Only keys for actions the user is granted appear here; absent keys mean \"not granted\".",
             "type": "object",
             "additionalProperties": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             }
           },
           "apiVersion": {
@@ -936,12 +930,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/FolderInfo"
-                }
-              ]
+              "$ref": "#/components/schemas/FolderInfo"
             },
             "x-kubernetes-list-map-keys": ["uid"],
             "x-kubernetes-list-type": "map"
@@ -983,12 +972,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Folder"
-                }
-              ]
+              "$ref": "#/components/schemas/Folder"
             }
           },
           "kind": {
@@ -1098,8 +1082,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -1215,15 +1198,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -1242,7 +1223,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -1267,7 +1247,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/FacetTerm"
               }
             }
@@ -1275,7 +1254,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -1316,8 +1294,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -1334,7 +1311,6 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -1350,7 +1326,6 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -1521,7 +1496,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -1530,8 +1504,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -1556,8 +1529,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

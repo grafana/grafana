@@ -35,6 +35,43 @@ func TestManagedPermissionsActionSetsFilter(t *testing.T) {
 	assert.Contains(t, filter, "'folders:admin'")
 }
 
+func TestSQLFilterAllowsAllRecords(t *testing.T) {
+	tests := []struct {
+		name        string
+		permissions []string
+		accessAll   bool
+		args        []any
+	}{
+		{
+			name:        "allows all records",
+			permissions: []string{"global.users:*"},
+			accessAll:   true,
+		},
+		{
+			name:        "returns filtered record arguments",
+			permissions: []string{"global.users:id:1"},
+			args:        []any{int64(1)},
+		},
+		{
+			name: "denies all records",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filter, err := accesscontrol.Filter(&user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionUsersRead: tt.permissions},
+				},
+			}, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+			require.NoError(t, err)
+			assert.Equal(t, tt.accessAll, filter.AllowsAllRecords())
+			assert.Equal(t, tt.args, filter.Args)
+		})
+	}
+}
+
 type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string
