@@ -86,6 +86,7 @@ function homeLogoStyles(theme: GrafanaTheme2) {
       height: theme.spacing(3),
       width: theme.spacing(3),
       margin: theme.spacing(0, 0.5),
+      flexShrink: 0,
       img: {
         maxHeight: '100%',
         maxWidth: '100%',

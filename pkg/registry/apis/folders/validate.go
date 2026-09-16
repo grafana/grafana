@@ -284,14 +284,37 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
-// folderTier (declared in sub_access.go) is the Viewer/Editor/Admin level used
-// by the /access subresource. Comparing tiers across the move catches
-// role-level escalations without firing on per-verb churn.
+// folderTier is the Viewer/Editor/Admin level a user holds on a folder.
+// Comparing tiers across the move catches role-level escalations without
+// firing on per-verb churn.
 //
 // Only the folder tier is compared. Built-in roles bundle dashboard, library
 // panel, alert, and annotation actions with the folder tier, so a folder-tier
 // jump catches them transitively. Custom roles that grant sub-resource
 // actions directly at folder scope without folder access are not caught here.
+type folderTier int
+
+const (
+	tierNone folderTier = iota
+	tierViewer
+	tierEditor
+	tierAdmin
+)
+
+// resolveTier picks the highest tier the user qualifies for. Highest match
+// wins: setPermissions → Admin; create/update/delete → Editor; get → Viewer.
+func resolveTier(allowed map[string]bool) folderTier {
+	switch {
+	case allowed["setperms"]:
+		return tierAdmin
+	case allowed["create"] || allowed["update"] || allowed["delete"]:
+		return tierEditor
+	case allowed["get"]:
+		return tierViewer
+	default:
+		return tierNone
+	}
+}
 
 // tierProbes are the verbs we ask Zanzana about to resolve a tier. setperms
 // signals Admin, the Editor verbs (create/update/delete) collectively signal
@@ -525,12 +548,8 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Limit:  limit,
 		Offset: offset,
 	})
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, false, fmt.Errorf("failed to search folders: %w", err)
-	}
-
-	if resp.Error != nil {
-		return nil, false, fmt.Errorf("search error: %s", resp.Error.Message)
 	}
 
 	if resp.Results == nil || len(resp.Results.Rows) == 0 {
@@ -569,19 +588,15 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	if err != nil {
-		return err
-	}
-
-	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+		return fmt.Errorf("could not verify if folder is empty: %w", err)
 	}
 
 	if resp.Stats == nil {
 		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
-	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements", "folders"}
+	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "folders", "variables"}
 
 	for _, v := range resp.Stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {

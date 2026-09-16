@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { rewriteRelativeMarkdownLinks } from './markdownLinks';
+import { isResourceLinkCandidate, RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from './markdownLinks';
 
 const githubRepo: RepositoryView = {
   name: 'manifests',
@@ -148,6 +148,78 @@ describe('rewriteRelativeMarkdownLinks', () => {
     expect(out).toContain(
       'href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/my%20file.md"'
     );
+  });
+
+  describe('resource link tagging', () => {
+    it('tags a JSON link with the resolved repo path and keeps the host href', () => {
+      const html = `<p><a href="./cpu.json">CPU</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/cpu.json"`);
+      expect(out).toContain('href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/cpu.json"');
+    });
+
+    it('tags a YAML link', () => {
+      const html = `<p><a href="./playlist.yaml">PL</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/playlist.yaml"`);
+    });
+
+    it('tags a folder directory link with its trailing slash', () => {
+      const html = `<p><a href="../GTM/">GTM</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/GTM/"`);
+    });
+
+    it('does not tag a markdown link', () => {
+      const html = `<p><a href="./notes.md">notes</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+
+    it('does not tag images', () => {
+      const html = `<p><img src="./diagram.png"></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+
+    it('does not tag external links', () => {
+      const html = `<p><a href="https://example.com/x.json">x</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
+
+      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+    });
+
+    it('tags a resource link even for a repo with no host URL (local), stripping the leading slash', () => {
+      const html = `<p><a href="./cpu.json">CPU</a></p>`;
+      const out = rewriteRelativeMarkdownLinks(html, {
+        repository: { ...githubRepo, type: 'local', url: '/data/repo' },
+        // A local repo's base dir is an absolute filesystem path.
+        baseDirInRepo: '/data/repo/team-a',
+      });
+
+      // No host href to fall back to, but still tagged so the click handler can
+      // resolve it to the in-app page. The leading slash is stripped so it matches
+      // the resolver's key (createGrafanaLinkResolver trims it too).
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="data/repo/team-a/cpu.json"`);
+      expect(out).not.toMatch(/href="\.\/cpu\.json"/);
+    });
+  });
+
+  describe('isResourceLinkCandidate', () => {
+    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/sub/', 'sub/'])('accepts %s', (path) => {
+      expect(isResourceLinkCandidate(path)).toBe(true);
+    });
+
+    // Extensionless paths (README, LICENSE, a folder link without a trailing
+    // slash) are not tagged, so they never trigger a resource lookup on click.
+    it.each(['a/notes.md', 'a/logo.png', 'a/archive.tar.gz', 'a/README', 'a/sub', 'sub', ''])('rejects %s', (path) => {
+      expect(isResourceLinkCandidate(path)).toBe(false);
+    });
   });
 
   describe('images', () => {

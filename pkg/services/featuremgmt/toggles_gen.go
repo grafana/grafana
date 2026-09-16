@@ -43,6 +43,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagGrafanaUseRouterMiddleware
+	// intercept /apis/... and /openapi/v3/... requests in middleware.
+	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
+
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -75,6 +79,10 @@ const (
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
+	// FlagAlertingRuleStatusSync
+	// Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+	FlagAlertingRuleStatusSync = "alerting.ruleStatusSync"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
@@ -94,6 +102,10 @@ const (
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagGrafanaFrontendLegacyFeatureToggleHandling
+	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).
+	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
 
 	// FlagProvisioningPerformance
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
@@ -143,6 +155,10 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
+	// FlagKubernetesFolderCountsLegacyStorage
+	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
+	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
+
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -191,6 +207,10 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
+	// FlagDatasourcesApiServerEnableProxyEndpoint
+	// Handle datasource proxy requests through the datasource API group endpoint.
+	FlagDatasourcesApiServerEnableProxyEndpoint = "datasourcesApiServerEnableProxyEndpoint"
+
 	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
 	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
@@ -238,10 +258,6 @@ const (
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
-
-	// FlagCanvasExternalPlugin
-	// Load Canvas panel from an external plugin instead of the bundled core plugin
-	FlagCanvasExternalPlugin = "canvasExternalPlugin"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -379,6 +395,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzUserPermissions
+	// Route user permission snapshots through the AuthZ service.
+	FlagAuthzUserPermissions = "authz.userPermissions"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -414,10 +434,6 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
-
-	// FlagImprovedExternalSessionHandling
-	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
-	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
@@ -487,10 +503,6 @@ const (
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
 
-	// FlagImprovedExternalSessionHandlingSAML
-	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
-	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
-
 	// FlagTeamHttpHeadersTempo
 	// Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams
 	FlagTeamHttpHeadersTempo = "teamHttpHeadersTempo"
@@ -498,6 +510,14 @@ const (
 	// FlagTeamHttpHeadersFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformST
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformST = "datasources.teamHttpHeadersFromAppPlatformST"
+
+	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
+	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -529,10 +549,6 @@ const (
 	// FlagNewShareReportDrawer
 	// Enables the report creation drawer in a dashboard
 	FlagNewShareReportDrawer = "newShareReportDrawer"
-
-	// FlagGrafanaAssetSriChecks
-	// Enables SRI checks for Grafana JavaScript assets
-	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
 
 	// FlagAlertRuleRestore
 	// Enables the alert rule restore feature
@@ -794,6 +810,14 @@ const (
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
+	// FlagKubernetesAuthInfoApi
+	// Enables auth info APIs in the app platform
+	FlagKubernetesAuthInfoApi = "kubernetesAuthInfoApi"
+
+	// FlagKubernetesAuthInfoRedirect
+	// Redirects the requests of the auth info service to the app platform APIs
+	FlagKubernetesAuthInfoRedirect = "kubernetesAuthInfoRedirect"
+
 	// FlagApppluginsLoadAppManifest
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
@@ -918,10 +942,6 @@ const (
 	// Use the new cache for datasource.StackInfoToSettings, backend flag
 	FlagDatasourcesUseNewStackInfoToSettingsCache = "datasources.useNewStackInfoToSettingsCache"
 
-	// FlagPreferencesRerouteLegacyAPIs
-	// Use K8s client implementation for legacy preferences API
-	FlagPreferencesRerouteLegacyAPIs = "preferences.rerouteLegacyAPIs"
-
 	// FlagPluginsMarketplaceLicensing
 	// Enables marketplace plugin licensing
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
@@ -933,6 +953,18 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagDashboardSearchFieldValueResults
+	// Uses field-value results for dashboard search requests
+	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
+
+	// FlagDashboardApiSearchFieldValueResults
+	// Uses field-value results for requests from the /api/search endpoint
+	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
+
+	// FlagSearchApiFieldValueResults
+	// Uses field-value results for generic resource search API requests
+	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
 
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
@@ -958,12 +990,16 @@ const (
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
 
+	// FlagReportingRedirectReportSettingsToK8SApi
+	// Redirect legacy report settings API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportSettingsToK8SApi = "reporting.redirectReportSettingsToK8SApi"
+
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
 
 	// FlagGrafanaFrontendLegacyAPIHandling
-	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
 	// FlagGrafanaOfrepRootUrl
@@ -973,6 +1009,10 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagFeaturesLegacyOverrideLookupBypass
+	// Skips checking for flag overrides.
+	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
 
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
@@ -1005,4 +1045,20 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagSamlGosaml2Provider
+	// Use the gosaml2 library instead of the crewjam SAML library for SAML authentication
+	FlagSamlGosaml2Provider = "saml.gosaml2Provider"
+
+	// FlagDatasourcesGatewayGuardrails
+	// Data source query gateway guardrails
+	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
+
+	// FlagAlertingFolderHasRulesLabel
+	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
+	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
+
+	// FlagUnifiedStorageClientRequireCallerIdentity
+	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
+	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
 )

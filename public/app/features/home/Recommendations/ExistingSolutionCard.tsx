@@ -1,27 +1,29 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
-
-import { SolutionSparkline } from './SolutionSparkline';
-import { type ExistingSolutionId } from './solutionsMatrix';
-import { type ExistingItem } from './types';
+import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 interface ExistingSolutionCardProps {
-  existing: ExistingItem[];
-  selected: ExistingItem;
-  onSelect: (id: ExistingSolutionId) => void;
+  existing: Solution[];
+  selected: Solution;
+  onSelect: (id: SolutionId) => void;
 }
 
 export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingSolutionCardProps) {
   const styles = useStyles2(getStyles);
 
-  const showStatsSparklineRow =
-    selected.statsLoading || selected.sparklineLoading || selected.stats || selected.sparkline;
+  const { value: alert = null } = useAsync(() => selected.alert(), [selected]);
+  const { value: cta = null, loading: ctaLoading } = useAsync(() => selected.cta(), [selected]);
+  const { value: datasource = null } = useAsync(() => selected.datasource(), [selected]);
+  const subtitle = datasource && t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name });
+  const isAttentionCta = cta?.action === 'view_alerts';
 
   return (
     <Stack direction="column" justifyContent="space-between" gap={2} flex={1}>
@@ -78,9 +80,9 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
             <Text variant="h3" color="primary" role="heading" aria-level={3}>
               {selected.title}
             </Text>
-            {selected.subtitle && (
+            {subtitle && (
               <Text variant="bodySmall" color="secondary">
-                {selected.subtitle}
+                {subtitle}
               </Text>
             )}
           </Stack>
@@ -88,45 +90,15 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
       </Stack>
 
       <Stack direction="column" gap={2}>
-        {showStatsSparklineRow && (
-          <Stack direction="row" gap={2} alignItems="center">
-            {(selected.statsLoading || selected.stats) && (
-              <div className={styles.stats}>
-                {selected.statsLoading ? (
-                  <Stack direction="column" gap={0} data-testid="kubernetes-stats-skeleton">
-                    <Skeleton width={96} height={28} />
-                    <Skeleton width={72} />
-                  </Stack>
-                ) : (
-                  selected.stats && (
-                    <Stack direction="column" gap={0}>
-                      <Text variant="h2" color="primary">
-                        {selected.stats.primary}
-                      </Text>
-                      <Text variant="body" color="secondary">
-                        {selected.stats.secondary}
-                      </Text>
-                    </Stack>
-                  )
-                )}
-              </div>
-            )}
+        <SolutionStatsRow
+          stats={selected.stats}
+          refinedStats={selected.refinedStats}
+          sparkline={selected.sparkline}
+          statsTestId="solution-stats-skeleton"
+          sparklineTestId="solution-sparkline-skeleton"
+        />
 
-            {selected.sparklineLoading ? (
-              <div className={styles.sparklineArea} data-testid="kubernetes-sparkline-skeleton">
-                <Skeleton height={56} />
-              </div>
-            ) : (
-              selected.sparkline && (
-                <div className={styles.sparklineArea}>
-                  <SolutionSparkline sparkline={selected.sparkline} />
-                </div>
-              )
-            )}
-          </Stack>
-        )}
-
-        {selected.alert && (
+        {alert && (
           <div className={styles.alert}>
             <Stack direction="row" alignItems="center" gap={1.5}>
               <Icon name="exclamation-triangle" size="md" className={styles.warning} />
@@ -134,10 +106,10 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
               <div className={cx(styles.metaRow, styles.alertText)}>
                 <span className={styles.segment}>
                   <Text variant="body" color="primary">
-                    {selected.alert.primary}
+                    {alert.primary}
                   </Text>
                 </span>
-                {selected.alert.details?.map((segment, i) => (
+                {alert.details?.map((segment, i) => (
                   <span key={i} className={styles.segment}>
                     <Text variant="body" color="secondary">
                       {segment}
@@ -145,49 +117,35 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                   </span>
                 ))}
               </div>
-
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="angle-right"
-                iconPlacement="right"
-                href={selected.alert.href}
-                onClick={() =>
-                  ctaClicked({
-                    surface: 'existing_solution',
-                    action: 'view_alerts',
-                    placement: 'card',
-                    solution: selected.id,
-                  })
-                }
-              >
-                {selected.alert.action}
-              </LinkButton>
             </Stack>
           </div>
         )}
       </Stack>
 
       <Stack direction="row" alignItems="center">
-        <LinkButton
-          variant="secondary"
-          size="md"
-          fill="solid"
-          icon="arrow-right"
-          iconPlacement="right"
-          href={selected.href}
-          onClick={() =>
-            ctaClicked({
-              surface: 'existing_solution',
-              action: 'open_solution',
-              placement: 'card',
-              solution: selected.id,
-            })
-          }
-        >
-          {selected.action}
-        </LinkButton>
+        {ctaLoading ? (
+          <Skeleton width={140} height={32} />
+        ) : cta ? (
+          <LinkButton
+            variant="secondary"
+            size={isAttentionCta ? 'sm' : 'md'}
+            fill={isAttentionCta ? 'text' : 'solid'}
+            icon={isAttentionCta ? 'angle-right' : 'arrow-right'}
+            iconPlacement="right"
+            href={cta.href}
+            className={isAttentionCta ? cx(styles.textAction, styles.attentionAction) : undefined}
+            onClick={() =>
+              ctaClicked({
+                surface: 'existing_solution',
+                action: cta.action,
+                placement: 'card',
+                solution: selected.id,
+              })
+            }
+          >
+            {cta.label}
+          </LinkButton>
+        ) : null}
       </Stack>
     </Stack>
   );
@@ -207,13 +165,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     columnGap: theme.spacing(1.5),
     rowGap: 0,
     overflow: 'hidden',
-  }),
-  stats: css({
-    flexShrink: 0,
-  }),
-  sparklineArea: css({
-    flex: '1 1 auto',
-    minWidth: 0,
   }),
   alertText: css({
     flex: '1 1 auto',
@@ -265,5 +216,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
     margin: theme.spacing(0, 0, 0, 0.5),
+  }),
+  textAction: css({
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
+  }),
+  attentionAction: css({
+    color: theme.colors.warning.text,
+
+    '&:hover, &:focus': {
+      background: theme.colors.warning.background,
+      color: theme.colors.warning.textEmphasis,
+    },
   }),
 });

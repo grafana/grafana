@@ -99,6 +99,14 @@ func TestForwardIDMiddleware(t *testing.T) {
 				require.Equal(t, "some-token", cdt.QueryDataReq.GetHTTPHeader(forwardIDHeaderName))
 			})
 
+			t.Run("Should set forwarded id header if present for QueryChunkedData", func(t *testing.T) {
+				err := cdt.MiddlewareHandler.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+					PluginContext: pluginContext,
+				}, nopChunkedWriter{})
+				require.NoError(t, err)
+				require.Equal(t, "some-token", cdt.QueryChunkedDataReq.GetHTTPHeader(forwardIDHeaderName))
+			})
+
 			t.Run("Should set forwarded id header if present for CallResource", func(t *testing.T) {
 				err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 					PluginContext: pluginContext,

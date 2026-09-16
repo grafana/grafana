@@ -16,7 +16,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -281,7 +281,13 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <LazyDiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
+        <MonacoDiffEditor
+          original={right}
+          modified={left}
+          language="json"
+          height="65vh"
+          options={{ lineNumbers: 'off' }}
+        />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />

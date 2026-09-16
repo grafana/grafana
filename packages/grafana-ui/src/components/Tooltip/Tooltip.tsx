@@ -143,7 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.components.tooltip.borderColor,
     theme.components.tooltip.text,
     { topBottom: 0.5, rightLeft: 1 }
   );

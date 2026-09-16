@@ -7,6 +7,7 @@ import {
   type TypedVariableModel,
 } from '@grafana/data';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
   type DatasourceVariableKind,
@@ -66,6 +67,12 @@ jest.mock('@grafana/runtime', () => ({
       minInterval: '10s',
     },
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn((v: string | DataSourceRef) => Promise.resolve(getStubInstanceSettings(v))),
+  getDataSourceInstanceSettings: (v: string | DataSourceRef) => Promise.resolve(getStubInstanceSettings(v)),
 }));
 
 jest.mock('app/features/library-panels/state/api', () => ({
@@ -668,6 +675,35 @@ describe('dashboard exporter v1', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('unresolvable datasource', () => {
+    it('fails the export when the datasource cannot be resolved', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.mocked(getDataSourceInstance).mockRejectedValueOnce(new Error('Datasource missing-uid was not found'));
+
+      const dashboard: Dashboard = {
+        title: 'My dashboard',
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            title: 'Panel',
+            datasource: { type: 'prometheus', uid: 'missing-uid' },
+          },
+        ],
+      } as Dashboard;
+      const dashboardModel = new DashboardModel(dashboard, undefined, {
+        getVariablesFromState: () => [],
+      });
+
+      const exported = (await makeExportableV1(dashboardModel)) as { error: { message: string } };
+      expect(JSON.parse(JSON.stringify(exported))).toEqual({
+        error: { message: 'Datasource missing-uid was not found' },
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 });

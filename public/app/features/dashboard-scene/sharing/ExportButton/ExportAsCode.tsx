@@ -7,7 +7,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, CodeEditor, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -70,14 +71,13 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
           {({ height }) => {
             if (stringifiedDashboard) {
               return (
-                <CodeEditor
+                <CodeMirrorEditor
                   value={stringifiedDashboard}
                   language={isViewingYAML ? 'yaml' : 'json'}
-                  showLineNumbers={true}
-                  showMiniMap={false}
-                  height={height}
-                  width="100%"
-                  readOnly={true}
+                  height={`${height}px`}
+                  aria-label={t('export.json.dashboard-definition', 'Dashboard definition')}
+                  onChange={() => {}}
+                  readOnly
                 />
               );
             }

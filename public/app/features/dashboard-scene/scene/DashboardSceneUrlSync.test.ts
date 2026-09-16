@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { locationService } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
@@ -259,13 +261,32 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
-    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', () => {
+    it('keeps the URL and selected edit view in sync after successive updates', async () => {
+      const scene = buildTestScene();
+      scene.setState({
+        editable: true,
+        isEditing: true,
+        meta: { ...scene.state.meta, canEdit: true },
+      });
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('settings');
+
+      scene.urlSync?.updateFromUrl({ editview: 'variables' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('variables');
+
+      await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
+    });
+
+    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
       expect(scene.state.viewPanel).toBeDefined();
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
-      expect(scene.state.editPanel).toBeDefined();
+      // The panel editor is code split, so editPanel lands in a follow-up state update.
+      await waitFor(() => expect(scene.state.editPanel).toBeDefined());
+      expect(scene.state.viewPanel).toBeUndefined();
     });
   });
 });

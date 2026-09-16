@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("ngalert.eval")
@@ -196,8 +197,7 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 // IsNonRetryableError reports whether an error is persistent and not worth retrying within an
 // evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
 func IsNonRetryableError(err error) bool {
-	var nonRetryableError *invalidEvalResultFormatError
-	if errors.As(err, &nonRetryableError) {
+	if _, ok := errors.AsType[*invalidEvalResultFormatError](err); ok {
 		return true
 	}
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {
@@ -337,20 +337,14 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
+// sanitizeHeaderValueMaxLen caps a header value's length to prevent oversized headers.
+const sanitizeHeaderValueMaxLen = 128
+
 // sanitizeHeaderValue strips ASCII control characters (including CRLF) and
-// truncates to 128 bytes to prevent header injection and oversized headers.
+// truncates to sanitizeHeaderValueMaxLen bytes to prevent header injection and
+// oversized headers.
 func sanitizeHeaderValue(v string) string {
-	s := strings.Map(func(r rune) rune {
-		if r < 0x20 || r == 0x7f {
-			return -1
-		}
-		return r
-	}, v)
-	const maxLen = 128
-	if len(s) > maxLen {
-		s = s[:maxLen]
-	}
-	return s
+	return util.SanitizeControlChars(v, sanitizeHeaderValueMaxLen)
 }
 
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {

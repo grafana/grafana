@@ -10,7 +10,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -19,13 +19,20 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
+  useHeaderTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -36,11 +43,11 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  markEdgeColumns,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -68,16 +75,19 @@ export function TableFlat(props: TableNGProps) {
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onDisplayedRowIndicesChange,
     onSortByChange,
     showTypeIcons,
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -95,6 +105,12 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  // Row-height and column-width measurement must both see the same rendered value column-building
+  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
+  // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
+  // object value to "[object Object]" — a single short line that never grows the row past one line,
+  // and that content-aware width sizes no wider than a plain short string column.
+  const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
     () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -118,6 +134,7 @@ export function TableFlat(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, [], { initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+  useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -145,13 +162,10 @@ export function TableFlat(props: TableNGProps) {
   const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   const frozenColumns = _frozenColumns;
 
@@ -173,12 +187,15 @@ export function TableFlat(props: TableNGProps) {
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
-    sortColumns,
+    tableRefreshEnabled,
+    filter,
+    noPanelPadding,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    visibleFields,
+    preparedFields,
     availableWidth,
     frozenColumns,
     widthConfigResetKey,
@@ -189,9 +206,11 @@ export function TableFlat(props: TableNGProps) {
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -202,10 +221,11 @@ export function TableFlat(props: TableNGProps) {
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: preparedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
+    noPanelPadding,
   });
 
   const {
@@ -225,6 +245,7 @@ export function TableFlat(props: TableNGProps) {
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     pageSize,
+    noPanelPadding,
   });
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -249,7 +270,6 @@ export function TableFlat(props: TableNGProps) {
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -267,10 +287,12 @@ export function TableFlat(props: TableNGProps) {
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      // the first column here is a field column, so it's the one carrying the panel-edge inset
+      firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -286,15 +308,18 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      noPanelPadding,
     ]
   );
 
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
-  const { columns, cellRootRenderers } = useMemo(
-    () => fromFields(visibleFields, widths, data, rows, sortedRows),
-    [fromFields, visibleFields, widths, data, rows, sortedRows]
-  );
+  const { columns, cellRootRenderers } = useMemo(() => {
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    markEdgeColumns(result);
+    return result;
+  }, [fromFields, visibleFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -336,6 +361,8 @@ export function TableFlat(props: TableNGProps) {
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}

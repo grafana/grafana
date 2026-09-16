@@ -39,7 +39,7 @@ func newTestBadgerKV(t *testing.T) kv.KV {
 
 func newTestLeaseManager(t *testing.T, store kv.KV, holder string) *lease.Manager {
 	t.Helper()
-	mgr := lease.NewManager(store, holder, nil,
+	mgr := lease.NewManager(store, holder, "test", nil,
 		lease.WithInternalMinTTL(kvTestMinTTL),
 		lease.WithGarbageCollectionDisabled,
 	)

@@ -3,12 +3,18 @@ package apistore
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -144,22 +150,139 @@ func (m *errWatchClient) SendMsg(any) error                     { return nil }
 func (m *errWatchClient) RecvMsg(any) error                     { return nil }
 
 func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
-	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
-	client := &errWatchClient{ctx: t.Context(), err: resource.NewResourceVersionExpiredError(1234)}
-	decoder := newStreamDecoder(client, newFunc, storage.Everything, unstructuredCodec(), func() {}, false)
+	for _, canceled := range []bool{false, true} {
+		name := "active context"
+		if canceled {
+			name = "already canceled context"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			t.Cleanup(cancel)
+			if canceled {
+				cancel()
+			}
+			client := &errWatchClient{ctx: ctx, err: resource.NewResourceVersionExpiredError(1234)}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			t.Cleanup(decoder.Close)
 
-	// The expired resource version is reported as a 410/Expired status object so
-	// that clients (e.g. reflectors) re-list from scratch.
-	action, obj, err := decoder.Decode()
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Error, action)
+			s, ok := obj.(*metav1.Status)
+			require.True(t, ok, "expected a metav1.Status, got %T", obj)
+			require.Equal(t, int32(http.StatusGone), s.Code)
+			require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+			require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+			// The stream is done: the same error must not be reported again.
+			_, _, err = decoder.Decode()
+			require.ErrorIs(t, err, io.EOF)
+		})
+	}
+}
+
+type streamDecoderTestServer struct {
+	resourcepb.UnimplementedResourceStoreServer
+	watch func(resourcepb.ResourceStore_WatchServer) error
+}
+
+func (s *streamDecoderTestServer) Watch(_ *resourcepb.WatchRequest, stream resourcepb.ResourceStore_WatchServer) error {
+	return s.watch(stream)
+}
+
+func newStreamDecoderGRPCClient(t *testing.T, handler func(resourcepb.ResourceStore_WatchServer) error) (resourcepb.ResourceStore_WatchClient, context.CancelFunc) {
+	t.Helper()
+
+	listener := bufconn.Listen(1024 * 1024)
+	server := grpc.NewServer()
+	resourcepb.RegisterResourceStoreServer(server, &streamDecoderTestServer{watch: handler})
+	serveErr := make(chan error, 1)
+	go func() { serveErr <- server.Serve(listener) }()
+	t.Cleanup(func() {
+		server.Stop()
+		require.NoError(t, <-serveErr)
+	})
+
+	conn, err := grpc.NewClient("passthrough:///bufnet",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return listener.DialContext(ctx)
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	require.NoError(t, err)
-	require.Equal(t, watch.Error, action)
-	status, ok := obj.(*metav1.Status)
-	require.True(t, ok, "expected a metav1.Status, got %T", obj)
-	require.Equal(t, int32(http.StatusGone), status.Code)
-	require.Equal(t, metav1.StatusReasonExpired, status.Reason)
-	require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(status)))
+	t.Cleanup(func() { require.NoError(t, conn.Close()) })
 
-	// The stream is done: the same error must not be reported again.
-	_, _, err = decoder.Decode()
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	t.Cleanup(cancel)
+	client, err := resourcepb.NewResourceStoreClient(conn).Watch(ctx, &resourcepb.WatchRequest{})
+	require.NoError(t, err)
+	return client, cancel
+}
+
+func TestStreamDecoderGRPCTermination(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		err     error
+		expired bool
+	}{
+		{name: "expired resource version", err: resource.NewResourceVersionExpiredError(1234), expired: true},
+		{name: "clean close"},
+		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled")},
+		{name: "max age disconnect", err: status.Error(codes.Unavailable, "transport is closing")},
+		{name: "deadline exceeded", err: status.Error(codes.DeadlineExceeded, "watch deadline exceeded")},
+		{name: "permission denied", err: status.Error(codes.PermissionDenied, "watch denied")},
+		{name: "internal", err: status.Error(codes.Internal, "storage error")},
+		{name: "out of range without expiry details", err: status.Error(codes.OutOfRange, "invalid range")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client, cancel := newStreamDecoderGRPCClient(t, func(stream resourcepb.ResourceStore_WatchServer) error {
+				if err := stream.Send(&resourcepb.WatchEvent{
+					Type:     resourcepb.WatchEvent_BOOKMARK,
+					Resource: &resourcepb.WatchEvent_Resource{Version: 10},
+				}); err != nil {
+					return err
+				}
+				return tc.err
+			})
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			t.Cleanup(decoder.Close)
+
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Bookmark, action)
+			require.Equal(t, "10", obj.(*unstructured.Unstructured).GetResourceVersion())
+
+			action, obj, err = decoder.Decode()
+			require.Equal(t, watch.Error, action)
+			require.ErrorIs(t, client.Context().Err(), context.Canceled)
+			if tc.expired {
+				require.NoError(t, err)
+				s, ok := obj.(*metav1.Status)
+				require.True(t, ok, "expected a metav1.Status, got %T", obj)
+				require.Equal(t, int32(http.StatusGone), s.Code)
+				require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+				require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+				action, obj, err = decoder.Decode()
+				require.Equal(t, watch.Error, action)
+			}
+			require.Nil(t, obj)
+			require.ErrorIs(t, err, io.EOF)
+		})
+	}
+}
+
+func TestStreamDecoderCallerCancellation(t *testing.T) {
+	client, cancel := newStreamDecoderGRPCClient(t, func(stream resourcepb.ResourceStore_WatchServer) error {
+		<-stream.Context().Done()
+		return status.FromContextError(stream.Context().Err()).Err()
+	})
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+	t.Cleanup(decoder.Close)
+
+	cancel()
+	action, obj, err := decoder.Decode()
+	require.Equal(t, watch.Error, action)
+	require.Nil(t, obj)
 	require.ErrorIs(t, err, io.EOF)
 }

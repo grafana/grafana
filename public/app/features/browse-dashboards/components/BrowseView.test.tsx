@@ -10,6 +10,8 @@ import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolde
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+
 import { BrowseView } from './BrowseView';
 
 const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
@@ -139,6 +141,33 @@ describe('browse-dashboards BrowseView', () => {
     expect(grandparentCheckbox).toBePartiallyChecked();
   });
 
+  it('renders a dashboard whose UID matches its parent folder', async () => {
+    // Unified storage namespaces UIDs per kind, so a dashboard may share its parent folder's UID
+    const folder: DashboardViewItem = { kind: 'folder', uid: 'same-uid', title: 'Folder same-uid' };
+    const dashboard: DashboardViewItem = {
+      kind: 'dashboard',
+      uid: 'same-uid',
+      title: 'Dashboard same-uid',
+      parentUID: 'same-uid',
+    };
+
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: fullyLoadedViewItemCollection([folder]),
+          childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
+          openFolders: { 'same-uid': true },
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+        },
+      },
+    });
+
+    // Rendering each row's checkbox calls isSelected, which walks hasSelectedDescendants; the dashboard row must be a
+    // leaf even though childrenByParentUID has an entry under its UID. Each row is labelled by its own title.
+    expect(await screen.findByRole('row', { name: folder.title })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
+  });
+
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(
@@ -185,6 +214,7 @@ describe('browse-dashboards BrowseView', () => {
         isLoading: false,
         markdownContent,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 
@@ -205,6 +235,7 @@ describe('browse-dashboards BrowseView', () => {
         isLoading: false,
         markdownContent: undefined,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 

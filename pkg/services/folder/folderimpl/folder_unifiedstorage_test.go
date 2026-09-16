@@ -307,6 +307,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	fakeK8sClient := new(client.MockK8sHandler)
+	variableK8sClient := new(client.MockK8sHandler)
+	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil)
 	folderService := &Service{
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
@@ -316,6 +318,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		tracer:                 tracer,
 		k8sclient:              k8sCli,
 		dashboardK8sClient:     fakeK8sClient,
+		variableK8sClient:      variableK8sClient,
 		publicDashboardService: publicDashboardService,
 	}
 
@@ -586,6 +589,7 @@ func TestSearchFolders(t *testing.T) {
 
 	t.Run("Should call search with uids, if provided", func(t *testing.T) {
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
@@ -677,6 +681,7 @@ func TestSearchFolders(t *testing.T) {
 			SignedInUser: user,
 		}
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
@@ -747,6 +752,7 @@ func TestSearchFolders(t *testing.T) {
 		}
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: "default",
@@ -848,6 +854,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		}
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
 				Fields: []*resourcepb.Requirement{{
@@ -897,6 +904,7 @@ func TestGetFolderByTitle(t *testing.T) {
 		}
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
 				Fields: []*resourcepb.Requirement{{
@@ -957,12 +965,14 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)
+	variableK8sClient := new(client.MockK8sHandler)
 	fakeFolderStore := folder.NewFakeStore()
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	tracer := noop.NewTracerProvider().Tracer("TestDeleteFolders")
 	service := Service{
 		k8sclient:              fakeK8sClient,
 		dashboardK8sClient:     dashboardK8sclient,
+		variableK8sClient:      variableK8sClient,
 		unifiedStore:           fakeFolderStore,
 		publicDashboardService: publicDashboardFakeService,
 		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
@@ -994,9 +1004,14 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	}
 	require.NoError(t, service.RegisterService(lps))
 
+	fieldValueRequest := mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+	})
+
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
-		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid1",
 			OrgID:        1,
@@ -1005,6 +1020,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		require.NoError(t, err)
 		dashboardK8sclient.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)
+		variableK8sClient.AssertExpectations(t)
 	})
 
 	t.Run("Should delete folders, dashboards, and public dashboards within the folder", func(t *testing.T) {
@@ -1012,6 +1028,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		dashboardK8sclient.On("Delete", mock.Anything, "test", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Delete", mock.Anything, "test2", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Labels: []*resourcepb.Requirement{},
 				Fields: []*resourcepb.Requirement{
@@ -1061,6 +1078,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 			TotalHits: 1,
 		}, nil).Once()
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid",
 			OrgID:        1,
@@ -1068,5 +1086,37 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		})
 		require.NoError(t, err)
 		publicDashboardFakeService.AssertExpectations(t)
+		variableK8sClient.AssertExpectations(t)
+	})
+
+	t.Run("Should delete variables within the folder", func(t *testing.T) {
+		fakeFolderStore.ExpectedFolders = nil
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "var1",
+							Resource: "variables",
+						},
+						Cells: [][]byte{[]byte("my-var")},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		variableK8sClient.On("Delete", mock.Anything, "var1", int64(1), mock.Anything).Return(nil).Once()
+
+		err := service.Delete(ctx, &folder.DeleteFolderCommand{
+			UID:              "uid-vars",
+			OrgID:            1,
+			ForceDeleteRules: true,
+			SignedInUser:     user,
+		})
+		require.NoError(t, err)
+		variableK8sClient.AssertExpectations(t)
 	})
 }

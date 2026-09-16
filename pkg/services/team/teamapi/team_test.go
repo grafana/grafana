@@ -12,15 +12,17 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -366,8 +368,11 @@ func setTeamRedirectFlags(t *testing.T, teamsRedirect, usersAPI bool) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Get(mock.Anything, mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
+
 	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
@@ -408,8 +413,11 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {

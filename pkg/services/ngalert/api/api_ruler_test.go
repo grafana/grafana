@@ -336,8 +336,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := make([]*models.AlertRule, 0)
-		for i := 0; i < 10; i++ {
+		expectedRules := make([]*models.AlertRule, 0, 100)
+		for range 10 {
 			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(new(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
 		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -731,6 +731,37 @@ func TestRouteGetRulesConfig(t *testing.T) {
 				require.Len(t, groups[0].Rules, len(group1))
 			})
 		})
+	})
+
+	t.Run("should query only the namespaces visible to the user", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		folders := []*folder.Folder{randFolder(), randFolder(), randFolder()}
+		ruleStore.Folders[orgID] = folders
+
+		rules := make([]*models.AlertRule, 0, len(folders))
+		expected := make([]string, 0, len(folders))
+		for _, f := range folders {
+			groupKey := models.GenerateGroupKey(orgID)
+			groupKey.NamespaceUID = f.UID
+			rules = append(rules, gen.With(gen.WithGroupKey(groupKey)).GenerateRef())
+			expected = append(expected, f.UID)
+		}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		req := createRequestContextWithPerms(orgID, createPermissionsForRules(rules, orgID), nil)
+		response := createService(ruleStore, usertest.NewUserServiceFake()).RouteGetRulesConfig(req)
+		require.Equal(t, http.StatusOK, response.Status())
+
+		queries := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			q, ok := cmd.(models.ListAlertRulesQuery)
+			return q, ok
+		})
+		require.Len(t, queries, 1)
+
+		// make([]string, len(m)) followed by append would pad this with as many
+		// empty UIDs as there are folders, doubling the IN list in SQL.
+		require.ElementsMatch(t, expected, queries[0].(models.ListAlertRulesQuery).NamespaceUIDs)
 	})
 
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {

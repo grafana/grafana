@@ -28,6 +28,7 @@ import (
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -586,6 +587,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
+		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -808,7 +813,11 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
-			Field:    field,
+			ManagedBy: dashboardv0alpha1.ManagedBy{
+				Kind: utils.ManagerKind(r.GetManagedByKind()),
+				ID:   r.GetManagedById(),
+			},
+			Field: field,
 		})
 	}
 
@@ -886,27 +895,16 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting. Dashboard-specific fields live under the fields.*
-	// sub-document inside bleve; clients pass the bare name (e.g.
-	// ?sort=views_total) and the search backend needs the prefixed form
-	// (fields.views_total) to find them. The leading "-" descending marker
-	// is stripped first so the dashboard-field lookup sees the bare name
-	// regardless of direction.
+	// Add sorting. Field names are passed through as the client sent them; the
+	// search backend knows where each field lives in the index. The leading "-"
+	// descending marker is stripped first.
 	if queryParams.Has("sort") {
-		isDashboardField := func(name string) bool {
-			return slices.ContainsFunc(builders.DashboardSearchFields, func(def resource.SearchFieldDefinition) bool {
-				return def.Name == name
-			})
-		}
 		for _, raw := range queryParams["sort"] {
 			field := raw
 			desc := false
 			if strings.HasPrefix(field, "-") {
 				desc = true
 				field = field[1:]
-			}
-			if isDashboardField(field) {
-				field = resource.SEARCH_FIELD_PREFIX + field
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
 				Field: field,
@@ -944,7 +942,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["panelType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Key:      builders.DASHBOARD_PANEL_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -952,7 +950,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["dataSourceType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Key:      builders.DASHBOARD_DS_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -1000,27 +998,15 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	if searchRequest.Query == "*" {
 		searchRequest.Query = "" // will match everything
 	} else if searchRequest.Query != "" {
-		// Explicitly configure the query for dashboard+folder matching.
+		// Name the title field once. The server picks which stored form of the
+		// title to query, and how to weight each one.
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{
-				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (word-level matching)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 1, // ngram analyzer (partial/prefix matching)
-			},
+			{Name: resource.SEARCH_FIELD_TITLE},
 		}
 
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
 			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
-				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
-				Type:  resourcepb.QueryFieldType_TEXT,
+				Name:  builders.DASHBOARD_PANEL_TITLE,
 				Boost: 5,
 			})
 		}
@@ -1124,10 +1110,11 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated:  []*resourcepb.ResourceKey{folderKey},
-		Fields:     []string{"folder"},
-		Limit:      int64(len(dashboardUids)),
-		Permission: int64(requestedPermission),
+		Federated:    []*resourcepb.ResourceKey{folderKey},
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(dashboardUids)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -1143,14 +1130,11 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	folderUidIdx := -1
-	for i, col := range dashboardResult.Results.Columns {
-		if col.Name == "folder" {
-			folderUidIdx = i
-		}
+	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
+	if err != nil {
+		return sharedDashboards, err
 	}
-
-	if folderUidIdx == -1 {
+	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1158,17 +1142,17 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// Root-parented dashboards have no parent folder to check, and the apistore may report root
 	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
-	for _, dash := range dashboardResult.Results.Rows {
-		folderUid := string(dash.Cells[folderUidIdx])
-		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
-			allFolders = append(allFolders, folderUid)
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(allFolders, dash.Folder) {
+			allFolders = append(allFolders, dash.Folder)
 		}
 	}
 
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:     []string{"folder"},
-		Limit:      int64(len(allFolders)),
-		Permission: int64(requestedPermission),
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(allFolders)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: folderKey,
 			Fields: []*resourcepb.Requirement{{
@@ -1184,19 +1168,32 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, err
 	}
 
-	foldersWithAccess := make([]string, 0, len(foldersResult.Results.Rows))
-	for _, fold := range foldersResult.Results.Rows {
-		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
+	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
+	if err != nil {
+		return sharedDashboards, err
+	}
+	foldersWithAccess := make([]string, 0, len(folderResults.Hits))
+	for _, fold := range folderResults.Hits {
+		foldersWithAccess = append(foldersWithAccess, fold.Name)
 	}
 
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
 	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
-	for _, dash := range dashboardResult.Results.Rows {
-		dashboardUid := dash.Key.Name
-		folderUid := string(dash.Cells[folderUidIdx])
-		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
-			sharedDashboards = append(sharedDashboards, dashboardUid)
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(foldersWithAccess, dash.Folder) {
+			sharedDashboards = append(sharedDashboards, dash.Name)
 		}
 	}
 	return sharedDashboards, nil
+}
+
+func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
+	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+			return field.GetName() == name
+		})
+	}
+	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
+		return field.GetName() == name
+	})
 }

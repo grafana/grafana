@@ -399,7 +399,8 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return css(
     {
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.components.drawer.background,
+      border: `1px solid ${theme.components.drawer.borderColor}`,
       bottom: 0,
       label: `drawer-content-wrapper-${size}`,
       position: 'absolute',
