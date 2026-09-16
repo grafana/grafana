@@ -27,6 +27,11 @@ export {
 } from './fixtures/pluginMetas';
 export { customGetPluginMetasHandler } from './handlers/apis/plugins.grafana.app/v0alpha1/handlers';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';
+export {
+  customGetUserPermissionsHandler,
+  resetMockUserPermissions,
+  setMockUserPermissions,
+} from './handlers/apis/iam.grafana.app/v0alpha1/handlers';
 export { customCreateFolderHandler, customFolderCountsHandler } from './handlers/api/folders/handlers';
 export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 
