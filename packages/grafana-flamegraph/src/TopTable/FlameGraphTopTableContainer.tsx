@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, type ReactNode, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -11,6 +11,8 @@ import {
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
+  formattedValueToString,
+  getValueFormat,
 } from '@grafana/data';
 import {
   IconButton,
@@ -26,7 +28,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { TOP_TABLE_COLUMN_WIDTH, TRUNCATED_NODE_NAME } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
@@ -64,6 +66,10 @@ const FlameGraphTopTableContainer = memo(
     contentAwareWidthsEnabled,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const truncationNotice = useMemo(() => {
+      const truncated = getTruncatedSummary(data);
+      return truncated && formatTruncationNotice(data, truncated);
+    }, [data]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -89,7 +95,8 @@ const FlameGraphTopTableContainer = memo(
               colorScheme,
               Boolean(useTableNG),
               search,
-              sandwichItem
+              sandwichItem,
+              truncationNotice
             );
 
             const onSortByChange = (s: TableSortByFieldState[]) => {
@@ -130,6 +137,67 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
+type TruncatedSide = { self: number; share: number };
+type TruncatedSummary = { count: number; baseline: TruncatedSide; comparison?: TruncatedSide };
+
+function getTruncatedSummary(data: FlameGraphDataContainer): TruncatedSummary | undefined {
+  // A diff profile splits every node's self time across the two profiles being compared, so the
+  // baseline side alone can be 0 for groups that only the comparison side truncated.
+  const isDiff = data.isDiffFlamegraph();
+  let self = 0;
+  let selfRight = 0;
+  let count = 0;
+
+  for (let i = 0; i < data.data.length; i++) {
+    if (data.getLabel(i) === TRUNCATED_NODE_NAME) {
+      self += data.getSelf(i);
+      if (isDiff) {
+        selfRight += data.getSelfRight(i);
+      }
+      count++;
+    }
+  }
+
+  if (!count) {
+    return undefined;
+  }
+
+  const levels = data.getLevels();
+  const root = levels.length && levels[0].length ? levels[0][0].itemIndexes : undefined;
+  const share = (amount: number, total: number) => (total > 0 ? amount / total : 0);
+
+  const summary: TruncatedSummary = {
+    count,
+    baseline: { self, share: share(self, root ? data.getValue(root) : 0) },
+  };
+
+  if (isDiff) {
+    summary.comparison = { self: selfRight, share: share(selfRight, root ? data.getValueRight(root) : 0) };
+  }
+
+  return summary;
+}
+
+function formatTruncationNotice(data: FlameGraphDataContainer, truncated: TruncatedSummary) {
+  const format = getValueFormat(data.selfField.config.unit);
+  const amount = ({ self, share }: TruncatedSide) =>
+    `${formattedValueToString(format(self))} (${(share * 100).toFixed(1)}%)`;
+  const groups = `${truncated.count.toLocaleString()} truncated ${
+    truncated.count === 1 ? 'group' : 'groups'
+  } below the detail limit`;
+
+  if (!truncated.comparison) {
+    const { self, share } = truncated.baseline;
+    return `${formattedValueToString(format(self))} of self time (${(share * 100).toFixed(
+      1
+    )}%) is not attributed to a symbol: ${groups}.`;
+  }
+
+  return `Self time not attributed to a symbol: ${amount(truncated.baseline)} baseline, ${amount(
+    truncated.comparison
+  )} comparison, across ${groups}.`;
+}
+
 function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
@@ -154,7 +222,7 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     const isRecursive = callStack.some((entry) => entry === label);
 
     // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
-    if (!matchedLabels || matchedLabels.has(label)) {
+    if (label !== TRUNCATED_NODE_NAME && (!matchedLabels || matchedLabels.has(label))) {
       filteredTable[label] = filteredTable[label] || {};
       filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
 
@@ -185,7 +253,8 @@ function buildTableDataFrame(
   colorScheme: ColorScheme | ColorSchemeDiff,
   useTableNG: boolean,
   search?: string,
-  sandwichItem?: string
+  sandwichItem?: string,
+  truncationNotice?: string
 ): DataFrame {
   const actionField: Field = createActionField(onSandwich, onSearch, useTableNG, search, sandwichItem);
 
@@ -214,6 +283,25 @@ function buildTableDataFrame(
       ],
     },
   };
+
+  if (truncationNotice) {
+    if (useTableNG) {
+      symbolField.config.custom.headerTooltip = truncationNotice;
+    } else {
+      symbolField.config.custom.headerComponent = ({ defaultContent }: { defaultContent: ReactNode }) => (
+        <>
+          {defaultContent}
+          <IconButton
+            name="info-circle"
+            size="sm"
+            tooltip={truncationNotice}
+            className={styleHeaderTooltipIcon}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </>
+      );
+    }
+  }
 
   let frame;
 
@@ -442,6 +530,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+const styleHeaderTooltipIcon = css({
+  cursor: 'default',
+  marginRight: 0,
+});
+
 const getStylesActionCell = () => {
   return {
     actionCellWrapper: css({
@@ -457,6 +550,6 @@ const getStylesActionCell = () => {
   };
 };
 
-export { buildFilteredTable };
+export { buildFilteredTable, getTruncatedSummary };
 
 export default FlameGraphTopTableContainer;
