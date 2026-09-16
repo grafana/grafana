@@ -37,10 +37,7 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFold
 	if strings.TrimSpace(ruleGroup.Title) == "" {
 		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no name set")
 	}
-	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
-	if ruleGroup.OrgID < 1 {
-		ruleGroup.OrgID = 1
-	}
+	ruleGroup.OrgID = max(ruleGroupV1.OrgID.Value(), 1)
 	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
 		return models.AlertRuleGroupWithFolderFullpath{}, err

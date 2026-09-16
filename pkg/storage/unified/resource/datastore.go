@@ -272,53 +272,6 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	return DataKey{}, ErrNotFound
 }
 
-// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
-// in a single atomic operation. Returns (latest, predecessor, error).
-// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
-func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
-	if err := key.Validate(); err != nil {
-		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
-	}
-	if key.Group == "" || key.Resource == "" || key.Name == "" {
-		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.GetLatestAndPredecessor")
-	defer span.End()
-
-	prefix := key.Prefix()
-	var latest, predecessor DataKey
-	count := 0
-	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Limit:    2, // Get latest and predecessor
-		Sort:     SortOrderDesc,
-	}) {
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		parsedKey, err := ParseKey(k)
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		switch count {
-		case 0:
-			latest = parsedKey
-		case 1:
-			predecessor = parsedKey
-		}
-		count++
-	}
-	if count == 0 {
-		return DataKey{}, DataKey{}, ErrNotFound
-	}
-	if count == 1 {
-		return latest, DataKey{}, nil
-	}
-	return latest, predecessor, nil
-}
-
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
@@ -559,10 +512,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 
 		// Process keys in batches
 		for i := 0; i < len(keys); i += dataBatchSize {
-			end := i + dataBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
+			end := min(i+dataBatchSize, len(keys))
 			batch := keys[i:end]
 
 			// Convert DataKeys to string keys and create a mapping
@@ -1169,7 +1119,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return false, fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+		return false, fmt.Errorf("compatibility layer: failed to verify conditional update result: %w", err)
 	}
 	if rows == 1 {
 		return false, nil

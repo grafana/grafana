@@ -472,7 +472,7 @@ var wireBasicSet = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
-	router.ProvideMiddlewareService,
+	router.ProvideService,
 	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,
 	appregistry.WireSet,

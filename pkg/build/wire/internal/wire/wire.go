@@ -28,6 +28,7 @@ import (
 	"go/types"
 	"io/ioutil"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -663,8 +664,8 @@ func injectPass(name string, sig *types.Signature, calls []call, set *ProviderSe
 	}
 	if injectSig.cleanup {
 		ig.p(", func() {\n")
-		for i := len(ig.cleanupNames) - 1; i >= 0; i-- {
-			ig.p("\t\t%s()\n", ig.cleanupNames[i])
+		for _, v := range slices.Backward(ig.cleanupNames) {
+			ig.p("\t\t%s()\n", v)
 		}
 		ig.p("\t}")
 	}

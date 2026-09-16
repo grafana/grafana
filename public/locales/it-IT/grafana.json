@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visualizza la cronologia di tutti gli eventi di avviso generati dalle regole di avviso gestite da Grafana. Vengono visualizzati tutti gli eventi di avviso, indipendentemente dall'impostazione di periodi di silenzio o disattivazione dell'audio.",
         "notifications": "Visualizza la cronologia di tutte le notifiche inviate dalle regole di avviso gestite da Grafana."
@@ -3242,14 +3245,19 @@
         "action-disable": "Disabilita sincronizzazione",
         "add-datasource-link": "Aggiungi origine dei dati Mimir",
         "badge-active": "Attivo",
+        "badge-failing": "",
         "badge-not-configured": "Non configurato",
         "badge-operator-managed": "Gestito da operatore",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Sincronizza continuamente le configurazioni degli avvisi da un'origine dei dati Mimir o Cortex Alertmanager in Grafana.",
         "disable-confirm-action": "Disabilita sincronizzazione",
         "disable-confirm-body": "La disabilitazione interromperà la sincronizzazione continua dall'origine dei dati {{uid}}. Puoi riattivarla in seguito selezionando nuovamente un'origine dei dati.",
         "disable-confirm-body-generic": "La disabilitazione interromperà la sincronizzazione continua. Puoi riattivarla in seguito selezionando nuovamente un'origine dei dati.",
         "disable-confirm-title": "Disabilitare la sincronizzazione automatica di Mimir Alertmanager?",
         "disable-success": "Sincronizzazione automatica di Mimir Alertmanager disabilitata",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Questo valore è impostato dalla chiave <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini e non può essere modificato dall'interfaccia utente. Modifica il file di configurazione e riavvia Grafana, o rimuovi la chiave per gestire la sincronizzazione da qui.",
@@ -3268,6 +3276,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Configurazione della sincronizzazione automatica"
       },
       "import": {
@@ -3305,6 +3314,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -5739,15 +5750,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Sposta {{typeName}}",
-      "panel-background": "Modifica lo sfondo del pannello",
-      "panel-description": "Modifica la descrizione del pannello",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Modifiche al pannello",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-preset": "Applica preimpostazione del pannello",
       "panel-repeat-direction": "Ripeti la direzione",
       "panel-repeat-variable": "Ripetizione del pannello per",
-      "panel-title": "Modifica il titolo del pannello",
+      "panel-title": "",
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "row-title": "Modifica il titolo riga",
@@ -6702,6 +6713,10 @@
       },
       "title-delete": "Eliminare {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Azzera ricerca",
       "no-transformations-found": "Nessuna trasformazione trovata",
@@ -6752,6 +6767,12 @@
     "view-panel": {
       "back-to-dashboard": "Torna alla dashboard",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7760,6 +7781,9 @@
         "title": "Modifiche non salvate"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Non è quello che stai cercando? Visualizza <2>altre dashboard suggerite</2> o <6>creane una da zero</6>.",
       "title": "Stai visualizzando {{title}}"
@@ -8014,6 +8038,7 @@
       "title-label": "Titolo"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Salva modifiche",
       "save-button-disabled-tooltip": "Correggi gli errori di convalida prima di salvare",
       "save-button-disabled-tooltip-yaml": "Il documento presenta errori di convalida. Passa al formato JSON per visualizzare i dettagli degli errori all'interno del testo.",
@@ -8640,6 +8665,16 @@
       "title-table": "Tabella",
       "title-traces": "Tracce"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8691,7 +8726,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Collegamento",
-      "open-value-in": "Apri valore in"
+      "open-value-in": "Apri valore in",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9156,6 +9192,9 @@
       "success-indicator": "",
       "target": "Destinazione",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
+      "trace-banner-error": "",
+      "trace-banner-metrics": "",
+      "trace-banner-warning": "",
       "trace-id": "ID traccia",
       "url": "URL",
       "warning-indicator": ""
@@ -9172,6 +9211,10 @@
       "aria-label-copy": "Copia negli appunti",
       "attribute-plugin-promo": {
         "learn-more": "Scopri di più"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Il monitoraggio del database mostra graficamente i piani di esecuzione, gli eventi di attesa e alcuni esempi di query, aiutandoti a diagnosticare i problemi al di là degli intervalli delle tracce.",
@@ -10667,7 +10710,6 @@
       "ariaLabel-panel-loading": "Barra di caricamento del pannello",
       "ariaLabel-panel-status": "Stato del pannello",
       "errors-and-notices": "Errori e avvisi",
-      "inspect-errors-notices": "Ispeziona",
       "tooltip-cancel": "Annulla query",
       "tooltip-cancel-loading": "Annulla query",
       "tooltip-stop-streaming": "Interrompi streaming",
@@ -10749,9 +10791,13 @@
       "cell-filter-out": "Escludi valore",
       "cell-inspect": "Ispeziona valore",
       "cell-inspect-tooltip": "Ispeziona valore",
+      "column-menu-filter": "",
+      "column-menu-label": "",
+      "column-menu-update-filter": "",
       "copy": "Copia negli appunti",
       "csv-counts": "Righe: {{rows}}, Colonne: {{columns}}",
       "csv-placeholder": "Inserisci qui il CSV...",
+      "edit-column-filter": "",
       "filter": {
         "add-all": "Aggiungi tutti i valori visualizzati al filtro",
         "blanks": "(Vuoti)",
@@ -11399,9 +11445,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -13106,9 +13150,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -16619,6 +16661,7 @@
       "tooltip-bold": "Grassetto",
       "tooltip-bullet-list": "Elenco puntato",
       "tooltip-checklist": "Lista di controllo",
+      "tooltip-diagram": "",
       "tooltip-heading": "Intestazione",
       "tooltip-insert-variable": "Inserisci variabile",
       "tooltip-italic": "Corsivo",
@@ -16632,8 +16675,18 @@
     "frame-picker": {
       "label": ""
     },
+    "mermaid": {
+      "invalid-syntax": "",
+      "render-error": ""
+    },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16854,6 +16907,10 @@
       "bar-stacked": "Grafico a barre – in pila",
       "bar-stacked-percent": "Grafico a barre – in pila per percentuale",
       "line": "Grafico a linee"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Aggiungi fuso orario",

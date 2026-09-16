@@ -22,21 +22,21 @@ func TestTokenRateLimiter(t *testing.T) {
 	defer cancelFunc()
 
 	var (
-		v  int64
+		v  atomic.Int64
 		wg sync.WaitGroup
 	)
 
 	testScreenshotFunc := func(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error) {
 		// v should be 1 to show that no other goroutines acquired the token
-		atomic.AddInt64(&v, 1)
-		assert.Equal(t, int64(1), atomic.LoadInt64(&v))
+		v.Add(1)
+		assert.Equal(t, int64(1), v.Load())
 
 		// interrupt so other goroutines can attempt to acquire the token
 		<-time.After(time.Microsecond)
 
 		// v should be 0
-		atomic.AddInt64(&v, -1)
-		assert.Equal(t, int64(0), atomic.LoadInt64(&v))
+		v.Add(-1)
+		assert.Equal(t, int64(0), v.Load())
 
 		return &Screenshot{}, nil
 	}

@@ -137,6 +137,154 @@
         }
       }
     },
+    "/globalrolebindings/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search GlobalRoleBinding resources in a namespace.",
+        "operationId": "listGlobalRoleBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resourcepermissions/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search ResourcePermission resources in a namespace.",
+        "operationId": "listResourcePermissionSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rolebindings/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search RoleBinding resources in a namespace.",
+        "operationId": "listRoleBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Role resources in a namespace.",
+        "operationId": "listRoleSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/searchExternalGroupMappings": {
       "post": {
         "tags": ["Search"],
@@ -657,6 +805,43 @@
         }
       ]
     },
+    "/serviceaccounts/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search ServiceAccount resources in a namespace.",
+        "operationId": "listServiceAccountSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/serviceaccounts/{name}": {
       "get": {
         "tags": ["ServiceAccount"],
@@ -1154,6 +1339,43 @@
         "tags": ["Search"],
         "description": "Search TeamBinding resources in a namespace.",
         "operationId": "listTeamBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teamlbacrules/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search TeamLBACRule resources in a namespace.",
+        "operationId": "listTeamLBACRuleSearchV0alpha1",
         "parameters": [],
         "requestBody": {
           "description": "A SearchQuery describing what to match, sort and return.",
@@ -4950,8 +5172,7 @@
             "description": "Input keys that were not useable",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "set"
           },
@@ -4959,8 +5180,7 @@
             "description": "Request keys used to lookup the display value",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "set"
           },
@@ -5023,9 +5243,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            }
+            "items": {}
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -5096,9 +5314,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            }
+            "items": {}
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -5188,9 +5404,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            }
+            "items": {}
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -5245,8 +5459,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -5362,15 +5575,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -5389,7 +5600,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -5414,7 +5624,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/FacetTerm"
               }
             }
@@ -5422,7 +5631,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -5463,8 +5671,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -5481,7 +5688,6 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -5497,7 +5703,6 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -5596,12 +5801,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.TeamMember"
-                }
-              ]
+              "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.TeamMember"
             }
           },
           "kind": {
@@ -5659,12 +5859,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.UserTeam"
-                }
-              ]
+              "$ref": "#/components/schemas/github.com~1grafana~1grafana~1pkg~1apis~1iam~1v0alpha1.UserTeam"
             }
           },
           "kind": {
@@ -5839,7 +6034,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -5848,8 +6042,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -5874,8 +6067,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

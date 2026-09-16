@@ -19,6 +19,7 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
+import { mockClientSize } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
@@ -50,16 +51,10 @@ const mockEventBus: EventBus = {
   newScopedBus: jest.fn(),
 };
 
-// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
-jest.mock('@grafana/ui/unstable', () => {
-  const actual = jest.requireActual('@grafana/ui/unstable');
-  const MockTableNG = actual.TableNG;
-  return {
-    ...actual,
-    TableNG: (props: React.ComponentProps<typeof MockTableNG>) => (
-      <MockTableNG {...props} enableVirtualization={false} />
-    ),
-  };
+// react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
+// this the table only renders a single column.
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();
