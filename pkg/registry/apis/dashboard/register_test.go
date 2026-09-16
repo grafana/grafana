@@ -574,9 +574,8 @@ func (r *gvkRecorder) WithStorageOptions(opts apistore.StorageOptions) generic.R
 // Every dashboard version installs its own store against the one shared
 // GroupResource, so the version a store persists as can only come from its
 // declared GVK. It matters most for v1beta1 and v1: they are the same Go type
-// (see commonMultiVersionTypes), so the scheme reports both GVKs for it and
-// checkGVK's fallback would resolve either store to whichever InstallSchema
-// registered first -- v1beta1, for both of them.
+// (see commonMultiVersionTypes), so nothing about the type itself tells the two
+// stores apart.
 func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 	recorder := &gvkRecorder{}
 	opts := apiserverbuilder.APIGroupOptions{
@@ -595,7 +594,7 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		dashv2beta1.DashboardResourceInfo,
 		dashv2.DashboardResourceInfo,
 	} {
-		opts.StorageOptsGetterFor(info, b.dashboardStorageOpts(opts))
+		opts.StorageOptsGetterFor(info, b.dashboardStorageOpts())
 	}
 
 	got := make([]schema.GroupVersionKind, 0, len(recorder.recorded))
@@ -605,7 +604,6 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		require.True(t, so.EnableFolderSupport, "%s lost folder support", so.GVK)
 		require.Equal(t, apistore.DeprecatedID_Required, so.DeprecatedInternalID, "%s lost the internal ID", so.GVK)
 		require.NotNil(t, so.Permissions, "%s lost its default permission setter", so.GVK)
-		require.Same(t, opts.Scheme, so.Scheme)
 	}
 
 	group := dashv0.DashboardResourceInfo.GroupResource().Group
@@ -630,7 +628,7 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 	b := &DashboardsAPIBuilder{}
 
 	info := dashv0.LibraryPanelResourceInfo
-	opts.StorageOptsGetterFor(info, b.libraryPanelStorageOpts(opts))
+	opts.StorageOptsGetterFor(info, b.libraryPanelStorageOpts())
 
 	require.Len(t, recorder.recorded, 1)
 	so := recorder.recorded[0]
@@ -638,4 +636,46 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 	require.Equal(t, "LibraryPanel", so.GVK.Kind)
 	require.True(t, so.EnableFolderSupport, "panels are synced into managed folders")
 	require.False(t, so.RequireFolder, "panels may live at the root")
+}
+
+// The remaining resources in the group -- variables, notebooks and snapshots --
+// are each served by a single version, but they share the dashboard group with
+// six dashboard versions. Nothing about a stored object's group says which kind
+// it is, so each of these has to declare its own GVK or the codec would be free
+// to persist it under some other kind in the group.
+func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
+	group := dashv0.DashboardResourceInfo.GroupResource().Group
+
+	for _, tc := range []struct {
+		name   string
+		info   utils.ResourceInfo
+		opts   apistore.StorageOptions
+		folder bool
+	}{
+		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
+		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
+		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := &gvkRecorder{}
+			opts := apiserverbuilder.APIGroupOptions{
+				Scheme:     runtime.NewScheme(),
+				OptsGetter: recorder,
+			}
+
+			opts.StorageOptsGetterFor(tc.info, tc.opts)
+
+			require.Len(t, recorder.recorded, 1)
+			so := recorder.recorded[0]
+			require.Equal(t, tc.info.GroupVersionKind(), so.GVK)
+			require.Equal(t, group, so.GVK.Group)
+			require.NotEmpty(t, so.GVK.Version, "an empty version persists without an apiVersion")
+			require.NotEmpty(t, so.GVK.Kind)
+			// Folder support is the one thing these three actually disagree on, and
+			// for notebooks it is load-bearing: their RBAC grant is a flat notebooks:*
+			// wildcard, so a folder-scoped notebook would bypass the folder's ACL.
+			require.Equal(t, tc.folder, so.EnableFolderSupport)
+			require.False(t, so.RequireFolder)
+		})
+	}
 }
