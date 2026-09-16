@@ -124,8 +124,7 @@
       "headerBackground": "palette.ink700",
       "border": "palette.ink700",
       "rowStripedBackground": "palette.ink750",
-      "rowHoverSurface": "palette.ink650",
-      "rowHoverOverlay": "palette.ink650",
+      "rowHoverBackground": "palette.ink650",
       "rowSelectedBackground": "palette.black",
       "rowSelectedHoverBackground": "palette.ink900"
     },
