@@ -33,9 +33,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
   notification-policy-trees:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policies
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policies
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
   notification-policy-default-timing:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy
@@ -263,7 +263,7 @@ The **Staged configuration** section lists the contact points, notification poli
 To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected.
 
 {{< admonition type="warning" >}}
-Reverting deletes the imported notification policy tree. Alert rules that route to that tree lose their target, and their alerts fall back to the root of your default notification policy. Repoint those rules before you revert.
+Reverting deletes the imported notification policy tree. Alert rules that route to that tree lose their target, and their alerts fall back to the root of your default notification policy. Update those rules to point elsewhere before you revert.
 {{< /admonition >}}
 
 ## Limitations
@@ -275,7 +275,7 @@ Consider the following when you import an Alertmanager configuration:
 - **Global settings**: After you promote an import, the `global` section no longer exists as a section of its own. Grafana has resolved its values into each integration setting that relies on them, so a promoted contact point carries the resolved value rather than a reference to `global`.
 - **Policy tree name**: The name of the imported policy tree, which is also the import identifier, must be a valid DNS subdomain name of at most 40 characters, using only lowercase alphanumeric characters, `-`, and `.`.
 - **One staged configuration at a time**: Grafana stores one staged configuration per organization. Before you stage another configuration, promote or revert the existing one. You can also explicitly replace the existing configuration during import.
-- **Template name conflicts across imports**: Grafana renames colliding template files, but the templates defined inside those files share one namespace. Say an earlier import defines a template called `default.email` that renders `X`, and a new import defines `default.email` again, in a file under a different name, rendering `Y`. Which definition wins isn't deterministic, and every contact point that uses that template gets the winner. As a result, contact points from the earlier import can start sending the wrong content. Check the names of the templates you define, not just the file names, before you import a second configuration.
+- **Template name conflicts across imports**: Grafana renames colliding template files, but the templates defined inside those files share one namespace. Say an earlier import defines a template called `default.email` that renders `X`, and a new import defines `default.email` again, in a file under a different name, rendering `Y`. Which definition wins isn't deterministic, and every contact point that uses that template gets the winner. As a result, contact points from the earlier import can start sending the wrong content. Check the names of the templates you define, not just the filenames, before you import a second configuration.
 - **Deprecated provisioning API**: A staged configuration isn't visible in the deprecated provisioning API, which doesn't return its contact points, templates, or time intervals. Use the Grafana Alerting notification API (`notifications.alerting.grafana.app`) instead.
 - **Inhibition rules**: Imported inhibition rules are supported through the API only. There's no user interface for creating or editing them. For more details, refer to [configure inhibition rules](ref:configure-inhibition-rules).
 
