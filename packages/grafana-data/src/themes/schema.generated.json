@@ -1220,7 +1220,7 @@
             },
             "rowSelected": {
               "type": "string",
-              "description": "Existing selection background for TableRT."
+              "description": "Deprecated: use colors.action.selected. This property will be removed in Grafana 14."
             },
             "headerBackground": {
               "type": "string",
