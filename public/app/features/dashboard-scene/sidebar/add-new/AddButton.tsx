@@ -55,10 +55,6 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1.5),
       alignItems: 'center',
       fontSize: '14px',
-      '&:hover': {
-        background: theme.colors.background.elevated,
-        boxShadow: theme.shadows.z1,
-      },
     }),
   };
 }
