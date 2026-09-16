@@ -180,8 +180,11 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
+  type AdHocTransformationsApi,
+  type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,
+  useAdHocTransformations,
 } from './components/PanelChrome';
 export {
   VizLayout,
