@@ -1226,6 +1226,10 @@
               "type": "string",
               "description": "Opaque header surface, distinct from body rows."
             },
+            "border": {
+              "type": "string",
+              "description": "Opaque body and footer dividers."
+            },
             "rowStripedBackground": {
               "type": "string",
               "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
