@@ -38,5 +38,6 @@ type RuleStore interface {
 	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
 	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
 	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error)
+	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
 	accesscontrol.RuleUIDToNamespaceStore
 }

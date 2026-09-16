@@ -201,9 +201,9 @@ func MergeManifestsByKind(sources ...[]*app.ManifestData) []*app.ManifestData {
 	// higher one already claimed.
 	claimedBy := map[LowerGroupResource]kindClaim{}
 	var merged []*app.ManifestData
-	for i := len(sources) - 1; i >= 0; i-- {
-		warnDuplicateKindsWithinSource(sources[i])
-		for _, m := range sources[i] {
+	for _, source := range slices.Backward(sources) {
+		warnDuplicateKindsWithinSource(source)
+		for _, m := range source {
 			if m == nil {
 				merged = append(merged, m)
 				continue

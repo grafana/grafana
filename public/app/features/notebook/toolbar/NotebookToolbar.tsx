@@ -6,6 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
@@ -33,7 +35,7 @@ export function NotebookToolbar({ uid, scene }: { uid?: string; scene: NotebookS
 function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const { remove, isDeleting } = useDeleteNotebook();
+  const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -60,7 +62,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   // way an export reflects what is on screen.
   const exportMenu = () => (
     <Menu>
-      <NotebookExportMenu uid={uid} getSpec={async () => transformNotebookSceneToSaveModel(scene)} />
+      <NotebookExportMenu
+        uid={uid}
+        getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
+      />
     </Menu>
   );
 
@@ -77,7 +83,13 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   return (
     <>
-      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
+      <ClipboardButton
+        variant="secondary"
+        size="sm"
+        icon="link"
+        getText={() => notebookShareUrl(uid)}
+        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_TOOLBAR)}
+      >
         {t('notebooks.view.copy-link', 'Copy link')}
       </ClipboardButton>
       <Dropdown overlay={exportMenu} placement="bottom-end" onVisibleChange={setIsExportOpen}>

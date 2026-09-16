@@ -17,6 +17,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey, getLibraryPanelBehavior } from '../../utils/utils';
 
@@ -240,5 +241,33 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
 
     expect(editedPanelKey(scene)).toBeUndefined();
+  });
+});
+
+describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
+  // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
+  // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
+  // (via entering edit mode), so panels stayed frozen in the new tree until the command also
+  // called it on the swapped-in body.
+  function isDraggable(scene: DashboardScene) {
+    return (scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable;
+  }
+
+  it('when the scene enters edit mode as part of applying the spec', async () => {
+    const scene = buildScene(makeSpec());
+    expect(scene.state.isEditing).toBeFalsy();
+
+    expect((await applySpec(scene, makeSpec())).success).toBe(true);
+
+    expect(isDraggable(scene)).toBe(true);
+  });
+
+  it('when the scene was already in edit mode before applying the spec', async () => {
+    const scene = buildScene(makeSpec());
+    scene.onEnterEditMode();
+
+    expect((await applySpec(scene, makeSpec())).success).toBe(true);
+
+    expect(isDraggable(scene)).toBe(true);
   });
 });
