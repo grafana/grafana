@@ -50,6 +50,8 @@ composableKinds: PanelCfg: {
 					disableKeyboardEvents?: bool
 					// Controls whether cells overflow when hovered. Selected cells always overflow.
 					hoverOverflow?: bool | *true
+					// Whether the column management sidebar starts open
+					showColumnsSidebar?: bool
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

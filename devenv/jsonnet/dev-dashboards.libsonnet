@@ -104,6 +104,7 @@
     "smoke": (import '../dev-dashboards/transforms/smoke.json'),
     "status-history-thresholds-mappings": (import '../dev-dashboards/panel-status-history/status-history-thresholds-mappings.json'),
     "table-auto-column-widths": (import '../dev-dashboards/panel-table/table-auto-column-widths.json'),
+    "table_adhoc_columns": (import '../dev-dashboards/panel-table/table_adhoc_columns.json'),
     "table_footer": (import '../dev-dashboards/panel-table/table_footer.json'),
     "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
     "table_markdown": (import '../dev-dashboards/panel-table/table_markdown.json'),
