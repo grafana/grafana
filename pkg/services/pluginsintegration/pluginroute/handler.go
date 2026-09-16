@@ -137,11 +137,14 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	config.EffectiveVersion = builder.GetEffectiveVersion(0, opts.BuildVersion, "", "")
 	config.RESTOptionsGetter = getter
 	config.AggregatedDiscoveryGroupManager = discoveryendpoint.NewResourceManager("apis")
-	config.Authorization.Authorizer = union.New(
-		apiserverauthorizer.NewImpersonationAuthorizer(),
-		apiserverauthorizer.NewNamespaceAuthorizer(),
-		b.GetAuthorizer(),
+	config.Authorization.Authorizer, err = union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
 	)
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", group, err)
+	}
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
 		builder.GetDefaultBuildHandlerChainFunc, gvs,
@@ -175,7 +178,7 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	info := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 	if err := b.UpdateAPIGroupInfo(&info, builder.APIGroupOptions{
 		Scheme: scheme, OptsGetter: getter, MetricsRegister: reg,
-		StorageOptsRegister: storageOptionsRegister(getter), StorageOpts: storageOpts,
+		StorageOpts:      storageOpts,
 		DualWriteBuilder: dualWriteBuilder,
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
@@ -227,13 +230,4 @@ func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureV
 		return apistore.NewRESTOptionsGetterForClient(client, secrets,
 			storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, configProvider, nil), nil
 	}
-}
-
-func storageOptionsRegister(getter generic.RESTOptionsGetter) apistore.StorageOptionsRegister {
-	if register, ok := getter.(interface {
-		RegisterOptions(schema.GroupResource, apistore.StorageOptions)
-	}); ok {
-		return register.RegisterOptions
-	}
-	return func(schema.GroupResource, apistore.StorageOptions) {}
 }
