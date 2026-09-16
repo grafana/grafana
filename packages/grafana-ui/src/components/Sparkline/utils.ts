@@ -324,7 +324,6 @@ export const prepareConfig = (
         index: idx,
         value,
         display: formattedValueToString(display(value)),
-        // Cursor viewport coords for positioning the tooltip.
         left: u.rect.left + (u.cursor.left ?? 0),
         top: u.rect.top + (u.cursor.top ?? 0),
       });
