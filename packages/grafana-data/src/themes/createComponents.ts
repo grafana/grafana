@@ -25,6 +25,7 @@ const ThemeTableColorsInputSchema = z.object({
     .optional(),
   rowSelected: z.string().describe('Existing selection background for TableRT.').optional(),
   headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
+  border: z.string().describe('Opaque body and footer dividers.').optional(),
   rowStripedBackground: z
     .string()
     .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
@@ -384,6 +385,7 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     rowHoverBackground: colors.action.hover,
     rowSelected: colors.action.selected,
     headerBackground,
+    border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
     rowHoverSurface: onBackground(rowHoverOverlay, background).toHexString(),
     rowHoverOverlay,

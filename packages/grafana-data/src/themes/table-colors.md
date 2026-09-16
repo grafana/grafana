@@ -10,6 +10,7 @@ palette.
 | Token                        | Usage                                                                       |
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `headerBackground`           | Header surface                                                              |
+| `border`                     | Body and footer dividers                                                    |
 | `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
 | `rowHoverSurface`            | Solid hover surface for an unstriped row                                    |
 | `rowHoverOverlay`            | Translucent tint over a row's existing background                           |
@@ -17,7 +18,8 @@ palette.
 | `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
 | `cellSelectionBorder`        | Focused cell outline                                                        |
 
-Background surfaces must be opaque where they hide scrolling or overflowing content.
+Background surfaces and dividers must be opaque where they cover field-configured
+cell backgrounds or scrolling content.
 
 Use the solid hover surface for plain rows and the hover overlay when the underlying
 surface must remain visible, such as striped or selected rows. Consumers must apply
@@ -32,8 +34,8 @@ than a fixed gray table. Refreshed themes override the table section with explic
 values and resolved `palette.*` references.
 
 Every input field is optional; every output field is populated. A partial override
-changes only that role. Consumers derive body backgrounds, dividers, and drag states
-from the theme's generic colors and these table roles.
+changes only that role. Consumers derive body backgrounds, header dividers, and drag
+states from the theme's generic colors and these table roles.
 
 ```ts
 const theme = createTheme({
