@@ -299,7 +299,16 @@ func registerStorageOptions(
 			if versionedProvider != nil {
 				gvr := gr.WithVersion(v.Name)
 				if opts := versionedProvider.GetVersionedStorageOptions(gvr); opts != nil {
-					if err := reg.RegisterVersionedOptions(gvr, *opts); err != nil {
+					// Copied before the Kind is filled in, since the provider may be
+					// handing back a pointer to something it keeps.
+					versionedOpts := *opts
+					// The manifest already names the kind this GVR serves, so a provider
+					// that only cares about folder scope or a name length does not have
+					// to repeat it -- and cannot leave the GVK incomplete by omission.
+					if versionedOpts.GVK.Kind == "" {
+						versionedOpts.GVK.Kind = k.Kind
+					}
+					if err := reg.RegisterVersionedOptions(gvr, versionedOpts); err != nil {
 						return err // the caller names the app
 					}
 					continue

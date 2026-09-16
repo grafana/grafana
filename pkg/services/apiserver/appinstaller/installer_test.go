@@ -307,6 +307,43 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		return reg.ForResource(gvr) != generic.RESTOptionsGetter(reg)
 	}
 
+	// apistore refuses a registration whose GVK has no Kind, and a provider that
+	// only cares about folder scope has no reason to name one. The installer fills
+	// it in from the manifest, so this registration succeeding is what proves it
+	// did -- a kindless GVK would otherwise be stored, and its empty Kind written
+	// onto every object.
+	t.Run("the manifest kind completes a provider's GVK", func(t *testing.T) {
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(schema.GroupVersionResource) *apistore.StorageOptions {
+				return &apistore.StorageOptions{EnableFolderSupport: true} // no GVK of its own
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
+
+		assert.True(t, scoped(t, reg, v1))
+		assert.True(t, scoped(t, reg, v2))
+	})
+
+	// The provider hands back a pointer, which it is free to keep. Filling the
+	// Kind in on that value would leave one version's kind behind in it.
+	t.Run("a provider's own options are left untouched", func(t *testing.T) {
+		shared := &apistore.StorageOptions{EnableFolderSupport: true}
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(schema.GroupVersionResource) *apistore.StorageOptions {
+				return shared
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
+
+		require.Empty(t, shared.GVK.Kind, "the installer must complete a copy, not the provider's value")
+	})
+
 	t.Run("each served version is asked and registered separately", func(t *testing.T) {
 		var asked []schema.GroupVersionResource
 		installer := &mockAppInstallerWithVersionedStorageOpts{

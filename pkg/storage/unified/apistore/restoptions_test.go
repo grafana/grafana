@@ -54,7 +54,8 @@ func TestForResource(t *testing.T) {
 	t.Run("a GVR with nothing registered falls back to the shared getter", func(t *testing.T) {
 		r := newGetter()
 		r.RegisterOptions(gr, StorageOptions{MaximumNameLength: 40})
-		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{
+			GVK: schema.GroupVersionKind{Kind: "Thing"}, RequireFolder: true}))
 
 		require.Same(t, r, r.ForResource(v2), "no versioned entry means no scoping")
 		require.Equal(t, 40, resolvedOptions(t, r.ForResource(v2), gr).MaximumNameLength)
@@ -76,14 +77,14 @@ func TestForResource(t *testing.T) {
 		require.Equal(t, v1.GroupVersion().WithKind("Thing"), resolvedOptions(t, r.ForResource(v1), gr).GVK)
 	})
 
-	t.Run("an empty GVK is completed to the key's kindless GVK", func(t *testing.T) {
+	// Only the caller knows the kind name, so a kindless GVK cannot be completed
+	// here. The registration is refused and the resource keeps falling through to
+	// the shared getter, rather than being scoped to options whose empty Kind
+	// would be written onto every object.
+	t.Run("a registration with no Kind is refused and scopes nothing", func(t *testing.T) {
 		r := newGetter()
-		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
-
-		got := resolvedOptions(t, r.ForResource(v1), gr).GVK
-		require.Equal(t, group, got.Group)
-		require.Equal(t, "v1alpha1", got.Version)
-		require.Empty(t, got.Kind, "only the caller knows the kind name")
+		require.Error(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
+		require.Same(t, r, r.ForResource(v1), "a rejected registration leaves no entry behind")
 	})
 
 	// A contradicting GVK is refused outright, so nothing is registered and the
@@ -106,7 +107,8 @@ func TestForResource(t *testing.T) {
 	// group or version cannot pick up these options.
 	t.Run("the key is the whole GVR", func(t *testing.T) {
 		r := newGetter()
-		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{RequireFolder: true}))
+		require.NoError(t, r.RegisterVersionedOptions(v1, StorageOptions{
+			GVK: schema.GroupVersionKind{Kind: "Thing"}, RequireFolder: true}))
 
 		other := schema.GroupVersionResource{Group: "other.grafana.app", Version: "v1alpha1", Resource: "things"}
 		require.Same(t, r, r.ForResource(other))
@@ -119,7 +121,8 @@ func TestForResourceSharesTheParentConfig(t *testing.T) {
 	r := NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 	gr := schema.GroupResource{Group: "example.grafana.app", Resource: "things"}
 	gvr := gr.WithVersion("v1alpha1")
-	require.NoError(t, r.RegisterVersionedOptions(gvr, StorageOptions{RequireFolder: true}))
+	require.NoError(t, r.RegisterVersionedOptions(gvr, StorageOptions{
+		GVK: schema.GroupVersionKind{Kind: "Thing"}, RequireFolder: true}))
 
 	shared, err := r.GetRESTOptions(gr, nil)
 	require.NoError(t, err)
@@ -148,8 +151,39 @@ func TestRegisterVersionedOptionsRejectsGVKMismatch(t *testing.T) {
 	})
 
 	t.Run("an omitted group and version are filled in, not rejected", func(t *testing.T) {
-		require.NoError(t, register(t, schema.GroupVersionKind{Kind: "Thing"}))
-		require.NoError(t, register(t, schema.GroupVersionKind{}))
+		r := NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		require.NoError(t, r.RegisterVersionedOptions(gvr, StorageOptions{GVK: schema.GroupVersionKind{Kind: "Thing"}}))
+		require.Equal(t, gvr.GroupVersion().WithKind("Thing"), r.versioned[gvr].GVK,
+			"the key supplies the group and version the caller left out")
+	})
+
+	// A GVK holding only a group and version is not Empty(), which is what tells
+	// the storage layer a kind was declared. Registering one would have it taken
+	// as a declaration and write an empty Kind onto every object.
+	t.Run("a GVK with no Kind is rejected rather than half-filled", func(t *testing.T) {
+		for _, gvk := range []schema.GroupVersionKind{
+			{},
+			{Group: group},
+			{Version: "v1alpha1"},
+			{Group: group, Version: "v1alpha1"},
+		} {
+			err := register(t, gvk)
+			require.Error(t, err, "GVK %v must not be accepted", gvk)
+			require.Contains(t, err.Error(), "declare no Kind")
+			require.Contains(t, err.Error(), gvr.String(), "the message names the resource that was rejected")
+		}
+	})
+
+	// Whatever is stored is used verbatim by the encode path, so nothing may land
+	// in the map unless all three parts are set.
+	t.Run("every accepted registration holds a complete GVK", func(t *testing.T) {
+		r := NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		require.NoError(t, r.RegisterVersionedOptions(gvr, StorageOptions{GVK: schema.GroupVersionKind{Kind: "Thing"}}))
+		for key, opts := range r.versioned {
+			require.NotEmpty(t, opts.GVK.Group, "%s stored an incomplete GVK", key)
+			require.NotEmpty(t, opts.GVK.Version, "%s stored an incomplete GVK", key)
+			require.NotEmpty(t, opts.GVK.Kind, "%s stored an incomplete GVK", key)
+		}
 	})
 
 	t.Run("a contradicting version is rejected", func(t *testing.T) {

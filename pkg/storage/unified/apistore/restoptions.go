@@ -66,7 +66,14 @@ func (r *RESTOptionsGetter) WithStorageOptions(opts StorageOptions) generic.REST
 // That matters because an omitted version is not inert: it decides the
 // apiVersion writes are persisted under.
 //
-// A GVK that contradicts the key is rejected, so callers have to handle the
+// The registration must end up with a complete GVK, and is rejected otherwise.
+// A Kind is the one part that cannot be derived from the key, and a GVK holding
+// only a group and version is worse than none: it is not [schema.GroupVersionKind.Empty],
+// which is exactly what tells the storage layer a kind was declared, so it would
+// be taken as one and stamp an empty Kind onto every object written. Callers that
+// reach this through the app-sdk installer get the Kind from the manifest.
+//
+// A GVK that contradicts the key is rejected too, so callers have to handle the
 // error rather than register storage that would persist the wrong kind.
 func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionResource, opts StorageOptions) error {
 	// A GVK disagreeing with its key says this storage persists as something it
@@ -79,12 +86,11 @@ func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionReso
 		return fmt.Errorf("storage options for %s declare GVK %s, which is outside the group version they are registered for",
 			gvr.String(), opts.GVK.String())
 	}
-	if opts.GVK.Group == "" {
-		opts.GVK.Group = gvr.Group
+	if opts.GVK.Kind == "" {
+		return fmt.Errorf("storage options for %s declare no Kind; a versioned registration has to name the kind it persists", gvr.String())
 	}
-	if opts.GVK.Version == "" {
-		opts.GVK.Version = gvr.Version
-	}
+	opts.GVK.Group = gvr.Group
+	opts.GVK.Version = gvr.Version
 	r.versioned[gvr] = opts
 	return nil
 }
