@@ -13,21 +13,22 @@ func TestCancelInFlightCancelsRegisteredJob(t *testing.T) {
 	t.Parallel()
 
 	s := &Service{}
-	started := make(chan struct{})
+	registered := make(chan struct{})
 	finished := make(chan struct{})
 
-	jobCtx, cancel := context.WithCancel(context.Background())
-	s.cancelMutex.Lock()
-	s.setCancelFunc(cancel)
 	go func() {
+		s.cancelMutex.Lock()
 		defer s.cancelMutex.Unlock()
 		defer s.clearCancelFunc()
-		close(started)
+
+		jobCtx, cancel := context.WithCancel(context.Background())
+		s.setCancelFunc(cancel)
+		close(registered)
 		<-jobCtx.Done()
 		close(finished)
 	}()
 
-	<-started
+	<-registered
 	require.NoError(t, s.cancelInFlight())
 
 	select {
@@ -50,14 +51,20 @@ func TestCancelInFlightRace(t *testing.T) {
 	t.Parallel()
 
 	s := &Service{}
-	jobCtx, cancel := context.WithCancel(context.Background())
-	s.cancelMutex.Lock()
-	s.setCancelFunc(cancel)
+	registered := make(chan struct{})
+
 	go func() {
+		s.cancelMutex.Lock()
 		defer s.cancelMutex.Unlock()
 		defer s.clearCancelFunc()
+
+		jobCtx, cancel := context.WithCancel(context.Background())
+		s.setCancelFunc(cancel)
+		close(registered)
 		<-jobCtx.Done()
 	}()
+
+	<-registered
 
 	var wg sync.WaitGroup
 	for i := 0; i < 20; i++ {
