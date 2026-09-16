@@ -123,7 +123,7 @@ describe('TableDataGrid', () => {
           table: {
             headerBackground: '#234567',
             border: '#345678',
-            rowHoverSurface: '#56789a',
+            rowHoverBackground: '#56789a',
             rowSelectedBackground: '#6789ab',
             rowSelectedHoverBackground: '#789abc',
           },
