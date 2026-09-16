@@ -9,6 +9,7 @@
 import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getLogger } from '@grafana/runtime/unstable';
 import { PageLoader } from '@grafana/ui';
 import {
@@ -92,13 +93,25 @@ export const optedInRoutePaths = new Set<string>();
  * table in `proxies.ts`. Grafana-managed URLs end up back on the page below, so opting a route in
  * is safe even when most of its traffic is Grafana's own.
  *
- * Does nothing when unified alerting is switched off — every alerting route serves the "alerting
- * is not enabled" page then, and someone who turned alerting off didn't ask us to find them
- * another way in. Read per call rather than once at import, because `config` is filled in after
- * this module is evaluated.
+ * Does nothing unless the `alerting.dataSourceManagedRouteProxy` flag is on. Handing the route
+ * straight back means an instance without the plugin does no proxy work at all — no wrapper, no
+ * chunk to fetch, no plugin lookup — which is why the flag is read here rather than inside the
+ * proxy. It has to be a flag: nothing else can say whether the plugin is there at the moment the
+ * route table is assembled, because the plugin metadata is only available asynchronously.
+ *
+ * Also does nothing when unified alerting is switched off — every alerting route serves the
+ * "alerting is not enabled" page then, and someone who turned alerting off didn't ask us to find
+ * them another way in.
+ *
+ * Both are read per call rather than once at import, because neither is populated until after this
+ * module is evaluated.
  */
 export function proxied(route: RouteDescriptor): RouteDescriptor {
   optedInRoutePaths.add(route.path);
+
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingDataSourceManagedRouteProxy, false)) {
+    return route;
+  }
 
   if (!config.unifiedAlertingEnabled) {
     return route;

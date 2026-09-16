@@ -2,6 +2,8 @@ import { lazy } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
@@ -34,8 +36,22 @@ function routeProps(path: string): GrafanaRouteComponentProps {
 describe('proxied', () => {
   const unifiedAlertingEnabled = config.unifiedAlertingEnabled;
 
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
+  });
+
   afterEach(() => {
     config.unifiedAlertingEnabled = unifiedAlertingEnabled;
+    setTestFlags();
+  });
+
+  it('leaves the route alone when the flag is off', () => {
+    config.unifiedAlertingEnabled = true;
+    setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: false });
+
+    // Handing the route straight back is what keeps an instance without the plugin from doing any
+    // proxy work at all — no wrapper means no chunk is ever fetched for these routes.
+    expect(proxied(route('/alerting/groups/')).component).toBe(CorePage);
   });
 
   it('wraps the route so the proxy gets a say', () => {
