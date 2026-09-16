@@ -51,9 +51,9 @@ export function mergePluginNavIntoTree(
   // containers are carried over separately by carryOverRuntimeChildren.
   let tree = buildStaticNavTree();
 
-  // Each app is gated the way the server gates it, per plugin (plugins:id:<id>).
-  // Without the scopes — still loading, or the request failed — the coarse
-  // action-only check from the flattened permissions map applies to all apps.
+  // Try the scoped check first — the server gates each app on plugins:id:<id>.
+  // Without scopes (the request failed, or it was skipped) fall back to the
+  // global plugins.app:access check, which applies to every app at once.
   const hasAppAccess = (app: AppPluginConfig) =>
     appAccessScopes == null
       ? contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)
