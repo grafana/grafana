@@ -71,6 +71,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   transparent?: boolean;
   tableRefreshEnabled?: boolean;
   zebraStriping?: boolean;
+  showColumnSidebarBorder?: boolean;
   noPanelPadding?: boolean;
   initialRowIndex?: number;
   sortedRows: TableRow[];
@@ -114,6 +115,7 @@ export function TableDataGrid({
   transparent,
   tableRefreshEnabled,
   zebraStriping,
+  showColumnSidebarBorder,
   noPanelPadding,
   initialRowIndex,
   sortedRows,
@@ -163,7 +165,8 @@ export function TableDataGrid({
     transparent,
     tableRefreshEnabled,
     noPanelPadding,
-    zebraStriping
+    zebraStriping,
+    showColumnSidebarBorder
   );
 
   const commonDataGridProps = useMemo(
