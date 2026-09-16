@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { CustomVariable, sceneGraph, SceneVariableSet, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
@@ -18,6 +18,7 @@ import { addNewRowTo, addNewTabTo } from '../../scene/layouts-shared/addNew';
 import { changeLayoutTo } from '../../scene/layouts-shared/utils';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { deactivatePlanningSession } from '../../scene/planningSession';
+import { type DashboardEditView } from '../../settings/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
@@ -113,6 +114,19 @@ it('refuses to start planning on a scene that has already deactivated', async ()
   const result = await client.execute(start);
   expect(result).toMatchObject({ success: false, error: 'The preview dashboard is no longer open.' });
   expect(scene.state.planning).toBeUndefined();
+});
+
+it('closes an open settings view when planning starts, including in the URL', async () => {
+  const { scene, client } = setup();
+  const editview = { getUrlKey: () => 'variables' } as unknown as DashboardEditView;
+  scene.setState({ editview });
+  locationService.partial({ editview: 'variables' });
+  const partialSpy = jest.spyOn(locationService, 'partial');
+
+  expect((await client.execute(start)).success).toBe(true);
+
+  expect(scene.state.editview).toBeUndefined();
+  expect(partialSpy).toHaveBeenCalledWith({ editview: null });
 });
 
 it.each(['row', 'tab'] as const)(

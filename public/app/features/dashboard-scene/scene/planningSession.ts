@@ -1,3 +1,4 @@
+import { locationService } from '@grafana/runtime';
 import { type SceneObject, type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 
@@ -36,6 +37,19 @@ export function startPlanningSession(
   if (scene.isPlanning()) {
     throw new Error('A dashboard plan is already being previewed. End it before starting another.');
   }
+
+  // dashboard-settings is denied while planning (see planningPolicy.ts), which blocks navigating
+  // *into* a settings view, but a view already open when START_PLANNING fires stays mounted and
+  // fully interactive — including surfaces T7/T11's guards do not reach, like the legacy
+  // settings page's own variables editor. Close whatever settings view is open, generically,
+  // rather than guarding each thing on it. Clears the URL too (matching the same
+  // locationService.partial({ editview: null }) used elsewhere to close this view), or a reload
+  // would re-parse the stale editview= param and reopen it.
+  if (scene.state.editview) {
+    scene.setState({ editview: undefined });
+    locationService.partial({ editview: null });
+  }
+
   lastPlanIds.set(scene, plan.planId);
   sessions.set(scene, { sections: new Set(), panels: new Set(), variables: new Map() });
   const notify = (action: 'build' | 'dismiss') => {
