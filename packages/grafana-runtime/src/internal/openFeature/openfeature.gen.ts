@@ -7,6 +7,7 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
@@ -93,6 +94,8 @@ export const FlagKeys = {
   GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables multi-tenant fallback behavior */
+  GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -653,6 +656,17 @@ export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFl
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables multi-tenant fallback behavior
+ *
+ * **Details:**
+ * - flag key: `grafana.mtFallback`
+ * - default value: `{}`
+ */
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
 };
 
 /**
