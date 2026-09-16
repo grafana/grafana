@@ -1166,6 +1166,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ overlay: undefined });
   }
 
+  /**
+   * True while an unbuilt dashboard plan is being previewed on this scene. The preview is a
+   * static, view-mode surface: it never enters edit mode, so there is no exit-edit-mode dance and
+   * no `_initialState` snapshot to restore later.
+   */
+  public isPlanning(): boolean {
+    return this.state.planning !== undefined;
+  }
+
   public onOpenSettings = () => {
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });

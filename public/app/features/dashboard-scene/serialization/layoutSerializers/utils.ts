@@ -34,11 +34,13 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getPlanningPanelData } from '../../scene/planningSampleData';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
@@ -55,7 +57,19 @@ import { normalizeTransformation } from '../transformationCompat';
  * buildVizPanel layers the dashboard-only chrome on top (menu, header actions, sub header, panel
  * context — all of which reach the root via getDashboardSceneFor and would throw elsewhere).
  */
-export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState {
+export interface BuildVizPanelOptions {
+  /**
+   * Omit the query runner for plan placeholders. An empty query list alone still
+   * receives the default datasource query during normal panel creation.
+   */
+  withoutQueries?: boolean;
+}
+
+export function buildVizPanelState(
+  panel: PanelKind,
+  id?: number,
+  buildOptions: BuildVizPanelOptions = {}
+): VizPanelState {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -69,6 +83,12 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
   // standalone notices title item is only shown with the legacy UI.
   if (!isNewPanelQueryErrorsUIEnabled()) {
     titleItems.push(new PanelNotices());
+  }
+
+  // A query-less panel is a plan placeholder, and its seeded data has to say so on the panel
+  // itself — the planning banner scrolls out of view, the numbers do not.
+  if (buildOptions.withoutQueries) {
+    titleItems.push(new PlanPlaceholderBadge());
   }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
@@ -91,8 +111,6 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
     description: panel.spec.description,
     subtitle: panel.spec.subtitle,
     pluginId: panel.spec.vizConfig.group,
-    options,
-    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     // An empty/absent version means the caller didn't pin one (it's optional in
     // the spec); leave pluginVersion undefined so the panel uses the running
     // plugin's current version rather than migrating against a bogus value.
@@ -101,10 +119,16 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     seriesLimit: config.panelSeriesLimit,
-    $data: createPanelDataProvider(panel),
+    $data: buildOptions.withoutQueries ? undefined : createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
+    // Spread before options/fieldConfig below: this only supplies a synthetic $data series so a
+    // query-less placeholder has something to render. The spec's own options/fieldConfig are the
+    // assistant's planned visualization settings and must win, not be clobbered by the sample's.
+    ...(buildOptions.withoutQueries ? getPlanningPanelData(panel.spec.title, panel.spec.vizConfig.group) : {}),
+    options,
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
   };
 
   // Set up Angular migration handler if migration data is present
@@ -125,8 +149,8 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
   return vizPanelState;
 }
 
-export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
-  const vizPanelState = buildVizPanelState(panel, id);
+export function buildVizPanel(panel: PanelKind, id?: number, buildOptions: BuildVizPanelOptions = {}): VizPanel {
+  const vizPanelState = buildVizPanelState(panel, id, buildOptions);
 
   addDashboardPanelChrome(vizPanelState);
 

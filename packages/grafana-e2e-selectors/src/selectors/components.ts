@@ -1389,6 +1389,12 @@ export const versionedComponents = {
       pastePanelButton: {
         '11.1.0': 'data-testid Paste panel button',
       },
+      planningBuildButton: {
+        '13.3.0': 'data-testid Build dashboard plan button',
+      },
+      planningDismissButton: {
+        '13.3.0': 'data-testid Dismiss dashboard plan button',
+      },
       discardChangesButton: {
         '11.1.0': 'data-testid Discard changes button',
       },
