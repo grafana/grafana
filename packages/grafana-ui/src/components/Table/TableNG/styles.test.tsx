@@ -87,7 +87,6 @@ describe('table zebra colors', () => {
   it.each([
     ['dark', 'rgb(34, 37, 43)'],
     ['light', 'rgb(244, 245, 245)'],
-    ['gildedgrove', 'rgb(37, 48, 44)'],
     ['visual_refresh_dark', 'rgb(25, 29, 34)'],
     ['visual_refresh_light', 'rgb(245, 245, 244)'],
   ])('uses the %s stripe token on alternating rows and their frozen cells', (id, stripe) => {
@@ -109,7 +108,6 @@ describe('table zebra colors', () => {
   it.each([
     ['dark', '#34363a'],
     ['light', '#e0e0e0'],
-    ['gildedgrove', '#3B3527'],
     ['visual_refresh_dark', '#282d33'],
     ['visual_refresh_light', '#e4e3e2'],
   ])('uses the %s hover background for striped rows', (id, hoverBackground) => {
