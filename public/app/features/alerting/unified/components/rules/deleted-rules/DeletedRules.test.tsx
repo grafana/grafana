@@ -53,12 +53,12 @@ function renderDeletedRules() {
 describe('render Deleted rules page', () => {
   it('should show recently deleted rules', async () => {
     renderDeletedRules();
-    expect(screen.getByText('Grafana-rule')).toBeInTheDocument();
+    expect(await screen.findByText('Grafana-rule')).toBeInTheDocument();
   });
 
   it('should render restore button', async () => {
     const { user } = renderDeletedRules();
-    const restoreButtons = screen.getAllByRole('button', { name: /restore/i });
+    const restoreButtons = await screen.findAllByRole('button', { name: /restore/i });
     await user.click(restoreButtons[0]);
     expect(
       screen.getByText(/are you sure you want to restore this deleted alert rule definition\?/i)
@@ -70,7 +70,7 @@ describe('render Deleted rules page', () => {
 
   it('should render permanently delete button', async () => {
     const { user } = renderDeletedRules();
-    const restoreButtons = screen.getAllByRole('button', { name: /permanently delete/i });
+    const restoreButtons = await screen.findAllByRole('button', { name: /permanently delete/i });
     await user.click(restoreButtons[0]);
     expect(
       screen.getByText(/are you sure you want to permanently delete this alert rule\? this action cannot be undone./i)

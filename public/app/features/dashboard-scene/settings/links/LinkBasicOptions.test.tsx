@@ -7,7 +7,6 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { LinkEdit } from './LinkAddEditableElement';
 import {
   LinkBooleanSwitch,
   LinkIconSelect,
@@ -16,6 +15,7 @@ import {
   LinkTextInput,
   LinkTypeSelect,
 } from './LinkBasicOptions';
+import { LinkEdit } from './LinkEdit';
 
 const LINK_TYPE_LINK: DashboardLink = {
   title: 'Test Link',

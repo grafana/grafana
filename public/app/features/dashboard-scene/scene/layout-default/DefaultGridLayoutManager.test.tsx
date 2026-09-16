@@ -8,8 +8,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
-import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';

@@ -768,6 +768,27 @@ const updateDashboardSettingsPayloadSchema = z.object({
   preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
+const getSpecPayloadSchema = z
+  .object({
+    validate: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('When true, validate the serialized spec against the v2 schema and fail if it is invalid.'),
+  })
+  .strict();
+
+const applySpecPayloadSchema = z.object({
+  spec: z
+    .record(z.string(), z.unknown())
+    .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
+  validate: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
+});
+
 const scopeSelectionSchema = z.union([
   z.literal('all'),
   z.literal('none'),
@@ -856,6 +877,11 @@ export const payloads = {
   ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
+  getSpec: getSpecPayloadSchema.describe('Return the entire dashboard as a v2 DashboardSpec JSON object.'),
+  applySpec: applySpecPayloadSchema.describe(
+    'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
+      '(settings, variables, annotations, panels, and nested rows/tabs layout).'
   ),
   getMetadataAnnotations: getMetadataAnnotationsPayloadSchema.describe(
     'Read allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is readable. Not a query annotation layer (use LIST_ANNOTATIONS). GET_SPEC / APPLY_SPEC do not include these annotations.'

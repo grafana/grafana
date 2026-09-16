@@ -74,16 +74,19 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTa
 
 describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
-    it('should render InspectDataTab', () => {
+    it('should render InspectDataTab', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
     });
-    it('should render Data Option row', () => {
+    it('should render Data Option row', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
     it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
@@ -91,13 +94,14 @@ describe('InspectDataTab', () => {
     });
     it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       await userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
-    it('should show download logs button if logs data', () => {
+    it('should show download logs button if logs data', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = false;
       const dataWithLogs = [
@@ -115,10 +119,11 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if logs data but config disabled', () => {
+    it('should not show download logs button if logs data but config disabled', async () => {
       const oldConfig = config.exploreHideLogsDownload;
       config.exploreHideLogsDownload = true;
       const dataWithLogs = [
@@ -136,14 +141,16 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
-    it('should not show download logs button if no logs data', () => {
+    it('should not show download logs button if no logs data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
-    it('should show download traces button if traces data', () => {
+    it('should show download traces button if traces data', async () => {
       const dataWithtraces = [
         {
           name: 'Data frame with traces',
@@ -201,13 +208,15 @@ describe('InspectDataTab', () => {
         },
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
+      await screen.findByRole('table');
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });
-    it('should not show download traces button if no traces data', () => {
+    it('should not show download traces button if no traces data', async () => {
       render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
-    it('should show download service graph button', () => {
+    it('should show download service graph button', async () => {
       const sgFrames = [
         {
           name: 'Nodes',
@@ -233,6 +242,7 @@ describe('InspectDataTab', () => {
           })}
         />
       );
+      await screen.findByRole('table');
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
   });
