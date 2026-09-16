@@ -1,8 +1,10 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import tinycolor from 'tinycolor2';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, createTheme } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { ThemeContext } from '@grafana/ui';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -27,7 +29,10 @@ describe('FlameGraphCallTreeContainer', () => {
     jest.useRealTimers();
   });
 
-  const setup = async (props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>) => {
+  const setup = async (
+    props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>,
+    theme = createTheme()
+  ) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSymbolClick = jest.fn();
@@ -36,14 +41,16 @@ describe('FlameGraphCallTreeContainer', () => {
 
     await act(async () => {
       render(
-        <FlameGraphCallTreeContainer
-          data={container}
-          onSymbolClick={onSymbolClick}
-          onSandwich={onSandwich}
-          search=""
-          onSearch={onSearch}
-          {...props}
-        />
+        <ThemeContext.Provider value={theme}>
+          <FlameGraphCallTreeContainer
+            data={container}
+            onSymbolClick={onSymbolClick}
+            onSandwich={onSandwich}
+            search=""
+            onSearch={onSearch}
+            {...props}
+          />
+        </ThemeContext.Provider>
       );
     });
 
@@ -171,6 +178,97 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(columnHeaders[1].textContent).toEqual('Function');
     expect(columnHeaders[2].textContent).toContain('Total');
   });
+
+  it('should allow horizontal scrolling so nested function names are not clipped', async () => {
+    await setup();
+
+    const scrollContainer = screen.getByTestId('call-tree-scroll-container');
+    expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
+
+    const columnHeaders = screen.getAllByRole('columnheader');
+    const colorBarHeader = columnHeaders[2];
+    const selfHeader = columnHeaders[3];
+    const totalHeader = columnHeaders[4];
+    expect(colorBarHeader).toHaveStyle({ position: 'sticky', right: '300px' });
+    expect(selfHeader).toHaveStyle({ position: 'sticky', right: '150px' });
+    expect(totalHeader).toHaveStyle({ position: 'sticky', right: '0px' });
+
+    const firstDataRow = screen.getAllByRole('row')[1];
+    const firstDataRowCells = within(firstDataRow).getAllByRole('cell');
+    expect(firstDataRowCells[2]).toHaveStyle({ position: 'sticky', right: '300px' });
+    expect(firstDataRowCells[3]).toHaveStyle({ position: 'sticky', right: '150px' });
+    expect(firstDataRowCells[4]).toHaveStyle({ position: 'sticky', right: '0px' });
+
+    // The root starts expanded. Collapse and expand it again to expand its
+    // single-child chains, which push names past the fixed Function column.
+    await user.click(screen.getByText('total'));
+    await user.click(screen.getByText('total'));
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    const nestedFunction = screen.getByText('test/pkg/agent.(*Target).start.func1');
+    await user.click(nestedFunction);
+    expect(nestedFunction).toBeInTheDocument();
+    expect(screen.getByText('test/pkg/agent.(*Target).scrape')).toBeInTheDocument();
+
+    const table = scrollContainer.querySelector('table');
+    expect(table).not.toBeNull();
+    expect(table!.querySelector('thead')).toBeInTheDocument();
+    expect(table!.querySelector('tbody')).toBeInTheDocument();
+  });
+
+  it.each([800, 1600])('should pin comparison columns at width %i', async (width) => {
+    mockBoundingClientRect({ width, height: 500 });
+    const diffData = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1] },
+        { name: 'value', values: [200, 90] },
+        { name: 'valueRight', values: [100, 40] },
+        { name: 'self', values: [110, 90] },
+        { name: 'selfRight', values: [60, 40] },
+        { name: 'label', values: ['total', 'nestedFunction'] },
+      ],
+    });
+    await setup({ data: new FlameGraphDataContainer(diffData, { collapsing: true }) });
+
+    const headers = screen.getAllByRole('columnheader');
+    if (width === 1600) {
+      expect(headers[2]).toHaveStyle({ position: 'sticky', right: '300px' });
+      for (const row of screen.getAllByRole('row').slice(1)) {
+        expect(within(row).getAllByRole('cell')[2]).toHaveStyle({ position: 'sticky', right: '300px' });
+      }
+    }
+
+    for (const [name, right] of [
+      ['Baseline', '200px'],
+      ['Comparison', '100px'],
+      ['Diff %', '0px'],
+    ]) {
+      const header = screen.getByText(name, { selector: 'th' });
+      expect(header).toHaveStyle({ position: 'sticky', right });
+      for (const row of screen.getAllByRole('row').slice(1)) {
+        expect(within(row).getAllByRole('cell')[headers.indexOf(header)]).toHaveStyle({
+          position: 'sticky',
+          right,
+        });
+      }
+    }
+  });
+
+  it.each(['light', 'dark'] as const)(
+    'should give searched rows an opaque background in the %s theme',
+    async (mode) => {
+      await setup({ search: 'runtime.mallocgc' }, createTheme({ colors: { mode } }));
+
+      const row = screen.getByText('runtime.mallocgc').closest('tr')!;
+      expect(tinycolor(getComputedStyle(row).backgroundColor).getAlpha()).toBe(1);
+      const cells = within(row).getAllByRole('cell');
+      for (const cell of cells.slice(-2)) {
+        expect(cell).toHaveStyle({ position: 'sticky', backgroundColor: 'inherit' });
+      }
+    }
+  );
 
   it('should enter focus mode when Focus on callees is clicked', async () => {
     // Use search to make runtime.mallocgc visible in the tree
