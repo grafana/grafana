@@ -3341,6 +3341,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.mtFallback",
+        "resourceVersion": "1789554179948",
+        "creationTimestamp": "2026-09-16T10:22:59Z"
+      },
+      "spec": {
+        "description": "Enables multi-tenant fallback behavior",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.multiTenantNavTree",
         "resourceVersion": "1784635043218",
         "creationTimestamp": "2026-07-14T15:15:16Z",
