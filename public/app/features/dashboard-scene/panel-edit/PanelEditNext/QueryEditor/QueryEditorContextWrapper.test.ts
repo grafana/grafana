@@ -14,7 +14,7 @@ import { type StackedEditorItem, useActionsContext, useQueryEditorUIContext } fr
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
-jest.mock('../../../utils/utils', () => ({
+jest.mock('../../../utils/getQueryRunnerFor', () => ({
   getQueryRunnerFor: jest.fn().mockReturnValue(null),
 }));
 
@@ -128,14 +128,14 @@ function renderWithWrapper(dataPane: PanelDataPaneNext) {
 // Multi-select can only be entered when there are cards to seed, so tests that exercise it
 // must expose queries through the (otherwise null) query runner.
 function mockQueryRunnerQueries(queries: DataQuery[]) {
-  const { getQueryRunnerFor } = require('../../../utils/utils');
+  const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
   getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries }) });
 }
 
 // Restore the defaults (no query runner, no transformations) after every test so cards set by
 // one test can't leak into the next and silently satisfy the "has cards" multi-select guard.
 afterEach(() => {
-  const { getQueryRunnerFor } = require('../../../utils/utils');
+  const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
   getQueryRunnerFor.mockReturnValue(null);
   const { useTransformations } = require('./hooks/useTransformations');
   useTransformations.mockReturnValue([]);
@@ -791,13 +791,13 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
     // Stacked mode drives the active card (selectedQuery / selectedTransformation), so the query
     // runner must expose real queries for the active selection to resolve through useSelectedCard.
-    const { getQueryRunnerFor } = require('../../../utils/utils');
+    const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
     getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries: stackedQueries }) });
   });
 
   // The on/off choice is persisted, so it would otherwise survive into the next test.
   afterEach(() => {
-    const { getQueryRunnerFor } = require('../../../utils/utils');
+    const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
     getQueryRunnerFor.mockReturnValue(null);
     store.delete(QUERY_EDITOR_STACKED_VIEW_KEY);
   });

@@ -87,6 +87,61 @@ describe('getFieldOverrideCategories', () => {
     });
   });
 
+  describe('panel options in the editor context', () => {
+    const fieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        { matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'custom.lineWidth', value: 5 }] },
+      ],
+    };
+
+    const getContextOptions = (options?: Record<string, unknown>) => {
+      const registry = makeRegistry([makeItem('custom.lineWidth')]);
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), options);
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        context: { options?: Record<string, unknown> };
+      }>;
+
+      return element.props.context.options;
+    };
+
+    it('hands the panel options to an override property editor', () => {
+      const options = { variant: 'sankey' };
+
+      expect(getContextOptions(options)).toBe(options);
+    });
+
+    it('leaves options undefined when a caller does not supply them', () => {
+      // not defaulted to {}, so an editor's `context.options ?? fallback` still reaches the fallback
+      expect(getContextOptions()).toBeUndefined();
+    });
+  });
+
+  describe('field config in the editor context', () => {
+    it('hands the whole panel field config to an override property editor', () => {
+      const registry = makeRegistry([makeItem('custom.lineWidth')]);
+      const fieldConfig: FieldConfigSource = {
+        defaults: { unit: 'bytes', custom: { lineWidth: 2 } },
+        overrides: [
+          { matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'custom.lineWidth', value: 5 }] },
+        ],
+      };
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn());
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        context: { fieldConfig?: FieldConfigSource; isOverride?: boolean };
+      }>;
+
+      // an editor in an override row can read the defaults it is overriding, not just its own value
+      expect(element.props.context.fieldConfig).toBe(fieldConfig);
+      expect(element.props.context.isOverride).toBe(true);
+    });
+  });
+
   describe('hideFromOverrides', () => {
     it('excludes items with hideFromOverrides:true from the add override property picker', () => {
       const registry = makeRegistry([

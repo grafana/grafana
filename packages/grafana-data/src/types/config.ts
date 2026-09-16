@@ -122,6 +122,8 @@ export interface GrafanaJavascriptAgentConfig {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  botFilterEnabled: boolean;
+  trackResources?: boolean;
 }
 
 interface UnifiedAlertingStateHistoryConfig {
@@ -171,7 +173,6 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconNam
  */
 export interface AnalyticsSettings {
   identifier: string;
-  intercomIdentifier?: string;
 }
 
 /**
@@ -316,6 +317,7 @@ export interface GrafanaConfig {
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
+  pluginImportTelemetryPackages: string[];
   rendererAvailable: boolean;
   rendererVersion: string;
   rendererDefaultImageWidth: number;
@@ -335,7 +337,6 @@ export interface GrafanaConfig {
   pluginAdminEnabled: boolean;
   pluginAdminExternalManageEnabled: boolean;
   pluginCatalogHiddenPlugins: string[];
-  pluginCatalogManagedPlugins: string[];
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
   pluginCatalogPreinstalledAutoUpdate?: boolean;
   pluginsCDNBaseURL: string;

@@ -620,7 +620,7 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 }
 
 func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.SQLStore) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
@@ -636,7 +636,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	require.NoError(t, err)
 
 	userService, err := userimpl.ProvideService(
-		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sql), orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

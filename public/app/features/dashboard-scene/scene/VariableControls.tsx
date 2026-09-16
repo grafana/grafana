@@ -17,17 +17,18 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
+import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
 import { isVariableEditable } from '../settings/variables/utils';
-import { dashboardEditActions } from '../sidebar/shared';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
-import { ControlActionsPopover, VariableEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
-import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+import { VariableEditActions } from './edit-actions-popover/VariableEditActions';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
 export function VariableControls({
@@ -58,7 +59,6 @@ export function VariableControls({
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
@@ -74,7 +74,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
-  const canEditControl = Boolean(isSelectable) && isVariableEditable(variable);
   const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable);
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
@@ -92,12 +91,12 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const onClickDeleteVariable = useCallback(() => {
     const set = variable.parent;
     if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+      removeVariable({ source: set, removedObject: variable });
     }
   }, [variable]);
 
   const onClickDuplicateVariable = useCallback(() => {
-    dashboardEditActions.duplicateVariable(variable);
+    duplicateVariable(variable);
   }, [variable]);
 
   const editActions = useMemo(
@@ -131,7 +130,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -153,7 +152,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
               className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
             />
           </div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       </>
     );
   }
@@ -162,7 +161,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
           <div
             className={cx(
               styles.verticalContainer,
@@ -182,7 +181,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             />
             <variable.Component model={variable} />
           </div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       </>
     );
   }
@@ -190,7 +189,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   return (
     <>
       {editorModal}
-      <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+      <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
         <div
           className={cx(
             styles.container,
@@ -206,7 +205,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
           <variable.Component model={variable} />
         </div>
-      </ControlActionsPopover>
+      </EditActionsPopover>
     </>
   );
 }

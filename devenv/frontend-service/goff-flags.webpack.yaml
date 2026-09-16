@@ -1,0 +1,8 @@
+# Bundler selection for the frontend-service. Tilt swaps this file for
+# goff-flags.rspack.yaml when RSPACK=1 is set.
+grafana.rspackBuild:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

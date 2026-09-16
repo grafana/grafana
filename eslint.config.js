@@ -391,6 +391,17 @@ module.exports = [
   },
 
   {
+    name: 'grafana/e2e-selectors-serializable',
+    files: ['packages/grafana-e2e-selectors/src/selectors/**/*.ts'],
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    rules: {
+      '@grafana/serializable-e2e-selectors': 'error',
+    },
+  },
+
+  {
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
@@ -632,6 +643,8 @@ module.exports = [
       '@grafana/no-gf-form': 'error',
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
+      '@grafana/no-config-feature-toggles': 'error',
     },
   },
   {
@@ -644,6 +657,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
     plugins: {
       '@grafana': grafanaPlugin,
@@ -654,6 +668,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
   },
   {

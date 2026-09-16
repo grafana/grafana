@@ -134,7 +134,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	if err := s.service.Upsert(ctx, mapToModel(setting), ident); err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, setting.Name, nil)
+	// Return the input as written so the dual-writer forwards the raw secret to
+	// MT-Settings; the store decorator redacts the response.
+	ns, _ := request.NamespaceInfoFrom(ctx, false)
+	created := mapToObject(ns.Value, mapToModel(setting))
+	return &created, nil
 }
 
 // Update implements rest.Updater.

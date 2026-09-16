@@ -168,7 +168,7 @@ func TestRunner_Run_CheckCleanup(t *testing.T) {
 
 		// Create checks that exceed the max history limit
 		items := make([]advisorv0alpha1.Check, 0, defaultMaxHistory+2)
-		for i := 0; i < defaultMaxHistory+2; i++ {
+		for i := range defaultMaxHistory + 2 {
 			item := advisorv0alpha1.Check{}
 			item.SetName(fmt.Sprintf("check-%d", i))
 			item.SetLabels(map[string]string{

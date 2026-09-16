@@ -52,6 +52,7 @@ export class LogListModel implements LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uid: string;
+  readonly uniqueKey: string;
   uniqueLabels: Labels | undefined;
   uniqueLabelsExpanded = false;
 
@@ -80,7 +81,9 @@ export class LogListModel implements LogRowModel {
       timeZone,
       virtualization,
       wrapLogMessage,
-    }: PreProcessLogOptions
+    }: PreProcessLogOptions,
+    // Position of this row within the array being processed.
+    index: number
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -105,6 +108,9 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
+    // log.uid is not guaranteed unique, which causes troubles with virtualization. To that end, we create a truly unique
+    // identifier, while leaving the data source identifier unmodified
+    this.uniqueKey = `${log.uid}#${index}`;
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
@@ -318,17 +324,21 @@ export const preProcessLogs = (
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) =>
-    preProcessLog(log, {
-      escape,
-      getFieldLinks,
-      grammar,
-      otelLogsFormattingEnabled,
-      prettifyJSON,
-      timeZone,
-      virtualization,
-      wrapLogMessage,
-    })
+  return orderedLogs.map((log, index) =>
+    preProcessLog(
+      log,
+      {
+        escape,
+        getFieldLinks,
+        grammar,
+        otelLogsFormattingEnabled,
+        prettifyJSON,
+        timeZone,
+        virtualization,
+        wrapLogMessage,
+      },
+      index
+    )
   );
 };
 
@@ -342,8 +352,8 @@ interface PreProcessLogOptions {
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
-const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
-  return new LogListModel(log, options);
+const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions, index: number): LogListModel => {
+  return new LogListModel(log, options, index);
 };
 
 function logLevelToDisplayLevel(level = '') {

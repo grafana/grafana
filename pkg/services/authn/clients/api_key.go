@@ -85,7 +85,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	return newServiceAccountIdentity(key), nil
 }
 
-func (s *APIKey) IsEnabled() bool {
+func (s *APIKey) IsEnabled(context.Context) bool {
 	return true
 }
 
@@ -201,8 +201,8 @@ func getTokenFromRequest(r *authn.Request) string {
 
 	header := r.HTTPRequest.Header.Get("Authorization")
 
-	if strings.HasPrefix(header, bearerPrefix) {
-		return strings.TrimPrefix(header, bearerPrefix)
+	if after, ok := strings.CutPrefix(header, bearerPrefix); ok {
+		return after
 	}
 	if strings.HasPrefix(header, basicPrefix) {
 		username, password, err := util.DecodeBasicAuthHeader(header)

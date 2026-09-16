@@ -11,6 +11,14 @@ interface RewriteOptions {
 const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
 
 /**
+ * Attribute stamped on links whose target could be a Grafana resource (JSON/YAML
+ * files or folder directories), carrying the resolved repo path. The README click
+ * handler reads it to lazily resolve the link to the in-app page — untagged links
+ * (docs, images, external) always open the host URL.
+ */
+export const RESOURCE_PATH_ATTR = 'data-provisioning-repo-path';
+
+/**
  * Walk the rendered Markdown HTML and rewrite relative URLs (`<a href>` and
  * `<img src>`) to absolute URLs that point back to the host repository.
  * Same-page anchors (`#…`) and already-absolute URLs are left untouched.
@@ -56,6 +64,13 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       // No host link pattern (e.g. local repo) — strip the broken relative
       // href so it doesn't render as a clickable but non-functional link.
       anchor.removeAttribute('href');
+    }
+
+    // Tag JSON/YAML/folder links so the README click handler can resolve them to
+    // the in-app Grafana page. Done regardless of the host URL so links in repos
+    // without one (local/git) still resolve via the resource listing.
+    if (isResourceLinkCandidate(result.path)) {
+      anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
     }
   });
 
@@ -141,4 +156,20 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): { path: stri
 }
 function stripLeadingSlashes(s: string): string {
   return s.replace(/^\/+/, '');
+}
+
+/**
+ * Whether a resolved repo path could map to a Grafana resource: a JSON/YAML file
+ * (dashboard, playlist, folder metadata, ...) or a folder directory. Folders are
+ * matched by their trailing slash — which the resolver preserves for directory
+ * links — rather than by "no extension", so extensionless files (README,
+ * LICENSE, Makefile) aren't tagged and never trigger a resource lookup. Links
+ * that fail this (docs, images, arbitrary files) are left as plain host links.
+ */
+export function isResourceLinkCandidate(path: string): boolean {
+  if (path.endsWith('/')) {
+    return true;
+  }
+  const lastSegment = path.slice(path.lastIndexOf('/') + 1);
+  return /\.(json|ya?ml)$/i.test(lastSegment);
 }

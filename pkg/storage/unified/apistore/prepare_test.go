@@ -19,6 +19,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -963,6 +964,28 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf, true))
 	})
 
+	t.Run("codec path: real LegacyCodec down-converts to the cap version (preferred==cap)", func(t *testing.T) {
+		// Real LegacyCodec, not a fake, with cap version first (as ReorderGroupVersionsForLegacyCodec does).
+		capGroup := "captest.grafana.app"
+		capGV := schema.GroupVersion{Group: capGroup, Version: "v1"}
+		higherGV := schema.GroupVersion{Group: capGroup, Version: "v2"}
+		codec := newCapCodec(t, capGV, higherGV)
+
+		reg := newGlobalCapRegistry(capGroup, []string{"v2", "v1"}, "v1")
+		s := &Storage{
+			gr:    schema.GroupResource{Group: capGroup, Resource: "widgets"},
+			codec: codec,
+			opts:  StorageOptions{Scheme: nil, VersionPolicy: reg},
+		}
+
+		var buf bytes.Buffer
+		require.NoError(t, s.encode(&capWidget{Value: "hi"}, &buf, true))
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, capGroup+"/v1", out.GetAPIVersion(), "preferred==cap: codec must persist the cap version")
+	})
+
 	t.Run("codec path: a persisted version from another group is rejected, not silently allowed", func(t *testing.T) {
 		// The codec picks a GVK outside the resource's group. That version cannot be ranked against the
 		// group's cap, so it must be rejected rather than slip through as unregistered.
@@ -1004,6 +1027,69 @@ type upcastCodec struct {
 func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
 	_, err := fmt.Fprintf(w, `{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)
 	return err
+}
+
+// capWidget is a hub (internal) test type; capWidgetV1/capWidgetV2 are its external versions.
+type capWidget struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidget) DeepCopyObject() runtime.Object {
+	out := &capWidget{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+type capWidgetV1 struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidgetV1) DeepCopyObject() runtime.Object {
+	out := &capWidgetV1{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+type capWidgetV2 struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidgetV2) DeepCopyObject() runtime.Object {
+	out := &capWidgetV2{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+// newCapCodec registers capWidget as the hub and versions[0]/[1] as its spokes, returning a real
+// serializer.CodecFactory.LegacyCodec(versions...).
+func newCapCodec(t *testing.T, versions ...schema.GroupVersion) runtime.Codec {
+	t.Helper()
+	require.Len(t, versions, 2, "newCapCodec takes exactly the two external spokes, cap version first")
+
+	s := runtime.NewScheme()
+	internalGV := schema.GroupVersion{Group: versions[0].Group, Version: runtime.APIVersionInternal}
+	s.AddKnownTypeWithName(internalGV.WithKind("Widget"), &capWidget{})
+	s.AddKnownTypeWithName(versions[0].WithKind("Widget"), &capWidgetV1{})
+	s.AddKnownTypeWithName(versions[1].WithKind("Widget"), &capWidgetV2{})
+
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV1)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidget), b.(*capWidgetV1)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV2)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidget), b.(*capWidgetV2)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+
+	return serializer.NewCodecFactory(s).LegacyCodec(versions...)
 }
 
 // TestUpdateCapExemptsDeletion covers the drain-only policy: an object stored above the cap cannot be
@@ -1054,5 +1140,82 @@ func TestUpdateCapExemptsDeletion(t *testing.T) {
 		upd.DeletionTimestamp = &now
 		_, err := s.prepareObjectForUpdate(ctx, upd, p)
 		require.NoError(t, err)
+	})
+}
+
+// checkGVK decides the version an object is persisted as. A declared GVK settles
+// it exactly; the Scheme fallback can only guess, and cannot distinguish the
+// versions of a Go type registered under several -- the shape the v1beta1/v1
+// dashboard and folder aliases have.
+func TestCheckGVK(t *testing.T) {
+	const group = "gvktest.grafana.app"
+	gr := schema.GroupResource{Group: group, Resource: "widgets"}
+	v1GVK := schema.GroupVersionKind{Group: group, Version: "v1", Kind: "Widget"}
+	v2GVK := schema.GroupVersionKind{Group: group, Version: "v2", Kind: "Widget"}
+
+	// One Go type under two versions, so ObjectKinds reports both for it.
+	aliasScheme := runtime.NewScheme()
+	aliasScheme.AddKnownTypeWithName(v1GVK, &capWidget{})
+	aliasScheme.AddKnownTypeWithName(v2GVK, &capWidget{})
+
+	t.Run("a declared GVK completes an object that carries none", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v2GVK, obj.GetObjectKind().GroupVersionKind())
+	})
+
+	t.Run("the declared GVK is used instead of the scheme's guess", func(t *testing.T) {
+		declared := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK, Scheme: aliasScheme}}
+		obj := &capWidget{}
+		require.NoError(t, declared.checkGVK(obj))
+		require.Equal(t, v2GVK, obj.GetObjectKind().GroupVersionKind())
+
+		// Without one, the version is whichever registration the scheme reports
+		// first. That it may be either is the point: it is not known to be the
+		// version this storage serves.
+		guessed := &Storage{gr: gr, opts: StorageOptions{Scheme: aliasScheme}}
+		other := &capWidget{}
+		require.NoError(t, guessed.checkGVK(other))
+		require.Contains(t, []schema.GroupVersionKind{v1GVK, v2GVK},
+			other.GetObjectKind().GroupVersionKind())
+	})
+
+	t.Run("an object's own complete GVK is left alone", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(v1GVK)
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"a write that named its own version keeps it")
+	})
+
+	t.Run("a declared GVK fills in only what is missing", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Group: group, Version: "v1"})
+		require.NoError(t, s.checkGVK(obj))
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"the kind is completed, the version already on the object is kept")
+	})
+
+	t.Run("no declared GVK and no scheme leaves the object untouched", func(t *testing.T) {
+		s := &Storage{gr: gr}
+		obj := &capWidget{}
+		require.NoError(t, s.checkGVK(obj))
+		require.True(t, obj.GetObjectKind().GroupVersionKind().Empty())
+	})
+
+	// encode writes the object's own GVK, so a declared one is enough to persist
+	// a correct apiVersion with no Scheme involved.
+	t.Run("encode persists the declared version without a scheme", func(t *testing.T) {
+		s := &Storage{gr: gr, opts: StorageOptions{GVK: v2GVK}}
+		var buf bytes.Buffer
+		require.NoError(t, s.encode(&capWidget{Value: "hi"}, &buf, true))
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v2", out.GetAPIVersion())
+		require.Equal(t, "Widget", out.GetKind())
 	})
 }

@@ -37,7 +37,7 @@ export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.fixedColorContainer)}>
           <SanitizedSVG
-            src={`${window.__grafana_public_path__}build/${symbol}`}
+            src={`${window.__grafana_build_path__}${symbol}`}
             className={style.legendSymbol}
             title={t('geomap.markers-legend.title-symbol', 'Symbol')}
             style={{ fill: color, opacity: opacity }}
