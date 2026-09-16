@@ -40,7 +40,7 @@
       "mainEmphasis": "palette.orange600",
       "text": "palette.orange700",
       "textEmphasis": "palette.orange800",
-      "background": "palette.orange100",
+      "background": "palette.orange50",
       "backgroundEmphasis": "palette.orange100",
       "border": "palette.orange200",
       "borderEmphasis": "palette.orange300",
@@ -54,7 +54,9 @@
       "background": "palette.red100",
       "backgroundEmphasis": "palette.red100",
       "border": "palette.red200",
-      "borderEmphasis": "palette.red300"
+      "borderEmphasis": "palette.red300",
+      "subtleBackground": "palette.red50",
+      "subtleBorder": "palette.red100"
     },
     "warning": {
       "main": "palette.amber500",
@@ -64,7 +66,9 @@
       "background": "palette.amber50",
       "backgroundEmphasis": "palette.amber100",
       "border": "palette.amber200",
-      "borderEmphasis": "palette.amber300"
+      "borderEmphasis": "palette.amber300",
+      "subtleBackground": "palette.amber50",
+      "subtleBorder": "palette.amber100"
     },
     "success": {
       "main": "palette.sage500",
@@ -74,7 +78,9 @@
       "background": "palette.sage100",
       "backgroundEmphasis": "palette.sage100",
       "border": "palette.sage200",
-      "borderEmphasis": "palette.sage300"
+      "borderEmphasis": "palette.sage300",
+      "subtleBackground": "palette.sage50",
+      "subtleBorder": "palette.sage100"
     },
     "info": {
       "main": "palette.blue500",
@@ -84,7 +90,9 @@
       "background": "palette.blue50",
       "backgroundEmphasis": "palette.blue100",
       "border": "palette.blue200",
-      "borderEmphasis": "palette.blue300"
+      "borderEmphasis": "palette.blue300",
+      "subtleBackground": "palette.blue50",
+      "subtleBorder": "palette.blue100"
     },
     "text": {
       "primary": "palette.neutral800",

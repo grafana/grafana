@@ -334,12 +334,9 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   let borderColor = visualRefreshEnabled ? color.border : 'transparent';
   let hoverBorderColor = 'transparent';
 
-  // Secondary button has some special rules as we lack the color token to
-  // specify border color for normal button vs border color for outline button
   if (color.name === 'secondary') {
     borderColor = color.border;
     hoverBorderColor = color.borderEmphasis;
-    outlineBorderColor = theme.colors.border.strong;
   }
 
   if (fill === 'outline') {

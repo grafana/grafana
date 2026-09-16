@@ -145,7 +145,7 @@ export const palette = {
   sky950: '#081d26',
 
   // Blue. Categorisation
-  blue50: '#fdfeff',
+  blue50: '#ebf5ff',
   blue100: '#d6e4fa',
   blue200: '#b1caf4',
   blue300: '#8eb1e9',

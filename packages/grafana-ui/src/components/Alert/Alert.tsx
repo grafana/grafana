@@ -67,28 +67,17 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <Box
-          data-testid={selectors.components.Alert.alertV2(severity)}
-          display="flex"
-          backgroundColor={severity}
-          borderRadius="lg"
-          paddingY={1}
-          paddingX={2}
-          borderStyle="solid"
-          borderColor={severity}
-          alignItems="stretch"
-          boxShadow={elevated ? 'z3' : undefined}
-        >
-          <Box paddingTop={1} paddingRight={2}>
-            <div className={styles.icon}>
-              <Icon size="xl" name={getIconFromSeverity(severity)} />
+        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.surface}>
+          <Box paddingRight={2}>
+            <div className={styles.iconBox}>
+              <Icon size="lg" name={getIconFromSeverity(severity)} className={styles.icon} />
             </div>
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
             <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
-                {title}
+              <Text weight="medium">
+                <span className={styles.title}>{title}</span>
               </Text>
               {children && <div className={styles.content}>{children}</div>}
             </Box>
@@ -114,7 +103,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </Box>
+        </div>
       </div>
     );
   }
@@ -144,6 +133,15 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const surfaceBackground = visualRefreshEnabled ? color.subtleBackground : color.transparent;
+  const surfaceBorder = visualRefreshEnabled ? color.subtleBorder : color.borderTransparent;
+  // In light mode, color.text is claimed by the matching solid button (a different shade), so the
+  // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
+  // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
+  const isLight = theme.colors.mode === 'light';
+  const iconColor = visualRefreshEnabled ? (isLight ? color.mainEmphasis : color.main) : color.text;
+  const textColor = visualRefreshEnabled ? (isLight ? color.mainEmphasis : color.text) : theme.colors.text.primary;
 
   return {
     wrapper: css({
@@ -164,13 +162,29 @@ const getStyles = (
         zIndex: -1,
       },
     }),
+    surface: css({
+      display: 'flex',
+      alignItems: 'center',
+      borderRadius: theme.shape.radius.lg,
+      padding: theme.spacing(1, 2),
+      border: `1px solid ${surfaceBorder}`,
+      backgroundColor: surfaceBackground,
+      boxShadow: elevated ? theme.shadows.z3 : undefined,
+    }),
+    iconBox: css({
+      display: 'inline-flex',
+      padding: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: color.backgroundEmphasis,
+    }),
     icon: css({
-      color: color.text,
-      position: 'relative',
-      top: '-1px',
+      color: iconColor,
+    }),
+    title: css({
+      color: textColor,
     }),
     content: css({
-      color: theme.colors.text.primary,
+      color: textColor,
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
