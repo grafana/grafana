@@ -160,10 +160,7 @@ func newBenchFixture(n int) *benchFixture {
 	numTeams := n / 5
 	numServiceAccounts := n / 10
 	numBasic := 2
-	numUsers := n - numTeams - numServiceAccounts - numBasic
-	if numUsers < 0 {
-		numUsers = 0
-	}
+	numUsers := max(n-numTeams-numServiceAccounts-numBasic, 0)
 
 	for i := 0; i < numUsers; i++ {
 		uid := fmt.Sprintf("user-uid-%d", i)
@@ -181,7 +178,7 @@ func newBenchFixture(n int) *benchFixture {
 		})
 	}
 
-	for i := 0; i < numServiceAccounts; i++ {
+	for i := range numServiceAccounts {
 		uid := fmt.Sprintf("service-account-uid-%d", i)
 		id := int64(10000 + i)
 		serviceAccounts[uid] = &serviceaccounts.ServiceAccountProfileDTO{
@@ -197,7 +194,7 @@ func newBenchFixture(n int) *benchFixture {
 		})
 	}
 
-	for i := 0; i < numTeams; i++ {
+	for i := range numTeams {
 		uid := fmt.Sprintf("team-uid-%d", i)
 		teams[uid] = &team.TeamDTO{
 			ID:    int64(i + 1),

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -250,7 +251,8 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 			}},
 		},
 	})
-	if err != nil {
+	// A failed search returns no rows, which would otherwise pass as "the ID is free".
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	if rsp.Results != nil && len(rsp.Results.Rows) > 0 {
