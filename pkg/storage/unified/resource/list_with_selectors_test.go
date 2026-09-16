@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"iter"
 	"net/http"
 	"testing"
@@ -17,9 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-func TestUseSelectorSearch(t *testing.T) {
+func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
+		allowlist       []string
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -49,6 +51,57 @@ func TestUseSelectorSearch(t *testing.T) {
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when no selectors and resource is allowlisted": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when resource version is set": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:          resourcepb.ListRequest_STORE,
+				ResourceVersion: 42,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when list has a name": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when no selectors and resource is not allowlisted": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when keys only": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:   resourcepb.ListRequest_STORE,
+				KeysOnly: true,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -124,8 +177,13 @@ func TestUseSelectorSearch(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
+			allowed := make(map[string]bool, len(tc.allowlist))
+			for _, resource := range tc.allowlist {
+				allowed[resource] = true
+			}
+			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 
-			require.Equal(t, tc.expectedAllowed, s.useSelectorSearch(tc.req))
+			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
 }
@@ -228,6 +286,44 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
+	})
+
+	t.Run("returns an embedded search error", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("search failed"),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Equal(t, "search failed", resp.Error.Message)
+	})
+
+	t.Run("returns transport errors directly", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchErr := errors.New("search unavailable")
+		s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, searchErr)
+		require.Nil(t, resp)
 	})
 
 	t.Run("rejects a continue token from the store path", func(t *testing.T) {
@@ -496,6 +592,30 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, []string{"s1"}, parsedToken.SearchAfter)
 		require.Equal(t, searchServerRv, parsedToken.ResourceVersion)
 	})
+}
+
+func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
+	s := createTestServer(searchClient, 1024)
+	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
+		"advisor.grafana.app/advisors": true,
+	}}
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: "nsx",
+			Group:     "advisor.grafana.app",
+			Resource:  "advisors",
+		}},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.NotNil(t, searchClient.last)
+	require.Empty(t, searchClient.last.Options.Fields)
+	require.Empty(t, searchClient.last.Options.Labels)
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
