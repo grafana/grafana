@@ -92,17 +92,17 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
    * Controls whether this option is offered in the "Add override property" picker, based on the
    * override editor context. Distinct from `showIf`, which is evaluated against the *default*
    * field config and so cannot decide what a per-field override may set.
+   * Use `hideFromOverrides` when the picker must never show the property.
    *
    * Return `false` to hide the option, `true` to offer it. The return type deliberately excludes
    * `undefined`, unlike `showIf`, so a predicate cannot fall off the end and hide the option by
    * accident. At runtime only an explicit `false` hides, so an untyped plugin that returns nothing
    * still has the option offered.
    *
-   * Condition on `context.options`. The context also carries `fieldConfig` for editors that need
-   * it, but reading the defaults here reintroduces the problem `showIf` has: an override rule can
-   * change the value you read, so the answer would not hold for the fields the rule matches.
-   * `context.data` is scoped to the rule's matcher, so two rules on one panel can be offered
-   * different properties.
+   * Use `context.options` to decide if the picker shows this property. `context.fieldConfig`
+   * contains the full field configuration for editors that need it. Do not use default field
+   * configuration values here because an override rule can change those values. `context.data`
+   * contains data for the matcher scope, but it does not contain data filtered by the matcher.
    *
    * @example
    * `context.options` is typed from the second generic of `SetFieldConfigOptionsArgs`, which
