@@ -920,7 +920,6 @@
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
-      "export-legacy-integration-tooltip": "Export is not available for contact points that contain legacy integrations",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
@@ -1484,10 +1483,6 @@
     },
     "grafana-receivers-export-preview": {
       "text-loading": "Loading...."
-    },
-    "grafana-receivers-exporter": {
-      "warning-v0-integrations-description": "Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and v1 integrations are exported without their legacy integrations.",
-      "warning-v0-integrations-title": "Legacy integrations are not included"
     },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
