@@ -45,7 +45,7 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 				gvr := schema.GroupVersionResource{
 					Group:    group,
 					Version:  version.Name,
-					Resource: ManifestResourceName(kind),
+					Resource: kind.Resource(),
 				}
 				fields[gvr] = manifestSearchFieldsToDefinitions(kind.SearchFields)
 
@@ -61,17 +61,6 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 		}
 	}
 	return newMapProvider(fields, preferred)
-}
-
-// ManifestResourceName returns the lower-cased resource (plural) name for a
-// kind, defaulting to the kind name plus "s" when the manifest omits the
-// plural, which mirrors the app-sdk default.
-func ManifestResourceName(kind app.ManifestVersionKind) string {
-	plural := kind.Plural
-	if plural == "" {
-		plural = kind.Kind + "s"
-	}
-	return strings.ToLower(plural)
 }
 
 // manifestSearchFieldsToDefinitions converts the manifest's search field
@@ -111,7 +100,7 @@ func manifestDeclaredKindKeys(manifests []*app.ManifestData) map[LowerGroupResou
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[NewLowerGroupResource(m.Group, ManifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.Group, kind.Resource())] = true
 			}
 		}
 	}
@@ -233,7 +222,7 @@ func warnDuplicateKindsWithinSource(src []*app.ManifestData) {
 		for _, v := range m.Versions {
 			for _, k := range v.Kinds {
 				if declaresSearchFields(k) {
-					declared[NewLowerGroupResource(group, ManifestResourceName(k))] = true
+					declared[NewLowerGroupResource(group, k.Resource())] = true
 				}
 			}
 		}
@@ -284,7 +273,7 @@ func pruneClaimedKinds(m *app.ManifestData, claimedBy map[LowerGroupResource]kin
 				anyKind = true
 				continue
 			}
-			key := NewLowerGroupResource(group, ManifestResourceName(k))
+			key := NewLowerGroupResource(group, k.Resource())
 			if declaredVersions[key] == nil {
 				declaredVersions[key] = map[string]bool{}
 			}
