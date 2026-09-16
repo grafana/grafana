@@ -208,13 +208,6 @@ func (f *fakeConfigClient) SubresourceRequest(_ context.Context, _ resource.Iden
 // syncExternalAMs can call SaveAndApplyExtraConfiguration without tripping on a
 // missing primary config. The feature flag is enabled (when requested) only after
 // bootstrap so the bootstrap call to syncExternalAMs is a no-op and does not
-// trigger admin-config-store mock expectations.
-// buildSyncTestMOA builds a MultiOrgAlertmanager wired for testing syncExternalAMs.
-// It bootstraps a default Alertmanager configuration and registers an Alertmanager
-// instance for each org in orgIDs (via LoadAndSyncAlertmanagersForOrgs) so that
-// syncExternalAMs can call SaveAndApplyExtraConfiguration without tripping on a
-// missing primary config. The feature flag is enabled (when requested) only after
-// bootstrap so the bootstrap call to syncExternalAMs is a no-op and does not
 // trigger admin-config-store mock expectations. proxy stands in for the datasource
 // proxy service the AM syncer fetches through; tests that never reach the fetch
 // path (flag off, no UID, admin-config lookup error) can pass an empty
