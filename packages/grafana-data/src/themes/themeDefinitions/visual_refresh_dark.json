@@ -38,22 +38,22 @@
     "accent": {
       "main": "palette.orange500",
       "mainEmphasis": "palette.orange400",
-      "text": "palette.orange400",
+      "text": "palette.orange100",
       "textEmphasis": "palette.orange300",
-      "background": "palette.orange950",
+      "background": "palette.orange600",
       "backgroundEmphasis": "palette.orange900",
-      "border": "palette.orange800",
+      "border": "palette.orange500",
       "borderEmphasis": "palette.orange700",
       "contrastText": "palette.black"
     },
     "error": {
       "main": "palette.red500",
       "mainEmphasis": "palette.red400",
-      "text": "palette.red300",
+      "text": "palette.red100",
       "textEmphasis": "palette.red200",
-      "background": "palette.red950",
+      "background": "palette.red600",
       "backgroundEmphasis": "palette.red900",
-      "border": "palette.red800",
+      "border": "palette.red500",
       "borderEmphasis": "palette.red700"
     },
     "warning": {
@@ -69,11 +69,11 @@
     "success": {
       "main": "palette.sage500",
       "mainEmphasis": "palette.sage400",
-      "text": "palette.sage300",
+      "text": "palette.sage100",
       "textEmphasis": "palette.sage200",
-      "background": "palette.sage950",
+      "background": "palette.sage600",
       "backgroundEmphasis": "palette.sage900",
-      "border": "palette.sage800",
+      "border": "palette.sage500",
       "borderEmphasis": "palette.sage700"
     },
     "info": {

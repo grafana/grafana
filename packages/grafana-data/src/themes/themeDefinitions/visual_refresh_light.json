@@ -40,7 +40,7 @@
       "mainEmphasis": "palette.orange600",
       "text": "palette.orange700",
       "textEmphasis": "palette.orange800",
-      "background": "palette.orange50",
+      "background": "palette.orange100",
       "backgroundEmphasis": "palette.orange100",
       "border": "palette.orange200",
       "borderEmphasis": "palette.orange300",
@@ -51,7 +51,7 @@
       "mainEmphasis": "palette.red600",
       "text": "palette.red700",
       "textEmphasis": "palette.red800",
-      "background": "palette.red50",
+      "background": "palette.red100",
       "backgroundEmphasis": "palette.red100",
       "border": "palette.red200",
       "borderEmphasis": "palette.red300"
@@ -71,7 +71,7 @@
       "mainEmphasis": "palette.sage600",
       "text": "palette.sage700",
       "textEmphasis": "palette.sage800",
-      "background": "palette.sage50",
+      "background": "palette.sage100",
       "backgroundEmphasis": "palette.sage100",
       "border": "palette.sage200",
       "borderEmphasis": "palette.sage300"

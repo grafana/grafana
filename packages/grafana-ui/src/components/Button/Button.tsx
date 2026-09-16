@@ -343,9 +343,6 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   }
 
   if (fill === 'outline') {
-    if (visualRefreshEnabled) {
-      outlineBorderColor = color.text;
-    }
     return {
       background: 'transparent',
       color: color.text,
