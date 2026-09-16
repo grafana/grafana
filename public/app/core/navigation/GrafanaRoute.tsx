@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
@@ -21,7 +21,19 @@ export function GrafanaRoute(props: Props) {
   //const allowedUrlsList = useFlagGrafanaMtFallback();
   //TODO use allowedUrlList values instead when the feature toggle is added to deployment-tools
   const allowedList = ['/', '/dashboards', '/a/k6-app'];
-  const isUrlAllowed: Boolean = allowedList.includes(props.location.pathname);
+  const isUrlAllowed: boolean = allowedList.includes(props.location.pathname);
+  const [isWaiting, setIsWaiting] = useState(!isUrlAllowed);
+
+  useEffect(() => {
+    if (isUrlAllowed) {
+      setIsWaiting(false);
+      return;
+    }
+
+    setIsWaiting(true);
+    const timeout = setTimeout(() => setIsWaiting(false), 60_000);
+    return () => clearTimeout(timeout);
+  }, [isUrlAllowed, props.location.pathname]);
 
   chrome.setMatchedRoute(props.route);
 
@@ -61,10 +73,10 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageLoader />}>
-            {isUrlAllowed ? (
-              <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
-            ) : (
+            {isWaiting ? (
               <PageFallbackLoader />
+            ) : (
+              <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
             )}
           </Suspense>
         );
