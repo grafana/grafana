@@ -29,7 +29,10 @@ export type PlanningAction =
   | 'inspect-panel'
   | 'save-dashboard'
   | 'dashboard-settings'
-  | 'share-dashboard';
+  | 'share-dashboard'
+  // Backend writes triggered from inside a panel, independent of any dashboard save. Covers
+  // create/update/delete uniformly: all three call annotationServer() directly.
+  | 'annotation';
 
 /**
  * Actions withheld while a plan is being previewed.
@@ -66,6 +69,13 @@ const DENIED_WHILE_PLANNING: ReadonlySet<PlanningAction> = new Set<PlanningActio
   'save-dashboard',
   'dashboard-settings',
   'share-dashboard',
+
+  // Unlike everything above, this writes straight to the backend with no dashboard save in
+  // between and no way for endPlanningSession to undo it on Dismiss — a plan panel's placeholder
+  // ID also has no lasting connection to whatever panel ends up at that position once the plan is
+  // built or discarded, so an annotation created during planning would outlive the preview it was
+  // made on and could attach to an unrelated panel later.
+  'annotation',
 ]);
 
 /**

@@ -324,6 +324,48 @@ describe('setDashboardPanelContext', () => {
     });
   });
 
+  describe('while a plan is being previewed', () => {
+    it('hides the add/edit/delete annotation gestures regardless of permissions', () => {
+      const { context } = buildTestScene({
+        planning: true,
+        builtInAnnotationsEnabled: true,
+        dashboardCanEdit: true,
+        canAdd: true,
+        canEdit: true,
+        canDelete: true,
+      });
+
+      expect(context.canAddAnnotations!()).toBe(false);
+      expect(context.canEditAnnotations!('dash-1')).toBe(false);
+      expect(context.canDeleteAnnotations!('dash-1')).toBe(false);
+    });
+
+    it('refuses to create an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canAdd: true });
+
+      await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
+
+      expect(postFn).not.toHaveBeenCalled();
+    });
+
+    it('refuses to update an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canEdit: true });
+
+      await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+
+      expect(putFn).not.toHaveBeenCalled();
+      expect(patchFn).not.toHaveBeenCalled();
+    });
+
+    it('refuses to delete an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canDelete: true });
+
+      await context.onAnnotationDelete!('event-id-123');
+
+      expect(deleteFn).not.toHaveBeenCalled();
+    });
+  });
+
   describe('onAddAdHocFilter', () => {
     it('Should add new filter set', async () => {
       const { scene, context } = buildTestScene({});
@@ -578,6 +620,7 @@ interface SceneOptions {
   existingGroupByVariable?: boolean;
   groupByDatasourceUid?: string;
   panelDatasourceUndefined?: boolean;
+  planning?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -644,6 +687,12 @@ function buildTestScene(options: SceneOptions) {
       },
     },
   });
+
+  if (options.planning) {
+    scene.setState({
+      planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+    });
+  }
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
 
