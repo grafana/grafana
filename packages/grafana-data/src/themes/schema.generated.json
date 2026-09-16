@@ -1237,10 +1237,6 @@
             "rowSelectedBackground": {
               "type": "string",
               "description": "Opaque background for a selected row."
-            },
-            "rowSelectedHoverBackground": {
-              "type": "string",
-              "description": "Opaque background for a hovered selected row when not using the hover overlay."
             }
           },
           "additionalProperties": false
