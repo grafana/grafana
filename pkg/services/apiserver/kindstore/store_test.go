@@ -248,14 +248,9 @@ func TestTableConvertorPriority(t *testing.T) {
 func newStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (Options, *apistore.StorageOptions) {
 	t.Helper()
 
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-	scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
-
 	parent := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 	scoped := &apistore.StorageOptions{}
 	return Options{
-		Scheme: scheme,
 		StorageOptsGetter: func(opts apistore.StorageOptions) generic.RESTOptionsGetter {
 			*scoped = opts
 			return parent.WithStorageOptions(opts)
@@ -282,13 +277,13 @@ func TestNew(t *testing.T) {
 		require.Equal(t, schema.GroupResource{Group: "example-app", Resource: "testkind"},
 			s.SingularQualifiedResource)
 
-		// Asserted field by field: StorageOptions holds a *runtime.Scheme, and
-		// comparing two of those by value buries the diff in reflect internals.
+		// Asserted field by field: StorageOptions carries interface and func
+		// members, and comparing two of those by value buries the diff in
+		// reflect internals.
 		require.Equal(t, gvk, scoped.GVK, "the served version reaches storage")
 		require.True(t, scoped.EnableFolderSupport)
 		require.True(t, scoped.RequireFolder)
 		require.Equal(t, apistore.DeprecatedID_None, scoped.DeprecatedInternalID)
-		require.Same(t, opts.Scheme, scoped.Scheme)
 
 		// No schema means no body validation and no status subresource.
 		require.Nil(t, s.validator)

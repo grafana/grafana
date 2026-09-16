@@ -83,10 +83,10 @@ type StorageOptions struct {
 	// [RESTOptionsGetter.RegisterOptions] is keyed by GroupResource and shared by
 	// every version of a resource, so options registered there must leave it
 	// empty. Use [RESTOptionsGetter.WithStorageOptions] to set it.
+	//
+	// Left empty, writes are serialized through the group's versioning codec,
+	// which picks the storage version itself -- see [Storage.encodeViaCodec].
 	GVK schema.GroupVersionKind
-
-	// Direct access to the schema (used for encode/decode)
-	Scheme *runtime.Scheme
 
 	// Required to force unique constraints
 	Index resourcepb.ResourceIndexClient
