@@ -763,7 +763,7 @@ func TestSearchFolders(t *testing.T) {
 				Labels: []*resourcepb.Requirement{},
 			},
 			Query:  "*test*",
-			Fields: dashboardsearch.IncludeFields,
+			Fields: dashboardsearch.FieldValueIncludeFields,
 			Page:   1,
 			Limit:  folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
