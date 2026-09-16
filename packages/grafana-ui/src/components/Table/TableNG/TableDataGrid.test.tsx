@@ -78,8 +78,8 @@ describe('TableDataGrid', () => {
 
   describe('table theme colors', () => {
     it.each([
-      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', '#4c4e56'],
-      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', '#d4d5d6'],
+      ['dark', '#181b1f', '#111217', '#2c2f35', '#34363a', '#383b42'],
+      ['light', '#ffffff', '#fbfbfb', '#ececed', '#e0e0e0', '#e1e2e3'],
       ['visual_refresh_dark', '#111419', '#090b0f', '#202429', '#282d33', '#282d33'],
       ['visual_refresh_light', '#ffffff', '#fafafa', '#f0f0ef', '#e4e3e2', '#dddcdb'],
     ])('uses the %s table surfaces in opaque and transparent panels', (id, body, canvas, header, hover, divider) => {
