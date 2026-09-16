@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -141,14 +140,11 @@ func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}
 
-	service := foldertest.NewFakeService()
-
 	store := &DBstore{
-		SQLStore:      db,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: service,
-		Logger:        &logtest.Fake{},
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		SQLStore: db,
+		Cfg:      cfg.UnifiedAlerting,
+		Logger:   &logtest.Fake{},
+		Bus:      bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	return store
 }

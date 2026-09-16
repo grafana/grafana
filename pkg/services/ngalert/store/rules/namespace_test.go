@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"context"
@@ -62,7 +62,7 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 }
 
 func TestGetNamespaceByUID(t *testing.T) {
-	store := DBstore{FolderService: foldertest.NewFakeService()}
+	store := RuleStore{FolderService: foldertest.NewFakeService()}
 
 	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
 		t.Run("rejects root folder UID "+uid, func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestGetNamespaceByUID(t *testing.T) {
 func TestGetNamespaceByTitle(t *testing.T) {
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedError = dashboards.ErrFolderNotFound
-	store := DBstore{
+	store := RuleStore{
 		FolderService: folderService,
 	}
 	_, err := store.GetNamespaceByTitle(context.Background(), "Test Folder", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
@@ -86,7 +86,7 @@ func TestGetNamespaceByTitle(t *testing.T) {
 }
 
 func TestGetOrCreateNamespaceByTitle(t *testing.T) {
-	store := DBstore{}
+	store := RuleStore{}
 	_, created, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.LegacyRootFolderUID) //nolint:staticcheck
 	require.False(t, created)
 	require.Error(t, err)

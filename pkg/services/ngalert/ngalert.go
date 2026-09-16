@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -193,6 +194,7 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
+	ruleStore                 *rules.RuleStore
 	userService               user.Service
 	orgService                org.Service
 
@@ -631,7 +633,7 @@ func (ng *AlertNG) init() error {
 		DataProxy:             ng.DataProxy,
 		QuotaService:          ng.QuotaService,
 		TransactionManager:    ng.store,
-		RuleStore:             ng.store,
+		RuleStore:             ng.ruleStore,
 		AlertingStore:         ng.store,
 		AdminConfigStore:      ng.store,
 		ProvenanceStore:       ng.store,
