@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -506,9 +505,9 @@ func TestK8sAdapter_Update(t *testing.T) {
 			mutate func(*annotationV0.Annotation)
 		}{
 			{"time", func(a *annotationV0.Annotation) { a.Spec.Time = 2000 }},
-			{"timeEnd", func(a *annotationV0.Annotation) { a.Spec.TimeEnd = ptr.To(int64(3000)) }},
-			{"dashboardUID", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = ptr.To("dash") }},
-			{"panelID", func(a *annotationV0.Annotation) { a.Spec.PanelID = ptr.To(int64(7)) }},
+			{"timeEnd", func(a *annotationV0.Annotation) { a.Spec.TimeEnd = new(int64(3000)) }},
+			{"dashboardUID", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = new("dash") }},
+			{"panelID", func(a *annotationV0.Annotation) { a.Spec.PanelID = new(int64(7)) }},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {

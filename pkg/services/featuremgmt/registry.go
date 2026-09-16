@@ -288,6 +288,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "grafana.frontendLegacyFeatureToggleHandling",
+			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).`,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "off",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "provisioning.performance",
 			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
 			Stage:       FeatureStageExperimental,
@@ -731,14 +740,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "reportRenderQueryDebounce",
-			Description: "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:        "canvasPanelPanZoom",
@@ -1961,7 +1962,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:   "true",
 		},
 		{
@@ -3184,11 +3185,11 @@ var (
 		},
 		{
 			Name:         "grafana.frontendLegacyAPIHandling",
-			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+			Description:  `Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).`,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "off",
 			Generate:     Generate{Go: true},
 		},
 		{
@@ -3211,6 +3212,15 @@ var (
 		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "features.legacyOverrideLookupBypass",
+			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBackendServicesSquad,
 			HideFromDocs: true,
@@ -3396,6 +3406,41 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "unifiedStorageClient.requireCallerIdentity",
+			Description:  "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.pluginExtensionReactElementProps",
+			Description:  "Pass React elements in plugin extension props by reference",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.logDetailsDisplayedFieldControls",
+			Description: "Deprecated: Toggle displayed fields from Log Details",
+			Stage:       FeatureStageDeprecated,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "grafana.mtFallback",
+			Description:  "Enables multi-tenant fallback behavior",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "{}",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
