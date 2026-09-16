@@ -32,11 +32,7 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { type SparklineHoverEvent } from './Sparkline';
 
-/**
- * Internal hover record produced by `prepareConfig`. Extends the public
- * `SparklineHoverEvent` with the cursor's viewport pixel coordinates so the
- * component can position the built-in tooltip. Not part of the public API.
- */
+/** Internal: public `SparklineHoverEvent` plus cursor viewport coords for positioning the tooltip. */
 export interface SparklineHoverInfo extends SparklineHoverEvent {
   left: number;
   top: number;
@@ -194,9 +190,8 @@ export const prepareConfig = (
   let yFieldIndex = -1;
 
   if (enableHover) {
-    // Interactive cursor: a vertical crosshair plus a focused point drawn on the
-    // line at the hovered index. No drag/zoom/select. focus.prox Infinity keeps the
-    // single series always focused so the tooltip shows across the full width.
+    // Crosshair + focused point at the hovered index, no drag/zoom. focus.prox Infinity keeps
+    // the single series focused so hover works across the full width.
     builder.setCursor({
       show: true,
       x: true,
@@ -208,7 +203,7 @@ export const prepareConfig = (
   } else {
     builder.setCursor({
       show: false,
-      x: false, // no crosshairs
+      x: false,
       y: false,
     });
   }
@@ -305,8 +300,7 @@ export const prepareConfig = (
     const seriesIdx = yFieldIndex;
     const yField = dataFrame.fields[seriesIdx];
     const display = yField.display ?? getDisplayProcessor({ field: yField, theme });
-    // Only emit when the focused index changes, and emit null once when leaving a
-    // previously-hovered point.
+    // Emit only on index change; emit null once when leaving a hovered point.
     let prevIdx: number | null | undefined;
 
     builder.addHook('setCursor', (u) => {
@@ -330,7 +324,7 @@ export const prepareConfig = (
         index: idx,
         value,
         display: formattedValueToString(display(value)),
-        // Viewport coords of the cursor, for positioning the built-in tooltip.
+        // Cursor viewport coords for positioning the tooltip.
         left: u.rect.left + (u.cursor.left ?? 0),
         top: u.rect.top + (u.cursor.top ?? 0),
       });

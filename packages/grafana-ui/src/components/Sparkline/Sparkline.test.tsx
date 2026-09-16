@@ -137,8 +137,7 @@ describe('Sparkline', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  // The public payload is the trimmed { index, value, display }; the internal viewport
-  // coords stay inside the component. Unmounting while hovered must clear the consumer.
+  // Public payload is the trimmed { index, value, display }; unmount while hovered clears it.
   it('fans a trimmed hover event out to onHover and clears it on unmount', async () => {
     const onHover = jest.fn();
     const { unmount } = render(
@@ -146,7 +145,6 @@ describe('Sparkline', () => {
     );
     await waitFor(() => expect(plotInstance?.status).toBe(1));
 
-    // hover props enable the cursor end-to-end
     expect(prepareConfigSpy).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
@@ -156,7 +154,7 @@ describe('Sparkline', () => {
       expect.any(Function)
     );
 
-    // The component passes its internal emit dispatcher as the onHover arg to prepareConfig.
+    // The component passes its internal emit dispatcher as prepareConfig's onHover arg.
     const emit = prepareConfigSpy.mock.calls[0][5] as (hover: sparklineUtils.SparklineHoverInfo | null) => void;
     act(() => emit({ index: 1, value: 20, display: '20', left: 5, top: 6 }));
     expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20' });
@@ -166,8 +164,7 @@ describe('Sparkline', () => {
     expect(onHover).toHaveBeenCalledWith(null);
   });
 
-  // A data refresh can swap the series while the mouse is held still; uPlot won't re-fire the
-  // cursor, so an active hover must be cleared to avoid surfacing a value tied to the old data.
+  // A data refresh can swap the series while the mouse is held still; the active hover must clear.
   it('clears an active hover when the sparkline series changes', async () => {
     const onHover = jest.fn();
     const { rerender } = render(

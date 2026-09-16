@@ -11,16 +11,11 @@ import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
 
 import { prepareSeries, prepareConfig, type SparklineHoverInfo } from './utils';
 
-/**
- * Payload emitted by `Sparkline`'s `onHover` when hover support is enabled
- * (`showTooltip` or `onHover` set). `null` is emitted on mouse leave and on unmount.
- */
+/** Hovered point emitted by `Sparkline`'s `onHover`; `null` on leave and unmount. */
 export interface SparklineHoverEvent {
-  /** Data index of the hovered point. */
   index: number;
-  /** Raw y value at the hovered point. */
   value: number | null;
-  /** Formatted value (via the y-field display processor). */
+  /** `value` formatted via the y-field display processor. */
   display: string;
 }
 
@@ -30,9 +25,9 @@ export interface SparklineProps extends Themeable2 {
   config?: FieldConfig<GraphFieldConfig>;
   sparkline: FieldSparkline;
   showHighlights?: boolean;
-  /** Render a built-in tooltip on hover. Enabling this (or `onHover`) turns on the cursor. */
+  /** Render a built-in tooltip on hover. Enabling this (or `onHover`) enables the cursor. */
   showTooltip?: boolean;
-  /** Fires the hovered point to the consumer; `null` on leave/unmount. Enabling this (or `showTooltip`) turns on the cursor. */
+  /** Emits the hovered point; `null` on leave/unmount. Enabling this (or `showTooltip`) enables the cursor. */
   onHover?: (hover: SparklineHoverEvent | null) => void;
 }
 
@@ -42,17 +37,16 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
 
   const [tooltip, setTooltip] = useState<SparklineHoverInfo | null>(null);
 
-  // Keep the latest onHover / showTooltip reachable from the (stable, memoized) uPlot
-  // hook so an inline callback identity change never rebuilds the config / re-inits the plot.
+  // Keep the latest onHover/showTooltip reachable from the memoized uPlot hook so a changing
+  // callback identity doesn't rebuild the config and re-init the plot.
   const onHoverRef = useRef(onHover);
   onHoverRef.current = onHover;
   const showTooltipRef = useRef(showTooltip);
   showTooltipRef.current = showTooltip;
-  // Tracks whether the consumer currently sees a non-null hover, so unmount can clear it.
+  // Whether a non-null hover is currently shown, so unmount/data-change can clear it.
   const hoverActiveRef = useRef(false);
 
-  // Single source of truth: the config hook emits a rich hover record; we fan it out to
-  // the public (trimmed) onHover and to the built-in tooltip state.
+  // Fan the config hook's rich record out to the trimmed public onHover and the tooltip.
   const emitHover = useMemo(
     () => (hover: SparklineHoverInfo | null) => {
       hoverActiveRef.current = hover != null;
@@ -64,8 +58,7 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
     []
   );
 
-  // Virtualized cells (e.g. tables) can unmount while hovered without a mouseleave, so
-  // clear the consumer's hover state on unmount if it is still active.
+  // Virtualized cells (e.g. tables) can unmount while hovered without a mouseleave; clear then.
   useEffect(
     () => () => {
       if (hoverActiveRef.current) {
@@ -75,9 +68,8 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
     []
   );
 
-  // The underlying series can change while the mouse is held still over the sparkline
-  // (e.g. a data refresh). uPlot won't re-fire the cursor, so clear any active hover to
-  // avoid showing a value tied to the previous data until the next mouse move.
+  // A data refresh can swap the series while the mouse is held still; uPlot won't re-fire the
+  // cursor, so clear any active hover to avoid surfacing stale data.
   useEffect(() => {
     if (hoverActiveRef.current) {
       emitHover(null);
