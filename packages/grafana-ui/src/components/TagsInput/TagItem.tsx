@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2, autoColors?: Boolean, disabled?: Boolea
         textShadow: 'none',
         fontWeight: 500,
         fontSize: theme.typography.size.sm,
-        color: '#fff',
+        color: textColor,
         borderColor,
         backgroundColor,
       },
@@ -78,10 +78,7 @@ const getStyles = (theme: GrafanaTheme2, autoColors?: Boolean, disabled?: Boolea
         borderRadius: theme.shape.radius.pill,
         padding: `0 ${theme.spacing.x1}`,
         fontSize: theme.typography.size.xs,
-        color: textColor,
-      },
-      disabled && {
-        color: theme.colors.text.disabled,
+        color: disabled ? theme.colors.text.disabled : textColor,
       }
     ),
     nameStyle: css({
