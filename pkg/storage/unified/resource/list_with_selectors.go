@@ -63,7 +63,10 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	if err != nil {
 		return nil, err
 	}
+	// Logged as well as returned, because in environments where only logs are
+	// available an empty page and a failed search look the same.
 	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
 	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
