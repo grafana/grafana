@@ -126,7 +126,7 @@ Users with the `Viewer` role can view provisioned resources. Their access to spe
 - Cannot push changes to open a pull request, migrate resources, or manage Git Sync repositories, regardless of folder permissions
 
 {{< admonition type="note" >}}
-Moving and deleting only checks the folder/dashboard permission - not the organization role - when the job targets the repository's configured branch. So a `Viewer` who's also granted Folder Editor/Admin permission gets the same create, edit, move, and delete access listed for [Editor users](#editor-users), for that folder. A `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can edit and delete that dashboard the same way, but can't move it - moving needs create permission on the destination, which only a folder-level grant provides. The organization role still gates push, migrate, repository management, and any move or delete targeting a branch other than the configured one - refer to [Job actions and required permissions](#job-actions-and-required-permissions) for the full breakdown.
+Moving and deleting only checks the folder/dashboard permission - not the organization role. So a `Viewer` who's also granted Folder Editor/Admin permission gets the same create, edit, move, and delete access listed for [Editor users](#editor-users), for that folder. A `Viewer` with only Dashboard-level Editor/Admin permission (no folder access) can edit and delete that dashboard the same way, but can't move it - moving needs create permission on the destination, which only a folder-level grant provides. The organization role still gates push, migrate, and repository management - refer to [Job actions and required permissions](#job-actions-and-required-permissions) for the full breakdown.
 {{< /admonition >}}
 
 ## Configure folder and dashboard permissions
@@ -292,7 +292,7 @@ Git Sync operations run as jobs, but not all job actions are gated the same way:
 - **Manual sync (pull from Git) and orphan-resource cleanup** require `provisioning.repositories:write`, which is admin-only. This keeps Editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
 {{< admonition type="note" >}}
-Move and delete only skip the `provisioning.jobs:create` requirement when the job targets the repository's configured branch (the default when no ref is specified). A move or delete that names a different branch - available when the repository's branch workflow is enabled - always requires `provisioning.jobs:create` in addition to the usual `dashboards:*`/`folders:*` permissions, since per-resource authorization reads from the configured branch and can't safely evaluate content on another one. A folder-scoped `Viewer` who can move and delete on the configured branch will still get a 403 targeting a feature branch.
+Move and delete permission checks work the same way regardless of which branch the job targets, including a feature branch under the repository's branch workflow. The one exception is the destination folder for a move: it's resolved from the repository's configured branch, so moving into a folder that only exists on a not-yet-merged branch isn't supported yet - the destination folder must already exist on the configured branch.
 {{< /admonition >}}
 
 | Job action                          | Required permission                                                                                           | Who can run it                                            |
@@ -325,7 +325,7 @@ Because the `repositories` resource has no Editor tier (`repositories:read` is g
 | `resources`, `history`, `status` | Repository management and inspection views           | `provisioning.repositories:write`                                                                                                                         | Admins only             |
 
 {{< admonition type="note" >}}
-Creating a job is allowed at the route level for any authenticated user, the same way `files` is. The real authorization decision happens once the specific action is known: move and delete check the folder/dashboard permissions being acted on (only for jobs targeting the repository's configured branch - a different branch still requires `provisioning.jobs:create`), while push, migrate, and fix folder metadata always require `provisioning.jobs:create`. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+Creating a job is allowed at the route level for any authenticated user, the same way `files` is. The real authorization decision happens once the specific action is known: move and delete check the folder/dashboard permissions being acted on, while push, migrate, and fix folder metadata still require `provisioning.jobs:create`. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
 {{< /admonition >}}
 
 {{< admonition type="note" >}}
