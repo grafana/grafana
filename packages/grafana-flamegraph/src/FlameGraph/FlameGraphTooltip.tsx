@@ -135,15 +135,17 @@ export const getDiffTooltipData = (
   const levels = data.getLevels();
   const totalTicksRight = levels[0][0].valueRight!;
   const totalTicksLeft = totalTicks - totalTicksRight;
-  const valueLeft = item.value - item.valueRight!;
+  // Guard against missing valueRight (e.g. a merged sandwich-view node) so we show 0 instead of NaN/undefined.
+  const itemValueRight = item.valueRight ?? 0;
+  const valueLeft = item.value - itemValueRight;
 
   const percentageLeft = Math.round((10000 * valueLeft) / totalTicksLeft) / 100;
-  const percentageRight = Math.round((10000 * item.valueRight!) / totalTicksRight) / 100;
+  const percentageRight = Math.round((10000 * itemValueRight) / totalTicksRight) / 100;
 
   const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
 
   const displayValueLeft = getValueWithUnit(data, data.valueDisplayProcessor(valueLeft));
-  const displayValueRight = getValueWithUnit(data, data.valueDisplayProcessor(item.valueRight!));
+  const displayValueRight = getValueWithUnit(data, data.valueDisplayProcessor(itemValueRight));
 
   const shortValFormat = getValueFormat('short');
 
@@ -160,14 +162,14 @@ export const getDiffTooltipData = (
       label: 'Value',
       baseline: displayValueLeft,
       comparison: displayValueRight,
-      diff: getValueWithUnit(data, data.valueDisplayProcessor(item.valueRight! - valueLeft)),
+      diff: getValueWithUnit(data, data.valueDisplayProcessor(itemValueRight - valueLeft)),
     },
     {
       rowId: '3',
       label: 'Samples',
       baseline: formatWithSuffix(valueLeft, shortValFormat),
-      comparison: formatWithSuffix(item.valueRight!, shortValFormat),
-      diff: formatWithSuffix(item.valueRight! - valueLeft, shortValFormat),
+      comparison: formatWithSuffix(itemValueRight, shortValFormat),
+      diff: formatWithSuffix(itemValueRight - valueLeft, shortValFormat),
     },
   ];
 };

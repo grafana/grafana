@@ -12,7 +12,7 @@ export type { Moment };
 
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
-  __momentBuiltinFormatBrand: any;
+  __momentBuiltinFormatBrand: unknown;
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;

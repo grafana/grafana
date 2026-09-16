@@ -40,7 +40,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Channels",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaChannelv1alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaChannelv1alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

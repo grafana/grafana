@@ -49,6 +49,7 @@ type DataSourceAPIBuilderConfig struct {
 	UseDualWriter               bool
 	EnableResourceEndpoint      bool
 	EnableHealthEndpoint        bool
+	EnableProxyEndpoint         bool
 	EnableChunkedQueryStreaming bool
 
 	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
@@ -105,6 +106,7 @@ func RegisterAPIService(
 		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
 		EnableResourceEndpoint:      features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint),
 		EnableHealthEndpoint:        features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint),
+		EnableProxyEndpoint:         features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableProxyEndpoint),
 		EnableChunkedQueryStreaming: features.IsEnabledGlobally(featuremgmt.FlagDatasourcesChunkedQueryStreaming),
 	}
 
@@ -327,7 +329,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Frontend proxy
-	if len(b.pluginJSON.Routes) > 0 {
+	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
 		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
 	}
 
