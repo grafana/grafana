@@ -23,7 +23,14 @@ func TestBuildSearchJobsRequestsFieldValues(t *testing.T) {
 	require.Len(t, jobs, 4)
 	for _, job := range jobs {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, job.req.ResultFormat)
-		require.Equal(t, searchDisplayFields, job.req.Fields)
+		switch job.req.Options.Key.Resource {
+		case "users":
+			require.Equal(t, userSearchDisplayFields, job.req.Fields)
+		case "serviceaccounts":
+			require.Equal(t, serviceAccountSearchDisplayFields, job.req.Fields)
+		default:
+			t.Fatalf("unexpected resource %q", job.req.Options.Key.Resource)
+		}
 	}
 }
 

@@ -30,10 +30,15 @@ func NewSearchDisplayProvider(client resourcepb.ResourceIndexClient) *SearchDisp
 	return &SearchDisplayProvider{client: client}
 }
 
-var searchDisplayFields = []string{
+var userSearchDisplayFields = []string{
 	resource.SEARCH_FIELD_TITLE,
 	builders.USER_EMAIL,
 	builders.USER_LOGIN,
+	resource.SEARCH_FIELD_LEGACY_ID,
+}
+
+var serviceAccountSearchDisplayFields = []string{
+	resource.SEARCH_FIELD_TITLE,
 	resource.SEARCH_FIELD_LEGACY_ID,
 }
 
@@ -99,9 +104,10 @@ func (r *SearchDisplayProvider) buildSearchJobs(ns authlib.NamespaceInfo, keys d
 	targets := []struct {
 		resource     string
 		identityType authlib.IdentityType
+		fields       []string
 	}{
-		{"users", authlib.TypeUser},
-		{"serviceaccounts", authlib.TypeServiceAccount},
+		{"users", authlib.TypeUser, userSearchDisplayFields},
+		{"serviceaccounts", authlib.TypeServiceAccount, serviceAccountSearchDisplayFields},
 	}
 
 	jobs := make([]searchJob, 0, 2*len(targets))
@@ -109,7 +115,7 @@ func (r *SearchDisplayProvider) buildSearchJobs(ns authlib.NamespaceInfo, keys d
 		newReq := func() *resourcepb.ResourceSearchRequest {
 			return &resourcepb.ResourceSearchRequest{
 				Limit:        100, // although the query should only return one item
-				Fields:       searchDisplayFields,
+				Fields:       target.fields,
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
