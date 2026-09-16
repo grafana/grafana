@@ -17,6 +17,6 @@ describe('logs table module', () => {
     const hoverOverflow = buildItems().find((item) => item.path === 'hoverOverflow');
 
     expect(hoverOverflow).toBeDefined();
-    expect(hoverOverflow?.defaultValue).toBe(true);
+    expect(hoverOverflow?.defaultValue).toBeUndefined();
   });
 });

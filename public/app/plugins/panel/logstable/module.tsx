@@ -1,10 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { defaultTableOptions } from '@grafana/schema';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
 import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
 
+import { HoverOverflowEditor } from './HoverOverflowEditor';
 import { LogsTable } from './LogsTable';
 import { logsTablePanelFieldConfig } from './logsTableFieldConfig';
 import { defaultOptions, type Options } from './panelcfg.gen';
@@ -33,7 +33,8 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
         ),
         defaultValue: defaultOptions.showCopyLogLink,
       })
-      .addBooleanSwitch({
+      .addCustomEditor({
+        id: 'hoverOverflow',
         path: 'hoverOverflow',
         name: t('logstable.hover-overflow.name', 'Cell hover overflow'),
         category: logsTableCategory,
@@ -41,7 +42,7 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'logstable.hover-overflow.description',
           'Expand overflowing cell content on hover. Selected cells always expand.'
         ),
-        defaultValue: defaultTableOptions.hoverOverflow,
+        editor: HoverOverflowEditor,
       })
       .addBooleanSwitch({
         path: 'showControls',
