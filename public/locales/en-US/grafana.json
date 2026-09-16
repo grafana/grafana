@@ -1716,6 +1716,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1777,14 +1780,17 @@
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
         "templates-label": "Notification templates",
         "templates-remove": "Remove {{name}}",
-        "upload": "Upload YAML file",
+        "upload": "Drop YAML file here or click to upload",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
-        "yaml-file": "Alertmanager config YAML"
+        "yaml-desc": "Accepted file types: {{extensions}}",
+        "yaml-file": "Alertmanager config YAML",
+        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-remove": "Remove {{name}}"
       },
       "step2": {
         "datasource": "Data source",
@@ -12247,6 +12253,10 @@
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
   },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
   },
@@ -12579,6 +12589,10 @@
     "authentication": {
       "title": "Authentication"
     },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
+    },
     "bookmarks": {
       "title": "Bookmarks"
     },
@@ -12785,6 +12799,7 @@
       "title": "Recorded queries"
     },
     "reporting": {
+      "subtitle": "Create and manage PDF reports distributed via e-mail",
       "title": "Reporting"
     },
     "saved-queries": {
@@ -12799,6 +12814,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -16674,10 +16693,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",

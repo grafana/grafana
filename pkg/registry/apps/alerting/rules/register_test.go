@@ -3,6 +3,8 @@ package rules
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -56,4 +58,14 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetStorageOptions(t *testing.T) {
+	a := &AppInstaller{}
+
+	got := a.GetStorageOptions(config.ResourceInfo.GroupResource())
+	require.False(t, got.EnableFolderSupport, "the Config singleton is a per-org object with no folder concept")
+
+	got = a.GetStorageOptions(alertrule.ResourceInfo.GroupResource())
+	require.True(t, got.EnableFolderSupport, "other rules-app kinds still live in folders")
 }

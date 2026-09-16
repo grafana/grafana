@@ -592,6 +592,28 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, []string{"s1"}, parsedToken.SearchAfter)
 		require.Equal(t, searchServerRv, parsedToken.ResourceVersion)
 	})
+
+	t.Run("a search with no rows returns an empty list", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{
+			resp: &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv},
+		}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Empty(t, resp.Items)
+		require.Equal(t, searchServerRv, resp.ResourceVersion)
+	})
 }
 
 func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
