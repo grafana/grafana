@@ -125,7 +125,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     ),
     wrapperPrimary: css({
       label: 'page-wrapper-primary',
-      background: theme.colors.background.page,
+      background: theme.colors.background.primary,
     }),
     wrapperGradient: css({
       label: 'page-wrapper-gradient',

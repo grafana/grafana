@@ -6,8 +6,9 @@
     "background": {
       "canvas": "palette.ink950",
       "page": "palette.ink900",
-      "primary": "palette.ink850",
-      "secondary": "palette.ink750",
+      "primary": "palette.ink900",
+      "secondary": "palette.ink850",
+      "tertiary": "palette.ink750",
       "elevated": "palette.ink750"
     },
     "primary": {
@@ -123,6 +124,9 @@
     "card": {
       "background": "palette.ink850",
       "borderColor": "palette.ink700"
+    },
+    "panel": {
+      "background": "palette.ink850"
     },
     "checkbox": {
       "activeBackgroundHover": "palette.orange400"

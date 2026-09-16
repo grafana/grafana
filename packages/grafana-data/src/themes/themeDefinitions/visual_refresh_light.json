@@ -6,8 +6,9 @@
     "background": {
       "canvas": "palette.white",
       "page": "palette.neutral50",
-      "primary": "palette.white",
-      "secondary": "palette.neutral150",
+      "primary": "palette.neutral50",
+      "secondary": "palette.white",
+      "tertiary": "palette.neutral150",
       "elevated": "palette.white"
     },
     "primary": {
@@ -123,6 +124,9 @@
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"
+    },
+    "panel": {
+      "background": "palette.white"
     },
     "checkbox": {
       "activeBackgroundHover": "palette.orange600"

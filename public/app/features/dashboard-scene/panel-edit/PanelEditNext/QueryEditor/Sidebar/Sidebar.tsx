@@ -150,10 +150,10 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      background: theme.colors.background.primary,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
     }),
     content: css({
-      background: theme.colors.background.primary,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
     }),

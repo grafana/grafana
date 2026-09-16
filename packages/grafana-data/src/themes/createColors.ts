@@ -36,12 +36,17 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       background: z.object({
         /** Body background */
         canvas: z.string().optional(),
-        /** Page container background */
+        /**
+         * Page container background
+         * @deprecated
+         */
         page: z.string().optional(),
         /** Primary content pane background (panels etc) */
         primary: z.string().optional(),
-        /** Cards and elements that need to stand out on the primary background */
+        /** Cards, panels, toolbar panes and box headers that need to stand out on the primary background */
         secondary: z.string().optional(),
+        /** Tertiary for elements that need to stand out inside panels or cards  */
+        tertiary: z.string().optional(),
         /**
          * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
          * themes it has a brighter shade to help give it contrast against the primary background.
@@ -187,6 +192,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     page: palette.gray10,
     primary: palette.gray10,
     secondary: palette.gray15,
+    tertiary: palette.gray15,
     elevated: palette.gray15,
   };
 
@@ -280,6 +286,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     page: palette.white,
     primary: palette.white,
     secondary: palette.gray95,
+    tertiary: palette.gray95,
     elevated: palette.white,
   };
 

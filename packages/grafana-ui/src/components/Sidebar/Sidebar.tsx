@@ -143,7 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flex: '1 1 0',
       border: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
       borderRadius: theme.shape.radius.lg,
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,

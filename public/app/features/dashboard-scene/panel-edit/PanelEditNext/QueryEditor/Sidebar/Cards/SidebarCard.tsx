@@ -271,7 +271,11 @@ function getStyles(
     ? `1px solid ${theme.colors.error.border}`
     : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
-  const cardBackground = isSelected ? selectedBg : theme.colors.background.primary;
+  const cardBackground = isSelected
+    ? selectedBg
+    : theme.flags.visualDesignRefresh
+      ? theme.colors.background.secondary
+      : theme.colors.background.primary;
   const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
   const indicatorWidth = isSelected ? 3 : 2;
 

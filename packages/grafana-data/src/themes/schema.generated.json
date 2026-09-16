@@ -494,6 +494,9 @@
             "secondary": {
               "type": "string"
             },
+            "tertiary": {
+              "type": "string"
+            },
             "elevated": {
               "type": "string"
             }

@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: theme.colors.background.primary,
+    background: theme.flags.visualDesignRefresh ? theme.colors.background.primary : theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     height: '100%',
