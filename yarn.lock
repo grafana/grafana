@@ -10376,21 +10376,21 @@ __metadata:
   linkType: hard
 
 "@tanstack/react-virtual@npm:^3.5.1, @tanstack/react-virtual@npm:^3.9.0":
-  version: 3.14.11
-  resolution: "@tanstack/react-virtual@npm:3.14.11"
+  version: 3.14.12
+  resolution: "@tanstack/react-virtual@npm:3.14.12"
   dependencies:
-    "@tanstack/virtual-core": "npm:3.17.9"
+    "@tanstack/virtual-core": "npm:3.17.10"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/d55e07c9103ec4cd8dec5d0c144140fd57a46a391b36c4a786781bf93291aa9461ccb5a29870e3094a42d54d6d41324feb33a2406d7ceeade53b5cdd435b457a
+  checksum: 10/d7846818b7848b7b6f566ae750f5982134a956d6086ddaa6d929a0deb6dde191029e7712a072be8c756bf0fc5a408bfc94e272d9e1c61b92193b605242f4b58d
   languageName: node
   linkType: hard
 
-"@tanstack/virtual-core@npm:3.17.9":
-  version: 3.17.9
-  resolution: "@tanstack/virtual-core@npm:3.17.9"
-  checksum: 10/5e1aa99c1311690cba75744499fe1bff4b5927e0ad98f54a3ccf0299f40136182be92061b3cf96b2621edd07a8a109dde13263b4760bee95209541170c4f96e1
+"@tanstack/virtual-core@npm:3.17.10":
+  version: 3.17.10
+  resolution: "@tanstack/virtual-core@npm:3.17.10"
+  checksum: 10/4995948b3ae543763d5cfaae3555d5829d1b9a0d8151fdfe81fb6e3ae1b0a7a49f5722c6876a4918bb03793806f4f5f453f8e1afe5a1118392e6cf442a58b45f
   languageName: node
   linkType: hard
 
@@ -17965,95 +17965,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:0.25.8, esbuild@npm:^0.25.0":
-  version: 0.25.8
-  resolution: "esbuild@npm:0.25.8"
-  dependencies:
-    "@esbuild/aix-ppc64": "npm:0.25.8"
-    "@esbuild/android-arm": "npm:0.25.8"
-    "@esbuild/android-arm64": "npm:0.25.8"
-    "@esbuild/android-x64": "npm:0.25.8"
-    "@esbuild/darwin-arm64": "npm:0.25.8"
-    "@esbuild/darwin-x64": "npm:0.25.8"
-    "@esbuild/freebsd-arm64": "npm:0.25.8"
-    "@esbuild/freebsd-x64": "npm:0.25.8"
-    "@esbuild/linux-arm": "npm:0.25.8"
-    "@esbuild/linux-arm64": "npm:0.25.8"
-    "@esbuild/linux-ia32": "npm:0.25.8"
-    "@esbuild/linux-loong64": "npm:0.25.8"
-    "@esbuild/linux-mips64el": "npm:0.25.8"
-    "@esbuild/linux-ppc64": "npm:0.25.8"
-    "@esbuild/linux-riscv64": "npm:0.25.8"
-    "@esbuild/linux-s390x": "npm:0.25.8"
-    "@esbuild/linux-x64": "npm:0.25.8"
-    "@esbuild/netbsd-arm64": "npm:0.25.8"
-    "@esbuild/netbsd-x64": "npm:0.25.8"
-    "@esbuild/openbsd-arm64": "npm:0.25.8"
-    "@esbuild/openbsd-x64": "npm:0.25.8"
-    "@esbuild/openharmony-arm64": "npm:0.25.8"
-    "@esbuild/sunos-x64": "npm:0.25.8"
-    "@esbuild/win32-arm64": "npm:0.25.8"
-    "@esbuild/win32-ia32": "npm:0.25.8"
-    "@esbuild/win32-x64": "npm:0.25.8"
-  dependenciesMeta:
-    "@esbuild/aix-ppc64":
-      optional: true
-    "@esbuild/android-arm":
-      optional: true
-    "@esbuild/android-arm64":
-      optional: true
-    "@esbuild/android-x64":
-      optional: true
-    "@esbuild/darwin-arm64":
-      optional: true
-    "@esbuild/darwin-x64":
-      optional: true
-    "@esbuild/freebsd-arm64":
-      optional: true
-    "@esbuild/freebsd-x64":
-      optional: true
-    "@esbuild/linux-arm":
-      optional: true
-    "@esbuild/linux-arm64":
-      optional: true
-    "@esbuild/linux-ia32":
-      optional: true
-    "@esbuild/linux-loong64":
-      optional: true
-    "@esbuild/linux-mips64el":
-      optional: true
-    "@esbuild/linux-ppc64":
-      optional: true
-    "@esbuild/linux-riscv64":
-      optional: true
-    "@esbuild/linux-s390x":
-      optional: true
-    "@esbuild/linux-x64":
-      optional: true
-    "@esbuild/netbsd-arm64":
-      optional: true
-    "@esbuild/netbsd-x64":
-      optional: true
-    "@esbuild/openbsd-arm64":
-      optional: true
-    "@esbuild/openbsd-x64":
-      optional: true
-    "@esbuild/openharmony-arm64":
-      optional: true
-    "@esbuild/sunos-x64":
-      optional: true
-    "@esbuild/win32-arm64":
-      optional: true
-    "@esbuild/win32-ia32":
-      optional: true
-    "@esbuild/win32-x64":
-      optional: true
-  bin:
-    esbuild: bin/esbuild
-  checksum: 10/9897411732768e652d90fa5dfadae965e8f420d24e5f23fa0604331a1441769e2c7ee4e41ca53e926f1fb51a53af52e01fc9070fdc1a4edf3e9ec9208ee41273
-  languageName: node
-  linkType: hard
-
 "esbuild@npm:0.28.1":
   version: 0.28.1
   resolution: "esbuild@npm:0.28.1"
@@ -18229,6 +18140,95 @@ __metadata:
   bin:
     esbuild: bin/esbuild
   checksum: 10/262b16c4a33cb70e9f054759a7ce420541649315eef7b064172c795021ccce322e56c3f5fd52e8842873f1c23745f3ab62311a24860950bd5406ba77b36b8529
+  languageName: node
+  linkType: hard
+
+"esbuild@npm:^0.25.0":
+  version: 0.25.8
+  resolution: "esbuild@npm:0.25.8"
+  dependencies:
+    "@esbuild/aix-ppc64": "npm:0.25.8"
+    "@esbuild/android-arm": "npm:0.25.8"
+    "@esbuild/android-arm64": "npm:0.25.8"
+    "@esbuild/android-x64": "npm:0.25.8"
+    "@esbuild/darwin-arm64": "npm:0.25.8"
+    "@esbuild/darwin-x64": "npm:0.25.8"
+    "@esbuild/freebsd-arm64": "npm:0.25.8"
+    "@esbuild/freebsd-x64": "npm:0.25.8"
+    "@esbuild/linux-arm": "npm:0.25.8"
+    "@esbuild/linux-arm64": "npm:0.25.8"
+    "@esbuild/linux-ia32": "npm:0.25.8"
+    "@esbuild/linux-loong64": "npm:0.25.8"
+    "@esbuild/linux-mips64el": "npm:0.25.8"
+    "@esbuild/linux-ppc64": "npm:0.25.8"
+    "@esbuild/linux-riscv64": "npm:0.25.8"
+    "@esbuild/linux-s390x": "npm:0.25.8"
+    "@esbuild/linux-x64": "npm:0.25.8"
+    "@esbuild/netbsd-arm64": "npm:0.25.8"
+    "@esbuild/netbsd-x64": "npm:0.25.8"
+    "@esbuild/openbsd-arm64": "npm:0.25.8"
+    "@esbuild/openbsd-x64": "npm:0.25.8"
+    "@esbuild/openharmony-arm64": "npm:0.25.8"
+    "@esbuild/sunos-x64": "npm:0.25.8"
+    "@esbuild/win32-arm64": "npm:0.25.8"
+    "@esbuild/win32-ia32": "npm:0.25.8"
+    "@esbuild/win32-x64": "npm:0.25.8"
+  dependenciesMeta:
+    "@esbuild/aix-ppc64":
+      optional: true
+    "@esbuild/android-arm":
+      optional: true
+    "@esbuild/android-arm64":
+      optional: true
+    "@esbuild/android-x64":
+      optional: true
+    "@esbuild/darwin-arm64":
+      optional: true
+    "@esbuild/darwin-x64":
+      optional: true
+    "@esbuild/freebsd-arm64":
+      optional: true
+    "@esbuild/freebsd-x64":
+      optional: true
+    "@esbuild/linux-arm":
+      optional: true
+    "@esbuild/linux-arm64":
+      optional: true
+    "@esbuild/linux-ia32":
+      optional: true
+    "@esbuild/linux-loong64":
+      optional: true
+    "@esbuild/linux-mips64el":
+      optional: true
+    "@esbuild/linux-ppc64":
+      optional: true
+    "@esbuild/linux-riscv64":
+      optional: true
+    "@esbuild/linux-s390x":
+      optional: true
+    "@esbuild/linux-x64":
+      optional: true
+    "@esbuild/netbsd-arm64":
+      optional: true
+    "@esbuild/netbsd-x64":
+      optional: true
+    "@esbuild/openbsd-arm64":
+      optional: true
+    "@esbuild/openbsd-x64":
+      optional: true
+    "@esbuild/openharmony-arm64":
+      optional: true
+    "@esbuild/sunos-x64":
+      optional: true
+    "@esbuild/win32-arm64":
+      optional: true
+    "@esbuild/win32-ia32":
+      optional: true
+    "@esbuild/win32-x64":
+      optional: true
+  bin:
+    esbuild: bin/esbuild
+  checksum: 10/9897411732768e652d90fa5dfadae965e8f420d24e5f23fa0604331a1441769e2c7ee4e41ca53e926f1fb51a53af52e01fc9070fdc1a4edf3e9ec9208ee41273
   languageName: node
   linkType: hard
 
@@ -20442,7 +20442,7 @@ __metadata:
     dompurify: "npm:3.4.15"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
-    esbuild: "npm:0.25.8"
+    esbuild: "npm:0.28.1"
     esbuild-loader: "npm:4.3.0"
     esbuild-plugin-browserslist: "npm:^1.0.0"
     eslint: "npm:9.32.0"
