@@ -10,7 +10,7 @@ labels:
     - oss
 title: Cross-dashboard variables
 description: Add variables that can you can use across dashboards, globally or by folder.
-weight: 250
+weight: 150
 ---
 
 {{< docs/public-preview product="Cross-dashboard variables" featureFlag="`grafana.dashboardGlobalVariables`" >}}
