@@ -9,37 +9,40 @@ labels:
     - enterprise
     - oss
 title: Cross-dashboard variables
-description: Add variables that can you can use across dashboards, globally or per folder.
+description: Add variables that can you can use across dashboards, globally or by folder.
 weight: 250
 ---
 
-In addition to adding variables to specific dashboards, you can create _cross-dashboard variables_ that can be used across multiple dashboards, either globally or per folder.
-This ensures that you're use of variables across your organization is consistent and removes the necessity of creating the same variable over and over.
+{{< docs/public-preview product="Cross-dashboard variables" featureFlag="`grafana.dashboardGlobalVariables`" >}}
 
-Cross-dashboard variables are listed per folder on the Variables page:
+Standard variables are specific to the dashboards in which they're created. In contrast, you can use _cross-dashboard variables_, across multiple dashboards.
+This helps ensure consistent use of variables across your organization, as well as removing the need to re-create the same variables every time you add a new dashboard.
+
+You can scope cross-dashboard variables in two ways:
+
+- **Globally**: Variables are available to all dashboards in the organization.
+- **By folder**: Variables are only available to the dashboards in the same folder as the variable.
+
+The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder:
 
 <!-- TODO: screenshot here -->
 
-## How are these applied??
+## Create cross-dashboard variables
 
-Are they automagically added to new dashboards upon creation?
+To create cross-dashboard variables, follow the these steps:
 
-## Add cross-dashboard variables
-
-To add cross-dashboard variables, follow the these steps:
-
-1. Navigate to Dashboards > Variables.
-1. Click + New variable.
-1. Set the following properties:
+1. Navigate to **Dashboards > Variables**.
+1. Click **+ New variable**.
+1. Set the following general variable properties:
 
    | Option | Description |
    | ------ | ----------- |
-   | Folder | Set the scope of the variable. To allow the variable to be used in all of the organization's dashboards, select Dashboards. |
+   | Folder | Set the availability of the variable. To allow the variable to be used in all of the organization's dashboards, select **Dashboards**. |
    | Variable type | Choose a variable type. |
    | Name | Enter a name for the variable. |
    | Label | (Optional) Enter the display name for the variable drop-down list. If you leave this empty, then the variable name is used. |
-   | Description | <p>(Optional) Enter a description of the variable. When you add a description, an info icon appears next to the variable name on the dashboard. Hover your cursor over the icon to display the description.</p><p>Descriptions support links. You can use Markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links—other protocols are displayed as plain text.</p> |
-   | Display | Choose where the variable is displayed:<ul><li>**Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.</li><li>**Above dashboard, label hidden** - The variable drop-down list displays above the dashboard, but without showing the name of the variable.</li><li>**Controls menu** - The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.</li><li>**Hidden** - No variable drop-down list is displayed on the dashboard.</li><ul> |
+   | Description | <p>(Optional) Enter a description of the variable. When you add a description, an info icon appears next to the variable name on the dashboard. Hover your cursor over the icon to display the description.</p><p>Descriptions support links. You can use Markdown-style links like `[link text](https://example.com)`, or paste bare URLs like `https://example.com`. Only `http` and `https` URLs render as clickable links—other protocols display as plain text.</p> |
+   | Display | Choose where the variable is displayed:<ul><li>**Above dashboard**: The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.</li><li>**Above dashboard, label hidden**: The variable drop-down list displays above the dashboard, but without showing the name of the variable.</li><li>**Controls menu**: The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.</li><li>**Hidden**: No variable drop-down list is displayed on the dashboard.</li><ul> |
 
 1. Click one of the following links to complete the steps for adding your selected variable type:
    - [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-query-variable)
@@ -49,3 +52,27 @@ To add cross-dashboard variables, follow the these steps:
    - [Data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-data-source-variable)
    - [Interval](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-an-interval-variable)
    - [Switch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-switch-variable)  
+
+## Add cross-dashboard variables to a dashboard
+
+You can choose which cross-dashboard variables to add dashboards you create.
+Only variables that share the same scope as your dashboard are available for you to select.
+
+To add cross-dashboard variables to a dashboard, follow these steps:
+
+1. Navigate to the dashboard you want to use the variables in or create a new dashboard.
+1. Click **Edit**.
+1. Click the cross-dashboard variables icon in the sidebar:
+
+  <!-- TODO: image here -->
+
+1. Select the variables you want to add to the dashboard:
+
+  <!-- TODO: image here -->
+
+  To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
+
+1. Update variable values as needed.
+1. Click **Save**.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Exit edit**.

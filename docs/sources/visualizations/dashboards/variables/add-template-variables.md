@@ -82,9 +82,9 @@ To create a variable, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign) and select **Variable**.
+1. Click the **Add new element** icon (plus sign) in the sidebar and select **Variable**.
 
-You can also click the add **Add variable** icon at the top of the dashboard (plus sign).
+You can also click the add **Add variable** icon (plus sign) at the top of the dashboard.
 
 1. Choose a variable type from the list.
 
@@ -97,7 +97,7 @@ You can also click the add **Add variable** icon at the top of the dashboard (pl
 
 1. (Optional) In the **Description** field, enter a description of the variable. The description appears as an info icon tooltip next to the variable name on the dashboard.
 
-   Descriptions support links. You can use Markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links—other protocols are displayed as plain text.
+   Descriptions support links. You can use Markdown-style links like `[link text](https://example.com)`, or paste bare URLs like `https://example.com`. Only `http` and `https` URLs render as clickable links—other protocols display as plain text.
 
 1. Choose a **Display** option:
    - **Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.
