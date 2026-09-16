@@ -128,6 +128,48 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
     expect(primary.from - compare.from).toBe(ONE_DAY_MS);
   });
 
+  test('enables comparison on a panel through the time settings drawer', async ({
+    page,
+    gotoDashboardPage,
+    selectors,
+  }) => {
+    const recorder = await mockQueryApi(page, selectors);
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: pinnedRange(RANGE_FROM, RANGE_TO),
+    });
+
+    // 'Compare disabled' is the one fixture panel with no query options at all, so applying the
+    // drawer has to build its panel time range from scratch rather than amend an existing one.
+    await recorder.waitForRequest(['B']);
+
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.menu('Compare disabled'))
+      .click({ force: true });
+    await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menuItems('Time settings')).click();
+
+    const drawer = dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.title('Panel time settings'));
+    const compareSelect = drawer.getByTestId(selectors.components.Drawer.PanelTimeRangeDrawer.timeComparisonSelect);
+    // Seeded from the panel, which has no comparison configured.
+    await expect(compareSelect).toHaveValue('Disabled');
+
+    await compareSelect.click();
+    // The option list renders in a portal, so it is anchored to the listbox rather than the drawer.
+    await page.getByRole('listbox').getByRole('option', { name: 'Day before' }).click();
+    await expect(compareSelect).toHaveValue('Day before');
+
+    await drawer.getByRole('button', { name: 'Apply' }).click();
+
+    const compare = await recorder.waitForRequest(['B-compare']);
+    expect(compare.from).toBe(1756913600000);
+    expect(compare.to).toBe(1756935200000);
+
+    // The panel header gains the time override indicator, which is also the control that reopens
+    // the drawer.
+    const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Compare disabled'));
+    await expect(panel.getByRole('button', { name: 'Compared to day before' })).toBeVisible();
+  });
+
   test.describe('asymmetric data', () => {
     test('renders comparison series in the visible range when the primary query returns no data (#132370)', async ({
       page,

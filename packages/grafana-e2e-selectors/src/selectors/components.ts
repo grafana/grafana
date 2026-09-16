@@ -777,6 +777,11 @@ export const versionedComponents = {
         '10.4.0': 'data-testid drawer subtitle',
       },
     },
+    PanelTimeRangeDrawer: {
+      timeComparisonSelect: {
+        '13.3.0': 'data-testid Panel time range drawer time comparison select',
+      },
+    },
     DashboardSaveDrawer: {
       saveButton: {
         '11.1.0': 'data-testid Save dashboard drawer button',
