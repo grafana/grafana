@@ -112,6 +112,19 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
+		// Every downstream authorization decision switches on spec.Action, but
+		// job persistence (mutateJobAction) instead derives the *stored* action
+		// from whichever options field is populated - if a caller declares one
+		// action while also populating a different action's options (e.g.
+		// Action: "delete" with a non-nil Pull), that mismatch would authorize
+		// the declared action but execute the smuggled one. Reject it here,
+		// before any authorization runs, so exactly one action's options can
+		// ever be in play and it always matches spec.Action.
+		if err := validateSingleJobAction(spec); err != nil {
+			responder.Error(err)
+			return
+		}
+
 		if jobs.IsOrphanCleanupAction(spec.Action) {
 			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
 			return
@@ -302,6 +315,49 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 	responder.Object(http.StatusAccepted, job)
 }
 
+// validateSingleJobAction rejects a spec that populates an options field for
+// an action other than spec.Action, or populates more than one action's
+// options field at once. mutateJobAction (persistentstore.go) derives the
+// *stored* action from whichever of these fields is set, independently of
+// spec.Action, so leaving a mismatch unchecked would let a request be
+// authorized against the declared action while a different, unauthorized
+// action's options ride along and take over at persistence time.
+//
+// Actions with no options field (e.g. the orphan-cleanup actions) are valid
+// with none of these set, so an empty result is not an error - only an
+// action/options mismatch or multiple populated fields are.
+func validateSingleJobAction(spec provisioning.JobSpec) error {
+	populated := map[provisioning.JobAction]bool{
+		provisioning.JobActionPullRequest:       spec.PullRequest != nil,
+		provisioning.JobActionPush:              spec.Push != nil,
+		provisioning.JobActionPull:              spec.Pull != nil,
+		provisioning.JobActionMigrate:           spec.Migrate != nil,
+		provisioning.JobActionDelete:            spec.Delete != nil,
+		provisioning.JobActionMove:              spec.Move != nil,
+		provisioning.JobActionFixFolderMetadata: spec.FixFolderMetadata != nil,
+		provisioning.JobActionTest:              spec.Test != nil,
+	}
+
+	var found []provisioning.JobAction
+	for action, isSet := range populated {
+		if isSet {
+			found = append(found, action)
+		}
+	}
+
+	switch len(found) {
+	case 0:
+		return nil
+	case 1:
+		if found[0] != spec.Action {
+			return apierrors.NewBadRequest(fmt.Sprintf("spec.action %q does not match the populated %q options", spec.Action, found[0]))
+		}
+		return nil
+	default:
+		return apierrors.NewBadRequest("job spec must set options for at most one action")
+	}
+}
+
 // authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
 	if spec.Action == provisioning.JobActionPullRequest {
@@ -327,18 +383,43 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 
 	switch spec.Action {
 	case provisioning.JobActionPush:
+		// The jobs subresource no longer gates job creation on provisioning.jobs:create
+		// (see authorizeRepositorySubresource), so push must re-require Editor here.
+		// authorizePushJob only checks read permission, which is too weak on its own.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizePushJob(ctx, repo, cfg)
 	case provisioning.JobActionMigrate:
+		// Same as push: migrate must stay Editor-only.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
 		return c.authorizeMigrateJob(ctx, repo, cfg, spec)
 	case provisioning.JobActionDelete:
-		if spec.Delete != nil {
-			return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources)
+		// Unlike push/migrate/fixFolderMetadata, delete has no unconditional
+		// Editor check above - its authorization *is* the per-path/resource
+		// checks in authorizeDeleteJob. A nil Delete must be rejected outright
+		// rather than silently falling through as authorized: the job would
+		// still be queued and only fail later, at the worker, having skipped
+		// authorization entirely.
+		if spec.Delete == nil {
+			return apierrors.NewBadRequest("delete jobs require spec.delete options")
 		}
+		return c.authorizeDeleteJob(ctx, repo, cfg, spec.Delete.Paths, spec.Delete.Resources, spec.Delete.Ref, true)
 	case provisioning.JobActionMove:
-		if spec.Move != nil {
-			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
+		// See the identical reasoning in the Delete case above.
+		if spec.Move == nil {
+			return apierrors.NewBadRequest("move jobs require spec.move options")
 		}
-	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
+		return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
+	case provisioning.JobActionFixFolderMetadata:
+		// fixFolderMetadata has no path/resource-level checks of its own, so it must
+		// stay Editor-only now that job creation isn't gated on jobs:create up front.
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionTest:
 		// Read-only / no-op operations don't require pre-flight resource authorization.
 		// Pull and test are authorized inline in handleCreateJob (admin-only).
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
@@ -346,6 +427,19 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		// and never reach authorizeJob.
 	}
 	return nil
+}
+
+// authorizeEditorJob checks provisioning.jobs:create with the Editor fallback role.
+// Used for job actions that have no path/resource-level authorization of their own
+// and so must stay Editor-only now that the jobs subresource lets any authenticated
+// user attempt job creation (see authorizeRepositorySubresource).
+func (c *jobsConnector) authorizeEditorJob(ctx context.Context, cfg *provisioning.Repository) error {
+	return c.access.WithFallbackRole(identity.RoleEditor).Check(ctx, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     provisioning.GROUP,
+		Resource:  provisioning.JobResourceInfo.GetName(),
+		Namespace: cfg.Namespace,
+	}, "")
 }
 
 // newJobAuthorizer creates an Authorizer for the given repository. Returns an error
@@ -362,23 +456,61 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	return resources.NewAuthorizer(cfg, reader, c.access, clients, c.folderMetadataEnabled), nil
 }
 
+// wrapAuthzError adds context to an authorization decision error while preserving
+// its HTTP status. fmt.Errorf's %w wrapping breaks status-code propagation here:
+// the apiserver extracts the response status via a type switch on the concrete
+// error type (k8s.io/apiserver/pkg/endpoints/handlers/responsewriters.ErrorToAPIStatus),
+// not errors.As, so a %w-wrapped apierrors.APIStatus (e.g. Forbidden) would
+// otherwise render as a 500 Internal Server Error instead of its real status.
+func wrapAuthzError(err error, format string, args ...any) error {
+	msg := fmt.Sprintf(format, args...)
+	if statusErr, ok := err.(apierrors.APIStatus); ok {
+		status := statusErr.Status()
+		status.Message = fmt.Sprintf("%s: %s", msg, status.Message)
+		return &apierrors.StatusError{ErrStatus: status}
+	}
+	return fmt.Errorf("%s: %w", msg, err)
+}
+
 // authorizeResourceRefs fetches each referenced resource and checks that the user
-// has the given verb permission on it. Resources that no longer exist are skipped.
-func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace string, refs []provisioning.ResourceRef, verb, action string) error {
+// has the given verb permission on it. Refs that no longer exist are skipped.
+//
+// When requireManaged is true, refs that aren't managed by repoName are also
+// skipped rather than authorized - a ResourceRef only carries a name/kind/group,
+// with nothing tying it to the repository the job was created against, so a ref
+// could otherwise name a resource the caller controls in a different repository
+// whose file path happens to collide with a protected path in this one. Skipping
+// mismatched refs here mirrors the same check the worker applies when it later
+// resolves the ref to a path (RepositoryResources.FindResourcePath). Pass false
+// only for callers whose resources are legitimately unmanaged by this repository
+// (e.g. a selective migration's export inputs) and whose execution path doesn't
+// resolve refs to this repository's file paths, so the collision this guards
+// against doesn't apply.
+//
+// Returns the set of distinct GVRs among refs that were actually found, owned
+// (if required), and authorized. Callers use this to detect a request that named
+// only unusable resources, which must not be treated as vacuously authorized
+// (see authorizeDeleteJob/authorizeMoveJob), and to restrict any further
+// target-folder check to only the kinds that will actually be acted on (see
+// authorizeMoveJob's call to authorizeCreateInFolder) - a ref skipped here is
+// also skipped by the worker, so checking its target permission would
+// incorrectly deny requests that mix a usable ref with one that's ignored.
+func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer resources.Authorizer, namespace, repoName string, refs []provisioning.ResourceRef, verb, action string, requireManaged bool) (map[schema.GroupVersionResource]bool, error) {
 	if len(refs) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	clients, err := c.clients.Clients(ctx, namespace)
 	if err != nil {
-		return fmt.Errorf("create clients for authorization: %w", err)
+		return nil, fmt.Errorf("create clients for authorization: %w", err)
 	}
 
+	found := map[schema.GroupVersionResource]bool{}
 	for _, ref := range refs {
 		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
 		client, gvr, err := clients.ForKind(ctx, gvk)
 		if err != nil {
-			return fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
+			return found, fmt.Errorf("get client for %s/%s: %w", ref.Group, ref.Kind, err)
 		}
 
 		obj, err := client.Get(ctx, ref.Name, metav1.GetOptions{})
@@ -386,12 +518,18 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			return fmt.Errorf("authorize %s resource %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return found, wrapAuthzError(err, "authorize %s resource %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
 
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
-			return fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+			return found, fmt.Errorf("get metadata for %s/%s/%s: %w", ref.Group, ref.Kind, ref.Name, err)
+		}
+
+		if requireManaged {
+			if manager, ok := meta.GetManagerProperties(); !ok || manager.Kind != utils.ManagerKindRepo || manager.Identity != repoName {
+				continue
+			}
 		}
 
 		parsed := &resources.ParsedResource{
@@ -401,10 +539,11 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 			GVR:      gvr,
 		}
 		if err := authorizer.AuthorizeResource(ctx, parsed, verb); err != nil {
-			return fmt.Errorf("authorize %s %s/%s/%s: %w", action, ref.Group, ref.Kind, ref.Name, err)
+			return found, wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 		}
+		found[gvr] = true
 	}
-	return nil
+	return found, nil
 }
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
@@ -490,8 +629,12 @@ func (c *jobsConnector) authorizeMigrateJob(ctx context.Context, repo repository
 			// Export + pull (takeover) only; nothing is deleted from the instance.
 			return nil
 		case selective:
-			// Deletes only the chosen resources.
-			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources)
+			// Deletes only the chosen resources. These are intentionally unmanaged
+			// by this repository (the migration exports them, then CleanResources
+			// removes only unmanaged resources), so requireManaged must be false
+			// here - unlike a real delete/move job, requiring manager ownership
+			// would reject every legitimate selective migration input.
+			return c.authorizeDeleteJob(ctx, repo, cfg, nil, spec.Migrate.Resources, "", false)
 		default:
 			// A full branch migration deletes every exported resource.
 			return c.authorizeDeleteAllSupported(ctx, repo, cfg)
@@ -514,7 +657,40 @@ func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo re
 }
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
-func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef) error {
+//
+// A delete job with no paths and no resources isn't a no-op: when Ref is empty,
+// the worker follows an empty delete with a full non-incremental sync (the only
+// way it supports removing an entire folder), which is the same effect as the
+// admin-only manual pull. Without this check, that full-sync side effect would be
+// reachable by anyone who can pass the per-path/resource checks below (trivially,
+// since there are none to check), rather than being gated like a real pull.
+//
+// requireManaged is threaded through to authorizeResourceRefs - see its doc.
+func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef, ref string, requireManaged bool) error {
+	if len(paths) == 0 && len(resources) == 0 {
+		return apierrors.NewBadRequest("delete jobs must target at least one path or resource")
+	}
+
+	// Neither check below is ref-aware: AuthorizeDeleteByPath reads file/folder
+	// identity from the repository's configured branch (ProvisioningAuthorizer
+	// has no concept of ref), and authorizeResourceRefs authorizes a resource
+	// ref's *current* Grafana state - but the worker resolves that same ref to
+	// its current sourcePath and deletes that path from opts.Ref. If the
+	// request targets a different branch, either path can diverge from what
+	// actually gets deleted there under the provisioning identity, so also
+	// require Editor - the same protection this had before these checks became
+	// reachable by non-Editors. This is additive, not a substitute: it must not
+	// return early on success, since that would skip the per-path/resource
+	// checks below entirely and let any Editor (including one with a
+	// restricted custom role) act on paths they otherwise have no permission
+	// on. Applies regardless of whether the target came from paths or
+	// resources.
+	if ref != "" && ref != cfg.Branch() {
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
+	}
+
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -522,15 +698,47 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 	for _, path := range paths {
 		if err := authorizer.AuthorizeDeleteByPath(ctx, path); err != nil {
-			return fmt.Errorf("authorize delete %q: %w", path, err)
+			return wrapAuthzError(err, "authorize delete %q", path)
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, resources, utils.VerbDelete, "delete")
+	found, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, resources, utils.VerbDelete, "delete", requireManaged)
+	if err != nil {
+		return err
+	}
+	// Resources that don't exist, or aren't managed by this repository, are skipped
+	// above rather than rejected outright (matching how the worker resolves them
+	// later), so a request naming only such resources must still be rejected here -
+	// otherwise it would authorize nothing and fall through to the same trivial
+	// success the empty-target check above guards against.
+	if len(paths) == 0 && len(found) == 0 {
+		return apierrors.NewBadRequest("delete jobs must target at least one existing path or resource")
+	}
+	return nil
 }
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
+//
+// Like delete, an empty Paths+Resources move isn't a no-op given how the worker
+// handles an empty ref, so it's rejected outright rather than trivially authorized.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
+	if len(opts.Paths) == 0 && len(opts.Resources) == 0 {
+		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
+	}
+
+	// See the identical guard in authorizeDeleteJob: neither the path-based nor
+	// the resource-ref-based check is ref-aware, so a request targeting a
+	// different branch than configured also requires Editor, regardless of
+	// whether the target came from paths or resources. This is additive - it
+	// must not return early on success, or it would skip the per-path/resource
+	// checks below and let any Editor act on paths they otherwise have no
+	// permission on.
+	if opts.Ref != "" && opts.Ref != cfg.Branch() {
+		if err := c.authorizeEditorJob(ctx, cfg); err != nil {
+			return err
+		}
+	}
+
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
@@ -538,11 +746,39 @@ func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Re
 
 	for _, path := range opts.Paths {
 		if err := authorizer.AuthorizeMoveByPath(ctx, path, opts.TargetPath); err != nil {
-			return fmt.Errorf("authorize move %q: %w", path, err)
+			return wrapAuthzError(err, "authorize move %q", path)
 		}
 	}
 
-	return c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, opts.Resources, utils.VerbUpdate, "move")
+	foundGVRs, err := c.authorizeResourceRefs(ctx, authorizer, cfg.Namespace, cfg.Name, opts.Resources, utils.VerbUpdate, "move", true)
+	if err != nil {
+		return err
+	}
+	if len(opts.Paths) == 0 && len(foundGVRs) == 0 {
+		return apierrors.NewBadRequest("move jobs must target at least one existing path or resource")
+	}
+
+	// authorizeResourceRefs only checks update on the source above. Path-based moves
+	// also require create on the target (AuthorizeMoveByPath), so resource-based moves
+	// need the equivalent target-folder check to avoid moving into a folder the user
+	// can't create in. Only check the GVRs that were actually found and authorized -
+	// a skipped ref is also skipped by the worker, so its target permission is moot.
+	return c.authorizeCreateInFolder(ctx, authorizer, foundGVRs, opts.TargetPath)
+}
+
+// authorizeCreateInFolder checks create permission on the destination folder for
+// each GVR in gvrs, mirroring the target-folder check that AuthorizeMoveByPath
+// already performs for path-based moves. There's no source file path to preserve
+// a basename from for resource-ref moves - the worker resolves each ref to a path
+// and then joins it into targetPath the same way, so the folder to check create
+// on is targetPath directly (see AuthorizeCreateInFolder on the Authorizer).
+func (c *jobsConnector) authorizeCreateInFolder(ctx context.Context, authorizer resources.Authorizer, gvrs map[schema.GroupVersionResource]bool, targetPath string) error {
+	for gvr := range gvrs {
+		if err := authorizer.AuthorizeCreateInFolder(ctx, gvr, targetPath); err != nil {
+			return wrapAuthzError(err, "authorize move target %q", targetPath)
+		}
+	}
+	return nil
 }
 
 // ValidUUID ensures the ID is valid for a blob.

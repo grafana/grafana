@@ -80,7 +80,16 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 	return r.lister.List(ctx, r.namespace, r.repoName)
 }
 
-// FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
+// FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind.
+//
+// A resource reference (name/kind/group) carries nothing tying it to a specific
+// repository, so name alone could match a resource actually managed by a
+// different repository. Since the caller applies whatever path this returns to
+// r.repoName under the provisioning service identity, resolving a path for a
+// resource this repository doesn't manage would let a request against one
+// repository act on a same-path resource in another. Guard against that by
+// requiring the resource's manager identity to match r.repoName, treating a
+// mismatch the same as not found.
 func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
 	// Use ForKind to get the dynamic client for this resource type
 	client, gvr, err := r.clients.ForKind(ctx, gvk)
@@ -95,6 +104,14 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 			return "", &ResourceNotFoundError{Group: gvr.Group, Resource: gvr.Resource, Name: name}
 		}
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", fmt.Errorf("get metadata for resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
+	}
+	if manager, ok := meta.GetManagerProperties(); !ok || manager.Kind != utils.ManagerKindRepo || manager.Identity != r.repoName {
+		return "", &ResourceNotFoundError{Group: gvr.Group, Resource: gvr.Resource, Name: name}
 	}
 
 	// Extract the source path from annotations
