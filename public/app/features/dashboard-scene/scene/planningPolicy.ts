@@ -22,13 +22,10 @@
  *    trigger, is there a `PlanningAction` that names it? (Related but not an instance of this:
  *    `settings/VariablesEditView.tsx`, the legacy dashboard-settings "Variables" tab, mutates the
  *    variable set directly through `SceneVariableSet.setState()` rather than through
- *    `add-variable`/`remove-variable`/`rename-variable`/`move-variable`'s chokepoints below. That
- *    is not currently a gap: the settings view can't be open during planning at all — clearing
- *    `editview` when planning starts closes it generically, for every settings view, not just
- *    this one — and even in the instant before that fires, there is no guard for it to bypass,
- *    since those four actions are permitted either way. Worth keeping as a structural note rather
- *    than deleting, though: it is a second, independent implementation of an already-permitted
- *    action, and it won't hear about it if that policy is ever tightened again.)
+ *    `add-variable`/`remove-variable`/`rename-variable`/`move-variable`'s chokepoints below. This
+ *    is currently inert rather than a gap, because T13 closes the settings view before planning
+ *    starts and T11's reversal permits these actions anyway — if either of those changes, this
+ *    second implementation is the first place to check.)
  *
  *  - Modelled and deliberately allowed: a `PlanningAction` that exists and is intentionally
  *    absent from `DENIED_WHILE_PLANNING`, because the feature's own documented capabilities say
