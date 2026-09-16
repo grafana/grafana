@@ -315,6 +315,10 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
+	// EmbeddingConfig is shared with the manifest watcher; consumers must read
+	// it after the initial poll and retain the registry to observe later reloads.
+	EmbeddingConfig *EmbeddingConfigRegistry
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
