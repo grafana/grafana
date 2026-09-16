@@ -13,6 +13,10 @@ interface Props {
 export function EvaluationMatches({ matches }: Props) {
   const styles = useStyles2(getStyles);
 
+  if (matches.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={0.5}>

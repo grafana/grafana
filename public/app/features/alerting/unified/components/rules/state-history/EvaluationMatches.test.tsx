@@ -29,4 +29,16 @@ describe('EvaluationMatches', () => {
     expect(screen.getByText('host=server-1')).toBeInTheDocument();
     expect(screen.getByText('value: 1')).toBeInTheDocument();
   });
+
+  it('does not render a grid row when matches are empty', () => {
+    const { container } = render(
+      <>
+        <span>State transition</span>
+        <EvaluationMatches matches={[]} />
+      </>
+    );
+
+    expect(screen.getByText('State transition')).toBeInTheDocument();
+    expect(container.childElementCount).toBe(1);
+  });
 });
