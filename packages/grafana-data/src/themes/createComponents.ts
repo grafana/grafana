@@ -36,7 +36,7 @@ const ThemeTableColorsInputSchema = z.object({
 type InferredThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
 
 type ThemeTableColors = Omit<InferredThemeTableColors, 'rowSelected'> & {
-  /** @deprecated Use `theme.colors.action.selected`. This property will be removed in Grafana 14. */
+  /** @deprecated Use `theme.components.table.rowSelectedBackground`. This property will be removed in Grafana 14. */
   rowSelected: string;
 };
 
