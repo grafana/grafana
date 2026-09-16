@@ -395,6 +395,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       textColor = color.contrastText;
       hoverTextColor = color.contrastText;
     }
+
+    if ((color.name === 'error' || color.name === 'success') && fill === 'solid') {
+      hoverBackgroundColor = color.border;
+    }
   }
 
   return {
