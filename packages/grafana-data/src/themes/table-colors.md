@@ -25,6 +25,10 @@ Use the row hover background for plain and striped rows. Row selection comes fro
 will be removed in Grafana 14. It remains available for existing TableRT consumers and
 custom themes during the deprecation period.
 
+`components.table.rowSelected` is deprecated in favor of `colors.action.selected` and
+will be removed in Grafana 14. It remains available for existing TableRT consumers and
+custom themes during the deprecation period.
+
 ## Inheritance and overrides
 
 Defaults are built after resolving the theme's generic colors. The current themes use
