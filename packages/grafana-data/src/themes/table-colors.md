@@ -11,6 +11,7 @@ palette.
 | ---------------------------- | --------------------------------------------------------------------------- |
 | `headerBackground`           | Header surface                                                              |
 | `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
+| `rowHoverSurface`            | Solid hover surface for an unstriped row                                    |
 | `rowHoverOverlay`            | Translucent tint over a row's existing background                           |
 | `rowSelectedBackground`      | Selected row surface                                                        |
 | `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
@@ -18,10 +19,9 @@ palette.
 
 Background surfaces must be opaque where they hide scrolling or overflowing content.
 
-The hover overlay retains the distinction between striped and plain rows and also
-works over selected rows and transparent-panel backing surfaces. Consumers can
-composite it onto a row surface when an opaque hover color is required, and must
-apply it without covering field-configured cell colors or nested tables.
+Use the solid hover surface for plain rows and the hover overlay when the underlying
+surface must remain visible, such as striped or selected rows. Consumers must apply
+the overlay without covering field-configured cell colors or nested tables.
 
 ## Inheritance and overrides
 
