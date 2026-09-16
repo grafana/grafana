@@ -1777,14 +1777,17 @@
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
         "templates-label": "Notification templates",
         "templates-remove": "Remove {{name}}",
-        "upload": "Upload YAML file",
+        "upload": "Drop YAML file here or click to upload",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
-        "yaml-file": "Alertmanager config YAML"
+        "yaml-desc": "Accepted file types: {{extensions}}",
+        "yaml-file": "Alertmanager config YAML",
+        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-remove": "Remove {{name}}"
       },
       "step2": {
         "datasource": "Data source",
