@@ -3,12 +3,34 @@ import { t } from '@grafana/i18n';
 import { joinPath, splitPath } from '../components/utils/path';
 
 /**
- * Recognized folder documentation conventions, ordered the way GitHub surfaces
- * them as tabs above a repository's README: README, Contributing, Security.
- * These always sort ahead of any other markdown files in the folder and get a
- * friendly, localized tab label instead of their raw file name.
+ * Recognized folder documentation conventions, in the order GitHub surfaces them
+ * as tabs above a repository's README. Key order is tab order. These always sort
+ * ahead of any other markdown files in the folder and get a friendly, localized
+ * tab label instead of their raw file name.
+ *
+ * File names are matched case-insensitively and reused when creating the file
+ * from the empty state. Only `.md` is recognized: the provisioning files API
+ * serves no other doc extension.
  */
-export type FolderDocKey = 'readme' | 'contributing' | 'security';
+const FOLDER_DOC_CONVENTIONS = {
+  readme: { fileName: 'README.md', label: () => t('browse-dashboards.readme.tab-readme', 'README') },
+  contributing: {
+    fileName: 'CONTRIBUTING.md',
+    label: () => t('browse-dashboards.readme.tab-contributing', 'Contributing'),
+  },
+  security: { fileName: 'SECURITY.md', label: () => t('browse-dashboards.readme.tab-security', 'Security') },
+} as const;
+
+export type FolderDocKey = keyof typeof FOLDER_DOC_CONVENTIONS;
+
+function isFolderDocKey(key: string): key is FolderDocKey {
+  return key in FOLDER_DOC_CONVENTIONS;
+}
+
+const FOLDER_DOC_KEYS = Object.keys(FOLDER_DOC_CONVENTIONS).filter(isFolderDocKey);
+
+/** The README is the default tab and drives the empty state. */
+const README = FOLDER_DOC_CONVENTIONS.readme;
 
 /**
  * Query param that selects a folder doc tab by its file name (e.g.
@@ -16,22 +38,6 @@ export type FolderDocKey = 'readme' | 'contributing' | 'security';
  * folder can deep-link straight to the right tab.
  */
 export const FOLDER_DOC_TAB_PARAM = 'docTab';
-
-interface FolderDocConvention {
-  key: FolderDocKey;
-  /** File name matched case-insensitively; also used when creating the file from the empty state. */
-  fileName: string;
-}
-
-// Only `.md` is recognized: the provisioning files API serves no other doc extension.
-const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
-  { key: 'readme', fileName: 'README.md' },
-  { key: 'contributing', fileName: 'CONTRIBUTING.md' },
-  { key: 'security', fileName: 'SECURITY.md' },
-];
-
-/** The README convention is the default tab and drives the empty state. */
-const README_CONVENTION = FOLDER_DOC_CONVENTIONS[0];
 
 export interface FolderDoc {
   /** Set when the file is a recognized convention; undefined for other markdown. */
@@ -42,25 +48,9 @@ export interface FolderDoc {
   fileName: string;
 }
 
-/**
- * Localized tab label for a recognized convention. Uses a switch of literal
- * `t()` calls so the strings are statically extractable — a dynamic `t(key)`
- * would not be.
- */
-function getFolderDocLabel(key: FolderDocKey): string {
-  switch (key) {
-    case 'readme':
-      return t('browse-dashboards.readme.tab-readme', 'README');
-    case 'contributing':
-      return t('browse-dashboards.readme.tab-contributing', 'Contributing');
-    case 'security':
-      return t('browse-dashboards.readme.tab-security', 'Security');
-  }
-}
-
 /** Tab label for any doc: the convention label, or the file name sans extension. */
 export function getDocTabLabel(doc: FolderDoc): string {
-  return doc.key ? getFolderDocLabel(doc.key) : stripMarkdownExtension(doc.fileName);
+  return doc.key ? FOLDER_DOC_CONVENTIONS[doc.key].label() : stripMarkdownExtension(doc.fileName);
 }
 
 /**
@@ -84,10 +74,11 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
   const docs: FolderDoc[] = [];
   const usedPaths = new Set<string>();
 
-  for (const convention of FOLDER_DOC_CONVENTIONS) {
-    const hit = inDir.find((file) => file.fileName.toLowerCase() === convention.fileName.toLowerCase());
+  for (const key of FOLDER_DOC_KEYS) {
+    const conventionName = FOLDER_DOC_CONVENTIONS[key].fileName.toLowerCase();
+    const hit = inDir.find((file) => file.fileName.toLowerCase() === conventionName);
     if (hit) {
-      docs.push({ key: convention.key, path: hit.path, fileName: hit.fileName });
+      docs.push({ key, path: hit.path, fileName: hit.fileName });
       usedPaths.add(hit.path);
     }
   }
@@ -103,12 +94,8 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
     docs.push({ path: file.path, fileName: file.fileName });
   }
 
-  if (!docs.some((doc) => doc.key === README_CONVENTION.key)) {
-    docs.unshift({
-      key: README_CONVENTION.key,
-      path: joinPath(dir, README_CONVENTION.fileName),
-      fileName: README_CONVENTION.fileName,
-    });
+  if (!docs.some((doc) => doc.key === 'readme')) {
+    docs.unshift({ key: 'readme', path: joinPath(dir, README.fileName), fileName: README.fileName });
   }
 
   return docs;

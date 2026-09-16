@@ -224,7 +224,7 @@ export function BrowseView({
             }
           />
         )}
-        {showReadme && <FolderReadmePanel key={folderUID} folderUID={folderUID} />}
+        {showReadme && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }

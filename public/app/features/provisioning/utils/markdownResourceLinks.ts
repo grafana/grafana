@@ -1,3 +1,4 @@
+import { urlUtil } from '@grafana/data';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { splitPath } from '../components/utils/path';
@@ -77,7 +78,7 @@ function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: st
     return undefined;
   }
 
-  return `${resourceKindInfos.folder.getRoute(folder.name)}?${FOLDER_DOC_TAB_PARAM}=${encodeURIComponent(filename)}`;
+  return urlUtil.renderUrl(resourceKindInfos.folder.getRoute(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {

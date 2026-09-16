@@ -36,8 +36,8 @@ interface Props {
  * Security first, then any other markdown. The README renders by default; its
  * pencil opens the host editor.
  *
- * Mount with `key={folderUID}` so switching folders remounts the panel instead
- * of carrying per-folder state (analytics, tab selection) across.
+ * Switching folders remounts the content so per-folder state (analytics, tab
+ * selection) never carries across.
  *
  * Returns null when the `provisioning.readmes` toggle is off or a loaded folder
  * isn't provisioned; shows a spinner while loading.
@@ -47,7 +47,7 @@ export function FolderReadmePanel({ folderUID }: Props) {
   if (!provisioningReadmesEnabled) {
     return null;
   }
-  return <FolderReadmePanelContent folderUID={folderUID} />;
+  return <FolderReadmePanelContent key={folderUID} folderUID={folderUID} />;
 }
 
 function FolderReadmePanelContent({ folderUID }: Props) {
