@@ -8,6 +8,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { useProvisionedFolderFormData } from './useProvisionedFolderFormData';
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 
@@ -77,6 +78,43 @@ describe('useProvisionedFolderFormData', () => {
 
       expect(result.current.isReadOnlyRepo).toBe(true);
       expect(result.current.isMissingRepo).toBe(false);
+    });
+  });
+
+  describe('root-level lookup', () => {
+    it('falls back to a folderless or instance repository when there is no folder to match on', () => {
+      setupRepoView({ repository: repoView({ target: 'folderless' }) });
+
+      const { result } = renderFolderFormData({ folderUid: undefined, title: 'My Team' });
+
+      expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+        folderName: undefined,
+        includeFolderless: true,
+      });
+      // No parent folder means no source path, so the folder is committed at the repository root
+      expect(result.current.initialValues).toMatchObject({ repo: 'my-repo', path: '' });
+    });
+
+    it('does not fall back for a real folderUid, which is not managed by a folderless repository', () => {
+      setupRepoView({ repository: repoView() });
+
+      renderFolderFormData({ folderUid: 'folder-1' });
+
+      expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+        folderName: 'folder-1',
+        includeFolderless: false,
+      });
+    });
+
+    it('treats the general folder uid as the root', () => {
+      setupRepoView({ repository: repoView({ target: 'folderless' }) });
+
+      renderFolderFormData({ folderUid: 'general' });
+
+      expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+        folderName: undefined,
+        includeFolderless: true,
+      });
     });
   });
 

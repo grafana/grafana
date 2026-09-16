@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, Menu, Spinner, Stack, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppChrome/QuickAdd/utils';
@@ -18,9 +18,10 @@ import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgr
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
+import { FormLoadingErrorAlert } from 'app/features/provisioning/components/Dashboards/FormLoadingErrorAlert';
+import { type SaveTarget, SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { useFolderCreateRepositoryView } from 'app/features/provisioning/hooks/useFolderCreateRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
   getImportPhrase,
@@ -60,7 +61,6 @@ export default function CreateNewButton({
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const notifyApp = useAppNotification();
-  const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
@@ -211,15 +211,11 @@ export default function CreateNewButton({
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
-            <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
-          ) : (
-            <NewFolderForm
-              onConfirm={onCreateFolder}
-              onCancel={() => setShowNewFolderDrawer(false)}
-              parentFolder={parentFolder}
-            />
-          )}
+          <NewFolderDrawerContent
+            parentFolder={parentFolder}
+            onDismiss={() => setShowNewFolderDrawer(false)}
+            onCreateDatabaseFolder={onCreateFolder}
+          />
         </Drawer>
       )}
       {showGenerateDashboardPrompt && (
@@ -232,6 +228,43 @@ export default function CreateNewButton({
         </Suspense>
       )}
     </>
+  );
+}
+
+interface NewFolderDrawerContentProps {
+  parentFolder?: FolderDTO;
+  onDismiss: () => void;
+  onCreateDatabaseFolder: (folderName: string, teamOwnerRefs?: OwnerReference[]) => void;
+}
+
+/**
+ * Body of the "New folder" drawer. Its own component so the Git/database choice is dropped when the
+ * drawer unmounts: held in CreateNewButton it would survive every close path and skip the choice the
+ * next time the drawer is opened.
+ */
+function NewFolderDrawerContent({ parentFolder, onDismiss, onCreateDatabaseFolder }: NewFolderDrawerContentProps) {
+  const view = useFolderCreateRepositoryView(parentFolder);
+  const [chosenTarget, setChosenTarget] = useState<SaveTarget | undefined>(undefined);
+  const target: SaveTarget =
+    view.canChooseTarget && chosenTarget ? chosenTarget : view.isProvisioned ? 'repository' : 'database';
+
+  // Rendering a form before the lookup settles would swap it out from under anything already typed
+  if (view.isLoading) {
+    return <Spinner />;
+  }
+
+  return (
+    <Stack direction="column" gap={2}>
+      {/* The database form below is a fallback, not a decision, so say why the repository is missing */}
+      {view.isError && <FormLoadingErrorAlert error={view.error} />}
+      {target === 'repository' ? (
+        <NewProvisionedFolderForm parentFolder={parentFolder} onDismiss={onDismiss} source="browse-dashboards" />
+      ) : (
+        <NewFolderForm parentFolder={parentFolder} onConfirm={onCreateDatabaseFolder} onCancel={onDismiss} />
+      )}
+      {/* Outside the form, so a read-only or dead-ended repository still leaves a way to the database */}
+      {view.canChooseTarget && <SaveTargetSwitch resource="folder" target={target} onChange={setChosenTarget} />}
+    </Stack>
   );
 }
 

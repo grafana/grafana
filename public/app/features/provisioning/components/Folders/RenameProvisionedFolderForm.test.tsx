@@ -110,6 +110,8 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
+  isOrphaned: false,
+  isError: false,
 };
 
 function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {

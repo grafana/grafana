@@ -151,6 +151,8 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
+  isOrphaned: false,
+  isError: false,
 };
 
 function setup(

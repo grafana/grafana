@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, Text } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -34,12 +34,23 @@ interface FormProps extends Props {
   canPushToConfiguredBranch: boolean;
   folder?: Folder;
 }
+/** Entry point the create is reported from, so each surface stays visible in analytics */
+export type NewProvisionedFolderSource = 'new-folder-form' | 'browse-dashboards';
+
 interface Props {
   parentFolder?: FolderDTO;
   onDismiss?: () => void;
+  source?: NewProvisionedFolderSource;
 }
 
-function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  repository,
+  canPushToConfiguredBranch,
+  folder,
+  onDismiss,
+  source = 'new-folder-form',
+}: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [, updateUrlParams] = useUrlParams();
@@ -79,6 +90,21 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
 
   const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
+  // The same value doSave commits under, so the destination shown cannot drift from the destination used
+  const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
+  const repoLabel = repository?.title || repository?.name;
+  const destination = basePath
+    ? t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-path',
+        'Will be created in {{repository}} under {{path}}',
+        { repository: repoLabel, path: basePath }
+      )
+    : t(
+        'browse-dashboards.new-provisioned-folder-form.text-destination-root',
+        'Will be created at the root of {{repository}}',
+        { repository: repoLabel }
+      );
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
@@ -154,7 +180,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       return;
     }
 
-    const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
     const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
@@ -172,7 +197,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
-      source: 'new-folder-form',
+      source,
     });
 
     try {
@@ -225,6 +250,12 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             />
           </Field>
 
+          {repoLabel && (
+            <Text variant="bodySmall" color="secondary">
+              {destination}
+            </Text>
+          )}
+
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew
@@ -271,16 +302,31 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   );
 }
 
-export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
-    useProvisionedFolderFormData({
-      folderUid: parentFolder?.uid,
-      title: '', // Empty title for new folders
-    });
+export function NewProvisionedFolderForm({ parentFolder, onDismiss, source }: Props) {
+  const {
+    canPushToConfiguredBranch,
+    repository,
+    folder,
+    initialValues,
+    isReadOnlyRepo,
+    isMissingRepo,
+    isLoading,
+    isOrphaned,
+    isError,
+    error,
+  } = useProvisionedFolderFormData({
+    folderUid: parentFolder?.uid,
+    title: '', // Empty title for new folders
+  });
 
   return (
     <ProvisionedFormGate
       isLoading={isLoading}
+      // A deleted or unreachable repository is a dead end of its own, not the same as a location
+      // that was never provisioned, so each gets its own notice rather than the generic banner
+      isOrphaned={isOrphaned}
+      isError={isError}
+      error={error}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
       readOnlyMessage={t(
@@ -292,6 +338,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
         <FormContent
           parentFolder={parentFolder}
           onDismiss={onDismiss}
+          source={source}
           initialValues={initialValues}
           repository={repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}

@@ -11,7 +11,11 @@ import {
   shouldEnforceBranchTemplate,
 } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  getFolderRepositoryArgs,
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
 
@@ -30,6 +34,13 @@ export interface ProvisionedFolderFormDataResult {
   isLoading: boolean;
   /** True when loading has settled and no repository could be resolved. See useGetResourceRepositoryView. */
   isMissingRepo: boolean;
+  /** The folder is annotated with a repository that no longer exists. Also sets isMissingRepo, so
+   * pass it to ProvisionedFormGate, whose priority order shows the orphan notice instead */
+  isOrphaned: boolean;
+  /** The lookup failed outright, as opposed to settling on "no repository". Also sets isMissingRepo */
+  isError: boolean;
+  /** Only meaningful alongside isError */
+  error?: unknown;
 }
 
 /**
@@ -40,9 +51,9 @@ export function useProvisionedFolderFormData({
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
-    folderName: folderUid,
-  });
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo, status, error } = useGetResourceRepositoryView(
+    getFolderRepositoryArgs(folderUid)
+  );
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -75,5 +86,8 @@ export function useProvisionedFolderFormData({
     isReadOnlyRepo,
     isLoading: Boolean(isLoading),
     isMissingRepo,
+    isOrphaned: status === RepoViewStatus.Orphaned,
+    isError: status === RepoViewStatus.Error,
+    error,
   };
 }
