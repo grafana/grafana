@@ -395,10 +395,7 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     background,
     backgroundOnCanvas: colors.background.canvas,
     headerBackground,
-    headerBorder: onBackground(
-      colors.mode === 'dark' ? colors.border.medium : colors.border.weak,
-      headerBackground
-    ).toHexString(),
+    headerBorder: colors.secondary.shade,
     border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
     rowHoverBackgroundSolid: onBackground(rowHoverOverlay, background).toHexString(),
