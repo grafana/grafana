@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
+import { getSelectStyles } from '../../Select/getSelectStyles';
 
 import { TimeZoneDescription } from './TimeZoneDescription';
 import { TimeZoneOffset } from './TimeZoneOffset';
@@ -18,6 +19,9 @@ interface Props {
   innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   data: SelectableZone;
+  selectProps?: {
+    showFocusRing?: boolean;
+  };
 }
 
 export interface SelectableZone extends SelectableValue<string> {
@@ -26,9 +30,16 @@ export interface SelectableZone extends SelectableValue<string> {
 }
 
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
-  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
+  const { children, innerProps, innerRef, data, isSelected, isFocused, selectProps } = props;
   const styles = useStyles2(getStyles);
-  const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
+  const selectStyles = useStyles2(getSelectStyles);
+  const containerStyles = cx(
+    selectStyles.option,
+    isFocused && selectStyles.optionFocused,
+    isFocused && selectProps?.showFocusRing && selectStyles.optionFocusRing,
+    isSelected && selectStyles.optionSelected,
+    data.isDisabled && selectStyles.optionDisabled
+  );
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -52,9 +63,16 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
 };
 
 export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
-  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
+  const { children, innerProps, innerRef, data, isSelected, isFocused, selectProps } = props;
   const styles = useStyles2(getStyles);
-  const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
+  const selectStyles = useStyles2(getSelectStyles);
+  const containerStyles = cx(
+    selectStyles.option,
+    isFocused && selectStyles.optionFocused,
+    isFocused && selectProps?.showFocusRing && selectStyles.optionFocusRing,
+    isSelected && selectStyles.optionSelected,
+    data.isDisabled && selectStyles.optionDisabled
+  );
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -62,13 +80,6 @@ export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
         <div className={styles.row}>
           <div className={styles.leftColumn}>
             <TimeZoneTitle title={children} />
-          </div>
-          <div className={styles.rightColumn}>
-            {isSelected && (
-              <span>
-                <Icon name="check" />
-              </span>
-            )}
           </div>
         </div>
         <div className={styles.row}>
@@ -85,23 +96,6 @@ export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexShrink: 0,
-    whiteSpace: 'nowrap',
-    cursor: 'pointer',
-    padding: theme.spacing(0.75, 1, 0.5),
-    borderRadius: theme.shape.radius.default,
-
-    '&:hover': {
-      background: theme.colors.action.hover,
-    },
-  }),
-  containerFocused: css({
-    background: theme.colors.action.hover,
-  }),
   body: css({
     display: 'flex',
     fontWeight: theme.typography.fontWeightMedium,
