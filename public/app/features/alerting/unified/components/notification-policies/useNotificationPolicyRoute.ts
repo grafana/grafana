@@ -12,6 +12,7 @@ import {
   generatedAPI as routingTreeApi,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
+import { type KVObject } from 'app/features/alerting/unified/types/rule-form';
 import {
   MatcherOperator,
   type ObjectMatcher,
@@ -19,6 +20,7 @@ import {
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -416,6 +418,85 @@ export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
 /** Returns true when the ObjectMatcher targets the internal routing label added by k8sRouteToRoute. */
 export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
   return matcher[0] === NAMED_ROOT_LABEL_NAME;
+}
+
+// --- Legacy label vs notification_settings.policy: the rule form/editor can route a rule to a
+// named policy tree in two ways, and both need to keep working until alertingPolicyRoutingSettings
+// is stable and every existing rule has been migrated off the label. The helpers below are the one
+// place that knows how the two mechanisms relate, so removing the label later means changing this
+// block (and its call sites), not re-deriving the rules from scratch in five different files.
+
+/** Reads the legacy policy label's value off a rule form's labels, if it has one. */
+export function getLegacyPolicyLabelValue(labels: KVObject[]): string | undefined {
+  return labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
+}
+
+/** Returns a new labels array with the legacy policy label set to `value`, or removed when `value` is ''. */
+export function setLegacyPolicyLabelValue(labels: KVObject[], value: string): KVObject[] {
+  const existingIndex = labels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
+
+  if (value === '') {
+    return existingIndex === -1 ? labels : labels.filter((_, index) => index !== existingIndex);
+  }
+
+  if (existingIndex === -1) {
+    return [...labels, { key: NAMED_ROOT_LABEL_NAME, value }];
+  }
+
+  const next = [...labels];
+  next[existingIndex] = { key: NAMED_ROOT_LABEL_NAME, value };
+  return next;
+}
+
+/** True when the legacy policy label points at a policy tree that no longer exists. */
+export function isLegacyPolicyLabelStale(labels: KVObject[], policies: RoutingTree[]): boolean {
+  const value = getLegacyPolicyLabelValue(labels);
+  if (value === undefined) {
+    return false;
+  }
+  return !policies.some((tree) =>
+    isDefaultRoutingTreeName(tree.metadata.name) ? value === '' : tree.metadata.name === value
+  );
+}
+
+/**
+ * True when the rule form should read/write the policy through notification_settings.policy
+ * (the field) rather than the legacy label. A rule that already has a selectedPolicy value but no
+ * legacy label must keep using the field even while the toggle is off, so the two mechanisms never
+ * both apply to the same rule at once.
+ */
+export function isEditingViaPolicyField(
+  toggleOn: boolean | undefined,
+  selectedPolicyValue: string | undefined,
+  labels: KVObject[]
+): boolean {
+  return toggleOn || (Boolean(selectedPolicyValue) && getLegacyPolicyLabelValue(labels) === undefined);
+}
+
+/**
+ * True when saving should use notification_settings.policy and drop the legacy label, so the two
+ * mechanisms never coexist in the same saved rule.
+ */
+export function shouldStripLegacyPolicyLabel(
+  toggleOn: boolean | undefined,
+  selectedPolicy: string | undefined,
+  manualRouting: boolean
+): boolean {
+  return toggleOn || Boolean(selectedPolicy && !manualRouting);
+}
+
+/**
+ * Resolves the notification-policy value to load into the rule form: notification_settings.policy
+ * wins when set. The legacy label is only consulted while the toggle is on, so a rule that's
+ * actually routed through the label doesn't get miscategorized as a policy-field rule just because
+ * the value leaked into the form while the field feature was enabled.
+ */
+export function resolveInitialSelectedPolicy(
+  notificationSettingsPolicy: string | undefined,
+  toggleOn: boolean | undefined,
+  ruleLabels: Labels | undefined
+): string | undefined {
+  return notificationSettingsPolicy ?? (toggleOn ? ruleLabels?.[NAMED_ROOT_LABEL_NAME] : undefined);
 }
 
 export function k8sRouteToRoute(route: RoutingTree): Route {

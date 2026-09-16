@@ -1,26 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { type SelectableValue } from '@grafana/data';
+import { RoutingTreeSelector, isDefaultRoutingTree, useListRoutingTrees } from '@grafana/alerting/unstable';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
-import { type Route } from 'app/plugins/datasource/alertmanager/types';
+import { Badge, Box, Button, Field, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
 import {
-  NAMED_ROOT_LABEL_NAME,
-  useListNotificationPolicyRoutes,
+  getLegacyPolicyLabelValue,
+  isEditingViaPolicyField,
+  isLegacyPolicyLabelStale,
+  setLegacyPolicyLabelValue,
 } from '../../notification-policies/useNotificationPolicyRoute';
-
-/**
- * Check if a policy is the default policy by looking at its object_matchers.
- * The default policy has a matcher for __grafana_managed_route__ with an empty value.
- */
-function isDefaultPolicy(policy: Route): boolean {
-  return policy.object_matchers?.some(([label, , value]) => label === NAMED_ROOT_LABEL_NAME && value === '') ?? false;
-}
 
 /**
  * PolicyTreeSelector - A component to select the notification policy tree for an alert rule.
@@ -47,14 +41,11 @@ export function PolicyTreeSelector() {
     defaultValue: '',
   });
 
-  const { currentData: policies, isLoading, error } = useListNotificationPolicyRoutes();
+  const { currentData: routingTrees, isLoading, error } = useListRoutingTrees();
+  const policies = routingTrees?.items;
 
-  // A rule routed via notification_settings.policy carries a selectedPolicy value but no legacy label.
-  // They must keep editing through the policy field even when the toggle is OFF, so the two routing mechanisms never coexist.
-  const [isPolicyFieldRule] = useState(
-    () =>
-      usePolicyRoutingSettings ||
-      (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
+  const [isPolicyFieldRule] = useState(() =>
+    isEditingViaPolicyField(usePolicyRoutingSettings, selectedPolicyField.value, labels)
   );
 
   // Resolve the current value from the routing mechanism this rule actually uses. Policy-field rules
@@ -64,8 +55,7 @@ export function PolicyTreeSelector() {
     if (isPolicyFieldRule) {
       return selectedPolicyField.value || '';
     }
-    const legacyLabelValue = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
-    return legacyLabelValue || '';
+    return getLegacyPolicyLabelValue(labels) || '';
   }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
@@ -80,43 +70,6 @@ export function PolicyTreeSelector() {
     }
   }, [isUsingDefaultPolicy, isLoading]);
 
-  // Build options from available policies, filtering out duplicate defaults
-  const policyOptions: Array<SelectableValue<string>> = useMemo(() => {
-    if (!policies) {
-      return [];
-    }
-
-    let defaultPolicyAdded = false;
-    const options: Array<SelectableValue<string>> = [];
-
-    for (const policy of policies) {
-      const isDefault = isDefaultPolicy(policy);
-
-      if (isDefault && defaultPolicyAdded) {
-        continue;
-      }
-
-      if (isDefault) {
-        defaultPolicyAdded = true;
-      }
-
-      options.push({
-        label: isDefault ? t('alerting.policy-tree-selector.default-policy', 'Default policy') : (policy.name ?? ''),
-        value: isDefault ? '' : (policy.name ?? ''),
-        description: isDefault
-          ? t(
-              'alerting.policy-tree-selector.default-policy-desc',
-              'Routes alerts using the default notification policy tree'
-            )
-          : t('alerting.policy-tree-selector.custom-policy-desc', 'Route alerts through the {{name}} policy tree', {
-              name: policy.name,
-            }),
-      });
-    }
-
-    return options;
-  }, [policies]);
-
   // Validate that existing label value is still valid when policies load (legacy label path only)
   useEffect(() => {
     if (isPolicyFieldRule) {
@@ -126,24 +79,9 @@ export function PolicyTreeSelector() {
       return;
     }
 
-    const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
-
-    if (!existingLabel) {
-      return;
-    }
-
-    const labelValue = existingLabel.value;
-    const policyExists = policies.some((p) => {
-      if (isDefaultPolicy(p)) {
-        return labelValue === '';
-      }
-      return p.name === labelValue;
-    });
-
     // Policy no longer exists, reset to default by removing the label
-    if (!policyExists) {
-      const newLabels = labels.filter((label) => label.key !== NAMED_ROOT_LABEL_NAME);
-      setValue('labels', newLabels);
+    if (isLegacyPolicyLabelStale(labels, policies)) {
+      setValue('labels', setLegacyPolicyLabelValue(labels, ''));
     }
   }, [isPolicyFieldRule, isLoading, policies, labels, setValue]);
 
@@ -156,36 +94,18 @@ export function PolicyTreeSelector() {
         return;
       }
 
-      const currentLabels = getValues('labels');
-      const existingLabelIndex = currentLabels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
-
-      let newLabels = [...currentLabels];
-
-      if (newValue === '') {
-        // If selecting default policy (empty value), remove the label entirely
-        if (existingLabelIndex !== -1) {
-          newLabels.splice(existingLabelIndex, 1);
-        }
-      } else {
-        // Add or update the label
-        if (existingLabelIndex !== -1) {
-          newLabels[existingLabelIndex] = { key: NAMED_ROOT_LABEL_NAME, value: newValue };
-        } else {
-          newLabels = [...newLabels, { key: NAMED_ROOT_LABEL_NAME, value: newValue }];
-        }
-      }
-
-      setValue('labels', newLabels);
+      setValue('labels', setLegacyPolicyLabelValue(getValues('labels'), newValue));
     },
     [isPolicyFieldRule, selectedPolicyField, getValues, setValue]
   );
 
-  const handlePolicyChange = (option: SelectableValue<string>) => {
-    const newValue = option.value ?? '';
+  const handlePolicyChange = (tree: RoutingTree) => {
+    const isDefault = isDefaultRoutingTree(tree);
+    const newValue = isDefault ? '' : (tree.metadata.name ?? '');
 
     updatePolicyValue(newValue);
 
-    if (newValue === '') {
+    if (isDefault) {
       setIsExpanded(false);
     }
   };
@@ -216,13 +136,11 @@ export function PolicyTreeSelector() {
             </Text>
             <Stack direction="row" gap={1} alignItems="center">
               <Field noMargin>
-                <Select
-                  inputId="policy-tree-selector"
+                <RoutingTreeSelector
+                  id="policy-tree-selector"
                   aria-label={t('alerting.policy-tree-selector.aria-label', 'Select notification policy')}
-                  options={policyOptions}
                   value={currentPolicyValue}
                   onChange={handlePolicyChange}
-                  isLoading={isLoading}
                   disabled={isLoading}
                   width={40}
                   placeholder={t('alerting.policy-tree-selector.placeholder', 'Select a policy...')}

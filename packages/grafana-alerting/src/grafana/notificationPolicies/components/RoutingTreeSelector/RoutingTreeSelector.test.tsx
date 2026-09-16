@@ -119,6 +119,16 @@ describe('pre-selection', () => {
     // Should display the friendly name "Default policy" in the input
     expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
   });
+
+  it('should show "Default policy" when value is an empty string', async () => {
+    const onChangeHandler = jest.fn();
+
+    // Callers that use "" as their own "no name means default" convention (rather than the
+    // tree's raw backend name) should still get the default tree selected.
+    render(<RoutingTreeSelector value="" onChange={onChangeHandler} />);
+
+    expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
+  });
 });
 
 describe('clearable behavior', () => {

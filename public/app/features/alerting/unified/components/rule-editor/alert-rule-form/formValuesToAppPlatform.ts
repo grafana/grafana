@@ -15,7 +15,10 @@ import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
+import {
+  NAMED_ROOT_LABEL_NAME,
+  shouldStripLegacyPolicyLabel,
+} from '../../notification-policies/useNotificationPolicyRoute';
 
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
@@ -75,7 +78,13 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
   // The legacy label and the routingTree field must not coexist, since the backend derives
   // the same routing label from routingTree — a stale one left in `labels` would win once
   // routingTree is unset (e.g. back to the Default policy).
-  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.type === 'NamedRoutingTree') {
+  if (
+    shouldStripLegacyPolicyLabel(
+      config.featureToggles.alertingPolicyRoutingSettings,
+      values.selectedPolicy,
+      values.manualRouting
+    )
+  ) {
     delete labels[NAMED_ROOT_LABEL_NAME];
   }
 

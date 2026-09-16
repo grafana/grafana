@@ -195,6 +195,9 @@ describe('PolicyTreeSelector', () => {
 
       // Badge and change button should be gone
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+
+      // The dropdown should show "Default policy" as selected, not blank
+      expect(screen.getByDisplayValue(/default policy/i)).toBeInTheDocument();
     });
 
     it('adds __grafana_managed_route__ label when custom policy is selected', async () => {
@@ -232,7 +235,7 @@ describe('PolicyTreeSelector', () => {
 
       // Verify the policy was selected and "Reset to default" button appears
       await waitFor(() => {
-        expect(screen.getByText(customPolicyName)).toBeInTheDocument();
+        expect(screen.getByDisplayValue(customPolicyName)).toBeInTheDocument();
       });
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
 
@@ -408,7 +411,7 @@ describe('PolicyTreeSelector', () => {
       });
 
       // Should show the custom policy name as selected
-      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
 
       // Reset to default button should be visible
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
@@ -484,7 +487,7 @@ describe('PolicyTreeSelector', () => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
 
-      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
       expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
@@ -643,7 +646,7 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
 
-      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
@@ -693,7 +696,7 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       });
 
       // The selector should show the migrated policy, not "Default policy"
-      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
