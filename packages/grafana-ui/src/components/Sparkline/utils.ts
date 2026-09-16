@@ -10,6 +10,7 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldSeriesColor,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
@@ -189,16 +190,24 @@ export const prepareConfig = (
   // uPlot series/data index of the single y series (0 is the x field).
   let yFieldIndex = -1;
 
+  // X is the first field in the aligned frame
+  const xField = dataFrame.fields[0];
+
   if (enableHover) {
     // Crosshair + focused point at the hovered index, no drag/zoom. focus.prox Infinity keeps
     // the single series focused so hover works across the full width.
+    const yField = dataFrame.fields.find((f) => f !== xField && f.type === FieldType.number);
+    // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
+    // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
+    // series (e.g. TableNG's default hue). A solid color sidesteps that.
+    const pointColor = yField ? getFieldSeriesColor(yField, theme).color : theme.colors.text.primary;
     builder.setCursor({
       show: true,
       x: true,
       y: false,
       drag: { x: false, y: false, setScale: false },
       focus: { prox: Infinity },
-      points: { size: HIGHLIGHT_IDX_POINT_SIZE },
+      points: { size: HIGHLIGHT_IDX_POINT_SIZE, stroke: pointColor, fill: pointColor },
     });
   } else {
     builder.setCursor({
@@ -208,8 +217,6 @@ export const prepareConfig = (
     });
   }
 
-  // X is the first field in the aligned frame
-  const xField = dataFrame.fields[0];
   builder.addScale({
     scaleKey: 'x',
     orientation: ScaleOrientation.Horizontal,

@@ -403,6 +403,18 @@ describe('prepareConfig hover', () => {
     expect(config.hooks?.setCursor).toHaveLength(1);
   });
 
+  // uPlot's default cursor-point color fn reads the builder's `frames`, which Sparkline never
+  // populates, so it throws on gradient series. We override it with a solid color string.
+  it('paints the cursor point with a solid color string, not the frames-reading default fn', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme, false, true, jest.fn()).getConfig();
+
+    expect(typeof config.cursor?.points?.stroke).toBe('string');
+    expect(typeof config.cursor?.points?.fill).toBe('string');
+  });
+
   it('emits the hovered index, raw value, formatted display and cursor viewport coords', () => {
     const onHover = jest.fn();
     const hook = getSetCursorHook(onHover, makeHoverSparkline({ decimals: 1 }));
