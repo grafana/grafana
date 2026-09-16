@@ -10,9 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/util/retry"
 
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -93,17 +90,10 @@ type ExternalRulerSyncer struct {
 	lastSyncHashMu sync.RWMutex
 	lastSyncHash   map[int64]uint64
 
-	// clientGenerator and namespaceMapper are required; NewExternalRulerSyncer's
-	// callers always pass real ones. The k8s client itself is built lazily from
-	// clientGenerator, NOT in NewExternalRulerSyncer: eager construction
-	// deadlocks during DI, since the ClientGenerator blocks on the apiserver
-	// being ready, which can't happen while we hold the main init goroutine.
-	// See resolveCfgClient.
-	clientGenerator resource.ClientGenerator
-	namespaceMapper request.NamespaceMapper
-
-	cfgClientMu sync.Mutex
-	cfgClient   *alertingrulesv0alpha1.ConfigClient
+	// cfgStore is required; NewExternalRulerSyncer's callers always pass a
+	// real one. See cfgStore for why its client is built lazily rather than
+	// at construction time.
+	cfgStore cfgAccessor
 }
 
 // NewExternalRulerSyncer constructs an ExternalRulerSyncer. The ruler config GET
@@ -137,36 +127,8 @@ func NewExternalRulerSyncer(
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
 		lastSyncHash:      make(map[int64]uint64),
-		clientGenerator:   clientGenerator,
-		namespaceMapper:   namespaceMapper,
+		cfgStore:          newCfgStore(clientGenerator, namespaceMapper),
 	}
-}
-
-// resolveCfgClient lazily builds and caches the rules Config client. Built
-// lazily (not in NewExternalRulerSyncer) because the ClientGenerator blocks
-// until the apiserver is ready, which would deadlock during DI. The successful
-// client is cached, but construction failures are NOT: the next call retries,
-// so a transient apiserver-not-ready at the first tick doesn't disable the API
-// sync path until the process restarts.
-func (s *ExternalRulerSyncer) resolveCfgClient() (*alertingrulesv0alpha1.ConfigClient, error) {
-	s.cfgClientMu.Lock()
-	defer s.cfgClientMu.Unlock()
-	if s.cfgClient != nil {
-		return s.cfgClient, nil
-	}
-	c, err := alertingrulesv0alpha1.NewConfigClientFromGenerator(s.clientGenerator)
-	if err != nil {
-		return nil, fmt.Errorf("construct Config client: %w", err)
-	}
-	s.cfgClient = c
-	return s.cfgClient, nil
-}
-
-// orgServiceContext wraps ctx with a service identity scoped to the org's
-// namespace for in-process k8s calls.
-func (s *ExternalRulerSyncer) orgServiceContext(ctx context.Context, orgID int64) (context.Context, string) {
-	ns := s.namespaceMapper(orgID)
-	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns), ns
 }
 
 // resolvedRulerSync is the effective external-ruler-sync configuration for one
@@ -187,16 +149,8 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 		return resolvedRulerSync{uid: iniUID, origin: originIni}, nil
 	}
 
-	c, err := s.resolveCfgClient()
+	cfg, err := s.cfgStore.Get(ctx, orgID)
 	if err != nil {
-		return resolvedRulerSync{}, err
-	}
-	nsCtx, ns := s.orgServiceContext(ctx, orgID)
-	cfg, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName})
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return resolvedRulerSync{origin: originAPI}, nil
-		}
 		return resolvedRulerSync{}, err
 	}
 	return resolvedRulerSync{
@@ -205,49 +159,10 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 	}, nil
 }
 
-// writeStatus upserts the org's Config.status using compute(prev), creating the
-// resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
-// logged). Unchanged status produces no physical write (unified storage
-// dedup).
+// writeStatus upserts the org's Config.status using compute(prev). Best-effort
+// (failures are logged) -- see cfgStore.UpdateStatus for the write mechanics.
 func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) {
-	c, err := s.resolveCfgClient()
-	if err != nil {
-		s.logger.Warn("Failed to resolve Config client for status write", "org_id", orgID, "error", err)
-		return
-	}
-	nsCtx, ns := s.orgServiceContext(ctx, orgID)
-	if ns == "" {
-		return
-	}
-	id := resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName}
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		existing, getErr := c.Get(nsCtx, id)
-		if k8serrors.IsNotFound(getErr) {
-			// Seed .Status on Create. Unified storage persists the whole object on
-			// Create today; a future migration to a real /status subresource would
-			// silently drop this — at that point swap to UpdateStatus.
-			r := &alertingrulesv0alpha1.Config{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName},
-				Status:     compute(nil),
-			}
-			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
-				// AlreadyExists -> another writer raced us. Surface as a conflict so
-				// RetryOnConflict re-enters and sees the existing object.
-				if k8serrors.IsAlreadyExists(createErr) {
-					return k8serrors.NewConflict(alertingrulesv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
-				}
-				return createErr
-			}
-			return nil
-		}
-		if getErr != nil {
-			return getErr
-		}
-		_, updateErr := c.UpdateStatus(nsCtx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
-		return updateErr
-	})
-	if err != nil {
+	if err := s.cfgStore.UpdateStatus(ctx, orgID, compute); err != nil {
 		s.logger.Warn("Failed to write Config status", "org_id", orgID, "error", err)
 	}
 }
@@ -406,11 +321,16 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
 		return
 	}
-	// TODO: validate the datasource (prometheus-compatible + Mimir flavor) at the
-	// rules-app Config-resource admission when it lands, mirroring the external
-	// Alertmanager sync's input-time check. The operator-set ini datasource is
-	// trusted here (as the AM ini path is).
-	//
+	// Cheap pre-check before paying for a network fetch: catches wrong
+	// datasource type / vanilla Prometheus without a round trip. The
+	// admission-time checker runs the same check on write for the API path,
+	// but the operator-set ini datasource is never admission-checked, so
+	// this is the only gate for it.
+	if err := IsRulerCandidate(ds); err != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonNotARuler, Cause: err})
+		return
+	}
+
 	// Recording rules write to the same datasource they are queried from unless
 	// spec.externalRulerSync.targetDatasourceUid overrides it (API path only).
 	targetDS := ds

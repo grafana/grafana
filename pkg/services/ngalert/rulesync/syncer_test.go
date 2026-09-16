@@ -154,8 +154,7 @@ func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fa
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
-		clientGenerator:   cs,
-		namespaceMapper:   cs.nsMapper,
+		cfgStore:          newCfgStore(cs, cs.nsMapper),
 	}
 }
 
@@ -224,6 +223,22 @@ func TestSyncOrg_NotARuler(t *testing.T) {
 	s.SyncOrg(context.Background(), 1)
 
 	assert.Nil(t, rs.replaced, "nothing synced when the datasource is not a ruler")
+}
+
+func TestSyncOrg_UnsupportedDatasourceType(t *testing.T) {
+	// IsRulerCandidate's cheap static check must reject the datasource before
+	// a fetch is even attempted: the operator-set ini UID skips the
+	// admission-time checker entirely, so this is its only gate.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	s.settings.ExternalRulerUID = "ds1"
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_LOKI}}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing synced for an unsupported datasource type")
+	assert.Equal(t, 0, fetch.calls, "must not attempt to fetch from a datasource that already failed the static check")
 }
 
 func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
@@ -297,11 +312,10 @@ func TestIsManagedFolder(t *testing.T) {
 	newSyncer := func(ns fakeNamespaceStore, uid string) *ExternalRulerSyncer {
 		cs := newFakeConfigClient()
 		return &ExternalRulerSyncer{
-			settings:        &setting.UnifiedAlertingSettings{ExternalRulerUID: uid},
-			logger:          log.NewNopLogger(),
-			namespaceStore:  ns,
-			clientGenerator: cs,
-			namespaceMapper: cs.nsMapper,
+			settings:       &setting.UnifiedAlertingSettings{ExternalRulerUID: uid},
+			logger:         log.NewNopLogger(),
+			namespaceStore: ns,
+			cfgStore:       newCfgStore(cs, cs.nsMapper),
 		}
 	}
 	rootResolvable := fakeNamespaceStore{

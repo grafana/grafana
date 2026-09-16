@@ -41,97 +41,74 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced
 // condition updated to Unknown/NotConfigured (used when the API path is
-// reachable but no datasourceUid is configured). Everything else rides
-// through unchanged: observedGeneration,
-// externalRulerSync (kept as the last-attempt context, its documented meaning)
-// and any sibling conditions. The Synced condition is a current-state snapshot,
-// and its lastTransitionTime advances only on a flip to Unknown, so consecutive
-// not-configured ticks produce an identical status that dedups to no write.
+// reachable but no datasourceUid is configured). externalRulerSync is left
+// untouched -- it documents the last attempted sync, and there wasn't one.
 func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now time.Time) alertingrulesv0alpha1.ConfigStatus {
-	st := alertingrulesv0alpha1.ConfigStatus{}
-	if prev != nil {
-		st = *prev
-		st.Conditions = append([]alertingrulesv0alpha1.ConfigCondition(nil), prev.Conditions...)
-	}
-
-	synced := alertingrulesv0alpha1.ConfigCondition{
+	st := cloneStatus(prev)
+	upsertSyncedCondition(&st, alertingrulesv0alpha1.ConfigCondition{
 		Type:               conditionTypeExternalRulerSynced,
 		Status:             alertingrulesv0alpha1.ConfigConditionStatusUnknown,
-		LastTransitionTime: now.UTC().Format(time.RFC3339),
+		LastTransitionTime: now.UTC().Format(time.RFC3339), // used only if this is a flip or first write
 		Reason:             conditionReasonNotConfigured,
-	}
-	for i, c := range st.Conditions {
-		if c.Type == conditionTypeExternalRulerSynced {
-			if c.Status == alertingrulesv0alpha1.ConfigConditionStatusUnknown {
-				synced.LastTransitionTime = c.LastTransitionTime // no flip -> keep the timestamp
-			}
-			st.Conditions[i] = synced
-			return st
-		}
-	}
-	st.Conditions = append(st.Conditions, synced)
+	})
 	return st
 }
 
-// buildSyncStatus folds an ExternalRulerSynced condition into prev. k8s
-// condition FSM: lastTransitionTime advances only on status flip. Starts from
-// *prev (like computeNotConfiguredStatus) rather than a fresh struct, so
-// observedGeneration, operatorStates and additionalFields ride through
-// unchanged too, not just sibling condition types -- those are exactly the
-// fields another controller writing this same status object would own.
+// buildSyncStatus folds an ExternalRulerSynced condition into prev, plus the
+// externalRulerSync context (datasource UID and origin) that produced it.
 func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingrulesv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
-	st := alertingrulesv0alpha1.ConfigStatus{}
-	if prev != nil {
-		st = *prev
-	}
-	st.Conditions = append([]alertingrulesv0alpha1.ConfigCondition(nil), prevConditions(prev)...)
+	st := cloneStatus(prev)
 	st.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
 		DatasourceUid: &uidCopy,
 		Origin:        &originCopy,
 	}
 
-	// lastTransitionTime advances only when status flips.
-	transitionTime := now.UTC().Format(time.RFC3339)
-	for _, c := range prevConditions(prev) {
-		if c.Type == conditionTypeExternalRulerSynced {
-			if c.Status == condStatus {
-				transitionTime = c.LastTransitionTime
-			}
-			break
-		}
-	}
-
 	synced := alertingrulesv0alpha1.ConfigCondition{
 		Type:               conditionTypeExternalRulerSynced,
 		Status:             condStatus,
-		LastTransitionTime: transitionTime,
+		LastTransitionTime: now.UTC().Format(time.RFC3339), // used only if this is a flip or first write
 		Reason:             reason,
 	}
 	if message != "" {
 		synced.Message = &message
 	}
-
-	// st.Conditions already carries every prior condition (copied above);
-	// upsert Synced in place instead of appending, so a sibling condition
-	// type is preserved and Synced itself isn't duplicated.
-	for i, c := range st.Conditions {
-		if c.Type == conditionTypeExternalRulerSynced {
-			st.Conditions[i] = synced
-			return st
-		}
-	}
-	st.Conditions = append(st.Conditions, synced)
-
+	upsertSyncedCondition(&st, synced)
 	return st
 }
 
-func prevConditions(prev *alertingrulesv0alpha1.ConfigStatus) []alertingrulesv0alpha1.ConfigCondition {
+// cloneStatus starts a new ConfigStatus from prev (or a zero value if prev is
+// nil), deep-copying Conditions so the caller can mutate it without aliasing
+// prev's slice. observedGeneration, operatorStates and additionalFields ride
+// through unchanged -- those are fields another controller writing this same
+// status object owns, not ours to drop.
+func cloneStatus(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
 	if prev == nil {
-		return nil
+		return alertingrulesv0alpha1.ConfigStatus{}
 	}
-	return prev.Conditions
+	st := *prev
+	st.Conditions = append([]alertingrulesv0alpha1.ConfigCondition(nil), prev.Conditions...)
+	return st
+}
+
+// upsertSyncedCondition writes synced into st.Conditions in place, appending
+// it if no ExternalRulerSynced condition exists yet. synced.LastTransitionTime
+// must already hold the time to use on a flip (or first write) -- it's
+// overwritten with the existing condition's timestamp when the status hasn't
+// changed, since k8s's condition FSM only advances lastTransitionTime on a
+// flip.
+func upsertSyncedCondition(st *alertingrulesv0alpha1.ConfigStatus, synced alertingrulesv0alpha1.ConfigCondition) {
+	for i, c := range st.Conditions {
+		if c.Type == conditionTypeExternalRulerSynced {
+			if c.Status == synced.Status {
+				synced.LastTransitionTime = c.LastTransitionTime
+			}
+			st.Conditions[i] = synced
+			return
+		}
+	}
+	st.Conditions = append(st.Conditions, synced)
 }
 
 // externalRulerSyncDatasourceUIDFromConfig returns the configured UID or ""
