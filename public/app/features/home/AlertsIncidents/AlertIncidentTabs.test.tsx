@@ -27,6 +27,7 @@ import {
   INCIDENTS_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
+import { type TeamSelection } from './teamFilter';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -120,10 +121,38 @@ function mockIrmPlugin(settings?: Partial<PluginMeta>) {
   );
 }
 
+const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
+const GET_FIELDS_PATH = '/api/plugins/:pluginId/resources/api/v1/FieldsService.GetFields';
+const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
+
+/** Mocks the incident previews endpoint; returns the `queryString` of each request received. */
 function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
+  const queries: string[] = [];
   server.use(
-    http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
+    http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
+      const body = (await request.json()) as { query: { queryString: string } };
+      queries.push(body.query.queryString);
+      return HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } });
+    })
+  );
+  return queries;
+}
+
+/** Org custom fields with a `team` select field offering the given values. */
+function mockIncidentTeamField(values: string[]) {
+  server.use(
+    http.post(GET_FIELDS_PATH, () =>
+      HttpResponse.json({
+        fields: [
+          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical' }] },
+          {
+            slug: 'team',
+            archived: false,
+            // Blank values would collide with the default-scope selection.
+            selectoptions: [...values.map((value) => ({ value })), { value: '  ' }],
+          },
+        ],
+      })
     )
   );
 }
@@ -165,6 +194,8 @@ beforeEach(async () => {
   // The component probes the IRM plugin settings; absent by default.
   // Tests that need the incidents tab layer mockIrmPlugin() on top.
   mockNoIrmPlugin();
+  // No `team` custom field by default, so the incidents dropdown stays hidden.
+  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields: [] })));
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
   await act(async () => {
@@ -185,15 +216,18 @@ afterEach(async () => {
 });
 
 function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
-  const [team, setTeam] = useState<string | undefined>();
-  const alertsData = useFiringAlerts(team);
-  const incidentsData = useIncidents();
+  const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
+  const [incidentsTeam, setIncidentsTeam] = useState<TeamSelection>('');
+  const alertsData = useFiringAlerts(alertsTeam);
+  const incidentsData = useIncidents(incidentsTeam);
   return (
     <AlertIncidentTabs
       alertsData={alertsData}
       incidentsData={incidentsData}
-      team={team}
-      setTeam={setTeam}
+      alertsTeam={alertsTeam}
+      onAlertsTeamChange={setAlertsTeam}
+      incidentsTeam={incidentsTeam}
+      onIncidentsTeamChange={setIncidentsTeam}
       switchRef={switchRef}
     />
   );
@@ -417,7 +451,7 @@ describe('AlertIncidentTabs', () => {
   });
 
   describe('team filter dropdown', () => {
-    it('shows the dropdown on the Alerts tab and hides it on the Incidents tab', async () => {
+    it('fetches the alert team label values once across tab switches', async () => {
       mockTeamLabelValues(['Team A']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
       mockIrmPlugin();
@@ -429,12 +463,10 @@ describe('AlertIncidentTabs', () => {
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('tab', { name: /incidents/i }));
-
-      // Hidden from the accessibility tree, but kept mounted so its fetched values survive.
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
 
-      // Switching back shows the dropdown again without refetching the team values.
+      // The values live in the tabs component, so switching back doesn't refetch them.
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
 
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
@@ -738,6 +770,122 @@ describe('AlertIncidentTabs', () => {
       // The selected value is a real label value, so the matcher carries it verbatim.
       await waitFor(() => expect(requests).toContainEqual(['team=~"platform-monitoring"']));
       expect(await screen.findByText('No firing alerts for platform-monitoring.')).toBeInTheDocument();
+    });
+  });
+
+  describe('incidents team filter dropdown', () => {
+    it("offers the org's team field values and filters incidents to the picked team", async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team B', 'Team A']);
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
+
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
+      expect(combobox).toHaveDisplayValue('All teams');
+      await user.click(combobox);
+
+      // Incidents have no "your teams" scope, so "All teams" is the only default option,
+      // followed by the non-blank field values sorted by name.
+      const options = await screen.findAllByRole('option');
+      expect(options.map((option) => option.textContent)).toEqual(['All teams', 'Team A', 'Team B']);
+      await user.click(screen.getByRole('option', { name: 'Team B' }));
+
+      // The pick becomes a custom-field clause on the incident query.
+      await waitFor(() => expect(queries).toHaveLength(2));
+      expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`);
+      expect(combobox).toHaveDisplayValue('Team B');
+    });
+
+    it('keeps the Alerts and Incidents team selections independent', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
+      const alertRequests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      // Team C exists only as an alert label, not as an incident field value.
+      mockIncidentTeamField(['Team A', 'Team B']);
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      await waitFor(() => expect(alertRequests).toHaveLength(2));
+      expect(alertRequests[1]).toEqual(['team=~"Team C"']);
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      // The alerts pick doesn't leak into incidents, which can't hold that value anyway.
+      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
+      expect(incidentsCombobox).toHaveDisplayValue('All teams');
+      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
+
+      await user.click(incidentsCombobox);
+      await user.click(await screen.findByRole('option', { name: 'Team B' }));
+      await waitFor(() => expect(queries.at(-1)).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`));
+
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+
+      // And the incidents pick doesn't disturb the alerts scope.
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('Team C');
+      expect(alertRequests).toHaveLength(2);
+    });
+
+    it('shows a team-scoped empty message when the selected team has no incidents', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team B']);
+      server.use(
+        http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
+          const body = (await request.json()) as { query: { queryString: string } };
+          const isTeamB = body.query.queryString.includes('field:team:"Team B"');
+          return HttpResponse.json({ incidentPreviews: isTeamB ? [] : [activeIncident], cursor: { hasMore: false } });
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter incidents by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team B' }));
+
+      expect(await screen.findByText('No active incidents for Team B.')).toBeInTheDocument();
+      expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
+    });
+
+    it('hides the dropdown when the org has no team custom field', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      // Only unrelated fields; the default handler's empty list is the other shape of "no team field".
+      server.use(
+        http.post(GET_FIELDS_PATH, () =>
+          HttpResponse.json({ fields: [{ slug: 'severity', selectoptions: [{ value: 'Critical' }] }] })
+        )
+      );
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+    });
+
+    it('hides the dropdown but still lists incidents when the fields request fails', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      server.use(http.post(GET_FIELDS_PATH, () => new HttpResponse(null, { status: 404 })));
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
     });
   });
 });

@@ -73,8 +73,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData() {
-  const data = useIncidents();
+function IncidentsCardWithData({ team }: { team?: string } = {}) {
+  const data = useIncidents(team);
   return <IncidentsCard data={data} />;
 }
 
@@ -112,6 +112,23 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
+  });
+
+  it('names the selected team in the empty message and scopes the request to it', async () => {
+    const queries: string[] = [];
+    server.use(
+      http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
+        const body = (await request.json()) as { query: { queryString: string } };
+        queries.push(body.query.queryString);
+        return HttpResponse.json({ incidentPreviews: [], cursor: { hasMore: false } });
+      })
+    );
+
+    render(<IncidentsCardWithData team="Team C" />);
+
+    expect(await screen.findByText('No active incidents for Team C.')).toBeInTheDocument();
+    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(queries).toEqual(['isdrill:false status:active field:team:"Team C"']);
   });
 
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
@@ -279,6 +296,8 @@ describe('IncidentsCard', () => {
     mockIncidents([activeIncidents[0]]);
     render(<IncidentsCardWithData />, { store });
 
+    // The cached list shows straight away while the refetch runs, not a skeleton.
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
     // cache would persist and this assertion would time out.
     expect(await screen.findByText('Database outage')).toBeInTheDocument();

@@ -16,6 +16,7 @@ import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncid
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -30,8 +31,6 @@ import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
 import { useHomepageSolutions } from './useHomepageSolutions';
-
-const HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -86,12 +85,11 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  // Persisted team scope for the alerts view and header pill; '' is the "your teams" default.
-  const [storedTeam, setStoredTeam] = useStoredString(HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY, '');
-  const team = storedTeam || undefined;
-  const setTeam = useCallback((next: string | undefined) => setStoredTeam(next ?? ''), [setStoredTeam]);
-  const alertsData = useFiringAlerts(team);
-  const incidentsData = useIncidents();
+  // Persisted team scopes, one per view; each also drives that view's header pill.
+  const [alertsTeam, setAlertsTeam] = useStoredString(ALERTS_TEAM_FILTER_STORAGE_KEY, '');
+  const [incidentsTeam, setIncidentsTeam] = useStoredString(INCIDENTS_TEAM_FILTER_STORAGE_KEY, '');
+  const alertsData = useFiringAlerts(alertsTeam);
+  const incidentsData = useIncidents(incidentsTeam);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
@@ -183,8 +181,10 @@ export default function HomePage() {
                     <AlertIncidentTabs
                       alertsData={alertsData}
                       incidentsData={incidentsData}
-                      team={team}
-                      setTeam={setTeam}
+                      alertsTeam={alertsTeam}
+                      onAlertsTeamChange={setAlertsTeam}
+                      incidentsTeam={incidentsTeam}
+                      onIncidentsTeamChange={setIncidentsTeam}
                       switchRef={alertIncidentRef}
                     />
                   </HomeGrid>

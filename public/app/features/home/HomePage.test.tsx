@@ -10,10 +10,13 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -107,7 +110,7 @@ describe('HomePage', () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem('grafana.home.alerts.teamFilter', 'platform');
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -121,6 +124,32 @@ describe('HomePage', () => {
     await waitFor(() => expect(filters.length).toBeGreaterThan(0));
     expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
     expect(filters[0][0]).toContain('platform');
+  });
+
+  it('scopes active incidents to their own stored team, not the alerts one', async () => {
+    mockUsePluginBridge.mockReturnValue({
+      installed: true,
+      loading: false,
+      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+    });
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    const queries: string[] = [];
+    server.use(
+      http.post(
+        '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews',
+        async ({ request }) => {
+          const body = (await request.json()) as { query: { queryString: string } };
+          queries.push(body.query.queryString);
+          return HttpResponse.json({ incidentPreviews: [], cursor: { hasMore: false } });
+        }
+      )
+    );
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(queries).toHaveLength(1));
+    expect(queries[0]).toBe('isdrill:false status:active field:team:"platform"');
   });
 
   it('renders the OSS welcome message', async () => {
