@@ -228,6 +228,22 @@ describe('DashboardScene', () => {
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
         expect(scene.getEditSessionSource()).toBe('user');
       });
+
+      it('skips the auto-edit entirely when editSource marks a plan preview', () => {
+        // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it and never
+        // intends to edit -- it must not flash into edit mode and back out again. Every other
+        // /dashboard/new caller (no param, editSource=user, editSource=assistant) is unaffected.
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=assistant-preview');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(scene.state.isDirty).toBeFalsy();
+        expect(scene.getEditSessionSource()).toBeUndefined();
+      });
     });
 
     describe('Given scene in edit mode', () => {

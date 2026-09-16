@@ -70,6 +70,39 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
       return { success: false, error: 'The preview dashboard is no longer open.', changes: [] };
     }
 
+    // RENDER_PLAN replaces the whole body, and END_PLANNING (its counterpart) clears
+    // unconditionally -- correct only because the assistant's own path always starts from a
+    // fresh, blank /dashboard/new (verified from source: it navigates there itself before ever
+    // calling RENDER_PLAN). Nothing in the mutation API enforces that for any other caller, and
+    // without this check a dirty or already-populated dashboard would have its real content
+    // silently overwritten -- with the isDirty: false set further down immediately suppressing
+    // the unsaved-changes warning that would otherwise have caught it.
+    //
+    // This is also what makes the deliberate absence of per-panel identity tracking (there is no
+    // planningSession.ts; see the design notes on why) sound rather than merely convenient:
+    // "discard means clear the dashboard" is only true if the dashboard was blank to begin with.
+    // This precondition is what makes that true by construction, rather than assumed.
+    //
+    // A saved-but-empty dashboard is refused too, not only a populated one: END_PLANNING clearing
+    // it unconditionally would leave a real, empty dashboard the user could then save over their
+    // own work. Only an unsaved, blank, non-dirty scene is safe, and that is the only case the
+    // assistant's path ever produces on first render -- so this guard is never expected to trip
+    // there. It is not dead code: it is what makes skipping identity tracking correct.
+    //
+    // Exception: a scene that is already a plan preview (state.planning set) may always be
+    // re-rendered, content and all -- the assistant calls RENDER_PLAN again on the same preview
+    // to replace an in-progress plan, and by construction nothing but a prior RENDER_PLAN could
+    // have put content there, so overwriting it is exactly as safe as the first render was.
+    const alreadyPlanning = scene.state.planning !== undefined;
+    const hasExistingContent = !alreadyPlanning && scene.state.body.getVizPanels().length > 0;
+    if (scene.state.uid || scene.state.isDirty || hasExistingContent) {
+      return {
+        success: false,
+        error: 'RENDER_PLAN can only render into a blank, unsaved dashboard, to avoid overwriting existing content.',
+        changes: [],
+      };
+    }
+
     try {
       let nextPanelId = 1;
       const buildSection = (section: RenderPlanPayload['sections'][number]) =>
@@ -101,11 +134,34 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         }
       };
 
+      // A fresh /dashboard/new scene enters edit mode unconditionally on activation, before this
+      // handler ever runs (DashboardScene's own isNew branch). The assistant's own preview flow
+      // now tells that branch to skip the auto-edit entirely via a URL marker
+      // (editSource=assistant-preview) -- but the mutation API is public, so another caller can
+      // still reach /dashboard/new without that marker and call RENDER_PLAN directly. This
+      // command has to guarantee view mode itself rather than depend on the caller's URL.
+      const wasEditing = scene.state.isEditing;
+
+      if (wasEditing) {
+        // Stop the change tracker before the bulk setState below so it cannot react mid-install
+        // and re-dirty the scene -- the same pattern JsonModelEditView already uses around its
+        // own bulk state replace. Without this, the tracker's own diff (worker-async in the
+        // browser, but synchronous in tests, where it would otherwise race this same tick) could
+        // flip isDirty back to true before exitEditMode below reads it.
+        scene.pauseTrackingChanges();
+      }
+
       scene.setState({
         title: payload.title,
         description: payload.description,
         body,
         $variables: new SceneVariableSet({ variables }),
+        // Belt-and-braces alongside pauseTrackingChanges above: exitEditModeConfirmed (called by
+        // exitEditMode below) restores the pre-edit snapshot whenever the scene is dirty,
+        // regardless of what the caller asks, and the isNew branch marks a fresh dashboard dirty
+        // on entry. A rendered plan preview is not an unsaved user edit -- there is nothing here
+        // for the user to be warned about losing -- so clear it before exiting.
+        isDirty: false,
         planning: {
           planId,
           planTitle: payload.title,
@@ -114,6 +170,21 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
           onDismiss: () => notify('dismiss'),
         },
       });
+
+      if (wasEditing) {
+        // Same pattern DashboardScene.onRestore already uses: install the new content via
+        // setState above, then exit edit mode without restoring the snapshot onEnterEditMode
+        // captured (which, for a fresh dashboard, predates the plan and is empty).
+        //
+        // Keep this call directly adjacent to the setState above. pauseTrackingChanges stops the
+        // change tracker itself from racing this, but exitEditMode still reads
+        // scene.state.isDirty at call time -- anything else that could flip it in between (an
+        // await, another command, a re-entrant setState) would reopen the same failure mode:
+        // exitEditModeConfirmed restoring the pre-plan (empty) snapshot instead of leaving the
+        // rendered plan in place. The symptom would be "the preview is empty," with nothing here
+        // to point at why.
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: false });
+      }
 
       return { success: true, changes: [{ path: '/', previousValue: null, newValue: payload.title }] };
     } catch (error) {

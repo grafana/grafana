@@ -1,10 +1,12 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { type CustomVariable, sceneGraph } from '@grafana/scenes';
+import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
@@ -17,9 +19,9 @@ setPluginImportUtils({
 
 let cleanUpPreviousScene = () => {};
 
-function setup() {
+function setup(overrides: Partial<DashboardSceneState> = {}) {
   cleanUpPreviousScene();
-  const scene = new DashboardScene({ title: 'hello', meta: { canEdit: true } });
+  const scene = new DashboardScene({ title: 'hello', meta: { canEdit: true }, ...overrides });
   cleanUpPreviousScene = scene.activate();
   const client = new DashboardMutationClient(scene);
   return { scene, client };
@@ -102,6 +104,98 @@ describe('RENDER_PLAN', () => {
 
     expect(result).toMatchObject({ success: false, error: 'The preview dashboard is no longer open.' });
     expect(scene.state.planning).toBeUndefined();
+  });
+
+  it('leaves the scene in view mode even though /dashboard/new enters edit mode on activation, and preserves the rendered plan rather than restoring the pre-plan snapshot', async () => {
+    const { scene, client } = setup();
+
+    // Simulates the isNew branch in DashboardScene's own activation handler, which enters edit
+    // mode unconditionally on a fresh /dashboard/new scene before RENDER_PLAN ever runs -- the
+    // exact pre-existing main behaviour that broke the design's view-mode-only premise.
+    scene.onEnterEditMode();
+    expect(scene.state.isEditing).toBe(true);
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.isEditing).toBe(false);
+    expect(scene.state.isDirty).toBe(false);
+    // The pre-plan snapshot exitEditMode could have restored was the scene's initial, empty
+    // state -- assert the plan's own content survived instead.
+    expect(scene.state.title).toBe('Kafka overview');
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Requests', 'Error rate']);
+    expect(scene.state.planning).toMatchObject({ planId: 'plan-1' });
+  });
+
+  it('does nothing extra when the scene was already in view mode', async () => {
+    const { scene, client } = setup();
+    expect(scene.state.isEditing).toBeFalsy();
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.isEditing).toBeFalsy();
+  });
+
+  describe('precondition: refuses any target that is not a blank, unsaved dashboard', () => {
+    // RENDER_PLAN replaces the whole body and END_PLANNING clears unconditionally, which is only
+    // safe because the assistant's own path always starts from a fresh, blank /dashboard/new.
+    // The mutation API is public, though, so these guard against a caller that reaches
+    // RENDER_PLAN some other way, on a dashboard that actually has something to lose.
+
+    it('refuses a dashboard that already has panels, and leaves them untouched', async () => {
+      const existingPanel = new VizPanel({ key: 'panel-1', title: 'Existing panel', pluginId: 'timeseries' });
+      const { scene, client } = setup({ body: DefaultGridLayoutManager.fromVizPanels([existingPanel]) });
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.title).toBe('hello');
+      expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Existing panel']);
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('refuses a dirty dashboard, even with no panels', async () => {
+      const { scene, client } = setup();
+      scene.setState({ isDirty: true });
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('refuses a saved dashboard (has a uid), even if blank and not dirty', async () => {
+      const { scene, client } = setup({ uid: 'existing-dash-uid' });
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('succeeds against a blank, unsaved, non-dirty dashboard -- the only case the product uses', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result.success).toBe(true);
+      expect(scene.state.planning).toBeDefined();
+    });
+
+    it('does not refuse a re-render of an already-planning scene, even though it now has panels', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      expect(scene.state.body.getVizPanels().length).toBeGreaterThan(0);
+
+      const result = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: { ...plan, planId: 'plan-2', title: 'Replacement' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(scene.state.title).toBe('Replacement');
+    });
   });
 
   it('only notifies the most recent plan: a stale onBuild/onDismiss closure is a no-op', async () => {
