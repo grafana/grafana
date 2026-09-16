@@ -321,36 +321,6 @@ func (_m *MockUserAuthTokenService) RevokeToken(ctx context.Context, token *user
 	return r0
 }
 
-// RotateToken provides a mock function with given fields: ctx, cmd
-func (_m *MockUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*usertoken.UserToken, error) {
-	ret := _m.Called(ctx, cmd)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RotateToken")
-	}
-
-	var r0 *usertoken.UserToken
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.RotateCommand) (*usertoken.UserToken, error)); ok {
-		return rf(ctx, cmd)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.RotateCommand) *usertoken.UserToken); ok {
-		r0 = rf(ctx, cmd)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*usertoken.UserToken)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, auth.RotateCommand) error); ok {
-		r1 = rf(ctx, cmd)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateExternalSession provides a mock function with given fields: ctx, externalSessionID, cmd
 func (_m *MockUserAuthTokenService) UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error {
 	ret := _m.Called(ctx, externalSessionID, cmd)

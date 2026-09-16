@@ -5,23 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"net"
-	"strconv"
 	"time"
-
-	"github.com/open-feature/go-sdk/openfeature"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,12 +22,9 @@ import (
 )
 
 var (
-	getTime            = time.Now
-	errTokenNotRotated = errors.New("token was not rotated")
-	errUserIDInvalid   = errors.New("invalid user ID")
+	getTime          = time.Now
+	errUserIDInvalid = errors.New("invalid user ID")
 )
-
-const SkipRotationTime = 5 * time.Second
 
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
@@ -44,15 +32,12 @@ func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDataba
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfgProvider configprovider.ConfigProvider, tracer tracing.Tracer,
-	features featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sql:               sql,
 		serverLockService: serverLockService,
 		cfgProvider:       cfgProvider,
 		log:               log.New("auth"),
-		singleflight:      new(singleflight.Group),
-		features:          features,
 		tracer:            tracer,
 	}
 
@@ -85,8 +70,6 @@ type UserAuthTokenService struct {
 	cfgProvider          configprovider.ConfigProvider
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
-	singleflight         *singleflight.Group
-	features             featuremgmt.FeatureToggles
 	tracer               tracing.Tracer
 }
 
@@ -111,17 +94,14 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.Create
 	}
 
 	userAuthToken := userAuthToken{
-		UserId:        cmd.User.ID,
-		AuthToken:     hashedToken,
-		PrevAuthToken: hashedToken,
-		ClientIp:      clientIPStr,
-		UserAgent:     cmd.UserAgent,
-		RotatedAt:     now,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-		SeenAt:        0,
-		RevokedAt:     0,
-		AuthTokenSeen: false,
+		UserId:    cmd.User.ID,
+		AuthToken: hashedToken,
+		ClientIp:  clientIPStr,
+		UserAgent: cmd.UserAgent,
+		CreatedAt: now,
+		UpdatedAt: now,
+		SeenAt:    now,
+		RevokedAt: 0,
 	}
 
 	dbHelper, err := s.sql(ctx)
@@ -178,9 +158,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	var exists bool
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err = dbSession.Table(dbHelper.Table("user_auth_token")).
-			Where("(auth_token = ? OR prev_auth_token = ?)",
-				hashedToken,
-				hashedToken).
+			Where("auth_token = ?", hashedToken).
 			Get(&model)
 
 		return err
@@ -203,78 +181,30 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
-	if model.CreatedAt <= s.createdAfterParam(cfg) || model.RotatedAt <= s.rotatedAfterParam(cfg) {
-		ctxLogger.Debug("User token has expired", "userID", model.UserId, "tokenID", model.Id, "createdAt", model.CreatedAt, "rotatedAt", model.RotatedAt)
+	if model.CreatedAt <= s.createdAfterParam(cfg) || model.SeenAt <= s.seenAfterParam(cfg) {
+		ctxLogger.Debug("User token has expired", "userID", model.UserId, "tokenID", model.Id, "createdAt", model.CreatedAt, "seenAt", model.SeenAt)
 		return nil, &auth.TokenExpiredError{
 			UserID:  model.UserId,
 			TokenID: model.Id,
 		}
 	}
 
-	// Current incoming token is the previous auth token in the DB and the auth_token_seen is true
-	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
-		origAuthTokenSeen := model.AuthTokenSeen
-		origRotatedAt := model.RotatedAt
-
-		model.AuthTokenSeen = false
-		model.RotatedAt = getTime().Add(-usertoken.UrgentRotateTime).Unix()
-
-		var affectedRows int64
-		err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-			affectedRows, err = dbSession.Table(dbHelper.Table("user_auth_token")).
-				Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
-					model.Id,
-					model.PrevAuthToken,
-					model.RotatedAt).
-				AllCols().Update(&model)
-
+	// Activity is independent of the credential. Bound writes and use a conditional
+	// update so concurrent requests cannot move activity backwards or revive a session.
+	now := getTime()
+	writeInterval := max(time.Second, min(time.Minute, cfg.LoginMaxInactiveLifetime/10))
+	if model.SeenAt <= now.Add(-writeInterval).Unix() {
+		err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
+			_, err := dbSession.Table(dbHelper.Table("user_auth_token")).
+				Where("id = ? AND auth_token = ? AND revoked_at = 0 AND seen_at <= ? AND seen_at > ? AND created_at > ?",
+					model.Id, hashedToken, now.Add(-writeInterval).Unix(), s.seenAfterParam(cfg), s.createdAfterParam(cfg)).
+				Cols("seen_at").Update(&userAuthToken{SeenAt: now.Unix()})
 			return err
 		})
 		if err != nil {
 			return nil, err
 		}
-
-		if affectedRows == 0 {
-			ctxLogger.Debug("Prev seen token unchanged", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
-
-			graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
-			if graceEnabled {
-				// The token has been rotated very recently, so we don't want to rotate it again.
-				// We accomplish this by restoring its rotation time and marking it back as seen.
-				model.AuthTokenSeen = origAuthTokenSeen
-				model.RotatedAt = origRotatedAt
-			}
-		} else {
-			// The token was last rotated more than UrgentRotateTime time ago. We keep the modified rotated_at and
-			// mark it as unseen so that it will be considered as needing urgent rotation during authentication.
-			ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
-		}
-	}
-
-	// Current incoming token is not seen and it is the latest valid auth token in the db
-	if !model.AuthTokenSeen && model.AuthToken == hashedToken {
-		model.AuthTokenSeen = true
-		model.SeenAt = getTime().Unix()
-
-		var affectedRows int64
-		err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-			affectedRows, err = dbSession.Table(dbHelper.Table("user_auth_token")).
-				Where("id = ? AND auth_token = ?",
-					model.Id,
-					model.AuthToken).
-				AllCols().Update(&model)
-
-			return err
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		if affectedRows == 0 {
-			ctxLogger.Debug("Seen wrong token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
-		} else {
-			ctxLogger.Debug("Seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
-		}
+		model.SeenAt = max(model.SeenAt, now.Unix())
 	}
 
 	model.UnhashedToken = unhashedToken
@@ -337,170 +267,6 @@ func (s *UserAuthTokenService) UpdateExternalSession(ctx context.Context, extern
 	defer span.End()
 
 	return s.externalSessionStore.Update(ctx, externalSessionID, cmd)
-}
-
-func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
-	ctx, span := s.tracer.Start(ctx, "authtoken.RotateToken")
-	defer span.End()
-
-	if cmd.UnHashedToken == "" {
-		return nil, auth.ErrInvalidSessionToken
-	}
-
-	// Same flag LookupToken uses for rotation-race bookkeeping.
-	graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
-
-	// Key by session ID so a still-valid-but-superseded token collapses into the same rotation.
-	singleflightKey := cmd.UnHashedToken
-	if graceEnabled {
-		initial, err := s.LookupToken(ctx, cmd.UnHashedToken)
-		if err != nil {
-			return nil, err
-		}
-		singleflightKey = strconv.FormatInt(initial.Id, 10)
-	}
-
-	rotate := func(ctx context.Context) (*auth.UserToken, error) {
-		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
-		if err != nil {
-			return nil, err
-		}
-		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
-
-		skip := time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime())
-
-		// Only skip if the presented token is still current -- otherwise it's about to be evicted anyway.
-		if graceEnabled {
-			cfg, err := s.cfgProvider.Get(ctx)
-			if err != nil {
-				return nil, err
-			}
-			skip = skip && hashToken(cfg.SecretKey, cmd.UnHashedToken) == token.AuthToken
-		}
-
-		if skip {
-			log.Debug("Token was last rotated very recently, skipping rotation")
-			span.SetAttributes(attribute.Bool("skipped", true))
-			return token, nil
-		}
-		log.Debug("Rotating token")
-
-		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
-
-		if errors.Is(err, errTokenNotRotated) {
-			span.SetAttributes(attribute.Bool("rotated", false))
-			return token, nil
-		}
-
-		if err != nil {
-			span.SetStatus(codes.Error, "token rotation failed")
-			span.RecordError(err)
-			return nil, err
-		}
-
-		return newToken, nil
-	}
-
-	res, err, _ := s.singleflight.Do(singleflightKey, func() (any, error) {
-		dbHelper, err := s.sql(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		var token *auth.UserToken
-		err = dbHelper.DB.InTransaction(ctx, func(ctx context.Context) error {
-			var err error
-			token, err = rotate(ctx)
-			return err
-		})
-		return token, err
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res.(*auth.UserToken), nil
-}
-
-type rotateTokenQuery struct {
-	sqltemplate.SQLTemplate
-	TokenTable    string
-	UserAgent     string
-	ClientIP      string
-	AuthToken     string
-	AuthTokenSeen any
-	RotatedAt     int64
-	TokenID       int64
-}
-
-func (q rotateTokenQuery) Validate() error { return nil }
-
-func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
-	ctx, span := s.tracer.Start(ctx, "authtoken.rotateToken")
-	defer span.End()
-
-	var clientIPStr string
-	if clientIP != nil {
-		clientIPStr = clientIP.String()
-	}
-
-	cfg, err := s.cfgProvider.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	newToken, hashedToken, err := generateAndHashToken(cfg.SecretKey)
-	if err != nil {
-		return nil, err
-	}
-
-	dbHelper, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	now := getTime()
-	query := rotateTokenQuery{
-		SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
-		TokenTable:    dbHelper.Table("user_auth_token"),
-		UserAgent:     userAgent,
-		ClientIP:      clientIPStr,
-		AuthToken:     hashedToken,
-		AuthTokenSeen: dbHelper.DB.GetDialect().BooleanValue(false),
-		RotatedAt:     now.Unix(),
-		TokenID:       token.Id,
-	}
-	rawSQL, err := sqltemplate.Execute(rotateTokenTemplate, query)
-	if err != nil {
-		return nil, err
-	}
-
-	var affected int64
-	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
-		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
-		if err != nil {
-			return err
-		}
-
-		affected, err = res.RowsAffected()
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if affected < 1 {
-		return nil, errTokenNotRotated
-	}
-
-	token.PrevAuthToken = token.AuthToken
-	token.AuthToken = hashedToken
-	token.UnhashedToken = newToken
-	token.AuthTokenSeen = false
-	token.RotatedAt = now.Unix()
-
-	return token, nil
 }
 
 func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {
@@ -722,10 +488,10 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var tokens []*userAuthToken
 		err := dbSession.Table(dbHelper.Table("user_auth_token")).
-			Where("user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0",
+			Where("user_id = ? AND created_at > ? AND seen_at > ? AND revoked_at = 0",
 				userId,
 				s.createdAfterParam(cfg),
-				s.rotatedAfterParam(cfg)).
+				s.seenAfterParam(cfg)).
 			Find(&tokens)
 		if err != nil {
 			return err
@@ -749,7 +515,7 @@ type activeTokenCountQuery struct {
 	sqltemplate.SQLTemplate
 	TokenTable   string
 	CreatedAfter int64
-	RotatedAfter int64
+	SeenAfter    int64
 	FilterByUser bool
 	UserID       int64
 }
@@ -779,7 +545,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 		SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
 		TokenTable:   dbHelper.Table("user_auth_token"),
 		CreatedAfter: s.createdAfterParam(cfg),
-		RotatedAfter: s.rotatedAfterParam(cfg),
+		SeenAfter:    s.seenAfterParam(cfg),
 	}
 	if userID != nil {
 		query.FilterByUser = true
@@ -897,7 +663,7 @@ func (s *UserAuthTokenService) createdAfterParam(cfg *setting.Cfg) int64 {
 	return getTime().Add(-cfg.LoginMaxLifetime).Unix()
 }
 
-func (s *UserAuthTokenService) rotatedAfterParam(cfg *setting.Cfg) int64 {
+func (s *UserAuthTokenService) seenAfterParam(cfg *setting.Cfg) int64 {
 	return getTime().Add(-cfg.LoginMaxInactiveLifetime).Unix()
 }
 

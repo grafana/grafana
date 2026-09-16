@@ -2,12 +2,14 @@ package frontendsettings
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -17,6 +19,33 @@ import (
 func newTestReqContext() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{},
+	}
+}
+
+func TestSessionHeartbeatSettings(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		signedIn bool
+		token    *auth.UserToken
+		idle     time.Duration
+		want     int64
+	}{
+		{"session", true, &auth.UserToken{}, 7 * 24 * time.Hour, 300000},
+		{"short idle timeout", true, &auth.UserToken{}, 3 * time.Minute, 60000},
+		{"minimum interval", true, &auth.UserToken{}, 2 * time.Second, 1000},
+		{"no session", true, nil, 7 * 24 * time.Hour, 0},
+		{"anonymous", false, nil, 7 * 24 * time.Hour, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.LoginMaxInactiveLifetime = tc.idle
+			ctx := newTestReqContext()
+			ctx.IsSignedIn = tc.signedIn
+			ctx.UserToken = tc.token
+			settings, err := GetBaseFrontendSettings(ctx, cfg, &licensing.OSSLicensingService{Cfg: cfg}, nil)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, settings.SessionHeartbeatInterval)
+		})
 	}
 }
 

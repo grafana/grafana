@@ -85,15 +85,14 @@ Grafana and the Grafana Cloud portal currently do not include built-in support f
 
 We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Entra ID, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
 
-## Login and short-lived tokens
+## Login and sessions
 
 > The following applies if you're using Grafana basic authentication, LDAP (without Auth proxy) or OAuth integration.
 
-Grafana uses short-lived tokens to verify authenticated users.
+Grafana uses a persistent session cookie backed by a server-side record. The credential stays the same until you log out or the session expires or is revoked. Authenticated requests update session activity. Open tabs send a heartbeat to keep the session active, including while you edit a dashboard. Activity writes are coalesced, so the inactivity deadline can be up to one minute earlier than the last request. OAuth access-token refresh remains separate from the Grafana session lifetime.
 
 You can set up the following parameters:
 
-- `token_rotation_interval_minutes`: Specifies the rotation interval of the token for active authenticated users.
 - `login_maximum_lifetime_duration`: Specifies for how long a user remains authenticated before being prompted to authenticate again.
 - `login_maximum_inactive_lifetime_duration`: Specifies for how long inactive authenticated users will remain logged in.
   - A user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
@@ -141,14 +140,11 @@ Example:
 # Login cookie name
 login_cookie_name = grafana_session
 
-# The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
+# The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). Authenticated requests update session activity. Open browser tabs send a heartbeat to keep the session active.
 login_maximum_inactive_lifetime_duration =
 
 # The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
 login_maximum_lifetime_duration =
-
-# How often should auth tokens be rotated for authenticated users when being active. The default is every 10 minutes.
-token_rotation_interval_minutes = 10
 
 # The maximum lifetime (seconds) an API key can be used. If it is set all the API keys should have limited lifetime that is lower than this value.
 api_key_max_seconds_to_live = -1

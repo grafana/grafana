@@ -1094,16 +1094,12 @@ The cookie name for storing the auth token. Default is `grafana_session`.
 
 The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d).
 This setting should be expressed as a duration such `5m` (minutes), `6h` (hours), `10d` (days), `2w` (weeks), or `1M` (month).
-The lifetime resets at each successful token rotation (`token_rotation_interval_minutes`).
+Authenticated requests update session activity. Open browser tabs send a heartbeat to keep the session active. Activity writes are coalesced, so the inactivity deadline can be up to one minute earlier than the last request.
 
 #### `login_maximum_lifetime_duration`
 
 The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d).
 This setting should be expressed as a duration such `5m` (minutes), `6h` (hours), `10d` (days), `2w` (weeks), or `1M` (month).
-
-#### `token_rotation_interval_minutes`
-
-How often auth tokens are rotated for authenticated users when the user is active. The default is each 10 minutes.
 
 #### `disable_login_form`
 

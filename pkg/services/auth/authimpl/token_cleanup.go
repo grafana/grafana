@@ -54,16 +54,16 @@ type deleteExpiredTokensQuery struct {
 	sqltemplate.SQLTemplate
 	TokenTable    string
 	CreatedBefore int64
-	RotatedBefore int64
+	SeenBefore    int64
 }
 
 func (q deleteExpiredTokensQuery) Validate() error { return nil }
 
 func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInactiveLifetime, maxLifetime time.Duration) (int64, error) {
 	createdBefore := getTime().Add(-maxLifetime)
-	rotatedBefore := getTime().Add(-maxInactiveLifetime)
+	seenBefore := getTime().Add(-maxInactiveLifetime)
 
-	s.log.Debug("Starting cleanup of expired auth tokens", "createdBefore", createdBefore, "rotatedBefore", rotatedBefore)
+	s.log.Debug("Starting cleanup of expired auth tokens", "createdBefore", createdBefore, "seenBefore", seenBefore)
 
 	dbHelper, err := s.sql(ctx)
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInact
 			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
 			TokenTable:    dbHelper.Table("user_auth_token"),
 			CreatedBefore: createdBefore.Unix(),
-			RotatedBefore: rotatedBefore.Unix(),
+			SeenBefore:    seenBefore.Unix(),
 		}
 		rawSQL, err := sqltemplate.Execute(deleteExpiredTokensTemplate, query)
 		if err != nil {

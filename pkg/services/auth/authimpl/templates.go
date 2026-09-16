@@ -23,7 +23,6 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	rotateTokenTemplate                    = mustTemplate("rotate_token.sql")
 	revokeAllUserTokensTemplate            = mustTemplate("revoke_all_user_tokens.sql")
 	batchRevokeAllUserTokensTemplate       = mustTemplate("batch_revoke_all_user_tokens.sql")
 	activeTokenCountTemplate               = mustTemplate("active_token_count.sql")
