@@ -65,7 +65,6 @@ export const getGridStyles = memoize(
         : theme.colors.background.canvas
       : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
@@ -80,9 +79,9 @@ export const getGridStyles = memoize(
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': borderColor,
+        '--rdg-border-color': table.border,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
         '--rdg-selection-color': table.cellSelectionBorder,

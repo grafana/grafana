@@ -115,13 +115,13 @@ describe('TableDataGrid', () => {
         colors: {
           mode: 'dark',
           background: { primary: '#123456' },
-          border: { weak: '#345678' },
           secondary: { shade: '#456789' },
         },
         components: {
           panel: { background: '#123456' },
           table: {
             headerBackground: '#234567',
+            border: '#345678',
             rowHoverSurface: '#56789a',
             rowSelectedBackground: '#6789ab',
             rowSelectedHoverBackground: '#789abc',
