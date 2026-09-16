@@ -178,7 +178,7 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	info := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 	if err := b.UpdateAPIGroupInfo(&info, builder.APIGroupOptions{
 		Scheme: scheme, OptsGetter: getter, MetricsRegister: reg,
-		StorageOptsRegister: storageOptionsRegister(getter), StorageOpts: storageOpts,
+		StorageOpts:      storageOpts,
 		DualWriteBuilder: dualWriteBuilder,
 	}); err != nil {
 		return nil, fmt.Errorf("%s: build group: %w", group, err)
@@ -230,13 +230,4 @@ func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureV
 		return apistore.NewRESTOptionsGetterForClient(client, secrets,
 			storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, configProvider, nil), nil
 	}
-}
-
-func storageOptionsRegister(getter generic.RESTOptionsGetter) apistore.StorageOptionsRegister {
-	if register, ok := getter.(interface {
-		RegisterOptions(schema.GroupResource, apistore.StorageOptions)
-	}); ok {
-		return register.RegisterOptions
-	}
-	return func(schema.GroupResource, apistore.StorageOptions) {}
 }

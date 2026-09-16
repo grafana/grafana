@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
@@ -190,6 +191,8 @@ export const LogLineDetailsComponent = memo(
         .catch(() => setDs(null));
     }, [log.datasourceUid]);
 
+    const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+
     // Wait for ds to be resolved to DataSourceApi or null on error
     if (ds === undefined) {
       return null;
@@ -224,7 +227,7 @@ export const LogLineDetailsComponent = memo(
             prettifyJSON={prettifyDetailsJSON}
           />
         </ControlledCollapse>
-        {displayedFields.length > 0 && setDisplayedFields && (
+        {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
             isOpen={displayedFieldsOpen}
