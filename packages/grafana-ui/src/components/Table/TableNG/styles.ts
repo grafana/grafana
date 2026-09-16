@@ -105,7 +105,7 @@ export const getGridStyles = memoize(
         '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
-        '--rdg-selection-color': table.cellSelectionBorder,
+        '--rdg-selection-color': theme.colors.action.selectedBorder,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below

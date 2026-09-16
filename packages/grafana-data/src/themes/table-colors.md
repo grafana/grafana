@@ -13,17 +13,16 @@ palette.
 | `border`                     | Body and footer dividers                                                    |
 | `rowStripedBackground`       | Alternating data rows; not headers, footers, or nested expansion containers |
 | `rowHoverSurface`            | Solid hover surface for an unstriped row                                    |
-| `rowHoverOverlay`            | Translucent tint over a row's existing background                           |
+| `rowHoverOverlay`            | Hover fill composited over a row's existing background                      |
 | `rowSelectedBackground`      | Selected row surface                                                        |
 | `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
-| `cellSelectionBorder`        | Focused cell outline                                                        |
 
 Background surfaces and dividers must be opaque where they cover field-configured
 cell backgrounds or scrolling content.
 
-Use the solid hover surface for plain rows and the hover overlay when the underlying
-surface must remain visible, such as striped or selected rows. Consumers must apply
-the overlay without covering field-configured cell colors or nested tables.
+Use the solid hover surface for plain rows and the hover overlay when striped and
+selected rows need their own hover treatment. The overlay may be opaque or translucent;
+consumers must not apply it to field-configured cell colors or nested tables.
 
 ## Inheritance and overrides
 

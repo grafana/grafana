@@ -16,6 +16,13 @@ describe('table colors', () => {
     });
   });
 
+  it.each([
+    ['visual_refresh_dark', '#282d33'],
+    ['visual_refresh_light', '#e4e3e2'],
+  ])('resolves a direct palette color for the %s hover overlay', (id, rowHoverOverlay) => {
+    expect(getThemeById(id).components.table.rowHoverOverlay).toBe(rowHoverOverlay);
+  });
+
   it('inherits custom theme surfaces and accents before applying partial table overrides', () => {
     const theme = createTheme({
       colors: {
@@ -29,7 +36,6 @@ describe('table colors', () => {
     expect(theme.components.table).toMatchObject({
       headerBackground: '#202429',
       rowStripedBackground: '#403040',
-      cellSelectionBorder: '#ff000026',
     });
     expect(createTheme({ colors: { mode: 'dark' } }).components.table.headerBackground).toBe('#2c2f35');
   });

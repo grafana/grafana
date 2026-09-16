@@ -1240,7 +1240,7 @@
             },
             "rowHoverOverlay": {
               "type": "string",
-              "description": "Translucent hover tint to composite over plain, striped or selected rows instead of replacing their background."
+              "description": "Hover fill composited over plain, striped or selected rows; themes may use an opaque or translucent color."
             },
             "rowSelectedBackground": {
               "type": "string",
@@ -1249,10 +1249,6 @@
             "rowSelectedHoverBackground": {
               "type": "string",
               "description": "Opaque background for a hovered selected row when not using the hover overlay."
-            },
-            "cellSelectionBorder": {
-              "type": "string",
-              "description": "Outline of the focused cell."
             }
           },
           "additionalProperties": false
