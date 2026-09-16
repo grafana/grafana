@@ -21,6 +21,12 @@ import { SceneDataNode } from '@grafana/scenes';
  *    soon as the plan does. A real query, even a synthetic one, is still a datasource round trip
  *    per panel; building frames in-process instead is materially faster at that scale and has no
  *    failure mode of its own to handle.
+ *
+ * The accepted cost of that choice: this sample data does not react to variable changes the way
+ * a real query would, since there's no query underneath it to re-run. That's a known, priced
+ * trade-off of a preview built this way, not an oversight — variables can still be reviewed,
+ * added, renamed, or reordered while planning (see planningPolicy.ts), just without the panels
+ * visibly responding until Build attaches real queries behind them.
  */
 
 type PlanPreviewDataShape =

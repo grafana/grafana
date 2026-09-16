@@ -19,12 +19,16 @@
  *    added — dashboard annotation writes went straight to the backend from a panel-context
  *    callback nobody had classified as a planning action in the first place. The standing check
  *    against this shape: for every backend write or state mutation a placeholder panel can
- *    trigger, is there a `PlanningAction` that names it? (One known instance not yet closed:
+ *    trigger, is there a `PlanningAction` that names it? (Related but not an instance of this:
  *    `settings/VariablesEditView.tsx`, the legacy dashboard-settings "Variables" tab, mutates the
- *    variable set directly and doesn't call through `add-variable`/`remove-variable`/
- *    `rename-variable`/`move-variable`'s chokepoints below — it's reachable today only if that
- *    settings view was already open before planning started, the same shape as the
- *    `dashboard-settings` bypass `save-dashboard` had before T7. Flagged, not yet fixed.)
+ *    variable set directly through `SceneVariableSet.setState()` rather than through
+ *    `add-variable`/`remove-variable`/`rename-variable`/`move-variable`'s chokepoints below. That
+ *    is not currently a gap: the settings view can't be open during planning at all — clearing
+ *    `editview` when planning starts closes it generically, for every settings view, not just
+ *    this one — and even in the instant before that fires, there is no guard for it to bypass,
+ *    since those four actions are permitted either way. Worth keeping as a structural note rather
+ *    than deleting, though: it is a second, independent implementation of an already-permitted
+ *    action, and it won't hear about it if that policy is ever tightened again.)
  *
  *  - Modelled and deliberately allowed: a `PlanningAction` that exists and is intentionally
  *    absent from `DENIED_WHILE_PLANNING`, because the feature's own documented capabilities say
