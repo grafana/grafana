@@ -1,5 +1,5 @@
 {
-  "uid": "demo-alerting-operations",
+  "uid": "demo-alerting",
   "title": "Demo: Grafana Alerting Operations",
   "tags": ["demo", "dummy", "alerting"],
   "timezone": "browser",
@@ -540,7 +540,7 @@
           "refId": "A",
           "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
           "scenarioId": "csv_content",
-          "csvContent": "Notifier,Failure rate,Sent (5m),Failed (5m)\nemail,0.012,420,5\nslack,0.048,180,9\npagerduty,0.002,90,0\nwebhook,0.081,55,5\nopsgenie,0.019,40,1\n"
+          "csvContent": "Notifier,Failure rate,Sent (5m),Failed (5m)\nemail,0.012,420,5\nslack,0.048,180,9\npagerduty,0.002,90,0\nwebhook,0.081,55,5\n"
         }
       ]
     }
