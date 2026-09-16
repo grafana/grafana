@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -253,4 +254,109 @@ func (m *mockAppInstallerWithStorageOpts) ManifestData() *app.ManifestData {
 
 func (m *mockAppInstallerWithStorageOpts) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
 	return m.getOpts(gr)
+}
+
+type mockAppInstallerWithVersionedStorageOpts struct {
+	*mockAppInstaller
+	manifest         *app.ManifestData
+	getOpts          func(schema.GroupResource) *apistore.StorageOptions
+	getVersionedOpts func(schema.GroupVersionResource) *apistore.StorageOptions
+}
+
+func (m *mockAppInstallerWithVersionedStorageOpts) ManifestData() *app.ManifestData {
+	return m.manifest
+}
+
+func (m *mockAppInstallerWithVersionedStorageOpts) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	if m.getOpts == nil {
+		return nil
+	}
+	return m.getOpts(gr)
+}
+
+func (m *mockAppInstallerWithVersionedStorageOpts) GetVersionedStorageOptions(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+	if m.getVersionedOpts == nil {
+		return nil
+	}
+	return m.getVersionedOpts(gvr)
+}
+
+// twoVersionManifest serves one kind under both versions, the shape that a
+// GroupResource key cannot describe.
+func twoVersionManifest(group string) *app.ManifestData {
+	return &app.ManifestData{
+		AppName: "test-app",
+		Group:   group,
+		Versions: []app.ManifestVersion{
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
+		},
+	}
+}
+
+func TestRegisterVersionedStorageOptions(t *testing.T) {
+	const group = "test.grafana.app"
+	v1 := schema.GroupVersionResource{Group: group, Version: "v1alpha1", Resource: "foos"}
+	v2 := schema.GroupVersionResource{Group: group, Version: "v2alpha1", Resource: "foos"}
+
+	// ForResource returns the getter itself for a GVR with nothing registered,
+	// and a distinct scoped getter for one that has -- which is how a caller
+	// outside apistore can tell whether a registration took.
+	scoped := func(t *testing.T, reg *apistore.RESTOptionsGetter, gvr schema.GroupVersionResource) bool {
+		t.Helper()
+		return reg.ForResource(gvr) != generic.RESTOptionsGetter(reg)
+	}
+
+	t.Run("each served version is asked and registered separately", func(t *testing.T) {
+		var asked []schema.GroupVersionResource
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+				asked = append(asked, gvr)
+				return &apistore.StorageOptions{EnableFolderSupport: true, RequireFolder: gvr.Version == "v1alpha1"}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		assert.ElementsMatch(t, []schema.GroupVersionResource{v1, v2}, asked,
+			"both versions are asked, and the plural is lower-cased into the resource name")
+		assert.True(t, scoped(t, reg, v1))
+		assert.True(t, scoped(t, reg, v2), "the second version is not skipped as a duplicate")
+	})
+
+	t.Run("a declined version falls back to the unversioned provider", func(t *testing.T) {
+		var unversioned []schema.GroupResource
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+				if gvr.Version != "v1alpha1" {
+					return nil // decline
+				}
+				return &apistore.StorageOptions{RequireFolder: true}
+			},
+			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
+				unversioned = append(unversioned, gr)
+				return &apistore.StorageOptions{MaximumNameLength: 40}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		assert.Equal(t, []schema.GroupResource{{Group: group, Resource: "foos"}}, unversioned,
+			"only the declined version consults the GroupResource provider")
+		assert.True(t, scoped(t, reg, v1), "the accepted version got its own entry")
+		assert.False(t, scoped(t, reg, v2), "the declined version resolves through the shared getter")
+	})
+
+	t.Run("an installer with neither provider registers nothing", func(t *testing.T) {
+		installer := &mockAppInstaller{
+			groupVersions: []schema.GroupVersion{{Group: group, Version: "v1alpha1"}},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		assert.False(t, scoped(t, reg, v1))
+	})
 }

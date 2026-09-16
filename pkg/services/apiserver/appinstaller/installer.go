@@ -65,8 +65,19 @@ type NamespaceScopedStorageAuthorizerProvider interface {
 // storage options (such as folder support) for unified storage. This is
 // needed for resources that use unified storage exclusively (nil legacy
 // storage) and need to opt in to storage features that are off by default.
+//
+// A GroupResource carries no version, so one answer covers every served version
+// of a kind. Implement [VersionedStorageOptionsProvider] instead to vary options
+// across versions, or to declare a GVK.
 type StorageOptionsProvider interface {
 	GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions
+}
+
+// VersionedStorageOptionsProvider is [StorageOptionsProvider] per
+// group+version+resource. An installer implementing both is asked this one
+// first, and falls back to the unversioned answer for any GVR it declines.
+type VersionedStorageOptionsProvider interface {
+	GetVersionedStorageOptions(gvr schema.GroupVersionResource) *apistore.StorageOptions
 }
 
 type AppInstallerConfig struct {
@@ -245,15 +256,21 @@ func createPostStartHook(
 	}
 }
 
-// registerStorageOptions checks if the installer implements StorageOptionsProvider
-// and registers per-resource storage options on the RESTOptionsGetter.
+// registerStorageOptions declares the installer's per-resource storage options on
+// the RESTOptionsGetter, from whichever provider interface it implements.
+//
+// Versioned options are keyed by GVR and read back by the app-sdk installer
+// through RESTOptionsGetter.ForResource, so each served version gets its own.
+// Unversioned options are keyed by GroupResource, which every version of a kind
+// shares; a resource is registered once and later versions add nothing.
 func registerStorageOptions(
 	installer appsdkapiserver.AppInstaller,
 	restOpsGetter generic.RESTOptionsGetter,
 	logger logging.Logger,
 ) {
-	provider, ok := installer.(StorageOptionsProvider)
-	if !ok {
+	provider, _ := installer.(StorageOptionsProvider)
+	versionedProvider, _ := installer.(VersionedStorageOptionsProvider)
+	if provider == nil && versionedProvider == nil {
 		return
 	}
 	reg, ok := restOpsGetter.(*apistore.RESTOptionsGetter)
@@ -263,7 +280,7 @@ func registerStorageOptions(
 		return
 	}
 	md := installer.ManifestData()
-	registered := make(map[string]struct{})
+	registered := make(map[schema.GroupResource]struct{})
 	for _, v := range md.Versions {
 		for _, k := range v.Kinds {
 			if k.Plural == "" {
@@ -273,12 +290,21 @@ func registerStorageOptions(
 				Group:    md.Group,
 				Resource: strings.ToLower(k.Plural),
 			}
-			if _, done := registered[gr.String()]; done {
+			if versionedProvider != nil {
+				if opts := versionedProvider.GetVersionedStorageOptions(gr.WithVersion(v.Name)); opts != nil {
+					reg.RegisterVersionedOptions(gr.WithVersion(v.Name), *opts)
+					continue
+				}
+			}
+			if provider == nil {
+				continue
+			}
+			if _, done := registered[gr]; done {
 				continue
 			}
 			if opts := provider.GetStorageOptions(gr); opts != nil {
 				reg.RegisterOptions(gr, *opts)
-				registered[gr.String()] = struct{}{}
+				registered[gr] = struct{}{}
 			}
 		}
 	}
