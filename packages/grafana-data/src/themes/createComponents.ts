@@ -382,7 +382,7 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
 
 function createTableColors(colors: ThemeColors): ThemeTableColors {
   const background = colors.background.primary;
-  const headerBackground = colors.secondary.main;
+  const headerBackground = onBackground(colors.secondary.main, background).toHexString();
   const rowSelectedBackground =
     colors.mode === 'dark'
       ? onBackground(colors.warning.main, background).darken(37).toHexString()
@@ -395,7 +395,7 @@ function createTableColors(colors: ThemeColors): ThemeTableColors {
     background,
     backgroundOnCanvas: colors.background.canvas,
     headerBackground,
-    headerBorder: colors.secondary.shade,
+    headerBorder: onBackground(colors.secondary.shade, headerBackground).toHexString(),
     border: onBackground(colors.border.weak, background).toHexString(),
     rowStripedBackground: colors.background.secondary,
     rowHoverBackgroundSolid: onBackground(rowHoverOverlay, background).toHexString(),
