@@ -1716,6 +1716,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -12250,6 +12253,10 @@
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
   },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
   },
@@ -16686,10 +16693,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",
