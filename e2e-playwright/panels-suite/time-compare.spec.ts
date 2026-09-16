@@ -20,6 +20,13 @@ const SHIFTED_RANGE_TO = 1756921600000;
 const pinnedRange = (from: number, to: number) =>
   new URLSearchParams({ from: String(from), to: String(to), timezone: 'utc' });
 
+/**
+ * A rolling range re-resolves against the wall clock on every refresh, so its timestamps cannot be
+ * frozen. Tests using it assert the offset between the two windows rather than absolute values.
+ * 5s is the shortest interval the default `min_refresh_interval` permits.
+ */
+const rollingRange = () => new URLSearchParams({ from: 'now-6h', to: 'now', timezone: 'utc', refresh: '5s' });
+
 // Both flags are LegacyFrontend in the feature registry
 test.use({
   featureToggles: {
@@ -126,6 +133,38 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
     expect(compare.from).toBe(1756813600000);
     expect(compare.to).toBe(1756835200000);
     expect(primary.from - compare.from).toBe(ONE_DAY_MS);
+  });
+
+  test('rolls the compare window forward with the primary one when a relative range auto-refreshes', async ({
+    page,
+    gotoDashboardPage,
+    selectors,
+  }) => {
+    // Waits out a real auto-refresh tick on top of the dashboard load.
+    test.slow();
+
+    const recorder = await mockQueryApi(page, selectors);
+    await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: rollingRange() });
+
+    const firstPrimary = await recorder.waitForRequest(['A']);
+    const firstCompare = await recorder.waitForRequest(['A-compare']);
+
+    expect(firstCompare.from).toBe(firstPrimary.from - ONE_DAY_MS);
+    expect(firstCompare.to).toBe(firstPrimary.to - ONE_DAY_MS);
+
+    // Drop the load's requests so the next ones can only have come from the refresh.
+    recorder.reset();
+
+    const nextPrimary = await recorder.waitForRequest(['A']);
+    const nextCompare = await recorder.waitForRequest(['A-compare']);
+
+    // `now` advanced, so both windows have to advance with it. A comparison window pinned to the
+    // range resolved at load time would still satisfy the offset assertions below.
+    expect(nextPrimary.to).toBeGreaterThan(firstPrimary.to);
+    expect(nextCompare.to).toBeGreaterThan(firstCompare.to);
+
+    expect(nextCompare.from).toBe(nextPrimary.from - ONE_DAY_MS);
+    expect(nextCompare.to).toBe(nextPrimary.to - ONE_DAY_MS);
   });
 
   test('enables comparison on a panel through the time settings drawer', async ({
