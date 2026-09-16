@@ -20,8 +20,8 @@ foldersV1: {
 		// re-run app-sdk codegen to reconcile.
 		status: {
 			cascadeDelete?: {
-				state?:     string
-				remaining:  int64
+				state?:    string
+				remaining: int64
 				errors?: [...string]
 				started?:  int64
 				finished?: int64
