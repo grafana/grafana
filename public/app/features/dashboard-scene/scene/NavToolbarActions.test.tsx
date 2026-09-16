@@ -8,6 +8,11 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import {
+  RepoViewStatus,
+  type RepositoryViewData,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -42,6 +47,30 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
+}));
+
+// Same as what the real hook returns with provisioning off, so the existing toolbar tests keep
+// their baseline. Only the read-only badge tests care about this mock.
+const noRepositoryView: RepositoryViewData = {
+  isLoading: false,
+  isInstanceManaged: false,
+  isReadOnlyRepo: false,
+  isMissingRepo: false,
+  status: RepoViewStatus.Disabled,
+};
+
+const readOnlyRepositoryView: RepositoryViewData = {
+  repository: { name: 'repo-1', title: 'Repo 1', type: 'github', target: 'folder', workflows: [] },
+  repoType: 'github',
+  status: RepoViewStatus.Ready,
+  isInstanceManaged: false,
+  isReadOnlyRepo: true,
+  isMissingRepo: false,
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -54,6 +83,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('NavToolbarActions', () => {
+  beforeEach(() => {
+    jest.mocked(useGetResourceRepositoryView).mockReturnValue(noRepositoryView);
+  });
+
   describe('Given an already saved dashboard', () => {
     it('Should show correct buttons when not in editing', async () => {
       setup();
@@ -211,6 +244,26 @@ describe('NavToolbarActions', () => {
       });
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+  });
+
+  describe('Read-only badge', () => {
+    beforeEach(() => {
+      jest.mocked(useGetResourceRepositoryView).mockReturnValue(readOnlyRepositoryView);
+    });
+
+    it('shows the badge next to the disabled Edit button for a user who could otherwise edit', async () => {
+      setup();
+
+      expect(await screen.findByRole('button', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByText('Read only')).toBeInTheDocument();
+    });
+
+    it('hides the badge from a user who cannot edit the dashboard anyway', async () => {
+      setup({ canEdit: false, canMakeEditable: false });
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
   });
 });

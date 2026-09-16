@@ -8,6 +8,7 @@ package extensions
 import (
 	_ "github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/alicebob/miniredis/v2"
+	_ "github.com/go-kit/log"
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
@@ -39,6 +40,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/org/orgtest"
 	_ "github.com/grafana/grafana/pkg/services/preference/preftest"
 	_ "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	_ "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/api"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"

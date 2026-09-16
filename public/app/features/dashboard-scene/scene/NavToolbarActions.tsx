@@ -124,15 +124,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (isReadOnlyRepo) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ReadOnlyBadge repoType={repoType} />;
-      },
-    });
-  }
+  // Only users who could otherwise edit need to know why they can't.
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
+    render: () => {
+      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
+    },
+  });
 
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.

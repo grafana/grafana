@@ -178,16 +178,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/panel/graph/**/*",
-      "/packages/grafana-ui/src/components/Graph/**/*",
-      "/packages/grafana-ui/src/components/GraphNG/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "area/panel/graph"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/panel/heatmap/**/*"
     ],
     "action": "updateLabel",

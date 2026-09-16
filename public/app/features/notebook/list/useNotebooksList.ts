@@ -303,6 +303,12 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     isFiltered,
     searchQuery,
     setSearchQuery,
+    /**
+     * The search the requests above actually carry, after the debounce. `searchQuery` holds what the
+     * box says right now, so a caller that has to act on a search somebody finished typing reads
+     * this one instead.
+     */
+    debouncedSearch,
     createdByMe,
     setCreatedByMe,
     tagFilter,
