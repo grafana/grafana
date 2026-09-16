@@ -1,8 +1,10 @@
 package rules
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -10,6 +12,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewFolderValidatorRejectsRootFolder(t *testing.T) {
+	validate := newFolderValidator(&ngalert.AlertNG{})
+
+	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
+		valid, err := validate(context.Background(), uid)
+		require.NoError(t, err)
+		require.False(t, valid)
+	}
+}
 
 func TestWatchNamespace(t *testing.T) {
 	tests := []struct {
