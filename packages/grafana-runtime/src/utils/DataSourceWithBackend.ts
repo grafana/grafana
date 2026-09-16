@@ -13,6 +13,7 @@ import {
   type DataSourceJsonData,
   type DataSourceRef,
   getDataSourceRef,
+  LoadingState,
   makeClassES5Compatible,
   parseLiveChannelAddress,
   type ScopedVars,
@@ -38,6 +39,7 @@ import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef'
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { areDatasourceTypesAllowed, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { toDataQueryError } from './toDataQueryError';
 import { UserStorage } from './userStorage';
 
 export class HealthCheckError extends Error {
@@ -337,7 +339,12 @@ class DataSourceWithBackend<
     return defer(() => this.createBackendRequest(request)).pipe(
       switchMap(([req, queries, useChunkedResponse]) => {
         if (useChunkedResponse) {
-          return toChunkedDataQueryResponse(getBackendSrv().chunked(req));
+          return toChunkedDataQueryResponse(getBackendSrv().chunked(req)).pipe(
+            catchError((err) => {
+              const error = toDataQueryError(err);
+              return of<DataQueryResponse>({ data: [], error, errors: [error], state: LoadingState.Error });
+            })
+          );
         }
 
         return getBackendSrv()

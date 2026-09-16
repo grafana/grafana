@@ -30,7 +30,7 @@ const frame: DataFrameJSON = {
 
 describe('toChunkedDataQueryResponse', () => {
   it('buffers partial JSONL lines and emits a streaming frame response', async () => {
-    const event = JSON.stringify({ refId: 'A', frame }) + '\n';
+    const event = JSON.stringify({ refId: 'A', frameId: '0', frame }) + '\n';
     const splitAt = 13;
 
     const responses = await firstValueFrom(
@@ -40,7 +40,7 @@ describe('toChunkedDataQueryResponse', () => {
     );
 
     expect(responses).toHaveLength(2);
-    expect(responses[0]).toMatchObject({ key: 'chunked-query-0', state: LoadingState.Streaming });
+    expect(responses[0]).toMatchObject({ key: 'chunked-query-A-0', state: LoadingState.Streaming });
     expect(responses[0].data[0].refId).toBe('A');
     expect(responses[0].data[0].fields[0].values).toEqual([42]);
     expect(responses[1]).toEqual({ key: 'chunked-query-complete', data: [], state: LoadingState.Done });
@@ -54,7 +54,7 @@ describe('toChunkedDataQueryResponse', () => {
     expect(responses).toHaveLength(3);
     expect(responses[0].data[0].refId).toBe('A');
     expect(responses[1]).toMatchObject({
-      key: 'chunked-query-1',
+      key: 'chunked-query-B-1',
       state: LoadingState.Error,
       error: { refId: 'B', message: 'query failed', status: 200 },
     });

@@ -57,6 +57,15 @@ function toQueryError(event: ChunkedQueryEvent, response: FetchResponse<Uint8Arr
   };
 }
 
+function toResponseError(response: FetchResponse<Uint8Array | undefined>): DataQueryError {
+  return {
+    message: `Chunked query request failed with status ${response.status}: ${response.statusText}`,
+    status: response.status,
+    statusText: response.statusText,
+    traceId: response.traceId,
+  };
+}
+
 /**
  * Converts the datasource API's JSONL query response into incremental query
  * packets. Browser ReadableStream chunks are arbitrary byte sequences, so lines
@@ -88,7 +97,12 @@ export function toChunkedDataQueryResponse(
         return;
       }
 
-      const key = `chunked-query-${packetCount++}`;
+      // frameId is part of the chunked datasource response contract and identifies
+      // a complete frame within one refId. Reusing it replaces a repeated frame
+      // rather than retaining another copy in the query runner.
+      const key = event.frameId
+        ? `chunked-query-${event.refId}-${event.frameId}`
+        : `chunked-query-${event.refId}-${packetCount++}`;
       if (event.error) {
         const error = toQueryError(event, response);
         subscriber.next({ key, data: [], error, errors: [error], state: LoadingState.Error });
@@ -110,9 +124,7 @@ export function toChunkedDataQueryResponse(
     const subscription = chunks.subscribe({
       next: (response) => {
         if (!response.ok) {
-          subscriber.error(
-            new Error(`Chunked query request failed with status ${response.status}: ${response.statusText}`)
-          );
+          subscriber.error(toResponseError(response));
           return;
         }
         if (!response.data) {

@@ -1,4 +1,5 @@
 import { firstValueFrom, of } from 'rxjs';
+import { toArray } from 'rxjs/operators';
 
 import {
   type DataQuery,
@@ -1028,6 +1029,44 @@ describe('DataSourceWithBackend', () => {
         url: '/apis/query.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy',
       });
       expect(mockChunkedRequest).not.toHaveBeenCalled();
+    });
+
+    it('returns a query error response when a chunked request fails', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetObjectValue.mockReturnValue({ types: ['dummy'] });
+      mockChunkedRequest.mockReturnValue(
+        of({
+          data: undefined,
+          status: 502,
+          statusText: 'Bad Gateway',
+          ok: false,
+          headers: new Headers(),
+          redirected: false,
+          type: 'basic',
+          url: '/query',
+          config: { url: '/query' },
+        })
+      );
+
+      const { ds } = createMockDatasource();
+      const responses = await firstValueFrom(
+        ds
+          .query({
+            maxDataPoints: 10,
+            intervalMs: 5000,
+            targets: [{ refId: 'A' }],
+            range: getDefaultTimeRange(),
+          } as DataQueryRequest)
+          .pipe(toArray())
+      );
+
+      expect(responses).toEqual([
+        expect.objectContaining({
+          data: [],
+          state: 'Error',
+          error: expect.objectContaining({ status: 502, statusText: 'Bad Gateway' }),
+        }),
+      ]);
     });
 
     it('uses the legacy endpoint when the datasource is not query-service compatible', async () => {
