@@ -101,10 +101,6 @@ function getPillColors(
     return onBackground(getColorByStringHash(mode.getColors(theme), value));
   }
 
-  // Under the visual refresh the pills fall in with the refreshed tags, which take a background and
-  // a matching same-hue text color from the theme's tag palette — a pair `getTextColorForBackground`
-  // cannot derive, since it only ever answers with near-black or near-white. The hash is the one
-  // tags use, so a value reads the same color here as it does in any other tag across the UI.
   if (theme.flags.visualDesignRefresh) {
     const { background, text } = getTagColorsFromName(value, theme);
     return { background, text };

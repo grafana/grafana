@@ -504,10 +504,10 @@ export function useRowHeight({
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
+  const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight, visualRefreshEnabled),
-    [nestedFields, typographyCtx, maxHeight, visualRefreshEnabled]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
+    [nestedFields, typographyCtx, maxHeight, theme]
   );
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
@@ -553,8 +553,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight, visualRefreshEnabled),
-    [fields, typographyCtx, maxHeight, visualRefreshEnabled]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -651,10 +651,10 @@ export function useFlatRowHeight({
   maxHeight,
   noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
-  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
+  const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight, visualRefreshEnabled),
-    [fields, typographyCtx, maxHeight, visualRefreshEnabled]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -793,10 +793,10 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
   headerTypographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  visualRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
 }
@@ -845,7 +845,6 @@ export function useContentAwareWidths({
   noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const headerTypographyCtx = useMemo(
     () =>
       createTypographyContext(
@@ -862,10 +861,10 @@ export function useContentAwareWidths({
         ? {
             typographyCtx,
             headerTypographyCtx,
+            theme,
             showTypeIcons,
             getActions,
             tableRefreshEnabled,
-            visualRefreshEnabled,
             filter,
             noPanelPadding,
           }
@@ -878,7 +877,7 @@ export function useContentAwareWidths({
       getActions,
       filter,
       tableRefreshEnabled,
-      visualRefreshEnabled,
+      theme,
       noPanelPadding,
     ]
   );
