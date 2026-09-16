@@ -759,6 +759,33 @@ func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
 
+func TestSyncExternalAMs_ProxyLocal404ClassifiedAsFetchFailure(t *testing.T) {
+	// A 404 from the datasource proxy itself (datasource/plugin not found,
+	// never reached Mimir) must NOT be mistaken for Mimir's "no config for
+	// this tenant" 404 — that would silently mask a real fetch failure as
+	// "nothing to import". The proxy's own error path (ReqContext.JsonApiErr)
+	// always answers with a {"message": ...} JSON body, unlike Mimir's real
+	// 404 (plain text, see the sibling test above) — that's what fetchMimirConfig
+	// tells the two apart on.
+	proxy := newFakeDatasourceProxy()
+	proxy.setResponse("mimir-uid", http.StatusNotFound, []byte(`{"message":"Unable to find datasource plugin","traceID":""}`))
+
+	ds := makeMimirDS("mimir-uid", 1)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
+	rowsBefore := len(cs.historicConfigs[1])
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "proxy-local 404 must not write history")
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
+}
+
 func TestSyncExternalAMs_InvalidConfigClassifiedOnMetric(t *testing.T) {
 	// Upstream config references a filesystem path (auth_password_file) that Grafana
 	// cannot represent. It fetches and parses fine but fails validation, so the sync

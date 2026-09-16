@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -696,10 +697,17 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	}
 
 	// Mimir returns 404 when no alertmanager_config has ever been stored for
-	// the tenant — semantically "nothing to import". Funnel into the same
-	// errNoUpstreamConfig sentinel that the 200/empty-body branch below uses,
-	// so both shapes get the same NoUpstreamConfig classification upstream.
+	// the tenant — semantically "nothing to import". But routed through the
+	// proxy, a 404 can also mean the proxy itself never reached Mimir (e.g.
+	// the datasource's plugin isn't loaded) — a real fetch failure, not "no
+	// upstream config". Grafana's own JsonApiErr, the proxy's only source of
+	// a synthetic 404, always answers with a {"message": ...} JSON body;
+	// Mimir's real "no config for this tenant" 404 is plain text. That
+	// distinguishes the two without depending on anything proxy-internal.
 	if res.Status == http.StatusNotFound {
+		if msg, ok := proxyErrorMessage(res.Body); ok {
+			return nil, 0, fmt.Errorf("datasource proxy returned 404: %s", msg)
+		}
 		return nil, 0, errNoUpstreamConfig
 	}
 
@@ -720,4 +728,16 @@ func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources
 	h := fnv.New64a()
 	_, _ = h.Write(body)
 	return &cfg, h.Sum64(), nil
+}
+
+// proxyErrorMessage reports whether body is the proxy's own JsonApiErr
+// envelope rather than a real upstream response, and if so, its message.
+func proxyErrorMessage(body []byte) (string, bool) {
+	var envelope struct {
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil || envelope.Message == "" {
+		return "", false
+	}
+	return envelope.Message, true
 }
