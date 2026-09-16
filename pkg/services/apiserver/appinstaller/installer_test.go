@@ -477,3 +477,39 @@ func TestInstallAPIsInstallsWithTheRegisteredGetter(t *testing.T) {
 	assert.False(t, resolvesPerVersion(t, installer.installedWith, v2),
 		"the version that declined still falls through to the shared getter")
 }
+
+// A server with no RESTOptionsGetter installs against a noop, and an app that
+// declares storage options is not a reason to refuse it: unified storage is
+// already unavailable, which InstallAPIs warns about once for the whole server.
+//
+// This covers the noop substitution, not which value registerStorageOptions is
+// handed -- a nil getter and the noop are indistinguishable to it, since neither
+// is a *apistore.RESTOptionsGetter. Registering on the same getter that gets
+// installed is true by construction in InstallAPIs rather than pinned here.
+func TestInstallAPIsWithoutARESTOptionsGetter(t *testing.T) {
+	const group = "test.grafana.app"
+
+	installer := &mockAppInstallerWithVersionedStorageOpts{
+		mockAppInstaller: &mockAppInstaller{groupVersions: []schema.GroupVersion{{Group: group, Version: "v1alpha1"}}},
+		manifest:         twoVersionManifest(group),
+		getVersionedOpts: func(schema.GroupVersionResource) *apistore.StorageOptions {
+			return &apistore.StorageOptions{EnableFolderSupport: true}
+		},
+	}
+
+	require.NoError(t, InstallAPIs(
+		context.Background(),
+		[]appsdkapiserver.AppInstaller{installer},
+		nil, // GenericAPIServer
+		nil, // no RESTOptionsGetter
+		nil, // storage options
+		nil, // dual write service
+		nil, // builder metrics
+		nil, // api resource config
+	))
+
+	require.NotNil(t, installer.installedWith, "the app-sdk is never installed with a nil getter")
+	_, isForResource := installer.installedWith.(appsdkapiserver.RESTOptionsGetterForResource)
+	assert.False(t, isForResource,
+		"the noop getter serves no per-version options, so it must not claim to -- the app-sdk would ask it and get nothing")
+}

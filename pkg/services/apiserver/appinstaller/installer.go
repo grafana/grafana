@@ -187,8 +187,10 @@ func InstallAPIs(
 
 		// Register per-resource storage options (e.g. folder support).
 		// Must happen before InstallAPIs so the RESTOptionsGetter has
-		// the options when it creates the underlying storage.
-		if err := registerStorageOptions(installer, restOpsGetter, logger); err != nil {
+		// the options when it creates the underlying storage, and on the
+		// same getter InstallAPIs is given -- registering on one getter and
+		// installing with another leaves the options unread.
+		if err := registerStorageOptions(installer, effectiveOptsGetter, logger); err != nil {
 			return fmt.Errorf("failed to register storage options for app %s: %w", installer.ManifestData().AppName, err)
 		}
 
