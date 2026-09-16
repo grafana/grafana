@@ -954,7 +954,7 @@ jobs:
             METICULOUS_API_TOKEN=meticulous-ui:api-token
 
       - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
+        uses: alwaysmeticulous/report-diffs-action/upload-container@b9ca268cbe3fbc86e54d3f3b0864b9004c4131c5 # v1
         with:
           api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
           image-tag: ${{ steps.load-image.outputs.IMAGE_UNDER_TEST }}
