@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -64,7 +65,7 @@ type ContactPointService struct {
 }
 
 type receiverService interface {
-	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
+	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, map[string]utils.ManagerProperties, error)
 	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
 	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
 }
@@ -115,7 +116,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		receiverQuery.Names = []string{q.Name}
 	}
 
-	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
+	res, _, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
 	if err != nil {
 		// New orgs have no Alertmanager config yet. Listing contact points is a
 		// valid empty state (GET-before-POST reconcilers depend on this).

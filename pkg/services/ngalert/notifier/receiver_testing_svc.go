@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -26,7 +27,7 @@ type AlertmanagerProvider interface {
 }
 
 type ReceiverGetter interface {
-	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, utils.ManagerProperties, error)
 }
 
 func NewReceiverTestingService(
@@ -93,7 +94,7 @@ func (t *ReceiverTestingService) PatchIntegrationAndTest(ctx context.Context, us
 		return IntegrationTestResult{}, err
 	}
 
-	rcv, err := t.receiverSvc.GetReceiver(ctx, receiverUID, false, user)
+	rcv, _, err := t.receiverSvc.GetReceiver(ctx, receiverUID, false, user)
 	if err != nil {
 		return IntegrationTestResult{}, err
 	}

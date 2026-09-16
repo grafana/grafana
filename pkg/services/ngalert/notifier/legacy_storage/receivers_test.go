@@ -303,7 +303,7 @@ func TestGetReceiver(t *testing.T) {
 
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		_, err := rev.GetReceiver("not-found", nil)
+		_, _, err := rev.GetReceiver("not-found", nil, nil)
 		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
@@ -328,7 +328,7 @@ func TestGetReceiver(t *testing.T) {
 			},
 		}
 		rev := getConfigRevisionForTest()
-		result, err := rev.GetReceiver(NameToUid("receiver1"), prov)
+		result, _, err := rev.GetReceiver(NameToUid("receiver1"), prov, nil)
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
 	})
@@ -342,7 +342,7 @@ func TestGetReceivers(t *testing.T) {
 			"integration-uid-1": "test",
 			"integration-uid-2": "some",
 		}
-		receivers, err := rev.GetReceivers(nil, prov)
+		receivers, _, err := rev.GetReceivers(nil, prov, nil)
 		require.NoError(t, err)
 		require.Len(t, receivers, len(rev.Config.AlertmanagerConfig.Receivers))
 		for _, r := range receivers {
@@ -358,13 +358,13 @@ func TestGetReceivers(t *testing.T) {
 		}
 	})
 	t.Run("should filter by uids", func(t *testing.T) {
-		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil)
+		receivers, _, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil, nil)
 		require.NoError(t, err)
 		require.Empty(t, receivers)
-		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil)
+		receivers, _, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
-		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil)
+		expected, _, err := rev.GetReceiver(NameToUid("receiver1"), nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
 	})
