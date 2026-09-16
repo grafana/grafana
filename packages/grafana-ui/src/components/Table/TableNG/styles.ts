@@ -6,6 +6,7 @@ import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import {
   COLUMN,
+  COLUMN_SETTLE_MS,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
@@ -51,14 +52,25 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-// How far the `table.refresh` header background steps away from the background the rows sit on.
-// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
-// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
-// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
+// Drag states derive from the header surface.
+const HEADER_DRAGGING_EMPHASIS = 0.1;
+const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
+
+export const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  if (theme.flags.visualDesignRefresh) {
+    return transparent ? theme.colors.background.page : theme.components.panel.background;
+  }
+  return transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+};
+
+const getHeaderBackgroundColor = (
+  theme: GrafanaTheme2,
+  transparent?: boolean,
+  tableRefreshEnabled?: boolean
+): string => {
+  const bgColor = getGridBackgroundColor(theme, transparent);
+  return tableRefreshEnabled ? theme.components.table.headerBackground : bgColor;
+};
 
 export const getGridStyles = memoize(
   (
@@ -66,25 +78,27 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    showColumnSidebarBorder?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-    }
+    const bgColor = getGridBackgroundColor(theme, transparent);
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+    const borderColor = tableRefreshEnabled
+      ? theme.components.table.border
+      : colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
     const selectedRowColor = theme.isDark
       ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
       : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
-    const headerBackgroundColor = tableRefreshEnabled
-      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
-      : bgColor;
+    const headerBackgroundColor = getHeaderBackgroundColor(theme, transparent, tableRefreshEnabled);
+    const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
+    const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
+      headerBackgroundColor,
+      HEADER_DRAG_TARGET_EMPHASIS
+    );
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -106,12 +120,8 @@ export const getGridStyles = memoize(
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
-        // background" means one thing across the table. The old pair had the same blind spot the
-        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
-        // light theme is white on near-white.
         '--rdg-row-hover-background-color': tableRefreshEnabled
-          ? headerBackgroundColor
+          ? theme.components.table.rowHoverBackground
           : transparent
             ? theme.colors.background.primary
             : theme.colors.background.secondary,
@@ -125,6 +135,7 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
+        ...(showColumnSidebarBorder && { borderInlineStart: `1px solid ${borderColor}` }),
 
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
@@ -209,6 +220,12 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -278,6 +295,17 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        ...(tableRefreshEnabled && {
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: headerCellDraggingBackgroundColor,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: headerCellDragTargetBackgroundColor,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
@@ -312,6 +340,16 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// Match the drop target so the highlight reads as the drag settling.
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: theme.colors.emphasize(
+      getHeaderBackgroundColor(theme, false, tableRefreshEnabled),
+      HEADER_DRAG_TARGET_EMPHASIS
+    ),
   })
 );
 

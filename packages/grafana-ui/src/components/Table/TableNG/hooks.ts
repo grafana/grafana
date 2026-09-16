@@ -409,6 +409,7 @@ interface UseHeaderHeightOptions {
   tableRefreshEnabled?: boolean;
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
 }
 
 export function useHeaderHeight({
@@ -420,6 +421,7 @@ export function useHeaderHeight({
   noPanelPadding = false,
   tableRefreshEnabled = false,
   filter,
+  hasColumnSidebar = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
   const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
@@ -440,10 +442,11 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasColumnSidebar,
         });
         return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys]
+    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys, hasColumnSidebar]
   );
 
   const headerHeight = useMemo(() => {
@@ -796,6 +799,7 @@ export interface ContentAwareWidths {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
 }
 
@@ -844,6 +848,7 @@ interface UseContentAwareWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   noPanelPadding?: boolean;
 }
 
@@ -860,6 +865,7 @@ export function useContentAwareWidths({
   getActions,
   tableRefreshEnabled = false,
   filter,
+  hasColumnSidebar = false,
   noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
@@ -876,6 +882,7 @@ export function useContentAwareWidths({
             getActions,
             tableRefreshEnabled,
             filter,
+            hasColumnSidebar,
             noPanelPadding,
           }
         : undefined,
@@ -889,6 +896,7 @@ export function useContentAwareWidths({
       filter,
       tableRefreshEnabled,
       theme,
+      hasColumnSidebar,
       noPanelPadding,
     ]
   );
@@ -1098,3 +1106,61 @@ export const useReducerEntries = (
     });
   }, [field, rows, displayName, colIdx]);
 };
+
+interface ColumnViewStateOptions {
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  structureRev?: number;
+}
+
+interface ColumnViewState {
+  columnOrder?: string[];
+  hiddenColumns: ReadonlySet<string>;
+  setColumnOrder: (columnOrder: string[]) => void;
+  setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
+  isControlled: boolean;
+}
+
+const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
+
+// Change handlers select controlled mode because controlled values may initially be empty.
+export function useColumnViewState({
+  columnOrder,
+  onColumnOrderChange,
+  hiddenColumns,
+  onHiddenColumnsChange,
+  structureRev,
+}: ColumnViewStateOptions): ColumnViewState {
+  const isControlled = onColumnOrderChange != null && onHiddenColumnsChange != null;
+
+  const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
+
+  useEffect(() => {
+    if (!isControlled) {
+      setLocalColumnOrder(undefined);
+      setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structureRev]);
+
+  const setColumnOrder = useCallback(
+    (next: string[]) => (onColumnOrderChange ? onColumnOrderChange(next) : setLocalColumnOrder(next)),
+    [onColumnOrderChange]
+  );
+
+  const setHiddenColumns = useCallback(
+    (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
+    [onHiddenColumnsChange]
+  );
+
+  return {
+    columnOrder: isControlled ? columnOrder : localColumnOrder,
+    hiddenColumns: (isControlled ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setColumnOrder,
+    setHiddenColumns,
+    isControlled,
+  };
+}
