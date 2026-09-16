@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -45,12 +46,14 @@ describe('NestedFolderPicker', () => {
   const useStarredItemsMock = useStarredItems as jest.Mock;
   const resolveStarredFoldersMock = resolveStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
+  let originalProvisioningEnabled: boolean;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
     // These tests were written against the legacy folder tree, so pin the flag off by default.
     // The describes below that need the app-platform tree opt in explicitly.
     // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
@@ -84,6 +87,7 @@ describe('NestedFolderPicker', () => {
   });
 
   afterEach(async () => {
+    config.provisioningEnabled = originalProvisioningEnabled;
     await act(async () => {
       setTestFlags({});
     });
@@ -131,6 +135,39 @@ describe('NestedFolderPicker', () => {
 
     await user.click(screen.getByLabelText(folderA.item.title));
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
+  });
+
+  it('shows the repository badge on nested folder search results', async () => {
+    config.provisioningEnabled = false;
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'repo-root',
+          title: 'Repo root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        {
+          resource: 'folders',
+          name: 'git-sync-child',
+          title: 'Git Sync child',
+          folder: 'repo-root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        { resource: 'folders', name: 'local-folder', title: 'Local folder' },
+      ])
+    );
+
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+    fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'folder' } });
+
+    const managedRow = await screen.findByRole('treeitem', { name: 'Git Sync child' });
+    const unmanagedRow = await screen.findByRole('treeitem', { name: 'Local folder' });
+
+    expect(within(managedRow).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(within(managedRow).getByText('/Repo root')).toBeInTheDocument();
+    expect(within(unmanagedRow).queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('can clear a selection if clearable is specified', async () => {
