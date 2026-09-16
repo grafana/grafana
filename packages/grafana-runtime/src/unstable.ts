@@ -23,6 +23,7 @@ export {
   getDefaultDataSourceInstanceListItem,
   hasDataSourceInstance,
   reloadDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
 } from './services/dataSource/settings';
 export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
 export { getDataSourceInstanceListItem } from './services/dataSource/listItem';
