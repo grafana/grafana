@@ -75,6 +75,15 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
     []
   );
 
+  // The underlying series can change while the mouse is held still over the sparkline
+  // (e.g. a data refresh). uPlot won't re-fire the cursor, so clear any active hover to
+  // avoid showing a value tied to the previous data until the next mouse move.
+  useEffect(() => {
+    if (hoverActiveRef.current) {
+      emitHover(null);
+    }
+  }, [sparkline, emitHover]);
+
   const { configBuilder, data, warning } = useMemo(() => {
     const { frame, warning: seriesWarning } = prepareSeries(sparkline, theme, fieldConfig, showHighlights);
     if (seriesWarning) {
