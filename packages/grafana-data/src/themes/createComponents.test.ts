@@ -4,16 +4,17 @@ import { getThemeById } from './registry';
 
 describe('table colors', () => {
   it.each([
-    ['dark', '#181b1f', '#2c2f35', '#22252b', '#111217'],
-    ['light', '#ffffff', '#ececed', '#f4f5f5', '#fbfbfb'],
-    ['visual_refresh_dark', '#111419', '#202429', '#191d22', '#090b0f'],
-    ['visual_refresh_light', '#ffffff', '#f0f0ef', '#f5f5f4', '#fafafa'],
+    ['dark', '#181b1f', '#2c2f35', '#383b42', '#22252b', '#111217'],
+    ['light', '#ffffff', '#ececed', '#e1e2e3', '#f4f5f5', '#fbfbfb'],
+    ['visual_refresh_dark', '#111419', '#202429', '#282d33', '#191d22', '#090b0f'],
+    ['visual_refresh_light', '#ffffff', '#f0f0ef', '#dddcdb', '#f5f5f4', '#fafafa'],
   ])(
     'resolves the chosen surfaces for %s',
-    (id, background, headerBackground, rowStripedBackground, backgroundOnCanvas) => {
+    (id, background, headerBackground, headerBorder, rowStripedBackground, backgroundOnCanvas) => {
       expect(getThemeById(id).components.table).toMatchObject({
         background,
         headerBackground,
+        headerBorder,
         rowStripedBackground,
         backgroundOnCanvas,
       });
