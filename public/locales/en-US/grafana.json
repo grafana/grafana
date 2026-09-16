@@ -12253,6 +12253,10 @@
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
   },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
   },
@@ -16689,10 +16693,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",
