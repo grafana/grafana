@@ -639,4 +639,37 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
     expect(mergedField.values[1]).toBeNull();
     expect(mergedField.values[2]).toBe('80%+');
   });
+
+  it('warns when a prepared frame has a null time cell (#130379)', () => {
+    const frames = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null, 3000] },
+          { name: 'value', type: FieldType.string, values: ['ok', 'warn', 'ok'] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames).toBeUndefined();
+    expect(result.warn).toEqual(
+      'Query A returned a time field with null values; filter out rows with empty timestamps'
+    );
+  });
+
+  it('uses a generic message when the invalid frame has no refId (#130379)', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null, 3000] },
+          { name: 'value', type: FieldType.string, values: ['ok', 'warn', 'ok'] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames).toBeUndefined();
+    expect(result.warn).toEqual(
+      'A query returned a time field with null values; filter out rows with empty timestamps'
+    );
+  });
 });

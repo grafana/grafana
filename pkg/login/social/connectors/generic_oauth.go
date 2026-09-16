@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/mail"
+	"slices"
 	"strconv"
 
 	"golang.org/x/oauth2"
@@ -183,10 +184,8 @@ func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Clie
 	}
 
 	for _, teamId := range s.teamIds {
-		for _, membershipId := range teamMemberships {
-			if teamId == membershipId {
-				return true
-			}
+		if slices.Contains(teamMemberships, teamId) {
+			return true
 		}
 	}
 
@@ -204,10 +203,8 @@ func (s *SocialGenericOAuth) isOrganizationMember(ctx context.Context, client *h
 	}
 
 	for _, allowedOrganization := range s.allowedOrganizations {
-		for _, organization := range organizations {
-			if organization == allowedOrganization {
-				return true
-			}
+		if slices.Contains(organizations, allowedOrganization) {
+			return true
 		}
 	}
 
@@ -438,13 +435,13 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
-		logger.Debug("No id_token found", "token", fmt.Sprintf("%+v", token))
+		logger.Debug("No id_token found")
 		return nil, nil
 	}
 
 	idTokenString, ok := idToken.(string)
 	if !ok {
-		logger.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", token))
+		logger.Warn("ID token is not a string")
 		return nil, nil
 	}
 
@@ -463,7 +460,7 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 		// Otherwise, just extract the payload without signature validation
 		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
 		if err != nil {
-			logger.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
+			logger.Warn("Error retrieving id_token payload", "error", err)
 			return nil, nil
 		}
 	}

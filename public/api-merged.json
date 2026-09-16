@@ -1039,11 +1039,6 @@
     },
     "/admin/ldap/reload": {
       "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
         "tags": [
           "admin_ldap"
@@ -1054,16 +1049,16 @@
           "410": {
             "$ref": "#/responses/goneError"
           }
-        }
-      }
-    },
-    "/admin/ldap/status": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/ldap/status": {
+      "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.status:read`.",
         "tags": [
           "admin_ldap"
@@ -1083,16 +1078,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/ldap/sync/{user_id}": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/ldap/sync/{user_id}": {
+      "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:sync`.",
         "tags": [
           "admin_ldap"
@@ -1121,16 +1116,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/ldap/{user_name}": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/ldap/{user_name}": {
+      "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.user:read`.",
         "tags": [
           "admin_ldap"
@@ -1158,7 +1153,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/admin/provisioning/access-control/reload": {
@@ -1185,11 +1185,6 @@
     },
     "/admin/provisioning/dashboards/reload": {
       "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "Reloads the provisioning config files for dashboards again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:dashboards`.",
         "tags": [
           "admin_provisioning"
@@ -1209,16 +1204,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/provisioning/datasources/reload": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/provisioning/datasources/reload": {
+      "post": {
         "description": "Reloads the provisioning config files for datasources again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:datasources`.",
         "tags": [
           "admin_provisioning"
@@ -1238,16 +1233,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/provisioning/plugins/reload": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/provisioning/plugins/reload": {
+      "post": {
         "description": "Reloads the provisioning config files for plugins again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:plugin`.",
         "tags": [
           "admin_provisioning"
@@ -1267,16 +1262,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/settings": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/settings": {
+      "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).",
         "tags": [
           "admin"
@@ -1293,7 +1288,12 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/admin/stats": {
@@ -1322,11 +1322,6 @@
     },
     "/admin/users": {
       "post": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.\nNote that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.",
         "tags": [
           "admin_users"
@@ -1362,16 +1357,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}": {
-      "delete": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}": {
+      "delete": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.",
         "tags": [
           "admin_users"
@@ -1403,16 +1398,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/auth-tokens": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/auth-tokens": {
+      "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.",
         "tags": [
           "admin_users"
@@ -1441,16 +1436,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/disable": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/disable": {
+      "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).",
         "tags": [
           "admin_users"
@@ -1482,16 +1477,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/enable": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/enable": {
+      "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).",
         "tags": [
           "admin_users"
@@ -1523,16 +1518,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/logout": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/logout": {
+      "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.",
         "tags": [
           "admin_users"
@@ -1567,16 +1562,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/password": {
-      "put": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/password": {
+      "put": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.",
         "tags": [
           "admin_users"
@@ -1616,7 +1611,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/admin/users/{user_id}/permissions": {
@@ -1665,11 +1665,6 @@
     },
     "/admin/users/{user_id}/quotas": {
       "get": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).",
         "tags": [
           "quota",
@@ -1702,16 +1697,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/quotas/{quota_target}": {
-      "put": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/quotas/{quota_target}": {
+      "put": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).",
         "tags": [
           "quota",
@@ -1758,16 +1753,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/admin/users/{user_id}/revoke-auth-token": {
-      "post": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/admin/users/{user_id}/revoke-auth-token": {
+      "post": {
         "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.",
         "tags": [
           "admin_users"
@@ -1810,7 +1805,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/annotations": {
@@ -1905,7 +1905,7 @@
               "annotation"
             ],
             "type": "string",
-            "description": "Return alerts or user created annotations",
+            "description": "Return alerts or user created annotations\nDescription:\n- `alert`\n- `annotation`",
             "name": "type",
             "in": "query"
           },
@@ -3842,6 +3842,7 @@
           },
           {
             "type": "string",
+            "description": "The dashboard UID",
             "name": "uid",
             "in": "path",
             "required": true
@@ -4853,13 +4854,14 @@
           },
           {
             "type": "string",
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "name": "dataSourceType",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "CacheConfigResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
@@ -4884,6 +4886,7 @@
           },
           {
             "type": "string",
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "name": "dataSourceType",
             "in": "query"
           },
@@ -4898,7 +4901,7 @@
         ],
         "responses": {
           "200": {
-            "description": "CacheConfigResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
@@ -4929,7 +4932,7 @@
         ],
         "responses": {
           "200": {
-            "description": "CacheConfigResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
@@ -4956,13 +4959,14 @@
           },
           {
             "type": "string",
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "name": "dataSourceType",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "CacheConfigResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
@@ -4989,13 +4993,14 @@
           },
           {
             "type": "string",
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "name": "dataSourceType",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "CacheConfigResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/CacheConfigResponse"
             }
@@ -5440,7 +5445,7 @@
         "operationId": "getHealth",
         "responses": {
           "200": {
-            "description": "healthResponse",
+            "description": "OK",
             "schema": {
               "$ref": "#/definitions/healthResponse"
             }
@@ -5472,7 +5477,7 @@
             ],
             "type": "integer",
             "format": "int64",
-            "description": "Kind of element to search for.",
+            "description": "Kind of element to search for.\nDescription:\n- 1 - library panels",
             "name": "kind",
             "in": "query"
           },
@@ -5482,7 +5487,7 @@
               "alpha-desc"
             ],
             "type": "string",
-            "description": "Sort order of elements.",
+            "description": "Sort order of elements.\nDescription:\n- alpha-asc: ascending\n- alpha-desc: descending",
             "name": "sortDirection",
             "in": "query"
           },
@@ -5780,7 +5785,7 @@
     },
     "/licensing/custom-permissions": {
       "get": {
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "tags": [
           "licensing",
           "enterprise"
@@ -5797,7 +5802,7 @@
     },
     "/licensing/custom-permissions-csv": {
       "get": {
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "produces": [
           "text/csv"
         ],
@@ -6473,11 +6478,6 @@
     },
     "/orgs": {
       "get": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "tags": [
           "orgs"
         ],
@@ -6527,7 +6527,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       },
       "post": {
         "description": "Only works if [users.allow_org_create](https://grafana.com/docs/grafana/latest/administration/configuration/#allow_org_create) is set.",
@@ -6567,11 +6572,6 @@
     },
     "/orgs/name/{org_name}": {
       "get": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "tags": [
           "orgs"
         ],
@@ -6598,16 +6598,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/orgs/{org_id}": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/orgs/{org_id}": {
+      "get": {
         "tags": [
           "orgs"
         ],
@@ -6635,14 +6635,14 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      },
-      "put": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      },
+      "put": {
         "tags": [
           "orgs"
         ],
@@ -6681,14 +6681,14 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      },
-      "delete": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      },
+      "delete": {
         "tags": [
           "orgs"
         ],
@@ -6722,7 +6722,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/orgs/{org_id}/address": {
@@ -6807,11 +6812,6 @@
     },
     "/orgs/{org_id}/quotas/{quota_target}": {
       "put": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:write` and scope `org:id:1` (orgIDScope).",
         "tags": [
           "quota",
@@ -6858,16 +6858,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/orgs/{org_id}/users": {
-      "get": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/orgs/{org_id}/users": {
+      "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
         "tags": [
           "orgs"
@@ -6896,7 +6896,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       },
       "post": {
         "description": "Adds a global user to the current organization.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:add` with scope `users:*`.",
@@ -6940,11 +6945,6 @@
     },
     "/orgs/{org_id}/users/search": {
       "get": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
         "tags": [
           "orgs"
@@ -6973,7 +6973,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/orgs/{org_id}/users/{user_id}": {
@@ -7086,7 +7091,6 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "in:limit",
             "name": "limit",
             "in": "query"
           }
@@ -8543,7 +8547,7 @@
               "dash-db"
             ],
             "type": "string",
-            "description": "Type to search for, dash-folder or dash-db",
+            "description": "Type to search for, dash-folder or dash-db\nDescription:\n- `dash-folder` - Search for folder\n- `dash-db` - Seatch for dashboard",
             "name": "type",
             "in": "query"
           },
@@ -8572,7 +8576,7 @@
               "type": "integer",
               "format": "int64"
             },
-            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead\n\nDeprecated: use FolderUIDs instead",
             "name": "folderIds",
             "in": "query"
           },
@@ -9950,11 +9954,6 @@
     },
     "/user/orgs": {
       "get": {
-        "security": [
-          {
-            "basic": []
-          }
-        ],
         "description": "Return a list of all organizations of the current user.",
         "tags": [
           "signed_in_user"
@@ -9974,16 +9973,16 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
-      }
-    },
-    "/user/password": {
-      "put": {
+        },
         "security": [
           {
             "basic": []
           }
-        ],
+        ]
+      }
+    },
+    "/user/password": {
+      "put": {
         "description": "Changes the password for the user.",
         "tags": [
           "signed_in_user"
@@ -10017,7 +10016,12 @@
           "500": {
             "$ref": "#/responses/internalServerError"
           }
-        }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ]
       }
     },
     "/user/preferences": {
@@ -10043,7 +10047,7 @@
         }
       },
       "put": {
-        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}\n\n\nOmitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "tags": [
           "signed_in_user",
           "preferences"
@@ -12158,6 +12162,14 @@
     }
   },
   "definitions": {
+    "AccessControlStatus": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
     "Ack": {
       "type": "object"
     },
@@ -13120,7 +13132,8 @@
         "dashboardId": {
           "description": "Deprecated: Use DashboardUID and OrgID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "dashboardUID": {
           "type": "string"
@@ -13179,7 +13192,6 @@
       }
     },
     "AnnotationActions": {
-      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "canAdd": {
@@ -13257,7 +13269,6 @@
       }
     },
     "AnnotationPermission": {
-      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "dashboard": {
@@ -13771,6 +13782,10 @@
           "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
           "type": "boolean"
         },
+        "NotAfter": {
+          "type": "string",
+          "format": "date-time"
+        },
         "NotBefore": {
           "type": "string",
           "format": "date-time"
@@ -13880,7 +13895,7 @@
           "type": "boolean"
         },
         "SerialNumber": {
-          "type": "string"
+          "type": "integer"
         },
         "Signature": {
           "type": "array",
@@ -14201,7 +14216,7 @@
       }
     },
     "CorrelationType": {
-      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL",
       "type": "string"
     },
     "CounterResetHint": {
@@ -14269,7 +14284,7 @@
       ],
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
           "type": "string"
         },
         "dashboard": {
@@ -14295,7 +14310,7 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
           "type": "string"
         },
         "name": {
@@ -14329,14 +14344,15 @@
         "folderId": {
           "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "description": "UID of the folder where the library element is stored.",
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
@@ -14570,7 +14586,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "type": "string"
@@ -14582,7 +14599,7 @@
           "type": "boolean"
         },
         "permission": {
-          "$ref": "#/definitions/PermissionType"
+          "$ref": "#/definitions/DashboardaccessPermissionType"
         },
         "permissionName": {
           "type": "string"
@@ -14650,7 +14667,7 @@
       "type": "object",
       "properties": {
         "permission": {
-          "$ref": "#/definitions/PermissionType"
+          "$ref": "#/definitions/DashboardaccessPermissionType"
         },
         "role": {
           "type": "string",
@@ -14672,14 +14689,14 @@
       }
     },
     "DashboardCreateCommand": {
-      "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+      "description": "These are the values expected to be sent from an end user",
       "type": "object",
       "required": [
         "dashboard"
       ],
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
           "type": "string"
         },
         "dashboard": {
@@ -14697,7 +14714,7 @@
           "default": false
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
           "type": "string"
         },
         "name": {
@@ -14755,7 +14772,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderTitle": {
           "type": "string"
@@ -14803,14 +14821,6 @@
         "version": {
           "type": "integer",
           "format": "int64"
-        }
-      }
-    },
-    "DashboardRedirect": {
-      "type": "object",
-      "properties": {
-        "redirectUri": {
-          "type": "string"
         }
       }
     },
@@ -14911,6 +14921,10 @@
           }
         }
       }
+    },
+    "DashboardaccessPermissionType": {
+      "type": "integer",
+      "format": "int64"
     },
     "DataLink": {
       "description": "DataLink define what",
@@ -15091,7 +15105,6 @@
       }
     },
     "DataTopic": {
-      "description": "nolint:revive",
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
@@ -15204,7 +15217,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
+      "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
       "type": "integer",
       "format": "int64"
     },
@@ -15775,7 +15788,8 @@
         "id": {
           "description": "Deprecated: use UID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "managedBy": {
           "$ref": "#/definitions/ManagerKind"
@@ -15967,7 +15981,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -16875,7 +16889,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "type": "string"
@@ -16911,7 +16926,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "type": "string"
@@ -17128,7 +17144,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\n- ed25519.PublicKey\n- ed25519.PrivateKey\n- *ecdsa.PublicKey\n- *ecdsa.PrivateKey\n- *rsa.PublicKey\n- *rsa.PrivateKey\n- []byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -17241,7 +17257,8 @@
         "id": {
           "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "kind": {
           "type": "integer",
@@ -17271,7 +17288,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "type": "string"
@@ -17287,9 +17305,7 @@
         "meta": {
           "$ref": "#/definitions/LibraryElementDTOMeta"
         },
-        "model": {
-          "type": "object"
-        },
+        "model": {},
         "name": {
           "type": "string"
         },
@@ -17480,7 +17496,7 @@
       }
     },
     "ManagerKind": {
-      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "description": "It can be a user or a tool or a generic API client.",
       "type": "string",
       "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
     },
@@ -17768,6 +17784,9 @@
       "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
       "type": "object",
       "properties": {
+        "CommonName": {
+          "type": "string"
+        },
         "Country": {
           "type": "array",
           "items": {
@@ -17792,6 +17811,30 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/AttributeTypeAndValue"
+          }
+        },
+        "Organization": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "OrganizationalUnit": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PostalCode": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Province": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "SerialNumber": {
@@ -18390,14 +18433,15 @@
         "folderId": {
           "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "description": "UID of the folder where the library element is stored.",
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
@@ -18405,8 +18449,7 @@
           ]
         },
         "model": {
-          "description": "The JSON model for the library element.",
-          "type": "object"
+          "description": "The JSON model for the library element."
         },
         "name": {
           "description": "Name of the library element.",
@@ -18426,7 +18469,7 @@
       "type": "object",
       "properties": {
         "homeDashboardId": {
-          "description": "The numerical :id of a favorited dashboard",
+          "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
           "type": "integer",
           "format": "int64",
           "default": 0
@@ -18491,10 +18534,6 @@
     },
     "PermissionDenied": {
       "type": "object"
-    },
-    "PermissionType": {
-      "type": "integer",
-      "format": "int64"
     },
     "Playlist": {
       "description": "Playlist model",
@@ -18608,7 +18647,7 @@
           "type": "string"
         },
         "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+          "description": "Value depends on type and describes the playlist item.\n\n- dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\n- dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\n- dashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
@@ -19012,7 +19051,6 @@
       }
     },
     "PreferencesNavbarPreference": {
-      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
         "bookmarkUrls": {
@@ -19024,7 +19062,6 @@
       }
     },
     "PreferencesQueryHistoryPreference": {
-      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
         "homeTab": {
@@ -19034,7 +19071,6 @@
       }
     },
     "PreferencesSpec": {
-      "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
         "homeDashboardUID": {
@@ -20136,9 +20172,7 @@
         "dashboard": {
           "$ref": "#/definitions/ReportDashboardID"
         },
-        "reportVariables": {
-          "type": "object"
-        },
+        "reportVariables": {},
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -20898,7 +20932,8 @@
         "folderId": {
           "description": "Deprecated: use FolderUID instead",
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "x-deprecated": true
         },
         "folderUid": {
           "type": "string"
@@ -20942,7 +20977,6 @@
       }
     },
     "SearchOrgServiceAccountsResult": {
-      "description": "swagger: model",
       "type": "object",
       "properties": {
         "page": {
@@ -21067,7 +21101,6 @@
       "$ref": "#/definitions/URL"
     },
     "ServiceAccountDTO": {
-      "description": "swagger: model",
       "type": "object",
       "properties": {
         "accessControl": {
@@ -21583,7 +21616,6 @@
       }
     },
     "State": {
-      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -21755,7 +21787,7 @@
           "format": "int64"
         },
         "permission": {
-          "$ref": "#/definitions/PermissionType"
+          "$ref": "#/definitions/TeamPermissionType"
         },
         "uid": {
           "type": "string"
@@ -21781,11 +21813,13 @@
         },
         "uid": {
           "description": "Deprecated: always empty; no per-entry id.",
-          "type": "string"
+          "type": "string",
+          "x-deprecated": true
         }
       }
     },
     "TeamGroupMapping": {
+      "description": "---------------------",
       "type": "object",
       "properties": {
         "groupId": {
@@ -21850,7 +21884,7 @@
           "format": "int64"
         },
         "permission": {
-          "$ref": "#/definitions/PermissionType"
+          "$ref": "#/definitions/TeamPermissionType"
         },
         "teamId": {
           "type": "integer",
@@ -21870,6 +21904,10 @@
           "type": "string"
         }
       }
+    },
+    "TeamPermissionType": {
+      "type": "integer",
+      "format": "int64"
     },
     "TelegramConfig": {
       "type": "object",
@@ -22352,20 +22390,18 @@
       }
     },
     "Type": {
-      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {
-      "description": "+k8s:deepcopy-gen=false",
+      "description": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
       "type": "object",
-      "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
       "properties": {
         "apiVersion": {
-          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+          "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
           "type": "string"
         },
         "kind": {
-          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+          "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
           "type": "string"
         }
       }
@@ -22620,7 +22656,7 @@
       "type": "object",
       "properties": {
         "homeDashboardId": {
-          "description": "The numerical :id of a favorited dashboard",
+          "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
           "type": "integer",
           "format": "int64",
           "default": 0
@@ -22776,7 +22812,7 @@
       "type": "object",
       "properties": {
         "permission": {
-          "$ref": "#/definitions/PermissionType"
+          "$ref": "#/definitions/TeamPermissionType"
         }
       }
     },
@@ -23921,7 +23957,10 @@
       }
     },
     "SMTPNotEnabledError": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "StateHistory": {
       "description": "(empty)",
@@ -24352,7 +24391,7 @@
     "getAccessControlStatusResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Status"
+        "$ref": "#/definitions/AccessControlStatus"
       }
     },
     "getAllRolesResponse": {
@@ -24425,7 +24464,10 @@
       }
     },
     "getDashboardSnapshotResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
     },
     "getDashboardsTagsResponse": {
       "description": "(empty)",
@@ -24747,7 +24789,10 @@
       }
     },
     "getStatusResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "boolean"
+      }
     },
     "getSyncStatusResponse": {
       "description": "(empty)",
@@ -25072,7 +25117,10 @@
       }
     },
     "postRenewLicenseTokenResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "type": "boolean"
+      }
     },
     "preconditionFailedError": {
       "description": "PreconditionFailedError",

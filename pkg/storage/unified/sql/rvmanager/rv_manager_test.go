@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bwmarrin/snowflake"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -267,4 +268,35 @@ func TestBulkSnowflakeRoundtrip(t *testing.T) {
 				counter, snowflakeID, microRV, roundtripped)
 		}
 	})
+}
+
+func TestNewMetricsRegistersOnGivenRegistry(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := newMetrics(reg)
+
+	// Touch every collector so the registry has series to gather.
+	m.writeDuration.WithLabelValues("g", "r", "ok").Observe(1)
+	m.execBatchDuration.WithLabelValues("g", "r", "ok").Observe(1)
+	m.execBatchPhaseDuration.WithLabelValues("g", "r", "write_ops").Observe(1)
+	m.inflightWrites.WithLabelValues("g", "r").Inc()
+	m.batchSize.WithLabelValues("g", "r").Observe(1)
+
+	mfs, err := reg.Gather()
+	require.NoError(t, err)
+
+	names := make([]string, 0, len(mfs))
+	for _, mf := range mfs {
+		names = append(names, mf.GetName())
+	}
+	require.ElementsMatch(t, []string{
+		"grafana_rvmanager_write_duration_seconds",
+		"grafana_rvmanager_exec_batch_duration_seconds",
+		"grafana_rvmanager_exec_batch_phase_duration_seconds",
+		"grafana_rvmanager_inflight_writes",
+		"grafana_rvmanager_batch_size",
+	}, names)
+}
+
+func TestNewMetricsWithNilRegistry(t *testing.T) {
+	require.NotNil(t, newMetrics(nil))
 }

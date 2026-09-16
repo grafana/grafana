@@ -6,7 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
-import { getQueryRunnerFor, isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -30,8 +31,10 @@ interface NarrativeCellFocusProps {
   autoFocus?: boolean;
   focusRequestId?: number;
   caretOffset?: number;
+  scrollAlign?: ScrollLogicalPosition;
   onAdvance?: (remainder: string, marker?: string) => void;
   onFocusRequest?: () => void;
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
@@ -43,11 +46,16 @@ export function NotebookCellRenderer({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
+  // Panel and Collapsed cells have no caret of their own to detect an ArrowUp/Down boundary with —
+  // NotebookCellFrame's own frame wrapper already handles that case, so `onNavigate` isn't threaded
+  // any further down for either of them.
   if (collapsed) {
     return <CollapsedCell name={elementName} />;
   }
@@ -65,8 +73,10 @@ export function NotebookCellRenderer({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         onAdvance={onAdvance}
         onFocusRequest={onFocusRequest}
+        onNavigate={onNavigate}
       />
     );
   }
@@ -127,8 +137,10 @@ function NarrativeCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: { cell: NotebookCellItem; content: CellContentKind } & NarrativeCellFocusProps) {
   const styles = useStyles2(getStyles);
 
@@ -142,8 +154,10 @@ function NarrativeCell({
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
           caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
           onAdvance={onAdvance}
           onFocusRequest={onFocusRequest}
+          onNavigate={onNavigate}
         />
       </div>
     );
@@ -162,8 +176,12 @@ function NarrativeCell({
           content={content}
           isEditing={isEditing}
           autoFocus={autoFocus}
+          focusRequestId={focusRequestId}
+          caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
           cell={cell}
           onChange={(updated) => cell.onContentChange(updated)}
+          onNavigate={onNavigate}
         />
       </Suspense>
     </div>
@@ -172,7 +190,7 @@ function NarrativeCell({
 
 /**
  * The markdown-only behaviors no other cell needs:
- * - Placeholder text and the "/" block-type menu (the same one NotebookAddBlockDivider uses) — keyed
+ * - Placeholder text and the "/" block-type menu (the same one NotebookCellAddButton uses) — keyed
  *   off whether *this cell's own content* is currently empty, not its position in the document. Any
  *   empty markdown cell gets these, and loses them again the moment it has real content — including a
  *   cell the reader typed into, then deleted everything from. The placeholder itself needs no extra
@@ -191,8 +209,10 @@ function SpecialMarkdownCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: {
   cell: NotebookCellItem;
   content: Extract<CellContentKind, { kind: 'Markdown' }>;
@@ -266,9 +286,14 @@ function SpecialMarkdownCell({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         placeholder={t('notebook.add-block.prompt', 'Type to start writing — press / for blocks')}
         onChange={handleChange}
         onSubmit={onAdvance}
+        // The "/" menu is a click-only typeahead popover with no arrow-key handling of its own, and
+        // "/" is always this cell's only line — without this guard, ArrowUp/Down would immediately
+        // read as "at the boundary" and jump to a different cell out from under the open menu.
+        onNavigate={menuOpen ? undefined : onNavigate}
       />
       {menuOpen && (
         <Portal>

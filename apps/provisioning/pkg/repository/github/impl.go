@@ -136,8 +136,7 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, branch string) (
 		}
 
 		// Return custom errors for common cases
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) {
+		if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized:
 				return nil, repo.ErrUnauthorized
@@ -180,8 +179,7 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	branchRules, _, err := r.gh.Repositories.GetRulesForBranch(ctx, r.owner, r.repo, branch, nil)
 	if err != nil {
 		// Handle common error cases
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) {
+		if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized:
 				return nil, repo.ErrUnauthorized
@@ -233,7 +231,7 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	}
 
 	for rulesetID := range rulesetIDs {
-		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, false)
+		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, true)
 		if err != nil {
 			// Fail-closed: a silent false negative would let the Repository save and
 			// then fail every subsequent sync push with a 403. Surfacing a block at

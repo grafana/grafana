@@ -22,13 +22,14 @@ import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
 import { type TableCellTooltipProps } from './components/TableCellTooltip';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
 import {
   type ColumnBuildConfig,
   prepareFieldsForDisplay,
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getHeaderCellStyles } from './styles';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -468,6 +469,46 @@ describe('useColumnBuilderFromFields', () => {
     const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
     expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
     expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  it("also takes the first column's panel-edge inset off the width it hands that column", () => {
+    // Under `noPanelPadding` the first column is padded further in to line its content up with the
+    // panel title. That padding eats into the content box, so a width-driven cell (sparkline, bar
+    // gauge) sized against the full content width would render that much too wide and clip.
+    const hook = renderColumnBuilderHook({
+      filterResult: makeFilterResult(),
+      config: makeConfig({ firstColumnExtraPadding: FIRST_COLUMN_EXTRA_PADDING }),
+    });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome - FIRST_COLUMN_EXTRA_PADDING);
+    // only the first column carries the inset
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
+  });
+
+  describe('header alignment', () => {
+    // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
+    // regardless, giving the column menu a stable trailing edge to sit against.
+    function headerClassForNumericField(tableRefreshEnabled: boolean) {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, tableRefreshEnabled }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      return { theme, headerCellClass: result.columns[1].headerCellClass };
+    }
+
+    it('right-aligns a numeric column header by default', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(false);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-end'));
+    });
+
+    it('left-aligns a numeric column header when table.refresh is on', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(true);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-start'));
+    });
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {
