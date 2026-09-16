@@ -50,7 +50,9 @@ export const Sparkline: React.FC<SparklineProps> = memo((props) => {
   const emitHover = useCallback((hover: SparklineHoverInfo | null) => {
     hoverActiveRef.current = hover != null;
     onHoverRef.current?.(hover ? { index: hover.index, value: hover.value, display: hover.display } : null);
-    if (showTooltipRef.current) {
+    // Feed the tooltip only while enabled, but always clear on leave so it can't resurface
+    // stale if showTooltip toggles back on. (setTooltip(null) when already null is a no-op.)
+    if (showTooltipRef.current || hover == null) {
       setTooltip(hover);
     }
   }, []);
