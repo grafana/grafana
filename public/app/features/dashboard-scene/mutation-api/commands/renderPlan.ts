@@ -45,7 +45,14 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
   };
 
   const vizPanel = buildVizPanel(panelKind, id, { withoutQueries: true });
-  vizPanel.setState({ key: getVizPanelKeyForPanelId(id) });
+  // buildVizPanel unconditionally attaches a dropdown menu (Share/alert-rule/View/Inspect/...).
+  // View turned out not to be read-only in practice -- timeseries (the commonest plan panel
+  // type) sets .setViewPanelOptions in its plugin module, which makes View's side pane render a
+  // live, mutating Quick toggles section (e.g. legend visibility) with no isPlanning() gate of
+  // its own. Clear the menu outright rather than police what plugins put behind that option:
+  // VizPanelRenderer only renders PanelChrome's menu button when `menu` is truthy, so this
+  // removes the button entirely rather than leaving one that opens nothing.
+  vizPanel.setState({ key: getVizPanelKeyForPanelId(id), menu: undefined });
 
   // buildVizPanel's own sample-vs-spec merge lets a real spec's options/fieldConfig win over the
   // sample (see layoutSerializers/utils.ts) -- correct when a caller supplies real ones, but this

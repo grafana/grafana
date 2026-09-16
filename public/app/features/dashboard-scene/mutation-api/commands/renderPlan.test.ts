@@ -67,6 +67,23 @@ describe('RENDER_PLAN', () => {
     expect(sceneGraph.getData(panel).state.data?.series[0]).toBeDefined();
   });
 
+  it('builds panels with no dropdown menu at all -- View is not read-only in practice', async () => {
+    // buildVizPanel attaches a menu unconditionally (Share/alert-rule/View/Inspect/...). View
+    // looked safe (it never enters edit mode) until the tester found timeseries -- the commonest
+    // plan panel type -- sets .setViewPanelOptions in its plugin module, making View's side pane
+    // render a live, mutating Quick toggles section with no isPlanning() gate of its own. Clearing
+    // the menu removes the button itself: confirmed with a real React render in a throwaway
+    // test (not shipped here) that VizPanelRenderer only renders PanelChrome's menu button when
+    // `menu` is truthy, and that clearing it makes the button disappear from the DOM, not just
+    // from state -- and that the same query finds a real menu button when one is attached.
+    const { scene, client } = setup();
+
+    await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+    const panel = scene.state.body.getVizPanels()[0];
+    expect(panel.state.menu).toBeUndefined();
+  });
+
   it('renders tabs when layout is "tabs"', async () => {
     const { scene, client } = setup();
 
