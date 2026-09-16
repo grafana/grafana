@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyfetch"
+	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyclient"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -55,12 +55,12 @@ const rulerSyncLogin = "grafana_external_ruler_sync"
 // datasource by routing the ruler config GET through Grafana's datasource proxy
 // service (transport, auth and egress validation are all handled there).
 type RulerFetcher struct {
-	proxy  dsproxyfetch.Proxy
+	proxy  dsproxyclient.Proxy
 	logger log.Logger
 }
 
 // NewRulerFetcher constructs a RulerFetcher around the datasource proxy service.
-func NewRulerFetcher(proxy dsproxyfetch.Proxy, logger log.Logger) *RulerFetcher {
+func NewRulerFetcher(proxy dsproxyclient.Proxy, logger log.Logger) *RulerFetcher {
 	return &RulerFetcher{proxy: proxy, logger: logger}
 }
 
@@ -71,7 +71,7 @@ func NewRulerFetcher(proxy dsproxyfetch.Proxy, logger log.Logger) *RulerFetcher 
 // rules"; a 2xx body that isn't a rule-config object yields ErrNotARuler.
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
 	// Mimir serves the ruler config API as YAML.
-	res, err := dsproxyfetch.Get(ctx, f.proxy, f.logger, ds, "config/v1/rules", rulerSyncLogin, "application/yaml")
+	res, err := dsproxyclient.Get(ctx, f.proxy, f.logger, ds, "config/v1/rules", rulerSyncLogin, "application/yaml")
 	if err != nil {
 		return nil, 0, err
 	}

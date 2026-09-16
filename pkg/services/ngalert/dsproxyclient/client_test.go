@@ -1,4 +1,4 @@
-package dsproxyfetch
+package dsproxyclient
 
 import (
 	"context"

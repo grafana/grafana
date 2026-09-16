@@ -1,8 +1,8 @@
-// Package dsproxyfetch lets background sync workers (the external ruler and
-// Alertmanager syncers) fetch config through Grafana's datasource proxy
-// instead of managing their own HTTP transport, so datasource auth and
-// egress validation are handled the same way as for user-driven requests.
-package dsproxyfetch
+// Package dsproxyclient is a client for Grafana's datasource proxy, used by
+// background sync workers (the external ruler and Alertmanager syncers) to
+// fetch config without managing their own HTTP transport, so datasource auth
+// and egress validation are handled the same way as for user-driven requests.
+package dsproxyclient
 
 import (
 	"context"

@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyfetch"
+	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -183,7 +183,7 @@ type amConfigReader interface {
 // persistence for the hash.
 type ExternalAMSyncer struct {
 	datasourceService datasources.DataSourceService
-	proxy             dsproxyfetch.Proxy
+	proxy             dsproxyclient.Proxy
 	settings          *setting.Cfg
 	metrics           *metrics.MultiOrgAlertmanager
 	logger            log.Logger
@@ -212,7 +212,7 @@ type ExternalAMSyncer struct {
 // clientGenerator/namespaceMapper (test paths) skips status writes.
 func NewExternalAMSyncer(
 	datasourceService datasources.DataSourceService,
-	proxy dsproxyfetch.Proxy,
+	proxy dsproxyclient.Proxy,
 	settings *setting.Cfg,
 	m *metrics.MultiOrgAlertmanager,
 	logger log.Logger,
@@ -690,7 +690,7 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 func (s *ExternalAMSyncer) fetchMimirConfig(ctx context.Context, ds *datasources.DataSource) (*mimirConfigResponse, uint64, error) {
 	// The config endpoint is /api/v1/alerts on the datasource; no Accept header
 	// (Mimir serves YAML there by default).
-	res, err := dsproxyfetch.Get(ctx, s.proxy, s.logger, ds, "/api/v1/alerts", amSyncLogin, "")
+	res, err := dsproxyclient.Get(ctx, s.proxy, s.logger, ds, "/api/v1/alerts", amSyncLogin, "")
 	if err != nil {
 		return nil, 0, err
 	}
