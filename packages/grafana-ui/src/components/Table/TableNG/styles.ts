@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
@@ -59,8 +59,16 @@ export const getGridStyles = memoize(
     noPanelPadding?: boolean
   ) => {
     const table = theme.components.table;
-    const bgColor = transparent ? table.backgroundOnCanvas : table.background;
+    const bgColor = transparent
+      ? theme.flags.visualDesignRefresh
+        ? theme.colors.background.page
+        : theme.colors.background.canvas
+      : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
+    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+    const headerBorderColor = colorManipulator
+      .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
+      .toHexString();
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -72,9 +80,9 @@ export const getGridStyles = memoize(
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': table.border,
+        '--rdg-border-color': borderColor,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': table.border,
+        '--rdg-summary-border-color': borderColor,
         '--rdg-summary-border-width': '1px',
 
         '--rdg-selection-color': table.cellSelectionBorder,
@@ -82,7 +90,7 @@ export const getGridStyles = memoize(
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        '--rdg-row-hover-background-color': table.rowHoverBackgroundSolid,
+        '--rdg-row-hover-background-color': table.rowHoverSurface,
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
         '--rdg-row-selected-hover-background-color': table.rowSelectedHoverBackground,
 
@@ -247,9 +255,9 @@ export const getGridStyles = memoize(
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         ...(tableRefreshEnabled && {
-          '--rdg-border-color': table.headerBorder,
-          '& .rdg-cell-dragging': { backgroundColor: table.headerDraggingBackground },
-          '& .rdg-cell-drag-over': { backgroundColor: table.headerDragTargetBackground },
+          '--rdg-border-color': headerBorderColor,
+          '& .rdg-cell-dragging': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.1) },
+          '& .rdg-cell-drag-over': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.05) },
         }),
       }),
       displayNone: css({ display: 'none' }),

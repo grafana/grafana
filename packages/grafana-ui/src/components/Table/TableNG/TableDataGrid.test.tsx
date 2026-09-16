@@ -84,6 +84,7 @@ describe('TableDataGrid', () => {
       ['visual_refresh_light', '#ffffff', '#fafafa', '#f0f0ef', '#e4e3e2', '#dddcdb'],
     ])('uses the %s table surfaces in opaque and transparent panels', (id, body, canvas, header, hover, divider) => {
       const theme = getThemeById(id);
+      theme.flags.visualDesignRefresh = id.startsWith('visual_refresh');
       const props = makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] });
       const { rerender } = render(
         <ThemeContext.Provider value={theme}>
@@ -111,13 +112,17 @@ describe('TableDataGrid', () => {
 
     it.each([false, true])('honors table overrides with visualDesignRefresh=%s', (visualDesignRefresh) => {
       const theme = createTheme({
+        colors: {
+          mode: 'dark',
+          background: { primary: '#123456' },
+          border: { weak: '#345678' },
+          secondary: { shade: '#456789' },
+        },
         components: {
+          panel: { background: '#123456' },
           table: {
-            background: '#123456',
             headerBackground: '#234567',
-            border: 'hsl(from #345678 h s l)',
-            headerBorder: '#456789',
-            rowHoverBackgroundSolid: '#56789a',
+            rowHoverSurface: '#56789a',
             rowSelectedBackground: '#6789ab',
             rowSelectedHoverBackground: '#789abc',
             cellSelectionBorder: '#89abcd',
@@ -133,8 +138,8 @@ describe('TableDataGrid', () => {
       const grid = window.getComputedStyle(screen.getByRole('grid'));
       expect(grid.getPropertyValue('--rdg-background-color')).toBe('#123456');
       expect(grid.getPropertyValue('--rdg-header-background-color')).toBe('#234567');
-      expect(grid.getPropertyValue('--rdg-border-color')).toBe('hsl(from #345678 h s l)');
-      expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe('hsl(from #345678 h s l)');
+      expect(grid.getPropertyValue('--rdg-border-color')).toBe('#345678');
+      expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe('#345678');
       expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe('#56789a');
       expect(grid.getPropertyValue('--rdg-row-selected-background-color')).toBe('#6789ab');
       expect(grid.getPropertyValue('--rdg-row-selected-hover-background-color')).toBe('#789abc');
