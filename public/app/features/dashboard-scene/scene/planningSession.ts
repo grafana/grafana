@@ -97,7 +97,22 @@ export function endPlanningSession(scene: DashboardScene, planId: string, discar
   }
   const session = sessions.get(scene);
   if (discard && session) {
-    for (const panel of session.panels) {
+    // Tracked references (session.panels) handle the common case, but a layout-type conversion,
+    // a panel dragged into a new row, or multi-select grouping all clone the panel rather than
+    // reuse the tracked instance, which invalidates that reference. PlanPlaceholderBadge.planId
+    // is documented to survive cloning (see the badge's own doc comment), and trackPlanningPanel
+    // already runs this exact check at tracking time — this reuses it at cleanup time too, so a
+    // cloned placeholder is still found and removed even though its object identity changed.
+    const panelsToRemove = new Set(session.panels);
+    for (const panel of scene.state.body.getVizPanels()) {
+      if (
+        panel.state.titleItems?.some((item) => item instanceof PlanPlaceholderBadge && item.state.planId === planId)
+      ) {
+        panelsToRemove.add(panel);
+      }
+    }
+
+    for (const panel of panelsToRemove) {
       if (panel.getRoot() === scene) {
         scene.removePanel(panel);
       }

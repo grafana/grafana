@@ -13,6 +13,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { changeLayoutTo } from '../../scene/layouts-shared/utils';
 import { DashboardPlanningEvent } from '../../scene/planningEvents';
 import { deactivatePlanningSession } from '../../scene/planningSession';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -227,6 +228,89 @@ it('removes scaffolded variables and panels when discarded', async () => {
   );
   expect(scene.state.body.getVizPanels()).toEqual([]);
   expect(sceneGraph.getVariables(scene).state.variables).toEqual([]);
+});
+
+it('still removes a plan panel after a layout-type conversion clones it', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_ROW',
+        planId: 'plan-1',
+        payload: { row: { kind: 'RowsLayoutRow', spec: { title: 'Overview' } }, parentPath: '/' },
+      })
+    ).success
+  ).toBe(true);
+  expect(
+    (
+      await client.execute({
+        type: 'ADD_PANEL',
+        planId: 'plan-1',
+        payload: { parentPath: '/rows/0', panel: { kind: 'Panel', spec: panel } },
+      })
+    ).success
+  ).toBe(true);
+
+  const body = scene.state.body;
+  if (!(body instanceof RowsLayoutManager)) {
+    throw new Error('Expected rows layout');
+  }
+
+  // Converting Rows -> Tabs rebuilds the tree: TabsLayoutManager.createFromLayout clones each
+  // row into a new TabItem and clones the row's inner layout (and its panels) along with it, so
+  // the panel tracked by ADD_PANEL above no longer resolves. The badge rescan is what still
+  // finds and removes it.
+  changeLayoutTo(body, TabsLayoutManager.descriptor, true);
+  // Boolean comparison rather than expect(x).toBe(y): a failing toBe on two live scene objects
+  // crashes Jest's worker trying to relay the circular object over IPC (see T9).
+  expect(scene.state.body instanceof TabsLayoutManager).toBe(true);
+  expect(scene.state.body.getVizPanels()).toHaveLength(1);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+    true
+  );
+
+  // toHaveLength rather than toEqual([]): a failing comparison against a live VizPanel array
+  // crashes Jest's worker trying to relay the circular object over IPC (see T9).
+  expect(scene.state.body.getVizPanels()).toHaveLength(0);
+});
+
+it('still removes a plan panel after it is dragged into a new row, which clones it', async () => {
+  const { scene, client } = setup();
+  await client.execute(start);
+  expect(
+    (await client.execute({ type: 'ADD_PANEL', planId: 'plan-1', payload: { panel: { kind: 'Panel', spec: panel } } }))
+      .success
+  ).toBe(true);
+  const originalPanel = scene.state.body.getVizPanels()[0];
+
+  const grid = scene.state.body;
+  if (!(grid instanceof DefaultGridLayoutManager)) {
+    throw new Error('Expected default grid layout');
+  }
+
+  // Simulates dragging the plan panel onto the "New row" drop target on the rows canvas.
+  // RowsLayoutManager.draggedGridItemInside clones an AutoGridItem's panel rather than reusing
+  // the tracked instance, so the badge rescan is what still finds and removes it.
+  grid.removePanel(originalPanel);
+  originalPanel.clearParent();
+  const rowsManager = new RowsLayoutManager({ rows: [] });
+  scene.setState({ body: rowsManager });
+  rowsManager.draggedGridItemInside(new AutoGridItem({ body: originalPanel }));
+
+  // Boolean comparisons rather than expect(x).toBe(y)/not.toBe(y): a failing toBe on two live
+  // scene objects crashes Jest's worker trying to relay the circular object over IPC (see T9).
+  expect(scene.state.body.getVizPanels()).toHaveLength(1);
+  expect(scene.state.body.getVizPanels()[0] === originalPanel).toBe(false);
+
+  expect((await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1', discard: true } })).success).toBe(
+    true
+  );
+
+  // toHaveLength rather than toEqual([]): a failing comparison against a live VizPanel array
+  // crashes Jest's worker trying to relay the circular object over IPC (see T9).
+  expect(scene.state.body.getVizPanels()).toHaveLength(0);
 });
 
 it('reshapes samples when visualization changes through UPDATE_PANEL', async () => {
