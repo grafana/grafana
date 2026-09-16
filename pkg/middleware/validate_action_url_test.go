@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestMiddlewareValidateActionUrl(t *testing.T) {
@@ -265,7 +266,6 @@ func TestMatchesAllowedPath(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-
 		t.Run(tc.name, func(t *testing.T) {
 			allGlobs, err := cacheGlobs(tc.allowList)
 			matched := matchesAllowedPath(allGlobs, tc.aPath)
@@ -294,7 +294,6 @@ func TestCacheGlobs(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-
 		t.Run(tc.name, func(t *testing.T) {
 			cache, err := cacheGlobs(tc.allowList)
 			assert.NoError(t, err)
