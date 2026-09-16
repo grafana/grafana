@@ -11,6 +11,7 @@ import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 import { type DashboardSceneState } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -70,7 +71,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
+    // Without this check, the branch below calls onEnterEditMode() unconditionally when not
+    // already editing -- exactly the invariant a plan preview depends on never happening (see
+    // refuseWhilePlanning, and RENDER_PLAN's own doc comment on why it never calls
+    // enterEditModeIfNeeded). Reachable directly via `?editview=`, independent of whether a
+    // settings entry point is rendered.
+    if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -94,8 +100,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.viewPanel = undefined;
     }
 
-    // Handle edit panel state
-    if (typeof values.editPanel === 'string') {
+    // Handle edit panel state. Same reason as editview above: the branch below calls
+    // onEnterEditMode() unconditionally if not already editing, so this has to be checked before
+    // that runs, not after.
+    if (typeof values.editPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
@@ -127,6 +135,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       this._enterPanelEdit(values.editPanel, panel);
+    } else if (typeof values.editPanel === 'string') {
+      // Refused while planning: clear the param rather than leaving it to keep re-triggering on
+      // every sync tick.
+      update.editPanel = undefined;
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.
       this._releaseEditPanel();
