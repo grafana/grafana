@@ -76,8 +76,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     // A plan preview is a fully static surface: allowlist to View rather than guard each item
     // (Edit, Get help/Inspect, Copy, legend/style, plugin extensions, ...) individually -- Edit
     // slipped through the previous per-item guards entirely, and subtraction only ever closes
-    // items we thought of. View is safe: unlike editPanel/editview, viewPanel never triggers
-    // edit mode (DashboardSceneUrlSync) and renders the same static panel with no toolbar.
+    // items we thought of. View is safe to keep: unlike editPanel/editview, the viewPanel branch
+    // in URL sync never triggers edit mode. It does open the ordinary view-panel side pane (its
+    // header and "Back to dashboard" button, not a bare panel) -- but that pane's interactive
+    // sections are gated on the plugin's viewPanelOptions, which no in-tree plugin sets today, and
+    // that gate is not conditioned on isPlanning(), so a plugin that adopts it later would surface
+    // toggles here without anyone having thought about the preview case.
     if (dashboard.isPlanning()) {
       menu.setState({ items: [getViewMenuItem(panel)] });
       return;
