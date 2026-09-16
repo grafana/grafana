@@ -49,7 +49,7 @@ global:
 receivers:
   - name: custom
     slack_configs:
-      - api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+      - api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # trufflehog:ignore
         channel: '#alerts'
     generic_configs:
       - endpoint: https://example.com/callback/AbCdEfGh12345678
@@ -96,5 +96,48 @@ receivers:
     const malformedYaml = 'root:\n\tchild: value';
 
     expect(() => redactPreviewSecrets(malformedYaml, 'yaml')).toThrow(PreviewRedactionError);
+  });
+
+  it('redacts a non-string value under a known secret key name', () => {
+    const yaml = `
+global:
+  smtp_auth_password: 20260916
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('20260916');
+    expect(result).toContain('<redacted>');
+  });
+
+  it('redacts credentials embedded in a URL via userinfo or a query parameter', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://user:S3cr3tTok3n123@hooks.example.com/notify
+      - url: https://hooks.example.com/notify?token=S3cr3tTok3n123
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('S3cr3tTok3n123');
+  });
+
+  it('redacts the authorization credentials field regardless of value shape', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: dXNlcjpwYXNzMTIz==
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml');
+
+    expect(result).not.toContain('dXNlcjpwYXNzMTIz==');
   });
 });

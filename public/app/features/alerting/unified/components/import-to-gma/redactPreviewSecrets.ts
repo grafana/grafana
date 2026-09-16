@@ -11,6 +11,8 @@ const SECRET_FIELD_NAMES = new Set([
   'auth_secret',
   'bearer_token',
   'bearer_token_file',
+  'credentials',
+  'credentials_file',
   'client_secret',
   'api_key',
   'api_secret',
@@ -61,8 +63,19 @@ function looksLikeCredentialUrl(value: string): boolean {
   if (!URL_PROTOCOL.test(value)) {
     return false;
   }
-  const segments = value.split('/').filter(Boolean);
-  return segments.some((segment) => HIGH_ENTROPY_URL_SEGMENT.test(segment) && hasEntropyVariety(segment));
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  const candidates = [
+    url.username,
+    url.password,
+    ...url.pathname.split('/').filter(Boolean),
+    ...url.searchParams.values(),
+  ];
+  return candidates.some((candidate) => HIGH_ENTROPY_URL_SEGMENT.test(candidate) && hasEntropyVariety(candidate));
 }
 
 function looksLikeSecretValue(value: string): boolean {
@@ -76,11 +89,9 @@ function redactNode(node: unknown, keyName?: string): unknown {
   if (node !== null && typeof node === 'object') {
     return Object.fromEntries(Object.entries(node).map(([key, value]) => [key, redactNode(value, key)]));
   }
-  if (typeof node === 'string') {
-    const matchesKnownSecretKey = keyName !== undefined && SECRET_FIELD_NAMES.has(keyName);
-    if (matchesKnownSecretKey || looksLikeSecretValue(node)) {
-      return REDACTED_VALUE;
-    }
+  const matchesKnownSecretKey = keyName !== undefined && SECRET_FIELD_NAMES.has(keyName);
+  if (matchesKnownSecretKey || (typeof node === 'string' && looksLikeSecretValue(node))) {
+    return REDACTED_VALUE;
   }
   return node;
 }
