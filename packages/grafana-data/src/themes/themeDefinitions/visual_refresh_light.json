@@ -123,6 +123,7 @@
     "table": {
       "headerBackground": "palette.neutral150",
       "rowStripedBackground": "palette.neutral100",
+      "rowHoverSurface": "palette.neutral250",
       "rowHoverOverlay": "hsl(from palette.black h s l / 0.12)",
       "rowSelectedBackground": "palette.amber200",
       "rowSelectedHoverBackground": "palette.amber200",

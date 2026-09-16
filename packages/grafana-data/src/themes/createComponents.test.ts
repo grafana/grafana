@@ -4,12 +4,16 @@ import { getThemeById } from './registry';
 
 describe('table colors', () => {
   it.each([
-    ['dark', '#2c2f35', '#22252b'],
-    ['light', '#ececed', '#f4f5f5'],
-    ['visual_refresh_dark', '#202429', '#191d22'],
-    ['visual_refresh_light', '#f0f0ef', '#f5f5f4'],
-  ])('resolves the chosen surfaces for %s', (id, headerBackground, rowStripedBackground) => {
-    expect(getThemeById(id).components.table).toMatchObject({ headerBackground, rowStripedBackground });
+    ['dark', '#2c2f35', '#22252b', '#34363a'],
+    ['light', '#ececed', '#f4f5f5', '#e0e0e0'],
+    ['visual_refresh_dark', '#202429', '#191d22', '#282d33'],
+    ['visual_refresh_light', '#f0f0ef', '#f5f5f4', '#e4e3e2'],
+  ])('resolves the chosen surfaces for %s', (id, headerBackground, rowStripedBackground, rowHoverSurface) => {
+    expect(getThemeById(id).components.table).toMatchObject({
+      headerBackground,
+      rowStripedBackground,
+      rowHoverSurface,
+    });
   });
 
   it('inherits custom theme surfaces and accents before applying partial table overrides', () => {
