@@ -1,4 +1,5 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
@@ -6,8 +7,11 @@ import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
+import { dispatch } from 'app/store/store';
 
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -31,6 +35,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
+
+    // Hides the "drag to annotate" gesture during planning; onAnnotationCreate below is the
+    // actual guarantee (this can't cover every path to it — e.g. a graph panel's own keyboard
+    // shortcut — the same way openSaveDrawer's check doesn't guarantee saving is blocked).
+    if (!dashboard.isPlanningActionAllowed('annotation')) {
+      return false;
+    }
+
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);
 
     // When there is no builtin annotations query we disable the ability to add annotations
@@ -46,7 +58,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const dashboard = getDashboardSceneFor(vizPanel);
 
     if (dashboard) {
-      return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
+      return (
+        dashboard.isPlanningActionAllowed('annotation') &&
+        Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit)
+      );
     }
 
     return false;
@@ -56,7 +71,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     const dashboard = getDashboardSceneFor(vizPanel);
 
     if (dashboard) {
-      return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);
+      return (
+        dashboard.isPlanningActionAllowed('annotation') &&
+        Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete)
+      );
     }
 
     return false;
@@ -64,6 +82,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
+
+    // The real guarantee: annotationServer() writes straight to the backend with nothing to
+    // await and nothing endPlanningSession can undo on Dismiss, so this has to refuse here, not
+    // only hide the gesture above (which drag/keyboard paths could still reach around).
+    if (refuseWhilePlanningAnnotation(dashboard)) {
+      return;
+    }
 
     const isRegion = event.from !== event.to;
     const anno = {
@@ -86,6 +111,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    if (refuseWhilePlanningAnnotation(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
@@ -106,9 +135,15 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    if (refuseWhilePlanningAnnotation(dashboard)) {
+      return;
+    }
+
     await annotationServer().delete({ id });
 
-    reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
+    reRunBuiltInAnnotationsLayer(dashboard);
 
     context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
@@ -214,8 +249,20 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  //
+  // A third route to the inspector besides the panel menu and the 'i' keyboard shortcut (both of
+  // which already check isPlanningActionAllowed('inspect-panel')), so it needs the same check.
+  // In practice a plan placeholder's sample data (planningSampleData.ts) always reports
+  // LoadingState.Done with no errors, so the popover this opens from has nothing to show and the
+  // gap has not been reachable — but that is incidental to the sample, not a guarantee, so it is
+  // still guarded here explicitly rather than left to rely on that.
   if (isNewPanelQueryErrorsUIEnabled()) {
-    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    context.onOpenInspector = () => {
+      if (!getDashboardSceneFor(vizPanel).isPlanningActionAllowed('inspect-panel')) {
+        return;
+      }
+      openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    };
   }
 }
 
@@ -226,6 +273,30 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
  */
 function getCurrentScopeNames(sceneObject: VizPanel): string[] {
   return sceneGraph.getScopes(sceneObject)?.map((scope) => scope.metadata.name) ?? [];
+}
+
+/**
+ * Refuses an annotation write while a plan is being previewed, and tells the user why instead of
+ * failing silently — `canAddAnnotations`/`canEditAnnotations`/`canDeleteAnnotations` above hide
+ * the gesture in the common case, but this is the one every write actually has to pass through.
+ */
+function refuseWhilePlanningAnnotation(dashboard: DashboardScene): boolean {
+  if (dashboard.isPlanningActionAllowed('annotation')) {
+    return false;
+  }
+
+  dispatch(
+    notifyApp(
+      createErrorNotification(
+        t(
+          'dashboard-scene.set-dashboard-panel-context.annotation-blocked-while-planning',
+          'Cannot save annotations while previewing a dashboard plan. Build or dismiss the plan first.'
+        )
+      )
+    )
+  );
+
+  return true;
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {

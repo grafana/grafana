@@ -32,6 +32,20 @@ export function useSaveDashboard(isCopy = false) {
           rawDashboardJSON?: Dashboard | DashboardV2Spec;
         }
     ) => {
+      // The real guarantee that a plan preview can never persist lives here, not on the callers.
+      // DashboardScene.openSaveDrawer also checks this (so the drawer never opens on a plan), but
+      // a caller that skips the drawer — e.g. JsonModelEditView saving straight from the JSON
+      // editor — would otherwise reach the backend with no check at all. This is the one function
+      // every save path calls, so this is the one place that has to refuse.
+      if (!scene.isPlanningActionAllowed('save-dashboard')) {
+        throw new Error(
+          t(
+            'dashboard-scene.use-save-dashboard.blocked-while-planning',
+            'This dashboard is showing a plan preview. Build or dismiss the plan before saving.'
+          )
+        );
+      }
+
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
 

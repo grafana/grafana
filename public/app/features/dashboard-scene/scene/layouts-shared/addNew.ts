@@ -1,15 +1,33 @@
 import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
 
+import { trackPlanningSection } from '../../scene/planningSession';
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
+import { findDashboardSceneFor } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { type RowItem } from '../layout-rows/RowItem';
+import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { type TabItem } from '../layout-tabs/TabItem';
+import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { getDashboardSceneLike } from '../types/dashboard';
+
+/**
+ * Records a newly created row/tab with the active planning session, if any, so
+ * endPlanningSession can consider removing it on Dismiss (see trackPlanningSection's doc
+ * comment). A no-op outside planning, and for the legacy SceneGridRow shape (dashboardNewLayouts
+ * disabled), which planning does not apply to.
+ */
+function trackNewSection(section: RowItem | TabItem | SceneGridRow) {
+  if (!(section instanceof RowItem) && !(section instanceof TabItem)) {
+    return;
+  }
+  const scene = findDashboardSceneFor(section);
+  if (scene) {
+    trackPlanningSection(scene, section);
+  }
+}
 
 /**
  * Dashboard default layout to start the new group with, when the current layout holds nothing worth keeping.
@@ -45,6 +63,12 @@ function createRowsLayoutContaining(layout: DashboardLayoutManager): RowsLayoutM
 }
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
+  const tab = addNewTabToImpl(layout);
+  trackNewSection(tab);
+  return tab;
+}
+
+function addNewTabToImpl(layout: DashboardLayoutManager): TabItem {
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
     throw new Error('Parent layout is not a LayoutParent');
@@ -67,6 +91,12 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
 }
 
 export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGridRow {
+  const row = addNewRowToImpl(layout);
+  trackNewSection(row);
+  return row;
+}
+
+function addNewRowToImpl(layout: DashboardLayoutManager): RowItem | SceneGridRow {
   /**
    * If new layouts feature is disabled we add old school rows to the custom grid layout
    */
@@ -87,7 +117,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
     if (!currentTab) {
       throw new Error('Could find currently active tab');
     }
-    return addNewRowTo(currentTab.state.layout);
+    return addNewRowToImpl(currentTab.state.layout);
   }
 
   const layoutParent = layout.parent!;

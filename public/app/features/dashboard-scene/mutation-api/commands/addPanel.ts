@@ -52,7 +52,9 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
 
       // While a plan is being previewed every panel is a placeholder, whoever adds it — the
       // scaffold, or the user adding one by hand. Deciding that here rather than from the payload
-      // means a caller cannot accidentally fire a live query into a preview.
+      // means a caller cannot accidentally fire a live query into a preview. For why a placeholder
+      // renders with synthetic sample data instead of a real query, see planningSampleData.ts's
+      // module doc comment.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const vizPanel = buildVizPanel(panelSpec as unknown as Parameters<typeof buildVizPanel>[0], panelId, {
         withoutQueries: scene.isPlanning(),

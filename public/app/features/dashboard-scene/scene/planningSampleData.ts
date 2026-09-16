@@ -10,6 +10,25 @@ import {
 } from '@grafana/data';
 import { SceneDataNode } from '@grafana/scenes';
 
+/**
+ * Why this module hand-builds sample frames instead of pointing each placeholder at a real query
+ * against the TestData datasource, which would need none of the logic below:
+ *
+ *  - TestData is a core datasource, but nothing guarantees it's installed, enabled, or reachable
+ *    on the instance a plan preview happens to run on — provisioning is an admin decision this
+ *    feature doesn't control, and a preview can't depend on it to render at all.
+ *  - A plan can scaffold many placeholder panels at once, and the preview is meant to render as
+ *    soon as the plan does. A real query, even a synthetic one, is still a datasource round trip
+ *    per panel; building frames in-process instead is materially faster at that scale and has no
+ *    failure mode of its own to handle.
+ *
+ * The accepted cost of that choice: this sample data does not react to variable changes the way
+ * a real query would, since there's no query underneath it to re-run. That's a known, priced
+ * trade-off of a preview built this way, not an oversight — variables can still be reviewed,
+ * added, renamed, or reordered while planning (see planningPolicy.ts), just without the panels
+ * visibly responding until Build attaches real queries behind them.
+ */
+
 type PlanPreviewDataShape =
   | 'series'
   | 'categories'

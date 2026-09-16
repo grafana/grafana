@@ -12,6 +12,7 @@ import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
@@ -32,14 +33,27 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../inspect/panelInspectorOpener', () => ({
+  ...jest.requireActual('../inspect/panelInspectorOpener'),
+  openPanelInspector: jest.fn(),
+}));
+
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const mockOpenPanelInspector = jest.mocked(openPanelInspector);
 const getBooleanValueFn = jest.fn();
+let newPanelQueryErrorsUIEnabled = false;
 
 function stubFFEnabled(enabled: boolean) {
-  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
-    key === FlagKeys.GrafanaKubernetesAnnotationsClient ? enabled : defaultValue
-  );
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) => {
+    if (key === FlagKeys.GrafanaKubernetesAnnotationsClient) {
+      return enabled;
+    }
+    if (key === FlagKeys.GrafanaNewPanelQueryErrorsUI) {
+      return newPanelQueryErrorsUIEnabled;
+    }
+    return defaultValue;
+  });
 }
 
 const postFn = jest.fn();
@@ -66,7 +80,9 @@ beforeEach(() => {
   deleteFn.mockReset();
   getFn.mockReset();
   mockIsAnnotationApiAvailable.mockReset();
+  mockOpenPanelInspector.mockReset();
   getBooleanValueFn.mockReset();
+  newPanelQueryErrorsUIEnabled = false;
   stubFFEnabled(false);
 });
 
@@ -324,6 +340,82 @@ describe('setDashboardPanelContext', () => {
     });
   });
 
+  describe('while a plan is being previewed', () => {
+    it('hides the add/edit/delete annotation gestures regardless of permissions', () => {
+      const { context } = buildTestScene({
+        planning: true,
+        builtInAnnotationsEnabled: true,
+        dashboardCanEdit: true,
+        canAdd: true,
+        canEdit: true,
+        canDelete: true,
+      });
+
+      expect(context.canAddAnnotations!()).toBe(false);
+      expect(context.canEditAnnotations!('dash-1')).toBe(false);
+      expect(context.canDeleteAnnotations!('dash-1')).toBe(false);
+    });
+
+    it('refuses to create an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canAdd: true });
+
+      await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
+
+      expect(postFn).not.toHaveBeenCalled();
+    });
+
+    it('refuses to update an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canEdit: true });
+
+      await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
+
+      expect(putFn).not.toHaveBeenCalled();
+      expect(patchFn).not.toHaveBeenCalled();
+    });
+
+    it('refuses to delete an annotation', async () => {
+      const { context } = buildTestScene({ planning: true, dashboardCanEdit: true, canDelete: true });
+
+      await context.onAnnotationDelete!('event-id-123');
+
+      expect(deleteFn).not.toHaveBeenCalled();
+    });
+
+    it('refuses to open the inspector regardless of the panel data state', () => {
+      // Pinning this structurally rather than relying on the plan placeholder's sample data
+      // reporting LoadingState.Done with no errors: that happens to make the popover that would
+      // call onOpenInspector have nothing to show today, but it is incidental to the sample, not
+      // a guarantee, so the guard itself has to hold regardless of what the panel's data reports.
+      newPanelQueryErrorsUIEnabled = true;
+      stubFFEnabled(false);
+      const { context } = buildTestScene({ planning: true });
+
+      context.onOpenInspector!();
+
+      expect(mockOpenPanelInspector).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onOpenInspector', () => {
+    it('opens the inspector when not planning', () => {
+      newPanelQueryErrorsUIEnabled = true;
+      stubFFEnabled(false);
+      const { context } = buildTestScene({});
+
+      context.onOpenInspector!();
+
+      expect(mockOpenPanelInspector).toHaveBeenCalledTimes(1);
+    });
+
+    it('is not wired up when the new panel query errors UI is disabled', () => {
+      newPanelQueryErrorsUIEnabled = false;
+      stubFFEnabled(false);
+      const { context } = buildTestScene({});
+
+      expect(context.onOpenInspector).toBeUndefined();
+    });
+  });
+
   describe('onAddAdHocFilter', () => {
     it('Should add new filter set', async () => {
       const { scene, context } = buildTestScene({});
@@ -578,6 +670,7 @@ interface SceneOptions {
   existingGroupByVariable?: boolean;
   groupByDatasourceUid?: string;
   panelDatasourceUndefined?: boolean;
+  planning?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -644,6 +737,12 @@ function buildTestScene(options: SceneOptions) {
       },
     },
   });
+
+  if (options.planning) {
+    scene.setState({
+      planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+    });
+  }
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
 

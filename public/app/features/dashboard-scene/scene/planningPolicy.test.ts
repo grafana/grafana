@@ -47,4 +47,16 @@ describe('the planning policy', () => {
     // artifact, which is the only route by which that sample could leave the preview.
     expect(isActionAllowedWhilePlanning('share-panel')).toBe(false);
   });
+
+  it('withholds annotation writes, which reach the backend with no dashboard save to undo them', () => {
+    expect(isActionAllowedWhilePlanning('annotation')).toBe(false);
+  });
+
+  it('permits editing the variable list, since the assistant matches its own placeholders by a kind+query fingerprint rather than position or count', () => {
+    const variableEdits: PlanningAction[] = ['add-variable', 'remove-variable', 'rename-variable', 'move-variable'];
+
+    for (const action of variableEdits) {
+      expect(isActionAllowedWhilePlanning(action)).toBe(true);
+    }
+  });
 });
