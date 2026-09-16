@@ -1999,7 +1999,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 					},
 				},
 			},
-			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{postableReceiver}),
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{&postableReceiver}),
 		}
 
 		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
@@ -2190,7 +2190,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	if cfg.Receivers == nil {
 		cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 	}
-	cfg.Receivers[v1.ReceiverUID(postableReceiver.Name)] = *postableReceiver
+	cfg.Receivers[v1.ReceiverUID(postableReceiver.Name)] = postableReceiver
 
 	// Mute Timings
 	location, err := time.LoadLocation("America/Montreal")

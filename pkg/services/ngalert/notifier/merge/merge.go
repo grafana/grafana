@@ -310,12 +310,11 @@ func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v
 		if i, ok := usedNames[cpy.Name]; ok && i != idx {
 			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
-			cpy.Name = newName
+			cpy = v1.NewReceiver(newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
 			usedNames[cpy.Name] = i
 		}
-		uid := v1.ReceiverUID(cpy.Name)
-		added = append(added, uid)
-		result[uid] = cpy
+		added = append(added, cpy.UID)
+		result[cpy.UID] = cpy
 	}
 	return result, renames, added
 }

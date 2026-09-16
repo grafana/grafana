@@ -158,6 +158,7 @@ func TestCreateReceiver(t *testing.T) {
 						Settings: settings,
 					},
 				},
+				Origin: models.ResourceOriginGrafana,
 			},
 			expectedError: nil,
 			assertResponse: func(t *testing.T, rev *ConfigRevision, receiver *models.Receiver) {
@@ -294,21 +295,17 @@ func TestGetReceiver(t *testing.T) {
 
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		_, err := rev.GetReceiver("not-found", nil)
+		_, err := rev.GetReceiver("not-found")
 		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
 	t.Run("should return receiver if exists", func(t *testing.T) {
-		prov := provenances{
-			"integration-uid-1": "test",
-		}
-
 		expected := &models.Receiver{
 			UID:        NameToUid("receiver1"),
 			Name:       "receiver1",
 			Provenance: models.Provenance("test"),
 			Origin:     models.ResourceOriginGrafana,
-			Version:    "0d67768f299ef0fe",
+			Version:    "f71d7ad4aec4f2dc",
 			Integrations: []*models.Integration{
 				{
 					UID:            "integration-uid-1",
@@ -319,7 +316,10 @@ func TestGetReceiver(t *testing.T) {
 			},
 		}
 		rev := getConfigRevisionForTest()
-		result, err := rev.GetReceiver(NameToUid("receiver1"), prov)
+		rev.AssignReceiverProvenances(map[string]models.Provenance{
+			"integration-uid-1": "test",
+		})
+		result, err := rev.GetReceiver(NameToUid("receiver1"))
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
 	})
@@ -329,11 +329,11 @@ func TestGetReceivers(t *testing.T) {
 	rev := getConfigRevisionForTest()
 
 	t.Run("should return all receivers with correct provenance", func(t *testing.T) {
-		prov := provenances{
+		rev.AssignReceiverProvenances(map[string]models.Provenance{
 			"integration-uid-1": "test",
 			"integration-uid-2": "some",
-		}
-		receivers, err := rev.GetReceivers(nil, prov)
+		})
+		receivers, err := rev.GetReceivers(nil)
 		require.NoError(t, err)
 		require.Len(t, receivers, len(rev.Config.Receivers))
 		for _, r := range receivers {
@@ -349,13 +349,13 @@ func TestGetReceivers(t *testing.T) {
 		}
 	})
 	t.Run("should filter by uids", func(t *testing.T) {
-		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil)
+		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"})
 		require.NoError(t, err)
 		require.Empty(t, receivers)
-		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil)
+		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")})
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
-		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil)
+		expected, err := rev.GetReceiver(NameToUid("receiver1"))
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
 	})

@@ -57,10 +57,12 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		if !ok {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(&r, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		recv, err := PostableApiReceiverToReceiver(r, models.ResourceOriginImported)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
+
+		recv.Provenance = models.ProvenanceConvertedPrometheus
 		result = append(result, recv)
 	}
 	return result, nil
