@@ -272,11 +272,18 @@ export const SeriesEditor = ({
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
                   placeholderText: '',
+                  isClearable: true,
                 },
               }}
             />
           </Field>
-          <Field label={t('xychart.series-editor.label-color-field', 'Color field')}>
+          <Field
+            label={t('xychart.series-editor.label-color-field', 'Color field')}
+            description={t(
+              'xychart.series-editor.description-color-field',
+              'Select a numeric field whose values control point colors. Use standard options or field overrides to configure the color scheme, thresholds, or value mappings.'
+            )}
+          >
             <FieldNamePicker
               id={colorFieldInputId}
               value={series.color?.matcher?.options as string}
@@ -308,6 +315,7 @@ export const SeriesEditor = ({
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
                   placeholderText: '',
+                  isClearable: true,
                 },
               }}
             />
