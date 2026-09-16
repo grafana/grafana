@@ -1099,7 +1099,7 @@ func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
 
 	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
 
@@ -1108,7 +1108,7 @@ func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
 	})
 
 	t.Run("plain error still completes in error state", func(t *testing.T) {
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		finalStatus := recorder.Complete(ctx, errors.New("boom"))
 
