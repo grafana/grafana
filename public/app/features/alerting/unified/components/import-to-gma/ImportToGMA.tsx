@@ -57,6 +57,7 @@ import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
+import { PreviewRedactionError, redactPreviewSecrets } from './redactPreviewSecrets';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { type DryRunValidationResult } from './types';
@@ -915,17 +916,24 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     try {
       let content = '';
       if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
-        content = await formData.notificationsYamlFile.text();
+        const rawContent = await formData.notificationsYamlFile.text();
+        content = redactPreviewSecrets(rawContent, 'yaml');
       } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
         const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
-        content = JSON.stringify(config.alertmanager_config, null, 2);
+        const rawContent = JSON.stringify(config.alertmanager_config, null, 2);
+        content = redactPreviewSecrets(rawContent, 'json');
       }
       setNotificationsPreviewContent(content);
     } catch (err) {
       setNotificationsPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
+        err instanceof PreviewRedactionError
+          ? t(
+              'alerting.import-to-gma.preview.redaction-error',
+              'This configuration could not be safely previewed and was not displayed.'
+            )
+          : t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
+              error: err instanceof Error ? err.message : String(err),
+            })
       );
     } finally {
       setIsLoadingNotifications(false);
@@ -940,18 +948,25 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     try {
       let content = '';
       if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
-        content = await formData.rulesYamlFile.text();
+        const rawContent = await formData.rulesYamlFile.text();
+        content = redactPreviewSecrets(rawContent, 'yaml');
       } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
         // Apply filters if set
         const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
-        content = JSON.stringify(filteredConfig, null, 2);
+        const rawContent = JSON.stringify(filteredConfig, null, 2);
+        content = redactPreviewSecrets(rawContent, 'json');
       }
       setRulesPreviewContent(content);
     } catch (err) {
       setRulesPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
+        err instanceof PreviewRedactionError
+          ? t(
+              'alerting.import-to-gma.preview.redaction-error',
+              'This configuration could not be safely previewed and was not displayed.'
+            )
+          : t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
+              error: err instanceof Error ? err.message : String(err),
+            })
       );
     } finally {
       setIsLoadingRules(false);

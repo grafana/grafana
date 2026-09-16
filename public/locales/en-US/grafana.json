@@ -1691,6 +1691,7 @@
         "error": "Failed to load content: {{error}}",
         "loading": "Loading content...",
         "notifications-title": "Notifications Config Preview",
+        "redaction-error": "This configuration could not be safely previewed and was not displayed.",
         "rules-title": "Alert Rules Preview"
       },
       "recording-rules": "Recording rules",
