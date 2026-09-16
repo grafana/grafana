@@ -1,3 +1,4 @@
+import { type ReactElement } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -189,6 +190,15 @@ describe('NotebookView', () => {
   // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is
   // edited against the conversation and only becomes a resource when someone publishes it.
   describe('a draft', () => {
+    /**
+     * A draft waits for the panel plugin metas before it builds anything, so the scene does not
+     * exist until that settles. Every case here needs it settled.
+     */
+    async function renderDraft(ui: ReactElement) {
+      const result = render(ui);
+      await act(async () => {});
+      return result;
+    }
     /** A document with no cells, off the generated default so every field the transform reads is there. */
     function aDraftSpec(title = 'Untitled investigation'): NotebookSpec {
       return { ...defaultNotebookSpec(), title };
@@ -241,7 +251,7 @@ describe('NotebookView', () => {
       const updateNotebook = jest.spyOn(notebookResource, 'updateNotebook');
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);
 
       // Both halves are needed for autosave to treat this as a writer edit: it ignores changes made
       // outside edit mode, and the mode switch alone is compared against the baseline recorded at
@@ -265,7 +275,7 @@ describe('NotebookView', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       const { loadedUids } = captureStateManager();
 
-      render(<NotebookView spec={aDraftSpec()} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} />);
 
       // Editable, and nothing was fetched: a draft has no uid to load.
       expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -276,7 +286,7 @@ describe('NotebookView', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
       const onTitleChange = jest.fn();
 
-      render(<NotebookView spec={aDraftSpec('Checkout latency')} onTitleChange={onTitleChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec('Checkout latency')} onTitleChange={onTitleChange} />);
 
       expect(onTitleChange).toHaveBeenCalledWith('Checkout latency');
     });
@@ -295,7 +305,7 @@ describe('NotebookView', () => {
       const onChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
 
       await act(async () => {
         const scene = draftScene();
@@ -324,7 +334,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec()} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec()} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         // A state change that is not part of the serialized document, as query results are not.
@@ -345,7 +355,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         const scene = draftScene();
@@ -374,7 +384,7 @@ describe('NotebookView', () => {
       const onDirtyChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      render(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} onDirtyChange={onDirtyChange} />);
+      await renderDraft(<NotebookView spec={aDraftSpec('Before')} onChange={onChange} onDirtyChange={onDirtyChange} />);
 
       await act(async () => {
         draftScene().setState({ title: 'After' });
@@ -396,7 +406,7 @@ describe('NotebookView', () => {
       const onChange = jest.fn();
       const draftScene = captureDraftScene();
 
-      const { unmount } = render(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
+      const { unmount } = await renderDraft(<NotebookView spec={aDraftSpecWithCell()} onChange={onChange} />);
 
       await act(async () => {
         const scene = draftScene();

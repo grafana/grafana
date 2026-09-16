@@ -303,7 +303,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
 
@@ -329,11 +329,11 @@ describe('NotebookPageStateManager', () => {
     /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
     const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
-    it('builds an empty notebook with no resource behind it and nothing fetched', () => {
+    it('builds an empty notebook with no resource behind it and nothing fetched', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.scene?.state.title).toMatch(TITLE_PATTERN);
@@ -346,16 +346,16 @@ describe('NotebookPageStateManager', () => {
     // The reason for naming them at all: autosave creates these without asking for a name, so
     // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
     // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
-    it('names each new notebook after the time it was created', () => {
+    it('names each new notebook after the time it was created', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
       const now = jest.spyOn(Date, 'now');
 
       now.mockReturnValue(new Date('2026-07-01T09:15:00Z').getTime());
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene?.state.title;
       now.mockReturnValue(new Date('2026-07-01T11:42:00Z').getTime());
-      manager.newNotebook();
+      await manager.newNotebook();
       const second = manager.state.scene?.state.title;
 
       now.mockRestore();
@@ -367,13 +367,13 @@ describe('NotebookPageStateManager', () => {
 
     // The scene cache is keyed by uid and a blank notebook has none, so caching it would mean every
     // blank page after the first reopened whatever the previous one was left holding.
-    it('does not keep the blank notebook, so a second one starts empty again', () => {
+    it('does not keep the blank notebook, so a second one starts empty again', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene;
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene).not.toBe(first);
     });
@@ -385,7 +385,7 @@ describe('NotebookPageStateManager', () => {
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      manager.newNotebook();
+      await manager.newNotebook();
       await slow;
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
@@ -402,7 +402,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       // What autosave does when the create comes back.
       blank.setState({ uid: 'nb-new' });
@@ -419,7 +419,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
       // Both of these are what a real create produces: the uid on the scene, and the generation the
@@ -438,7 +438,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
 
       await manager.loadNotebook('nb-other');
