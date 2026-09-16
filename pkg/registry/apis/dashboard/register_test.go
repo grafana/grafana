@@ -536,7 +536,7 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if commonMultiVersionTypes[typ] {
 			continue
 		}
-		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		obj, ok := reflect.TypeAssert[runtime.Object](reflect.New(typ))
 		if !ok {
 			continue
 		}
