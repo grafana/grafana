@@ -2,13 +2,10 @@
  * Contract fixture for RENDER_PLAN, shared in spirit (not by import -- the assistant repo cannot
  * import core's zod schemas) with the assistant's own mapper test.
  *
- * This is the payload shape the assistant's plan-to-RENDER_PLAN mapper is expected to produce.
- * Core asserts this fixture is accepted by `renderPlanCommand.payloadSchema` and renders correctly
- * (see renderPlan.test.ts); the assistant repo asserts its mapper produces exactly this object
- * from its own `DashboardPlan` shape. Keep the two literal objects in sync by hand: if either
- * side changes its shape, update this fixture and the assistant's copy together, so a mismatch
- * shows up as a failing assertion on the changed side rather than as a runtime rejection Oscar
- * finds in the browser.
+ * This is the payload shape the assistant's plan-to-RENDER_PLAN mapper produces. Core asserts
+ * this fixture is accepted and renders correctly (see renderPlan.test.ts); the assistant repo
+ * asserts its mapper produces exactly this object. Keep the two literal objects in sync by hand
+ * -- a shape change on either side needs a matching update on both.
  *
  * Assistant-side fixture: apps/plugin/src/features/dashboarding/renderPlanContractFixture.ts
  * (or wherever the assistant places its half -- check there before changing this shape).

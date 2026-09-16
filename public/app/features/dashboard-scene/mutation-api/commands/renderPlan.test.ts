@@ -68,14 +68,9 @@ describe('RENDER_PLAN', () => {
   });
 
   it('builds panels with no dropdown menu at all -- View is not read-only in practice', async () => {
-    // buildVizPanel attaches a menu unconditionally (Share/alert-rule/View/Inspect/...). View
-    // looked safe (it never enters edit mode) until the tester found timeseries -- the commonest
-    // plan panel type -- sets .setViewPanelOptions in its plugin module, making View's side pane
-    // render a live, mutating Quick toggles section with no isPlanning() gate of its own. Clearing
-    // the menu removes the button itself: confirmed with a real React render in a throwaway
-    // test (not shipped here) that VizPanelRenderer only renders PanelChrome's menu button when
-    // `menu` is truthy, and that clearing it makes the button disappear from the DOM, not just
-    // from state -- and that the same query finds a real menu button when one is attached.
+    // A plugin's View pane can expose a Quick toggles section (timeseries sets
+    // .setViewPanelOptions) that mutates panel options, with no isPlanning() gate. The menu is
+    // cleared entirely rather than guarded, so there is no button at all.
     const { scene, client } = setup();
 
     await client.execute({ type: 'RENDER_PLAN', payload: plan });
@@ -97,9 +92,8 @@ describe('RENDER_PLAN', () => {
   });
 
   it('renders stand-in variables alongside the plan, with generated sample values', async () => {
-    // The plan names only the variable, not what its values should look like -- generating
-    // plausible values is the same job as the panel sample data, so it happens here rather than
-    // being reconstructed on the caller's side.
+    // The plan names only the variable, not what its values should look like -- sample values
+    // are generated here rather than by the caller.
     const { scene, client } = setup();
 
     await client.execute({
@@ -126,9 +120,8 @@ describe('RENDER_PLAN', () => {
   it('leaves the scene in view mode even though /dashboard/new enters edit mode on activation, and preserves the rendered plan rather than restoring the pre-plan snapshot', async () => {
     const { scene, client } = setup();
 
-    // Simulates the isNew branch in DashboardScene's own activation handler, which enters edit
-    // mode unconditionally on a fresh /dashboard/new scene before RENDER_PLAN ever runs -- the
-    // exact pre-existing main behaviour that broke the design's view-mode-only premise.
+    // A fresh /dashboard/new scene enters edit mode unconditionally on activation, before
+    // RENDER_PLAN ever runs.
     scene.onEnterEditMode();
     expect(scene.state.isEditing).toBe(true);
 
@@ -137,8 +130,7 @@ describe('RENDER_PLAN', () => {
     expect(result.success).toBe(true);
     expect(scene.state.isEditing).toBe(false);
     expect(scene.state.isDirty).toBe(false);
-    // The pre-plan snapshot exitEditMode could have restored was the scene's initial, empty
-    // state -- assert the plan's own content survived instead.
+    // Assert the plan's own content survived, not the empty pre-plan snapshot.
     expect(scene.state.title).toBe('Kafka overview');
     expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Requests', 'Error rate']);
     expect(scene.state.planning).toMatchObject({ planId: 'plan-1' });
@@ -155,10 +147,9 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
-    // DefaultGridLayoutManager.fromVizPanels hardcodes isDraggable/isResizable true at
-    // construction; the only place either ever flips false is editModeChanged, which runs on an
-    // edit-mode *transition*. Assert behaviour (isDraggable(), getDragHooks()) rather than the raw
-    // state flag, so a future change that re-enables dragging some other way still fails this.
+    // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
+    // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
+    // future change that re-enables dragging some other way still fails this.
     function getGrid(scene: DashboardScene) {
       const rows = (scene.state.body as RowsLayoutManager).state.rows;
       return (rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
@@ -189,10 +180,8 @@ describe('RENDER_PLAN', () => {
     });
 
     it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
-      // With dashboardNewLayouts on, DefaultGridLayoutManager.editModeChanged does the actual
-      // isDraggable/isResizable correction inside a setTimeout(..., 10) rather than synchronously
-      // (to avoid grid animation jank) -- assert it lands after that delay, not that it is
-      // already true the same tick, so this test can't pass for the wrong reason.
+      // With dashboardNewLayouts on, the correction lands inside a setTimeout(..., 10), not
+      // synchronously -- assert it after that delay, not the same tick.
       const originalToggle = config.featureToggles.dashboardNewLayouts;
       config.featureToggles.dashboardNewLayouts = true;
       try {
@@ -212,10 +201,9 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('precondition: refuses any target that is not a blank, unsaved dashboard', () => {
-    // RENDER_PLAN replaces the whole body and END_PLANNING clears unconditionally, which is only
-    // safe because the assistant's own path always starts from a fresh, blank /dashboard/new.
-    // The mutation API is public, though, so these guard against a caller that reaches
-    // RENDER_PLAN some other way, on a dashboard that actually has something to lose.
+    // RENDER_PLAN replaces the whole body and END_PLANNING clears unconditionally -- safe only
+    // if the target was already blank and unsaved. These guard against a caller that reaches
+    // RENDER_PLAN some other way, on a dashboard that has something to lose.
 
     it('refuses a dashboard that already has panels, and leaves them untouched', async () => {
       const existingPanel = new VizPanel({ key: 'panel-1', title: 'Existing panel', pluginId: 'timeseries' });
@@ -287,10 +275,8 @@ describe('RENDER_PLAN', () => {
   });
 
   it("CONTRACT: accepts and renders the fixture payload the assistant's mapper is expected to produce", async () => {
-    // See renderPlanContractFixture.ts -- the assistant repo asserts its mapper produces exactly
-    // this object from its own DashboardPlan shape. This is core's half: that RENDER_PLAN accepts
-    // it and renders it correctly. A schema change on either side that isn't mirrored on the
-    // other shows up here as a failing assertion, not as a runtime rejection.
+    // See renderPlanContractFixture.ts: the assistant repo asserts its mapper produces exactly
+    // this object. This is core's half, that RENDER_PLAN accepts and renders it correctly.
     const { scene, client } = setup();
 
     const result = await client.execute({ type: 'RENDER_PLAN', payload: renderPlanContractFixture });

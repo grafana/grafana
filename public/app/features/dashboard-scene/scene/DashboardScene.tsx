@@ -266,12 +266,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const editSource = locationService.getSearchObject().editSource;
 
       // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it, and never
-      // intends to edit -- entering edit mode here and exiting again a moment later (once
-      // RENDER_PLAN runs) would still show a real edit toolbar with Save/Discard for the
-      // round trip in between. Skip the auto-edit entirely for this caller rather than exit
-      // out of it after the fact. This is a withhold-from-URL check (a missing/forged marker
-      // just degrades to today's normal edit-mode behaviour below), unlike a grant-from-URL
-      // check such as ?editview=, which is why this is safe where that one was not.
+      // intends to edit -- entering edit mode here and exiting again a moment later would still
+      // show a real edit toolbar for the round trip in between. Skip the auto-edit entirely
+      // instead. This is a withhold-from-URL check (a missing/forged marker just degrades to
+      // the normal edit-mode behaviour below), unlike a grant-from-URL check such as ?editview=,
+      // which is why this is safe where that one was not.
       if (editSource !== 'plan-preview') {
         // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
         // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
@@ -303,10 +302,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // than leaving the caller holding a stale reference to a preview nothing is showing.
       if (this.state.planning) {
         appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
-        // Not a fix for a live leak -- nothing today restores a deactivated scene's planning flag
-        // (a fresh /dashboard/new always builds a brand-new scene, uncached, with no planning
-        // state; confirmed from source, not assumed). This is lifecycle hygiene: a deactivated
-        // scene is not planning, independent of whether anything currently caches it.
+        // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
+        // scene with no planning state, so this only matters if that ever changes.
         this.setState({ planning: undefined });
       }
       destroyMutationClient();

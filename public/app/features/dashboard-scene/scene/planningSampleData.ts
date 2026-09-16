@@ -11,22 +11,12 @@ import {
 import { SceneDataNode } from '@grafana/scenes';
 
 /**
- * Why this module hand-builds sample frames instead of pointing each placeholder at a real query
- * against the TestData datasource, which would need none of the logic below:
+ * Hand-builds sample frames instead of querying the TestData datasource: nothing guarantees
+ * TestData is installed or reachable on a given instance, and a plan can scaffold many panels at
+ * once, where building frames in-process is faster than a per-panel datasource round trip.
  *
- *  - TestData is a core datasource, but nothing guarantees it's installed, enabled, or reachable
- *    on the instance a plan preview happens to run on — provisioning is an admin decision this
- *    feature doesn't control, and a preview can't depend on it to render at all.
- *  - A plan can scaffold many placeholder panels at once, and the preview is meant to render as
- *    soon as the plan does. A real query, even a synthetic one, is still a datasource round trip
- *    per panel; building frames in-process instead is materially faster at that scale and has no
- *    failure mode of its own to handle.
- *
- * The accepted cost of that choice: this sample data does not react to variable changes the way
- * a real query would, since there's no query underneath it to re-run. That's a known, priced
- * trade-off of a preview built this way, not an oversight — variables can still be reviewed,
- * added, renamed, or reordered while planning (see planningPolicy.ts), just without the panels
- * visibly responding until Build attaches real queries behind them.
+ * Tradeoff: this data doesn't react to variable changes, since there's no query behind it to
+ * re-run -- panels stay static until Build attaches real queries.
  */
 
 type PlanPreviewDataShape =
@@ -57,14 +47,10 @@ const POINT_COUNT = 60;
 const WINDOW_MS = 60 * 60 * 1000;
 
 /**
- * Build a self-contained preview for one planned panel.
- *
- * The numbers are synthetic but seeded off the panel title, so a given panel
- * looks the same on every render while neighbouring panels look different —
- * which is what makes the preview read as a dashboard rather than as the same
- * chart repeated. The signal's unit, range and series names are inferred from
- * the title too, so a "p99 latency" panel shows milliseconds and an "error
- * rate" panel shows a mostly-flat line with a spike.
+ * Builds a self-contained preview for one planned panel. Numbers are seeded off the panel
+ * title, so a panel looks the same on every render while neighbours differ; the title also
+ * infers the signal's unit and range, so a "p99 latency" panel shows milliseconds and an
+ * "error rate" panel shows a mostly-flat line with a spike.
  */
 function buildMockPanelViz(title: string, viz: PlanVisualization): MockPanelViz {
   const random = seededRandom(title);
@@ -540,11 +526,8 @@ export function getPlanningPanelData(title: string, pluginId: string) {
 }
 
 /**
- * A few generic sample values for a stand-in variable in a plan preview -- the same job as the
- * panel sample data above (making a query-less preview look plausible), for a variable that has
- * no real datasource behind it yet. Deliberately generic rather than name-derived: a plan names
- * only the variable (e.g. "cluster"), not what its values should look like, and generic
- * placeholders are honest about being a preview rather than guessing real-looking ones.
+ * Generic sample values for a stand-in variable, not name-derived: a plan names only the
+ * variable (e.g. "cluster"), not what its values should look like.
  */
 export function getPlanningVariableValues(): string[] {
   return ['value-1', 'value-2', 'value-3'];

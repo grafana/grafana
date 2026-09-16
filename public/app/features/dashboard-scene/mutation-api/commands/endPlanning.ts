@@ -1,10 +1,9 @@
 /**
  * END_PLANNING command
  *
- * Ends the plan preview and clears the dashboard back to empty. Unconditional: the preview
- * always renders on a blank dashboard and nothing else can add content to it (view mode, no
- * editing), so there is no "keep the scaffold" case left to distinguish -- every panel/section/
- * variable present is, tautologically, the whole plan.
+ * Ends the plan preview and clears the dashboard back to empty, unconditionally: nothing but
+ * RENDER_PLAN can add content to a preview (view mode, no editing), so every panel/section/
+ * variable present is tautologically the whole plan.
  */
 import type * as z from 'zod';
 

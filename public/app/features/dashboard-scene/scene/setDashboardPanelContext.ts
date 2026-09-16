@@ -231,12 +231,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
   //
-  // A third route to inspect-panel, independent of the menu item and the 'i' keyboard shortcut
-  // (both already guarded above). Inert today, not reachable: the sample generator always
-  // reports LoadingState.Done with no error, so the errors/notices popover this callback is wired
-  // to never renders for a placeholder panel, and nothing calls this directly otherwise. That's
-  // incidental to today's sample data, not structural, so it's guarded the same as its siblings
-  // rather than left open for whenever the sample generator gains an error state.
+  // A third route to inspect-panel, independent of the 'i' keyboard shortcut (guarded in
+  // keyboardShortcuts.ts) and the menu item (unreachable -- preview panels have no menu at all).
+  // Unreachable while the sample generator never reports an error for this popover to attach to;
+  // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => {
       if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {

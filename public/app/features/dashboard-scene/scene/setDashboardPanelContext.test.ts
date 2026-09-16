@@ -331,10 +331,8 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('while planning', () => {
-    // canAddAnnotations (and canEdit/canDelete) have no isEditing check either -- this is an
-    // immediate backend write reachable by the ordinary drag-to-annotate gesture regardless of
-    // edit mode, so it's refused explicitly (refuseWhilePlanning) rather than relying on a view-
-    // mode rule that doesn't cover it.
+    // canAddAnnotations has no isEditing check: this is an immediate backend write, reachable by
+    // the ordinary drag-to-annotate gesture regardless of edit mode, so it's refused explicitly.
     it('refuses to create, update or delete an annotation', async () => {
       const { scene, context } = buildTestScene({
         dashboardCanEdit: true,
@@ -357,10 +355,10 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('refuses to open the errors/notices popover inspector', async () => {
-      // A third route to inspect-panel, independent of the menu item and the 'i' keyboard
-      // shortcut (both guarded in keyboardShortcuts.ts/PanelMenuBehavior.tsx). Inert today --
-      // the sample generator never reports an error for this popover to attach to -- but that's
-      // incidental, not structural, so it's guarded the same as its siblings.
+      // A third route to inspect-panel, independent of the 'i' keyboard shortcut (guarded in
+      // keyboardShortcuts.ts) and the menu item (unreachable -- preview panels have no menu at
+      // all). Unreachable while the sample generator never reports an error, but guarded here
+      // directly rather than left open for when that changes.
       getBooleanValueFn.mockImplementation(
         (key: string, defaultValue: boolean) => key === FlagKeys.GrafanaNewPanelQueryErrorsUI || defaultValue
       );

@@ -34,14 +34,12 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
   }
 
   /**
-   * A plan preview is not a mutation target: refuse every mutating command against it except
-   * RENDER_PLAN and END_PLANNING, which manage the plan itself. Checked once here, the single
-   * point every dashboard command passes through, so a command added later is refused without
-   * needing its own guard.
+   * A plan preview is not a mutation target: refuses every mutating command except RENDER_PLAN
+   * and END_PLANNING. The single point every dashboard command passes through, so a future
+   * command is refused without its own guard.
    *
-   * This does not add conversation scoping to the mutation API -- a caller still acts on
-   * whatever scene is mounted, regardless of which conversation it belongs to. It only closes
-   * that gap for a plan preview specifically.
+   * Does not add conversation scoping to the mutation API -- a caller still acts on whatever
+   * scene is mounted, regardless of conversation. Only closes that gap for a plan preview.
    */
   async execute(mutation: MutationRequest): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();

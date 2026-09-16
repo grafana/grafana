@@ -71,11 +71,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    // Without this check, the branch below calls onEnterEditMode() unconditionally when not
-    // already editing -- exactly the invariant a plan preview depends on never happening (see
-    // refuseWhilePlanning, and RENDER_PLAN's own doc comment on why it never calls
-    // enterEditModeIfNeeded). Reachable directly via `?editview=`, independent of whether a
-    // settings entry point is rendered.
+    // Reachable directly via ?editview=, independent of any settings entry point: without this
+    // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
+    // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
       update.editview = createDashboardEditViewFor(values.editview);
 
@@ -93,11 +91,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.editview = undefined;
     }
 
-    // Handle view panel state. Guarded like editview/editPanel/shareView below: a preview
-    // panel has no dropdown menu at all (see renderPlan.ts), but a hand-typed ?viewPanel=
-    // reaches the same interactive view-panel side pane directly, bypassing that. Its Quick
-    // toggles section is gated on the plugin's viewPanelOptions, not on isPlanning() -- the
-    // same reachable-without-isEditing shape as the other three routes here.
+    // Guarded like editview/editPanel/shareView below: a preview panel has no menu (see
+    // renderPlan.ts), but ?viewPanel= reaches the same view-panel pane directly. Its Quick
+    // toggles section is gated on the plugin's viewPanelOptions, not on isPlanning().
     if (typeof values.viewPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       update.viewPanel = values.viewPanel;
     } else if (typeof values.viewPanel === 'string') {
@@ -106,9 +102,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.viewPanel = undefined;
     }
 
-    // Handle edit panel state. Same reason as editview above: the branch below calls
-    // onEnterEditMode() unconditionally if not already editing, so this has to be checked before
-    // that runs, not after.
+    // Same reason as editview above: the branch below calls onEnterEditMode() unconditionally
+    // if not already editing, so this must be checked first.
     if (typeof values.editPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       const panel = findEditPanel(this._scene, values.editPanel);
 
@@ -154,11 +149,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    // Share is already guarded elsewhere (its keyboard shortcuts in keyboardShortcuts.ts; its
-    // menu submenu route is closed structurally, since a preview panel has no menu at all -- see
-    // renderPlan.ts) -- this URL param is a third route to the same action, not a new one.
-    // `?shareView=snapshot` in particular would let a placeholder's synthetic sample data leave
-    // the preview as a durable, real-looking artifact.
+    // Share is guarded elsewhere too (keyboardShortcuts.ts; the menu route is closed since a
+    // preview panel has no menu at all). ?shareView=snapshot would otherwise let a placeholder's
+    // synthetic sample data leave the preview as a durable, real-looking artifact.
     if (typeof values.shareView === 'string' && !refuseWhilePlanning(this._scene)) {
       update.shareView = values.shareView;
       update.overlay = new ShareDrawer({
