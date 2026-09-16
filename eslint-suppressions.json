@@ -3097,11 +3097,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/calculateHeatmap/editor/helper.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/calculateHeatmap/heatmap.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
