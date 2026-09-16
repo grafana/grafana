@@ -137,7 +137,7 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
       // A fresh /dashboard/new scene enters edit mode unconditionally on activation, before this
       // handler ever runs (DashboardScene's own isNew branch). The assistant's own preview flow
       // now tells that branch to skip the auto-edit entirely via a URL marker
-      // (editSource=assistant-preview) -- but the mutation API is public, so another caller can
+      // (editSource=plan-preview) -- but the mutation API is public, so another caller can
       // still reach /dashboard/new without that marker and call RENDER_PLAN directly. This
       // command has to guarantee view mode itself rather than depend on the caller's URL.
       const wasEditing = scene.state.isEditing;

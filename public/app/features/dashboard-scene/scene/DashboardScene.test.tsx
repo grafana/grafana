@@ -234,7 +234,7 @@ describe('DashboardScene', () => {
         // intends to edit -- it must not flash into edit mode and back out again. Every other
         // /dashboard/new caller (no param, editSource=user, editSource=assistant) is unaffected.
         const scene = buildTestScene();
-        locationService.push('/dashboard/new?editSource=assistant-preview');
+        locationService.push('/dashboard/new?editSource=plan-preview');
         const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
 
         scene.activate();

@@ -272,7 +272,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // out of it after the fact. This is a withhold-from-URL check (a missing/forged marker
       // just degrades to today's normal edit-mode behaviour below), unlike a grant-from-URL
       // check such as ?editview=, which is why this is safe where that one was not.
-      if (editSource !== 'assistant-preview') {
+      if (editSource !== 'plan-preview') {
         // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
         // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
         // mode bypasses the button).
