@@ -18,12 +18,17 @@ export async function importPluginModule({
   loadingStrategy,
   version,
   moduleHash,
+  buildHash,
   translations,
   hasUpdate,
   pluginName,
 }: PluginImportInfo): Promise<System.Module> {
-  if (version) {
-    registerPluginInfoInCache({ path, version, loadingStrategy });
+  // Register whenever there is anything to cache-bust with: a version (legacy
+  // timestamp/version busting) OR a content buildHash (build-addressed pinning). A
+  // plugin with a buildHash but no info.version must still be pinned to
+  // /public/plugins/:id/:buildHash/* so the HA chunk-skew fix applies.
+  if (version || buildHash) {
+    registerPluginInfoInCache({ path, version, loadingStrategy, buildHash });
   }
 
   // Add locales to i18n for a plugin if the feature toggle is enabled and the plugin has locales
