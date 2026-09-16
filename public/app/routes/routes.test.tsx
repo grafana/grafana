@@ -84,7 +84,7 @@ describe('notebooks route guards', () => {
   });
 
   // The blank route is the only notebook one that writes, so reading is not enough to reach it.
-  it('rejects /notebooks/new without notebooks:write', () => {
+  it('rejects /notebooks/new without notebooks:create', () => {
     contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
