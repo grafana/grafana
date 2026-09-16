@@ -86,6 +86,7 @@ public/css/*.min.css
 !.claude/skills/add-e2e-selectors/
 !.claude/skills/frontend-testing-strategy/
 !.claude/skills/panel-testing-strategy/
+!.claude/skills/mermaid/
 
 .eslintcache
 .stylelintcache
