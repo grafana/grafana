@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { createTheme } from '@grafana/data';
@@ -42,18 +42,60 @@ function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridPr
 
 describe('TableDataGrid', () => {
   let origResizeObserver = global.ResizeObserver;
+  let resizeObservers: Array<{
+    callback: ResizeObserverCallback;
+    disconnect: jest.Mock;
+  }>;
+  let mutationObservers: Array<{
+    callback: MutationCallback;
+    disconnect: jest.Mock;
+  }>;
+  let animationFrames: FrameRequestCallback[];
+  let origMutationObserver = global.MutationObserver;
+  let requestAnimationFrameSpy: jest.SpyInstance;
+  let cancelAnimationFrameSpy: jest.SpyInstance;
 
   beforeEach(() => {
     origResizeObserver = global.ResizeObserver;
+    origMutationObserver = global.MutationObserver;
+    resizeObservers = [];
+    mutationObservers = [];
+    animationFrames = [];
     global.ResizeObserver = class ResizeObserver {
+      disconnect = jest.fn();
+
+      constructor(public callback: ResizeObserverCallback) {
+        resizeObservers.push(this);
+      }
+
       observe() {}
       unobserve() {}
-      disconnect() {}
     };
+    global.MutationObserver = class MutationObserver {
+      disconnect = jest.fn();
+
+      constructor(public callback: MutationCallback) {
+        mutationObservers.push(this);
+      }
+
+      observe() {}
+      takeRecords() {
+        return [];
+      }
+    };
+    requestAnimationFrameSpy = jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => animationFrames.push(callback));
+    cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle) => {
+      delete animationFrames[handle - 1];
+    });
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
+    global.MutationObserver = origMutationObserver;
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
   });
 
   describe('table.refresh', () => {
@@ -174,10 +216,11 @@ describe('TableDataGrid', () => {
       expect(bottom).toHaveStyle({ bottom: '45px' });
     });
 
-    it('re-measures on render, so content that grows without a scroll or a resize still gets a shadow', () => {
+    it('re-measures after content changes without blocking the render that produced them', () => {
       // expanding a nested row or re-wrapping text after a column resize changes the content height
       // without firing a scroll event or resizing the grid itself
-      const { container, rerender } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const props = makeProps({ tableRefreshEnabled: true });
+      const { container, rerender } = render(<TableDataGrid {...props} />);
       const grid = screen.getByRole('grid');
       const { bottom } = getShadows(container);
 
@@ -185,8 +228,45 @@ describe('TableDataGrid', () => {
       expect(bottom).toHaveStyle({ opacity: '0' });
 
       Object.defineProperty(grid, 'scrollHeight', { configurable: true, value: 900 });
-      rerender(<TableDataGrid {...makeProps({ tableRefreshEnabled: true, noValue: 'forces a re-render' })} />);
+      rerender(<TableDataGrid {...props} rows={[...props.rows]} />);
+      expect(bottom).toHaveStyle({ opacity: '0' });
+
+      act(() => mutationObservers.at(-1)?.callback([], mutationObservers.at(-1) as unknown as MutationObserver));
+      act(() => animationFrames.splice(0).forEach((callback) => callback(0)));
+      expect(bottom).toHaveStyle({ opacity: '0' });
+
+      act(() => animationFrames.splice(0).forEach((callback) => callback(0)));
       expect(bottom).toHaveStyle({ opacity: '1' });
+    });
+
+    it('re-measures when the grid viewport resizes', () => {
+      const { container } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const grid = screen.getByRole('grid');
+      const { bottom } = getShadows(container);
+
+      Object.defineProperties(grid, {
+        clientHeight: { configurable: true, value: 100 },
+        offsetHeight: { configurable: true, value: 100 },
+        scrollHeight: { configurable: true, value: 400 },
+      });
+      act(() => mutationObservers.at(-1)?.callback([], mutationObservers.at(-1) as unknown as MutationObserver));
+      act(() => resizeObservers.at(-1)?.callback([], resizeObservers.at(-1) as unknown as ResizeObserver));
+
+      expect(bottom).toHaveStyle({ opacity: '1' });
+      expect(cancelAnimationFrameSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('disconnects its observers and cancels pending work on unmount', () => {
+      const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const scrollShadowObserver = resizeObservers.at(-1);
+      const contentObserver = mutationObservers.at(-1);
+      act(() => contentObserver?.callback([], contentObserver as unknown as MutationObserver));
+
+      unmount();
+
+      expect(scrollShadowObserver?.disconnect).toHaveBeenCalledTimes(1);
+      expect(contentObserver?.disconnect).toHaveBeenCalledTimes(1);
+      expect(cancelAnimationFrameSpy).toHaveBeenCalledTimes(1);
     });
 
     it('is not rendered without table.refresh', () => {

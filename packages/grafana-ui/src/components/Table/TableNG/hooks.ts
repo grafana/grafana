@@ -823,27 +823,59 @@ export function useScrollShadows(
     }
   }, [ref, enabled, topOffset, bottomOffset]);
 
-  // Anything that changes the content's height rather than the viewport's — a nested row expanding,
-  // a column resize re-wrapping text, a new page of rows — reaches the DOM through a render, so
-  // re-measuring on every commit covers all of them without watching each one. The reads are cheap,
-  // and only the refreshed table runs them.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(sync);
-
   useEffect(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
 
-    el.addEventListener('scroll', sync, { passive: true });
-    // the panel resizing changes what fits without moving the scroll position or re-rendering the
-    // grid when only the scrollbars come and go
-    const resizeObserver = new ResizeObserver(sync);
+    let animationFrame: number | undefined;
+    const cancelScheduledSync = () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = undefined;
+      }
+    };
+    const syncNow = () => {
+      cancelScheduledSync();
+      sync();
+    };
+    const scheduleSyncAfterLayout = () => {
+      if (animationFrame !== undefined) {
+        return;
+      }
+
+      // The first frame lets the mutation reach layout and paint. Reading geometry in the following
+      // frame avoids forcing that layout from a React commit while coalescing a whole DOM update.
+      animationFrame = requestAnimationFrame(() => {
+        animationFrame = requestAnimationFrame(() => {
+          animationFrame = undefined;
+          sync();
+        });
+      });
+    };
+
+    syncNow();
+    el.addEventListener('scroll', syncNow, { passive: true });
+    // Panel resizing changes what fits without moving the scroll position. ResizeObserver runs after
+    // layout, so it can measure immediately and cancel any redundant sync queued by DOM mutations.
+    const resizeObserver = new ResizeObserver(syncNow);
     resizeObserver.observe(el);
+    // Content height can change without resizing the viewport: nested rows expand, columns re-wrap,
+    // or pages of rows are replaced. Observe those DOM changes instead of reading layout after every
+    // React commit.
+    const mutationObserver = new MutationObserver(scheduleSyncAfterLayout);
+    mutationObserver.observe(el, {
+      attributeFilter: ['class', 'style'],
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
     return () => {
-      el.removeEventListener('scroll', sync);
+      cancelScheduledSync();
+      el.removeEventListener('scroll', syncNow);
       resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
   }, [ref, enabled, sync]);
 
