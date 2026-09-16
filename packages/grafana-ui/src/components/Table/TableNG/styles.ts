@@ -218,7 +218,10 @@ export const getGridStyles = memoize(
         // but frozen cells paint an explicit, opaque background of their own so they can occlude
         // scrolling cells behind them — that has to be repeated here or a striped frozen column
         // would fall back to the plain row background instead.
-        ...(zebraStriping && {
+        // Zebra striping only exists under `table.refresh` — gate on both, since the panel option's
+        // stored value can outlive the flag being turned off (`showIf` only hides the editor, it
+        // doesn't clear the value).
+        ...(zebraStriping && tableRefreshEnabled && {
           '.rdg-row-odd:not(.rdg-summary-row)': {
             backgroundColor: zebraStripeBackgroundColor,
             '.rdg-cell.rdg-cell-frozen': {
