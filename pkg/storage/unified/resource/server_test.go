@@ -2036,14 +2036,9 @@ func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
 func (s *stubWatchServer) SendMsg(any) error                 { return nil }
 func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
 
-// TestWatchContextCancellation pins down how Watch translates errors that
-// surface during context cancellation. The watch loop has an explicit
-// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
-// when the context is canceled we may instead run a Send/Read that returns
-// the context error. Watch must treat that as a clean shutdown, while still
-// surfacing unrelated errors and context errors that did not originate from
-// our own context.
-func TestWatchContextCancellation(t *testing.T) {
+// TestWatchTerminationErrors pins down which errors Watch treats as a clean
+// shutdown and which errors it propagates.
+func TestWatchTerminationErrors(t *testing.T) {
 	testUser := newWatchTestUser()
 
 	watchReq := &resourcepb.WatchRequest{
@@ -2085,6 +2080,17 @@ func TestWatchContextCancellation(t *testing.T) {
 		stub := &stubWatchServer{ctx: ctx, sendErr: sentinel}
 		err := srv.Watch(watchReq, stub)
 		require.ErrorIs(t, err, sentinel)
+	})
+
+	t.Run("returns nil when the watch transport is unavailable", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		bookmarkReq := proto.Clone(watchReq).(*resourcepb.WatchRequest)
+		bookmarkReq.Options.Key.Name = "missing"
+		bookmarkReq.AllowWatchBookmarks = true
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: status.Error(codes.Unavailable, "transport is closing")}
+		require.NoError(t, srv.Watch(bookmarkReq, stub))
 	})
 
 	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
