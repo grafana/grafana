@@ -184,8 +184,8 @@ export const getGridStyles = memoize(
           },
         }),
 
-        // Overlay cells so hover preserves plain, striped and selected row backgrounds, including
-        // frozen cells. Nested containers must be excluded: hovering their children also hovers them.
+        // Overlay cells so striped and selected rows can use the theme's hover fill, including frozen
+        // cells. Nested containers must be excluded: hovering their children also hovers them.
         ...(zebraStriping && {
           [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}):hover > .rdg-cell`]: {
             backgroundImage: `linear-gradient(${table.rowHoverOverlay}, ${table.rowHoverOverlay})`,

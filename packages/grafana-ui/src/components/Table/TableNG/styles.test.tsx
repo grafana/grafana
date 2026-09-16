@@ -108,9 +108,9 @@ describe('table zebra colors', () => {
   it.each([
     ['dark', 'rgba(255, 255, 255, 0.12)'],
     ['light', 'rgba(0, 0, 0, 0.12)'],
-    ['visual_refresh_dark', 'hsl(from #ffffff h s l / 0.12)'],
-    ['visual_refresh_light', 'hsl(from #000000 h s l / 0.12)'],
-  ])('uses the %s hover overlay without replacing row or selection surfaces', (id, overlay) => {
+    ['visual_refresh_dark', '#282d33'],
+    ['visual_refresh_light', '#e4e3e2'],
+  ])('uses the %s hover fill for striped and selected rows', (id, overlay) => {
     const { rowHoverBackground, selectedRowHoverBackground, gridClass } = gridVarsFor(getThemeById(id), {
       zebraStriping: true,
       tableRefreshEnabled: true,
