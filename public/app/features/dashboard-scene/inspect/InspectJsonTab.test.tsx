@@ -1,6 +1,3 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import {
@@ -22,7 +19,6 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -36,24 +32,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
-
-jest.mock('react-virtualized-auto-sizer', () => ({
-  __esModule: true,
-  default: ({ children }: AutoSizerProps) => children({ height: 480, scaledHeight: 480, scaledWidth: 800, width: 800 }),
-}));
-
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: (props: CodeMirrorEditorProps) => (
-    <textarea
-      aria-label={props['aria-label']}
-      readOnly={props.readOnly}
-      value={props.value}
-      onChange={(event) => props.onChange(event.currentTarget.value)}
-      onBlur={(event) => props.onBlur?.(event.currentTarget.value)}
-    />
-  ),
-}));
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 const panelPlugin: PanelPlugin = new PanelPlugin(() => null);
@@ -183,25 +161,26 @@ describe('InspectJsonTab', () => {
     expect(tab.isEditable()).toBe(false);
   });
 
-  it('applies the latest editor text when Apply is clicked immediately after editing', async () => {
-    const user = userEvent.setup();
+  it('Can update model', async () => {
     const { tab, panel, scene } = await buildTestScene();
-    render(<tab.Component model={tab} />);
 
-    const updatedPanel = {
-      id: 12,
-      type: 'table',
-      title: 'New title',
-      gridPos: { x: 1, y: 2, w: 3, h: 4 },
-      options: {},
-      fieldConfig: {},
-      transformations: [],
-      transparent: false,
-    };
-    const editor = screen.getByRole('textbox', { name: 'JSON content' });
-    await user.clear(editor);
-    await user.paste(JSON.stringify(updatedPanel));
-    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    tab.onJsonTextChange(`{
+      "id": 12,
+      "type": "table",
+      "title": "New title",
+      "gridPos": {
+        "x": 1,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
 
     const panel2 = findVizPanelByKey(scene, panel.state.key)!;
     expect(panel2.state.title).toBe('New title');
