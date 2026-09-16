@@ -1220,7 +1220,7 @@
             },
             "rowSelected": {
               "type": "string",
-              "description": "Deprecated: use colors.action.selected. This property will be removed in Grafana 14."
+              "description": "Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14."
             },
             "headerBackground": {
               "type": "string",

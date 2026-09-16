@@ -22,7 +22,7 @@ const ThemeTableColorsInputSchema = z.object({
   rowHoverBackground: z.string().describe('Opaque background for a hovered, unselected row.').optional(),
   rowSelected: z
     .string()
-    .describe('Deprecated: use colors.action.selected. This property will be removed in Grafana 14.')
+    .describe('Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14.')
     .optional(),
   headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
   border: z.string().describe('Opaque body and footer dividers.').optional(),
@@ -36,7 +36,7 @@ const ThemeTableColorsInputSchema = z.object({
 type InferredThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
 
 type ThemeTableColors = Omit<InferredThemeTableColors, 'rowSelected'> & {
-  /** @deprecated Use `theme.colors.action.selected`. This property will be removed in Grafana 14. */
+  /** @deprecated Use `theme.components.table.rowSelectedBackground`. This property will be removed in Grafana 14. */
   rowSelected: string;
 };
 

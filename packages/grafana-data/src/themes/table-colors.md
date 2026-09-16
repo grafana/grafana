@@ -21,9 +21,9 @@ cell backgrounds or scrolling content.
 Use the row hover background for plain and striped rows. Consumers derive the hovered
 selection surface by emphasizing the selected row background.
 
-`components.table.rowSelected` is deprecated in favor of `colors.action.selected` and
-will be removed in Grafana 14. It remains available for existing TableRT consumers and
-custom themes during the deprecation period.
+`components.table.rowSelected` is deprecated in favor of
+`components.table.rowSelectedBackground` and will be removed in Grafana 14. It remains
+available for existing TableRT consumers and custom themes during the deprecation period.
 
 ## Inheritance and overrides
 
