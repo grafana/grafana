@@ -34,6 +34,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -160,7 +161,8 @@ func RegisterAPIService(
 	getflag := func(f string) bool {
 		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
 	}
-	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
+	routed := getflag(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	if !routed && !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
 
@@ -181,8 +183,9 @@ func RegisterAPIService(
 			}
 			return false
 		},
-		Schemas:     true,
-		AppManifest: getflag(featuremgmt.FlagApppluginsLoadAppManifest),
+		Schemas: true,
+		// The router always loads manifests, so startup must provision matching roles and settings.
+		AppManifest: routed || getflag(featuremgmt.FlagApppluginsLoadAppManifest),
 	})
 
 	if err != nil {
@@ -217,10 +220,20 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// Unified storage checks every *.ext.grafana.app group, and nothing else
-		// grants the actions a manifest kind is checked against.
+		// Unified storage checks every *.ext.grafana.app group,
+		// and nothing else grants the actions a manifest kind is checked against.
 		if err := declareManifestRoles(acService, b.group, plugin.JSONData.Name, plugin.Manifest); err != nil {
 			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+		}
+
+		// Routed plugins still need their roles declared before startup registers them.
+		if routed {
+			// The handler copies storage options; resolve defaults here so the shared
+			// dual-write service observes them before requests start using the config.
+			b.applyDefaultStorageConfig(builder.APIGroupOptions{
+				StorageOpts: &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
+			}, apppluginV0.SettingsResourceInfo.WithGroupAndShortName(b.group, plugin.JSONData.ID))
+			continue
 		}
 
 		apiRegistrar.RegisterAPI(b)

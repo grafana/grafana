@@ -163,8 +163,8 @@ func TestTableConvertor(t *testing.T) {
 func TestStoreStrategyDefaults(t *testing.T) {
 	s := testStore(false, false)
 
-	require.False(t, s.AllowCreateOnUpdate())
-	require.False(t, s.AllowUnconditionalUpdate())
+	require.False(t, s.AllowCreateOnUpdate(context.Background()))
+	require.False(t, s.AllowUnconditionalUpdate(context.Background()))
 	require.Nil(t, s.WarningsOnCreate(context.Background(), nil))
 	require.Nil(t, s.WarningsOnUpdate(context.Background(), nil, nil))
 

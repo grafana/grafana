@@ -12,4 +12,10 @@ export default [
     output: [esmOutput(pkg, 'grafana-plugin-compat')],
     treeshake: false,
   },
+  {
+    input: 'src/apps.ts',
+    plugins,
+    output: [esmOutput(pkg, 'grafana-plugin-compat')],
+    treeshake: false,
+  },
 ];
