@@ -1222,21 +1222,9 @@
               "type": "string",
               "description": "Existing selection background for TableRT."
             },
-            "background": {
-              "type": "string",
-              "description": "Opaque background for body rows and frozen cells."
-            },
-            "backgroundOnCanvas": {
-              "type": "string",
-              "description": "Opaque backing surface when the surrounding panel has no background."
-            },
             "headerBackground": {
               "type": "string",
               "description": "Opaque header surface, distinct from body rows."
-            },
-            "headerBorder": {
-              "type": "string",
-              "description": "Opaque header cell dividers."
             },
             "border": {
               "type": "string",
@@ -1246,7 +1234,7 @@
               "type": "string",
               "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
             },
-            "rowHoverBackgroundSolid": {
+            "rowHoverSurface": {
               "type": "string",
               "description": "Opaque hover surface for an unstriped row."
             },
@@ -1261,14 +1249,6 @@
             "rowSelectedHoverBackground": {
               "type": "string",
               "description": "Opaque background for a hovered selected row when not using the hover overlay."
-            },
-            "headerDraggingBackground": {
-              "type": "string",
-              "description": "Opaque background of a header being dragged."
-            },
-            "headerDragTargetBackground": {
-              "type": "string",
-              "description": "Opaque background of a header that is a drop target."
             },
             "cellSelectionBorder": {
               "type": "string",
