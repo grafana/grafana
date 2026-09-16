@@ -21,7 +21,6 @@ export interface ConfirmContentProps {
   description?: ReactNode;
   /** Text for confirm button */
   confirmButtonLabel: string;
-  confirmButtonRef?: RefObject<HTMLButtonElement | null>;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
   /** Text user needs to fill in before confirming */
@@ -54,7 +53,6 @@ export const ConfirmContent = ({
   confirmPromptText,
   confirmPromptRef,
   confirmButtonLabel,
-  confirmButtonRef,
   confirmButtonVariant,
   dismissButtonVariant,
   dismissButtonLabel,
@@ -133,7 +131,6 @@ export const ConfirmContent = ({
             type="submit"
             variant={confirmButtonVariant}
             disabled={isDisabled}
-            ref={confirmButtonRef}
             data-testid={selectors.pages.ConfirmModal.delete}
           >
             {confirmButtonLabel}
