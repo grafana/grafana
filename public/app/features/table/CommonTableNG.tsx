@@ -5,7 +5,7 @@ import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled'
+  'tableRefreshEnabled' | 'tableRefreshNewFeaturesEnabled' | 'contentAwareWidthsEnabled'
 >;
 
 /**
