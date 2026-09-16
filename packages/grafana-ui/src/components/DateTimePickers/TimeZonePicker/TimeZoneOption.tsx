@@ -5,7 +5,6 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { Icon } from '../../Icon/Icon';
 import { getSelectStyles } from '../../Select/getSelectStyles';
 
 import { TimeZoneDescription } from './TimeZoneDescription';
@@ -51,11 +50,6 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
         </div>
         <div className={styles.rightColumn}>
           <TimeZoneOffset offset={`UTC${data.info.offset}`} />
-          {isSelected && (
-            <span>
-              <Icon name="check" />
-            </span>
-          )}
         </div>
       </div>
     </div>
