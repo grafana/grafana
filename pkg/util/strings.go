@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 var stringListItemMatcher = regexp.MustCompile(`"[^"]+"|[^,\t\n\v\f\r ]+`)
@@ -178,6 +179,33 @@ func ByteCountSI(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %cB",
 		float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+// TruncateUTF8 truncates s to at most n bytes without splitting a multi-byte rune.
+// A non-positive n returns an empty string.
+func TruncateUTF8(s string, n int) string {
+	if n <= 0 {
+		return ""
+	}
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
+}
+
+// SanitizeControlChars strips ASCII control characters (including CRLF) and
+// truncates to maxBytes via TruncateUTF8.
+func SanitizeControlChars(s string, maxBytes int) string {
+	s = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, s)
+	return TruncateUTF8(s, maxBytes)
 }
 
 // StripBOM removes Byte Order Mark (BOM) characters from a string.

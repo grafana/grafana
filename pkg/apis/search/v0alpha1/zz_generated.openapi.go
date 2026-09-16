@@ -97,7 +97,7 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 					},
 					"operator": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Operator is \"In\" or \"NotIn\" in v1.",
+							Description: "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -109,9 +109,8 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -321,8 +320,7 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
 									},
 								},
 							},
@@ -334,9 +332,8 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -348,9 +345,8 @@ func schema_pkg_apis_search_v0alpha1_SearchQuery(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -418,8 +414,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
 									},
 								},
 							},
@@ -437,8 +432,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: map[string]interface{}{},
-													Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm"),
+													Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm"),
 												},
 											},
 										},
@@ -503,9 +497,8 @@ func schema_pkg_apis_search_v0alpha1_TextPredicate(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -557,8 +550,7 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
 									},
 								},
 							},
@@ -570,9 +562,8 @@ func schema_pkg_apis_search_v0alpha1_TrashQuery(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -631,8 +622,7 @@ func schema_pkg_apis_search_v0alpha1_TrashResults(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
 									},
 								},
 							},
@@ -651,7 +641,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"and": {
@@ -661,8 +651,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 									},
 								},
 							},
@@ -674,8 +663,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
 									},
 								},
 							},

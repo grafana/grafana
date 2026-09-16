@@ -15,14 +15,14 @@ import (
 func TestRolloutBucket_Determinism(t *testing.T) {
 	namespaces := []string{"stacks-1", "stacks-100", "stacks-999", "org-42", "default"}
 	for _, ns := range namespaces {
-		b1 := rolloutBucket(ns, "dashboard.grafana.app", "dashboards")
-		b2 := rolloutBucket(ns, "dashboard.grafana.app", "dashboards")
+		b1 := rolloutBucket(ns, "dashboard.grafana.app/dashboards")
+		b2 := rolloutBucket(ns, "dashboard.grafana.app/dashboards")
 		assert.Equal(t, b1, b2, "rolloutBucket must return the same value for namespace %s", ns)
 	}
 }
 
 func TestRolloutBucket_Range(t *testing.T) {
-	b := rolloutBucket("stacks-100", "dashboard.grafana.app", "dashboards")
+	b := rolloutBucket("stacks-100", "dashboard.grafana.app/dashboards")
 	assert.GreaterOrEqual(t, b, 0.0)
 	assert.Less(t, b, 1.0)
 }
@@ -35,8 +35,8 @@ func TestRolloutBucket_PerResourceIndependence(t *testing.T) {
 
 	diffCount := 0
 	for _, ns := range namespaces {
-		dashBucket := rolloutBucket(ns, "dashboard.grafana.app", "dashboards")
-		folderBucket := rolloutBucket(ns, "folder.grafana.app", "folders")
+		dashBucket := rolloutBucket(ns, "dashboard.grafana.app/dashboards")
+		folderBucket := rolloutBucket(ns, "folder.grafana.app/folders")
 		if dashBucket != folderBucket {
 			diffCount++
 		}
@@ -61,7 +61,7 @@ func TestRolloutAccessClient_RoutesCorrectly(t *testing.T) {
 			Namespace: ns,
 			Verb:      utils.VerbGet,
 		}
-		bucket := rolloutBucket(ns, "dashboard.grafana.app", "dashboards")
+		bucket := rolloutBucket(ns, "dashboard.grafana.app/dashboards")
 		expectedZanzana := bucket < 0.5
 
 		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: ns}, req, "")
@@ -130,6 +130,95 @@ func TestRolloutAccessClient_ResourceNotInRollout(t *testing.T) {
 	resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
 	require.NoError(t, err)
 	assert.True(t, resp.Allowed, "resource not in rollout map should always use RBAC")
+}
+
+func TestRolloutAccessClient_Subresource(t *testing.T) {
+	rbacClient := authlib.FixedAccessClient(true)
+	zanzanaClient := authlib.FixedAccessClient(false)
+
+	t.Run("subresource is not covered by its parent resource", func(t *testing.T) {
+		// Zanzana only holds tuples for the actions its reconciler translates,
+		// and annotations are not among them. Rolling out dashboards must not
+		// drag the annotations subresource along with it.
+		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
+			"dashboard.grafana.app/dashboards": 1.0,
+		})
+		req := authlib.CheckRequest{
+			Group:       "dashboard.grafana.app",
+			Resource:    "dashboards",
+			Subresource: "annotations",
+			Namespace:   "stacks-1",
+			Verb:        utils.VerbGet,
+		}
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed, "subresource absent from the rollout map should use RBAC")
+	})
+
+	t.Run("subresource routes to zanzana when rolled out explicitly", func(t *testing.T) {
+		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
+			"dashboard.grafana.app/dashboards/annotations": 1.0,
+		})
+		req := authlib.CheckRequest{
+			Group:       "dashboard.grafana.app",
+			Resource:    "dashboards",
+			Subresource: "annotations",
+			Namespace:   "stacks-1",
+			Verb:        utils.VerbGet,
+		}
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed, "explicitly rolled out subresource should use Zanzana")
+	})
+
+	t.Run("rolling out a subresource does not affect its parent", func(t *testing.T) {
+		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
+			"dashboard.grafana.app/dashboards/annotations": 1.0,
+		})
+		req := authlib.CheckRequest{
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Namespace: "stacks-1",
+			Verb:      utils.VerbGet,
+		}
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed, "parent resource absent from the rollout map should use RBAC")
+	})
+
+	t.Run("BatchCheck keeps subresource items on RBAC", func(t *testing.T) {
+		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
+			"dashboard.grafana.app/dashboards": 1.0,
+		})
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "1", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: utils.VerbGet},
+				{CorrelationID: "2", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: utils.VerbCreate},
+			},
+		}
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.True(t, resp.Results["1"].Allowed, "subresource batch should route to RBAC")
+		assert.True(t, resp.Results["2"].Allowed, "subresource batch should route to RBAC")
+	})
+
+	t.Run("BatchCheck mixing subresources falls back to rbac", func(t *testing.T) {
+		client := newRolloutAccessClient(rbacClient, zanzanaClient, map[string]float64{
+			"dashboard.grafana.app/dashboards": 1.0,
+		})
+		req := authlib.BatchCheckRequest{
+			Namespace: "stacks-1",
+			Checks: []authlib.BatchCheckItem{
+				{CorrelationID: "1", Group: "dashboard.grafana.app", Resource: "dashboards", Verb: utils.VerbGet},
+				{CorrelationID: "2", Group: "dashboard.grafana.app", Resource: "dashboards", Subresource: "annotations", Verb: utils.VerbGet},
+			},
+		}
+		resp, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		require.NoError(t, err)
+		assert.True(t, resp.Results["1"].Allowed, "mixed-subresource batch should fall back to RBAC")
+		assert.True(t, resp.Results["2"].Allowed, "mixed-subresource batch should fall back to RBAC")
+	})
 }
 
 //nolint:staticcheck // SA1019: Compile is deprecated but still exercised here until BatchCheck is fully implemented

@@ -3,15 +3,26 @@ package bedrock
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
+	"net"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
+	"github.com/aws/smithy-go"
 	smithymiddleware "github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
+
+const retryAfterHeader = "X-Amz-Retry-After"
 
 // runtimeAPI is the subset of the Bedrock runtime SDK we use; declaring it
 // as an interface keeps the client testable without a live AWS client.
@@ -69,7 +80,7 @@ func (c *awsClient) EmbedTexts(ctx context.Context, model string, texts []string
 		Body:        body,
 	})
 	if err != nil {
-		return EmbedResult{}, fmt.Errorf("bedrock: invoke: %w", err)
+		return EmbedResult{}, fmt.Errorf("bedrock: invoke: %w", retryableError(err))
 	}
 
 	var resp cohereEmbedResponse
@@ -109,4 +120,28 @@ func inputTokensFromMetadata(md smithymiddleware.Metadata) int {
 	}
 	n, _ := strconv.Atoi(resp.Header.Get("X-Amzn-Bedrock-Input-Token-Count"))
 	return n
+}
+
+func retryableError(err error) error {
+	var netErr net.Error
+	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.(type) {
+		case *types.ThrottlingException, *types.ServiceQuotaExceededException, *types.ServiceUnavailableException, *types.InternalServerException, *types.ModelTimeoutException, *types.ModelNotReadyException:
+			retryable = true
+		}
+	}
+	if !retryable {
+		return err
+	}
+	var delay time.Duration
+	var responseErr *smithyhttp.ResponseError
+	if errors.As(err, &responseErr) && responseErr.Response != nil && responseErr.Response.Response != nil {
+		value := strings.TrimSpace(responseErr.Response.Header.Get(retryAfterHeader))
+		if ms, parseErr := strconv.ParseInt(value, 10, 64); parseErr == nil && ms > 0 && ms <= math.MaxInt64/int64(time.Millisecond) {
+			delay = time.Duration(ms) * time.Millisecond
+		}
+	}
+	return &embedder.RetryableError{Err: err, RetryAfter: delay}
 }

@@ -1,16 +1,24 @@
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
-import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
+import { extractCacheKeyFromPath, getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './sharedDependencies';
-import { type SystemJSWithLoaderHooks } from './types';
+import { type SystemJSRegistration, type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
+
+const ignoredInteropExports: Record<string, true> = {
+  __esModule: true,
+  __useDefault: true,
+};
+
+const reportedSharedDependencyImports = new Set<string>();
 
 export function initSystemJSHooks() {
   const imports = buildImportMap(sharedDependenciesMap);
@@ -52,10 +60,94 @@ export function initSystemJSHooks() {
   const systemJSResolve = systemJSPrototype.resolve;
   systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, systemJSResolve);
 
+  if (config.pluginImportTelemetryPackages.length > 0) {
+    const systemJSInstantiate = systemJSPrototype.instantiate;
+    systemJSPrototype.instantiate = function (url: string, firstParentUrl?: string, meta?: unknown) {
+      return decorateSystemJSInstantiate.call(this, systemJSInstantiate, url, firstParentUrl, meta);
+    };
+  }
+
   // Older plugins load .css files which resolves to a CSS Module.
   // https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
   // Any css files loaded via SystemJS have their styles applied onload.
   systemJSPrototype.onload = decorateSystemJsOnload;
+}
+
+// Compiled System.register setters expose named imports as namespace property reads.
+// Wraps the setters for monitored dependencies in a Proxy to report when a plugin
+// accesses a shared dependency import.
+export async function decorateSystemJSInstantiate(
+  this: SystemJSWithLoaderHooks,
+  originalInstantiate: SystemJSWithLoaderHooks['instantiate'],
+  url: string,
+  firstParentUrl?: string,
+  meta?: unknown
+): Promise<SystemJSRegistration | undefined> {
+  const registration = await originalInstantiate.call(this, url, firstParentUrl, meta);
+  const pluginId = extractCacheKeyFromPath(url);
+  if (!registration || !pluginId) {
+    return registration;
+  }
+
+  // Abort early if the plugin is not using any monitored dependencies to avoid unnecessary overhead.
+  const monitoredPackages = config.pluginImportTelemetryPackages;
+  const [dependencies, declare, metadata] = registration;
+  if (!dependencies.some((dependency) => monitoredPackages.includes(dependency))) {
+    return registration;
+  }
+
+  return [
+    dependencies,
+    function (_export, context) {
+      const declaration = declare(_export, context);
+      if (!declaration.setters) {
+        return declaration;
+      }
+
+      for (let index = 0; index < dependencies.length; index++) {
+        const dependencyName = dependencies[index];
+        const isMonitoredDependency = monitoredPackages.includes(dependencyName);
+        const setter = declaration.setters[index];
+        if (!isMonitoredDependency || !setter) {
+          continue;
+        }
+
+        // Here's the magic - before the dependency is given to the plugin, wrap it in a Proxy to report
+        // each property (named import) access
+        let dependencyProxy: System.Module | undefined;
+        declaration.setters[index] = function (dependency) {
+          dependencyProxy ??= new Proxy(dependency, {
+            get(target, property, receiver) {
+              if (typeof property === 'string' && !ignoredInteropExports[property]) {
+                reportSharedDependencyImport(pluginId, dependencyName, property);
+              }
+              return Reflect.get(target, property, receiver);
+            },
+          });
+          setter(dependencyProxy);
+        };
+      }
+
+      return declaration;
+    },
+    metadata,
+  ];
+}
+
+// This is triggered on each dependency read - e.g. each time the function is called or react component rendered.
+// Keep a map of reported imports to avoid spamming the logs with duplicate reports.
+function reportSharedDependencyImport(pluginId: string, dependencyName: string, importName: string) {
+  const reportKey = `${pluginId}\0${dependencyName}\0${importName}`; // \0 - NUL character as a seperator
+  if (reportedSharedDependencyImports.has(reportKey)) {
+    return;
+  }
+  reportedSharedDependencyImports.add(reportKey);
+
+  getLogger('features.plugins').logInfo('Plugin accessed shared dependency import', {
+    pluginId,
+    dependencyName,
+    importName,
+  });
 }
 
 export async function decorateSystemJSFetch(

@@ -41,6 +41,7 @@ import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
+import { QueryEditorRowExtensionActions } from './QueryEditorRowExtensionActions';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
@@ -69,10 +70,12 @@ export interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   hideActionButtons?: boolean;
+  draggable?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
+  onQueryClosed?: () => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
@@ -468,6 +471,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
     extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
+    extraActions.push(
+      <QueryEditorRowExtensionActions
+        key="query-editor-row-extension-actions"
+        query={query}
+        queries={queries}
+        dataSource={dataSource}
+        app={app}
+        timeRange={data.timeRange}
+      />
+    );
 
     return extraActions;
   };
@@ -577,8 +590,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       visualization,
       collapsable,
       hideActionButtons,
+      draggable = true,
       isOpen,
       onQueryOpenChanged,
+      onQueryClosed,
       app,
       editSavedQueryRef,
       addingSavedQuery,
@@ -606,13 +621,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons && !inSavedQueryMode}
+        draggable={draggable && !hideActionButtons && !inSavedQueryMode}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}
         actions={hideActionButtons ? undefined : this.renderActions}
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
+        onClose={onQueryClosed}
       >
         <div
           className={rowClasses}

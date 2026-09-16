@@ -206,6 +206,7 @@ type Vector struct {
 type VectorMeta struct {
 	Subresource string
 	Title       string
+	Folder      string
 	Metadata    json.RawMessage
 }
 

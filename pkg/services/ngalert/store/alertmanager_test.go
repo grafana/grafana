@@ -355,7 +355,7 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 		unmarkedConfig, _ := setupConfig(t, "unmarked", store)
 
 		// Save four configurations for the same org.
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			config, _ := setupConfig(t, fmt.Sprintf("test-%d", i+1), store)
 			cmd := &models.SaveAlertmanagerConfigurationCmd{
 				AlertmanagerConfiguration: config,
@@ -376,7 +376,7 @@ func TestIntegrationGetAppliedConfigurations(t *testing.T) {
 		}
 
 		// Save some configs for other orgs.
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			config, _ := setupConfig(t, fmt.Sprintf("test-%d", i+1), store)
 			cmd := &models.SaveAlertmanagerConfigurationCmd{
 				AlertmanagerConfiguration: config,

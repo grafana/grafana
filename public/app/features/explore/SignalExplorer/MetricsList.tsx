@@ -92,10 +92,10 @@ export const MetricsList = memo(function MetricsList({
     (name: string) => {
       const metric = metricsRef.current.find((candidate) => candidate.name === name);
       if (metric) {
-        onSelectMetric({ refId, dsUid, metric });
+        onSelectMetric({ refId, dsKey: dsKey(dsRef), metric });
       }
     },
-    [onSelectMetric, refId, dsUid]
+    [onSelectMetric, refId, dsRef]
   );
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also

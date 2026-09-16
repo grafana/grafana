@@ -1,13 +1,26 @@
+const mockLogInfo = jest.fn();
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getLogger: () => ({ logInfo: mockLogInfo }),
+}));
+
 import { config } from '@grafana/runtime';
 
 jest.mock('./pluginInfoCache', () => ({
+  ...jest.requireActual('./pluginInfoCache'),
   resolvePluginUrlWithCache: (url: string) => `${url}?_cache=1234`,
 }));
 
 import { server } from './pluginLoader.mock';
 import { SystemJS } from './systemjs';
-import { decorateSystemJSFetch, decorateSystemJSResolve, getLoadPluginCssUrl } from './systemjsHooks';
-import { type SystemJSWithLoaderHooks } from './types';
+import {
+  decorateSystemJSFetch,
+  decorateSystemJSInstantiate,
+  decorateSystemJSResolve,
+  getLoadPluginCssUrl,
+} from './systemjsHooks';
+import { type SystemJSRegistration, type SystemJSWithLoaderHooks } from './types';
 
 describe('SystemJS Loader Hooks', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
@@ -129,5 +142,152 @@ describe('getLoadPluginCssUrl', () => {
     const result = getLoadPluginCssUrl(path);
 
     expect(result).toBe('http://my-cdn.com/sample-cdn-plugin/1.0.0/public/plugins/sample-cdn-plugin/styles/dark.css');
+  });
+});
+describe('decorateSystemJSInstantiate', () => {
+  const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
+  const context: System.Context = { import: jest.fn(), meta: { url: '' } };
+
+  beforeEach(() => {
+    mockLogInfo.mockClear();
+    config.pluginImportTelemetryPackages = ['react-router-dom', 'react-router'];
+  });
+
+  it('reports shared dependency imports with the plugin ID without changing their values', async () => {
+    let importedUseHistory: (() => string) | undefined;
+    let Switch: (() => string) | undefined;
+    let router: System.Module | undefined;
+    const registration: SystemJSRegistration = [
+      ['react-router-dom'],
+      () => ({
+        setters: [
+          (module) => {
+            importedUseHistory = module.useHistory;
+            Switch = module.Switch;
+            router = module;
+          },
+        ],
+        execute: () => ({
+          history: importedUseHistory?.(),
+          switchValue: Switch?.(),
+          routesValue: router?.Routes(),
+        }),
+      }),
+    ];
+    const instantiate = jest.fn(async () => registration);
+
+    const decoratedRegistration = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/plugins/acme-panel/module.js'
+    );
+    const declaration = decoratedRegistration![1](() => undefined, context);
+    const dependency = {
+      useHistory: () => 'history',
+      Switch: () => 'switch',
+      Routes: () => 'routes',
+    };
+
+    declaration.setters![0](dependency);
+    declaration.setters![0](dependency);
+
+    expect(declaration.execute?.()).toEqual({
+      history: 'history',
+      switchValue: 'switch',
+      routesValue: 'routes',
+    });
+    expect(mockLogInfo.mock.calls).toEqual([
+      [
+        'Plugin accessed shared dependency import',
+        {
+          pluginId: 'acme-panel',
+          dependencyName: 'react-router-dom',
+          importName: 'useHistory',
+        },
+      ],
+      [
+        'Plugin accessed shared dependency import',
+        {
+          pluginId: 'acme-panel',
+          dependencyName: 'react-router-dom',
+          importName: 'Switch',
+        },
+      ],
+      [
+        'Plugin accessed shared dependency import',
+        {
+          pluginId: 'acme-panel',
+          dependencyName: 'react-router-dom',
+          importName: 'Routes',
+        },
+      ],
+    ]);
+  });
+
+  it('reports react-router exports but ignores SystemJS interop exports', async () => {
+    let importedUseRoutes: (() => string) | undefined;
+    let interopExports: unknown[];
+    const registration: SystemJSRegistration = [
+      ['react-router'],
+      () => ({
+        setters: [
+          (module) => {
+            interopExports = [module.__esModule, module.__useDefault];
+            importedUseRoutes = module.useRoutes;
+          },
+        ],
+        execute: () => ({ routes: importedUseRoutes?.(), interopExports }),
+      }),
+    ];
+    const instantiate = jest.fn(async () => registration);
+
+    const decoratedRegistration = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/plugins/acme-router-panel/module.js'
+    );
+    const declaration = decoratedRegistration![1](() => undefined, context);
+
+    declaration.setters![0]({
+      __esModule: true,
+      __useDefault: true,
+      useRoutes: () => 'routes',
+    });
+    expect(declaration.execute?.()).toEqual({ routes: 'routes', interopExports: [true, true] });
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+    expect(mockLogInfo).toHaveBeenCalledWith('Plugin accessed shared dependency import', {
+      pluginId: 'acme-router-panel',
+      dependencyName: 'react-router',
+      importName: 'useRoutes',
+    });
+  });
+
+  it('does not decorate unconfigured shared dependencies', async () => {
+    config.pluginImportTelemetryPackages = [];
+    const registration: SystemJSRegistration = [['react-router-dom'], () => ({ setters: [] })];
+    const instantiate = jest.fn(async () => registration);
+
+    const result = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/plugins/acme-panel/module.js'
+    );
+
+    expect(result).toBe(registration);
+    expect(mockLogInfo).not.toHaveBeenCalled();
+  });
+
+  it('does not decorate modules outside plugin paths', async () => {
+    const registration: SystemJSRegistration = [['react-router-dom'], () => ({ setters: [] })];
+    const instantiate = jest.fn(async () => registration);
+
+    const result = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/app/core/module.js'
+    );
+
+    expect(result).toBe(registration);
+    expect(mockLogInfo).not.toHaveBeenCalled();
   });
 });

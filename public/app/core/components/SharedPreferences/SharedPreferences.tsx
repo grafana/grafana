@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, type ReactNode } from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,16 +23,25 @@ import {
   WeekStartPicker,
 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
+import { VisualRefreshInfo } from 'app/features/visual-refresh/components/VisualRefreshInfo/VisualRefreshInfo';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
+import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState } from './utils';
 
-export const SharedPreferences = memo((props: Props) => {
-  const { resourceUri } = props;
+interface SharedPreferencesProps {
+  resourceUri: string;
+  disabled?: boolean;
+  preferenceType: 'org' | 'team' | 'user';
+  onConfirm?: () => Promise<boolean>;
+  legend: ReactNode;
+}
+
+export const SharedPreferences = memo((props: SharedPreferencesProps) => {
+  const { resourceUri, preferenceType, legend } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
@@ -78,13 +87,13 @@ export const SharedPreferences = memo((props: Props) => {
     }
     if (isAnalyticsFrameworkEnabled) {
       saveButtonClicked({
-        preferenceType: props.preferenceType,
+        preferenceType,
         theme: state.theme,
         language: state.language,
       });
     } else {
       reportInteraction('grafana_preferences_save_button_clicked', {
-        preferenceType: props.preferenceType,
+        preferenceType,
         theme: state.theme,
         language: state.language,
       });
@@ -105,7 +114,7 @@ export const SharedPreferences = memo((props: Props) => {
 
     if (nextHomeDashboardUID !== previousHomeDashboardUID) {
       homeDashboardChanged({
-        preferenceType: props.preferenceType,
+        preferenceType,
         action: nextHomeDashboardUID ? 'set' : 'cleared',
       });
     }
@@ -118,13 +127,13 @@ export const SharedPreferences = memo((props: Props) => {
     if (isAnalyticsFrameworkEnabled) {
       themeChanged({
         toTheme: value.value,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     } else {
       // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_theme_changed', {
         toTheme: value.value,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     }
 
@@ -153,12 +162,12 @@ export const SharedPreferences = memo((props: Props) => {
     if (isAnalyticsFrameworkEnabled) {
       languageChanged({
         toLanguage: language,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     } else {
       reportInteraction('grafana_preferences_language_changed', {
         toLanguage: language,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     }
   };
@@ -176,8 +185,9 @@ export const SharedPreferences = memo((props: Props) => {
           title={t('shared-preferences.error.update-preferences', 'Error updating preferences')}
         />
       )}
-      <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
+      <FieldSet label={legend} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
+          {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field
             noMargin
             loading={isLoading}

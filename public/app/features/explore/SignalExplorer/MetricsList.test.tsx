@@ -298,9 +298,20 @@ describe('<MetricsList />', () => {
 
       expect(onSelectMetric).toHaveBeenCalledWith({
         refId: 'A',
-        dsUid: 'prom-uid',
+        dsKey: 'u:prom-uid',
         metric: { name: 'up', type: 'gauge', help: 'Whether the target is reachable.' },
       });
+    });
+
+    it('identifies a type-only datasource ref by its type', async () => {
+      setCatalog([{ name: 'up', type: 'gauge' }]);
+      renderList({ dsUid: undefined, dsType: 'grafana-amazonprometheus-datasource' });
+
+      await selectMetric('up');
+
+      expect(onSelectMetric).toHaveBeenCalledWith(
+        expect.objectContaining({ dsKey: 't:grafana-amazonprometheus-datasource' })
+      );
     });
 
     // The entry is read through a ref to keep the callback stable; the ref has to keep up.

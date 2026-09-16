@@ -14,6 +14,7 @@ import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -30,6 +31,7 @@ import type { MutationCommand } from './types';
 import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
+import { updateMetadataAnnotationsCommand } from './updateMetadataAnnotations';
 import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
@@ -62,6 +64,8 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   removePanelCommand,
   listPanelsCommand,
   getDashboardInfoCommand,
+  getMetadataAnnotationsCommand,
+  updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
