@@ -208,7 +208,6 @@ function FormContent({
                     clearErrors('targetFolderUID');
                   }}
                   repositoryName={repository.name}
-                  repositoryTarget={repository.target}
                   // selectedItems.folder contains false entries from deselect ancestor propagation
                   // in setItemSelectionState reducer - filter to only truly-selected UIDs
                   excludeUIDs={getSelectedUIDs(selectedItems, 'folder')}

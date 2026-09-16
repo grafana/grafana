@@ -141,6 +141,7 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
+    folderFilter,
   });
 
   useEffect(() => {
@@ -251,17 +252,13 @@ export function NestedFolderPicker({
     if (isBrowsing) {
       flatTree = browseFlatTree;
 
-      // Theoretically this and excluded items could be done in a single iteration, but as these are used infrequently,
-      // it does not seem worth the tradeoff of readability.
       if (!showRootFolder) {
         flatTree = filterRootItem(flatTree);
       }
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
       const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
-      // Add "Team folders" at the top of the tree list.
-      const filteredTree = filterBrowseItems(fullTree, folderFilter, rootFolderItem?.item.uid ?? '');
-      return filterExcludedItems(filteredTree, excludeUIDs);
+      return filterExcludedItems(fullTree, excludeUIDs);
     } else {
       const searchItems = folderFilter ? (searchResults?.items || []).filter(folderFilter) : searchResults?.items || [];
       flatTree = searchItems.map((item) => ({ isOpen: false, level: 0, item }));
@@ -277,7 +274,6 @@ export function NestedFolderPicker({
     teamFolderTreeItems,
     starredFolderTreeItems,
     rootFolderUID,
-    rootFolderItem?.item.uid,
   ]);
 
   const isItemLoaded = useCallback(
@@ -416,20 +412,6 @@ export function NestedFolderPicker({
         />
       </fieldset>
     </>
-  );
-}
-
-function filterBrowseItems(
-  items: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>>,
-  folderFilter: ((folder: DashboardViewItem) => boolean) | undefined,
-  rootFolderUID: string
-) {
-  if (!folderFilter) {
-    return items;
-  }
-
-  return items.filter(
-    ({ item, level }) => item.kind === 'ui' || (level === 0 && item.uid === rootFolderUID) || folderFilter(item)
   );
 }
 

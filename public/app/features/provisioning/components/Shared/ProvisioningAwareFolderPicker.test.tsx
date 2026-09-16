@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import type { ManagerKind } from 'app/features/apiserver/types';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
 
@@ -20,7 +20,7 @@ jest.mock('app/core/components/Select/FolderPicker', () => ({
   FolderPicker: (props: {
     rootFolderUID?: string;
     excludeUIDs?: string[];
-    rootFolderItem?: { item: { uid: string; title: string } };
+    rootFolderItem?: { item: { uid: string; title: string; managerId?: string } };
     folderFilter?: (folder: { uid: string; managedBy?: ManagerKind; managerId?: string }) => boolean;
   }) => (
     <div data-testid="folder-picker">
@@ -28,11 +28,12 @@ jest.mock('app/core/components/Select/FolderPicker', () => ({
       <div data-testid="exclude-uids">{JSON.stringify(props.excludeUIDs || [])}</div>
       <div data-testid="root-item-uid">{props.rootFolderItem?.item.uid ?? 'undefined'}</div>
       <div data-testid="root-item-title">{props.rootFolderItem?.item.title ?? 'undefined'}</div>
+      <div data-testid="root-item-manager-id">{props.rootFolderItem?.item.managerId ?? 'undefined'}</div>
       <div data-testid="filtered-uids">
         {JSON.stringify(
           [
-            { uid: 'active-repo-folder', managedBy: 'repo' as ManagerKind, managerId: 'folderless-repo' },
-            { uid: 'other-repo-folder', managedBy: 'repo' as ManagerKind, managerId: 'other-repo' },
+            { uid: 'active-repo-folder', managedBy: ManagerKind.Repo, managerId: 'folderless-repo' },
+            { uid: 'other-repo-folder', managedBy: ManagerKind.Repo, managerId: 'other-repo' },
             { uid: 'unmanaged-folder' },
           ]
             .filter((folder) => props.folderFilter?.(folder) ?? true)
@@ -50,20 +51,19 @@ const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunc
 
 const setup = ({
   repoName = undefined,
-  repositoryTarget = undefined,
   excludeUIDs = undefined,
+  showAllFolders = false,
 }: {
   repoName?: string;
-  repositoryTarget?: 'folder' | 'folderless' | 'instance';
-  isNonProvisionedFolder?: boolean;
   excludeUIDs?: string[];
+  showAllFolders?: boolean;
 }) => {
   render(
     <ProvisioningAwareFolderPicker
       repositoryName={repoName}
-      repositoryTarget={repositoryTarget}
       onChange={jest.fn()}
       excludeUIDs={excludeUIDs}
+      showAllFolders={showAllFolders}
     />
   );
 };
@@ -133,20 +133,12 @@ describe('ProvisioningAwareFolderPicker', () => {
         },
       });
 
-      setup({ repoName: 'folderless-repo', repositoryTarget: 'folderless' });
+      setup({ repoName: 'folderless-repo' });
 
       expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('general');
       expect(screen.getByTestId('root-item-uid')).toBeEmptyDOMElement();
       expect(screen.getByTestId('root-item-title')).toHaveTextContent('Folderless Repository');
-      expect(screen.getByTestId('filtered-uids')).toHaveTextContent('["active-repo-folder"]');
-    });
-
-    it('should use the provided folderless target before settings have loaded', () => {
-      mockUseGetFrontendSettingsQuery.mockReturnValue({ data: undefined, isLoading: true });
-
-      setup({ repoName: 'folderless-repo', repositoryTarget: 'folderless' });
-
-      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('general');
+      expect(screen.getByTestId('root-item-manager-id')).toHaveTextContent('folderless-repo');
       expect(screen.getByTestId('filtered-uids')).toHaveTextContent('["active-repo-folder"]');
     });
 
@@ -161,6 +153,22 @@ describe('ProvisioningAwareFolderPicker', () => {
       const excludeUIDs = JSON.parse(screen.getByTestId('exclude-uids').textContent || '[]');
       expect(excludeUIDs).toEqual(['repo1', 'repo2', 'repo3', 'custom1']);
     });
+
+    it('should preserve caller exclusions when all folders are shown', () => {
+      setup({ showAllFolders: true, excludeUIDs: ['custom1'] });
+
+      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('undefined');
+      expect(screen.getByTestId('exclude-uids')).toHaveTextContent('["custom1"]');
+    });
+
+    it('should keep an unknown repository scoped to its name', () => {
+      setup({ repoName: 'deleted-repo' });
+
+      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('deleted-repo');
+      expect(screen.getByTestId('filtered-uids')).toHaveTextContent(
+        '["active-repo-folder","other-repo-folder","unmanaged-folder"]'
+      );
+    });
   });
 
   describe('Feature Toggle Disabled', () => {
@@ -170,7 +178,7 @@ describe('ProvisioningAwareFolderPicker', () => {
     });
 
     it('should not apply restrictions', () => {
-      setup({ isNonProvisionedFolder: true });
+      setup({});
       expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('undefined');
       expect(screen.getByTestId('exclude-uids')).toHaveTextContent('[]');
     });
@@ -183,7 +191,7 @@ describe('ProvisioningAwareFolderPicker', () => {
 
     it('should handle missing settings data', () => {
       mockUseGetFrontendSettingsQuery.mockReturnValue({ data: undefined });
-      setup({ isNonProvisionedFolder: true });
+      setup({});
       expect(screen.getByTestId('exclude-uids')).toHaveTextContent('[]');
     });
   });

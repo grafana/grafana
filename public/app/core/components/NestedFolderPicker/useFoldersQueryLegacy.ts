@@ -8,6 +8,7 @@ import { type ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/brow
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 import { type FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -53,6 +54,7 @@ export function useFoldersQueryLegacy({
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID,
   rootFolderItem,
+  folderFilter,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
 
@@ -162,17 +164,22 @@ export function useFoldersQueryLegacy({
 
         return pageItems.flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
+          const folderItem: DashboardViewItem = {
+            kind: 'folder',
+            title: item.title,
+            uid: item.uid,
+            managedBy: item.managedBy,
+            parentUID: item.parentUid,
+          };
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),
             level: level,
-            item: {
-              kind: 'folder' as const,
-              title: item.title,
-              uid: item.uid,
-              managedBy: item.managedBy,
-              parentUID: item.parentUid,
-            },
+            item: folderItem,
           };
+
+          if (folderFilter && !folderFilter(folderItem)) {
+            return [];
+          }
 
           const childPages = folderIsOpen && state.pagesByParent[item.uid];
 
@@ -205,7 +212,7 @@ export function useFoldersQueryLegacy({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, folderFilter]);
 
   return {
     emptyFolders,

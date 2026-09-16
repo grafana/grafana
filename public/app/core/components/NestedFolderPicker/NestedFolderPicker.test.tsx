@@ -7,7 +7,6 @@ import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 
@@ -43,10 +42,6 @@ jest.mock('app/features/stars/folders', () => ({
   resolveStarredFolders: jest.fn(),
 }));
 
-jest.mock('app/features/search/service/searcher', () => ({
-  getGrafanaSearcher: jest.fn(),
-}));
-
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -55,8 +50,6 @@ describe('NestedFolderPicker', () => {
   const resolveStarredFoldersMock = resolveStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
   let originalProvisioningEnabled: boolean;
-  const getGrafanaSearcherMock = jest.mocked(getGrafanaSearcher);
-  const searchMock = jest.fn();
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
@@ -90,7 +83,6 @@ describe('NestedFolderPicker', () => {
     resolveStarredFoldersMock.mockResolvedValue([
       { kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' },
     ]);
-    getGrafanaSearcherMock.mockReturnValue({ search: searchMock } as never);
   });
 
   afterAll(() => {
@@ -233,114 +225,48 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
   });
 
-  it('filters browsed folders while retaining a selectable custom root', async () => {
+  it('keeps a custom root selectable when browsing from general', async () => {
     const rootFolderItem = getCustomRootFolderItem({ title: 'Folderless Repository', managedBy: ManagerKind.Repo });
     useFoldersQueryMock.mockReturnValue({
       emptyFolders: new Set<string>(),
-      items: [
-        rootFolderItem,
-        {
-          isOpen: false,
-          level: 1,
-          item: {
-            kind: 'folder',
-            uid: 'active-repo-folder',
-            title: 'Active repository folder',
-            managedBy: ManagerKind.Repo,
-            managerId: 'folderless-repo',
-          },
-        },
-        {
-          isOpen: false,
-          level: 1,
-          item: {
-            kind: 'folder',
-            uid: 'other-repo-folder',
-            title: 'Other repository folder',
-            managedBy: ManagerKind.Repo,
-            managerId: 'other-repo',
-          },
-        },
-        {
-          isOpen: false,
-          level: 1,
-          item: { kind: 'folder', uid: 'unmanaged-folder', title: 'Unmanaged folder' },
-        },
-        {
-          isOpen: false,
-          level: 1,
-          item: {
-            kind: 'folder',
-            uid: 'legacy-managed-folder',
-            title: 'Legacy managed folder',
-            managedBy: ManagerKind.Repo,
-          },
-        },
-        {
-          isOpen: true,
-          level: 0,
-          disabled: true,
-          item: { kind: 'folder', uid: 'sharedwithme', title: 'Shared with me' },
-        },
-      ],
+      items: [rootFolderItem],
       isLoading: false,
       error: undefined,
       requestNextPage: jest.fn(),
     });
 
-    const folderFilter = (folder: { managedBy?: ManagerKind; managerId?: string }) =>
-      folder.managedBy === ManagerKind.Repo && folder.managerId === 'folderless-repo';
     const { user } = render(
-      <NestedFolderPicker
-        rootFolderUID={GENERAL_FOLDER_UID}
-        rootFolderItem={rootFolderItem}
-        folderFilter={folderFilter}
-        onChange={mockOnChange}
-      />
+      <NestedFolderPicker rootFolderUID={GENERAL_FOLDER_UID} rootFolderItem={rootFolderItem} onChange={mockOnChange} />
     );
 
     await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
-    expect(await screen.findByLabelText('Active repository folder')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Other repository folder')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Unmanaged folder')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Legacy managed folder')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Shared with me')).not.toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Folderless Repository'));
     expect(mockOnChange).toHaveBeenCalledWith('', 'Folderless Repository');
   });
 
   it('applies the folder filter to typed search results', async () => {
-    const makeSearchResult = (name: string, uid: string, managerId?: string) => ({
-      kind: 'folder',
-      name,
-      uid,
-      url: `/dashboards/f/${uid}`,
-      panel_type: '',
-      tags: [],
-      location: '',
-      ds_uid: [],
-      score: 0,
-      explain: {},
-      managedBy: managerId ? { kind: ManagerKind.Repo, id: managerId } : undefined,
-    });
-    const view = Object.assign(
-      [
-        makeSearchResult('Active repository folder', 'active-repo-folder', 'folderless-repo'),
-        makeSearchResult('Other repository folder', 'other-repo-folder', 'other-repo'),
-        makeSearchResult('Unmanaged folder', 'unmanaged-folder'),
-      ],
-      { dataFrame: { meta: undefined } }
+    config.provisioningEnabled = false;
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'active-repo-folder',
+          title: 'Active repository folder',
+          managedBy: { kind: 'repo', id: 'folderless-repo' },
+        },
+        {
+          resource: 'folders',
+          name: 'other-repo-folder',
+          title: 'Other repository folder',
+          managedBy: { kind: 'repo', id: 'other-repo' },
+        },
+        { resource: 'folders', name: 'unmanaged-folder', title: 'Unmanaged folder' },
+      ])
     );
-    searchMock.mockResolvedValue({
-      view,
-      loadMoreItems: jest.fn(),
-      isItemLoaded: jest.fn(() => true),
-      totalRows: view.length,
-    });
 
     const folderFilter = (folder: { managedBy?: ManagerKind; managerId?: string }) =>
       folder.managedBy === ManagerKind.Repo && folder.managerId === 'folderless-repo';

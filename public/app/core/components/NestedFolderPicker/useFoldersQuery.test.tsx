@@ -78,6 +78,29 @@ describe('useFoldersQuery', () => {
         })
       );
     });
+
+    it('filters browsed folders while retaining a custom root', async () => {
+      const rootFolderItem = getCustomRootFolderItem({ title: 'Repository', managedBy: ManagerKind.Repo });
+      const folderFilter = (folder: DashboardViewItem) => folder.uid === folderA.item.uid;
+      const { result } = renderHook(
+        () =>
+          useFoldersQuery({
+            isBrowsing: true,
+            openFolders: {},
+            rootFolderItem,
+            folderFilter,
+          }),
+        { wrapper }
+      );
+
+      act(() => {
+        result.current.requestNextPage(undefined);
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items.map(({ item }) => item.uid)).toEqual(['', folderA.item.uid]);
+      expect(result.current.items[0]).toEqual(rootFolderItem);
+    });
   });
 });
 
