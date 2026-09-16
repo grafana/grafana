@@ -16,7 +16,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
+	"slices"
 	"strconv"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -211,22 +214,27 @@ func (h *Handler) requireClusterWideServiceIdentity(ctx context.Context, kind ki
 	return nil
 }
 
-// Refused rather than ignored: silently dropping a selector would hand the caller
-// an unfiltered list.
-type unsupportedListOption struct {
-	name string
-	set  func(*metav1.ListOptions) bool
-}
+// honoredListOptions are the only ListOptions fields listing keys reads. Keeping
+// it an allowlist means a field added upstream is refused rather than silently
+// ignored, which for a selector would hand the caller an unfiltered list.
+var honoredListOptions = []string{"limit", "continue", "resourceVersion"}
 
-var unsupportedListOptions = []unsupportedListOption{
-	{"labelSelector", func(o *metav1.ListOptions) bool { return o.LabelSelector != "" }},
-	{"fieldSelector", func(o *metav1.ListOptions) bool { return o.FieldSelector != "" }},
-	{"watch", func(o *metav1.ListOptions) bool { return o.Watch }},
-	{"allowWatchBookmarks", func(o *metav1.ListOptions) bool { return o.AllowWatchBookmarks }},
-	{"sendInitialEvents", func(o *metav1.ListOptions) bool { return o.SendInitialEvents != nil }},
-	{"timeoutSeconds", func(o *metav1.ListOptions) bool { return o.TimeoutSeconds != nil }},
-	{"resourceVersionMatch", func(o *metav1.ListOptions) bool { return o.ResourceVersionMatch != "" }},
-	{"shardSelector", func(o *metav1.ListOptions) bool { return o.ShardSelector != "" }},
+// firstUnhonoredField names the first field set that listing keys does not read,
+// or "" when the caller sent only honored ones. Names come from the struct tags so
+// there is no second list to fall out of step.
+func firstUnhonoredField(opts *metav1.ListOptions) string {
+	v := reflect.ValueOf(*opts)
+	for i := range v.NumField() {
+		name, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("json"), ",")
+		// TypeMeta is inline and so unnamed; its kind is checked separately.
+		if name == "" || name == "-" || slices.Contains(honoredListOptions, name) {
+			continue
+		}
+		if !v.Field(i).IsZero() {
+			return name
+		}
+	}
+	return ""
 }
 
 // An empty body means all defaults.
@@ -254,11 +262,10 @@ func decodeListOptions(r *http.Request) (*metav1.ListOptions, error) {
 		return nil, apierrors.NewBadRequest("limit must not be negative")
 	}
 
-	for _, opt := range unsupportedListOptions {
-		if opt.set(opts) {
-			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("%s is not supported when listing keys", opt.name))
-		}
+	if name := firstUnhonoredField(opts); name != "" {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf(
+			"%s is not supported; listing keys accepts only %s",
+			name, strings.Join(honoredListOptions, ", ")))
 	}
 
 	return opts, nil
