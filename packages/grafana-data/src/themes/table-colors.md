@@ -14,6 +14,7 @@ palette.
 | `rowHoverOverlay`            | Translucent tint over a row's existing background                           |
 | `rowSelectedBackground`      | Selected row surface                                                        |
 | `rowSelectedHoverBackground` | Solid hovered selection surface                                             |
+| `cellSelectionBorder`        | Focused cell outline                                                        |
 
 Background surfaces must be opaque where they hide scrolling or overflowing content.
 
@@ -31,8 +32,8 @@ than a fixed gray table. Refreshed themes override the table section with explic
 values and resolved `palette.*` references.
 
 Every input field is optional; every output field is populated. A partial override
-changes only that role. Consumers derive body backgrounds, borders, focus outlines,
-and drag states from the theme's generic colors and these table roles.
+changes only that role. Consumers derive body backgrounds, dividers, and drag states
+from the theme's generic colors and these table roles.
 
 ```ts
 const theme = createTheme({

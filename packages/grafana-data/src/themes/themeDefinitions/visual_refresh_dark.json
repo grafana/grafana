@@ -125,7 +125,8 @@
       "rowStripedBackground": "palette.ink750",
       "rowHoverOverlay": "hsl(from palette.white h s l / 0.12)",
       "rowSelectedBackground": "palette.black",
-      "rowSelectedHoverBackground": "palette.ink900"
+      "rowSelectedHoverBackground": "palette.ink900",
+      "cellSelectionBorder": "hsl(from palette.blue500 h s l / 0.15)"
     },
     "card": {
       "background": "palette.ink850",

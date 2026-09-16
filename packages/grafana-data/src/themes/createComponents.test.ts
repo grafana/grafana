@@ -18,12 +18,14 @@ describe('table colors', () => {
         mode: 'dark',
         background: { primary: '#302030', secondary: '#403040' },
         secondary: { main: '#504050' },
+        info: { main: '#ff0000' },
       },
       components: { table: { headerBackground: 'palette.ink700' } },
     });
     expect(theme.components.table).toMatchObject({
       headerBackground: '#202429',
       rowStripedBackground: '#403040',
+      cellSelectionBorder: '#ff000026',
     });
     expect(createTheme({ colors: { mode: 'dark' } }).components.table.headerBackground).toBe('#2c2f35');
   });
