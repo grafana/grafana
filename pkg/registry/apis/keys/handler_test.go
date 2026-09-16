@@ -146,6 +146,9 @@ func TestListKeys_TranslatesListOptions(t *testing.T) {
 		"limit only":                {body: `{"limit":5}`, wantLimit: 5},
 		"continue token":            {body: `{"continue":"tok"}`, wantToken: "tok"},
 		"resource version":          {body: `{"resourceVersion":"999"}`, wantRV: 999},
+		// Kubernetes gives "0" the meaning "any version", which is what serving
+		// the latest snapshot does, so it is accepted rather than refused.
+		"resource version zero": {body: `{"resourceVersion":"0"}`, wantRV: 0},
 		"all three": {
 			body:      `{"continue":"tok","resourceVersion":"999","limit":5}`,
 			wantLimit: 5, wantToken: "tok", wantRV: 999,
@@ -181,7 +184,10 @@ func TestListKeys_RejectsUnsupportedListOptions(t *testing.T) {
 		"unknown field":        `{"nonsense":true}`,
 		"wrong kind":           `{"kind":"SearchQuery"}`,
 		"bad resourceVersion":  `{"resourceVersion":"not-a-number"}`,
-		"two objects":          `{}{}`,
+		// Parses, but both backends read any value <= 0 as unset and serve the
+		// latest snapshot, so forwarding it would answer a different question.
+		"negative resourceVersion": `{"resourceVersion":"-1"}`,
+		"two objects":              `{}{}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}

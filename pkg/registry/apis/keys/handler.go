@@ -139,7 +139,12 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 
 		if opts.ResourceVersion != "" {
 			rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-			if err != nil {
+			// A negative version parses but is not a version. Both backends read
+			// anything <= 0 as unset and serve the latest snapshot, so forwarding
+			// it would quietly answer a different question than the one asked.
+			// Zero is left alone: Kubernetes gives it the meaning "any version",
+			// which is what serving the latest snapshot does.
+			if err != nil || rv < 0 {
 				errhttp.Write(ctx, apierrors.NewBadRequest(
 					fmt.Sprintf("invalid resourceVersion: %q", opts.ResourceVersion)), w)
 				return

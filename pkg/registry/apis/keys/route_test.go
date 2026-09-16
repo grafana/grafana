@@ -107,7 +107,7 @@ func TestListKeysInNamespaceRoute_Shape(t *testing.T) {
 
 	// Operation IDs have to differ, or the merged per-version specs collide.
 	assert.Equal(t, "listNamespacedDashboardKeysV1beta1", op.OperationId)
-	assert.NotEqual(t, testRoute(t).Spec.Post.OperationProps.OperationId, op.OperationId)
+	assert.NotEqual(t, testRoute(t).Spec.Post.OperationId, op.OperationId)
 
 	// The namespace is a path parameter, so it has to be described.
 	require.Len(t, op.Parameters, 1)
