@@ -1,8 +1,41 @@
+import { type QueryReturnValue } from '@reduxjs/toolkit/query/react';
+
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import {
+  type NotificationsSourceParams,
+  resolveAlertmanagerConfig,
+} from '../components/import-to-gma/resolveAlertmanagerConfig';
 import type { ConvertAlertmanagerResponse } from '../components/import-to-gma/types';
 
 import { type WithNotificationOptions, alertingApi } from './alertingApi';
+
+/** Args for the wizard's interactive dry-run validation. No `promote` — the wizard never promotes from Step 1. */
+export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote'>;
+
+function fileSignature(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
+/**
+ * A cache key built from stable, serializable fields instead of the raw args. `File` objects have
+ * no own enumerable properties, so the default JSON.stringify-based key would collapse every
+ * upload to the same `"{}"` — this is the mechanism that gives each distinct input its own
+ * independent, isolated cache entry.
+ */
+function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertmanagerConfigImportArgs): string {
+  const { source, yamlFile, templateFiles = [], datasourceName, configIdentifier } = queryArgs;
+  const signature =
+    source === 'yaml'
+      ? {
+          source,
+          file: yamlFile ? fileSignature(yamlFile) : null,
+          templates: templateFiles.map(fileSignature).sort(),
+          configIdentifier,
+        }
+      : { source, datasourceName, configIdentifier };
+  return JSON.stringify(signature);
+}
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -106,6 +139,51 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         },
         notificationOptions,
       }),
+    }),
+
+    /**
+     * Interactive dry-run validation for the Import wizard's Step 1. Unlike `dryRunAlertmanagerConfig`
+     * (a plain mutation, still used as-is by the Settings promote-preview modal), this is a `query`
+     * keyed by a signature of the current inputs: an edit produces a new cache key (so a late response
+     * for an old input can never land on the current one), and revisiting an unchanged input serves the
+     * cached result instead of re-validating. See resolveAlertmanagerConfig for the async pre-work
+     * (reading the YAML file or fetching the datasource's config) done before the actual POST, which
+     * reuses `dryRunAlertmanagerConfig`'s own request URL/headers.
+     */
+    validateAlertmanagerConfigImport: build.query<ConvertAlertmanagerResponse, ValidateAlertmanagerConfigImportArgs>({
+      serializeQueryArgs: ({ queryArgs, endpointName }) =>
+        `${endpointName}(${serializeValidateAlertmanagerConfigImportArgs(queryArgs)})`,
+      // Explicit return type: without it, TypeScript can't infer `convertToGMAApi`'s type (needed
+      // below to dispatch its own `dryRunAlertmanagerConfig` endpoint) while still inferring the
+      // type of this very endpoint definition, which is itself part of `convertToGMAApi` — a
+      // circular dependency that surfaces as "implicitly has type 'any'" errors on `convertToGMAApi`
+      // and cascades into unrelated call sites (e.g. useImport.ts's `useDryRunNotifications`).
+      queryFn: async (
+        args,
+        { dispatch }
+      ): Promise<QueryReturnValue<ConvertAlertmanagerResponse, unknown, {} | undefined>> => {
+        let resolved;
+        try {
+          resolved = await resolveAlertmanagerConfig(args);
+        } catch (err) {
+          return { error: err instanceof Error ? err : new Error(String(err)) };
+        }
+
+        try {
+          // Reuse the dry-run mutation's request logic (URL, headers, body shape) by dispatching
+          // it directly, rather than duplicating it here.
+          const data = await dispatch(
+            convertToGMAApi.endpoints.dryRunAlertmanagerConfig.initiate({
+              alertmanagerConfig: resolved.alertmanagerConfig,
+              templateFiles: resolved.templateFiles,
+              configIdentifier: args.configIdentifier,
+            })
+          ).unwrap();
+          return { data };
+        } catch (error) {
+          return { error };
+        }
+      },
     }),
 
     /**
