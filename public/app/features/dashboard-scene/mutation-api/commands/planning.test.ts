@@ -32,7 +32,13 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
 });
 
+// Deactivates the previous test's scene before a new one activates — real DashboardScene
+// activation registers a global macro under a fixed name, which throws "already registered" if
+// two activated scenes coexist (see SaveDashboardDrawer.test.tsx for the same pattern).
+let cleanUpPreviousScene = () => {};
+
 function setup() {
+  cleanUpPreviousScene();
   const scene = new DashboardScene({
     title: 'Preview',
     isEditing: true,
@@ -42,6 +48,7 @@ function setup() {
   });
   jest.spyOn(scene, 'activateSidebar').mockImplementation(() => {});
   jest.spyOn(scene, 'forceRender').mockImplementation(() => {});
+  cleanUpPreviousScene = scene.activate();
   const client = new DashboardMutationClient(scene);
   return { scene, client };
 }
@@ -94,6 +101,15 @@ it('refuses stale reads, writes and decisions against another preview', async ()
   }
   expect(scene.state.planning?.planId).toBe('plan-1');
   expect(scene.state.body.getVizPanels()).toEqual([]);
+});
+
+it('refuses to start planning on a scene that has already deactivated', async () => {
+  const { scene, client } = setup();
+  cleanUpPreviousScene();
+  cleanUpPreviousScene = () => {};
+  const result = await client.execute(start);
+  expect(result).toMatchObject({ success: false, error: 'The preview dashboard is no longer open.' });
+  expect(scene.state.planning).toBeUndefined();
 });
 
 it.each(['row', 'tab'] as const)(

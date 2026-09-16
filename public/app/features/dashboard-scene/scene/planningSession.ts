@@ -24,6 +24,14 @@ export function startPlanningSession(
   scene: DashboardScene,
   plan: { planId: string; planTitle: string; panelCount: number }
 ) {
+  // A scene that deactivated before START_PLANNING reached it (e.g. the user navigated away
+  // while the call was in flight) must not get a session: deactivatePlanningSession only
+  // publishes 'closed' for a scene that already has a planId, so a session created here would
+  // never be reported as ended, leaving the caller believing it owns a live preview on a
+  // dashboard nothing is showing.
+  if (!scene.isActive) {
+    throw new Error('The preview dashboard is no longer open.');
+  }
   if (scene.isPlanning()) {
     throw new Error('A dashboard plan is already being previewed. End it before starting another.');
   }
