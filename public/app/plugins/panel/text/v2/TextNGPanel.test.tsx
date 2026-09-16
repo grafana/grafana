@@ -261,6 +261,19 @@ describe('TextNGPanel', () => {
       expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
     });
 
+    it('opens the editor on the split view', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = Object.assign({}, defaultProps, {
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+    });
+
     it('merges a language change made in the editor into the existing code options', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const onOptionsChange = jest.fn();
