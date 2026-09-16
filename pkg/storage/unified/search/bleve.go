@@ -2595,6 +2595,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
+	if errResult := rejectInternalFields(req); errResult != nil {
+		return nil, errResult
+	}
+
 	if errResult := validateTrashRequest(req); errResult != nil {
 		return nil, errResult
 	}
@@ -2968,6 +2972,48 @@ func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.Err
 	// backstop for callers that reach an index directly.
 	if len(req.Federated) > 0 {
 		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
+	}
+	return nil
+}
+
+// rejectInternalFields refuses a request naming an index field that exists for the
+// backend's own use. Without this a filter on one matches nothing and a sort on one
+// orders by nothing, neither with any sign the field was never usable.
+//
+// Unconditional, unlike the sort capability check: an internal name is not a field
+// whose capabilities fall short, it is a field no request may name.
+func rejectInternalFields(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is internal to the search index", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsInternalSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsInternalSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	for _, f := range req.QueryFields {
+		if resource.IsInternalSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
+	for _, facet := range req.Facet {
+		if resource.IsInternalSearchField(facet.GetField()) {
+			return refused(facet.GetField())
+		}
+	}
+	// Labels are left out on purpose: a label key is user data, and an object may
+	// carry a label named like an internal field without any conflict.
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsInternalSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
 	}
 	return nil
 }

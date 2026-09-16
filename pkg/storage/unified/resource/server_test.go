@@ -2622,7 +2622,7 @@ func TestStatsAccessChecks(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{
@@ -2734,7 +2734,7 @@ func TestGetResourceDailyStats(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{

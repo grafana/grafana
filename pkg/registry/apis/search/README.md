@@ -26,7 +26,16 @@ IAM shows how this catches people out: its own search falls back to legacy SQL w
 
 ## 1. Getting the endpoint
 
-Declare at least one search field in the kind's own `.cue` file, the file where you already declare `schema` and `selectableFields`, not `manifest.cue`. Then run `make gen-apps`.
+Every namespaced kind in a manifest gets `/search` unless it opts out. Nothing has to be declared to get it.
+
+Two conditions:
+
+- The kind must be namespaced. A cluster-scoped kind has no namespace to search within, so it gets no endpoint (`pkg/services/apiserver/searchroutes/searchroutes.go`).
+- The group version has to be one this process actually serves.
+
+Search fields are separate: they control **what callers can query and retrieve**, not whether the endpoint exists. A kind with only the standard fields (name, title, folder, labels, timestamps) works fine.
+
+Declare fields in the kind's own `.cue` file, the file where you already declare `schema` and `selectableFields`, not `manifest.cue`. Then run `make gen-apps`.
 
 Example, from `apps/iam/kinds/user.cue`:
 
@@ -41,22 +50,6 @@ searchFields: [
 	},
 ]
 ```
-
-Two conditions besides the fields:
-
-- The kind must be namespaced. A cluster-scoped kind has no namespace to search within, so it gets no endpoint (`pkg/services/apiserver/searchroutes/searchroutes.go`).
-- The group version has to be one this process actually serves.
-
-### The field requirement is temporary
-
-Declaring a field is not what makes search work. This requirement is temporary, until we review kinds before enrolling them automatically. A kind with only the standard fields works fine. Folders are the live example, kept working by an allowlist in `searchroutes.go`.
-
-The plan is to drop the requirement. After that, **every kind in a manifest gets the endpoint unless it opts out**. So:
-
-- If you want your kind searchable, it will be, whether or not you declare fields. Declaring them now just gets you there sooner.
-- If you do not want your kind searchable, declaring no fields will not stop it. Write the opt-out down (next section).
-
-At that point `searchFields` only controls **what callers can query and retrieve**, not whether the endpoint exists.
 
 ## 2. Opting out
 
@@ -77,8 +70,6 @@ search: {
 Kind-level, and note the colon: `search: { ... }`. Brace shorthand is not valid CUE here. Definition: `#KindSearch` in the app SDK's `codegen/cuekind/def.cue`.
 
 `endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash decides access from a different rule, and only some kinds are allowed to serve it (see [Other things worth knowing](#other-things-worth-knowing)).
-
-The opt-out works today and keeps working after the field requirement is dropped.
 
 Opting out should be rare, though. Search exposes nothing that listing your kind did not already expose (see [Authorization](#7-authorization)), so there is usually nothing to protect by opting out. If you are unsure, leave the default alone.
 
@@ -281,7 +272,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 
 - **422 Unprocessable Entity**: the request parsed but is not valid. A field your kind does not declare, a field missing the capability the request needs, an unsupported operator, `All` with several values on a field holding a single value, a `not`/`or`/`exists` node, a second text leaf. The response body names the offending field path.
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
-- **405 Method Not Allowed**: the kind is served, but has no search endpoint. It declares no search fields, it opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
+- **405 Method Not Allowed**: the kind is served, but has no search endpoint. It opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
 - **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
 
@@ -298,7 +289,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so declaring search fields gets you `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
+- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 

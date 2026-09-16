@@ -137,6 +137,154 @@
         }
       }
     },
+    "/globalrolebindings/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search GlobalRoleBinding resources in a namespace.",
+        "operationId": "listGlobalRoleBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resourcepermissions/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search ResourcePermission resources in a namespace.",
+        "operationId": "listResourcePermissionSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rolebindings/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search RoleBinding resources in a namespace.",
+        "operationId": "listRoleBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Role resources in a namespace.",
+        "operationId": "listRoleSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/searchExternalGroupMappings": {
       "post": {
         "tags": ["Search"],
@@ -657,6 +805,43 @@
         }
       ]
     },
+    "/serviceaccounts/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search ServiceAccount resources in a namespace.",
+        "operationId": "listServiceAccountSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/serviceaccounts/{name}": {
       "get": {
         "tags": ["ServiceAccount"],
@@ -1154,6 +1339,43 @@
         "tags": ["Search"],
         "description": "Search TeamBinding resources in a namespace.",
         "operationId": "listTeamBindingSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teamlbacrules/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search TeamLBACRule resources in a namespace.",
+        "operationId": "listTeamLBACRuleSearchV0alpha1",
         "parameters": [],
         "requestBody": {
           "description": "A SearchQuery describing what to match, sort and return.",
