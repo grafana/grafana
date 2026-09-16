@@ -249,8 +249,20 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  //
+  // A third route to the inspector besides the panel menu and the 'i' keyboard shortcut (both of
+  // which already check isPlanningActionAllowed('inspect-panel')), so it needs the same check.
+  // In practice a plan placeholder's sample data (planningSampleData.ts) always reports
+  // LoadingState.Done with no errors, so the popover this opens from has nothing to show and the
+  // gap has not been reachable — but that is incidental to the sample, not a guarantee, so it is
+  // still guarded here explicitly rather than left to rely on that.
   if (isNewPanelQueryErrorsUIEnabled()) {
-    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    context.onOpenInspector = () => {
+      if (!getDashboardSceneFor(vizPanel).isPlanningActionAllowed('inspect-panel')) {
+        return;
+      }
+      openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    };
   }
 }
 
