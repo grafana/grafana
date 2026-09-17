@@ -236,15 +236,13 @@ func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRou
 		b.store,
 	)
 
-	routes := &builder.APIRoutes{}
+	// One manifest and one served version in, so at most one entry matches.
 	for _, gvRoutes := range built {
-		if gvRoutes.GroupVersion != gv || gvRoutes.Routes == nil {
-			continue
+		if gvRoutes.GroupVersion == gv {
+			return gvRoutes.Routes
 		}
-		routes.Root = append(routes.Root, gvRoutes.Routes.Root...)
-		routes.Namespace = append(routes.Namespace, gvRoutes.Routes.Namespace...)
 	}
-	return routes
+	return nil
 }
 
 // routeHandler forwards a manifest route to the plugin's v3 route service.

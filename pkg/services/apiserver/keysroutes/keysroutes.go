@@ -56,7 +56,8 @@ func BuildForServedGroupVersions(
 	tracer tracing.Tracer,
 	store resourcepb.ResourceStoreClient,
 ) []builder.GroupVersionRoutes {
-	// Read by the caller: one server is configured from ini, the other from flags.
+	// Callers own the toggle: they read it from their own config, and the plugin
+	// spec builder sets it unconditionally to describe the route.
 	if !enabled || store == nil {
 		return nil
 	}
