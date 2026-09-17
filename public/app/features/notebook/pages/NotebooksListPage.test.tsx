@@ -680,7 +680,7 @@ describe('NotebooksListPage', () => {
     });
   });
 
-  it('hides the create button without dashboards:create', async () => {
+  it('hides the create button without notebooks:create', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
