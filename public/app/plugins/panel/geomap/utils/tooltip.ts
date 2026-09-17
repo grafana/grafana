@@ -86,7 +86,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
   const resolution = panel.map.getView().getResolution() ?? 0;
   const tolerance = resolution * HIT_TOLERANCE_PX;
 
-  let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
+  let ttip: Pick<GeomapHoverPayload, 'data' | 'rowIndex'> = {};
   panel.map.forEachFeatureAtPixel(
     pixel,
     (feature, layer, geo) => {

@@ -5971,6 +5971,7 @@
     "inspect-json": {
       "dataframe-description": "Raw data without transformations and field config applied. ",
       "dataframe-label": "DataFrame JSON (from Query)",
+      "editor-label": "JSON content",
       "panel-data-description": "The raw model passed to the panel visualization",
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
@@ -7752,6 +7753,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Resource"
       },
+      "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
@@ -11850,6 +11852,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
@@ -12766,7 +12769,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
