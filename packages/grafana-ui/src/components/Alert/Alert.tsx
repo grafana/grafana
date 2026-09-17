@@ -139,9 +139,9 @@ const getStyles = (
   // In light mode, color.text is claimed by the matching solid button (a different shade), so the
   // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
   // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
-  const isLight = theme.colors.mode === 'light';
-  const iconColor = visualRefreshEnabled ? (isLight ? color.mainEmphasis : color.main) : color.text;
-  const textColor = visualRefreshEnabled ? (isLight ? color.mainEmphasis : color.text) : theme.colors.text.primary;
+  const iconColor = color.text;
+  const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
+  const iconBackground = `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`;
 
   return {
     wrapper: css({
@@ -175,7 +175,7 @@ const getStyles = (
       display: 'inline-flex',
       padding: theme.spacing(1),
       borderRadius: theme.shape.radius.default,
-      backgroundColor: color.backgroundEmphasis,
+      backgroundColor: iconBackground,
     }),
     icon: css({
       color: iconColor,

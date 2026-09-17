@@ -67,6 +67,15 @@
             "subtleBorder": {
               "type": "string"
             },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -126,6 +135,15 @@
               "type": "string"
             },
             "subtleBorder": {
+              "type": "string"
+            },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
               "type": "string"
             },
             "shade": {
@@ -189,6 +207,15 @@
             "subtleBorder": {
               "type": "string"
             },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -248,6 +275,15 @@
               "type": "string"
             },
             "subtleBorder": {
+              "type": "string"
+            },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
               "type": "string"
             },
             "shade": {
@@ -311,6 +347,15 @@
             "subtleBorder": {
               "type": "string"
             },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -370,6 +415,15 @@
               "type": "string"
             },
             "subtleBorder": {
+              "type": "string"
+            },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
               "type": "string"
             },
             "shade": {
@@ -433,6 +487,15 @@
             "subtleBorder": {
               "type": "string"
             },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -492,6 +555,15 @@
               "type": "string"
             },
             "subtleBorder": {
+              "type": "string"
+            },
+            "solidBackground": {
+              "type": "string"
+            },
+            "solidBorder": {
+              "type": "string"
+            },
+            "solidText": {
               "type": "string"
             },
             "shade": {
