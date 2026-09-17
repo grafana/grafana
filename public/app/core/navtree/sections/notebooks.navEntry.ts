@@ -5,12 +5,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { NavID, NavWeight } from '../constants';
 import { isSignedIn, type NavEntryBuilder } from '../utils';
 
-// Notebooks reuse dashboard RBAC: an unscoped dashboards:read grants the list
-// page, and the apiserver filters the list down to what the user may see.
+// An unscoped notebooks:read grants the list page, and the apiserver filters the list down to
+// what the user may see.
 export const notebooksNavEntry: NavEntryBuilder = {
   when: () =>
     isSignedIn() &&
-    contextSrv.hasPermission(AccessControlAction.DashboardsRead) &&
+    contextSrv.hasPermission(AccessControlAction.NotebooksRead) &&
     getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false),
   build: () => ({
     text: 'Notebooks',
