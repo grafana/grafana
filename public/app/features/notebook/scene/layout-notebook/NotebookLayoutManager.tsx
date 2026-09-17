@@ -42,7 +42,7 @@ import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import {
   getCellDropIndicator,
   NotebookCellFrame,
-  NOTEBOOK_CELL_AFFORDANCES_CLASS,
+  NOTEBOOK_CELL_CONTROLS_CLASS,
   NOTEBOOK_CELL_FRAME_CLASS,
   type NotebookDragState,
 } from './edit/NotebookCellFrame';
@@ -583,7 +583,7 @@ export class NotebookLayoutManager
   }
 
   /**
-   * Inserts a new cell at `index`, the position the add-block affordance was offering.
+   * Inserts a new cell at `index`, the position the add-block button was offering.
    *
    * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
    * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
@@ -953,7 +953,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
-                    // Undefined outside edit mode, same as every other affordance here — a read-only
+                    // Undefined outside edit mode, same as every other cell control here. A read-only
                     // Code cell still mounts a (readOnly) CodeMirror instance, so without this its own
                     // ArrowUp/Down keymap would happily fire while just reading the notebook.
                     onNavigate={isEditing ? (direction) => onNavigate(index, direction) : undefined}
@@ -1067,10 +1067,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   listEditing: css({
     gap: 0,
-    // Without this, the cell you type in and the cell under the pointer both show their drag handle,
-    // add button and actions bar. So the pointer wins: this hides all three on every cell the pointer
-    // is not over. Whatever holds focus stays visible, because a tab stop at opacity 0 is a focus trap.
-    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}:not(:focus-within)`]:
+    // Without this, the cell you type in and the cell under the pointer both show their controls. So
+    // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
+    // focus stays visible, because a tab stop at opacity 0 is a focus trap.
+    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within)`]:
       {
         opacity: 0,
         pointerEvents: 'none',
