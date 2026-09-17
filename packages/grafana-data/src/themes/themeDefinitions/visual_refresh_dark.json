@@ -89,7 +89,7 @@
     "text": {
       "primary": "palette.ink150",
       "secondary": "palette.ink300",
-      "disabled": "palette.ink400",
+      "disabled": "palette.ink350",
       "link": "palette.blue400"
     },
     "border": {
