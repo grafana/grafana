@@ -119,18 +119,32 @@ describe('TableDataGrid', () => {
     });
 
     it.each([
-      { tableRefreshEnabled: true, hasFooter: false, role: 'grid' as const, omitLastBorder: true },
-      { tableRefreshEnabled: true, hasFooter: true, role: 'grid' as const, omitLastBorder: false },
-      { tableRefreshEnabled: false, hasFooter: false, role: 'grid' as const, omitLastBorder: false },
-      { tableRefreshEnabled: true, hasFooter: false, role: 'treegrid' as const, omitLastBorder: false },
+      { tableRefreshEnabled: true, hasFooter: false, transparent: false, role: 'grid' as const, omitLastBorder: true },
+      { tableRefreshEnabled: true, hasFooter: true, transparent: true, role: 'grid' as const, omitLastBorder: true },
+      {
+        tableRefreshEnabled: false,
+        hasFooter: false,
+        transparent: false,
+        role: 'grid' as const,
+        omitLastBorder: false,
+      },
+      {
+        tableRefreshEnabled: true,
+        hasFooter: false,
+        transparent: false,
+        role: 'treegrid' as const,
+        omitLastBorder: false,
+      },
     ])(
-      'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, role=$role',
-      ({ tableRefreshEnabled, hasFooter, role, omitLastBorder }) => {
+      'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, transparent=$transparent, role=$role',
+      ({ tableRefreshEnabled, hasFooter, transparent, role, omitLastBorder }) => {
+        const theme = createTheme();
         const { container } = render(
           <TableDataGrid
             {...makeProps({
               tableRefreshEnabled,
               hasFooter,
+              transparent,
               role,
               enableVirtualization: false,
               columns: [{ key: 'value', name: 'Value', renderSummaryCell: () => 'Total' }],
@@ -156,6 +170,12 @@ describe('TableDataGrid', () => {
         expect(window.getComputedStyle(lastCell).borderBlockEnd === 'none').toBe(omitLastBorder);
         if (hasFooter) {
           expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
+          const gridRule = getGridStyleRule();
+          expect(gridRule?.style.getPropertyValue('border-block-end')).toBe(
+            `1px solid ${theme.components.table.border}`
+          );
+          expect(gridRule?.style.getPropertyValue('border-end-start-radius')).toBe('var(--table-header-corner-radius)');
+          expect(gridRule?.style.getPropertyValue('border-end-end-radius')).toBe('var(--table-header-corner-radius)');
         }
       }
     );
@@ -212,6 +232,9 @@ describe('TableDataGrid', () => {
           theme.components.table.rowHoverBackground
         );
         expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe('');
+        expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe('');
+        expect(getGridStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe('');
+        expect(getGridStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe('');
         expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
           headerDivider
         );
@@ -232,6 +255,15 @@ describe('TableDataGrid', () => {
         );
         expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe(
           `1px solid ${theme.components.table.border}`
+        );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe(
+          `1px solid ${theme.components.table.border}`
+        );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
+          'var(--table-header-corner-radius)'
+        );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe(
+          'var(--table-header-corner-radius)'
         );
       }
     );

@@ -118,7 +118,12 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
-        ...(transparent && { borderInline: `1px solid ${table.border}` }),
+        ...(transparent && {
+          borderInline: `1px solid ${table.border}`,
+          borderBlockEnd: `1px solid ${table.border}`,
+          borderEndStartRadius: cornerRadius,
+          borderEndEndRadius: cornerRadius,
+        }),
 
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
