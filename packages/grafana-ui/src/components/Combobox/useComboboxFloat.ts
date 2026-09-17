@@ -1,5 +1,5 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
-import { type CSSProperties, type RefObject, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -85,14 +85,23 @@ export const useComboboxFloat = (
     }),
   ];
   const elements = { reference: inputRef.current, floating: floatingRef.current };
-  const { floatingStyles } = useFloating({
+  const { floatingStyles, update } = useFloating({
     strategy: 'fixed',
     open: isOpen,
     placement: 'bottom-start',
     middleware,
     elements,
-    whileElementsMounted: autoUpdate,
   });
+
+  useEffect(() => {
+    if (!isOpen || !inputRef.current || !floatingRef.current) {
+      return;
+    }
+
+    // Only automatically update the position/size when the popover is open on the screen
+    // Otherwise we hit issues with continual updates when the input is hidden by CSS
+    return autoUpdate(inputRef.current, floatingRef.current, update);
+  }, [isOpen, update]);
 
   const longestItemWidth = useMemo(() => {
     let longestLabel = '';

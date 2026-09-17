@@ -1,3 +1,4 @@
+import { autoUpdate } from '@floating-ui/react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -18,12 +19,15 @@ jest.mock('@floating-ui/react', () => {
 
   return {
     ...actual,
+    autoUpdate: jest.fn((...args) => actual.autoUpdate(...args)),
     size: jest.fn((options) => {
       mockSizeApply = options.apply;
       return actual.size(options);
     }),
   };
 });
+
+const mockAutoUpdate = jest.mocked(autoUpdate);
 
 // Mock data for the Combobox options
 const options: ComboboxOption[] = [
@@ -67,11 +71,36 @@ describe('Combobox', () => {
 
   afterEach(() => {
     onChangeHandler.mockReset();
+    mockAutoUpdate.mockReset();
   });
 
   it('renders without error', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('does not observe floating element changes while hidden in collapsed details', () => {
+    const renderCombobox = () => (
+      <details>
+        <summary>Options</summary>
+        <Combobox options={options} value={null} onChange={onChangeHandler} />
+      </details>
+    );
+    const { rerender } = render(renderCombobox());
+
+    rerender(renderCombobox());
+
+    expect(mockAutoUpdate).not.toHaveBeenCalled();
+  });
+
+  it('observes floating element changes while the menu is open', async () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    await waitFor(() => {
+      expect(mockAutoUpdate).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('does not update its input for an unchanged floating size measurement', () => {
