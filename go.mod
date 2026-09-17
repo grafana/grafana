@@ -26,7 +26,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/VividCortex/mysqlerr v1.0.0 // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.38.0 // @grafana/alerting-backend
-	github.com/andybalholm/brotli v1.2.2 // @grafana/data-sources-plugins
+	github.com/andybalholm/brotli v1.2.3 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.7.0 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go-v2 v1.42.1 // @grafana/data-sources-plugins
@@ -104,9 +104,9 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.60.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.60.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/plugin v0.60.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.60.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.60.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/plugin v0.60.2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
@@ -117,7 +117,7 @@ require (
 	github.com/grafana/nanogit/gittest v1.4.1 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
-	github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 // @grafana/identity-access-team
+	github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c // @grafana/identity-access-team
 	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
@@ -190,7 +190,7 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
 	go.etcd.io/bbolt v1.5.0 // @grafana/grafana-search-and-storage
-	go.opentelemetry.io/collector/pdata v1.63.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/collector/pdata v1.66.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // @grafana/grafana-catalog
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.71.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0 // @grafana/sharing-squad
@@ -210,13 +210,13 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // @grafana/alerting-backend
 	gocloud.dev v0.46.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.45.0 // @grafana/grafana-operator-experience-squad
-	golang.org/x/net v0.58.0 // @grafana/data-sources-plugins
+	golang.org/x/net v0.59.0 // @grafana/data-sources-plugins
 	golang.org/x/oauth2 v0.37.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.23.0 // @grafana/alerting-backend
-	golang.org/x/text v0.41.0 // @grafana/grafana-backend-group
+	golang.org/x/text v0.42.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
-	google.golang.org/api v0.296.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.297.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260825221802-da73d73af1c5 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5 // @grafana/identity-access-team
 	google.golang.org/grpc v1.83.2 // @grafana/grafana-catalog
@@ -605,7 +605,6 @@ require (
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
-	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/quagmt/udecimal v1.10.1 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.22.0 // indirect
 	github.com/redis/rueidis v1.0.77 // indirect
@@ -662,7 +661,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.7.1 // indirect
 	go.etcd.io/etcd/client/v3 v3.7.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/collector/featuregate v1.63.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.66.0 // indirect
 	go.opentelemetry.io/collector/pdata/pprofile v0.154.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.71.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.44.0 // indirect
@@ -683,13 +682,13 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
-	golang.org/x/crypto v0.56.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/exp v0.0.0-20260824195058-e88cd73687aa // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260811182544-a038080d80e5 // indirect
-	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260908163034-4bcc4b2ee518 // indirect
+	golang.org/x/term v0.46.0 // indirect
+	golang.org/x/tools v0.50.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20260715232425-e75dac1f907d // indirect
@@ -703,10 +702,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kms v0.37.0 // indirect
 	k8s.io/streaming v0.37.0 // indirect
-	modernc.org/libc v1.74.4 // indirect
+	modernc.org/libc v1.75.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.57.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
+	modernc.org/sqlite v1.58.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect

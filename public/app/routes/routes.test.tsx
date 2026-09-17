@@ -54,8 +54,6 @@ describe('admin route guards', () => {
   });
 });
 
-// Notebooks reuse dashboard RBAC actions rather than defining their own, so both notebook routes
-// are gated on dashboards:read — the same action the notebooks apiserver resource resolves to.
 describe('notebooks route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
 
@@ -73,29 +71,37 @@ describe('notebooks route guards', () => {
 
   const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?'];
 
-  it.each(notebookRoutes)('rejects %s without dashboards:read', (path) => {
+  it.each(notebookRoutes)('rejects %s without notebooks:read', (path) => {
     contextSrv.user.permissions = {};
 
     expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
   });
 
-  it.each(notebookRoutes)('allows %s with dashboards:read', (path) => {
-    contextSrv.user.permissions = { [AccessControlAction.DashboardsRead]: true };
+  it.each(notebookRoutes)('allows %s with notebooks:read', (path) => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
 
     expect(getRouteRolesGuard(path)()).toEqual([]);
   });
 
   // The blank route is the only notebook one that writes, so reading is not enough to reach it.
-  it('rejects /notebooks/new without dashboards:create', () => {
-    contextSrv.user.permissions = { [AccessControlAction.DashboardsRead]: true };
+  it('rejects /notebooks/new without notebooks:create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
   });
 
-  it('allows /notebooks/new with dashboards:create', () => {
-    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+  // The route creates a notebook, which the apiserver authorizes with its own action — write alone
+  // would admit a user whose save is then denied.
+  it('allows /notebooks/new with notebooks:create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual([]);
+  });
+
+  it('rejects /notebooks/new for a writer who cannot create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
+
+    expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
   });
 
   /**
