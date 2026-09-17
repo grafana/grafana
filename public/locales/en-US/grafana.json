@@ -13194,6 +13194,7 @@
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",
+      "add-tag": "Add tag",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13203,6 +13204,7 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "remove-tag": "Remove tag",
       "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
