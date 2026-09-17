@@ -120,6 +120,7 @@ export const getGridStyles = memoize(
         border: 'none',
         ...(transparent && {
           borderInline: `1px solid ${table.border}`,
+          borderBlockStart: `1px solid ${table.border}`,
           borderBlockEnd: `1px solid ${table.border}`,
           borderEndStartRadius: cornerRadius,
           borderEndEndRadius: cornerRadius,

@@ -232,6 +232,7 @@ describe('TableDataGrid', () => {
           theme.components.table.rowHoverBackground
         );
         expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe('');
+        expect(getGridStyleRule()?.style.getPropertyValue('border-block-start')).toBe('');
         expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe('');
         expect(getGridStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe('');
         expect(getGridStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe('');
@@ -254,6 +255,9 @@ describe('TableDataGrid', () => {
           theme.components.table.rowHoverBackground
         );
         expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe(
+          `1px solid ${theme.components.table.border}`
+        );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-block-start')).toBe(
           `1px solid ${theme.components.table.border}`
         );
         expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe(
