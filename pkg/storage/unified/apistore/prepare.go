@@ -148,9 +148,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
-	if err := s.checkGVK(newObject); err != nil {
-		return v, err
-	}
+	s.checkGVK(newObject)
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
@@ -269,9 +267,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if !ok {
 		return v, errors.New("missing auth info")
 	}
-	if err := s.checkGVK(updateObject); err != nil {
-		return v, err
-	}
+	s.checkGVK(updateObject)
 
 	obj, err := utils.MetaAccessor(updateObject)
 	if err != nil {
@@ -412,69 +408,41 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	return utils.MetaAccessor(raw)
 }
 
-// checkGVK completes obj's group+version+kind when the object does not carry a
-// full one of its own. [Storage.encode] writes whatever GVK the object holds, so
-// an incomplete one would otherwise persist without an apiVersion.
+// checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the
+// object does not carry a full one of its own. [Storage.encode] writes whatever
+// GVK the object holds, so an incomplete one would otherwise persist without an
+// apiVersion.
 //
-// A configured [StorageOptions.GVK] answers this exactly. The Scheme fallback
-// only guesses: it reports every GVK the Go type is registered under, and for a
-// type shared across versions (v1beta1 and v1 dashboards, folders) the first one
-// in this resource's group need not be the version being served. It stays only
-// for resources that do not declare a GVK yet.
-func (s *Storage) checkGVK(obj runtime.Object) error {
-	// Ensure group+version+kind are configured
+// A resource that declares no GVK is left alone here and encoded through the
+// versioning codec instead -- see [Storage.encodeViaCodec].
+func (s *Storage) checkGVK(obj runtime.Object) {
 	info := obj.GetObjectKind()
 	gvk := info.GroupVersionKind()
 	if gvk.Group != "" && gvk.Kind != "" && gvk.Version != "" {
-		return nil
+		return
+	}
+	if s.opts.GVK.Empty() {
+		return
 	}
 
-	if !s.opts.GVK.Empty() {
-		gvk.Group = s.opts.GVK.Group
-		gvk.Kind = s.opts.GVK.Kind
-		if gvk.Version == "" {
-			gvk.Version = s.opts.GVK.Version
-		}
-		info.SetGroupVersionKind(gvk)
-		return nil
+	gvk.Group = s.opts.GVK.Group
+	gvk.Kind = s.opts.GVK.Kind
+	if gvk.Version == "" {
+		gvk.Version = s.opts.GVK.Version
 	}
-
-	if s.opts.Scheme == nil {
-		return nil // we can not do anything
-	}
-	gvks, _, err := s.opts.Scheme.ObjectKinds(obj)
-	if err != nil {
-		return fmt.Errorf("unknown object kind %w", err)
-	}
-	for _, v := range gvks {
-		if v.Group != s.gr.Group {
-			continue // skip values not in this group
-		}
-		gvk.Group = v.Group
-		gvk.Kind = v.Kind
-		if gvk.Version == "" {
-			gvk.Version = v.Version
-		}
-		info.SetGroupVersionKind(gvk)
-		return nil
-	}
-	return nil
+	info.SetGroupVersionKind(gvk)
 }
 
 // encode serializes obj into buf. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
 // true on create and on non-deletion updates; deletion-related updates pass false so an object already
 // stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
 func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
-	// Encoding the object directly needs the kind it is stored as. A declared GVK
-	// settles that on its own; the Scheme is what resources that declare no GVK
-	// still fall back to, and this half of the condition goes away with
-	// StorageOptions.Scheme.
-	if s.opts.GVK.Empty() && s.opts.Scheme == nil {
+	// Encoding the object directly needs the kind it is stored as, which only a
+	// declared GVK settles. A resource that declares none goes through the codec.
+	if s.opts.GVK.Empty() {
 		return s.encodeViaCodec(obj, buf, enforceCap)
 	}
-	if err := s.checkGVK(obj); err != nil {
-		return err
-	}
+	s.checkGVK(obj)
 	// The JSON encoder writes obj's own (checkGVK-resolved) GVK, so the checked version is the persisted version.
 	// This always writes the saved GVK, unlike:
 	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
@@ -487,7 +455,7 @@ func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer, enforceCap bool)
 	return json.NewEncoder(buf).Encode(obj)
 }
 
-// encodeViaCodec serializes through the versioning codec (no scheme). That codec may convert the object
+// encodeViaCodec serializes through the versioning codec. That codec may convert the object
 // to a higher-priority storage version, so the cap is enforced against the persisted apiVersion read back
 // from the encoded bytes, not the declared version. Encoding goes straight into the destination buffer;
 // a rejected write resets it so no rejected payload is retained.
