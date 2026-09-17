@@ -920,6 +920,7 @@
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
+      "export-legacy-integration-tooltip": "Export is not available for contact points that contain legacy integrations",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Loading...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and v1 integrations are exported without their legacy integrations.",
+      "warning-v0-integrations-title": "Legacy integrations are not included"
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
     },
@@ -1716,6 +1721,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -4620,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit document",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
-      "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "load-error-title": "Couldn't load this document",
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display this document.",
+      "tab-contributing": "Contributing",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -12182,6 +12194,10 @@
       "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
     },
+    "hover-overflow": {
+      "description": "Expand overflowing cell content on hover. Selected cells always expand.",
+      "name": "Cell hover overflow"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
@@ -12249,6 +12265,10 @@
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
+  },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -12582,6 +12602,10 @@
     "authentication": {
       "title": "Authentication"
     },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
+    },
     "bookmarks": {
       "title": "Bookmarks"
     },
@@ -12788,6 +12812,7 @@
       "title": "Recorded queries"
     },
     "reporting": {
+      "subtitle": "Create and manage PDF reports distributed via e-mail",
       "title": "Reporting"
     },
     "saved-queries": {
@@ -12802,6 +12827,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -16677,10 +16706,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",

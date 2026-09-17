@@ -822,6 +822,10 @@ const (
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
+	// FlagApppluginsLoadAppManifestAndKeepSettings
+	// Continue to expose settings when a manifest exists
+	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -1009,6 +1013,10 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagFeaturesLegacyOverrideLookupBypass
+	// Skips checking for flag overrides.
+	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
 
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata

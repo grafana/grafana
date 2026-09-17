@@ -1962,7 +1962,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:   "true",
 		},
 		{
@@ -2483,6 +2483,16 @@ var (
 		{
 			Name:            "appplugins.loadAppManifest",
 			Description:     "Load app manifest when loading plugin definitions",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
+			Name:            "appplugins.loadAppManifestAndKeepSettings",
+			Description:     "Continue to expose settings when a manifest exists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			Generate:        Generate{Go: true},
@@ -3212,6 +3222,15 @@ var (
 		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "features.legacyOverrideLookupBypass",
+			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBackendServicesSquad,
 			HideFromDocs: true,
