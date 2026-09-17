@@ -1300,7 +1300,12 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Action:          meta.Action,
 		Folder:          meta.Folder,
 	})
-	if err != nil || data == nil {
+	if errors.Is(err, ErrNotFound) || (err == nil && data == nil) {
+		// Metadata resolved but the body is gone (GC'd between resolve and read),
+		// which is a not-found like the batch path returns.
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+	}
+	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	value, err := readAndClose(data)
@@ -1324,6 +1329,28 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 	entries := make([]batchReadEntry, 0, len(requests))
 	keys := make([]kv.DataKey, 0, len(requests))
 
+	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
+	// would otherwise resolve the highest retained revision below it, so the batch
+	// and single-read paths would disagree when search and storage briefly diverge.
+	// The latest RV is fetched once and shared across the batch.
+	var maxReqRV int64
+	for _, req := range requests {
+		if req != nil && req.Key != nil {
+			if rv := ToSnowflakeRV(req.ResourceVersion); rv > maxReqRV {
+				maxReqRV = rv
+			}
+		}
+	}
+	var latestRV int64
+	if maxReqRV > 0 {
+		latestRV = k.snowflake.Generate().Int64()
+		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+			latestRV = lastEventKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return nil, fmt.Errorf("failed to fetch latest resource version: %w", err)
+		}
+	}
+
 	for i, req := range requests {
 		if req == nil || req.Key == nil {
 			responses[i] = &BackendReadResponse{Error: NewBadRequestError("missing key")}
@@ -1331,6 +1358,10 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		}
 
 		rv := ToSnowflakeRV(req.ResourceVersion)
+		if rv > 0 && rv > latestRV {
+			responses[i] = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+			continue
+		}
 		name := req.Key.Name
 		getKey := GetRequestKey{
 			Group:     req.Key.Group,

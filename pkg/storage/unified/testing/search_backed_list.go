@@ -87,7 +87,7 @@ func (c *countingBackend) ReadResource(ctx context.Context, req *resourcepb.Read
 }
 
 // denyFolderAccess allows everything except one folder, denying through both
-// Compile (the in-searcher filter) and BatchCheck (authorizeSearchRows) so the
+// Compile (the in-searcher filter) and Check (the per-row authorizeRead) so the
 // index and the List authorization agree.
 type denyFolderAccess struct{ denied string }
 
@@ -129,7 +129,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		deniedFolder = "folder-denied"
 		matchTeam    = "a"
 		otherTeam    = "b"
-		authorized   = 55 // > searchReadChunkSize (50) so the read crosses a chunk boundary
+		authorized   = 55 // > searchReadChunkSize (10) so the read crosses several chunk boundaries
 		unauthorized = 5
 		otherLabel   = 3
 	)
@@ -278,8 +278,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.Len(t, resp.Items, authorized)
 
 		if opts.ExpectBatchReads {
-			// 55 authorized hits over a 50-item read chunk = two batched reads, no single reads.
-			require.Equal(t, int64(2), counting.batchReads.Load())
+			// 60 selector-matching hits (55 authorized + 5 denied) over a 10-item read
+			// chunk = six batched reads, no single reads.
+			require.Equal(t, int64(6), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})

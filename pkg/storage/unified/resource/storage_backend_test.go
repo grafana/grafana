@@ -1326,6 +1326,48 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	require.Contains(t, response.Error.Message, "too large resource version")
 }
 
+func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	_, rv := createAndWriteTestObject(t, backend)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"}
+
+	// A batch mixing a valid read with a too-high RV must reject only the latter,
+	// matching ReadResource, instead of resolving a lower retained revision.
+	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
+		{Key: key},
+		{Key: key, ResourceVersion: rv + 1000000000000},
+	})
+	require.NoError(t, err)
+	require.Len(t, responses, 2)
+
+	require.Nil(t, responses[0].Error, "valid read should succeed")
+	require.NotNil(t, responses[1].Error, "too-high RV should be rejected")
+	require.Equal(t, int32(400), responses[1].Error.Code)
+	require.Contains(t, responses[1].Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	createAndWriteTestObject(t, backend)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"}
+
+	// Resolve the key, then delete only the body so the key still resolves but the
+	// read finds no data: the GC race the not-found branch handles.
+	dataKey, err := backend.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+		Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource",
+	}, 0)
+	require.NoError(t, err)
+	require.NoError(t, backend.dataStore.Delete(ctx, dataKey))
+
+	response := backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	require.NotNil(t, response.Error, "read of a resolved key with a missing body should error")
+	require.Equal(t, int32(404), response.Error.Code, "missing body is a not-found, not a 500")
+}
+
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
