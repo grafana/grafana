@@ -7,7 +7,7 @@ export enum PluginMetaSource {
   metas = 'metas',
 }
 
-const LOADABLE_MODULE_PREFIXES = ['http://', 'https://', 'core:'] as const;
+const LOADABLE_MODULE_PREFIXES = ['http://', 'https://', 'core:', 'public/plugins/', 'public/app/plugins/'] as const;
 
 type ErrorLogger = typeof logPluginMetaError;
 type WarningLogger = typeof logPluginMetaWarning;
