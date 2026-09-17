@@ -87,6 +87,29 @@ describe('ResettingCustomVariable', () => {
     expect(target.state.value).toBe('urlValue');
   });
 
+  it('resets even if a validation skip is somehow set on a dependent variable', async () => {
+    // Synthetic, and deliberately so. MultiValueUrlSyncHandler.updateFromUrl also sets this
+    // flag, for any variable inactive at URL-sync time and regardless of its dependencies, so
+    // it is not covered by upstream narrowing its own guard to static queries. No natural
+    // path reaches a set flag at reset time: updateFromUrl only fires while inactive, and
+    // activation consumes the flag before a user can clear a dependency. This pins the clear
+    // in the class as defence in depth rather than documenting a reachable bug.
+    const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
+    const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
+
+    const deactivate = activateFullSceneTree(sceneWithVariables([dep, target]));
+    expect(target.state.value).toBe('scopeA');
+
+    target.skipNextValidation = true;
+
+    dep.setValue('');
+    await flushReset();
+
+    expect(target.state.value).toBe('');
+
+    deactivate();
+  });
+
   it('drops a pending reset when the query is edited to drop its dependency', async () => {
     const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
     const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
