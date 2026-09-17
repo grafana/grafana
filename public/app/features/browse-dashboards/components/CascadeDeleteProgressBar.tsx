@@ -6,6 +6,12 @@ import { useStyles2 } from '@grafana/ui';
 interface Props {
   /** 0-100. Renders an indeterminate sliding animation instead when omitted. */
   percent?: number;
+  /**
+   * Which theme color to fill the bar with. Defaults to 'error' to match the red "Deleting"
+   * badge used in the browse tree; pass 'info' when pairing this with an info-severity Alert
+   * (e.g. FolderCascadeStatusBanner's working state) so the bar doesn't read as an error there.
+   */
+  color?: 'error' | 'info';
 }
 
 /**
@@ -15,8 +21,8 @@ interface Props {
  * badge and the folder-page banner both read as an operation that's actually progressing instead
  * of one that might be stuck.
  */
-export function CascadeDeleteProgressBar({ percent }: Props) {
-  const styles = useStyles2(getStyles);
+export function CascadeDeleteProgressBar({ percent, color = 'error' }: Props) {
+  const styles = useStyles2(getStyles, color);
 
   if (percent === undefined) {
     return (
@@ -33,11 +39,12 @@ export function CascadeDeleteProgressBar({ percent }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, color: 'error' | 'info') => {
   const slide = keyframes({
     '0%': { left: '-40%' },
     '100%': { left: '100%' },
   });
+  const fillColor = theme.colors[color].main;
 
   return {
     track: css({
@@ -51,7 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     fill: css({
       height: '100%',
       borderRadius: theme.shape.radius.pill,
-      background: theme.colors.error.main,
+      background: fillColor,
       [theme.transitions.handleMotion('no-preference')]: {
         transition: 'width 400ms ease-out',
       },
@@ -62,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '40%',
       height: '100%',
       borderRadius: theme.shape.radius.pill,
-      background: theme.colors.error.main,
+      background: fillColor,
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${slide} 1.2s ease-in-out infinite`,
       },

@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
+
 import { t } from '@grafana/i18n';
+import { isFetchError, locationService } from '@grafana/runtime';
 import { Alert, Button, Space, Stack, Text } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
 import { useCascadeDeleteProgress } from '../utils/useCascadeDeleteProgress';
 import { useOfferFolderMove } from '../utils/useOfferFolderMove';
+import { usePropagateCascadeDeleteToChildren } from '../utils/usePropagateCascadeDeleteToChildren';
 
 import { CascadeDeleteProgressBar } from './CascadeDeleteProgressBar';
 
@@ -21,15 +25,27 @@ interface Props {
  * looking at whichever list happens to still be showing this folder's row as a child -- see
  * DeletingFolderBadge -- which doesn't apply when you're standing inside the folder itself).
  * Polls independently of that mechanism since a completely different user, with nothing in their
- * own cascadeDeletingUIDs, might be the one to land here.
+ * own cascadeDeletingUIDs, might be the one to land here. Also marks this folder's own children
+ * as cascade-deleting (see usePropagateCascadeDeleteToChildren) and, once the folder itself is
+ * confirmed gone, navigates away -- there's nothing left here to look at.
  */
 export function FolderCascadeStatusBanner({ folderUID }: Props) {
-  const { data } = useGetFolderQuery({ name: folderUID }, { pollingInterval: POLL_INTERVAL_MS });
+  const { data, error } = useGetFolderQuery({ name: folderUID }, { pollingInterval: POLL_INTERVAL_MS });
   const offerFolderMove = useOfferFolderMove();
   const cascadeDelete = data?.status?.cascadeDelete;
   const percent = useCascadeDeleteProgress(cascadeDelete?.remaining);
+  const isDeleting = Boolean(data?.metadata?.deletionTimestamp);
+  const isGone = isFetchError(error) && error.status === 404;
 
-  if (!data?.metadata?.deletionTimestamp) {
+  usePropagateCascadeDeleteToChildren(folderUID, isDeleting);
+
+  useEffect(() => {
+    if (isGone) {
+      locationService.push('/dashboards');
+    }
+  }, [isGone]);
+
+  if (!isDeleting) {
     return null;
   }
 
@@ -90,7 +106,7 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
               </Text>
             )}
           </Stack>
-          <CascadeDeleteProgressBar percent={percent} />
+          <CascadeDeleteProgressBar percent={percent} color="info" />
         </Stack>
       </Alert>
       <Space v={2} />

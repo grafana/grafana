@@ -1,7 +1,9 @@
 import { render, screen } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { useOfferFolderMove } from '../utils/useOfferFolderMove';
 
 import { FolderCascadeStatusBanner } from './FolderCascadeStatusBanner';
@@ -113,5 +115,46 @@ describe('FolderCascadeStatusBanner', () => {
     await user.click(screen.getByRole('button', { name: /move this folder instead/i }));
 
     expect(offerFolderMove).toHaveBeenCalledWith('folder-1');
+  });
+
+  it('navigates to the Dashboards page once the folder is confirmed gone', () => {
+    mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ error: { status: 404, data: {} } }));
+    mockUseOfferFolderMove.mockReturnValue(jest.fn());
+
+    // test-utils' render() installs its own fresh locationService for the test, so the
+    // component's effect ends up pushing through that instance -- assert on the resulting
+    // location rather than spying on the (by-then-replaced) module-level one.
+    render(<FolderCascadeStatusBanner folderUID="folder-1" />);
+
+    expect(locationService.getLocation().pathname).toBe('/dashboards');
+  });
+
+  it("marks this folder's already-loaded children as cascade-deleting too, for visual effect", () => {
+    mockUseGetFolderQuery.mockReturnValue(
+      mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 2 } }) })
+    );
+    mockUseOfferFolderMove.mockReturnValue(jest.fn());
+
+    const { store } = render(<FolderCascadeStatusBanner folderUID="folder-1" />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: undefined,
+          childrenByParentUID: {
+            'folder-1': fullyLoadedViewItemCollection([
+              { kind: 'folder', uid: 'child-folder', title: 'Child folder' },
+              { kind: 'dashboard', uid: 'child-dashboard', title: 'Child dashboard' },
+            ]),
+          },
+          openFolders: {},
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          cascadeDeletingUIDs: {},
+        },
+      },
+    });
+
+    expect(store?.getState().browseDashboards.cascadeDeletingUIDs).toEqual({
+      'child-folder': true,
+      'child-dashboard': true,
+    });
   });
 });
