@@ -344,7 +344,7 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.AMConfigV1 {
+func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
 	orig, err := definition.LoadCompat([]byte(yaml))
 	require.NoError(t, err)
@@ -352,7 +352,7 @@ func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingCon
 		AlertmanagerConfig: *orig,
 	})
 	for _, m := range mutate {
-		m(&cfg.AlertmanagerConfig)
+		m(cfg)
 	}
 	return cfg
 }
@@ -433,8 +433,8 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
-		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
-			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
+		grafana := load(t, fullGrafanaConfig, func(cfg *v1.AMConfigV1) {
+			cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
 				Name: "grafana-default-email" + getDedupSuffix(identifier),
 			})
 		})
