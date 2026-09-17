@@ -10,6 +10,7 @@ import mdx from './Sidebar.mdx';
 
 interface StoryProps {
   position: SidebarPosition;
+  enableFloating: boolean;
 }
 
 const meta: Meta<StoryProps> = {
@@ -22,6 +23,7 @@ const meta: Meta<StoryProps> = {
   },
   args: {
     position: 'right',
+    enableFloating: false,
   },
   argTypes: {
     position: { control: { type: 'radio' }, options: ['right', 'left'] },
@@ -64,6 +66,7 @@ export const Example: StoryFn<StoryProps> = (args) => {
   const contextValue = useSidebar({
     hasOpenPane: !!openPane,
     position: args.position,
+    enableFloating: args.enableFloating,
     bottomMargin: 0,
     edgeMargin: 0,
     onClosePane: () => {
@@ -165,6 +168,7 @@ export const VerticalTabs: StoryFn = (args) => {
 
   const contextValue = useSidebar({
     position: args.position,
+    enableFloating: args.enableFloating,
     tabsMode: true,
     edgeMargin: 0,
   });
@@ -223,3 +227,6 @@ function renderBox(label: string) {
 }
 
 export default meta;
+
+export const Floating = Example.bind({});
+Floating.args = { enableFloating: true };

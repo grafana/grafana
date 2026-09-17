@@ -6,9 +6,12 @@ import { store } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { clamp } from '../../utils/clamp';
 
+import { useFloatingSidebar } from './useFloatingSidebar';
+
 export type SidebarPosition = 'left' | 'right';
 
 export interface SidebarContextValue {
+  floating?: ReturnType<typeof useFloatingSidebar>;
   isDocked: boolean;
   position: SidebarPosition;
   compact: boolean;
@@ -39,6 +42,8 @@ export const SidebarContext: React.Context<SidebarContextValue | undefined> = Re
 export const useSidebarContext = () => useContext(SidebarContext);
 
 export interface UseSideBarOptions {
+  enableFloating?: boolean;
+  getFloatingParkAnchor?: () => HTMLElement | null;
   hasOpenPane?: boolean;
   position?: SidebarPosition;
   tabsMode?: boolean;
@@ -78,6 +83,8 @@ export const SIDE_BAR_WIDTH_WITH_TEXT = 8;
 
 export function useSidebar({
   hasOpenPane,
+  enableFloating = false,
+  getFloatingParkAnchor,
   position = 'right',
   tabsMode,
   defaultToCompact = true,
@@ -93,6 +100,8 @@ export function useSidebar({
   hiddenPersistenceKey,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
+  const floating = useFloatingSidebar(getFloatingParkAnchor, Boolean(hasOpenPane));
+  const isFloating = enableFloating && floating.isFloating;
   const [isDocked, setIsDocked] = useSidebarSavedState(persistenceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistenceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistenceKey, 'size', 240);
@@ -106,7 +115,7 @@ export function useSidebar({
   const effectiveIsHidden = isHidden && !isTemporarilyShown;
   // On small viewports the sidebar is always rendered as an undocked overlay so it doesn't
   // permanently steal horizontal space — docking only applies on larger viewports.
-  const effectiveIsDocked = !isTemporarilyShown && !isMobile && isDocked;
+  const effectiveIsDocked = !isFloating && !isTemporarilyShown && !isMobile && isDocked;
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
@@ -122,13 +131,15 @@ export function useSidebar({
     theme.spacing.gridSize;
 
   const outerWrapperProps =
-    effectiveIsHidden || isTemporarilyShown
-      ? {}
-      : {
-          style: {
-            [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
-          },
-        };
+    isFloating && !effectiveIsHidden
+      ? { style: { [prop]: toolbarWidth, paddingTop: 0 } }
+      : effectiveIsHidden || isTemporarilyShown
+        ? {}
+        : {
+            style: {
+              [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+            },
+          };
 
   const onResize = useCallback(
     (diff: number) => {
@@ -162,6 +173,7 @@ export function useSidebar({
   const setIsHiddenValue = useCallback((value: boolean) => setIsHidden(() => value), [setIsHidden]);
 
   return {
+    floating: enableFloating ? floating : undefined,
     isDocked: effectiveIsDocked,
     onToggleDock: isMobile || isTemporarilyShown ? undefined : onToggleDock,
     onResize,

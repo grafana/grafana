@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -31,9 +32,11 @@ function SidebarComp({ children, contextValue }: Props) {
   const theme = useTheme2();
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin, onToggleIsHidden } = contextValue;
 
+  const floating = contextValue.floating;
+  const isFloating = !!floating?.isFloating;
   const className = cx({
     [styles.container]: true,
-    [styles.undockedPaneOpen]: hasOpenPane && !isDocked,
+    [styles.undockedPaneOpen]: hasOpenPane && !isDocked && !isFloating,
     [styles.containerLeft]: position === 'left',
     [styles.containerTabsMode]: tabsMode,
     [styles.containerHidden]: !!contextValue.isHidden,
@@ -47,7 +50,7 @@ function SidebarComp({ children, contextValue }: Props) {
     if (evt.target instanceof Node && portalContainer && portalContainer.contains(evt.target)) {
       return;
     }
-    if (!isDocked && hasOpenPane) {
+    if (!isFloating && !isDocked && hasOpenPane) {
       contextValue.onClosePane?.();
     }
   });
@@ -71,15 +74,25 @@ function SidebarComp({ children, contextValue }: Props) {
   return (
     <SidebarContext.Provider value={contextValue}>
       <div
-        ref={ref}
+        ref={(element) => {
+          ref.current = element;
+          if (floating) {
+            floating.anchorRef.current = element;
+          }
+        }}
         className={className}
         style={style}
         id="sidebar-container"
         data-testid={selectors.components.Sidebar.container}
         aria-hidden={contextValue.isHidden}
       >
-        {!tabsMode && <SidebarResizer />}
+        {!tabsMode && !isFloating && <SidebarResizer />}
         {children}
+        {isFloating && !hasOpenPane && (
+          <SidebarOpenPane>
+            <SidebarPaneHeader title={t('grafana-ui.sidebar.empty-selection', 'Nothing is selected')} />
+          </SidebarOpenPane>
+        )}
       </div>
     </SidebarContext.Provider>
   );
@@ -123,20 +136,115 @@ function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
     throw new Error('Sidebar.OpenPane must be used within a Sidebar component');
   }
 
-  const className = cx(
-    styles.openPane,
-    sidebarContext.position === 'right' ? styles.openPaneRight : styles.openPaneLeft
-  );
+  const floating = sidebarContext.floating;
+  const isFloating = !!floating?.isFloating;
+  const fitRef = useRef(floating?.fit);
+  fitRef.current = floating?.fit;
+  useEffect(() => {
+    if (!isFloating) {
+      return;
+    }
+    const fit = () => fitRef.current?.();
+    fit();
+    window.addEventListener('resize', fit);
+    const onScroll = () => {
+      if (floating?.isParked) {
+        fit();
+      }
+    };
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      window.removeEventListener('resize', fit);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [isFloating, floating?.isParked, sidebarContext.hasOpenPane]);
 
-  return (
-    <div className={className} style={{ width: sidebarContext.paneWidth }}>
+  const pane = (
+    <div
+      ref={floating?.containerRef}
+      className={cx(
+        styles.openPane,
+        isFloating
+          ? styles.floatingPane
+          : sidebarContext.position === 'right'
+            ? styles.openPaneRight
+            : styles.openPaneLeft
+      )}
+      style={{ width: isFloating ? '100%' : sidebarContext.paneWidth }}
+    >
       {children}
     </div>
+  );
+
+  if (!isFloating || !floating) {
+    return pane;
+  }
+
+  return createPortal(
+    <div
+      role="region"
+      aria-label={t('grafana-ui.sidebar.floating-pane', 'Floating sidebar')}
+      className={cx(styles.floating, floating.isMinimized && styles.minimized)}
+      style={{
+        left: floating.bounds.x,
+        top: floating.bounds.y,
+        width: floating.bounds.width,
+        height: floating.bounds.height,
+      }}
+    >
+      {pane}
+      {sidebarContext.hasOpenPane && (
+        <button
+          type="button"
+          className={styles.resize}
+          aria-label={t('grafana-ui.sidebar.resize-floating', 'Resize toolbox')}
+          {...floating.resizeProps}
+        />
+      )}
+    </div>,
+    document.body
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    minimized: css({ borderRadius: theme.shape.radius.pill }),
+    floating: css({
+      position: 'fixed',
+      display: 'flex',
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.lg,
+      zIndex: theme.zIndex.navbarFixed,
+      containerType: 'size',
+      containerName: 'sidebar-toolbox',
+      overflow: 'hidden',
+      flexDirection: 'column',
+      boxShadow: theme.shadows.z3,
+      [theme.transitions.handleMotion('no-preference')]: { transition: 'none' },
+    }),
+    floatingPane: css({
+      minHeight: 0,
+      height: '100%',
+      paddingBottom: 0,
+      border: 0,
+      '@container sidebar-toolbox (max-height: 48px)': {
+        overflow: 'hidden',
+      },
+    }),
+    resize: css({
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+      width: 12,
+      height: 12,
+      border: 0,
+      borderRight: `3px solid ${theme.colors.text.secondary}`,
+      borderBottom: `3px solid ${theme.colors.text.secondary}`,
+      background: 'transparent',
+      cursor: 'nwse-resize',
+      touchAction: 'none',
+    }),
     container: css({
       display: 'flex',
       position: 'absolute',

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { act } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,6 +24,129 @@ function mockMatchMedia(shouldMatchMobile: boolean) {
 }
 
 describe('Sidebar', () => {
+  it('floats without reserving panel space and stays open when interacting with the dashboard', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Dock').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+
+    expect(screen.getByTestId('sidebar-test-wrapper')).toHaveStyle('padding-top: 0px; padding-right: 72px');
+    expect(screen.getByTestId('sidebar-test-wrapper')).not.toHaveStyle('padding-right: 312px');
+    await userEvent.click(document.body);
+    expect(screen.getByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Settings');
+
+    act(() => screen.getByLabelText('Return to sidebar').click());
+    expect(screen.getByTestId('sidebar-test-wrapper')).toHaveStyle('padding-right: 312px');
+  });
+
+  it('minimizes, moves, parks above panels, and restores the expanded size', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+    const toolbox = screen.getByRole('region', { name: 'Floating sidebar' });
+    screen.getByLabelText('Resize toolbox').focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(toolbox).toHaveStyle('width: 450px');
+    act(() => screen.getByLabelText('Minimize toolbox').click());
+    expect(toolbox).toHaveStyle('height: 48px');
+    screen.getByLabelText('Move toolbox').focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(toolbox).toHaveStyle('left: 522px');
+    act(() => screen.getByLabelText('Move away from panels').click());
+    expect(toolbox).toHaveStyle('top: 0px; left: 0px; height: 48px');
+    expect(screen.getByTestId('sidebar-test-wrapper')).toHaveStyle('padding-top: 0px');
+    act(() => screen.getByLabelText('Expand toolbox').click());
+    expect(toolbox).toHaveStyle('width: 450px; height: 560px');
+    expect(screen.getByTestId('sidebar-test-wrapper')).toHaveStyle('padding-top: 0px');
+  });
+
+  it('keeps the floating toolbox inside the available area when moved or resized', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+    screen.getByLabelText('Move toolbox').focus();
+    await userEvent.keyboard('{Shift>}{ArrowLeft>20/}{/Shift}');
+    screen.getByLabelText('Move toolbox').focus();
+    await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}');
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('left: 0px; top: 0px');
+    for (let i = 0; i < 30; i++) {
+      screen.getByLabelText('Resize toolbox').focus();
+      await userEvent.keyboard('{Shift>}{ArrowLeft}{/Shift}');
+      screen.getByLabelText('Resize toolbox').focus();
+      await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}');
+    }
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('width: 320px; height: 48px');
+    expect(screen.getByLabelText('Expand toolbox')).toBeInTheDocument();
+  });
+
+  it('drags and resizes the floating toolbox with pointer input', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+    const handle = screen.getByLabelText('Move toolbox');
+    handle.setPointerCapture = jest.fn();
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: handle, coords: { clientX: 20, clientY: 20 } },
+      { target: handle, coords: { clientX: 70, clientY: 50 } },
+      { keys: '[/MouseLeft]', target: handle },
+    ]);
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('left: 562px; top: 46px');
+    const title = screen.getByRole('button', { name: 'Move Settings toolbox' });
+    title.setPointerCapture = jest.fn();
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: title, coords: { clientX: 600, clientY: 60 } },
+      { target: title, coords: { clientX: 600, clientY: 0 } },
+      { keys: '[/MouseLeft]', target: title },
+    ]);
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('top: 0px');
+    expect(screen.getByTestId(selectors.components.Sidebar.container)).toContainElement(
+      screen.getByLabelText('Settings')
+    );
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).not.toContainElement(
+      screen.getByLabelText('Settings')
+    );
+    const resize = screen.getByLabelText('Resize toolbox');
+    resize.setPointerCapture = jest.fn();
+    await userEvent.pointer([
+      { keys: '[MouseLeft>]', target: resize, coords: { clientX: 440, clientY: 560 } },
+      { target: resize, coords: { clientX: 460, clientY: 500 } },
+      { keys: '[/MouseLeft]', target: resize },
+    ]);
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('width: 460px; height: 500px');
+  });
+
+  it('keeps quick actions usable while minimized and permits leaving floating mode after closing the pane', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+    act(() => screen.getByLabelText('Minimize toolbox').click());
+    await userEvent.click(screen.getByRole('button', { name: 'Apply setting' }));
+    expect(screen.getByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Updated settings');
+    act(() => screen.getByLabelText('Close').click());
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveTextContent('Nothing is selected');
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle('width: 320px; height: 48px');
+    await userEvent.click(screen.getByLabelText('Settings'));
+    act(() => screen.getByLabelText('Return to sidebar').click());
+    expect(screen.getByLabelText('Settings')).toBeInTheDocument();
+  });
+
+  it('keeps an empty pill movable and restores the pane size when an item is selected', async () => {
+    render(<TestSetup enableFloating />);
+    act(() => screen.getByLabelText('Settings').click());
+    act(() => screen.getByLabelText('Float toolbox').click());
+    act(() => screen.getByLabelText('Close').click());
+    const pill = screen.getByRole('region', { name: 'Floating sidebar' });
+    expect(pill).toHaveTextContent('Nothing is selected');
+    expect(pill).toHaveStyle('width: 320px; height: 48px');
+    screen.getByRole('button', { name: 'Move Nothing is selected toolbox' }).focus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(pill).toHaveStyle('left: 502px');
+    await userEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle(
+      'width: 440px; height: 560px; left: 502px'
+    );
+  });
+
   it('should render sidebar', async () => {
     render(<TestSetup />);
 
@@ -167,15 +291,18 @@ describe('Sidebar', () => {
 });
 
 interface TestSetupProps {
+  enableFloating?: boolean;
   persistenceKey?: string;
   defaultIsHidden?: boolean;
   hiddenPersistenceKey?: string;
 }
 
-function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey }: TestSetupProps) {
+function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey, enableFloating }: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
+  const [title, setTitle] = React.useState('Settings');
   const contextValue = useSidebar({
     position: 'right',
+    enableFloating,
     hasOpenPane: openPane !== '',
     persistenceKey,
     hiddenPersistenceKey,
@@ -192,7 +319,9 @@ function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey }: Te
       <Sidebar contextValue={contextValue}>
         {openPane === 'settings' && (
           <Sidebar.OpenPane>
-            <Sidebar.PaneHeader title="Settings" />
+            <Sidebar.PaneHeader title={title}>
+              <button onClick={() => setTitle('Updated settings')}>Apply setting</button>
+            </Sidebar.PaneHeader>
           </Sidebar.OpenPane>
         )}
         <Sidebar.Toolbar>
