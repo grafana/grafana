@@ -35,6 +35,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
@@ -634,6 +635,49 @@ describe('panelMenuBehavior', () => {
       expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
       const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
       expect(sendToMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
+    });
+
+    it('should offer Unlink/Replace library panel in Send to, instead of New library panel, when editing a library panel', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ isEditing: true });
+      panel.setState({
+        $behaviors: [
+          new LibraryPanelBehavior({
+            isLoaded: true,
+            uid: 'lib-uid',
+            name: 'My library panel',
+            _loadedPanel: {
+              uid: 'lib-uid',
+              name: 'My library panel',
+              model: { type: 'table' },
+              type: 'panel',
+              version: 1,
+            },
+          }),
+        ],
+      });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'Unlink library panel')).toEqual(
+        expect.objectContaining({ iconClassName: 'link-broken' })
+      );
+      expect(sendToMenu?.find((i) => i.text === 'Replace library panel')).toEqual(
+        expect.objectContaining({ iconClassName: 'library-panel' })
+      );
+      expect(sendToMenu?.find((i) => i.text === 'New library panel')).toBeUndefined();
+
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Unlink library panel')).toBeUndefined();
+      expect(moreMenu?.find((i) => i.text === 'Replace library panel')).toBeUndefined();
     });
 
     it('should only contain explore when embedded', async () => {

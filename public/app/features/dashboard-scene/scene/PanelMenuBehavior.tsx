@@ -199,30 +199,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
-      if (isLibraryPanel(panel)) {
-        moreSubMenu.push({
-          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-          iconClassName: 'link-broken',
-          onClick: () => {
-            dashboard.showModal(
-              new UnlinkLibraryPanelModal({
-                panelRef: panel.getRef(),
-              })
-            );
-          },
-        });
-
-        moreSubMenu.push({
-          text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
-          iconClassName: 'library-panel',
-          onClick: () => {
-            dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
-          },
-        });
-      }
-    }
-
     const isCreateAlertMenuOptionAvailable =
       config.unifiedAlertingEnabled &&
       contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
@@ -312,19 +288,41 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel && !isLibraryPanel(panel)) {
-      sendToSubMenu.push({
-        text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
-        iconClassName: 'plus-square',
-        onClick: () => {
-          const drawer = new ShareDrawer({
-            shareView: shareDashboardType.libraryPanel,
-            panelRef: panel.getRef(),
-          });
+    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+      if (isLibraryPanel(panel)) {
+        sendToSubMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          iconClassName: 'link-broken',
+          onClick: () => {
+            dashboard.showModal(
+              new UnlinkLibraryPanelModal({
+                panelRef: panel.getRef(),
+              })
+            );
+          },
+        });
 
-          dashboard.showModal(drawer);
-        },
-      });
+        sendToSubMenu.push({
+          text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          iconClassName: 'library-panel',
+          onClick: () => {
+            dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
+          },
+        });
+      } else {
+        sendToSubMenu.push({
+          text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+          iconClassName: 'plus-square',
+          onClick: () => {
+            const drawer = new ShareDrawer({
+              shareView: shareDashboardType.libraryPanel,
+              panelRef: panel.getRef(),
+            });
+
+            dashboard.showModal(drawer);
+          },
+        });
+      }
     }
 
     if (sendToSubMenu.length) {
