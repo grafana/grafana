@@ -1,9 +1,7 @@
 import { CODE_MIRROR_LANGUAGES } from './languages';
 import { type CodeMirrorEditorLanguage } from './types';
 
-const languages = (Object.keys(CODE_MIRROR_LANGUAGES) as CodeMirrorEditorLanguage[]).filter(
-  (language) => language !== 'sql'
-);
+const languages = Object.keys(CODE_MIRROR_LANGUAGES) as CodeMirrorEditorLanguage[];
 
 jest.mock('@codemirror/lang-sql', () => {
   const actual = jest.requireActual('@codemirror/lang-sql');
@@ -89,15 +87,19 @@ describe('loadLanguageExtension', () => {
     });
   });
 
-  it.each(languages)('loads and memoizes the %s extension', async (language) => {
+  it.each(languages)('loads and memoizes the %s extension', async (languageId) => {
     await jest.isolateModulesAsync(async () => {
       const { loadLanguageExtension } = await import('./languageLoader');
-      const { Language } = await import('@codemirror/language');
+      const { Language, language } = await import('@codemirror/language');
+      const { EditorState } = await import('@codemirror/state');
 
-      const extension = await loadLanguageExtension(language);
-      const again = await loadLanguageExtension(language);
+      const extension = await loadLanguageExtension(languageId);
+      const again = await loadLanguageExtension(languageId);
+      const state = EditorState.create({
+        extensions: extension ?? [],
+      });
 
-      expect(extension).toHaveProperty('language', expect.any(Language));
+      expect(state.facet(language)).toBeInstanceOf(Language);
       expect(again).toBe(extension);
     });
   });
