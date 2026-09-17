@@ -95,7 +95,7 @@ class AdHocTransformations implements AdHocTransformationsApi {
     return group;
   }
 
-  private _updateTransformer(previousData: unknown, nextData: unknown, clear = false): void {
+  private _updateTransformer(previousData: unknown, nextData: unknown, clearGroups = false): void {
     const previousTransformer = getTransformer(previousData);
     const nextTransformer = getTransformer(nextData);
 
@@ -106,7 +106,7 @@ class AdHocTransformations implements AdHocTransformationsApi {
 
       previousTransformer?.removeRuntimeTransformations(tag);
       group.sourceSeries = NO_SERIES;
-      if (clear) {
+      if (clearGroups) {
         group.configs = NO_CONFIGS;
         for (const listener of Array.from(group.listeners)) {
           listener();
