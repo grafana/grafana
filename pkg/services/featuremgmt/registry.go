@@ -2491,6 +2491,16 @@ var (
 			HideFromDocs:    true,
 		},
 		{
+			Name:            "appplugins.loadAppManifestAndKeepSettings",
+			Description:     "Continue to expose settings when a manifest exists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,

@@ -902,6 +902,21 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifestAndKeepSettings",
+        "resourceVersion": "1789622340153",
+        "creationTimestamp": "2026-09-17T05:19:00Z"
+      },
+      "spec": {
+        "description": "Continue to expose settings when a manifest exists",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
