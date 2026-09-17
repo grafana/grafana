@@ -11,7 +11,8 @@ export const PublicDashboardAlert = () => (
   <Alert title="" severity="warning" bottomSpacing={0} data-testid={selectors.publicAlert}>
     <Stack justifyContent="space-between" gap={2} alignItems="center">
       <Trans i18nKey="public-dashboard.public-sharing.alert-text">
-        Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.
+        Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended
+        for dashboards with sensitive data.
       </Trans>
       <Button variant="secondary" onClick={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')} type="button">
         <Trans i18nKey="public-dashboard.public-sharing.learn-more-button">Learn more</Trans>
