@@ -4,9 +4,8 @@ import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { useFlagKubernetesFolderCascadeDeleteAsync } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -46,11 +45,6 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
   useDeleteFoldersMutation: jest.fn(),
   useMoveFoldersMutation: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagKubernetesFolderCascadeDeleteAsync: jest.fn(() => false),
 }));
 
 const dispatchMockFn = jest.fn();
@@ -148,6 +142,14 @@ afterAll(() => {
   config.provisioningEnabled = originalProvisioningEnabled;
 });
 
+// setTestFlags mutates a module-level provider, so reset it for every test. The act wrap is needed
+// because the reset fires OpenFeature events while components are still mounted.
+afterEach(async () => {
+  await act(async () => {
+    setTestFlags({});
+  });
+});
+
 describe('useGetFolderQueryFacade', () => {
   const originalAppSubUrl = String(config.appSubUrl);
   const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
@@ -163,7 +165,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('merges multiple responses into a single FolderDTO-like object if flag is true', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const result = await renderFolderHook();
 
@@ -199,7 +201,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const { result } = renderHook(() => useGetFolderQueryFacade('general'), {
       wrapper: getWrapper({}),
@@ -230,7 +232,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('runs a real access query for the sharedwithme virtual folder (no access)', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
     config.sharedWithMeFolderUID = 'sharedwithme';
 
     const { result } = renderHook(() => useGetFolderQueryFacade('sharedwithme'), {
@@ -253,7 +255,7 @@ describe('useGetFolderQueryFacade', () => {
   });
 
   it('returns legacy folder response if flag is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
     const result = await renderFolderHook();
     expect(result.current.data).toMatchObject({
       id: 791,
@@ -281,7 +283,7 @@ describe('useGetFolderQueryFacade', () => {
   it.each([true, false])(
     'stops reporting a folder once the uid is cleared (foldersAppPlatformAPI: %s)',
     async (foldersAppPlatformAPI) => {
-      config.featureToggles.foldersAppPlatformAPI = foldersAppPlatformAPI;
+      setTestFlags({ foldersAppPlatformAPI });
       const initialProps: { uid?: string } = { uid: folderA_folderA.item.uid };
       const { result, rerender } = renderHook(({ uid }: { uid?: string }) => useGetFolderQueryFacade(uid), {
         wrapper: getWrapper({}),
@@ -306,15 +308,34 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
     (useDeleteFoldersMutationLegacy as jest.Mock).mockReturnValue([mockDeleteFolderLegacy]);
   });
 
+  it('deletes multiple folders and publishes success alert', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true });
+    // Same test as for legacy as right now we always use legacy API for deletes.
+    const folderUIDs = ['uid1', 'uid2'];
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
+
+    // Should call deleteFolder for each UID
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
+    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+  });
+
   it('deletes multiple folders via the app platform API when both flags are on', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
     // PoC: the app platform backend now supports cascading delete, gated behind
     // kubernetesFolderCascadeDeleteAsync specifically -- this facade only skips the legacy path
     // when that flag is also on.
-    (useFlagKubernetesFolderCascadeDeleteAsync as jest.Mock).mockReturnValue(true);
+    setTestFlags({ foldersAppPlatformAPI: true, kubernetesFolderCascadeDeleteAsync: true });
     const folderUIDs = ['uid1', 'uid2'];
-    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-    await deleteFolders({ folderUIDs });
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
 
     // Should call deleteFolder for each UID via the app platform mutation, not the legacy one
     expect(mockDeleteFolder).toHaveBeenCalledTimes(2);
@@ -323,27 +344,33 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
     expect(mockDeleteFolderLegacy).not.toHaveBeenCalled();
   });
 
-  it('uses legacy call when foldersAppPlatformAPI is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
-    (useFlagKubernetesFolderCascadeDeleteAsync as jest.Mock).mockReturnValue(true);
+  it('uses legacy call when flag is false', async () => {
+    setTestFlags({ foldersAppPlatformAPI: false });
     const folderUIDs = ['uid1', 'uid2'];
-    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-    await deleteFolders({ folderUIDs });
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
 
-    // Should call deleteFolder for each UID
     expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
     expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    expect(mockDeleteFolder).not.toHaveBeenCalled();
   });
 
   it('uses legacy call when foldersAppPlatformAPI is on but kubernetesFolderCascadeDeleteAsync is off', async () => {
     // This is the important case: foldersAppPlatformAPI covers unrelated App Platform folder
     // behavior and can be on independently of the cascade-delete PoC flag -- ordinary folder
     // deletes must stay on the legacy path unless kubernetesFolderCascadeDeleteAsync is also on.
-    config.featureToggles.foldersAppPlatformAPI = true;
-    (useFlagKubernetesFolderCascadeDeleteAsync as jest.Mock).mockReturnValue(false);
+    setTestFlags({ foldersAppPlatformAPI: true, kubernetesFolderCascadeDeleteAsync: false });
     const folderUIDs = ['uid1', 'uid2'];
-    const deleteFolders = useDeleteMultipleFoldersMutationFacade();
-    await deleteFolders({ folderUIDs });
+    const { result } = renderHook(() => useDeleteMultipleFoldersMutationFacade(), {
+      wrapper: getWrapper({}),
+    });
+    await act(async () => {
+      await result.current({ folderUIDs });
+    });
 
     expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
     expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
@@ -365,7 +392,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   });
 
   it('moves multiple folders and publishes success alert', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
     setupUpdateFolderHandler(patchSpy);
     const folderUIDs = ['uid1', 'uid2'];
     const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
@@ -396,7 +423,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
   });
 
   it('uses legacy call when flag is false', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
     const folderUIDs = ['uid1', 'uid2'];
     const { result } = renderHook(() => useMoveMultipleFoldersMutationFacade(), {
       wrapper: getWrapper({}),
@@ -418,7 +445,7 @@ describe.each([
   false,
 ])('folderAppPlatformAPI toggle set to: %s', (toggle) => {
   beforeEach(() => {
-    config.featureToggles.foldersAppPlatformAPI = toggle;
+    setTestFlags({ foldersAppPlatformAPI: toggle });
     if (toggle) {
       folderAPIVersionResolver.set('v1beta1');
     }
@@ -511,7 +538,7 @@ describe.each([
 describe('useUpdateFolder app-platform starred nav update', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
     folderAPIVersionResolver.set('v1beta1');
     setupUpdateFolderHandler();
   });
@@ -548,7 +575,7 @@ describe('getFolderByUidFacade', () => {
   });
 
   it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is enabled', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     const fetchError = { status: 403, data: { message: 'Forbidden' } };
     dispatchMockFn
@@ -560,7 +587,7 @@ describe('getFolderByUidFacade', () => {
   });
 
   it('throws the original error with HTTP status when folder API returns 403 and foldersAppPlatformAPI is disabled', async () => {
-    config.featureToggles.foldersAppPlatformAPI = false;
+    setTestFlags({ foldersAppPlatformAPI: false });
 
     const fetchError = { status: 403, data: { message: 'Forbidden' } };
     dispatchMockFn.mockResolvedValueOnce({ error: fetchError, data: undefined });
@@ -569,7 +596,7 @@ describe('getFolderByUidFacade', () => {
   });
 
   it('throws a generic error when all responses are undefined and no error is available', async () => {
-    config.featureToggles.foldersAppPlatformAPI = true;
+    setTestFlags({ foldersAppPlatformAPI: true });
 
     dispatchMockFn
       .mockResolvedValueOnce({ data: undefined })

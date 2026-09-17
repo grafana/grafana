@@ -545,27 +545,31 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 				Values:   parentUIDs,
 			}},
 		},
-		Limit:  limit,
-		Offset: offset,
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Limit:        limit,
+		Offset:       offset,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, false, fmt.Errorf("failed to search folders: %w", err)
 	}
 
-	if resp.Results == nil || len(resp.Results.Rows) == 0 {
+	rows, err := decodeSearchRows(resp)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to decode folder search results: %w", err)
+	}
+	if len(rows) == 0 {
 		return nil, false, nil
 	}
 
-	children := make([]string, 0, len(resp.Results.Rows))
-	for _, row := range resp.Results.Rows {
-		if row.Key != nil {
-			children = append(children, row.Key.Name)
-		}
+	children := make([]string, 0, len(rows))
+	for _, row := range rows {
+		children = append(children, row.key.Name)
 	}
 
 	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
 	// pagination must be driven off TotalHits + offset rather than the token.
-	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
+	hasMore := resp.GetResults().GetNextPageToken() != "" || offset+int64(len(rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 

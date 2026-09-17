@@ -35,16 +35,22 @@ var (
 	_ rest.GracefulDeleter      = (*MTSettingsStore)(nil)
 )
 
+// defaultsProvider exposes per-provider default setting values.
+type defaultsProvider interface {
+	GetDefaults(provider string) map[string]any
+}
+
 // MTSettingsStore backs the SSOSetting kind with MT-Settings: a provider's blob
 // maps to per-key Setting rows under the auth.<provider> section. Source-layer
 // precedence and secret encrypt/decrypt are handled server-side.
 type MTSettingsStore struct {
-	reader settingsvc.Service
-	writer settingsvc.Writer
+	reader   settingsvc.Service
+	writer   settingsvc.Writer
+	defaults defaultsProvider
 }
 
-func NewMTSettingsStore(reader settingsvc.Service, writer settingsvc.Writer) *MTSettingsStore {
-	return &MTSettingsStore{reader: reader, writer: writer}
+func NewMTSettingsStore(reader settingsvc.Service, writer settingsvc.Writer, defaults defaultsProvider) *MTSettingsStore {
+	return &MTSettingsStore{reader: reader, writer: writer, defaults: defaults}
 }
 
 // Destroy implements rest.Storage.
@@ -98,6 +104,19 @@ func (s *MTSettingsStore) get(ctx context.Context, name string) (*iamv0.SSOSetti
 	return rowsToSSOSetting(ctx, name, rows), nil
 }
 
+// withProviderDefaults fills any key the request left absent or empty with the
+// provider's default values.
+func (s *MTSettingsStore) withProviderDefaults(provider string, settings map[string]any) map[string]any {
+	if s.defaults == nil {
+		return settings
+	}
+	defaults := s.defaults.GetDefaults(provider)
+	if defaults == nil {
+		return settings
+	}
+	return withDefaults(settings, defaults)
+}
+
 // Create implements rest.Creater. It writes each key of the blob as a per-key
 // row under auth.<provider>. Secret classification/encryption is the settings
 // service mutator's job.
@@ -118,6 +137,7 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 	section := sectionFor(ssoSetting.Name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
 	resolveSecrets(desired, nil)
+	desired = s.withProviderDefaults(ssoSetting.Name, desired)
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 			return nil, apierrors.NewInternalError(err)
@@ -236,6 +256,7 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 		stored = current.Spec.Settings.Object
 	}
 	resolveSecrets(desired, stored)
+	desired = s.withProviderDefaults(name, desired)
 
 	// Upsert every desired key first — a required value is never removed before
 	// its replacement is durable.
@@ -245,21 +266,8 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	// Prune stale us-layer rows last: any us row whose key is not in the desired
-	// blob. defaults/hgapi layers are not ours to touch.
-	existing, err := s.reader.List(ctx, sectionSelector(name))
-	if err != nil {
+	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, desired); err != nil {
 		return nil, false, apierrors.NewInternalError(err)
-	}
-	for _, row := range existing {
-		if row.Labels["source"] != "us" {
-			continue
-		}
-		if _, keep := desired[row.Key]; !keep {
-			if err := s.writer.Delete(ctx, section, row.Key); err != nil {
-				return nil, false, apierrors.NewInternalError(err)
-			}
-		}
 	}
 
 	updated, err := s.Get(ctx, name, &metav1.GetOptions{})
@@ -283,18 +291,8 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 		}
 	}
 
-	rows, err := s.reader.List(ctx, sectionSelector(name))
-	if err != nil {
+	if _, err := pruneStaleRows(ctx, s.reader, s.writer, name, nil); err != nil {
 		return nil, false, apierrors.NewInternalError(err)
-	}
-	section := sectionFor(name)
-	for _, row := range rows {
-		if row.Labels["source"] != "us" {
-			continue
-		}
-		if err := s.writer.Delete(ctx, section, row.Key); err != nil {
-			return nil, false, apierrors.NewInternalError(err)
-		}
 	}
 	// NOTE: returns the pre-delete object. Removing the us override leaves any
 	// defaults/hgapi rows, so the provider does not truly vanish; the accurate
@@ -306,6 +304,32 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 func (s *MTSettingsStore) notImplemented(verb string, name string) error {
 	return apierrors.NewGenericServerResponse(http.StatusNotImplemented, verb, resource.GroupResource(), name,
 		"MT-Settings storage for SSO settings is not implemented yet", 0, false)
+}
+
+// pruneStaleRows deletes the provider's us-layer rows whose key is absent from
+// keep, and reports how many it deleted.
+func pruneStaleRows(ctx context.Context, reader settingsvc.Service, writer settingsvc.Writer,
+	provider string, keep map[string]any) (int, error) {
+	rows, err := reader.List(ctx, sectionSelector(provider))
+	if err != nil {
+		return 0, err
+	}
+
+	section := sectionFor(provider)
+	pruned := 0
+	for _, row := range rows {
+		if row.Labels["source"] != "us" {
+			continue
+		}
+		if _, ok := keep[row.Key]; ok {
+			continue
+		}
+		if err := writer.Delete(ctx, section, row.Key); err != nil {
+			return pruned, err
+		}
+		pruned++
+	}
+	return pruned, nil
 }
 
 // sectionFor returns the settings section for a provider (e.g. saml -> auth.saml).

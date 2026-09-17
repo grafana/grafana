@@ -196,7 +196,7 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ folderUID, destinationUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([folderUID]));
+          dispatch(refreshParents({ kind: 'folder', uids: [folderUID] }));
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
@@ -303,7 +303,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(dashboardUIDs));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
         });
       },
     }),
@@ -343,7 +343,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
         });
       },
@@ -375,7 +375,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
@@ -462,7 +462,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(dashboardUIDs));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(
@@ -597,7 +597,12 @@ export const browseDashboardsAPI = createApi({
 function getDashboardFolder(dashboardUid?: string) {
   if (dashboardUid) {
     const { browseDashboards } = getState();
-    const item = findItem(browseDashboards.rootItems?.items ?? [], browseDashboards.childrenByParentUID, dashboardUid);
+    const item = findItem(
+      browseDashboards.rootItems?.items ?? [],
+      browseDashboards.childrenByParentUID,
+      'dashboard',
+      dashboardUid
+    );
     return item?.parentUID;
   }
   return undefined;
