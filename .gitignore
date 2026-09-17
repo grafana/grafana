@@ -107,6 +107,7 @@ example-apiserver/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 /devenv/docker/blocks/auth/openldap/certs/
+/devenv/docker/blocks/tempo/tempo-data
 
 conf/custom.ini
 conf/operator.ini
