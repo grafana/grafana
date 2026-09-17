@@ -94,6 +94,10 @@ export const getGridStyles = memoize(
     return {
       gridFrame: css({
         '--table-header-corner-radius': cornerRadiusValue,
+        // This wrapper can be a flex item alongside controls such as the multi-frame picker. Its
+        // automatic minimum is the grid's content height, which prevents it from yielding the space
+        // reserved for those controls.
+        minBlockSize: 0,
         // Give pagination controls their room back, so the frame and pager together still fit the
         // panel (see getPaginationChromeHeight).
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',

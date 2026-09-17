@@ -397,12 +397,16 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
 
     await waitFor(() => {
       const grid = document.querySelector<HTMLElement>('.rdg')!;
-      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
-      const handedWidth = parseFloat(grid.parentElement!.style.width);
+      // The nearest explicitly sized container is the width the table was handed. TableNG may add
+      // structural wrappers between it and the grid.
+      const sizedContainer = grid.parentElement!.closest<HTMLElement>('[style*="width:"]');
       const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
 
+      expect(sizedContainer).not.toBeNull();
       expect(columnWidths).toHaveLength(4);
-      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
+      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(
+        parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH
+      );
     });
   });
 });
