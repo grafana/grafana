@@ -1,5 +1,5 @@
 import { type DropResult } from '@hello-pangea/dnd';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { DraggableList } from './DraggableList';
 
@@ -33,28 +33,35 @@ function getDragHandle(label: string): HTMLElement | null {
 }
 
 describe('DraggableList', () => {
-  it('renders every item via renderItem', () => {
-    renderList();
+  it('renders every item via renderItem', async () => {
+    const { container } = renderList();
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('Item A')).toBeInTheDocument();
     expect(screen.getByText('Item B')).toBeInTheDocument();
   });
 
-  it('enables dragging by default when isDragDisabled is omitted', () => {
+  it('enables dragging by default when isDragDisabled is omitted', async () => {
     renderList();
 
-    expect(getDragHandle('Item A')).toBeInTheDocument();
+    await waitFor(() => expect(getDragHandle('Item A')).toBeInTheDocument());
   });
 
-  it('enables dragging when isDragDisabled is false', () => {
+  it('enables dragging when isDragDisabled is false', async () => {
     renderList(false);
 
-    expect(getDragHandle('Item A')).toBeInTheDocument();
+    await waitFor(() => expect(getDragHandle('Item A')).toBeInTheDocument());
   });
 
-  it('disables dragging when isDragDisabled is true', () => {
-    renderList(true);
+  it('disables dragging when isDragDisabled is true', async () => {
+    const { container } = renderList(true);
 
+    await waitFor(() =>
+      expect(container.querySelector('[data-rfd-droppable-id="test-droppable"]')).toBeInTheDocument()
+    );
     expect(getDragHandle('Item A')).not.toBeInTheDocument();
   });
 });

@@ -52,4 +52,8 @@ type RuntimeConfig struct {
 	// services. It backs the single namespaced POST /search custom route, which
 	// federates alert and recording rules into one result set.
 	SearchRulesHandler simple.AppCustomRouteHandler
+	// CheckExternalRulerSyncDatasource validates that uid is usable as an
+	// external ruler sync source, returning a non-nil error if not. Nil
+	// disables the check (returns no error).
+	CheckExternalRulerSyncDatasource func(ctx context.Context, uid string) error
 }

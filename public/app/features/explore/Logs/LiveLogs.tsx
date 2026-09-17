@@ -1,7 +1,6 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
-import tinycolor from 'tinycolor2';
 
 import { type LogRowModel, dateTimeFormat, type GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -17,7 +16,7 @@ import { filterLogRowsByIndex } from '../state/utils';
 const getStyles = (theme: GrafanaTheme2) => {
   const fade = keyframes({
     from: {
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: `rgb(from ${theme.colors.info.transparent} r g b / 0.25)`,
     },
     to: {
       backgroundColor: 'transparent',
@@ -40,7 +39,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     logsRowFade: css({
       label: 'logs-row-fresh',
       color: theme.colors.text.primary,
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: `rgb(from ${theme.colors.info.transparent} r g b / 0.25)`,
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         animation: `${fade} 1s ease-out 1s 1 normal forwards`,
       },

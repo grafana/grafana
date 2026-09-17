@@ -19,6 +19,7 @@ import {
   resolveKubernetesDatasource,
   resetKubernetesPrometheusResolution,
 } from './kubernetesData';
+import { resetProbeHealth } from './probeUtils';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -47,7 +48,6 @@ function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: b
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: ds.isDefault ?? false,
   };
 }
@@ -87,11 +87,13 @@ beforeEach(() => {
   mockCreateQueryRunner.mockReset();
   mockGetDataSourceInstanceList.mockReset();
   healthGet.mockReset();
-  // Health pre-filter: every candidate healthy unless a test overrides by uid.
+  // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
   window.localStorage.clear();
   resetKubernetesPrometheusResolution();
+  // The /health cache is module-level and shared across scans; a cached OK would leak between tests.
+  resetProbeHealth();
   dataByUid = {};
   probeErrorUids = new Set();
   probeHangUids = new Set();
@@ -384,7 +386,6 @@ describe('Kubernetes Prometheus resolution', () => {
       name: partial.name,
       type: partial.type,
       meta: { id: partial.metaId } as DataSourceInstanceListItem['meta'],
-      readOnly: false,
       isDefault: false,
     });
     // Builtin rejected by meta.id; real and alias prometheus datasources pass.

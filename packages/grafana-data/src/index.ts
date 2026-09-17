@@ -52,9 +52,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -616,6 +615,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
@@ -942,6 +942,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated

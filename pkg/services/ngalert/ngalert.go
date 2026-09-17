@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -200,6 +201,8 @@ type AlertNG struct {
 	tracer          tracing.Tracer
 	clientGenerator resource.ClientGenerator
 
+	folderLabelSyncer *folderlabelsyncer.Service
+
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
 }
@@ -211,7 +214,11 @@ func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
 	if ng.clientGenerator == nil {
 		return nil
 	}
-	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
+	return schedule.NewK8sRuleSequenceStore(
+		ng.clientGenerator,
+		schedule.RuleSequenceNamespace(ng.Cfg),
+		log.New("ngalert.rulesequence.store"),
+	)
 }
 
 func (ng *AlertNG) init() error {
@@ -600,8 +607,10 @@ func (ng *AlertNG) init() error {
 
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
-	// the user-driven proxy). It only runs when the operator has set the
-	// external_ruler_uid setting (the enable signal; no separate feature flag).
+	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
+	// setting and/or per-org via the rules Config resource; neither path needs
+	// a feature flag — setting the ini value or the resource's
+	// spec.externalRulerSync.datasourceUid is itself the enable signal.
 	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
 		&ng.Cfg.UnifiedAlerting,
 		log.New("ngalert.rulesync"),
@@ -612,6 +621,8 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.store,
 		ng.FolderResourcePermissions,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
 	)
 
 	ng.Api = &api.API{
@@ -664,6 +675,12 @@ func (ng *AlertNG) init() error {
 		}
 		return key.LogContext(), true
 	})
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+		ng.folderLabelSyncer = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator,
+			ng.Metrics.GetFolderLabelSyncerMetrics())
+	}
 
 	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
@@ -759,6 +776,13 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabelSyncer != nil {
+		children.Go(func() error {
+			return ng.folderLabelSyncer.Run(subCtx)
+		})
+	}
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

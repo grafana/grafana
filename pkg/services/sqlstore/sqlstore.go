@@ -387,8 +387,7 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 	var result string
 	_, err := engine.SQL("SELECT 1").Get(&result)
 
-	var mysqlError *mysql.MySQLError
-	if errors.As(err, &mysqlError) {
+	if mysqlError, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		// if there was an error due to transaction isolation
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
 			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
@@ -431,8 +430,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 			err := sess.SQL(recQry).Find(&result)
 			return err
 		}); err != nil {
-			var driverErr *mysql.MySQLError
-			if errors.As(err, &driverErr) {
+			if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 				if driverErr.Number == mysqlerr.ER_PARSE_ERROR || driverErr.Number == mysqlerr.ER_NOT_SUPPORTED_YET {
 					return false, nil
 				}

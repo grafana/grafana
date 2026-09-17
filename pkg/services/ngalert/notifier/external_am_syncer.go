@@ -139,8 +139,7 @@ func (e *SyncError) Unwrap() error { return e.Cause }
 // ReasonUnclassified for un-tagged errors — keeps metric label cardinality
 // bounded.
 func reasonOf(err error) SyncReason {
-	var se *SyncError
-	if errors.As(err, &se) {
+	if se, ok := errors.AsType[*SyncError](err); ok {
 		return se.Reason
 	}
 	return ReasonUnclassified
@@ -154,8 +153,7 @@ func ClassifySaveError(err error) *SyncError {
 		return nil
 	}
 	// Already classified — return as-is so we don't double-wrap.
-	var existing *SyncError
-	if errors.As(err, &existing) {
+	if existing, ok := errors.AsType[*SyncError](err); ok {
 		return existing
 	}
 	if errors.Is(err, ErrAlertmanagerMultipleExtraConfigsUnsupported.Base) {
