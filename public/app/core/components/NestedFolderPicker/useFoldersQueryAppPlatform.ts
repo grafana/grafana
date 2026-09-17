@@ -7,7 +7,6 @@ import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { isRootFolderUID } from 'app/features/search/constants';
-import { type DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { type ManagerKind } from '../../../features/apiserver/types';
@@ -39,7 +38,6 @@ export function useFoldersQueryAppPlatform({
   /* rootFolderUID: configure which folder to start browsing from */
   rootFolderUID,
   rootFolderItem,
-  folderFilter,
   permission,
 }: UseFoldersQueryProps) {
   const dispatch = useDispatch();
@@ -154,26 +152,22 @@ export function useFoldersQueryAppPlatform({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
-        const folderItem: DashboardViewItem = {
-          kind: 'folder',
-          title: item.title,
-          // We use resource name as UID because metadata.uid cannot be used to query the folder.
-          uid: name,
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          managedBy: item.managedBy?.kind as ManagerKind | undefined,
-          managerId: item.managedBy?.id,
-          parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
-        };
         const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
           disabled: item.name === sharedWithMeFolderToken,
-          item: folderItem,
+          item: {
+            kind: 'folder' as const,
+            title: item.title,
+            // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
+            // query by it.
+            uid: name,
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            managedBy: item.managedBy?.kind as ManagerKind | undefined,
+            managerId: item.managedBy?.id,
+            parentUID: isRootFolderUID(item.folder) ? undefined : item.folder,
+          },
         };
-
-        if (folderFilter && !folderFilter(folderItem)) {
-          return [];
-        }
 
         const childResponse = folderIsOpen && state.responseByParent[name];
         if (childResponse) {
@@ -204,7 +198,7 @@ export function useFoldersQueryAppPlatform({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, folderFilter]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
 
   return {
     emptyFolders,

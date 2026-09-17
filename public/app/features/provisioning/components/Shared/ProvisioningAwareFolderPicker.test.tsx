@@ -32,9 +32,11 @@ jest.mock('app/core/components/Select/FolderPicker', () => ({
       <div data-testid="filtered-uids">
         {JSON.stringify(
           [
+            { uid: 'repo1-folder', managedBy: ManagerKind.Repo, managerId: 'repo1' },
             { uid: 'active-repo-folder', managedBy: ManagerKind.Repo, managerId: 'folderless-repo' },
             { uid: 'other-repo-folder', managedBy: ManagerKind.Repo, managerId: 'other-repo' },
             { uid: 'unmanaged-folder' },
+            { uid: 'legacy-api-repo-folder', managedBy: ManagerKind.Repo },
           ]
             .filter((folder) => props.folderFilter?.(folder) ?? true)
             .map((folder) => folder.uid)
@@ -108,14 +110,13 @@ describe('ProvisioningAwareFolderPicker', () => {
       mockUseIsProvisionedInstance.mockReturnValue(false);
     });
 
-    it('should set root folder for repository context', () => {
+    it('should scope a managed-folder repository to its folder and only show folders it owns', () => {
       setup({ repoName: 'repo1' });
 
       expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('repo1');
       expect(screen.getByTestId('root-item-uid')).toHaveTextContent('repo1');
-      expect(screen.getByTestId('filtered-uids')).toHaveTextContent(
-        '["active-repo-folder","other-repo-folder","unmanaged-folder"]'
-      );
+      expect(screen.getByTestId('root-item-manager-id')).toHaveTextContent('repo1');
+      expect(screen.getByTestId('filtered-uids')).toHaveTextContent('["repo1-folder","legacy-api-repo-folder"]');
     });
 
     it('should browse folderless repositories from root and only show folders owned by that repository', () => {
@@ -135,7 +136,7 @@ describe('ProvisioningAwareFolderPicker', () => {
 
       setup({ repoName: 'folderless-repo' });
 
-      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('general');
+      expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('undefined');
       expect(screen.getByTestId('root-item-uid')).toBeEmptyDOMElement();
       expect(screen.getByTestId('root-item-title')).toHaveTextContent('Folderless Repository');
       expect(screen.getByTestId('root-item-manager-id')).toHaveTextContent('folderless-repo');
@@ -166,7 +167,7 @@ describe('ProvisioningAwareFolderPicker', () => {
 
       expect(screen.getByTestId('root-folder-uid')).toHaveTextContent('deleted-repo');
       expect(screen.getByTestId('filtered-uids')).toHaveTextContent(
-        '["active-repo-folder","other-repo-folder","unmanaged-folder"]'
+        '["repo1-folder","active-repo-folder","other-repo-folder","unmanaged-folder","legacy-api-repo-folder"]'
       );
     });
   });

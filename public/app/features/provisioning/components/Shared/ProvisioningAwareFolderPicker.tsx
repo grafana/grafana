@@ -7,9 +7,9 @@ import { type NestedFolderPickerProps } from 'app/core/components/NestedFolderPi
 import { getCustomRootFolderItem } from 'app/core/components/NestedFolderPicker/utils';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from '../../utils/managedResource';
 
 interface Props extends NestedFolderPickerProps {
   /* Repository name (uid) or undefined (when it's non-provisioned folder). This decides when to show only one provisioned folder */
@@ -25,19 +25,17 @@ export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, 
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
   const repositories = settingsData?.items;
 
-  const scope = useMemo<Scope>(() => {
-    const repositoryScope =
+  const repositoryScope = useMemo<Scope>(
+    () =>
       provisioningEnabled && !isProvisionedInstance && !showAllFolders
         ? getRepositoryScope(repositoryName, repositories ?? [])
-        : {};
+        : {},
+    [provisioningEnabled, isProvisionedInstance, showAllFolders, repositoryName, repositories]
+  );
 
-    return {
-      ...repositoryScope,
-      excludeUIDs: [...(repositoryScope.excludeUIDs ?? []), ...(props.excludeUIDs ?? [])],
-    };
-  }, [provisioningEnabled, isProvisionedInstance, showAllFolders, repositoryName, repositories, props.excludeUIDs]);
+  const excludeUIDs = [...(repositoryScope.excludeUIDs ?? []), ...(props.excludeUIDs ?? [])];
 
-  return <FolderPicker {...props} {...scope} />;
+  return <FolderPicker {...props} {...repositoryScope} excludeUIDs={excludeUIDs} />;
 }
 
 function getRepositoryScope(repositoryName: string | undefined, repositories: RepositoryView[]): Scope {
@@ -50,22 +48,20 @@ function getRepositoryScope(repositoryName: string | undefined, repositories: Re
     return { rootFolderUID: repositoryName };
   }
 
-  const isFolderless = repository.target === 'folderless';
-  const rootFolderItem = getCustomRootFolderItem({
-    title: repository.title,
-    managedBy: ManagerKind.Repo,
-    managerId: repository.name,
-    uid: isFolderless ? '' : repository.name,
-  });
-
-  if (isFolderless) {
-    // An explicit root hides team, starred, and shared-with-me virtual roots, which are not repository destinations.
-    return {
-      rootFolderUID: GENERAL_FOLDER_UID,
-      rootFolderItem,
-      folderFilter: (folder) => folder.managedBy === ManagerKind.Repo && folder.managerId === repository.name,
-    };
-  }
-
-  return { rootFolderUID: repository.name, rootFolderItem };
+  const rootFolderUID = repository.target === 'folderless' ? undefined : repository.name;
+  // The legacy folder API reports managedBy but not managerId. Inside the repository's own folder every
+  // managed child is its own, so a missing id is accepted there. Folderless browsing has no such fence.
+  const acceptMissingManagerId = rootFolderUID !== undefined;
+  return {
+    rootFolderUID,
+    rootFolderItem: getCustomRootFolderItem({
+      title: repository.title,
+      managedBy: ManagerKind.Repo,
+      managerId: repository.name,
+      uid: rootFolderUID ?? '',
+    }),
+    folderFilter: (folder) =>
+      isItemManagedByRepository(folder) &&
+      (folder.managerId === repository.name || (acceptMissingManagerId && folder.managerId === undefined)),
+  };
 }

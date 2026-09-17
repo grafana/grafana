@@ -50,7 +50,7 @@ export interface NestedFolderPickerProps {
   /* Custom root folder item, default is "Dashboards" */
   rootFolderItem?: DashboardsTreeItem;
 
-  /* Only show folders that match this predicate. The root and loading placeholders are always retained. */
+  /* Only show folders that match this predicate. Non-folder rows such as loading placeholders are kept. */
   folderFilter?: (folder: DashboardViewItem) => boolean;
 
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
@@ -141,7 +141,6 @@ export function NestedFolderPicker({
     permission,
     rootFolderUID,
     rootFolderItem,
-    folderFilter,
   });
 
   useEffect(() => {
@@ -258,11 +257,10 @@ export function NestedFolderPicker({
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
       const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
-      return filterExcludedItems(fullTree, excludeUIDs);
+      return filterItems(fullTree, excludeUIDs, folderFilter);
     } else {
-      const searchItems = folderFilter ? (searchResults?.items || []).filter(folderFilter) : searchResults?.items || [];
-      flatTree = searchItems.map((item) => ({ isOpen: false, level: 0, item }));
-      return filterExcludedItems(flatTree, excludeUIDs);
+      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
+      return filterItems(flatTree, excludeUIDs, folderFilter);
     }
   }, [
     browseFlatTree,
@@ -304,16 +302,20 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
+  // A custom root row is not a stored folder, so its label and badge come from the row itself.
+  const selectedRootItem =
+    rootFolderItem?.item.kind === 'folder' && value === rootFolderItem.item.uid ? rootFolderItem.item : undefined;
   let label = getSelectedFolderResult.data?.title;
   if (value === '') {
-    label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
+    // An empty row title falls back to the default label.
+    label = selectedRootItem?.title || t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
   // Display the folder name and provisioning status when the picker is closed
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={getSelectedFolderResult.data} canEdit={permission === 'edit'} />
+      <FolderRepo folder={selectedRootItem ?? getSelectedFolderResult.data} canEdit={permission === 'edit'} />
     </Stack>
   ) : (
     ''
@@ -577,11 +579,17 @@ function filterRootItem(items: DashboardsTreeItem[]) {
   return itemsFiltered;
 }
 
-function filterExcludedItems(items: DashboardsTreeItem[], excludeUIDs: string[] | undefined) {
-  if (excludeUIDs?.length) {
-    return items.filter((i) => !excludeUIDs?.includes(i.item.uid));
+function filterItems(
+  items: DashboardsTreeItem[],
+  excludeUIDs: string[] | undefined,
+  folderFilter: ((folder: DashboardViewItem) => boolean) | undefined
+) {
+  if (!excludeUIDs?.length && !folderFilter) {
+    return items;
   }
-  return items;
+  return items.filter(
+    ({ item }) => !excludeUIDs?.includes(item.uid) && (item.kind !== 'folder' || !folderFilter || folderFilter(item))
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

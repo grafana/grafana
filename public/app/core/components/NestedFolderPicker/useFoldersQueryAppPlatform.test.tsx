@@ -1,10 +1,7 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { act, renderHook } from 'test/test-utils';
 
-import { ManagerKind } from 'app/features/apiserver/types';
-
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
-import { getCustomRootFolderItem } from './utils';
 
 let mockSelectorResult: unknown;
 let mockDispatchResult = jest.fn();
@@ -80,42 +77,6 @@ describe('useFoldersQueryAppPlatform', () => {
 
     const repositoryRoot = result.current.items.find((treeItem) => treeItem.item.uid === 'repo-root');
     expect(repositoryRoot?.item).toMatchObject({ parentUID: undefined });
-  });
-
-  it('keeps the root and only folders owned by the selected repository', () => {
-    mockSelectorResult = {
-      isLoading: false,
-      responseByParent: {
-        general: {
-          status: QueryStatus.fulfilled,
-          data: {
-            hits: [
-              {
-                name: 'active-folder',
-                title: 'Active folder',
-                managedBy: { kind: ManagerKind.Repo, id: 'active-repo' },
-              },
-              { name: 'other-folder', title: 'Other folder', managedBy: { kind: ManagerKind.Repo, id: 'other-repo' } },
-              { name: 'unmanaged-folder', title: 'Unmanaged folder' },
-            ],
-          },
-        },
-      },
-    };
-
-    const rootFolderItem = getCustomRootFolderItem({ title: 'Active repository', uid: '' });
-    const { result } = renderHook(() =>
-      useFoldersQueryAppPlatform({
-        isBrowsing: true,
-        openFolders: {},
-        rootFolderUID: 'general',
-        rootFolderItem,
-        folderFilter: (folder) => folder.managedBy === ManagerKind.Repo && folder.managerId === 'active-repo',
-      })
-    );
-
-    expect(result.current.items.map(({ item }) => item.uid)).toEqual(['', 'active-folder']);
-    expect(result.current.items[0]).toEqual(rootFolderItem);
   });
 
   it('dispatches an app-platform search request when requestNextPage is called', () => {

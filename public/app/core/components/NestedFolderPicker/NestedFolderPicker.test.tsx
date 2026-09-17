@@ -6,7 +6,6 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 
@@ -225,27 +224,87 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByLabelText(folderC.item.title)).not.toBeInTheDocument();
   });
 
-  it('keeps a custom root selectable when browsing from general', async () => {
-    const rootFolderItem = getCustomRootFolderItem({ title: 'Folderless Repository', managedBy: ManagerKind.Repo });
+  it('applies the folder filter while browsing and keeps the owning root selectable', async () => {
+    setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
+
+    const rootFolderItem = getCustomRootFolderItem({
+      title: 'Infra dashboards',
+      managedBy: ManagerKind.Repo,
+      managerId: 'infra-dashboards',
+    });
+    const ownedFolder = {
+      isOpen: false,
+      level: 1,
+      item: {
+        kind: 'folder' as const,
+        uid: 'net-core',
+        title: 'Network core',
+        managedBy: ManagerKind.Repo,
+        managerId: 'infra-dashboards',
+      },
+    };
+    const otherRepositoryFolder = {
+      isOpen: false,
+      level: 1,
+      item: {
+        kind: 'folder' as const,
+        uid: 'billing',
+        title: 'Billing',
+        managedBy: ManagerKind.Repo,
+        managerId: 'finance-dashboards',
+      },
+    };
     useFoldersQueryMock.mockReturnValue({
       emptyFolders: new Set<string>(),
-      items: [rootFolderItem],
+      items: [
+        rootFolderItem,
+        ownedFolder,
+        otherRepositoryFolder,
+        { isOpen: false, level: 1, item: { kind: 'folder', uid: 'local', title: 'Local' } },
+        {
+          isOpen: false,
+          level: 1,
+          disabled: true,
+          item: { kind: 'folder', uid: 'sharedwithme', title: 'Shared with me' },
+        },
+      ],
       isLoading: false,
       error: undefined,
       requestNextPage: jest.fn(),
     });
+    const folderFilter = (folder: { managedBy?: ManagerKind; managerId?: string }) =>
+      folder.managedBy === ManagerKind.Repo && folder.managerId === 'infra-dashboards';
 
     const { user } = render(
-      <NestedFolderPicker rootFolderUID={GENERAL_FOLDER_UID} rootFolderItem={rootFolderItem} onChange={mockOnChange} />
+      <NestedFolderPicker rootFolderItem={rootFolderItem} folderFilter={folderFilter} onChange={mockOnChange} />
     );
 
     await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
+    expect(screen.getByLabelText('Network core')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Billing')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Local')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shared with me')).not.toBeInTheDocument();
 
-    await user.click(screen.getByLabelText('Folderless Repository'));
-    expect(mockOnChange).toHaveBeenCalledWith('', 'Folderless Repository');
+    await user.click(screen.getByLabelText('Infra dashboards'));
+    expect(mockOnChange).toHaveBeenCalledWith('', 'Infra dashboards');
+  });
+
+  it('labels a selected custom root with its own title', async () => {
+    config.provisioningEnabled = false;
+    const rootFolderItem = getCustomRootFolderItem({
+      title: 'Infra dashboards',
+      managedBy: ManagerKind.Repo,
+      managerId: 'infra-dashboards',
+    });
+
+    render(<NestedFolderPicker value="" rootFolderItem={rootFolderItem} onChange={mockOnChange} />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Select folder: Infra dashboards currently selected' })
+    ).toBeInTheDocument();
   });
 
   it('applies the folder filter to typed search results', async () => {
