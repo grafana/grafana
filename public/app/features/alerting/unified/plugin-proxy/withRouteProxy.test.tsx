@@ -1,9 +1,10 @@
-import { lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PageLoader } from '@grafana/ui';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
@@ -13,8 +14,8 @@ import {
 import { proxied } from './withRouteProxy';
 
 // Stands in for the real proxy chunk. The real one, for a URL Grafana keeps, renders the route's
-// own page — which is itself lazy and so suspends inside the proxy's boundary. That second wait is
-// what the last test here is about.
+// own page — which is itself lazy and so suspends too. That second wait is what the last test here
+// is about.
 jest.mock('./ProxiedAlertingRoute', () => ({
   withRouteProxyForPath: (_path: string, RoutePage: GrafanaRouteComponent) => RoutePage,
 }));
@@ -87,7 +88,14 @@ describe('proxied', () => {
     const PATH = '/alerting/silence/new';
     const ProxiedPage = proxied({ path: PATH, component: StillLoading }).component;
 
-    render(<ProxiedPage {...routeProps(PATH)} />);
+    // Standing in for GrafanaRoute, which wraps every route component in exactly this. The proxy
+    // deliberately doesn't add a boundary of its own, so without this there'd be nothing to catch
+    // the suspension.
+    render(
+      <Suspense fallback={<PageLoader />}>
+        <ProxiedPage {...routeProps(PATH)} />
+      </Suspense>
+    );
 
     expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument();
     expect(screen.queryByText('Redirecting…')).not.toBeInTheDocument();

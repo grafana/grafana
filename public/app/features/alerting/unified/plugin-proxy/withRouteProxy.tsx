@@ -6,12 +6,11 @@
  * about which URLs the plugin serves. Routes name themselves by calling `proxied()`, and the table
  * saying what to do with them lives in `proxies.ts`, fetched the first time someone opens one.
  */
-import { Suspense, lazy } from 'react';
+import { lazy } from 'react';
 
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getLogger } from '@grafana/runtime/unstable';
-import { PageLoader } from '@grafana/ui';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
@@ -41,17 +40,16 @@ function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
   // accepted to keep the proxy out of the boot bundle entirely. The chunk is small and shared by
   // every proxied route, so it costs one request per session.
   //
-  // The fallback is the same loader every other route shows, on purpose. This boundary covers two
-  // waits: fetching the table, and then the page's own chunk if the URL turns out to be one
-  // Grafana keeps. Most URLs on these routes are Grafana's own, so a "Redirecting…" notice here
-  // would tell the majority of people something that isn't happening to them. Once we know a
-  // redirect is coming, `ProxiedAlertingRoute` says so itself.
+  // That wait needs no Suspense boundary of its own: `GrafanaRoute` already wraps every route
+  // component in one, showing the same `PageLoader` every other route shows while it loads. Which
+  // is the right thing to show here — most URLs on these routes are Grafana's own and aren't going
+  // anywhere, so a "Redirecting…" notice would tell the majority of people something that isn't
+  // happening to them. Once we know a redirect is coming, `ProxiedAlertingRoute` says so itself.
+  //
+  // Named, and returned as a component rather than handing `LazyProxiedRoute` back directly, so
+  // the route table carries something `routes.test.tsx` can recognise as proxied.
   function MaybeProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
-    return (
-      <Suspense fallback={<PageLoader />}>
-        <LazyProxiedRoute {...props} />
-      </Suspense>
-    );
+    return <LazyProxiedRoute {...props} />;
   }
 
   return MaybeProxiedAlertingRoute;
