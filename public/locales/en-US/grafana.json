@@ -5930,6 +5930,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7361,6 +7362,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -11164,6 +11166,7 @@
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
+      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11223,6 +11226,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
+      "empty-selected-team": "No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
