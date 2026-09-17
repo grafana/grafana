@@ -82,7 +82,13 @@ class Parser {
     let v = this.logicalAnd();
     while (this.take('||')) {
       const r = this.logicalAnd();
-      v = this.truthy(v) || this.truthy(r) ? 1 : 0;
+      if (v == null || r == null) {
+        v = null;
+      } else if (Number.isNaN(Number(v)) || Number.isNaN(Number(r))) {
+        v = NaN;
+      } else {
+        v = this.truthy(v) || this.truthy(r) ? 1 : 0;
+      }
     }
     return v;
   }
@@ -90,7 +96,13 @@ class Parser {
     let v = this.equality();
     while (this.take('&&')) {
       const r = this.equality();
-      v = this.truthy(v) && this.truthy(r) ? 1 : 0;
+      if (v == null || r == null) {
+        v = null;
+      } else if (Number.isNaN(Number(v)) || Number.isNaN(Number(r))) {
+        v = NaN;
+      } else {
+        v = this.truthy(v) && this.truthy(r) ? 1 : 0;
+      }
     }
     return v;
   }
