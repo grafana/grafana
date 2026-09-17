@@ -47,8 +47,7 @@ type Options struct {
 }
 
 // Versions returns the versions the plugin serves, preferred version first.
-// Every version is renderable, including the settings version a manifest never
-// mentions.
+// Settings are included for legacy plugins and when the compatibility flag is enabled.
 func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error) {
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
@@ -65,9 +64,9 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 	}
 	return appplugin.NewAppPluginAPIBuilder(
 		plugin,
-		nil, // only used when serving health and resource subresource requests
+		offlinePluginClient{},
 		offlineClientV3{},
-		nil, // plugin context is only needed to call the backend
+		offlinePluginContext{},
 		nil, // no decrypter: reading secrets is a request time concern
 		appplugin.NewPluginAccessChecker(nil),
 		offlineSearchClient{},
@@ -93,6 +92,9 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 	// All served versions share the plugin's API group. A manifest can override
 	// the default group derived from the plugin ID.
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return nil, fmt.Errorf("plugin %s has no served versions", plugin.JSONData.ID)
+	}
 	group := gvs[0].Group
 	if version == "" {
 		version = gvs[0].Version

@@ -177,5 +177,4 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 	second := target.Backends()[0]
 	require.NotEqual(t, first.Key(), second.Key())
 	require.Len(t, dirty, 1)
-
 }

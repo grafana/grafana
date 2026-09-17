@@ -56,7 +56,15 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 	if len(gvks) > 0 {
 		s.AddExtension("x-kubernetes-group-version-kind", gvks)
 	}
-	return common.OpenAPIDefinition{Schema: s}
+	// Manifest post-processing adds metadata references even when no settings
+	// routes pull these schemas into the generated document.
+	return common.OpenAPIDefinition{
+		Schema: s,
+		Dependencies: []string{
+			v1.ObjectMeta{}.OpenAPIModelName(),
+			v1.ListMeta{}.OpenAPIModelName(),
+		},
+	}
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
