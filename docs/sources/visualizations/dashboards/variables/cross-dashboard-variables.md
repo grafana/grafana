@@ -34,7 +34,7 @@ For example, in the preceding image, there was a variable in the "Core metrics" 
 The following image shows a dashboard in the "Core metrics" folder.
 As a result, the variable in the "Core metrics" folder is available to that dashboard, as well as all the global variables:
 
-![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png)
+![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-xdash-variables-sidebar-v13.3.png)
 
 Variables in other folders aren't available to that dashboard.
 
