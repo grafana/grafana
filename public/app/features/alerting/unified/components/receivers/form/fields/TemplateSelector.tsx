@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useCopyToClipboard } from 'react-use';
 
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -16,6 +15,7 @@ import {
   Stack,
   Text,
   TextArea,
+  useCopyToClipboard,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -142,7 +142,7 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
   const [templateOption, setTemplateOption] = useState<TemplateFieldOption | undefined>(
     valueInFormIsCustom ? 'Custom' : 'Existing'
   );
-  const [_, copyToClipboard] = useCopyToClipboard();
+  const copyToClipboard = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
