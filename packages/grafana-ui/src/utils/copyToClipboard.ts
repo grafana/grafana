@@ -1,25 +1,30 @@
-type Ref = React.RefObject<HTMLElement | null>;
+import { type RefObject } from 'react';
+
+type Ref = RefObject<HTMLElement | null>;
 
 /**
  * Copies text to the clipboard using the Clipboard API or a fallback method.
  *
- * @param text The text to copy to the clipboard.
+ * @param text The text to copy, or a promise of it. A pending promise is passed on unresolved so the
+ * write is issued inside the click's user activation — Safari refuses one made after an `await`.
  * @param appendTo An optional ref used by the fallback method when the Clipboard API is not available.
- * @returns A promise that resolves when the copy operation completes.
+ * @returns A promise that rejects when the copy fails.
  */
-export function copyTextToClipboard(text: string, appendTo?: Ref): Promise<void> {
+export async function copyTextToClipboard(text: string | Promise<string>, appendTo?: Ref): Promise<void> {
   if (!navigator.clipboard || !window.isSecureContext) {
-    copyTextToClipboardFallback(text, appendTo);
-    return Promise.resolve();
+    copyTextToClipboardFallback(await text, appendTo);
+    return;
   }
 
   if (typeof ClipboardItem === 'undefined' || !navigator.clipboard.write) {
-    return navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(await text);
+    return;
   }
 
   const type = 'text/plain';
+  // Promise.resolve is identity for a native promise, so a pending one stays pending here.
   const clipboardItem = new ClipboardItem({ [type]: Promise.resolve(text) });
-  return navigator.clipboard.write([clipboardItem]);
+  await navigator.clipboard.write([clipboardItem]);
 }
 
 function copyTextToClipboardFallback(text: string, appendTo?: Ref) {
