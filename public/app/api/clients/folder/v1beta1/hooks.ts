@@ -5,6 +5,7 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
+import { useFlagKubernetesFolderCascadeDeleteAsync } from '@grafana/runtime/internal';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -295,10 +296,12 @@ export function useDeleteFolderMutationFacade() {
   const refresh = useRefreshFolders();
   const notify = useAppNotification();
 
-  // PoC: the app platform backend now supports async cascading delete (kubernetesFolderCascadeDeleteAsync,
-  // pkg/registry/apis/folders/cascade_delete_controller.go), so the previous "no cascade delete support"
-  // blocker no longer applies.
-  const isBackendSupport = true;
+  // PoC: the app platform backend now supports async cascading delete
+  // (pkg/registry/apis/folders/cascade_delete_controller.go), so the previous "no cascade delete
+  // support" blocker no longer applies -- but only when kubernetesFolderCascadeDeleteAsync is on.
+  // Gating on this flag specifically, rather than folding it into foldersAppPlatformAPI, keeps
+  // ordinary (non-PoC) folder deletes on the legacy path unaffected.
+  const isBackendSupport = useFlagKubernetesFolderCascadeDeleteAsync();
   if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
     return deleteFolderLegacy;
   }
@@ -325,10 +328,9 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const dispatch = useDispatch();
   const refresh = useRefreshFolders();
 
-  // PoC: the app platform backend now supports async cascading delete (kubernetesFolderCascadeDeleteAsync,
-  // pkg/registry/apis/folders/cascade_delete_controller.go), so the previous "no cascade delete support"
-  // blocker no longer applies.
-  const isBackendSupport = true;
+  // PoC: see useDeleteFolderMutationFacade above for why this is gated on
+  // kubernetesFolderCascadeDeleteAsync specifically, not just foldersAppPlatformAPI.
+  const isBackendSupport = useFlagKubernetesFolderCascadeDeleteAsync();
   if (!(config.featureToggles.foldersAppPlatformAPI && isBackendSupport)) {
     return deleteFoldersLegacy;
   }
