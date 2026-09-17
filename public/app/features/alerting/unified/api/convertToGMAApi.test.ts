@@ -60,8 +60,6 @@ describe('validateAlertmanagerConfigImport', () => {
     expect(headers[0].get('X-Grafana-Alerting-Config-Identifier')).toBe('prod');
   });
 
-  // Regression target for bugbot's "old API error hides YAML parse" finding: a local parse
-  // failure must never reach the network, and must surface its own friendly message.
   it('rejects invalid YAML locally without ever calling the backend', async () => {
     const getRequestCount = countRequests();
     const args = { source: 'yaml' as const, yamlFile: yamlFile(INVALID_YAML, 'broken.yaml'), configIdentifier: 'prod' };
@@ -73,9 +71,6 @@ describe('validateAlertmanagerConfigImport', () => {
     expect(getRequestCount()).toBe(0);
   });
 
-  // Regression target for bugbot's "stale dry-run re-enables Next" and "back-navigation clears
-  // valid dry-run" findings: two different signatures never share a cache entry, in either
-  // direction.
   it('keeps two different signatures in independent cache entries', async () => {
     server.use(
       http.post(CONVERT_URL, async ({ request }) => {

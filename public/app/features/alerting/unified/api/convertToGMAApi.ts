@@ -18,10 +18,8 @@ function fileSignature(file: File): string {
 }
 
 /**
- * A cache key built from stable, serializable fields instead of the raw args. `File` objects have
- * no own enumerable properties, so the default JSON.stringify-based key would collapse every
- * upload to the same `"{}"` — this is the mechanism that gives each distinct input its own
- * independent, isolated cache entry.
+ * Built from stable fields, not the raw args — `File` objects have no own enumerable properties,
+ * so JSON.stringify-ing them directly would collapse every upload to the same key.
  */
 function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertmanagerConfigImportArgs): string {
   const { source, yamlFile, templateFiles = [], datasourceName, configIdentifier } = queryArgs;
@@ -142,22 +140,14 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
     }),
 
     /**
-     * Interactive dry-run validation for the Import wizard's Step 1. Unlike `dryRunAlertmanagerConfig`
-     * (a plain mutation, still used as-is by the Settings promote-preview modal), this is a `query`
-     * keyed by a signature of the current inputs: an edit produces a new cache key (so a late response
-     * for an old input can never land on the current one), and revisiting an unchanged input serves the
-     * cached result instead of re-validating. See resolveAlertmanagerConfig for the async pre-work
-     * (reading the YAML file or fetching the datasource's config) done before the actual POST, which
-     * reuses `dryRunAlertmanagerConfig`'s own request URL/headers.
+     * Interactive Step 1 dry-run validation, keyed by a signature of the inputs so each edit gets
+     * its own isolated cache entry. Reuses `dryRunAlertmanagerConfig`'s request via `.initiate()`.
      */
     validateAlertmanagerConfigImport: build.query<ConvertAlertmanagerResponse, ValidateAlertmanagerConfigImportArgs>({
       serializeQueryArgs: ({ queryArgs, endpointName }) =>
         `${endpointName}(${serializeValidateAlertmanagerConfigImportArgs(queryArgs)})`,
-      // Explicit return type: without it, TypeScript can't infer `convertToGMAApi`'s type (needed
-      // below to dispatch its own `dryRunAlertmanagerConfig` endpoint) while still inferring the
-      // type of this very endpoint definition, which is itself part of `convertToGMAApi` — a
-      // circular dependency that surfaces as "implicitly has type 'any'" errors on `convertToGMAApi`
-      // and cascades into unrelated call sites (e.g. useImport.ts's `useDryRunNotifications`).
+      // Explicit return type breaks a circular reference: this queryFn dispatches convertToGMAApi's
+      // own dryRunAlertmanagerConfig endpoint, which TypeScript can't infer while still defining it.
       queryFn: async (
         args,
         { dispatch }
