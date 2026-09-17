@@ -755,6 +755,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Visa en historik över alla larmhändelser som genererats av dina Grafana-hanterade larmregler. Alla larmhändelser visas oavsett om tysta perioder eller tysta tidsintervall är inställda.",
         "notifications": "Visa en historik över alla aviseringar som skickats från dina Grafana-hanterade larmregler."
@@ -917,6 +920,7 @@
       "button-view": "Visa",
       "export-ariaLabel-export": "Exportera",
       "export-label-export": "Exportera",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Ta bort",
       "label-manage-permissions": "Hantera behörigheter",
       "tooltip-history": "Visa historiken över aviseringsförsök som gjorts till denna kontaktpunkt",
@@ -1481,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Laddar …"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Laddar …"
     },
@@ -1709,6 +1717,9 @@
         "pause-none": "Inga regler pausade",
         "pause-recording": "Inspelningsregler pausade",
         "policy-tree": "Policyträd",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Dirigering av aviseringar",
         "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
@@ -1770,14 +1781,17 @@
         "templates-duplicate": "Dubblerat mallfilsnamn: ”{{name}}”. Mallfilnamnen måste vara unika.",
         "templates-label": "Aviseringsmallar",
         "templates-remove": "Ta bort {{name}}",
-        "upload": "Ladda upp YAML-fil",
+        "upload": "",
         "validating": "Validerar konfiguration …",
         "validation-error": "Valideringen misslyckades",
         "validation-error-desc": "Det gick inte att validera konfigurationen.",
         "validation-success": "Valideringen lyckades",
         "validation-success-desc": "Inga konflikter hittades. Konfigurationen är redo att importeras.",
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter med befintliga resurser",
-        "yaml-file": "YAML för konfigurationen för Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML för konfigurationen för Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Datakälla",
@@ -3242,14 +3256,19 @@
         "action-disable": "Inaktivera synkonisering",
         "add-datasource-link": "Lägg till Mimir-datakälla",
         "badge-active": "Aktiv",
+        "badge-failing": "",
         "badge-not-configured": "Inte konfigurerat",
         "badge-operator-managed": "Hanteras av operatör",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Synkronisera kontinuerligt larmkonfiguration från en Mimir- eller Cortex Alertmanager-datakälla till Grafana.",
         "disable-confirm-action": "Inaktivera synkonisering",
         "disable-confirm-body": "Inaktivering kommer att stoppa kontinuerlig synkronisering från datakällan {{uid}}. Du kan aktivera den igen senare genom att välja en datakälla på nytt.",
         "disable-confirm-body-generic": "Inaktivering kommer att stoppa kontinuerlig synkronisering. Du kan aktivera den igen senare genom att välja en datakälla på nytt.",
         "disable-confirm-title": "Inaktivera automatisk synkronisering av Mimir Alertmanager?",
         "disable-success": "Automatisk synkronisering av Mimir Alertmanager har inaktiverats",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Detta värde ställs in av nyckeln <1>[unified_alerting] external_alertmanager_uid</1> i grafana.ini och kan inte ändras från användargränssnittet. Redigera konfigurationsfilen och starta om Grafana, eller ta bort nyckeln om du vill hantera synkronisering härifrån.",
@@ -3268,6 +3287,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Konfiguration av automatisk synkronisering"
       },
       "import": {
@@ -3305,6 +3325,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -4606,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Lägg till README",
-      "edit-tooltip": "Redigera README",
+      "edit-doc-tooltip": "",
       "empty-message": "Lägg till en README för att beskriva vad som finns i den här mappen och var du hittar de rätta instrumentpanelerna.",
       "load-error-retry": "Försök igen",
-      "load-error-title": "Det gick inte att ladda README",
-      "parse-error": "Det gick inte att visa README-innehåll."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Rensa historik",
@@ -5739,15 +5765,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Flytta {{typeName}}",
-      "panel-background": "Ändra panelbakgrund",
-      "panel-description": "Ändra panelbeskrivning",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Paneländringar",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-preset": "Tillämpa panelförinställning",
       "panel-repeat-direction": "Upprepa riktning",
       "panel-repeat-variable": "Panelupprepning efter",
-      "panel-title": "Ändra paneltitel",
+      "panel-title": "",
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "row-title": "Ändra radtitel",
@@ -6702,6 +6728,10 @@
       },
       "title-delete": "Radera {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Rensa sökningen",
       "no-transformations-found": "Inga omvandlingar hittades",
@@ -6752,6 +6782,12 @@
     "view-panel": {
       "back-to-dashboard": "Tillbaka till instrumentpanelen",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7760,6 +7796,9 @@
         "title": "Ändringar som inte sparats"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Är det inte det du letar efter? Visa <2>andra föreslagna instrumentpaneler</2> eller <6>skapa en från grunden</6>.",
       "title": "Du visar {{title}}"
@@ -8014,6 +8053,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Spara ändringarna",
       "save-button-disabled-tooltip": "Åtgärda valideringsfel innan du sparar",
       "save-button-disabled-tooltip-yaml": "Dokumentet innehåller valideringsfel. Byt till JSON för att se detaljerad felinformation i texten.",
@@ -8640,6 +8680,16 @@
       "title-table": "Tabell",
       "title-traces": "Spår"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8691,7 +8741,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Länk",
-      "open-value-in": "Öppna värde i"
+      "open-value-in": "Öppna värde i",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9175,6 +9226,10 @@
       "aria-label-copy": "Kopiera till urklippet",
       "attribute-plugin-promo": {
         "learn-more": "Läs mer"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Observerbarhet för databaser visar visuella förklaringsplaner, väntningshändelser och frågeexempel – vilket hjälper dig att diagnostisera problem bortom spårningens intervall.",
@@ -11405,9 +11460,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12209,6 +12262,10 @@
     "team-not-found": "[Okänt team]",
     "unknown-error": "Okänt fel"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
   },
@@ -12541,6 +12598,10 @@
     "authentication": {
       "title": "Autentisering"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bokmärken"
     },
@@ -12747,6 +12808,7 @@
       "title": "Registrerade frågor"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapportering"
     },
     "saved-queries": {
@@ -12761,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Sök instrumentpaneler"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Visa inställningarna som definierats i Grafana-konfigurationen",
@@ -13112,9 +13178,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -16625,6 +16689,7 @@
       "tooltip-bold": "Fet",
       "tooltip-bullet-list": "Punktlista",
       "tooltip-checklist": "Checklista",
+      "tooltip-diagram": "",
       "tooltip-heading": "Rubrik",
       "tooltip-insert-variable": "Infoga variabel",
       "tooltip-italic": "Kursiv",
@@ -16639,7 +16704,13 @@
       "label": ""
     },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16860,6 +16931,10 @@
       "bar-stacked": "Stapeldiagram – staplat",
       "bar-stacked-percent": "Stapeldiagram – staplat efter procent",
       "line": "Linjediagram"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Lägg till tidszon",

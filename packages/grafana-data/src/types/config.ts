@@ -156,7 +156,6 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconNam
  */
 export interface AnalyticsSettings {
   identifier: string;
-  intercomIdentifier?: string;
 }
 
 /**
@@ -309,7 +308,6 @@ export interface GrafanaConfig {
   rendererDefaultImageScale: number;
   dashboardPerformanceMetrics: string[];
   panelSeriesLimit: number;
-  reportRenderQueryGracePeriodMs: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID: string;
   rootFolderUID: string;

@@ -1,9 +1,10 @@
 import { assertIsDefined } from 'test/helpers/asserts';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import { sharedWithMeFolder, wellFormedDashboard } from '../fixtures/dashboardsTreeItem.fixture';
 import { SelectionState } from '../types';
@@ -26,12 +27,18 @@ describe('browse-dashboards DashboardsTree', () => {
   const isSelected = () => SelectionState.Unselected;
   const allItemsAreLoaded = () => true;
   const requestLoadMore = () => Promise.resolve();
+  let originalProvisioningEnabled: boolean;
 
   beforeAll(() => {
     config.sharedWithMeFolderUID = 'sharedwithme';
   });
 
+  beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+  });
+
   afterEach(() => {
+    config.provisioningEnabled = originalProvisioningEnabled;
     // Reset permissions back to defaults
     Object.assign(mockPermissions, {
       canEditFolders: true,
@@ -180,6 +187,55 @@ describe('browse-dashboards DashboardsTree', () => {
     );
 
     expect(screen.getByText(folder.item.title)).toBeInTheDocument();
+  });
+
+  it('shows repository badges only on managed root rows', () => {
+    config.provisioningEnabled = false;
+    const repositoryRoot = {
+      ...folder,
+      item: {
+        ...folder.item,
+        uid: 'repo-root',
+        title: 'Repository root',
+        managedBy: ManagerKind.Repo,
+        managerId: 'repo-1',
+        parentUID: undefined,
+      },
+    };
+    const repositoryChild = {
+      ...folder,
+      item: {
+        ...folder.item,
+        uid: 'repo-child',
+        title: 'Repository child',
+        managedBy: ManagerKind.Repo,
+        managerId: 'repo-1',
+        parentUID: repositoryRoot.item.uid,
+      },
+      level: repositoryRoot.level + 1,
+      parentUID: repositoryRoot.item.uid,
+    };
+
+    render(
+      <DashboardsTree
+        permissions={mockPermissions}
+        items={[repositoryRoot, repositoryChild]}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onTagClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
+      />
+    );
+
+    const rootRow = screen.getByTestId(selectors.pages.BrowseDashboards.table.row(repositoryRoot.item.title));
+    const childRow = screen.getByTestId(selectors.pages.BrowseDashboards.table.row(repositoryChild.item.title));
+    expect(within(rootRow).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(within(childRow).queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('renders a folder link', () => {

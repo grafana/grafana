@@ -765,6 +765,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Możesz sprawdzać historię wszystkich zdarzeń związanych z alertami wygenerowanych na podstawie reguł alertów zarządzanych przez Grafanę. Wyświetlane są wszystkie zdarzenia alertów niezależnie od tego, czy ustawiono okresy lub harmonogramy wyciszenia.",
         "notifications": "Przeglądaj historię wszystkich powiadomień wysłanych na podstawie reguł alertów zarządzanych przez Grafanę."
@@ -927,6 +930,7 @@
       "button-view": "Wyświetl",
       "export-ariaLabel-export": "Eksportuj",
       "export-label-export": "Eksport",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Usuń",
       "label-manage-permissions": "Zarządzaj uprawnieniami",
       "tooltip-history": "Wyświetl historię prób wysłania powiadomień do tego punktu kontaktu",
@@ -1495,6 +1499,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Ładowanie…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Ładowanie…"
     },
@@ -1723,6 +1731,9 @@
         "pause-none": "Żadne reguły nie zostały wstrzymane",
         "pause-recording": "Reguły rejestracji zostały wstrzymane",
         "policy-tree": "Drzewo zasad",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Przekierowywanie powiadomień",
         "routing-none": "Nie wybrano drzewa zasad",
         "routing-tree": "Drzewo zasad: {{name}}",
@@ -1786,14 +1797,17 @@
         "templates-duplicate": "Zduplikowana nazwa pliku szablonu: „{{name}}”. Nazwy plików szablonów muszą być unikalne.",
         "templates-label": "Szablony powiadomień",
         "templates-remove": "Usuń: {{name}}",
-        "upload": "Prześlij plik YAML",
+        "upload": "",
         "validating": "Weryfikowanie konfiguracji…",
         "validation-error": "Weryfikacja się nie powiodła",
         "validation-error-desc": "Nie udało się zweryfikować poprawności konfiguracji.",
         "validation-success": "Weryfikacja się powiodła",
         "validation-success-desc": "Nie znaleziono konfliktów. Konfiguracja jest gotowa do zaimportowania.",
         "validation-warning": "Nazwy niektórych zasobów zostaną zmienione, aby uniknąć konfliktów z istniejącymi zasobami.",
-        "yaml-file": "Kod YAML konfiguracji menedżera alertów"
+        "yaml-desc": "",
+        "yaml-file": "Kod YAML konfiguracji menedżera alertów",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Źródło danych",
@@ -3288,14 +3302,19 @@
         "action-disable": "Wyłącz synchronizację",
         "add-datasource-link": "Dodaj źródło danych Mimir",
         "badge-active": "Aktywny",
+        "badge-failing": "",
         "badge-not-configured": "Nie skonfigurowano",
         "badge-operator-managed": "Zarządzane przez operatora",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Ciągle synchronizuj z Grafaną konfigurację alertów ze źródła danych Mimir lub menedżera alertów Cortex.",
         "disable-confirm-action": "Wyłącz synchronizację",
         "disable-confirm-body": "Wyłączenie zatrzyma ciągłą synchronizację ze źródła danych {{uid}}. Możesz ją włączyć później, ponownie wybierając źródło danych.",
         "disable-confirm-body-generic": "Wyłączenie spowoduje zatrzymanie ciągłej synchronizacji. Możesz ją włączyć później, ponownie wybierając źródło danych.",
         "disable-confirm-title": "Wyłączyć automatyczną synchronizację menedżera alertów Mimir?",
         "disable-success": "Automatyczna synchronizacja menedżera alertów Mimir wyłączona",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Ta wartość jest ustawiana przez klucz <1>[unified_alerting] external_alertmanager_uid</1> w pliku grafana.ini i nie można jej zmienić z poziomu interfejsu użytkownika. Edytuj plik konfiguracyjny i uruchom ponownie Grafanę lub usuń klucz, aby zarządzać synchronizacją z tego miejsca.",
@@ -3314,6 +3333,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Konfiguracja automatycznej synchronizacji"
       },
       "import": {
@@ -3351,6 +3371,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -4682,11 +4704,15 @@
     },
     "readme": {
       "add-readme": "Dodaj plik README",
-      "edit-tooltip": "Edytuj plik README",
+      "edit-doc-tooltip": "",
       "empty-message": "Dodaj plik README, aby opisać, co znajduje się w tym folderze i gdzie można znaleźć odpowiednie pulpity.",
       "load-error-retry": "Spróbuj ponownie",
-      "load-error-title": "Nie udało się wczytać pliku README",
-      "parse-error": "Nie można wyświetlić zawartości pliku README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Wyczyść historię",
@@ -5823,15 +5849,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "Przenieś {{typeName}}",
-      "panel-background": "Zmień tło panelu",
-      "panel-description": "Zmień opis panelu",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "Zmiany panelu",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "Maks. liczba powtórzeń na wiersz",
       "panel-preset": "Zastosuj ustawienia wstępne panelu",
       "panel-repeat-direction": "Powtórz kierunek",
       "panel-repeat-variable": "Powtórz panel wg",
-      "panel-title": "Zmień tytuł panelu",
+      "panel-title": "",
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "row-title": "Zmień tytuł wiersza",
@@ -6788,6 +6814,10 @@
       },
       "title-delete": "Usunąć: {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "Wyczyść wyszukiwanie",
       "no-transformations-found": "Nie znaleziono transformacji",
@@ -6840,6 +6870,12 @@
     "view-panel": {
       "back-to-dashboard": "Wróć do pulpitu",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7854,6 +7890,9 @@
         "title": "Niezapisane zmiany"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "Szukasz czegoś innego? Zobacz <2>inne sugerowane pulpity</2> lub <6>utwórz pulpit od podstaw</6>.",
       "title": "Obecnie wyświetlane: {{title}}"
@@ -8110,6 +8149,7 @@
       "title-label": "Tytuł"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "Zapisz zmiany",
       "save-button-disabled-tooltip": "Przed zapisaniem napraw błędy wykryte podczas weryfikacji",
       "save-button-disabled-tooltip-yaml": "Dokument zawiera błędy weryfikacji. Przełącz na format JSON, aby zobaczyć szczegóły błędów w tekście.",
@@ -8738,6 +8778,16 @@
       "title-table": "Tabela",
       "title-traces": "Ślady"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8789,7 +8839,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "Link",
-      "open-value-in": "Otwórz wartość w:"
+      "open-value-in": "Otwórz wartość w:",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9281,6 +9332,10 @@
       "aria-label-copy": "Kopiuj do schowka",
       "attribute-plugin-promo": {
         "learn-more": "Dowiedz się więcej"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Obserwowalność bazy danych ujawnia wizualne plany wyjaśnień, zdarzenia oczekiwania i próbki zapytań, pomagając w diagnozowaniu problemów wykraczających poza zakresy śledzenia.",
@@ -11547,11 +11602,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_one": "",
-        "stats-sources_few": "",
-        "stats-sources_many": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12385,6 +12436,10 @@
     "team-not-found": "[Nieznany zespół]",
     "unknown-error": "Nieznany błąd"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nie znaleziono opcji"
   },
@@ -12717,6 +12772,10 @@
     "authentication": {
       "title": "Uwierzytelnienie"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Zakładki"
     },
@@ -12923,6 +12982,7 @@
       "title": "Zarejestrowane zapytania"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Raportowanie"
     },
     "saved-queries": {
@@ -12937,6 +12997,10 @@
     },
     "search-dashboards": {
       "title": "Wyszukaj pulpity"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Wyświetl ustawienia zdefiniowane w konfiguracji usługi Grafana",
@@ -13294,9 +13358,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -16871,6 +16933,7 @@
       "tooltip-bold": "Pogrubiona",
       "tooltip-bullet-list": "Lista punktowana",
       "tooltip-checklist": "Lista kontrolna",
+      "tooltip-diagram": "",
       "tooltip-heading": "Nagłówek",
       "tooltip-insert-variable": "Wstaw zmienną",
       "tooltip-italic": "Kursywa",
@@ -16885,7 +16948,13 @@
       "label": ""
     },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -17106,6 +17175,10 @@
       "bar-stacked": "Wykres słupkowy – skumulowany",
       "bar-stacked-percent": "Wykres słupkowy – skumulowany procentowo",
       "line": "Wykres liniowy"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Dodaj strefę czasową",

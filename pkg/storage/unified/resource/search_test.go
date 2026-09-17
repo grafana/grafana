@@ -681,6 +681,15 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
+// Asserts both halves, so requiring the feature — which rebuilds every existing
+// index — cannot happen by accident.
+func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, IndexFeaturesForNewIndex(false), IndexFeatureStoredResourceVersion)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
+	}
+}
+
 // One index keeping deleted documents must not change what every other index
 // records.
 func TestIndexFeaturesForNewIndexLeavesCurrentAlone(t *testing.T) {
@@ -1772,6 +1781,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-vector-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
@@ -1796,6 +1806,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-hybrid-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
