@@ -15,7 +15,7 @@
  */
 import { parseArgs } from 'node:util';
 
-import { generateClients } from './lib.ts';
+import { generateClients } from './generateClients.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
