@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -307,15 +308,14 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 }
 
 // buildNotebooksNavLink returns the top-level Notebooks section, or nil when the feature is off
-// or the user cannot read dashboards. Notebooks reuse dashboard RBAC actions, so an unscoped
-// dashboards:read is what grants access to the list page; the apiserver then filters the list
-// down to the notebooks the user may actually see.
+// or the user cannot read notebooks. An unscoped notebooks:read is what grants access to the list
+// page; the apiserver then filters the list down to the notebooks the user may actually see.
 func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
 	if !c.IsSignedIn {
 		return nil
 	}
 
-	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
 		return nil
 	}
 
