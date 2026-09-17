@@ -24,15 +24,21 @@ const (
 // discovery is not advertised at all. The static provider serves the
 // [feature_toggles] ini flags on Grafana's own root OFREP route
 // (/ofrep/v1/evaluate/flags), so the Grafana app URL is advertised instead.
+// Any other provider type advertises nothing: the app URL is only known to
+// serve flags for the static provider.
 func (cfg *PluginInstanceCfg) openFeatureProviderURL() string {
 	of := cfg.OpenFeature
-	if of.ProviderType == setting.FeaturesServiceProviderType || of.ProviderType == setting.OFREPProviderType {
+	switch of.ProviderType {
+	case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
 		if of.URL == nil {
 			return ""
 		}
 		return of.URL.String()
+	case setting.StaticProviderType:
+		return cfg.GrafanaAppURL
+	default:
+		return ""
 	}
-	return cfg.GrafanaAppURL
 }
 
 // openFeatureCacheTTLSeconds returns the advisory evaluation cache TTL as an

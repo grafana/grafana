@@ -670,6 +670,24 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 		})
 	})
 
+	t.Run("Unknown provider type advertises nothing", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://myorg.com/"
+		cfg.OpenFeature = setting.OpenFeatureSettings{
+			ProviderType: "some-future-provider",
+			CacheTTL:     time.Minute,
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		m := p.PluginRequestConfig(context.Background(), "", nil)
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_URL")
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE")
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CACHE_TTL")
+	})
+
 	t.Run("Remote provider URL is passed through", func(t *testing.T) {
 		u, err := url.Parse("http://features.example.com:1031")
 		require.NoError(t, err)
