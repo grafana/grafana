@@ -15136,7 +15136,7 @@
     },
     "public-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
       "public-ack": "I understand that this entire dashboard will be public.*",
