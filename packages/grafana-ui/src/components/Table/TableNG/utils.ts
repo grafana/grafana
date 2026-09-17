@@ -354,9 +354,21 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   };
 }
 
-const PILLS_FONT_SIZE = 12;
-const PILLS_SPACING = 12; // 6px horizontal padding on each side
-const PILLS_GAP = 4; // gap between pills
+const getPillMetrics = (theme?: GrafanaTheme2) => {
+  if (!theme) {
+    throw new Error('A theme is required to measure pill cells');
+  }
+
+  const refreshed = theme.flags.visualDesignRefresh;
+  const fontSize = refreshed ? theme.typography.size.xs : theme.typography.size.sm;
+  const horizontalPadding = refreshed ? theme.spacing.x1 : theme.spacing(0.75);
+
+  return {
+    fontSize: extractPixelValue(fontSize),
+    spacing: 2 * extractPixelValue(horizontalPadding),
+    gap: extractPixelValue(theme.spacing(0.5)),
+  };
+};
 
 // Fuzzy chrome estimates for the other inline-run cell types (see measureInlineRunWidth). Used only
 // for auto-width sizing, so approximate values that slightly over-reserve are fine.
@@ -365,7 +377,11 @@ const LINK_GAP = 2; // separator border between inline data links
 const ACTION_SPACING = 20; // horizontal padding of a small action Button
 const ACTION_GAP = 6; // theme.spacing(0.75) gap between action buttons
 
-export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
+export function getPillCellHeightMeasurer(
+  measureWidth: (value: string) => number,
+  spacing: number,
+  gap: number
+): MeasureCellHeight {
   // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
   // appears in many rows) and across column widths, so a resize never re-measures pill text.
   const pillWidthCache: Record<string, number> = {};
@@ -391,7 +407,7 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
           rawWidth = measureWidth(strPill);
           pillWidthCache[strPill] = rawWidth;
         }
-        return rawWidth + PILLS_SPACING;
+        return rawWidth + spacing;
       });
       pillWidthsByValue.set(strValue, pillWidths);
     }
@@ -405,17 +421,17 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
     let lines = 0;
     let currentLineUse = width;
     for (const pillWidth of pillWidths) {
-      if (currentLineUse + pillWidth + PILLS_GAP > width) {
+      if (currentLineUse + pillWidth + gap > width) {
         lines++;
         currentLineUse = pillWidth;
       } else {
-        currentLineUse += pillWidth + PILLS_GAP;
+        currentLineUse += pillWidth + gap;
       }
     }
 
     // default line height happens to be the height of a pill, but maybe we need a custom
     // const here to make sure this doesn't get out of sync with the actual pill height.
-    return lines * lineHeight + (lines - 1) * PILLS_GAP;
+    return lines * lineHeight + (lines - 1) * gap;
   };
 }
 
@@ -451,6 +467,7 @@ const spaceRegex = /[\s-]/;
 export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
+  theme: GrafanaTheme2,
   maxHeight?: number
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
@@ -465,14 +482,16 @@ export function buildCellHeightMeasurers(
     [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
     // pills use a different font size, so they require their own typography context.
     [TableCellDisplayMode.Pill]: () => {
+      const { fontSize, spacing, gap } = getPillMetrics(theme);
       const pillTypographyCtx = createTypographyContext(
-        PILLS_FONT_SIZE,
+        fontSize,
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
-      // kerned whole-string width, deliberately: the pill measurer lays pills out itself rather than
-      // handing the text to the line counter, so a pill is as wide as the browser draws it.
-      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
+      return [
+        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width, spacing, gap),
+        undefined,
+      ];
     },
   } as const;
 
@@ -1313,6 +1332,7 @@ export interface ContentAwareColWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
+  theme?: GrafanaTheme2;
   /**
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
@@ -1525,6 +1545,7 @@ interface ColWidthMeasureCtx {
   typographyCtx: TypographyCtx;
   /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
   getActions?: GetActionsFunctionLocal;
+  theme?: GrafanaTheme2;
 }
 
 /**
@@ -1541,16 +1562,20 @@ const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 // fixed default reads better than the graphical default.
 const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
-const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureInlineRunWidth(
-    sampleIndices(field.values.length, sampleSize),
-    // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
-    // value mappings/units are reflected. formatCellValue falls back to String() with no display.
-    (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
-    typographyCtx.avgCharWidth,
-    PILLS_SPACING,
-    PILLS_GAP
-  ) + CELL_HORIZONTAL_CHROME;
+const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, theme }) => {
+  const { spacing, gap } = getPillMetrics(theme);
+  return (
+    measureInlineRunWidth(
+      sampleIndices(field.values.length, sampleSize),
+      // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
+      // value mappings/units are reflected. formatCellValue falls back to String() with no display.
+      (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
+      typographyCtx.avgCharWidth,
+      spacing,
+      gap
+    ) + CELL_HORIZONTAL_CHROME
+  );
+};
 
 const measureDataLinksColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureInlineRunWidth(
@@ -1666,6 +1691,7 @@ export function computeContentAwareColWidths(
     hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
+    theme,
     filter,
     sampleSize,
     noPanelPadding = false,
@@ -1695,7 +1721,7 @@ export function computeContentAwareColWidths(
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
