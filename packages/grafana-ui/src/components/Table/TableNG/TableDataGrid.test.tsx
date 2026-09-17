@@ -5,6 +5,7 @@ import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@graf
 import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
   return {
@@ -120,7 +121,8 @@ describe('TableDataGrid', () => {
 
     it.each([
       { tableRefreshEnabled: true, hasFooter: false, transparent: false, role: 'grid' as const, omitLastBorder: true },
-      { tableRefreshEnabled: true, hasFooter: true, transparent: true, role: 'grid' as const, omitLastBorder: true },
+      { tableRefreshEnabled: false, hasFooter: false, transparent: true, role: 'grid' as const, omitLastBorder: true },
+      { tableRefreshEnabled: false, hasFooter: true, transparent: true, role: 'grid' as const, omitLastBorder: true },
       {
         tableRefreshEnabled: false,
         hasFooter: false,
@@ -139,6 +141,7 @@ describe('TableDataGrid', () => {
       'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, transparent=$transparent, role=$role',
       ({ tableRefreshEnabled, hasFooter, transparent, role, omitLastBorder }) => {
         const theme = createTheme();
+        const edgeClasses = `${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`;
         const { container } = render(
           <TableDataGrid
             {...makeProps({
@@ -147,7 +150,15 @@ describe('TableDataGrid', () => {
               transparent,
               role,
               enableVirtualization: false,
-              columns: [{ key: 'value', name: 'Value', renderSummaryCell: () => 'Total' }],
+              columns: [
+                {
+                  key: 'value',
+                  name: 'Value',
+                  cellClass: edgeClasses,
+                  summaryCellClass: edgeClasses,
+                  renderSummaryCell: () => 'Total',
+                },
+              ],
               rows: [
                 { __index: 12, __depth: 0, value: 'First' },
                 { __index: 3, __depth: 0, value: 'Last' },
@@ -170,12 +181,19 @@ describe('TableDataGrid', () => {
         expect(window.getComputedStyle(lastCell).borderBlockEnd === 'none').toBe(omitLastBorder);
         if (hasFooter) {
           expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
+        }
+        if (transparent) {
           const gridRule = getGridStyleRule();
           expect(gridRule?.style.getPropertyValue('border-block-end')).toBe(
             `1px solid ${theme.components.table.border}`
           );
           expect(gridRule?.style.getPropertyValue('border-end-start-radius')).toBe('var(--table-header-corner-radius)');
           expect(gridRule?.style.getPropertyValue('border-end-end-radius')).toBe('var(--table-header-corner-radius)');
+          expect(screen.getByRole('gridcell', { name: hasFooter ? 'Total' : 'Last' })).toHaveStyle({
+            borderEndStartRadius: 'var(--table-header-corner-radius)',
+            borderEndEndRadius: 'var(--table-header-corner-radius)',
+            overflow: 'hidden',
+          });
         }
       }
     );

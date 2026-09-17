@@ -124,6 +124,14 @@ export const getGridStyles = memoize(
           borderBlockEnd: `1px solid ${table.border}`,
           borderEndStartRadius: cornerRadius,
           borderEndEndRadius: cornerRadius,
+          [`.rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+            borderEndStartRadius: cornerRadius,
+            overflow: 'hidden',
+          },
+          [`.rdg-bottom-summary-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+            borderEndEndRadius: cornerRadius,
+            overflow: 'hidden',
+          },
         }),
 
         '.rdg-cell': {
@@ -191,6 +199,14 @@ export const getGridStyles = memoize(
           },
         },
 
+        ...((tableRefreshEnabled || transparent) && {
+          // The footer's top border separates it from the rows. Its bottom border would duplicate
+          // the transparent grid frame, or leave an extra line along a refreshed opaque table.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: 'none',
+          },
+        }),
+
         // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
           // The header cells' own rounded corners (below) leave the area outside the radius
@@ -234,12 +250,6 @@ export const getGridStyles = memoize(
             insetInlineEnd: 0,
             background: `radial-gradient(circle at 0 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
-          // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
-          // draws a hairline along the table's own bottom edge with nothing below it to divide.
-          // Its top border (`--rdg-summary-border-*`) still separates it from the rows above.
-          '.rdg-bottom-summary-row > .rdg-cell': {
-            borderBlockEnd: 'none',
-          },
         }),
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
@@ -258,6 +268,16 @@ export const getGridStyles = memoize(
       }),
       lastRow: css({
         '& > .rdg-cell': { borderBlockEnd: 'none' },
+        ...(transparent && {
+          [`& > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+            borderEndStartRadius: cornerRadius,
+            overflow: 'hidden',
+          },
+          [`& > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+            borderEndEndRadius: cornerRadius,
+            overflow: 'hidden',
+          },
+        }),
       }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no

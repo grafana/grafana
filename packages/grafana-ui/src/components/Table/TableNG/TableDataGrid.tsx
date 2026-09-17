@@ -191,7 +191,7 @@ export function TableDataGrid({
         rowClass={(row, rowIdx) =>
           clsx(
             rowClass?.(row, rowIdx),
-            tableRefreshEnabled && role === 'grid' && rowIdx === rows.length - 1 && styles.lastRow
+            (tableRefreshEnabled || transparent) && role === 'grid' && rowIdx === rows.length - 1 && styles.lastRow
           )
         }
         rowKeyGetter={rowKeyGetter}
