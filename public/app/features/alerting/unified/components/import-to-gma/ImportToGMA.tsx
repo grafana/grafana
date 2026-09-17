@@ -36,6 +36,7 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
@@ -57,7 +58,7 @@ import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
-import { PreviewRedactionError, redactPreviewSecrets } from './redactPreviewSecrets';
+import { PreviewRedactionError, buildSecretFieldMap, redactPreviewSecrets } from './redactPreviewSecrets';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { type DryRunValidationResult } from './types';
@@ -895,6 +896,16 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [isLoadingRules, setIsLoadingRules] = useState(false);
 
+  // Fetch integration type schemas to build the secret field map for redaction
+  const { data: schemas, isLoading: schemasLoading, error: schemasError } = useIntegrationTypeSchemas();
+  const secretFieldMap = useMemo(() => buildSecretFieldMap(schemas ?? []), [schemas]);
+  // Shown whenever content can't be safely redacted, whether the schema fetch failed or the
+  // content itself failed to parse — computed once and reused by both preview handlers below.
+  const redactionErrorMessage = t(
+    'alerting.import-to-gma.preview.redaction-error',
+    'This configuration could not be safely previewed and was not displayed.'
+  );
+
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
@@ -914,23 +925,26 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     setShowNotificationsPreview(true);
 
     try {
+      // Fail closed if schema fetch failed — don't read/fetch any raw content at all
+      if (schemasError) {
+        setNotificationsPreviewContent(redactionErrorMessage);
+        return;
+      }
+
       let content = '';
       if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
         const rawContent = await formData.notificationsYamlFile.text();
-        content = redactPreviewSecrets(rawContent, 'yaml');
+        content = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
       } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
         const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
         const rawContent = JSON.stringify(config.alertmanager_config, null, 2);
-        content = redactPreviewSecrets(rawContent, 'json');
+        content = redactPreviewSecrets(rawContent, 'json', secretFieldMap);
       }
       setNotificationsPreviewContent(content);
     } catch (err) {
       setNotificationsPreviewContent(
         err instanceof PreviewRedactionError
-          ? t(
-              'alerting.import-to-gma.preview.redaction-error',
-              'This configuration could not be safely previewed and was not displayed.'
-            )
+          ? redactionErrorMessage
           : t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
               error: err instanceof Error ? err.message : String(err),
             })
@@ -938,7 +952,14 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     } finally {
       setIsLoadingNotifications(false);
     }
-  }, [formData.notificationsSource, formData.notificationsYamlFile, formData.notificationsDatasourceName]);
+  }, [
+    formData.notificationsSource,
+    formData.notificationsYamlFile,
+    formData.notificationsDatasourceName,
+    schemasError,
+    secretFieldMap,
+    redactionErrorMessage,
+  ]);
 
   // Load rules preview content
   const handlePreviewRules = useCallback(async () => {
@@ -946,24 +967,27 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     setShowRulesPreview(true);
 
     try {
+      // Fail closed if schema fetch failed — don't read/fetch any raw content at all
+      if (schemasError) {
+        setRulesPreviewContent(redactionErrorMessage);
+        return;
+      }
+
       let content = '';
       if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
         const rawContent = await formData.rulesYamlFile.text();
-        content = redactPreviewSecrets(rawContent, 'yaml');
+        content = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
       } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
         // Apply filters if set
         const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
         const rawContent = JSON.stringify(filteredConfig, null, 2);
-        content = redactPreviewSecrets(rawContent, 'json');
+        content = redactPreviewSecrets(rawContent, 'json', secretFieldMap);
       }
       setRulesPreviewContent(content);
     } catch (err) {
       setRulesPreviewContent(
         err instanceof PreviewRedactionError
-          ? t(
-              'alerting.import-to-gma.preview.redaction-error',
-              'This configuration could not be safely previewed and was not displayed.'
-            )
+          ? redactionErrorMessage
           : t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
               error: err instanceof Error ? err.message : String(err),
             })
@@ -971,7 +995,16 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     } finally {
       setIsLoadingRules(false);
     }
-  }, [formData.rulesSource, formData.rulesYamlFile, formData.namespace, formData.ruleGroup, rulesFromDatasource]);
+  }, [
+    formData.rulesSource,
+    formData.rulesYamlFile,
+    formData.namespace,
+    formData.ruleGroup,
+    rulesFromDatasource,
+    schemasError,
+    secretFieldMap,
+    redactionErrorMessage,
+  ]);
 
   // Calculate rules count
   const rulesCount = useMemo(() => {
@@ -1032,6 +1065,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                     size="sm"
                     icon="eye"
                     onClick={handlePreviewNotifications}
+                    disabled={schemasLoading}
                     aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
                   >
                     {t('alerting.import-to-gma.review.preview', 'Preview')}
@@ -1075,6 +1109,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                     size="sm"
                     icon="eye"
                     onClick={handlePreviewRules}
+                    disabled={schemasLoading}
                     aria-label={t('alerting.import-to-gma.review.preview-rules-aria', 'Preview alert rules')}
                   >
                     {t('alerting.import-to-gma.review.preview', 'Preview')}

@@ -1,10 +1,17 @@
-import { PreviewRedactionError, redactPreviewSecrets } from './redactPreviewSecrets';
+import {
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type NotifierType,
+  type NotifierVersion,
+} from '../../types/alerting';
+
+import { PreviewRedactionError, buildSecretFieldMap, redactPreviewSecrets } from './redactPreviewSecrets';
 
 describe('redactPreviewSecrets', () => {
   it('round-trips YAML content that contains no secret-shaped fields', () => {
     const yaml = `route:\n  receiver: default\nreceivers:\n  - name: default\n`;
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
 
     expect(result).toContain('receiver: default');
     expect(result).toContain('name: default');
@@ -13,7 +20,7 @@ describe('redactPreviewSecrets', () => {
   it('round-trips JSON content that contains no secret-shaped fields', () => {
     const json = JSON.stringify({ route: { receiver: 'default' }, receivers: [{ name: 'default' }] }, null, 2);
 
-    const result = redactPreviewSecrets(json, 'json');
+    const result = redactPreviewSecrets(json, 'json', {});
     const parsedResult = JSON.parse(result);
 
     expect(parsedResult).toEqual({ route: { receiver: 'default' }, receivers: [{ name: 'default' }] });
@@ -35,8 +42,11 @@ receivers:
 global:
   smtp_auth_password: hunter2wayTooSimpleButStillAKey123
 `;
+    const secretFieldMap = {
+      email_configs: new Set(['auth_password']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('Sup3rSecretMultilineValue123');
     expect(result).not.toContain('hunter2wayTooSimpleButStillAKey123');
@@ -56,8 +66,11 @@ receivers:
         note: xK9pL2vQz8mN4rT6wY1cB3dF5gH7jA0s
         label: normal-label-that-is-quite-long-but-plain-english-words
 `;
+    const secretFieldMap = {
+      slack_configs: new Set(['api_url']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('XXXXXXXXXXXXXXXXXXXXXXXX');
     expect(result).not.toContain('AbCdEfGh12345678');
@@ -83,8 +96,12 @@ receivers:
       null,
       2
     );
+    const secretFieldMap = {
+      pagerduty_configs: new Set(['routing_key']),
+      webhook_configs: new Set(['url']),
+    };
 
-    const result = redactPreviewSecrets(json, 'json');
+    const result = redactPreviewSecrets(json, 'json', secretFieldMap);
     const parsedResult = JSON.parse(result);
 
     expect(result).not.toContain('abcdef0123456789abcdef0123456789');
@@ -95,7 +112,7 @@ receivers:
   it('fails closed on malformed input instead of returning raw content', () => {
     const malformedYaml = 'root:\n\tchild: value';
 
-    expect(() => redactPreviewSecrets(malformedYaml, 'yaml')).toThrow(PreviewRedactionError);
+    expect(() => redactPreviewSecrets(malformedYaml, 'yaml', {})).toThrow(PreviewRedactionError);
   });
 
   it('redacts a non-string value under a known secret key name', () => {
@@ -104,7 +121,7 @@ global:
   smtp_auth_password: 20260916
 `;
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
 
     expect(result).not.toContain('20260916');
     expect(result).toContain('<redacted>');
@@ -118,8 +135,11 @@ receivers:
       - url: https://user:S3cr3tTok3n123@hooks.example.com/notify
       - url: https://hooks.example.com/notify?token=S3cr3tTok3n123
 `;
+    const secretFieldMap = {
+      webhook_configs: new Set(['url']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('S3cr3tTok3n123');
   });
@@ -135,8 +155,11 @@ receivers:
             type: Bearer
             credentials: dXNlcjpwYXNzMTIz==
 `;
+    const secretFieldMap = {
+      webhook_configs: new Set(['http_config.authorization.credentials']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('dXNlcjpwYXNzMTIz==');
   });
@@ -149,8 +172,11 @@ receivers:
       - user_key: a1b2c3d4e5f6
         title: Incident notice
 `;
+    const secretFieldMap = {
+      pushover_configs: new Set(['user_key']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('a1b2c3d4e5f6');
     expect(result).toContain('title: Incident notice');
@@ -165,7 +191,7 @@ receivers:
         url: https://example.com/link-to-incident
 `;
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
 
     expect(result).toContain('https://example.com/link-to-incident');
   });
@@ -177,8 +203,11 @@ receivers:
     webhook_configs:
       - url: https://hooks.example.com/notify
 `;
+    const secretFieldMap = {
+      webhook_configs: new Set(['url']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('https://hooks.example.com/notify');
   });
@@ -198,7 +227,7 @@ receivers:
                 - public-label
 `;
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
 
     expect(result).not.toContain('shortsecret1');
     expect(result).toContain('public-label');
@@ -222,7 +251,7 @@ receivers:
               -----END PRIVATE KEY-----
 `;
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
 
     expect(result).not.toContain('FAKE-TEST-FIXTURE-NOT-A-REAL-KEY-0000000000000000000000');
     expect(result).toContain('FAKE-TEST-FIXTURE-NOT-A-REAL-CERT-0000000000000000000000');
@@ -239,10 +268,379 @@ receivers:
             client_id: my-client
             client_certificate_key: FAKE-CLIENT-CERT-KEY-PLACEHOLDER
 `;
+    const secretFieldMap = {
+      webhook_configs: new Set(['http_config.oauth2.client_certificate_key']),
+    };
 
-    const result = redactPreviewSecrets(yaml, 'yaml');
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
 
     expect(result).not.toContain('FAKE-CLIENT-CERT-KEY-PLACEHOLDER');
     expect(result).toContain('client_id: my-client');
+  });
+});
+
+describe('redactPreviewSecrets — schema map and override precedence', () => {
+  it('redacts a field marked secure in the SecretFieldMap', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    slack_configs:
+      - api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # trufflehog:ignore
+        channel: '#alerts'
+`;
+    const secretFieldMap = {
+      slack_configs: new Set(['api_url']),
+    };
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('XXXXXXXXXXXXXXXXXXXXXXXX');
+    expect(result).toContain("channel: '#alerts'");
+  });
+
+  it('redacts bearer_token under http_config even with an empty SecretFieldMap', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    slack_configs:
+      - channel: '#alerts'
+        http_config:
+          bearer_token: s3cr3tBearerT0k3n123456789012
+`;
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('s3cr3tBearerT0k3n123456789012');
+    expect(result).toContain("channel: '#alerts'");
+  });
+
+  it('redacts tls_config.key even with an empty SecretFieldMap', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          tls_config:
+            key: |
+              -----BEGIN PRIVATE KEY-----
+              FAKE-TEST-FIXTURE-NOT-A-REAL-KEY-0000000000000000000000
+              -----END PRIVATE KEY-----
+`;
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('FAKE-TEST-FIXTURE-NOT-A-REAL-KEY-0000000000000000000000');
+  });
+
+  it('redacts http_headers secrets even with an empty SecretFieldMap', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          http_headers:
+            X-Api-Key:
+              secrets:
+                - mysecretapikey123456789
+              values:
+                - public-label
+`;
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('mysecretapikey123456789');
+    expect(result).toContain('public-label');
+  });
+
+  it('redacts proxy_connect_header values even with an empty SecretFieldMap', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          proxy_connect_header:
+            Proxy-Authorization:
+              - Basic dXNlcjpwYXNzd29yZA==
+`;
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('Basic dXNlcjpwYXNzd29yZA==');
+  });
+
+  it('redacts global.slack_api_url even with an empty SecretFieldMap', () => {
+    const yaml = `
+global:
+  slack_api_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX  # trufflehog:ignore
+  resolve_timeout: 5m
+`;
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).not.toContain('XXXXXXXXXXXXXXXXXXXXXXXX');
+    expect(result).toContain('resolve_timeout: 5m');
+  });
+
+  it('redacts a low-entropy global.wechat_api_secret', () => {
+    const yaml = `
+global:
+  wechat_api_secret: plainsecret
+  resolve_timeout: 5m
+`;
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('plainsecret');
+    expect(result).toContain('resolve_timeout: 5m');
+  });
+
+  it('redacts a low-entropy global.http_config.basic_auth.password', () => {
+    const yaml = `
+global:
+  http_config:
+    basic_auth:
+      username: monitoring
+      password: plainpassword
+`;
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('plainpassword');
+    expect(result).toContain('username: monitoring');
+  });
+
+  it('redacts a low-entropy global.http_config.authorization.credentials', () => {
+    const yaml = `
+global:
+  http_config:
+    authorization:
+      type: Bearer
+      credentials: plaincredentials
+`;
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('plaincredentials');
+    expect(result).toContain('type: Bearer');
+  });
+
+  it('redacts a low-entropy global.http_config.oauth2.client_secret', () => {
+    const yaml = `
+global:
+  http_config:
+    oauth2:
+      client_id: monitoring
+      client_secret: plainclientsecret
+      token_url: https://example.com/oauth/token
+`;
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('plainclientsecret');
+    expect(result).toContain('client_id: monitoring');
+    expect(result).toContain('https://example.com/oauth/token');
+  });
+
+  it('does NOT redact url_file by key name (intentional drop of _file fields)', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url_file: /etc/secrets/token
+        url: https://hooks.example.com/notify
+`;
+    // url_file is removed from the redaction list as a _file field that Grafana rejects at import anyway
+    const secretFieldMap = {};
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).toContain('/etc/secrets/token');
+  });
+
+  it('redacts webhook_configs url but NOT pushover_configs url via receiver-key scoping', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    pushover_configs:
+      - user_key: a1b2c3d4e5f6
+        url: https://example.com/incident/123
+    webhook_configs:
+      - url: https://hooks.example.com/notify/S3cr3tTok3n1234567890
+`;
+    // Only webhook_configs.url is secret, pushover_configs.url is not
+    const secretFieldMap = {
+      webhook_configs: new Set(['url']),
+    };
+
+    const result = redactPreviewSecrets(yaml, 'yaml', secretFieldMap);
+
+    expect(result).toContain('https://example.com/incident/123'); // pushover url stays
+    expect(result).not.toContain('S3cr3tTok3n1234567890'); // webhook url redacted
+  });
+});
+
+// Minimal factories for the buildSecretFieldMap tests below — fill in the required-but-irrelevant
+// schema.Field/NotifierVersion/NotifierDTO boilerplate so each test can express just the
+// propertyName/secure/subformOptions shape it actually cares about, with no `as` cast needed.
+function testField(
+  propertyName: string,
+  overrides: Partial<NotificationChannelOption> = {}
+): NotificationChannelOption {
+  return {
+    element: 'input',
+    inputType: 'text',
+    label: '',
+    description: '',
+    placeholder: '',
+    propertyName,
+    required: false,
+    validationRule: '',
+    showWhen: { field: '', is: '' },
+    dependsOn: '',
+    secure: false,
+    ...overrides,
+  };
+}
+
+function testVersion(version: string, options: NotificationChannelOption[]): NotifierVersion {
+  return { version, label: '', description: '', options };
+}
+
+function testSchema(type: NotifierType, versions: NotifierVersion[]): NotifierDTO {
+  return { type, name: '', description: '', heading: '', versions };
+}
+
+describe('buildSecretFieldMap', () => {
+  it('builds a secret field map from schemas with secure fields', () => {
+    const schemas = [
+      testSchema('slack', [testVersion('v0mimir1', [testField('api_url', { secure: true }), testField('channel')])]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    expect(result.slack_configs).toBeDefined();
+    expect(result.slack_configs.has('api_url')).toBe(true);
+    expect(result.slack_configs.has('channel')).toBe(false);
+  });
+
+  it('correctly handles nested secure fields under subforms', () => {
+    const schemas = [
+      testSchema('webhook', [
+        testVersion('v0mimir1', [
+          testField('url'),
+          testField('http_config', {
+            subformOptions: [
+              testField('basic_auth', {
+                subformOptions: [testField('username'), testField('password', { secure: true })],
+              }),
+            ],
+          }),
+        ]),
+      ]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    expect(result.webhook_configs).toBeDefined();
+    expect(result.webhook_configs.has('http_config.basic_auth.password')).toBe(true);
+    expect(result.webhook_configs.has('http_config.basic_auth.username')).toBe(false);
+  });
+
+  it('handles the teams schema correctly with both v0mimir1 and v0mimir2 versions (regression test)', () => {
+    const schemas = [
+      testSchema('teams', [
+        testVersion('v0mimir1', [testField('webhook_url', { secure: true })]),
+        testVersion('v0mimir2', [testField('title'), testField('client_secret', { secure: true })]),
+      ]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    // Both receiver keys should be present
+    expect(result.msteams_configs).toBeDefined();
+    expect(result.msteamsv2_configs).toBeDefined();
+
+    // msteams_configs (v0mimir1) should have webhook_url
+    expect(result.msteams_configs.has('webhook_url')).toBe(true);
+
+    // msteamsv2_configs (v0mimir2) should have client_secret but not title
+    expect(result.msteamsv2_configs.has('client_secret')).toBe(true);
+    expect(result.msteamsv2_configs.has('title')).toBe(false);
+  });
+
+  it('skips schema types not in the legacy version mapping', () => {
+    const schemas = [testSchema('oncall', [testVersion('v0mimir1', [testField('integration_url', { secure: true })])])];
+
+    const result = buildSecretFieldMap(schemas);
+
+    // oncall is not in LEGACY_VERSION_TO_RECEIVER_KEY, so no entry should be added
+    expect(result.oncall_configs).toBeUndefined();
+    expect(Object.keys(result).length).toBe(0);
+  });
+
+  it('does not recurse into subforms of a secure field', () => {
+    const schemas = [
+      testSchema('slack', [
+        testVersion('v0mimir1', [
+          testField('some_secret', {
+            secure: true,
+            subformOptions: [testField('nested_public'), testField('nested_private', { secure: true })],
+          }),
+          testField('channel'),
+        ]),
+      ]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    // The secure field itself is added, but its subform is not traversed
+    expect(result.slack_configs.has('some_secret')).toBe(true);
+    expect(result.slack_configs.has('some_secret.nested_public')).toBe(false);
+    expect(result.slack_configs.has('some_secret.nested_private')).toBe(false);
+  });
+
+  it('handles multiple nested levels correctly', () => {
+    const schemas = [
+      testSchema('email', [
+        testVersion('v0mimir1', [
+          testField('smtp_config', {
+            subformOptions: [
+              testField('auth', {
+                subformOptions: [
+                  testField('oauth2', { subformOptions: [testField('client_secret', { secure: true })] }),
+                ],
+              }),
+            ],
+          }),
+        ]),
+      ]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    expect(result.email_configs.has('smtp_config.auth.oauth2.client_secret')).toBe(true);
+  });
+
+  it('collects multiple secure paths from the same schema', () => {
+    const schemas = [
+      testSchema('pagerduty', [
+        testVersion('v0mimir1', [
+          testField('routing_key', { secure: true }),
+          testField('service_key', { secure: true }),
+          testField('description'),
+        ]),
+      ]),
+    ];
+
+    const result = buildSecretFieldMap(schemas);
+
+    expect(result.pagerduty_configs.has('routing_key')).toBe(true);
+    expect(result.pagerduty_configs.has('service_key')).toBe(true);
+    expect(result.pagerduty_configs.has('description')).toBe(false);
+    expect(result.pagerduty_configs.size).toBe(2);
   });
 });
