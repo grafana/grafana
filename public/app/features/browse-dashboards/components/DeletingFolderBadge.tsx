@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
 import { refetchChildren } from '../state/actions';
-import { itemCascadeDeleteFinished } from '../state/slice';
+import { itemCascadeDeleteFinished, itemCascadeDeleteStarted } from '../state/slice';
 
 import { CascadeDeleteIndicator } from './CascadeDeleteIndicator';
 
@@ -32,6 +32,22 @@ export function DeletingFolderBadge({ folderUID, parentUID }: Props) {
 
   const isGone = isFetchError(error) && error.status === 404;
   const isStillDeleting = Boolean(data?.metadata?.deletionTimestamp);
+
+  // If this folder's own children happen to already be loaded (the user has it expanded), mark
+  // them as cascade-deleting too, purely for visual effect: the backend cascades this folder's
+  // *own* direct children independently of whatever the frontend is watching, so there's no
+  // per-child confirmation to wait for here -- this just lets DeletingFolderBadge/
+  // DeletingDashboardBadge render on those rows too instead of them just sitting there unchanged
+  // until the parent's own row disappears.
+  const childItems = useSelector((state) => state.browseDashboards.childrenByParentUID[folderUID]?.items);
+  useEffect(() => {
+    if (!isStillDeleting || !childItems) {
+      return;
+    }
+    for (const child of childItems) {
+      dispatch(itemCascadeDeleteStarted(child.uid));
+    }
+  }, [isStillDeleting, childItems, dispatch]);
 
   useEffect(() => {
     // Either the folder is truly gone (404) or it came back without a deletionTimestamp

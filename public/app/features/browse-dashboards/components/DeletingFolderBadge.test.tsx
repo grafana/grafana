@@ -2,6 +2,8 @@ import { render, screen } from 'test/test-utils';
 
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+
 import { DeletingFolderBadge } from './DeletingFolderBadge';
 
 // `refetchChildren` is a real thunk that hits the search service, which isn't set up in this
@@ -93,5 +95,31 @@ describe('DeletingFolderBadge', () => {
     render(<DeletingFolderBadge folderUID="folder-1" />);
 
     expect(screen.queryByText('Deleting')).not.toBeInTheDocument();
+  });
+
+  it("marks this folder's already-loaded children as cascade-deleting too, for visual effect", () => {
+    mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ data: makeFolder() }));
+
+    const { store } = render(<DeletingFolderBadge folderUID="folder-1" />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: undefined,
+          childrenByParentUID: {
+            'folder-1': fullyLoadedViewItemCollection([
+              { kind: 'folder', uid: 'child-folder', title: 'Child folder' },
+              { kind: 'dashboard', uid: 'child-dashboard', title: 'Child dashboard' },
+            ]),
+          },
+          openFolders: {},
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          cascadeDeletingUIDs: {},
+        },
+      },
+    });
+
+    expect(store?.getState().browseDashboards.cascadeDeletingUIDs).toEqual({
+      'child-folder': true,
+      'child-dashboard': true,
+    });
   });
 });

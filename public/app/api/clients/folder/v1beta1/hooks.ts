@@ -315,6 +315,12 @@ export function useDeleteFolderMutationFacade() {
   return async function deleteFolder(folder: FolderDTO) {
     const result = await deleteFolderMutation({ name: folder.uid });
     if (!result.error) {
+      // trackCascadeDeleteIfStarted does its own network round-trip (a GET to check
+      // deletionTimestamp), so it must be awaited *before* refresh() below -- otherwise refresh's
+      // own refetch can resolve first and strip the row out of the list before cascadeDeletingUIDs
+      // is set, with nothing left for the ghost-row preservation in refetchChildrenFulfilled to key
+      // off of.
+      await trackCascadeDeleteIfStarted(folder.uid);
       // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
       // here and so it seemed easier to do it here.
       refresh({ childrenOf: folder.parentUid });
@@ -322,7 +328,6 @@ export function useDeleteFolderMutationFacade() {
       // public/app/core/services/backend_srv.ts#L341-L361. New API does not do that so we do it here.
       notify.success(t('folders.api.folder-deleted-success', 'Folder deleted'));
       invalidateQuotaUsage(dispatch);
-      await trackCascadeDeleteIfStarted(folder.uid);
     }
     return result;
   };
