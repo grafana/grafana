@@ -1,12 +1,15 @@
 package setting
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKVLeaseTTLBounds(t *testing.T) {
@@ -562,6 +565,35 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
 	})
+}
+
+func TestVectorAllowedInternalCollectionsOverrides(t *testing.T) {
+	for _, tc := range []struct {
+		name, config, envValue string
+		setEnv                 bool
+		want                   []string
+	}{
+		{name: "omitted defaults to dashboards", want: []string{"dashboard.grafana.app/dashboards"}},
+		{name: "explicit empty custom ini", config: "vector_allowed_internal_collections =\n"},
+		{name: "empty environment overrides custom ini", config: "vector_allowed_internal_collections = dashboard.grafana.app/dashboards\n", setEnv: true},
+		{name: "environment overrides empty custom ini", config: "vector_allowed_internal_collections =\n", setEnv: true,
+			envValue: " dashboard.grafana.app/dashboards, folder.grafana.app/folders ", want: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			envKey := EnvKey("unified_storage", vectorAllowedInternalCollectionsKey)
+			t.Setenv(envKey, tc.envValue)
+			if !tc.setEnv {
+				require.NoError(t, os.Unsetenv(envKey))
+			}
+			config := filepath.Join(t.TempDir(), "custom.ini")
+			require.NoError(t, os.WriteFile(config, []byte("[unified_storage]\n"+tc.config), 0600))
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: config}))
+			assert.Equal(t, tc.want, cfg.VectorAllowedInternalCollections)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, tc.want, cfg.VectorAllowedInternalCollections)
+		})
+	}
 }
 
 func TestStorageServicesEnabled(t *testing.T) {

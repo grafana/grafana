@@ -12,6 +12,13 @@ import (
 // Consumers preserve existing vectors and continue processing other resources.
 var ErrSkip = errors.New("skip embedding extraction")
 
+// BuilderProvider returns one immutable builder snapshot per enrolled resource.
+// Consumers request a new snapshot to observe manifest reloads.
+type BuilderProvider interface {
+	Builders() ([]Builder, error)
+	Has(group, resource string) bool
+}
+
 // Item is one chunk of a resource ready to be embedded.
 type Item struct {
 	UID         string          // resource UID (e.g. dashboard UID)

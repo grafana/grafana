@@ -1347,7 +1347,8 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 
 	for _, section := range userConfig.Sections() {
 		for _, key := range section.Keys() {
-			if key.Value() == "" {
+			// Empty enrollment explicitly disables the default internal collection.
+			if key.Value() == "" && !(section.Name() == "unified_storage" && key.Name() == vectorAllowedInternalCollectionsKey) {
 				continue
 			}
 
