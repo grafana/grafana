@@ -12,3 +12,7 @@ export const MIN_WIDTH_FOR_SPLIT_VIEW = 800;
 export const MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS = 1100;
 export const TOP_TABLE_COLUMN_WIDTH = 120;
 export const FLAMEGRAPH_CONTAINER_HEIGHT = 800;
+
+// Label that profiling data sources (e.g. Pyroscope) use for the node aggregating all stacktraces that were
+// truncated when the configured node/sample limit was reached.
+export const OTHER_LABEL = 'other';
