@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -70,12 +72,14 @@ func TestSearch(t *testing.T) {
 }
 
 func TestVectorSearch(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDashboardVectorSearch)
+
 	newHandler := func(client *MockClient) SearchHandler {
 		return SearchHandler{
 			log:      log.New("test", "test"),
 			client:   client,
 			tracer:   tracing.NewNoopTracerService(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+			features: featuremgmt.WithFeatures(),
 		}
 	}
 
@@ -165,30 +169,17 @@ func TestVectorSearch(t *testing.T) {
 			assert.Equal(t, wantStatus, rr.Result().StatusCode, "grpc code %s", code)
 		}
 	})
-
-	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
-		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
-			h := SearchHandler{features: features}
-			for _, route := range h.GetAPIRoutes(nil).Namespace {
-				if route.Path == "search/vector" {
-					return true
-				}
-			}
-			return false
-		}
-
-		assert.False(t, hasVectorRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
-		assert.True(t, hasVectorRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
-	})
 }
 
 func TestHybridSearch(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDashboardVectorSearch)
+
 	newHandler := func(client *MockClient) SearchHandler {
 		return SearchHandler{
 			log:      log.New("test", "test"),
 			client:   client,
 			tracer:   tracing.NewNoopTracerService(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+			features: featuremgmt.WithFeatures(),
 		}
 	}
 
@@ -312,21 +303,133 @@ func TestHybridSearch(t *testing.T) {
 		rr := doRequest(newHandler(mockClient), "query=")
 		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
 	})
+}
 
-	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
-		hasHybridRoute := func(features featuremgmt.FeatureToggles) bool {
-			h := SearchHandler{features: features}
-			for _, route := range h.GetAPIRoutes(nil).Namespace {
-				if route.Path == "search/hybrid" {
-					return true
+func TestSemanticSearchRoutes(t *testing.T) {
+	for _, features := range []featuremgmt.FeatureToggles{nil, featuremgmt.WithFeatures()} {
+		handler := SearchHandler{features: features}
+		paths := make([]string, 0)
+		for _, route := range handler.GetAPIRoutes(nil).Namespace {
+			paths = append(paths, route.Path)
+		}
+		assert.Contains(t, paths, "search/vector")
+		assert.Contains(t, paths, "search/hybrid")
+	}
+}
+
+func TestSemanticSearchFeatureFlag(t *testing.T) {
+	for _, endpoint := range []struct {
+		name   string
+		handle func(*SearchHandler, http.ResponseWriter, *http.Request)
+	}{
+		{name: "vector", handle: (*SearchHandler).DoVectorSearch},
+		{name: "hybrid", handle: (*SearchHandler).DoHybridSearch},
+	} {
+		t.Run(endpoint.name, func(t *testing.T) {
+			doRequest := func(handler *SearchHandler, namespace string) *httptest.ResponseRecorder {
+				req := httptest.NewRequest(http.MethodGet, "/search/"+endpoint.name+"?query=cpu", nil)
+				ctx := identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: namespace})
+				ctx = openfeature.WithTransactionContext(ctx, openfeature.NewEvaluationContext(namespace, map[string]any{
+					"namespace": namespace,
+					"slug":      "test-stack",
+				}))
+				rr := httptest.NewRecorder()
+				endpoint.handle(handler, rr, req.WithContext(ctx))
+				return rr
+			}
+
+			failEvaluation := func(_ memprovider.InMemoryFlag, _ openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+				return true, openfeature.ProviderResolutionDetail{
+					ResolutionError: openfeature.NewGeneralResolutionError("evaluation failed"),
 				}
 			}
-			return false
-		}
+			for _, tc := range []struct {
+				name  string
+				flags map[string]memprovider.InMemoryFlag
+			}{
+				{
+					name: "disabled",
+					flags: map[string]memprovider.InMemoryFlag{
+						featuremgmt.FlagDashboardVectorSearch: {
+							Key:            featuremgmt.FlagDashboardVectorSearch,
+							DefaultVariant: "disabled",
+							Variants:       map[string]any{"disabled": false},
+						},
+					},
+				},
+				{name: "missing"},
+				{
+					name: "provider error",
+					flags: map[string]memprovider.InMemoryFlag{
+						featuremgmt.FlagDashboardVectorSearch: {
+							Key:              featuremgmt.FlagDashboardVectorSearch,
+							ContextEvaluator: &failEvaluation,
+						},
+					},
+				},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(tc.flags)))
+					t.Cleanup(func() {
+						_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+					})
 
-		assert.False(t, hasHybridRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
-		assert.True(t, hasHybridRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
-	})
+					client := &MockClient{}
+					handler := NewSearchHandler(tracing.NewNoopTracerService(), client, featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch))
+					rr := doRequest(handler, "stacks-1")
+
+					assert.Equal(t, http.StatusNotFound, rr.Code)
+					assert.Zero(t, client.VectorSearchCallCount)
+					assert.Zero(t, client.HybridSearchCallCount)
+					assert.Zero(t, client.CallCount)
+				})
+			}
+
+			t.Run("uses tenant context and current flag value on every request", func(t *testing.T) {
+				enabled := false
+				var observedContext openfeature.FlattenedContext
+				evaluate := func(_ memprovider.InMemoryFlag, flatCtx openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+					observedContext = flatCtx
+					return enabled && flatCtx[openfeature.TargetingKey] == "stacks-1", openfeature.ProviderResolutionDetail{}
+				}
+				require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+					featuremgmt.FlagDashboardVectorSearch: {
+						Key:              featuremgmt.FlagDashboardVectorSearch,
+						ContextEvaluator: &evaluate,
+					},
+				})))
+				t.Cleanup(func() {
+					_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+				})
+
+				client := &MockClient{
+					VectorSearchResponse: &resourcepb.VectorSearchResponse{},
+					HybridSearchResponse: &resourcepb.HybridSearchResponse{},
+				}
+				handler := NewSearchHandler(tracing.NewNoopTracerService(), client, featuremgmt.WithFeatures())
+				for _, step := range []struct {
+					enabled   bool
+					namespace string
+					status    int
+				}{
+					{enabled: false, namespace: "stacks-1", status: http.StatusNotFound},
+					{enabled: true, namespace: "stacks-1", status: http.StatusOK},
+					{enabled: true, namespace: "stacks-2", status: http.StatusNotFound},
+					{enabled: false, namespace: "stacks-1", status: http.StatusNotFound},
+				} {
+					enabled = step.enabled
+					rr := doRequest(handler, step.namespace)
+
+					assert.Equal(t, step.status, rr.Code)
+					assert.Equal(t, step.namespace, observedContext[openfeature.TargetingKey])
+					assert.Equal(t, step.namespace, observedContext["namespace"])
+					assert.Equal(t, "test-stack", observedContext["slug"])
+				}
+				assert.Equal(t, 1, client.VectorSearchCallCount+client.HybridSearchCallCount)
+				assert.Zero(t, client.CallCount)
+			})
+		})
+	}
 }
 
 func TestSearchHandler(t *testing.T) {

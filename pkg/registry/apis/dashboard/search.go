@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -335,67 +336,64 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 		},
 	}
 
-	// Semantic (vector) search is still experimental, so it's only registered —
-	// and therefore only present in the OpenAPI spec — when the feature toggle
-	// is enabled.
-	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagDashboardVectorSearch) { // nolint:staticcheck
-		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-			Path: "search/vector",
-			Spec: &spec3.PathProps{
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "vectorSearchDashboards",
-						Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "natural language query string",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
+	// Register both routes so OpenFeature can gate each request using tenant context
+	// and flag changes can take effect without restarting the API server.
+	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+		Path: "search/vector",
+		Spec: &spec3.PathProps{
+			Get: &spec3.Operation{
+				OperationProps: spec3.OperationProps{
+					Tags:        []string{"Search"},
+					OperationId: "vectorSearchDashboards",
+					Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
+					Parameters: []*spec3.Parameter{
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
 						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "query",
+								In:          "query",
+								Description: "natural language query string",
+								Required:    true,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "folder",
+								In:          "query",
+								Description: "restrict results to a folder (not recursive)",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "limit",
+								In:          "query",
+								Description: "maximum number of results to return (default 50, max 200)",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+					},
+					Responses: &spec3.Responses{
+						ResponsesProps: spec3.ResponsesProps{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &searchResults,
 												},
 											},
 										},
@@ -406,93 +404,93 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					},
 				},
 			},
-			Handler: s.DoVectorSearch,
-		})
+		},
+		Handler: s.DoVectorSearch,
+	})
 
-		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-			Path: "search/hybrid",
-			Spec: &spec3.PathProps{
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "hybridSearchDashboards",
-						Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "query string, used for both search legs",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "semanticQuery",
-									In:          "query",
-									Description: "optional richer phrasing embedded for the semantic leg instead of query",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "minRelevance",
-									In:          "query",
-									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "skipRerank",
-									In:          "query",
-									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
-									Required:    false,
-									Schema:      spec.BooleanProperty(),
-								},
+	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+		Path: "search/hybrid",
+		Spec: &spec3.PathProps{
+			Get: &spec3.Operation{
+				OperationProps: spec3.OperationProps{
+					Tags:        []string{"Search"},
+					OperationId: "hybridSearchDashboards",
+					Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
+					Parameters: []*spec3.Parameter{
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
 						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "query",
+								In:          "query",
+								Description: "query string, used for both search legs",
+								Required:    true,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "semanticQuery",
+								In:          "query",
+								Description: "optional richer phrasing embedded for the semantic leg instead of query",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "folder",
+								In:          "query",
+								Description: "restrict results to a folder (not recursive)",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "limit",
+								In:          "query",
+								Description: "maximum number of results to return (default 50, max 200)",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "minRelevance",
+								In:          "query",
+								Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "skipRerank",
+								In:          "query",
+								Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
+								Required:    false,
+								Schema:      spec.BooleanProperty(),
+							},
+						},
+					},
+					Responses: &spec3.Responses{
+						ResponsesProps: spec3.ResponsesProps{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &searchResults,
 												},
 											},
 										},
@@ -503,9 +501,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 					},
 				},
 			},
-			Handler: s.DoHybridSearch,
-		})
-	}
+		},
+		Handler: s.DoHybridSearch,
+	})
 
 	return routes
 }
@@ -618,10 +616,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	s.write(w, parsedResults)
 }
 
-// DoVectorSearch serves the semantic (vector) search endpoint. It is registered
-// only when the dashboardVectorSearch feature toggle is enabled. Unlike lexical
-// search it does not fall back: if the vector backend isn't configured the
-// underlying call returns Unimplemented, which we surface as 501.
+// DoVectorSearch serves semantic search when dashboard.vectorSearch is enabled.
+// Unlike lexical search it does not fall back: if the vector backend is not
+// configured, the underlying call returns Unimplemented, which we surface as 501.
 func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.vectorSearch")
 	defer span.End()
@@ -629,6 +626,11 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDashboardVectorSearch, false, openfeature.TransactionContext(ctx)) {
+		http.NotFound(w, r)
 		return
 	}
 
@@ -717,8 +719,8 @@ func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse)
 var errHybridSearchNotConfigured = errutil.NotImplemented("dashboard.hybridSearchNotConfigured")
 
 // DoHybridSearch serves the hybrid (lexical + semantic, RRF-fused) search
-// endpoint. Registered only when the dashboardVectorSearch feature toggle is
-// enabled. Like DoVectorSearch it does not fall back on Unimplemented.
+// endpoint when dashboard.vectorSearch is enabled. Like DoVectorSearch it does
+// not fall back on Unimplemented.
 func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.hybridSearch")
 	defer span.End()
@@ -726,6 +728,11 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDashboardVectorSearch, false, openfeature.TransactionContext(ctx)) {
+		http.NotFound(w, r)
 		return
 	}
 
