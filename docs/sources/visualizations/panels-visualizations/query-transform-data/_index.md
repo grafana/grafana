@@ -433,7 +433,7 @@ This automatic interval is calculated based on the width of the graph.
 As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
 Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
 
-For more information, refer to [Global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables).
+For more information, refer to [Built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables).
 
 ### Relative time
 
