@@ -617,7 +617,7 @@ groupLoop:
 				// Check it regardless.
 				// If these values are out of sync due to some bug elsewhere in the code, let's fix it up.
 				// Our receiver group fixing logic below will handle it.
-				if grafanaReceiver.Name == target.Name && receiverGroup.Name == grafanaReceiver.Name {
+				if receiverGroup.Name == target.Name {
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					cfg.Receivers[groupUID] = receiverGroup
 					break groupLoop

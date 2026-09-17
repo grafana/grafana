@@ -1703,6 +1703,63 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
+			name:    "update inconsistent group in the database, algorithm fixes it",
+			initial: createInconsistentTestConfigWithReceivers(),
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "receiver-2",
+				Type: "opsgenie",
+			},
+			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expCreatedReceiver: false,
+			expCfg: v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
+				},
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+					{
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+					{
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "opsgenie",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				}),
+			},
+		},
+		{
 			name: "single item group rename to existing group",
 			initial: &v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
