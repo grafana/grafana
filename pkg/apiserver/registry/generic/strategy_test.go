@@ -183,6 +183,34 @@ func TestStatusStrategy(t *testing.T) {
 			require.Equal(t, expectedObj, newObj)
 		})
 
+		t.Run("WithAllowBundlingSpec lets a status update also change spec", func(t *testing.T) {
+			t.Parallel()
+			oldObj := obj.DeepCopy()
+			newObj := obj.DeepCopy()
+			newObj.Spec.NodeSelector = map[string]string{"foo": "baz"}
+			expectedObj := newObj.DeepCopy()
+
+			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv).WithAllowBundlingSpec()
+			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+			require.Equal(t, expectedObj, newObj)
+		})
+
+		t.Run("WithAllowBundlingSecure lets a status update also change secure values", func(t *testing.T) {
+			t.Parallel()
+			secureObj := &testSecureObj{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
+				Secure:     testSecureObjSecure{Token: common.InlineSecureValue{Name: "existing-token"}},
+			}
+			oldObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj := secureObj.DeepCopyObject().(*testSecureObj)
+			newObj.Secure.Token = common.InlineSecureValue{Name: "bundled-token"}
+			expectedObj := newObj.DeepCopyObject().(*testSecureObj)
+
+			strategy := generic.NewStatusStrategy(runtime.NewScheme(), gv).WithAllowBundlingSecure()
+			strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+			require.Equal(t, expectedObj, newObj)
+		})
+
 		t.Run("ignores label updates", func(t *testing.T) {
 			t.Parallel()
 			oldObj := obj.DeepCopy()

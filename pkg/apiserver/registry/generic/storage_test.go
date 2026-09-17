@@ -5,10 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -136,6 +138,51 @@ func (m *mockObject) DeepCopyObject() runtime.Object {
 		TypeMeta:   m.TypeMeta,
 		ObjectMeta: *m.DeepCopy(),
 	}
+}
+
+// mockSpecObject is a minimal runtime.Object with a Spec field, used to
+// verify NewRegistryStatusStore's options actually reach the strategy it
+// builds: mockObject (used elsewhere in this file) has no Spec to bundle.
+type mockSpecObject struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	Spec string
+}
+
+func (m *mockSpecObject) DeepCopyObject() runtime.Object {
+	out := *m
+	out.ObjectMeta = *m.DeepCopy()
+	return &out
+}
+
+func TestNewRegistryStatusStore_Options(t *testing.T) {
+	newSpecStore := func() *genericregistry.Store {
+		return &genericregistry.Store{
+			NewFunc: func() runtime.Object { return &mockSpecObject{} },
+		}
+	}
+
+	t.Run("without options, a status update cannot change spec", func(t *testing.T) {
+		statusStore := NewRegistryStatusStore(runtime.NewScheme(), newSpecStore())
+		strategy, ok := statusStore.store.UpdateStrategy.(*genericStatusStrategy)
+		require.True(t, ok)
+
+		oldObj := &mockSpecObject{Spec: "old"}
+		newObj := &mockSpecObject{Spec: "smuggled"}
+		strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+		require.Equal(t, "old", newObj.Spec, "spec must be reset without WithAllowBundlingSpec")
+	})
+
+	t.Run("WithAllowBundlingSpec lets a status update also change spec", func(t *testing.T) {
+		statusStore := NewRegistryStatusStore(runtime.NewScheme(), newSpecStore(), WithAllowBundlingSpec())
+		strategy, ok := statusStore.store.UpdateStrategy.(*genericStatusStrategy)
+		require.True(t, ok)
+
+		oldObj := &mockSpecObject{Spec: "old"}
+		newObj := &mockSpecObject{Spec: "bundled"}
+		strategy.PrepareForUpdate(t.Context(), newObj, oldObj)
+		require.Equal(t, "bundled", newObj.Spec, "spec must be kept with WithAllowBundlingSpec")
+	})
 }
 
 type mockObjectList struct {
