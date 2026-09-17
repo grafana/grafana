@@ -17,6 +17,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -319,15 +320,43 @@ func NewValidationError(field, value, msg string) error {
 	return ValidationError{Field: field, Value: value, Msg: msg}
 }
 
-// grpcCodeFromHTTPStatus is lossy in a way runtime.HTTPStatusFromCode is not:
-// several gRPC codes collapse onto the same HTTP status going out
-// (AlreadyExists and Aborted both become 409, InvalidArgument /
-// FailedPrecondition / OutOfRange all become 400), so coming back we pick the
-// code that unified storage actually produces for that status.
-// An unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-// This is just a helper to set the correct codes in metric labels
-func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
+var errorMappingLog = log.New("resource-error-mapping")
+
+// Reasons disambiguate HTTP statuses shared by multiple gRPC codes, notably
+// Conflict and AlreadyExists. Without a reason, preserve the HTTP mapping.
+func grpcCodeFromHTTPStatus(httpCode int32, reason string) grpccodes.Code {
+	switch metav1.StatusReason(reason) {
+	case metav1.StatusReasonUnauthorized:
+		return grpccodes.Unauthenticated
+	case metav1.StatusReasonForbidden:
+		return grpccodes.PermissionDenied
+	case metav1.StatusReasonNotFound:
+		return grpccodes.NotFound
+	case metav1.StatusReasonAlreadyExists:
+		return grpccodes.AlreadyExists
+	case metav1.StatusReasonConflict:
+		return grpccodes.Aborted
+	case metav1.StatusReasonGone, metav1.StatusReasonExpired:
+		return grpccodes.OutOfRange
+	case metav1.StatusReasonBadRequest, metav1.StatusReasonInvalid,
+		metav1.StatusReasonNotAcceptable, metav1.StatusReasonUnsupportedMediaType:
+		return grpccodes.InvalidArgument
+	case metav1.StatusReasonTimeout:
+		return grpccodes.DeadlineExceeded
+	case metav1.StatusReasonServerTimeout, metav1.StatusReasonServiceUnavailable:
+		return grpccodes.Unavailable
+	case metav1.StatusReasonTooManyRequests, metav1.StatusReasonRequestEntityTooLarge:
+		return grpccodes.ResourceExhausted
+	case metav1.StatusReasonMethodNotAllowed:
+		return grpccodes.Unimplemented
+	case metav1.StatusReasonInternalError, metav1.StatusReasonStoreReadError:
+		return grpccodes.Internal
+	default:
+		if reason != "" {
+			errorMappingLog.Warn("Unrecognized error reason, falling back to HTTP status", "httpCode", httpCode, "reason", reason)
+		}
+	}
+
 	switch httpCode {
 	case http.StatusOK:
 		return grpccodes.OK
@@ -363,5 +392,10 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.Canceled
 	}
 
-	return grpccodes.Unknown
+	if httpCode >= 400 && httpCode < 500 {
+		errorMappingLog.Warn("Unmapped HTTP status, assuming InvalidArgument", "httpCode", httpCode)
+		return grpccodes.InvalidArgument
+	}
+	errorMappingLog.Warn("Unmapped HTTP status, assuming Internal", "httpCode", httpCode)
+	return grpccodes.Internal
 }

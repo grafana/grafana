@@ -834,7 +834,11 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		if retErr != nil {
 			code = status.Code(retErr)
 		} else if resp != nil && resp.Error != nil {
-			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+			code = grpcCodeFromHTTPStatus(resp.Error.Code, resp.Error.Reason)
+			// an ErrorResult must always return an error code
+			if code == codes.OK {
+				code = codes.Internal
+			}
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,

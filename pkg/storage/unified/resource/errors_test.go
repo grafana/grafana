@@ -158,23 +158,58 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 		499:                                     codes.Canceled, // nginx's client-closed-request, what gRPC gateways emit for Canceled
 	}
 	for httpCode, want := range mapped {
-		require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+		for _, reason := range []string{"", "error reading settings"} {
+			require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode, reason), "http status %d, reason %q", httpCode, reason)
+		}
 	}
 
-	// Anything unmapped labels as Unknown: a signal to add a mapping rather
-	// than a silent mislabel.
-	unmapped := []int32{
-		0,
-		-1,
-		http.StatusNoContent,
-		http.StatusMovedPermanently,
-		http.StatusTeapot,
-		http.StatusGone,
-		http.StatusBadGateway,
-		599,
+	unmapped := map[int32]codes.Code{
+		0:                           codes.Internal,
+		-1:                          codes.Internal,
+		http.StatusNoContent:        codes.Internal,
+		http.StatusMovedPermanently: codes.Internal,
+		http.StatusTeapot:           codes.InvalidArgument,
+		http.StatusGone:             codes.InvalidArgument,
+		498:                         codes.InvalidArgument,
+		http.StatusBadGateway:       codes.Internal,
+		599:                         codes.Internal,
+		600:                         codes.Internal,
 	}
-	for _, httpCode := range unmapped {
-		require.Equal(t, codes.Unknown, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	for httpCode, want := range unmapped {
+		require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode, ""), "http status %d", httpCode)
+	}
+
+	reasons := []struct {
+		code   int32
+		reason metav1.StatusReason
+		want   codes.Code
+	}{
+		{401, metav1.StatusReasonUnauthorized, codes.Unauthenticated},
+		{403, metav1.StatusReasonForbidden, codes.PermissionDenied},
+		{404, metav1.StatusReasonNotFound, codes.NotFound},
+		{409, metav1.StatusReasonAlreadyExists, codes.AlreadyExists},
+		{409, metav1.StatusReasonConflict, codes.Aborted},
+		{410, metav1.StatusReasonGone, codes.OutOfRange},
+		{410, metav1.StatusReasonExpired, codes.OutOfRange},
+		{422, metav1.StatusReasonInvalid, codes.InvalidArgument},
+		{400, metav1.StatusReasonBadRequest, codes.InvalidArgument},
+		{406, metav1.StatusReasonNotAcceptable, codes.InvalidArgument},
+		{415, metav1.StatusReasonUnsupportedMediaType, codes.InvalidArgument},
+		{504, metav1.StatusReasonTimeout, codes.DeadlineExceeded},
+		{500, metav1.StatusReasonServerTimeout, codes.Unavailable},
+		{503, metav1.StatusReasonServiceUnavailable, codes.Unavailable},
+		{429, metav1.StatusReasonTooManyRequests, codes.ResourceExhausted},
+		{413, metav1.StatusReasonRequestEntityTooLarge, codes.ResourceExhausted},
+		{405, metav1.StatusReasonMethodNotAllowed, codes.Unimplemented},
+		{500, metav1.StatusReasonInternalError, codes.Internal},
+		{500, metav1.StatusReasonStoreReadError, codes.Internal},
+	}
+	for _, tt := range reasons {
+		t.Run(string(tt.reason), func(t *testing.T) {
+			for _, code := range []int32{tt.code, 0, http.StatusOK, http.StatusInternalServerError} {
+				require.Equal(t, tt.want, grpcCodeFromHTTPStatus(code, string(tt.reason)), "http status %d", code)
+			}
+		})
 	}
 }
 
