@@ -1,4 +1,6 @@
 import {
+  type DynamicConfigValue,
+  type FieldConfig,
   type FieldConfigOptionsRegistry,
   type FieldConfigPropertyItem,
   type FieldConfigSource,
@@ -7,6 +9,7 @@ import {
   Registry,
 } from '@grafana/data';
 
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 
 jest.mock('app/features/panel/panellinks/link_srv', () => ({
@@ -34,7 +37,10 @@ function makeRegistry(items: FieldConfigPropertyItem[]): FieldConfigOptionsRegis
   return new Registry<FieldConfigPropertyItem>(() => items);
 }
 
-function makeItem(id: string, overrides?: Partial<FieldConfigPropertyItem>): FieldConfigPropertyItem {
+function makeItem<TContextOptions = unknown>(
+  id: string,
+  overrides?: Partial<FieldConfigPropertyItem<FieldConfig, unknown, {}, TContextOptions>>
+): FieldConfigPropertyItem {
   return {
     id,
     path: id,
@@ -84,6 +90,38 @@ describe('getFieldOverrideCategories', () => {
 
       expect(getContextData(0)).toEqual([nestedFrame]);
       expect(getContextData(1)).toEqual([topLevelFrame]);
+    });
+  });
+
+  describe('panel options in the editor context', () => {
+    const fieldConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        { matcher: { id: 'byName', options: 'A-series' }, properties: [{ id: 'custom.lineWidth', value: 5 }] },
+      ],
+    };
+
+    const getContextOptions = (options?: Record<string, unknown>) => {
+      const registry = makeRegistry([makeItem('custom.lineWidth')]);
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), options);
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      const element = propertyItem?.props.render(propertyItem!) as React.ReactElement<{
+        context: { options?: Record<string, unknown> };
+      }>;
+
+      return element.props.context.options;
+    };
+
+    it('hands the panel options to an override property editor', () => {
+      const options = { layout: 'bars' };
+
+      expect(getContextOptions(options)).toBe(options);
+    });
+
+    it('leaves options undefined when a caller does not supply them', () => {
+      // not defaulted to {}, so an editor's `context.options ?? fallback` still reaches the fallback
+      expect(getContextOptions()).toBeUndefined();
     });
   });
 
@@ -160,6 +198,91 @@ describe('getFieldOverrideCategories', () => {
       }>;
 
       expect(element.props.options).toHaveLength(3);
+    });
+  });
+
+  describe('showIfOverride', () => {
+    const fieldConfigWith = (properties: FieldConfigSource['overrides'][number]['properties']): FieldConfigSource => ({
+      defaults: {},
+      // matcher.options must be truthy for the add-property button to appear
+      overrides: [{ matcher: { id: 'byName', options: 'someField' }, properties }],
+    });
+
+    function getPickerOptionValues(categories: OptionsPaneCategoryDescriptor[]): string[] {
+      const overrideCategory = categories[0];
+      const addButtonItem = overrideCategory.items[overrideCategory.items.length - 1];
+      const element = addButtonItem.props.render(addButtonItem) as React.ReactElement<{
+        options: Array<{ value: string }>;
+      }>;
+      return element.props.options.map((o) => o.value);
+    }
+
+    it('excludes an item from the add override property picker when its predicate returns false', () => {
+      const registry = makeRegistry([
+        // context.options is typed here, not unknown - this stops compiling if that regresses
+        makeItem<{ layout?: string }>('custom.lineWidth', {
+          showIfOverride: (context) => context.options?.layout !== 'bars',
+        }),
+        makeItem('custom.fillOpacity'),
+      ]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
+        layout: 'bars',
+      });
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.fillOpacity']);
+    });
+
+    it('offers the item when the same predicate returns true for the current panel options', () => {
+      const registry = makeRegistry([
+        makeItem<{ layout?: string }>('custom.lineWidth', {
+          showIfOverride: (context) => context.options?.layout !== 'bars',
+        }),
+        makeItem('custom.fillOpacity'),
+      ]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn(), {
+        layout: 'lines',
+      });
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.lineWidth', 'custom.fillOpacity']);
+    });
+
+    it('offers items that declare no predicate', () => {
+      const registry = makeRegistry([makeItem('custom.a'), makeItem('custom.b')]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn());
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.a', 'custom.b']);
+    });
+
+    it('offers the item when an untyped predicate returns undefined', () => {
+      // the return type forbids undefined, but an untyped plugin can still produce it and only an
+      // explicit false hides
+      const showIfOverride = (() => undefined) as unknown as FieldConfigPropertyItem['showIfOverride'];
+      const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride })]);
+
+      const categories = getFieldOverrideCategories(fieldConfigWith([]), registry, [], '', jest.fn());
+
+      expect(getPickerOptionValues(categories)).toEqual(['custom.lineWidth']);
+    });
+
+    it('still renders the row for a rule that already set the hidden property, keeping its value', () => {
+      const registry = makeRegistry([makeItem('custom.lineWidth', { showIfOverride: () => false })]);
+      const fieldConfig = fieldConfigWith([{ id: 'custom.lineWidth', value: 5 }]);
+
+      const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), { layout: 'bars' });
+
+      // hiding it from the picker must not strand an existing override the user cannot see or remove
+      expect(getPickerOptionValues(categories)).toEqual([]);
+
+      const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
+      expect(propertyItem).toBeDefined();
+
+      const element = propertyItem!.props.render(propertyItem!) as React.ReactElement<{
+        property: DynamicConfigValue;
+      }>;
+      expect(element.props.property).toEqual({ id: 'custom.lineWidth', value: 5 });
     });
   });
 
