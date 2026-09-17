@@ -3,7 +3,9 @@ package embedder
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +55,7 @@ func TestBatchEmbedder_Embed_MapsItemsToVectors(t *testing.T) {
 		{UID: "dash-1", Title: "API — 5xx", Subresource: "panel/2", Content: "panel two body", Folder: "folder-prod"},
 	}
 
-	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, items)
+	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, 1, items)
 	require.NoError(t, err)
 	require.Len(t, vecs, 2)
 
@@ -70,6 +72,7 @@ func TestBatchEmbedder_Embed_MapsItemsToVectors(t *testing.T) {
 	assert.JSONEq(t, `{"a":1}`, string(v0.Metadata))
 	assert.Equal(t, "test/model-1", v0.Model)
 	assert.Equal(t, []float32{1, 0, 0}, v0.Embedding)
+	assert.Equal(t, 1, v0.ContentVersion)
 
 	// Second Vector — distinguish from first via embedding.
 	assert.Equal(t, "panel/2", vecs[1].Subresource)
@@ -81,6 +84,22 @@ func TestBatchEmbedder_Embed_MapsItemsToVectors(t *testing.T) {
 	assert.False(t, fake.gotIn.Normalize, "Normalized=true on Embedder should skip client-side normalize")
 }
 
+func TestBatchEmbedder_Embed_StampsContentVersion(t *testing.T) {
+	fake := &fakeTextEmbedder{dim: 3}
+	be := NewBatchEmbedder(newTestEmbedder(fake))
+
+	items := []embed.Item{
+		{UID: "dash-1", Subresource: "panel/1", Content: "panel one body"},
+		{UID: "dash-1", Subresource: "panel/2", Content: "panel two body"},
+	}
+
+	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, 3, items)
+	require.NoError(t, err)
+	require.Len(t, vecs, 2)
+	assert.Equal(t, 3, vecs[0].ContentVersion)
+	assert.Equal(t, 3, vecs[1].ContentVersion)
+}
+
 func TestBatchEmbedder_Embed_DropsEmptyContent(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 3}
 	be := NewBatchEmbedder(newTestEmbedder(fake))
@@ -90,7 +109,7 @@ func TestBatchEmbedder_Embed_DropsEmptyContent(t *testing.T) {
 		{UID: "u", Subresource: "panel/2", Content: ""},
 		{UID: "u", Subresource: "panel/3", Content: "more text"},
 	}
-	vecs, err := be.Embed(context.Background(), "ns", "dashboards", 1, items)
+	vecs, err := be.Embed(context.Background(), "ns", "dashboards", 1, 1, items)
 	require.NoError(t, err)
 	require.Len(t, vecs, 2)
 	assert.Equal(t, "panel/1", vecs[0].Subresource)
@@ -103,7 +122,7 @@ func TestBatchEmbedder_Embed_AllEmptyReturnsNil(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 3}
 	be := NewBatchEmbedder(newTestEmbedder(fake))
 
-	vecs, err := be.Embed(context.Background(), "ns", "dashboards", 1, []embed.Item{
+	vecs, err := be.Embed(context.Background(), "ns", "dashboards", 1, 1, []embed.Item{
 		{UID: "u", Subresource: "panel/1", Content: ""},
 	})
 	require.NoError(t, err)
@@ -117,7 +136,7 @@ func TestBatchEmbedder_Embed_NormalizeWhenProviderDoesnt(t *testing.T) {
 	e.Normalized = false // provider does not normalize → ask client-side
 	be := NewBatchEmbedder(e)
 
-	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, []embed.Item{{Content: "x"}})
+	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, 1, []embed.Item{{Content: "x"}})
 	require.NoError(t, err)
 	assert.True(t, fake.gotIn.Normalize)
 }
@@ -126,7 +145,7 @@ func TestBatchEmbedder_Embed_ProviderError(t *testing.T) {
 	wantErr := errors.New("upstream blew up")
 	be := NewBatchEmbedder(newTestEmbedder(&fakeTextEmbedder{dim: 3, wantErr: wantErr}))
 
-	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, []embed.Item{{Content: "x"}})
+	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, 1, []embed.Item{{Content: "x"}})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, wantErr)
 }
@@ -136,7 +155,7 @@ func TestBatchEmbedder_Embed_MismatchedResultLength(t *testing.T) {
 	bad := &lengthMismatchingEmbedder{returnCount: 1}
 	be := NewBatchEmbedder(newTestEmbedder(bad))
 
-	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, []embed.Item{
+	_, err := be.Embed(context.Background(), "ns", "dashboards", 1, 1, []embed.Item{
 		{Content: "a"}, {Content: "b"},
 	})
 	require.Error(t, err)
@@ -151,4 +170,22 @@ func (l *lengthMismatchingEmbedder) EmbedText(_ context.Context, _ EmbedTextInpu
 		out[i] = Embedding{Dense: []float32{0, 0, 0}}
 	}
 	return EmbedTextOutput{Embeddings: out}, nil
+}
+
+func TestBatchEmbedder_Embed_PreservesRetryableError(t *testing.T) {
+	cause := errors.New("provider failure")
+	for _, hint := range []time.Duration{0, time.Minute} {
+		t.Run(hint.String(), func(t *testing.T) {
+			retryErr := &RetryableError{Err: cause, RetryAfter: hint}
+			fake := &fakeTextEmbedder{wantErr: fmt.Errorf("provider client: %w", retryErr)}
+			be := NewBatchEmbedder(newTestEmbedder(fake))
+			vectors, err := be.Embed(t.Context(), "ns", "dashboards", 42, 1, []embed.Item{{UID: "dash", Content: "CPU usage"}})
+			require.Error(t, err)
+			assert.Nil(t, vectors)
+			assert.ErrorIs(t, err, cause)
+			var got *RetryableError
+			require.ErrorAs(t, err, &got)
+			assert.Same(t, retryErr, got)
+		})
+	}
 }

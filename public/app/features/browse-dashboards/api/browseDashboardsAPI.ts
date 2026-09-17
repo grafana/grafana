@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
@@ -79,6 +78,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
+  recordingrules: folderCounts.recordingrules || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -195,7 +195,7 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ folderUID, destinationUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([folderUID]));
+          dispatch(refreshParents({ kind: 'folder', uids: [folderUID] }));
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
@@ -244,6 +244,7 @@ export const browseDashboardsAPI = createApi({
             dashboards: dashboardUIDs.length,
             librarypanels: 0,
             alertrules: 0,
+            recordingrules: 0,
           };
 
           for (const folderCounts of results) {
@@ -252,6 +253,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
+            totalCounts.recordingrules += normalizedCounts.recordingrules;
           }
 
           return { data: totalCounts };
@@ -273,12 +275,14 @@ export const browseDashboardsAPI = createApi({
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-          if (isProvisionedDashboard(fullDash)) {
-            appEvents.publish({
-              type: AppEvents.alertWarning.name,
-              payload: ['Cannot move provisioned dashboard'],
-            });
-            continue;
+          if (config.provisioningEnabled) {
+            if (isProvisionedDashboard(fullDash)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned dashboard'],
+              });
+              continue;
+            }
           }
           await api.saveDashboard({
             dashboard,
@@ -298,7 +302,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(dashboardUIDs));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
         });
       },
     }),
@@ -338,7 +342,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
         });
       },
@@ -370,7 +374,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
@@ -393,15 +397,17 @@ export const browseDashboardsAPI = createApi({
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
-            const dto = await api.getDashboardDTO(dashboardUID);
-            if (isProvisionedDashboard(dto)) {
-              appEvents.publish({
-                type: AppEvents.alertWarning.name,
-                payload: [
-                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
-                ],
-              });
-              continue;
+            if (config.provisioningEnabled) {
+              const dto = await api.getDashboardDTO(dashboardUID);
+              if (isProvisionedDashboard(dto)) {
+                appEvents.publish({
+                  type: AppEvents.alertWarning.name,
+                  payload: [
+                    'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                  ],
+                });
+                continue;
+              }
             }
             await api.deleteDashboard(dashboardUID, false);
 
@@ -435,8 +441,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(dashboardUIDs));
-          dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(
@@ -571,7 +576,12 @@ export const browseDashboardsAPI = createApi({
 function getDashboardFolder(dashboardUid?: string) {
   if (dashboardUid) {
     const { browseDashboards } = getState();
-    const item = findItem(browseDashboards.rootItems?.items ?? [], browseDashboards.childrenByParentUID, dashboardUid);
+    const item = findItem(
+      browseDashboards.rootItems?.items ?? [],
+      browseDashboards.childrenByParentUID,
+      'dashboard',
+      dashboardUid
+    );
     return item?.parentUID;
   }
   return undefined;

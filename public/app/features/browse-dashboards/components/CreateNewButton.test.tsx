@@ -8,6 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
@@ -40,7 +41,21 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
 
+jest.mock('app/features/dashboard-prompt/useDashboardGenerationAvailable', () => ({
+  useDashboardGenerationAvailable: jest.fn(),
+}));
+
+// Stub the lazy-loaded modal: this suite covers the menu wiring, not the prompt itself.
+jest.mock('app/features/dashboard-prompt/GenerateDashboardModal', () => ({
+  GenerateDashboardModal: ({ onDismiss }: { onDismiss: () => void }) => (
+    <div data-testid="generate-dashboard-modal">
+      <button onClick={onDismiss}>Close prompt</button>
+    </div>
+  ),
+}));
+
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
+const mockUseDashboardGenerationAvailable = jest.mocked(useDashboardGenerationAvailable);
 
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
@@ -57,6 +72,7 @@ async function renderAndOpen(folder?: FolderDTO) {
 describe('NewActionsButton', () => {
   beforeEach(() => {
     mockUseIsProvisionedInstance.mockReturnValue(false);
+    mockUseDashboardGenerationAvailable.mockReturnValue(false);
   });
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
@@ -204,6 +220,46 @@ describe('NewActionsButton', () => {
       await renderAndOpen();
       const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=createNewButton');
+    });
+  });
+
+  describe('Generate dashboard item', () => {
+    beforeEach(() => {
+      mockUseDashboardGenerationAvailable.mockReturnValue(true);
+    });
+
+    it('shows the item directly after `New dashboard`, matching the QuickAdd menu', async () => {
+      await renderAndOpen();
+
+      const dashboardGroup = screen.getByRole('group', { name: 'Dashboard' });
+      const items = within(dashboardGroup)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent);
+      expect(items.slice(0, 2)).toEqual(['New dashboard', 'Generate dashboard']);
+    });
+
+    it('opens the prompt on click, and closes it again on dismiss', async () => {
+      const { user } = render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} />);
+      await user.click(screen.getByText('New'));
+      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('menuitem', { name: 'Generate dashboard' }));
+      expect(await screen.findByTestId('generate-dashboard-modal')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Close prompt' }));
+      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
+    });
+
+    it('does not show the item when generation is unavailable', async () => {
+      mockUseDashboardGenerationAvailable.mockReturnValue(false);
+      await renderAndOpen();
+      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
+    });
+
+    it('does not show the item when the user cannot create dashboards', async () => {
+      const { user } = render(<CreateNewButton canCreateDashboard={false} canCreateFolder isReadOnlyRepo={false} />);
+      await user.click(screen.getByText('New'));
+      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
     });
   });
 });

@@ -50,7 +50,7 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
+	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			if onRequest != nil {
 				onRequest()

@@ -64,16 +64,16 @@ func TestUpdatePolicyTree(t *testing.T) {
 	defaultVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
 	newRoute := definitions.Route{
-		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+		Receiver: rev.Config.Receivers[0].Name,
 		Routes: []*definitions.Route{
 			{
 				Receiver: "",
 				MuteTimeIntervals: []string{
-					rev.Config.AlertmanagerConfig.TimeIntervals[0].Name,
+					"test-mute-interval",
 				},
 			},
 			{
-				Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+				Receiver: rev.Config.Receivers[0].Name,
 			},
 		},
 	}
@@ -84,7 +84,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 			MuteTimeIntervals: []string{
 				"not-existing",
 			},
@@ -99,7 +99,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 			ActiveTimeIntervals: []string{
 				"not-existing",
 			},
@@ -138,7 +138,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
-				Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+				Receiver: rev.Config.Receivers[0].Name,
 				Routes: []*definitions.Route{
 					{Receiver: "unknown"},
 				},
@@ -155,7 +155,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
 		require.ErrorIs(t, err, ErrVersionConflict)
@@ -196,7 +196,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, extra)
 
 		route := definitions.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 			Routes: []*definitions.Route{
 				{
 					ObjectMatchers: definitions.ObjectMatchers{
@@ -298,19 +298,15 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
 		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("", "test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
-	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
-		{
-			Name: "test",
-		},
+	currentRevision.Config.TimeIntervals = map[v1.ResourceUID]v1.TimeInterval{
+		v1.TimeIntervalUID("test"): v1.NewTimeInterval("test", nil, models.ProvenanceNone),
 	}
-	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
+	currentRevision.Config.Receivers = []*v1.PostableApiReceiver{
 		{
-			Receiver: definitions.Receiver{Name: "receiver"},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-					{
-						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
-					},
+			Name: "receiver",
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+				{
+					UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
 				},
 			},
 		},
@@ -365,7 +361,7 @@ func TestResetPolicyTree(t *testing.T) {
 
 		expectedRev := currentRevision
 		expectedRev.Config.AlertmanagerConfig.Route = getDefaultConfigRevision().Config.AlertmanagerConfig.Route
-		expectedRev.Config.AlertmanagerConfig.Receivers = append(expectedRev.Config.AlertmanagerConfig.Receivers, getDefaultConfigRevision().Config.AlertmanagerConfig.Receivers[0])
+		expectedRev.Config.Receivers = append(expectedRev.Config.Receivers, getDefaultConfigRevision().Config.Receivers[0])
 
 		tree, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
 		require.NoError(t, err)
@@ -375,7 +371,7 @@ func TestResetPolicyTree(t *testing.T) {
 		assert.Equal(t, "Save", store.Calls[1].Method)
 		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
 		resetRev := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-		assert.Equal(t, expectedRev.Config.AlertmanagerConfig, resetRev.Config.AlertmanagerConfig)
+		assert.Equal(t, expectedRev.Config, resetRev.Config)
 
 		assert.Len(t, prov.Calls, 2)
 		c := prov.Calls[0]
@@ -477,7 +473,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
 
-		receiverType := reflect.TypeOf((*v1.Route)(nil)).Elem()
+		receiverType := reflect.TypeFor[v1.Route]()
 		for i := 0; i < receiverType.NumField(); i++ {
 			field := receiverType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
@@ -535,19 +531,15 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 						Receiver: "test-receiver",
 					},
 					InhibitRules: nil,
-					TimeIntervals: []v1.TimeInterval{
-						{
-							Name: "test-mute-interval",
-						},
-					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{
-						Receiver: definitions.Receiver{
-							Name: "test-receiver",
-						},
-					},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{
+					Name: "test-receiver",
 				},
+			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+				v1.TimeIntervalUID("test-mute-interval"): v1.NewTimeInterval("test-mute-interval", nil, models.ProvenanceNone),
 			},
 		},
 		ConcurrencyToken: util.GenerateShortUID(),

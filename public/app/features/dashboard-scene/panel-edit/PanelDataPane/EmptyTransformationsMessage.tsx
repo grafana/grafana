@@ -12,7 +12,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -20,7 +20,7 @@ import { TransformationCard } from '../../../dashboard/components/Transformation
 import sqlDarkImage from '../../../expressions/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../expressions/images/light/sqlExpression.svg';
 
-import { hasBackendDatasource } from './utils';
+import { useHasBackendDatasource } from './utils';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -72,6 +72,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
 
 function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
@@ -109,11 +110,13 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
     props.onShowPicker();
   };
 
+  const hasBackendDs = useHasBackendDatasource({
+    datasourceUid: props.datasourceUid,
+    queries: props.queries,
+  });
+
   // Show the SQL Expression card if any datasource in the query set is a backend datasource.
-  const showSqlCard =
-    hasGoToQueries &&
-    config.featureToggles.sqlExpressions &&
-    hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
+  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions && hasBackendDs;
 
   return (
     <Box padding={2}>
@@ -142,7 +145,7 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
                   'dashboard-scene.empty-transformations-message.sql-transformation-description',
                   'Manipulate your data using MySQL-like syntax'
                 )}
-                imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
+                imageUrl={theme.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="transform-with-sql-card"
                 fullWidth

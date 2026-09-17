@@ -1,7 +1,7 @@
 // Dedicated typecheck config for the CUJ smoke runner. The main tsconfig.json
 // excludes `__smoke__/` and `*.smoke.ts` because those files import each other
-// with explicit `.ts` extensions (Node ESM with --experimental-strip-types
-// requires them). Setting `allowImportingTsExtensions` globally breaks the
+// with explicit `.ts` extensions (Node ESM type stripping requires them).
+// Setting `allowImportingTsExtensions` globally breaks the
 // dev server's fork-ts-checker (OOM), so smoke files live under their own
 // config: `yarn typecheck:smoke` validates them without touching anything else.
 {
@@ -15,7 +15,8 @@
     "lib": ["dom", "dom.iterable", "es2022"],
     "types": ["node"],
     "skipLibCheck": true,
-    "noUnusedLocals": false
+    "noUnusedLocals": false,
+    "erasableSyntaxOnly": true
   },
   "include": [
     "scripts/cuj-smoke.ts",

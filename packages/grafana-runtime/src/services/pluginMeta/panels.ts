@@ -5,10 +5,10 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
-import { initPluginMetas, refetchPluginMetas } from './plugins';
+import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
 let panels: PanelPluginMetas = {};
@@ -50,18 +50,19 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
-function setMetas(metas: PluginMetasResponse) {
-  if (!metas.items.length) {
-    // something failed while trying to fetch plugin meta
-    // fallback to config.panels from bootdata
+function setMetas(metas: PluginMetasResponse | null) {
+  if (!metas?.items.length) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.panel });
+    logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
     return;
   }
 
   const mapper = getPanelPluginMapper();
   setPanelsAndAliases(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
 }
 
 async function initPanelPluginMetas(): Promise<void> {
@@ -74,7 +75,6 @@ async function initPanelPluginMetas(): Promise<void> {
 
   const metas = await initPluginMetas();
   setMetas(metas);
-  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {

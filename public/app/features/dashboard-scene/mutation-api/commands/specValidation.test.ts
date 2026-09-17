@@ -16,7 +16,10 @@ jest.mock('../../serialization/transformSaveModelSchemaV2ToScene', () => ({
 }));
 
 jest.mock('@grafana/scenes', () => ({
-  sceneUtils: { cloneSceneObjectState: (state: unknown) => state },
+  sceneUtils: {
+    cloneSceneObjectState: (state: unknown) => state,
+  },
+  NewSceneObjectAddedEvent: class {},
 }));
 
 jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({
@@ -56,13 +59,15 @@ const stubContext = { scene: {} as DashboardScene } satisfies MutationContext;
 // (edit-mode entry, metadata envelope, state swap), so the rebuild is reached.
 function makeSceneContext(): MutationContext {
   const scene = {
-    state: { isEditing: true, key: 'scene-key', meta: {} },
+    state: { isEditing: true, key: 'scene-key', meta: {}, body: { editModeChanged: jest.fn() } },
     onEnterEditMode: jest.fn(),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     serializer: {
       getK8SMetadata: () => ({ name: 'dash-uid', generation: 1, creationTimestamp: '2026-01-01T00:00:00Z' }),
     },
     setState: jest.fn(),
+    forEachChild: jest.fn(),
+    publishEvent: jest.fn(),
   };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural stub of the DashboardScene surface this command reads
   return { scene: scene as unknown as DashboardScene } satisfies MutationContext;

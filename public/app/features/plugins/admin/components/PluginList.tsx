@@ -1,5 +1,6 @@
 import { useLocation, useSearchParams } from 'react-router-dom-v5-compat';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
@@ -32,7 +33,7 @@ export const PluginList = ({ plugins, isLoading }: Props) => {
   }
 
   return (
-    <Grid gap={3} {...{ minColumnWidth: 34 }} data-testid="plugin-list">
+    <Grid gap={3} {...{ minColumnWidth: 34 }} data-testid={selectors.pages.PluginsList.list}>
       {isLoading
         ? new Array(50).fill(null).map((_, index) => <PluginListItem.Skeleton key={index} />)
         : plugins.map((plugin) => <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} />)}

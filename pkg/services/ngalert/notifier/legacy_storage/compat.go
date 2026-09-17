@@ -49,33 +49,22 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*v1.
 }
 
 func ReceiverToPostableApiReceiver(r *models.Receiver) (*v1.PostableApiReceiver, error) {
-	integrations := v1.PostableGrafanaReceivers{
-		GrafanaManagedReceivers: make([]*v1.PostableGrafanaReceiver, 0, len(r.Integrations)),
-	}
+	integrations := make([]*v1.PostableGrafanaReceiver, 0, len(r.Integrations))
 	for _, cfg := range r.Integrations {
 		postable, err := IntegrationToPostableGrafanaReceiver(cfg)
 		if err != nil {
 			return nil, err
 		}
-		integrations.GrafanaManagedReceivers = append(integrations.GrafanaManagedReceivers, postable)
+		integrations = append(integrations, postable)
 	}
 
 	return &v1.PostableApiReceiver{
-		Receiver: alertingNotify.ConfigReceiver{
-			Name: r.Name,
-		},
-		PostableGrafanaReceivers: integrations,
+		Name:                    r.Name,
+		GrafanaManagedReceivers: integrations,
 	}, nil
 }
 
 func PostableApiReceiverToReceiver(postable *v1.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
-	if postable.HasMimirIntegrations() {
-		p, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(postable)
-		if err != nil {
-			return nil, err
-		}
-		postable = p
-	}
 	integrations, err := PostableGrafanaReceiversToIntegrations(postable.GrafanaManagedReceivers)
 	if err != nil {
 		return nil, err
@@ -124,26 +113,6 @@ func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaRecei
 	}
 
 	return integrations, nil
-}
-
-func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
-	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
-	}
-	result := make([]*models.Integration, 0, len(v0))
-	for _, config := range v0 {
-		s, err := config.ConfigMap()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get settings of v0 receiver %s (version %s): %w", config.Schema.Type(), config.Schema.Version, err)
-		}
-		result = append(result, &models.Integration{
-			Config:         config.Schema,
-			Settings:       s,
-			SecureSettings: map[string]string{},
-		})
-	}
-	return result, nil
 }
 
 func PostableGrafanaReceiverToIntegration(p *v1.PostableGrafanaReceiver) (*models.Integration, error) {

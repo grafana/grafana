@@ -23,7 +23,6 @@ import (
 // and legacy-ID handling with the standard Create path.
 func newGraphiteHandler(
 	creator rest.Creater,
-	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {

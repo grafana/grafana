@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
@@ -56,24 +58,24 @@ export function BrowseView({
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const { data: settingsData } = useGetFrontendSettingsQuery(undefined);
+  const provisioningEnabled = config.provisioningEnabled;
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();
 
-  const excludeUIDs = useMemo(() => {
-    if (isProvisionedInstance) {
+  const excludeFolderUIDs = useMemo(() => {
+    if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
-    // if only one repo folder and no local folders, then don't exclude it from selection
+    // A lone repo folder with no local folders stays selectable
     if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
       return [];
     }
-    // loop through settingsData to find all available repo name, and exclude them from select all action
-    // repo root folder is not actionable on browse dashboards page
-    return settingsData?.items.map((repo) => repo.name);
-  }, [isProvisionedInstance, settingsData, rootItems]);
+    // Repo root folders are not actionable from the browse page
+    return settingsData?.items.map((repo) => repo.name) ?? [];
+  }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -231,7 +233,9 @@ export function BrowseView({
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
+      onAllSelectionChange={(newState) =>
+        dispatch(setAllSelection({ isSelected: newState, folderUID, excludeFolderUIDs }))
+      }
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -245,6 +249,11 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
+  // Only folders have children
+  if (item.kind !== 'folder') {
+    return false;
+  }
+
   const collection = childrenByParentUID[item.uid];
   if (!collection) {
     return false;

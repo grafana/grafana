@@ -84,6 +84,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearch,
 		withSearchClient,
 		withQuotaConfig,
+		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
 	)
@@ -163,10 +164,16 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 }
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	authzOpts := resource.AuthzOptions{
+		Registry:         opts.Reg,
+		ExemptionEnabled: opts.Cfg.UnifiedStorageAuthzExemptionEnabled,
+		ExemptResources:  opts.Cfg.UnifiedStorageAuthzExemptResources,
+	}
+	if err := resource.ValidateAuthzOptions(authzOpts); err != nil {
+		return err
+	}
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
-			Registry: opts.Reg,
-		})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, authzOpts)
 	}
 	return nil
 }
@@ -270,6 +277,8 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
 		Metrics:       resourceOpts.VectorMetrics,
+
+		EmbeddingCountInterval: opts.Cfg.VectorEmbeddingCountInterval,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)
@@ -325,6 +334,17 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
+	}
+	return nil
+}
+
+func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
+	for _, r := range opts.Cfg.SearchBackedListResources {
+		allowed[r] = true
+	}
+	resourceOpts.SearchBackedListConfig = resource.SearchBackedListConfig{
+		AllowedResources: allowed,
 	}
 	return nil
 }

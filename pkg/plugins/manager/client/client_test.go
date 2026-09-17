@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -443,6 +445,54 @@ func TestCallResource(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestCallResourceErrors(t *testing.T) {
+	tests := []struct {
+		name          string
+		pluginErr     error
+		expectedError error
+	}{
+		{
+			name:          "context cancellation",
+			pluginErr:     context.Canceled,
+			expectedError: plugins.ErrPluginRequestCanceledErrorBase,
+		},
+		{
+			name:          "gRPC cancellation",
+			pluginErr:     grpcstatus.Error(grpccodes.Canceled, "context canceled"),
+			expectedError: plugins.ErrPluginRequestCanceledErrorBase,
+		},
+		{
+			name:          "plugin failure",
+			pluginErr:     errors.New("plugin failure"),
+			expectedError: plugins.ErrPluginRequestFailureErrorBase,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry := pluginfakes.NewFakePluginRegistry()
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{ID: "pid"},
+			}
+			p.RegisterClient(&fakePluginBackend{
+				crr: func(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error {
+					return tt.pluginErr
+				},
+			})
+			require.NoError(t, registry.Add(context.Background(), p))
+
+			client := ProvideService(registry)
+			err := client.CallResource(
+				context.Background(),
+				&backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: "pid"}},
+				backend.CallResourceResponseSenderFunc(func(*backend.CallResourceResponse) error { return nil }),
+			)
+
+			require.ErrorIs(t, err, tt.expectedError)
+		})
+	}
 }
 
 type fakePluginBackend struct {

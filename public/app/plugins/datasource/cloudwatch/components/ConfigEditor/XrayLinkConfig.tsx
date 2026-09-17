@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type DataSourceInstanceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/plugin-ui';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker } from '@grafana/runtime';
+import { useHasDataSourceInstance } from '@grafana/runtime/unstable';
 import { Alert, Field, InlineField, useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -21,7 +22,7 @@ interface Props {
 const xRayDsId = 'grafana-x-ray-datasource';
 
 export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Props) {
-  const hasXrayDatasource = Boolean(getDataSourceSrv().getList({ pluginId: xRayDsId }).length);
+  const { isLoading, error, hasInstance: hasXrayDatasource } = useHasDataSourceInstance(xRayDsId);
 
   const styles = useStyles2(getStyles);
 
@@ -30,7 +31,7 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
       title="Application Signals trace link"
       description="Grafana will automatically create a link to a trace in Application Signals data source if logs contain @xrayTraceId field"
     >
-      {!hasXrayDatasource && (
+      {!isLoading && !error && !hasXrayDatasource && (
         <Alert
           title={
             'There is no Application Signals datasource to link to. First add an Application Signals data source and then link it to Cloud Watch. '
@@ -60,7 +61,7 @@ export function XrayLinkConfig({ newFormStyling, datasourceUid, onChange }: Prop
         @xrayTraceId field
       </div>
 
-      {!hasXrayDatasource && (
+      {!isLoading && !error && !hasXrayDatasource && (
         <Alert
           title={
             'There is no Application Signals datasource to link to. First add an Application Signals data source and then link it to Cloud Watch. '

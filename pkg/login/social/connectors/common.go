@@ -87,9 +87,11 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 		return nil, errDo
 	}
 
+	logger := s.log.FromContext(ctx)
+
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			s.log.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -104,7 +106,7 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 		return nil, fmt.Errorf("unsuccessful response status code %d: %s", r.StatusCode, string(response.Body))
 	}
 
-	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
+	logger.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
 	return response, nil
 }

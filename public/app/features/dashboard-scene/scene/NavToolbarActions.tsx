@@ -20,7 +20,7 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
@@ -124,15 +124,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (isReadOnlyRepo) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ReadOnlyBadge repoType={repoType} />;
-      },
-    });
-  }
+  // Only users who could otherwise edit need to know why they can't.
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
+    render: () => {
+      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
+    },
+  });
 
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.
@@ -173,10 +172,10 @@ export function ToolbarActions({ dashboard }: Props) {
               key="add-visualization"
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
+              onClick={async () => {
+                const vizPanel = await dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+                openPanelEditor(dashboard, vizPanel, true);
               }}
             />
             <Menu.Item
@@ -471,6 +470,7 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
+            testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
           />
         </Menu>
       );
@@ -494,6 +494,7 @@ export function ToolbarActions({ dashboard }: Props) {
               icon="angle-down"
               variant={isDirty ? 'primary' : 'secondary'}
               size="sm"
+              data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
           </Dropdown>
         </ButtonGroup>

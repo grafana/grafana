@@ -118,9 +118,6 @@ func (f *FakeOrgService) SearchOrgUsersByEmails(ctx context.Context, query *org.
 	return f.ExpectedSearchOrgUsersByEmailsResult, f.ExpectedError
 }
 
-func (f *FakeOrgService) RegisterDelete(query string) {
-}
-
 type FakeOrgDeletionService struct {
 	ExpectedError error
 }

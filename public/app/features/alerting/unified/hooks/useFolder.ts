@@ -26,5 +26,5 @@ export function stringifyFolder({ title, parents }: FolderDTO) {
 }
 
 function encodeTitle(title: string): string {
-  return title.replaceAll('/', '\\/');
+  return title.replaceAll('\\', '\\\\').replaceAll('/', '\\/');
 }

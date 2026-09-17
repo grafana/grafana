@@ -768,6 +768,88 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/authorize": {
+      "post": {
+        "tags": [
+          "Connection"
+        ],
+        "description": "Complete the OAuth authorization of this connection by exchanging an authorization code",
+        "operationId": "createConnectionAuthorize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+                "type": "object",
+                "required": [
+                  "spec"
+                ],
+                "properties": {
+                  "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "default": {}
+                  },
+                  "spec": {
+                    "default": {}
+                  },
+                  "status": {
+                    "default": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequest"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ConnectionAuthorizeRequest"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ConnectionAuthorizeRequest",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/repositories": {
       "get": {
         "tags": [
@@ -794,9 +876,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -2625,9 +2705,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -3394,9 +3472,7 @@
                     },
                     "items": {
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      },
+                      "items": {},
                       "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
@@ -4029,11 +4105,11 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig": {
         "type": "object",
         "required": [
-          "clientID"
+          "workspace"
         ],
         "properties": {
-          "clientID": {
-            "description": "App client ID",
+          "workspace": {
+            "description": "The workspace the OAuth consumer belongs to",
             "type": "string",
             "default": ""
           }
@@ -4084,6 +4160,14 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.CommitOptions": {
         "type": "object",
         "properties": {
+          "authorEmail": {
+            "description": "Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+            "type": "string"
+          },
+          "authorName": {
+            "description": "Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+            "type": "string"
+          },
           "enforceTemplate": {
             "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"
@@ -4172,6 +4256,84 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequest": {
+        "description": "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequestSpec"
+              }
+            ]
+          },
+          "status": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequestStatus"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionAuthorizeRequest",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequestSpec": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "description": "The authorization code returned by the provider",
+            "type": "string",
+            "default": ""
+          },
+          "redirectURI": {
+            "description": "The redirect URI used in the authorization request",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionAuthorizeRequestStatus": {
+        "type": "object",
+        "required": [
+          "authorized"
+        ],
+        "properties": {
+          "authorized": {
+            "description": "Whether the connection has been authorized",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionInfo": {
         "type": "object",
         "required": [
@@ -4197,12 +4359,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4226,6 +4383,19 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionOAuthConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "The OAuth app client ID",
+            "type": "string",
+            "default": ""
+          }
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSecure": {
         "type": "object",
@@ -4267,7 +4437,7 @@
         ],
         "properties": {
           "bitbucket": {
-            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
+            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucketOAuth\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
@@ -4294,11 +4464,19 @@
               }
             ]
           },
-          "gitlab": {
-            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
+          "githubEnterpriseOAuth": {
+            "description": "GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is \"githubEnterpriseOAuth\"",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig"
+              }
+            ]
+          },
+          "oauth": {
+            "description": "OAuth app configuration shared by all OAuth app providers",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionOAuthConfig"
               }
             ]
           },
@@ -4308,14 +4486,16 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
-              "bitbucket",
+              "bitbucketOAuth",
               "github",
               "githubEnterprise",
-              "gitlab"
+              "githubEnterpriseOAuth",
+              "githubOAuth",
+              "gitlabOAuth"
             ]
           },
           "url": {
@@ -4344,12 +4524,7 @@
             "description": "Conditions represent the latest available observations of the connection's state.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
-                }
-              ]
+              "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
             },
             "x-kubernetes-list-map-keys": [
               "type"
@@ -4362,12 +4537,7 @@
             "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4413,8 +4583,7 @@
             "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "ref": {
@@ -4425,12 +4594,7 @@
             "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           }
         }
@@ -4491,12 +4655,7 @@
             "description": "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           }
         }
@@ -4538,12 +4697,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExternalRepository"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ExternalRepository"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -4607,9 +4761,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -4668,6 +4820,19 @@
             "type": "string",
             "default": ""
           },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig": {
+        "type": "object",
+        "required": [
+          "serverUrl"
+        ],
+        "properties": {
           "serverUrl": {
             "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
             "type": "string",
@@ -4741,6 +4906,10 @@
             "description": "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
             "type": "string"
           },
+          "repoID": {
+            "description": "RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
+            "type": "string"
+          },
           "url": {
             "description": "The repository URL (e.g. `https://gitlab.com/example/test`).",
             "type": "string"
@@ -4772,19 +4941,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig": {
-        "type": "object",
-        "required": [
-          "clientID"
-        ],
-        "properties": {
-          "clientID": {
-            "description": "App client ID",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HealthStatus": {
         "type": "object",
         "required": [
@@ -4813,8 +4969,7 @@
             "description": "Summary messages (can be shown to users) Will only be populated when not healthy",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }
@@ -4875,12 +5030,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJob"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJob"
             }
           },
           "kind": {
@@ -4915,9 +5065,7 @@
         "properties": {
           "authors": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "createdAt": {
@@ -4948,9 +5096,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "default": {}
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -5020,12 +5166,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job"
             }
           },
           "kind": {
@@ -5069,8 +5210,7 @@
             "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "group": {
@@ -5088,6 +5228,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "totalChanges": {
+            "description": "TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket.",
+            "type": "integer",
+            "format": "int64"
+          },
           "update": {
             "type": "integer",
             "format": "int64"
@@ -5100,8 +5245,7 @@
           "warnings": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "write": {
@@ -5214,8 +5358,7 @@
           "errors": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "finished": {
@@ -5268,8 +5411,7 @@
           "warnings": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -5328,12 +5470,7 @@
             "description": "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           },
           "skipResourceDeletion": {
@@ -5349,8 +5486,7 @@
             "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "ref": {
@@ -5361,12 +5497,7 @@
             "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceRef"
             }
           },
           "targetPath": {
@@ -5378,9 +5509,17 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions": {
         "type": "object",
         "properties": {
+          "forkURL": {
+            "description": "URL of the head repository for a pull request from a fork, when available.",
+            "type": "string"
+          },
           "hash": {
             "description": "The specific commit hash that triggered this notice",
             "type": "string"
+          },
+          "isFork": {
+            "description": "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+            "type": "boolean"
           },
           "pr": {
             "description": "Pull request number (when appropriate)",
@@ -5415,7 +5554,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus": {
-        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "description": "QuotaStatus represents the quota limits configured for this repository.",
         "type": "object",
         "properties": {
           "maxRepositories": {
@@ -5425,6 +5564,11 @@
           },
           "maxResourcesPerRepository": {
             "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "description": "UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.",
             "type": "integer",
             "format": "int64"
           }
@@ -5468,12 +5612,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5564,12 +5703,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5727,7 +5861,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "branch",
                 "write"
@@ -5750,12 +5883,7 @@
             "description": "Conditions represent the latest available observations of the repository's state.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
-                }
-              ]
+              "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
             },
             "x-kubernetes-list-map-keys": [
               "type"
@@ -5772,12 +5900,7 @@
             "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5809,12 +5932,7 @@
             "description": "The object count when sync last ran",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -5951,7 +6069,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "branch",
                 "write"
@@ -5979,7 +6096,6 @@
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "folder",
                 "folderless",
@@ -5991,12 +6107,26 @@
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
+          "availableConnectionTypes": {
+            "description": "AvailableConnectionTypes is the list of connection types supported in this instance",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bitbucketOAuth",
+                "github",
+                "githubEnterprise",
+                "githubEnterpriseOAuth",
+                "githubOAuth",
+                "gitlabOAuth"
+              ]
+            }
+          },
           "availableRepositoryTypes": {
             "description": "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
             "type": "array",
             "items": {
               "type": "string",
-              "default": "",
               "enum": [
                 "bitbucket",
                 "git",
@@ -6078,12 +6208,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceListItem"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceListItem"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6362,8 +6487,7 @@
             "description": "If errors exist, show them here",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6552,8 +6676,7 @@
             "description": "Summary messages (will be shown to users)",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -6622,12 +6745,7 @@
             "description": "Field related errors",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
             }
           },
           "kind": {
@@ -6729,8 +6847,7 @@
           "subscribedEvents": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "url": {

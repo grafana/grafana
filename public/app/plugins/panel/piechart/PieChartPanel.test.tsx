@@ -248,8 +248,8 @@ describe('PieChartPanel', () => {
 
         await act(async () => {
           trigger.focus();
-          await user.keyboard('{Enter}');
         });
+        await user.keyboard('{Enter}');
 
         expect(screen.getByText('Open dashboard')).toBeInTheDocument();
         expect(screen.getByText('Open runbook')).toBeInTheDocument();
@@ -273,8 +273,8 @@ describe('PieChartPanel', () => {
         expect(screen.queryByText('Open dashboard')).not.toBeInTheDocument();
         await act(async () => {
           trigger.focus();
-          await user.keyboard(' ');
         });
+        await user.keyboard(' ');
 
         expect(screen.getByText('Open dashboard')).toBeInTheDocument();
         expect(screen.getByText('Open runbook')).toBeInTheDocument();

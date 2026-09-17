@@ -4,7 +4,7 @@
  * List template variables for a scope (dashboard or row/tab section) in v2beta1 VariableKind format.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { SceneVariableSet } from '@grafana/scenes';
 

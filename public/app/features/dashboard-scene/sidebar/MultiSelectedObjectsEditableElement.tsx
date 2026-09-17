@@ -14,7 +14,7 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
 
   constructor(private _elements: BulkActionElement[]) {}
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
     return [];
   }
 

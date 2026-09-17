@@ -59,7 +59,7 @@ class ScenarioCtx {
   results!: PanelData[];
   subscription!: Subscription;
   wasStarted = false;
-  error: Error | null = null;
+  error: unknown = null;
   toStartTime = dateTime();
   fromStartTime = dateTime();
 
@@ -323,6 +323,20 @@ describe('runRequest', () => {
 
     it('should emit 1 error result', () => {
       expect(ctx.results[0].error?.message).toBe('Ohh no');
+      expect(ctx.results[0].state).toBe(LoadingState.Error);
+    });
+  });
+
+  // Errors that come back out of the Redux store are frozen by immer -- for example anything a
+  // runtime data source gets from an RTK Query `unwrap()`. Normalising those used to throw.
+  runRequestScenarioThatThrows('on a thrown frozen error', (ctx) => {
+    ctx.setup(() => {
+      ctx.error = Object.freeze({ status: 500, statusText: 'Internal Server Error' });
+      ctx.start();
+    });
+
+    it('should emit 1 error result', () => {
+      expect(ctx.results[0].error?.message).toBe('Query error: 500 Internal Server Error');
       expect(ctx.results[0].state).toBe(LoadingState.Error);
     });
   });

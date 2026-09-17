@@ -68,14 +68,6 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-beforeAll(() => {
-  setTestFlags({ [FlagKeys.TableRefactorNested]: false });
-});
-
-afterAll(() => {
-  setTestFlags({});
-});
-
 describe('useCacheFieldDisplayNames', () => {
   it('caches the display name onto each field', () => {
     const frame = makeFrame({
@@ -189,6 +181,7 @@ describe('useCommonTableProps', () => {
     cellHeight: undefined,
     maxRowHeight: 100,
     disableKeyboardEvents: true,
+    hoverOverflow: false,
     frameIndex: 0,
   };
 
@@ -206,16 +199,44 @@ describe('useCommonTableProps', () => {
       cellHeight: undefined,
       maxRowHeight: 100,
       disableKeyboardEvents: true,
+      hoverOverflow: false,
       disableSanitizeHtml: false,
-      nestedRefactorEnabled: false,
+      contentAwareWidthsEnabled: false,
+      tableRefreshEnabled: false,
     });
   });
 
-  it('reflects the nested-refactor feature flag', () => {
-    setTestFlags({ [FlagKeys.TableRefactorNested]: true });
+  it('passes the table-refresh flag through', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
     const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
-    expect(result.current.nestedRefactorEnabled).toBe(true);
+    expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  it('enables hover overflow when the option is undefined', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, hoverOverflow: undefined }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.hoverOverflow).toBe(true);
+  });
+
+  it('passes pageSize through when the pagination-page-size flag is on', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBe(25);
+  });
+
+  it('drops pageSize when the pagination-page-size flag is off', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: false });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBeUndefined();
   });
 
   it('returns a stable reference when inputs do not change', () => {

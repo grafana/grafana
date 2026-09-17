@@ -16,10 +16,12 @@ export interface LogDetailsContextData {
   detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   enableLogDetails: boolean;
+  prettifyDetailsJSON: boolean;
   replaceDetails: (log: LogListModel) => void;
   setCurrentLog: (log: LogListModel) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
+  setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: LogListModel) => void;
 }
@@ -31,10 +33,12 @@ export const emptyContextData: LogDetailsContextData = {
   detailsMode: 'sidebar',
   detailsWidth: 0,
   enableLogDetails: false,
+  prettifyDetailsJSON: true,
   replaceDetails: () => {},
   setCurrentLog: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
+  setPrettifyDetailsJSON: () => {},
   showDetails: [],
   toggleDetails: () => {},
 };
@@ -57,6 +61,7 @@ export interface Props {
   enableLogDetails: boolean;
   logs: LogRowModel[];
   logOptionsStorageKey?: string;
+  prettifyDetailsJSON?: boolean;
   showControls: boolean;
   showFieldSelector?: boolean;
 }
@@ -70,12 +75,17 @@ export const LogDetailsContextProvider = ({
     ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? getDefaultDetailsMode(containerElement))
     : getDefaultDetailsMode(containerElement),
   logs,
+  prettifyDetailsJSON: prettifyDetailsJSONProp,
   showControls,
   showFieldSelector,
 }: Props) => {
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
 
   const [currentLog, setCurrentLog] = useState<LogListModel | undefined>(undefined);
+  const [prettifyDetailsJSON, setPrettifyDetailsJSONState] = useState(
+    prettifyDetailsJSONProp ??
+      (logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyDetailsJSON`, true) : true)
+  );
   const [detailsWidth, setDetailsWidthState] = useState(
     getDetailsWidth(containerElement, logOptionsStorageKey, undefined, detailsModeProp, showControls, showFieldSelector)
   );
@@ -89,6 +99,13 @@ export const LogDetailsContextProvider = ({
       setDetailsMode(detailsModeProp);
     }
   }, [detailsModeProp]);
+
+  // Sync prettifyDetailsJSON
+  useEffect(() => {
+    if (prettifyDetailsJSONProp !== undefined) {
+      setPrettifyDetailsJSONState(prettifyDetailsJSONProp);
+    }
+  }, [prettifyDetailsJSONProp]);
 
   // Sync show details
   useEffect(() => {
@@ -182,6 +199,16 @@ export const LogDetailsContextProvider = ({
     [currentLog, enableLogDetails, showDetails]
   );
 
+  const setPrettifyDetailsJSON = useCallback(
+    (prettifyDetailsJSON: boolean) => {
+      setPrettifyDetailsJSONState(prettifyDetailsJSON);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.prettifyDetailsJSON`, prettifyDetailsJSON);
+      }
+    },
+    [logOptionsStorageKey]
+  );
+
   const setDetailsWidth = useCallback(
     (width: number) => {
       if (!logOptionsStorageKey || !containerElement) {
@@ -211,10 +238,12 @@ export const LogDetailsContextProvider = ({
         detailsMode,
         detailsWidth,
         enableLogDetails,
+        prettifyDetailsJSON,
         replaceDetails,
         setCurrentLog,
         setDetailsMode,
         setDetailsWidth,
+        setPrettifyDetailsJSON,
         showDetails,
         toggleDetails,
       }}

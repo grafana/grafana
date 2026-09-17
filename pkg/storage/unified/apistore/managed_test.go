@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,32 @@ import (
 	serviceauthn "github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
+	_, provisioner, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+	for _, current := range []utils.ManagerProperties{
+		{Kind: utils.ManagerKindTerraform, Identity: "terraform-provider", AllowsEdits: true},
+		{Kind: utils.ManagerKindClassicFP}, //nolint:staticcheck
+	} {
+		t.Run(string(current.Kind), func(t *testing.T) {
+			old, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			old.SetManagerProperties(current)
+			obj, err := utils.MetaAccessor(&unstructured.Unstructured{})
+			require.NoError(t, err)
+			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "dashboards"})
+
+			err = checkManagerPropertiesOnUpdateSpec(provisioner, obj, old)
+			require.Error(t, err)
+			require.True(t, apierrors.IsForbidden(err))
+			require.True(t, utils.IsForbiddenManagerKindChangeError(err))
+			require.True(t, apierrors.HasStatusCause(err, "ResourceManagerKindConflict"))
+			require.Contains(t, err.Error(), string(current.Kind))
+			require.Contains(t, err.Error(), `to "repo" (identity "dashboards")`)
+		})
+	}
+}
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
@@ -662,7 +689,7 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				},
 			}
 
-			err := s.handleManagedResourceRouting(
+			cleanupSafe, err := s.handleManagedResourceRouting(
 				context.Background(),
 				errResourceIsManagedInRepository,
 				tt.action,
@@ -670,8 +697,10 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				obj,
 				&dashboard.Dashboard{},
 			)
-			// The test server returns 500; surface that as a non-nil error.
+			// The test server returns an error; surface that as a non-nil error.
 			require.Error(t, err)
+			// Once the request is sent the write may have applied, so cleanup is never safe.
+			require.False(t, cleanupSafe, "a sent request must not report cleanupSafe")
 
 			require.Equal(t, tt.wantMethod, captured.method, "HTTP method")
 			require.Contains(t, captured.path, "/namespaces/default/repositories/my-repo/files/dashboards/dash.json",

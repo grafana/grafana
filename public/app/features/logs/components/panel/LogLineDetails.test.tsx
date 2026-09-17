@@ -18,6 +18,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
@@ -33,8 +34,23 @@ import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
+};
+
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('../fieldSelector/FieldSelector');
@@ -142,6 +158,7 @@ const setup = async (
 
 describe('LogLineDetails', () => {
   beforeEach(() => {
+    setBooleanFlags({});
     lokiDS = createLokiDatasource(undefined, { uid: 'loki-ds' });
     tempoDS = createTempoDatasource(undefined, { uid: 'tempo-ds' });
     jest.mocked(usePluginLinks).mockReturnValue({
@@ -312,6 +329,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Show log line'));
@@ -327,6 +347,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Hide log line'));
@@ -336,6 +359,9 @@ describe('LogLineDetails', () => {
     test('should not show an option to display the log line when displayed fields are not used', async () => {
       await setup(undefined, { labels: { key1: 'label1' } }, { displayedFields: [] });
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.queryByLabelText('Show log line')).not.toBeInTheDocument();
     });
     test('should render the filter controls when the callbacks are provided', async () => {
@@ -716,6 +742,7 @@ describe('LogLineDetails', () => {
       });
 
       test('Shows displayed fields controls if required props are present', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(
@@ -769,7 +796,105 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/value2/)).toBeInTheDocument();
       });
 
+      test('Shows a prettify switch for JSON log lines when the log line section is open', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByRole('switch', { name: 'Prettify' })).toBeInTheDocument();
+      });
+
+      test('Does not show a prettify switch for non-JSON log lines', async () => {
+        await setup(undefined, { entry: 'plain log line', labels: { key1: 'label1' } });
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+      });
+
+      test('Toggling the prettify switch calls setPrettifyDetailsJSON', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+        const setPrettifyDetailsJSON = jest.fn();
+
+        await setup({ logs: [log] }, undefined, undefined, {
+          showDetails: [log],
+          currentLog: log,
+          prettifyDetailsJSON: true,
+          setPrettifyDetailsJSON,
+        });
+
+        await userEvent.click(screen.getByText('Log line'));
+        await userEvent.click(screen.getByRole('switch', { name: 'Prettify' }));
+
+        expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(false);
+      });
+
+      test('Renders a compact JSON log line when prettifyDetailsJSON is false', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: false }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByText(jsonEntry)).toBeInTheDocument();
+      });
+
+      test('Renders a prettified JSON log line when prettifyDetailsJSON is true', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: true }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByText(jsonEntry)).not.toBeInTheDocument();
+        expect(screen.getByText(/"key"/)).toBeInTheDocument();
+        expect(screen.getByText(/"value"/)).toBeInTheDocument();
+      });
+
       test('Exposes buttons to reorder displayed fields', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(

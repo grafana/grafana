@@ -93,18 +93,12 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 
 /**
- * JSON annotation listing predefined (global/folder) variables to exclude from injection.
- * Value shape: a JSON array of strings (sentinels and/or exact variable names).
- * Absent or `[]` → inject all. `["*"]` → inject none.
+ * JSON annotation selecting which cross-dashboard (global/folder) variables to inject.
+ * Value shape: `{"global":"all"|"none"|string[],"folder":"all"|"none"|string[]}`.
+ * Absent or invalid JSON → inject none (not opted in). `"all"` in a scope auto-includes new vars;
+ * a name array does not. Empty array is `"none"`. Both scopes `"none"` → omit this key.
  */
-export const AnnoKeyIgnorePredefinedVariables = 'grafana.app/ignorePredefinedVariables';
-
-/** Denylist sentinel: exclude all predefined variables. */
-export const DENY_ALL_PREDEFINED = '*';
-/** Denylist sentinel: exclude all org-global predefined variables. */
-export const DENY_ALL_GLOBAL_PREDEFINED = 'global:*';
-/** Denylist sentinel: exclude all folder-scoped predefined variables. */
-export const DENY_ALL_FOLDER_PREDEFINED = 'folder:*';
+export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardVariables';
 
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
@@ -145,7 +139,7 @@ type GrafanaClientAnnotations = {
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
 
-  [AnnoKeyIgnorePredefinedVariables]?: string;
+  [AnnoKeyUseCrossDashboardVariables]?: string;
 };
 
 // Labels

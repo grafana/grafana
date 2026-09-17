@@ -3,8 +3,10 @@ package sql
 import (
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
 )
 
@@ -137,6 +139,37 @@ func TestIsHighAvailabilityEnabled(t *testing.T) {
 			result := isHighAvailabilityEnabled(tt.cfg.SectionWithEnvOverrides("database"),
 				tt.cfg.SectionWithEnvOverrides("resource_api"))
 			require.Equal(t, tt.isHA, result)
+		})
+	}
+}
+
+func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
+	tests := []struct {
+		name       string
+		enabled    bool
+		exemptions []string
+		wantError  string
+	}{
+		{name: "disabled with empty exemptions is valid"},
+		{name: "enabled with empty exemptions is valid", enabled: true},
+		{name: "enabled with exact exemption is valid", enabled: true, exemptions: []string{"example.grafana.app/widgets"}},
+		{name: "malformed exemption fails initialization while disabled", exemptions: []string{"invalid"}, wantError: "invalid unified storage authz exemption"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.UnifiedStorageAuthzExemptionEnabled = tt.enabled
+			cfg.UnifiedStorageAuthzExemptResources = tt.exemptions
+			err := withAccessClient(&ServerOptions{
+				Cfg:          cfg,
+				AccessClient: types.FixedAccessClient(true),
+			}, &resource.ResourceServerOptions{})
+			if tt.wantError != "" {
+				require.ErrorContains(t, err, tt.wantError)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

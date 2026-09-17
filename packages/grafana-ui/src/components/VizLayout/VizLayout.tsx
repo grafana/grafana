@@ -88,7 +88,14 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
       if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
-        size = { width: width - legend.props.width, height };
+
+        // `maxWidth` can clamp the legend below the requested width, so subtracting the raw
+        // prop would size the viz for a wider legend than is actually rendered and leave a
+        // dead gap in the panel. Prefer the measured width; the prop is only the first-render
+        // fallback, before the legend has been measured in its new position.
+        if (!legendMeasure.width) {
+          size = { width: width - legend.props.width, height };
+        }
       }
       break;
   }
