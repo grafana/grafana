@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
+var textTemplateFileManager = models.ProvenanceToManagerProperties(models.ProvenanceFile)
+
 type TextTemplateProvisioner interface {
 	Provision(ctx context.Context, files []*AlertingFile) error
 	Unprovision(ctx context.Context, files []*AlertingFile) error
@@ -44,7 +46,7 @@ func (c *defaultTextTemplateProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deleteTemplate := range file.DeleteTemplates {
-			err := c.templateService.DeleteTemplate(ctx, deleteTemplate.OrgID, deleteTemplate.Name, models.ProvenanceFile, "")
+			err := c.templateService.DeleteTemplate(ctx, deleteTemplate.OrgID, deleteTemplate.Name, textTemplateFileManager, "")
 			if err != nil {
 				return err
 			}

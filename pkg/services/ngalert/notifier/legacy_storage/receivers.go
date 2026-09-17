@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/util"
@@ -93,26 +94,30 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 	return m
 }
 
-func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Receiver, error) {
+// GetReceiver returns the receiver with the given uid, along with its ManagerProperties.
+func (rev *ConfigRevision) GetReceiver(uid string, prov provenances, managerProps map[string]utils.ManagerProperties) (*models.Receiver, utils.ManagerProperties, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if NameToUid(r.GetName()) != uid {
 			continue
 		}
 		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginGrafana), models.ResourceOriginGrafana)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+			return nil, utils.ManagerProperties{}, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
-		return recv, nil
+		return recv, GetReceiverManager(managerProps, r, models.ResourceOriginGrafana), nil
 	}
-	return nil, models.ErrReceiverNotFound.Errorf("")
+	return nil, utils.ManagerProperties{}, models.ErrReceiverNotFound.Errorf("")
 }
 
-func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*models.Receiver, error) {
+// GetReceivers returns all receivers matching uids, along with their ManagerProperties keyed by
+// resource UID.
+func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances, managerProps map[string]utils.ManagerProperties) ([]*models.Receiver, map[string]utils.ManagerProperties, error) {
 	capacity := len(uids)
 	if capacity == 0 {
 		capacity = len(rev.Config.AlertmanagerConfig.Receivers)
 	}
 	receivers := make([]*models.Receiver, 0, capacity)
+	result := make(map[string]utils.ManagerProperties, capacity)
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		uid := NameToUid(r.GetName())
 		if len(uids) > 0 && !slices.Contains(uids, uid) {
@@ -120,11 +125,12 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*mod
 		}
 		recv, err := PostableApiReceiverToReceiver(r, GetReceiverProvenance(prov, r, models.ResourceOriginGrafana), models.ResourceOriginGrafana)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
+			return nil, nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
 		receivers = append(receivers, recv)
+		result[recv.GetUID()] = GetReceiverManager(managerProps, r, models.ResourceOriginGrafana)
 	}
-	return receivers, nil
+	return receivers, result, nil
 }
 
 // GetReceiversNames returns a map of receiver names

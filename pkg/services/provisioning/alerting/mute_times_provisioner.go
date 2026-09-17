@@ -28,11 +28,12 @@ func NewMuteTimesProvisioner(logger log.Logger,
 
 func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
+	manager := models.ProvenanceToManagerProperties(models.ProvenanceFile)
 	cache := map[int64]map[string]struct{}{}
 	for _, file := range files {
 		for _, muteTiming := range file.MuteTimes {
 			if _, exists := cache[muteTiming.OrgID]; !exists {
-				intervals, err := c.muteTimingService.GetMuteTimings(ctx, muteTiming.OrgID)
+				intervals, _, err := c.muteTimingService.GetMuteTimings(ctx, muteTiming.OrgID)
 				if err != nil {
 					return err
 				}
@@ -43,13 +44,13 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 			}
 			muteTiming.MuteTime.Provenance = models.ProvenanceFile
 			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Title]; exists {
-				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
+				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID, manager)
 				if err != nil {
 					return err
 				}
 				continue
 			}
-			_, err := c.muteTimingService.CreateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
+			_, err := c.muteTimingService.CreateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID, manager)
 			if err != nil {
 				return err
 			}
@@ -60,9 +61,10 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 
 func (c *defaultMuteTimesProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
+	manager := models.ProvenanceToManagerProperties(models.ProvenanceFile)
 	for _, file := range files {
 		for _, deleteMuteTime := range file.DeleteMuteTimes {
-			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, models.ProvenanceFile, "")
+			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, manager, "")
 			if err != nil {
 				return err
 			}
