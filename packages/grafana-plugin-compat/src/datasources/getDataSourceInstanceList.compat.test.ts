@@ -1,6 +1,8 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 
+import { getMockedDatasourceSrv } from '../utils/mocks';
+
 import { getDataSourceInstanceList } from './getDataSourceInstanceList';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -8,13 +10,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceList: undefined,
 }));
 
-const mockDatasourceSrv: DataSourceSrv = {
-  get: jest.fn(),
-  getInstanceSettings: jest.fn(),
-  getList: jest.fn(),
-  registerRuntimeDataSource: jest.fn(),
-  reload: jest.fn(),
-};
+const mockDatasourceSrv = getMockedDatasourceSrv();
 const mockData = { uid: 'ds-logs', type: 'loki', name: 'Loki' } as DataSourceInstanceSettings;
 
 describe('getDataSourceInstanceList', () => {
@@ -64,5 +60,11 @@ describe('getDataSourceInstanceList', () => {
       type: 'loki',
       uid: 'ds-logs',
     });
+  });
+
+  it('should reject when getDataSourceSrv is not setup', async () => {
+    setDataSourceSrv(undefined as unknown as DataSourceSrv);
+
+    await expect(getDataSourceInstanceList({ pluginId: 'loki' })).rejects.toThrow();
   });
 });

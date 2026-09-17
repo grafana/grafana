@@ -2,11 +2,10 @@
 import { type ScopedVars, type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getDataSourceInstanceSettings as rtGetDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type DataSourceRef } from '@grafana/schema';
 
-type Ref = DataSourceRef | string | null;
+import { type Ref } from './types';
 
-export function getDataSourceInstanceSettings(
+export async function getDataSourceInstanceSettings(
   ref?: Ref,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
@@ -17,9 +16,9 @@ export function getDataSourceInstanceSettings(
   return backwardsCompatibleDataSourceInstanceSettings(ref, scopedVars);
 }
 
-function backwardsCompatibleDataSourceInstanceSettings(
+async function backwardsCompatibleDataSourceInstanceSettings(
   ref?: Ref,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  return Promise.resolve(getDataSourceSrv().getInstanceSettings(ref, scopedVars));
+  return getDataSourceSrv().getInstanceSettings(ref, scopedVars);
 }

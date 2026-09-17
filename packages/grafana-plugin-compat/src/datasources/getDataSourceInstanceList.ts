@@ -6,9 +6,9 @@ import {
   getDataSourceInstanceList as rtGetDataSourceInstanceList,
 } from '@grafana/runtime/unstable';
 
-type Filters = GetDataSourceInstanceListFilters;
-
-export function getDataSourceInstanceList(filters?: Filters): Promise<DataSourceInstanceListItem[]> {
+export async function getDataSourceInstanceList(
+  filters?: GetDataSourceInstanceListFilters
+): Promise<DataSourceInstanceListItem[]> {
   if (typeof rtGetDataSourceInstanceList === 'function') {
     return rtGetDataSourceInstanceList(filters);
   }
@@ -16,14 +16,15 @@ export function getDataSourceInstanceList(filters?: Filters): Promise<DataSource
   return backwardsCompatibleGetDataSourceInstanceList(filters);
 }
 
-function backwardsCompatibleGetDataSourceInstanceList(filters?: Filters): Promise<DataSourceInstanceListItem[]> {
+async function backwardsCompatibleGetDataSourceInstanceList(
+  filters?: GetDataSourceInstanceListFilters
+): Promise<DataSourceInstanceListItem[]> {
   const { filter, ...rest } = filters ?? {};
   const legacyFilters: GetDataSourceListFilters = filter
     ? { ...rest, filter: (item) => filter(toDataSourceInstanceListItem(item)) }
     : { ...rest };
 
-  const list = getDataSourceSrv().getList(legacyFilters).map(toDataSourceInstanceListItem);
-  return Promise.resolve(list);
+  return getDataSourceSrv().getList(legacyFilters).map(toDataSourceInstanceListItem);
 }
 
 function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSourceInstanceListItem {
