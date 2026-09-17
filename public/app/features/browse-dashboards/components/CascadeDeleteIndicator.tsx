@@ -1,9 +1,17 @@
 import { t } from '@grafana/i18n';
-import { Badge, LoadingBar, Stack } from '@grafana/ui';
+import { Badge, LoadingBar, Stack, Tooltip } from '@grafana/ui';
 
 interface Props {
   /** Direct children left to delete, if known (folders only -- dashboards have no cascadeDelete status). */
   remaining?: number;
+  /**
+   * Non-fatal errors from the last reconcile pass (folders only), e.g. a legacy subfolder that
+   * can't be removed because it predates the cascade-delete finalizer. The controller keeps
+   * retrying on its own rate-limited schedule -- this isn't necessarily permanent -- but the user
+   * who triggered the delete (or anyone else who looks at this folder later) should be able to see
+   * why it's stuck instead of watching a spinner indefinitely.
+   */
+  errors?: string[];
 }
 
 /**
@@ -15,7 +23,21 @@ interface Props {
  * component, so the decreasing remaining-child count (when known) is surfaced directly in the
  * badge text instead of a filled bar.
  */
-export function CascadeDeleteIndicator({ remaining }: Props) {
+export function CascadeDeleteIndicator({ remaining, errors }: Props) {
+  if (errors && errors.length > 0) {
+    return (
+      <Tooltip content={errors.join('\n')} interactive>
+        <span>
+          <Badge
+            color="orange"
+            icon="exclamation-triangle"
+            text={t('browse-dashboards.cascade-delete-indicator.error-text', 'Deletion stuck — hover for details')}
+          />
+        </span>
+      </Tooltip>
+    );
+  }
+
   const text =
     remaining !== undefined
       ? t('browse-dashboards.cascade-delete-indicator.text-with-remaining', '', {

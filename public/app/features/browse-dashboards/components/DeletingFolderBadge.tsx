@@ -63,5 +63,10 @@ export function DeletingFolderBadge({ folderUID, parentUID }: Props) {
     return null;
   }
 
-  return <CascadeDeleteIndicator remaining={data?.status?.cascadeDelete?.remaining} />;
+  return (
+    <CascadeDeleteIndicator
+      remaining={data?.status?.cascadeDelete?.remaining}
+      errors={data?.status?.cascadeDelete?.errors}
+    />
+  );
 }

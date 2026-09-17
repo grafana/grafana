@@ -175,7 +175,10 @@ describe('browse-dashboards FolderActionsButton', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
 
     const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
-    await showModalEvent.payload.props.onConfirm();
+    await expect(showModalEvent.payload.props.onConfirm()).rejects.toEqual({
+      status: 400,
+      data: { message: backendMessage },
+    });
 
     expect(publishSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -198,7 +201,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
 
     const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
-    await showModalEvent.payload.props.onConfirm();
+    await expect(showModalEvent.payload.props.onConfirm()).rejects.toEqual({ status: 500 });
 
     expect(publishSpy).toHaveBeenCalledWith(
       expect.objectContaining({

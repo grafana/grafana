@@ -3,8 +3,10 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
+import { findItem } from '../state/utils';
+import { type BrowseDashboardsState, type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return `${baseId}${item.kind}-${item.uid}`;
@@ -117,6 +119,38 @@ export function getSelectedUIDs(
 ): string[] {
   const selection = selectedItems[kind];
   return Object.keys(selection).filter((uid) => selection[uid]);
+}
+
+/**
+ * Selected folder/dashboard UIDs, with any item dropped whose direct parent is also selected.
+ *
+ * Selecting a folder in the tree visually cascades the selection to all of its descendants
+ * (see setItemSelectionState), but deleting/moving a folder already cascades to everything
+ * beneath it on its own -- calling the same action again for each visually-selected descendant is
+ * redundant at best (an extra API call per item) and can race with the parent's own cascade at
+ * worst. This keeps only the "top" of each selected subtree.
+ *
+ * A direct-parent check is sufficient (not a full ancestor walk): cascading selection means a
+ * folder can only be selected while its own parent is unselected if that parent was never selected
+ * at all, so there's no case where a grandparent is selected but the parent in between isn't.
+ */
+export function getTopLevelSelectedUIDs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>,
+  rootItems: DashboardViewItem[],
+  childrenByUID: BrowseDashboardsState['childrenByParentUID']
+): { folders: string[]; dashboards: string[] } {
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
+  const selectedFolderUIDs = new Set(selectedFolders);
+
+  const isTopLevel = (kind: 'folder' | 'dashboard', uid: string) => {
+    const item = findItem(rootItems, childrenByUID, kind, uid);
+    return !item?.parentUID || !selectedFolderUIDs.has(item.parentUID);
+  };
+
+  return {
+    folders: selectedFolders.filter((uid) => isTopLevel('folder', uid)),
+    dashboards: getSelectedUIDs(selectedItems, 'dashboard').filter((uid) => isTopLevel('dashboard', uid)),
+  };
 }
 
 /** Selected folders and dashboards as (kind, uid) pairs, folders first. */

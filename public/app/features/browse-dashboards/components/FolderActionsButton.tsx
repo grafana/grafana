@@ -83,7 +83,9 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
         type: AppEvents.alertError.name,
         payload: [extractErrorMessage(result.error, fallbackMessage)],
       });
-      return;
+      // Re-throw so DeleteModal's onDelete catch block knows the delete didn't actually happen
+      // and doesn't move on to waiting for a cascade that was never started.
+      throw result.error;
     }
 
     reportInteraction('grafana_manage_dashboards_item_deleted', {
@@ -93,6 +95,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       },
       source: 'folder_actions',
     });
+  };
+
+  // Navigation only happens once DeleteModal confirms the folder (and its cascade, if any) is
+  // actually gone -- not immediately after the delete request was merely accepted -- so the user
+  // isn't bounced away from feedback about what's actually happening. See DeleteModal's onSettled.
+  const onDeleteSettled = () => {
     const { parents } = folder;
     const parentUrl = parents && parents.length ? parents[parents.length - 1].url : '/dashboards';
     locationService.push(parentUrl);
@@ -127,6 +135,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
             $all: false,
           },
           onConfirm: onDelete,
+          onSettled: onDeleteSettled,
         },
       })
     );

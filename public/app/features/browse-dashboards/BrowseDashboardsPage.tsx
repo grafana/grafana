@@ -28,6 +28,7 @@ import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { FolderCascadeErrorBanner } from './components/FolderCascadeErrorBanner';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
@@ -189,6 +190,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         {repoViewStatus === RepoViewStatus.Orphaned && orphanedRepoName && (
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
+        {/* Only shown when viewing a folder whose own async cascade delete is stuck retrying. */}
+        {folderDTO && <FolderCascadeErrorBanner folderUID={folderDTO.uid} />}
         <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
