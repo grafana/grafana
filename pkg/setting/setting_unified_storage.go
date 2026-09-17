@@ -19,8 +19,6 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	vectorAllowedInternalCollectionsKey = "vector_allowed_internal_collections"
-
 	PlaylistResource         = "playlists.playlist.grafana.app"
 	FolderResource           = "folders.folder.grafana.app"
 	DashboardResource        = "dashboards.dashboard.grafana.app"
@@ -85,8 +83,7 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 		}
 		envKey := before
 		envValue := after
-		// An explicitly empty enrollment list disables the default dashboard collection.
-		if envValue == "" && envKey != EnvKey("unified_storage", vectorAllowedInternalCollectionsKey) {
+		if envValue == "" {
 			continue
 		}
 
@@ -196,9 +193,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
-	if section.HasKey(vectorAllowedInternalCollectionsKey) {
-		cfg.VectorAllowedInternalCollections = parseCommaSeparatedList(section.Key(vectorAllowedInternalCollectionsKey).String())
-	} else {
+	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
+	if len(cfg.VectorAllowedInternalCollections) == 0 {
 		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
 	}
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
