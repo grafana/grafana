@@ -59,7 +59,6 @@ To see variable settings, click **Edit** in the top-right corner of the dashboar
 Grafana supports two broad kinds of variables:
 
 - **User-defined variables**: Variables that you define and configure. Use these variables when viewers need to choose values such as a server, data source, region, environment, or interval. These fall into two categories:
-
   - **Dashboard-scoped variables**: Variables that you create within a dashboard. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
   - **Cross-dashboard variables**: Variables already defined by your organization that you can use across dashboards either globally or by folder. For configuration steps, refer to [Cross-dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/cross-dashboard-variables/).
 
