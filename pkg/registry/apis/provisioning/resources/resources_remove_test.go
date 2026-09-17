@@ -375,6 +375,7 @@ func TestRenameResourceFile(t *testing.T) {
 	t.Run("old file parse error still attempts to write new resource", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json"}
 		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
@@ -392,19 +393,25 @@ func TestRenameResourceFile(t *testing.T) {
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
 
-		// Client is nil so Run returns an error, isolating whether the write was
-		// even attempted from whether it succeeded.
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj:  newObj,
-			Meta: newMeta,
-			GVK:  dashboardGVK,
-			Repo: testRepoInfo(),
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}, nil)
+
+		// Client.Create fails, isolating whether the write was even attempted
+		// from whether it succeeded.
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "new-uid")
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, fmt.Errorf("permission denied"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
 
-		require.Error(t, err, "write step is expected to fail (no client)")
+		require.Error(t, err, "write step is expected to fail")
 		require.Contains(t, err.Error(), "failed to write resource",
 			"the new resource must be attempted even when the previous file cannot be parsed")
 		require.Empty(t, folderName, "old resource's identity is unknown, so no folder cleanup signal can be produced")
@@ -483,15 +490,19 @@ func TestRenameResourceFile(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}, nil)
 
+		// Hash differs (rename-with-edits), but quota must still be checked
+		// exactly like the hash-match not-found case -- Bugbot's finding that
+		// this branch used to skip the check entirely.
 		notFound := apierrors.NewNotFound(schema.GroupResource{}, "brand-new-uid")
 		mockClient.On("Get", mock.Anything, "brand-new-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
-		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
-			Return(nil, notFound)
 		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
+		quota := quotas.NewMockQuotaTracker(t)
+		quota.EXPECT().TryAcquire().Return(true)
+
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		name, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quota)
 
 		require.Error(t, err, "old resource may need manual cleanup")
 		require.Equal(t, "brand-new-uid", name)
@@ -607,9 +618,11 @@ func TestRenameResourceFile(t *testing.T) {
 		notFound := apierrors.NewNotFound(schema.GroupResource{}, "quota-blocked-uid")
 		mockClient.On("Get", mock.Anything, "quota-blocked-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
 
+		quota := quotas.NewMockQuotaTracker(t)
+		quota.EXPECT().TryAcquire().Return(false)
+
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		quotaCheck := func() bool { return false }
-		_, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quotaCheck)
+		_, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quota)
 
 		var qe *quotas.QuotaExceededError
 		require.ErrorAs(t, err, &qe)
@@ -658,13 +671,63 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
 			Return(newObj, nil)
 
+		// Reserved for the create it thought it was about to do; must be
+		// given back once it turns out to be an update instead.
+		quota := quotas.NewMockQuotaTracker(t)
+		quota.EXPECT().TryAcquire().Return(true)
+		quota.EXPECT().Release()
+
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+		name, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quota)
 
 		require.NoError(t, err)
 		require.Equal(t, "raced-uid", name)
 		require.False(t, netNew, "ended up an update, not a create")
 		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything)
+	})
+
+	t.Run("old file parse error, never synced, failed write releases quota", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "failed-create-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		notFound := apierrors.NewNotFound(schema.GroupResource{}, "failed-create-uid")
+		mockClient.On("Get", mock.Anything, "failed-create-uid", metav1.GetOptions{}, mock.Anything).Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, newObj, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, fmt.Errorf("permission denied"))
+
+		quota := quotas.NewMockQuotaTracker(t)
+		quota.EXPECT().TryAcquire().Return(true)
+		quota.EXPECT().Release()
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", quota)
+
+		require.Error(t, err)
+		require.False(t, netNew)
 	})
 
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {

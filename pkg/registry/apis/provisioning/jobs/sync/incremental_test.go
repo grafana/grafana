@@ -862,8 +862,8 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				// then has nothing left and gets blocked.
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
 					Run(func(args mock.Arguments) {
-						if quotaCheck, ok := args.Get(5).(func() bool); ok {
-							quotaCheck()
+						if quota, ok := args.Get(5).(resources.QuotaGate); ok {
+							quota.TryAcquire()
 						}
 					}).
 					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, true, nil)
