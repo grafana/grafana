@@ -500,9 +500,10 @@ export function useRowHeight({
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
-    [nestedFields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
+    [nestedFields, typographyCtx, maxHeight, theme]
   );
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
@@ -548,8 +549,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -647,9 +648,10 @@ export function useFlatRowHeight({
   maxHeight,
   noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -788,6 +790,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
   headerTypographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
   showTypeIcons?: boolean;
   /** Whether the table renders a header row; when it doesn't, header labels don't bound the columns. */
   hasHeader?: boolean;
@@ -868,6 +871,7 @@ export function useContentAwareWidths({
         ? {
             typographyCtx,
             headerTypographyCtx,
+            theme,
             showTypeIcons,
             hasHeader,
             getActions,
@@ -885,6 +889,7 @@ export function useContentAwareWidths({
       getActions,
       filter,
       tableRefreshEnabled,
+      theme,
       noPanelPadding,
     ]
   );

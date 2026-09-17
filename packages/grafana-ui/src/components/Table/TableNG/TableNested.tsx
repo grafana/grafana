@@ -76,6 +76,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -438,6 +439,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
@@ -445,6 +447,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     }),
     [
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       filter,
       getCellActions,
