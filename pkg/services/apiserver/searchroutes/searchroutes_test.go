@@ -389,7 +389,7 @@ func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {
 	fromBuilder := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
 	b := &fakeBuilder{gvs: []schema.GroupVersion{fromBuilder}}
 
-	served := servedGroupVersions([]builder.APIGroupBuilder{b}, nil)
+	served := builder.ServedGroupVersions([]builder.APIGroupBuilder{b}, nil)
 	assert.True(t, served[fromBuilder])
 	assert.False(t, served[schema.GroupVersion{Group: "other.grafana.app", Version: "v1"}])
 }
