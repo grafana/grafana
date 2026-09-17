@@ -40,6 +40,7 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
+	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
 	DualWrite          dualwrite.Service
@@ -58,7 +59,6 @@ type PluginDependencies struct {
 type PluginLoaderDependencies struct {
 	PluginDependencies
 
-	PluginClient   plugins.Client
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
@@ -86,12 +86,12 @@ func ProvidePluginLoaderDependencies(
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return PluginLoaderDependencies{
-		PluginClient:   pluginClient,
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
 		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
+			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
 			DualWrite:          dualWrite,
@@ -203,7 +203,7 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 //-----------------------
 
 func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (*PluginBackend, error) {
-	group, err := pluginroute.APIGroup(plugin)
+	group, err := pluginroute.APIGroup(plugin, pluginroute.Options{PluginClient: deps.PluginClient, ContextProvider: deps.ContextProvider})
 	if err != nil {
 		return nil, err
 	}

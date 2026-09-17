@@ -14,10 +14,8 @@ import (
 // ProvideCloudRoutesLoaderFactory), then local plugins. Dummy groups let the
 // router run when none of those sources are available.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg); err != nil {
-		return nil, err
-	} else if cloud != nil {
-		return cloud, nil
+	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
+		return cloud, err
 	}
 
 	// Plugin sources

@@ -818,6 +818,10 @@ const (
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
+	// FlagApppluginsLoadAppManifestAndKeepSettings
+	// Continue to expose settings when a manifest exists
+	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
