@@ -273,7 +273,7 @@ export const prepareConfig = (
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
-    if (hasHighlightIndex || enableHover) {
+    if (hasHighlightIndex) {
       builder.setPadding([rangePad, rangePad, rangePad, rangePad]);
     }
 
