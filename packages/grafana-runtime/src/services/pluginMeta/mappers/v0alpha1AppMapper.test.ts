@@ -82,15 +82,10 @@ describe('v0alpha1AppMapper', () => {
     expect(Object.keys(result)).toEqual(Object.keys(apps));
   });
 
-  // The mapper runs during app plugin init, so one unmappable meta must not
-  // leave the whole cache empty for the session
   it('should skip a meta it cannot map and keep its siblings', () => {
     const logWarning = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const malformed = structuredClone(v0alpha1Response);
-    const app = malformed.items.find((item) => item.spec.pluginJson.type === 'app');
-    if (!app) {
-      throw new Error('fixture has no app plugin to malform');
-    }
+    const app = malformed.items.find((item) => item.spec.pluginJson.type === 'app')!;
     // specMapper reads info.logos, so dropping info is enough to make it throw
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     app.spec.pluginJson.info = undefined as unknown as typeof app.spec.pluginJson.info;
