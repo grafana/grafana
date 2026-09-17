@@ -109,6 +109,7 @@ func TestSearchHandler(t *testing.T) {
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
 	t.Run("returns error if search fails", func(t *testing.T) {
