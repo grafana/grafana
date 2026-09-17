@@ -11,6 +11,20 @@ import { Combobox } from './Combobox';
 import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
+let mockSizeApply: ((args: { availableWidth: number; availableHeight: number }) => void) | undefined;
+
+jest.mock('@floating-ui/react', () => {
+  const actual = jest.requireActual('@floating-ui/react');
+
+  return {
+    ...actual,
+    size: jest.fn((options) => {
+      mockSizeApply = options.apply;
+      return actual.size(options);
+    }),
+  };
+});
+
 // Mock data for the Combobox options
 const options: ComboboxOption[] = [
   { label: 'Option 1', value: '1' },
@@ -58,6 +72,27 @@ describe('Combobox', () => {
   it('renders without error', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('does not update its input for an unchanged floating size measurement', () => {
+    const removeAttribute = jest.spyOn(HTMLInputElement.prototype, 'removeAttribute');
+    render(<Combobox options={[]} value={null} onChange={onChangeHandler} aria-label="Options" />);
+
+    expect(screen.getByRole('combobox', { name: 'Options', hidden: true })).toBeInTheDocument();
+
+    act(() => {
+      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+    });
+    removeAttribute.mockClear();
+
+    act(() => {
+      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+    });
+
+    // React does `element.name = ""` + `element.removeAttribute('name')` when updating the input
+    // causing the DOM node to be updated without any visible attribute change
+    expect(removeAttribute).not.toHaveBeenCalledWith('name');
+    removeAttribute.mockRestore();
   });
 
   it('should allow selecting a value by clicking directly', async () => {

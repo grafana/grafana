@@ -53,6 +53,7 @@ export const useComboboxFloat = (
     width: 0,
     height: 0,
   }); // set initial values to prevent infinite size, briefly removing the list virtualization
+  const popoverMaxSizeRef = useRef(popoverMaxSize);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
@@ -72,6 +73,13 @@ export const useComboboxFloat = (
         const width = Math.max(preferredMaxWidth, 0);
         const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
 
+        // Check against the existing size to avoid a rerender if the size hasn't changed
+        // Calling `setPopoverMaxSize` with the same object still causes a rerender, so use a ref
+        if (popoverMaxSizeRef.current.width === width && popoverMaxSizeRef.current.height === height) {
+          return;
+        }
+
+        popoverMaxSizeRef.current = { width, height };
         setPopoverMaxSize({ width, height });
       },
     }),
