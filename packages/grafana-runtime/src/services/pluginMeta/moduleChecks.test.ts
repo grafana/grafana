@@ -20,6 +20,8 @@ describe('isLoadableModule', () => {
     ['absolute https URL', CDN_MODULE],
     ['absolute http URL', 'http://example.com/module.js'],
     ['core plugin reference', CORE_MODULE],
+    ['local plugin path', 'public/plugins/my-plugin/module.js'],
+    ['core-bundled plugin path', 'public/app/plugins/panel/timeseries/module.js'],
   ])('accepts %s', (_desc, module) => {
     expect(isLoadableModule(module)).toBe(true);
   });
@@ -30,6 +32,7 @@ describe('isLoadableModule', () => {
     ['relative path', 'module.js'],
     ['dotted relative path', './foo/bar.js'],
     ['unknown scheme', 'ftp://example.com/module.js'],
+    ['non-plugin public asset', 'public/fonts/some-font.woff2'],
   ])('rejects %s', (_desc, module) => {
     expect(isLoadableModule(module)).toBe(false);
   });
@@ -79,6 +82,8 @@ describe('logUnloadableModules', () => {
     ['https URL', CDN_MODULE],
     ['core plugin reference', CORE_MODULE],
     ['http URL', 'http://example.com/module.js'],
+    ['local plugin path', 'public/plugins/my-plugin/module.js'],
+    ['core-bundled plugin path', 'public/app/plugins/panel/timeseries/module.js'],
   ])('does not log for loadable module (%s)', (_desc, module) => {
     const logError = jest.fn();
 
