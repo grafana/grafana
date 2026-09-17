@@ -4497,7 +4497,8 @@
       "metadata": {
         "name": "queryFetchConfigFromSettingsService",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-17T18:24:30Z"
       },
       "spec": {
         "description": "Enables the query service to fetch the configuration from the settings service",
