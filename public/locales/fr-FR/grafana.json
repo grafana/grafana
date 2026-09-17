@@ -920,6 +920,7 @@
       "button-view": "Afficher",
       "export-ariaLabel-export": "Exporter",
       "export-label-export": "Exporter",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Supprimer",
       "label-manage-permissions": "Gérer les autorisations",
       "tooltip-history": "Afficher l’historique des tentatives d’envoi de notification à ce point de contact",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Chargement…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Chargement…"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Aucune règle n’est suspendue",
         "pause-recording": "Règles d’enregistrement suspendues",
         "policy-tree": "Arborescence de la politique",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Routage des notifications",
         "routing-none": "Aucune arborescence de politique sélectionnée",
         "routing-tree": "Arborescence de la politique : {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Nom de fichier de modèle dupliqué : « {{name}} ». Les noms de fichiers de modèles doivent être uniques.",
         "templates-label": "Modèles de notification",
         "templates-remove": "Supprimer {{name}}",
-        "upload": "Importer le fichier YAML",
+        "upload": "",
         "validating": "Validation de la configuration…",
         "validation-error": "Échec de la validation",
         "validation-error-desc": "Échec de la validation de la configuration.",
         "validation-success": "Validation réussie",
         "validation-success-desc": "Aucun conflit n’a été trouvé. La configuration est prête pour l’importation.",
         "validation-warning": "Certaines ressources seront renommées afin d’éviter les conflits avec les ressources existantes",
-        "yaml-file": "Fichier YAML de configuration Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "Fichier YAML de configuration Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Source de données",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Ajoutez un README",
-      "edit-tooltip": "Modifiez le README",
+      "edit-doc-tooltip": "",
       "empty-message": "Ajoutez un fichier README pour décrire le contenu de ce dossier et indiquer où trouver les bons tableaux de bord.",
       "load-error-retry": "Réessayer",
-      "load-error-title": "Impossible de charger le README",
-      "parse-error": "Impossible d’afficher le contenu du README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Effacer l’historique",
@@ -12247,6 +12262,10 @@
     "team-not-found": "[Équipe inconnue]",
     "unknown-error": "Erreur inconnue"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
   },
@@ -12579,6 +12598,10 @@
     "authentication": {
       "title": "Authentification"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Signets"
     },
@@ -12785,6 +12808,7 @@
       "title": "Requêtes enregistrées"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapports"
     },
     "saved-queries": {
@@ -12799,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -16674,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
