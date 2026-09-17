@@ -118,6 +118,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
           <IconButton
             name="ellipsis-v"
             variant="secondary"
+            size="sm"
             // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
             // announces as a plain button and gives no hint that it opens a menu.
             aria-haspopup="menu"
