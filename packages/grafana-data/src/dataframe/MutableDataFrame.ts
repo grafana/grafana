@@ -61,12 +61,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       }
     }
 
-    // Get Length to show up if you use spread
+    // Get Length to show up if you use spread. The setter matches the prototype one: this own
+    // property shadows it, so without a setter here a write to a live frame still throws.
     Object.defineProperty(this, 'length', {
       enumerable: true,
       get: () => {
         return this.first.length;
       },
+      set: () => {},
     });
   }
 

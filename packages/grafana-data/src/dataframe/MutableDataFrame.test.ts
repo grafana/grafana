@@ -1,6 +1,7 @@
 import { type DataFrameDTO, FieldType } from '../types/dataFrame';
 
 import { MutableDataFrame } from './MutableDataFrame';
+import { addRow } from './utils';
 
 describe('Reversing DataFrame', () => {
   describe('when called with a DataFrame', () => {
@@ -73,5 +74,28 @@ describe('Cloning DataFrame', () => {
     expect(() => {
       clone.length = 3;
     }).not.toThrow();
+  });
+});
+
+describe('Writing to the derived length', () => {
+  it('ignores a write to a live frame instead of throwing', () => {
+    const frame = new MutableDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+    });
+
+    expect(() => {
+      frame.length = 99;
+    }).not.toThrow();
+    expect(frame.length).toEqual(3);
+  });
+
+  it('keeps length in step with the fields after addRow', () => {
+    const frame = new MutableDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+    });
+
+    addRow(frame, { value: 4 });
+
+    expect(frame.length).toEqual(4);
   });
 });
