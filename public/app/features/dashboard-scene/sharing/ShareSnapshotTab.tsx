@@ -1,6 +1,6 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { store, type SelectableValue } from '@grafana/data';
+import { formattedValueToString, getValueFormat, store, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, type SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
@@ -53,6 +53,25 @@ export const getExpireOptions = () => {
     },
   ];
 };
+
+// A snapshot embeds every panel's query results, so a dashboard that repeats panels over many
+// variable values can serialize to a body larger than the API accepts (web.MaxBindBodyBytes).
+// A reverse proxy in front of Grafana may also cap body size and reject the request before it
+// reaches the API at all, leaving no response we can turn into a useful message — so measure
+// the payload up front rather than posting something that cannot succeed.
+export const MAX_SNAPSHOT_PAYLOAD_BYTES = 100 * 1024 * 1024;
+
+// JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
+// name or label value in the embedded data, so measure the encoded length actually sent.
+export function getSnapshotPayloadSizeBytes(payload: object): number {
+  return new Blob([JSON.stringify(payload)]).size;
+}
+
+// IEC units to match the 1024-based limit above. Rounding to whole megabytes would report a
+// payload just over the limit as equal to it ("100 MB, over the 100 MB limit").
+function formatBytes(bytes: number): string {
+  return formattedValueToString(getValueFormat('bytes')(bytes, 1));
+}
 
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
 
@@ -100,6 +119,9 @@ interface DashboardV2SpecWithUid extends DashboardV2Spec {
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
+
+  // Overridable so the size guard can be exercised without building a payload this large
+  protected maxPayloadSizeBytes = MAX_SNAPSHOT_PAYLOAD_BYTES;
 
   public constructor(
     state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption' | 'snapshotSharingOptions'>
@@ -182,6 +204,26 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
       expires: selectedExpireOption?.value,
       external,
     };
+
+    const payloadSizeBytes = getSnapshotPayloadSizeBytes(cmdData);
+    if (payloadSizeBytes > this.maxPayloadSizeBytes) {
+      const message = t(
+        'snapshot.share.too-large-body',
+        'This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.',
+        {
+          size: formatBytes(payloadSizeBytes),
+          limit: formatBytes(this.maxPayloadSizeBytes),
+        }
+      );
+
+      dispatch(
+        notifyApp(
+          createErrorNotification(t('snapshot.share.too-large-title', 'Snapshot is too large to publish'), message)
+        )
+      );
+
+      throw new Error(message);
+    }
 
     try {
       const response = await getDashboardSnapshotSrv().create(cmdData);
