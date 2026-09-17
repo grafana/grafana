@@ -16,6 +16,9 @@ setPluginImportUtils({
 standardTransformersRegistry.setInit(getStandardTransformers);
 
 const HIDE_B = { id: 'organize', options: { excludeByName: { B: true } } };
+const REVERSE_FIELDS = { id: 'organize', options: { indexByName: { B: 0, A: 1 } } };
+const TAG = 'test:hidden-fields';
+const OTHER_TAG = 'test:field-order';
 
 function setup() {
   const source = new SceneDataNode({
@@ -49,32 +52,37 @@ describe('AdHocTransformations', () => {
   it('contributes nothing while the stage is empty', () => {
     const { panel, transformer, source } = setup();
 
-    expect(getAdHocTransformations(panel)!.get()).toEqual([]);
+    expect(getAdHocTransformations(panel)!.get(TAG)).toEqual([]);
     expect(transformer.getResolvedSystemTransformations()).toEqual({ prepend: [], append: [] });
     expect(transformer.state.data?.series).toBe(source.state.data!.series);
   });
 
-  it('keeps ad-hoc configs separate from saved transformations', async () => {
-    const { panel, transformer } = setup();
+  it('keeps ad-hoc configs separate from saved transformations and source execution', async () => {
+    const { panel, transformer, source } = setup();
+    const sourceListener = jest.fn();
+    source.subscribeToState(sourceListener);
 
-    getAdHocTransformations(panel)!.set([HIDE_B]);
+    getAdHocTransformations(panel)!.set(TAG, [HIDE_B]);
     await settle();
 
     expect(fieldNames(transformer)).toEqual(['A']);
     expect(transformer.state.transformations).toEqual([]);
-    expect(transformer.getResolvedSystemTransformations().append).toHaveLength(1);
+    expect(transformer.getResolvedSystemTransformations().append).toEqual([
+      expect.objectContaining({ origin: TAG, position: 'append', tag: TAG, operator: expect.any(Function) }),
+    ]);
+    expect(sourceListener).not.toHaveBeenCalled();
   });
 
   it('applies ad-hoc transformations after saved transformations', async () => {
     const { panel, transformer } = setup();
 
-    transformer.setState({ transformations: [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }] });
+    transformer.setState({ transformations: [REVERSE_FIELDS] });
     transformer.reprocessTransformations();
     await settle();
 
     expect(fieldNames(transformer)).toEqual(['B', 'A']);
 
-    getAdHocTransformations(panel)!.set([HIDE_B]);
+    getAdHocTransformations(panel)!.set(TAG, [HIDE_B]);
     await settle();
 
     expect(fieldNames(transformer)).toEqual(['A']);
@@ -85,26 +93,26 @@ describe('AdHocTransformations', () => {
     const { panel, transformer } = setup();
     const adHoc = getAdHocTransformations(panel)!;
 
-    adHoc.set([HIDE_B]);
+    adHoc.set(TAG, [HIDE_B]);
     await settle();
 
     expect(fieldNames(transformer)).toEqual(['A']);
-    expect(adHoc.getSourceSeries()[0].fields.map((f) => f.name)).toEqual(['A', 'B']);
-    expect(adHoc.getSourceSeries()[0].fields[1].values).toEqual([4, 5, 6]);
+    expect(adHoc.getSourceSeries(TAG)[0].fields.map((f) => f.name)).toEqual(['A', 'B']);
+    expect(adHoc.getSourceSeries(TAG)[0].fields[1].values).toEqual([4, 5, 6]);
   });
 
   it('returns the pipeline output as source series while empty', async () => {
     const { panel, transformer } = setup();
     const adHoc = getAdHocTransformations(panel)!;
 
-    expect(adHoc.getSourceSeries()).toBe(transformer.state.data!.series);
+    expect(adHoc.getSourceSeries(TAG)).toBe(transformer.state.data!.series);
 
-    adHoc.set([HIDE_B]);
+    adHoc.set(TAG, [HIDE_B]);
     await settle();
-    adHoc.set([]);
+    adHoc.set(TAG, []);
     await settle();
 
-    expect(adHoc.getSourceSeries()[0].fields.map((f) => f.name)).toEqual(['A', 'B']);
+    expect(adHoc.getSourceSeries(TAG)[0].fields.map((f) => f.name)).toEqual(['A', 'B']);
   });
 
   it('notifies subscribers and stops when they unsubscribe', () => {
@@ -112,13 +120,13 @@ describe('AdHocTransformations', () => {
     const adHoc = getAdHocTransformations(panel)!;
     const onChange = jest.fn();
 
-    const unsubscribe = adHoc.subscribe(onChange);
-    adHoc.set([HIDE_B]);
+    const unsubscribe = adHoc.subscribe(TAG, onChange);
+    adHoc.set(TAG, [HIDE_B]);
 
     expect(onChange).toHaveBeenCalledTimes(1);
 
     unsubscribe();
-    adHoc.set([]);
+    adHoc.set(TAG, []);
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
@@ -127,18 +135,18 @@ describe('AdHocTransformations', () => {
     const { panel } = setup();
     const adHoc = getAdHocTransformations(panel)!;
 
-    expect(adHoc.get()).toBe(adHoc.get());
+    expect(adHoc.get(TAG)).toBe(adHoc.get(TAG));
 
-    adHoc.set([HIDE_B]);
-    const afterSet = adHoc.get();
+    adHoc.set(TAG, [HIDE_B]);
+    const afterSet = adHoc.get(TAG);
 
-    expect(adHoc.get()).toBe(afterSet);
+    expect(adHoc.get(TAG)).toBe(afterSet);
   });
 
   it('resolves the same operator instance while the configs are unchanged', async () => {
     const { panel, transformer } = setup();
 
-    getAdHocTransformations(panel)!.set([HIDE_B]);
+    getAdHocTransformations(panel)!.set(TAG, [HIDE_B]);
     await settle();
 
     const first = transformer.getResolvedSystemTransformations().append[0];
@@ -148,20 +156,20 @@ describe('AdHocTransformations', () => {
     expect('operator' in first && 'operator' in second && first.operator === second.operator).toBe(true);
   });
 
-  it('replaces the operator instance when the configs change', async () => {
+  it('keeps the operator instance stable when the configs change', async () => {
     const { panel, transformer } = setup();
     const adHoc = getAdHocTransformations(panel)!;
 
-    adHoc.set([HIDE_B]);
+    adHoc.set(TAG, [HIDE_B]);
     await settle();
     const first = transformer.getResolvedSystemTransformations().append[0];
 
-    adHoc.set([]);
-    adHoc.set([HIDE_B]);
+    adHoc.set(TAG, []);
+    adHoc.set(TAG, [HIDE_B]);
     await settle();
     const second = transformer.getResolvedSystemTransformations().append[0];
 
-    expect('operator' in first && 'operator' in second && first.operator !== second.operator).toBe(true);
+    expect('operator' in first && 'operator' in second && first.operator === second.operator).toBe(true);
   });
 
   it('does not mark dashboard state as changed', async () => {
@@ -170,7 +178,7 @@ describe('AdHocTransformations', () => {
 
     panel.subscribeToEvent(SceneObjectStateChangedEvent, (event) => events.push(event));
 
-    getAdHocTransformations(panel)!.set([HIDE_B]);
+    getAdHocTransformations(panel)!.set(TAG, [HIDE_B]);
     await settle();
 
     expect(events.length).toBeGreaterThan(0);
@@ -181,10 +189,96 @@ describe('AdHocTransformations', () => {
     const { panel } = setup();
     const adHoc = getAdHocTransformations(panel)!;
 
-    adHoc.set([HIDE_B]);
+    adHoc.set(TAG, [HIDE_B]);
     panel.setState({ pluginId: 'timeseries' });
 
-    expect(adHoc.get()).toEqual([]);
+    expect(adHoc.get(TAG)).toEqual([]);
+  });
+
+  it('updates tags independently and preserves registration order', async () => {
+    const { panel, transformer } = setup();
+    const adHoc = getAdHocTransformations(panel)!;
+    const firstListener = jest.fn();
+    const secondListener = jest.fn();
+
+    adHoc.subscribe(TAG, firstListener);
+    adHoc.subscribe(OTHER_TAG, secondListener);
+    adHoc.set(OTHER_TAG, [REVERSE_FIELDS]);
+    adHoc.set(TAG, [HIDE_B]);
+    await settle();
+
+    expect(fieldNames(transformer)).toEqual(['A']);
+    expect(adHoc.get(OTHER_TAG)).toEqual([REVERSE_FIELDS]);
+    expect(adHoc.get(TAG)).toEqual([HIDE_B]);
+    expect(transformer.getResolvedSystemTransformations().append.map(({ tag }) => tag)).toEqual([OTHER_TAG, TAG]);
+    expect(firstListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).toHaveBeenCalledTimes(1);
+
+    adHoc.set(TAG, []);
+    await settle();
+
+    expect(fieldNames(transformer)).toEqual(['B', 'A']);
+    expect(adHoc.get(OTHER_TAG)).toEqual([REVERSE_FIELDS]);
+    expect(transformer.getResolvedSystemTransformations().append.map(({ tag }) => tag)).toEqual([OTHER_TAG]);
+    expect(firstListener).toHaveBeenCalledTimes(2);
+    expect(secondListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('moves active tags when panel data is replaced', async () => {
+    const { panel, transformer } = setup();
+    const adHoc = getAdHocTransformations(panel)!;
+    adHoc.set(TAG, [HIDE_B]);
+    await settle();
+
+    const replacementSource = new SceneDataNode({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'A', values: [1] },
+              { name: 'B', values: [2] },
+            ],
+          }),
+        ],
+      },
+    });
+    const replacement = new SceneDataTransformer({ $data: replacementSource, transformations: [] });
+
+    panel.setState({ $data: replacement });
+    replacement.activate();
+    await settle();
+
+    expect(transformer.getResolvedSystemTransformations().append).toEqual([]);
+    expect(replacement.getResolvedSystemTransformations().append.map(({ tag }) => tag)).toEqual([TAG]);
+    expect(fieldNames(replacement)).toEqual(['A']);
+
+    adHoc.set(TAG, []);
+    await settle();
+
+    expect(replacement.getResolvedSystemTransformations().append).toEqual([]);
+    expect(fieldNames(replacement)).toEqual(['A', 'B']);
+  });
+
+  it('clears every active tag when the panel changes viz type', async () => {
+    const { panel, transformer } = setup();
+    const adHoc = getAdHocTransformations(panel)!;
+    const firstListener = jest.fn();
+    const secondListener = jest.fn();
+
+    adHoc.subscribe(TAG, firstListener);
+    adHoc.subscribe(OTHER_TAG, secondListener);
+    adHoc.set(TAG, [HIDE_B]);
+    adHoc.set(OTHER_TAG, [REVERSE_FIELDS]);
+    panel.setState({ pluginId: 'timeseries' });
+    await settle();
+
+    expect(adHoc.get(TAG)).toEqual([]);
+    expect(adHoc.get(OTHER_TAG)).toEqual([]);
+    expect(transformer.getResolvedSystemTransformations().append).toEqual([]);
+    expect(firstListener).toHaveBeenCalledTimes(2);
+    expect(secondListener).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -204,12 +298,22 @@ describe('getAdHocTransformations', () => {
   it('gives a clone its own empty stage', () => {
     const { panel } = setup();
 
-    getAdHocTransformations(panel)!.set([HIDE_B]);
+    getAdHocTransformations(panel)!.set(TAG, [HIDE_B]);
 
     const clone = panel.clone();
     clone.activate();
 
-    expect(getAdHocTransformations(clone)!.get()).toEqual([]);
-    expect(getAdHocTransformations(panel)!.get()).toHaveLength(1);
+    expect(getAdHocTransformations(clone)!.get(TAG)).toEqual([]);
+    expect((clone.state.$data as SceneDataTransformer).getResolvedSystemTransformations().append).toEqual([]);
+    expect(getAdHocTransformations(panel)!.get(TAG)).toHaveLength(1);
+  });
+
+  it('becomes available after a transformation stage is installed late', () => {
+    const panel = new VizPanel({ pluginId: 'table' });
+    expect(getAdHocTransformations(panel)).toBeUndefined();
+
+    panel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+    expect(getAdHocTransformations(panel)).toBeDefined();
   });
 });

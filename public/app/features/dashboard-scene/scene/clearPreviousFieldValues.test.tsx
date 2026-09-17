@@ -39,6 +39,7 @@ jest.mock('react-use', () => ({
 standardTransformersRegistry.setInit(getStandardTransformers);
 
 const HIDE_B = { id: 'organize', options: { excludeByName: { B: true } } };
+const TAG = 'test:hidden-fields';
 
 describe('_UNSAFE_clearPreviousFieldValues vs. a field removed by a transformation', () => {
   beforeEach(() => {
@@ -89,14 +90,14 @@ describe('_UNSAFE_clearPreviousFieldValues vs. a field removed by a transformati
     expect(renderedFieldNames()).toEqual(['A', 'B']);
 
     await act(async () => {
-      adHocTransformations.set([HIDE_B]);
+      adHocTransformations.set(TAG, [HIDE_B]);
     });
 
     expect(renderedFieldNames()).toEqual(['A']);
     expect(transformer.state.transformations).toEqual([]);
 
     await act(async () => {
-      adHocTransformations.set([]);
+      adHocTransformations.set(TAG, []);
     });
 
     expect(renderedFieldNames()).toEqual(['A', 'B']);

@@ -84,6 +84,15 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('is available to viewers without the plugin transformation feature flag', () => {
+      const { context } = buildTestScene({ dashboardCanEdit: false });
+
+      expect(context.adHocTransformations).toBeDefined();
+      expect(context.adHocTransformations?.get('test:viewer')).toEqual([]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});

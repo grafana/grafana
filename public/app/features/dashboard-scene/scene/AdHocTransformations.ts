@@ -12,88 +12,133 @@ import { type AdHocTransformationsApi } from '@grafana/ui';
 const NO_CONFIGS: readonly DataTransformerConfig[] = Object.freeze([]);
 const NO_SERIES: readonly DataFrame[] = Object.freeze([]);
 
+class RuntimeTransformationGroup {
+  public configs: readonly DataTransformerConfig[] = NO_CONFIGS;
+  public listeners = new Set<() => void>();
+  public sourceSeries: readonly DataFrame[] = NO_SERIES;
+  public operator: CustomTransformOperator = (ctx) => (source) =>
+    source.pipe(
+      tap((frames) => {
+        this.sourceSeries = frames;
+      }),
+      mergeMap((frames) => transformDataFrame(Array.from(this.configs), frames, ctx))
+    );
+
+  public notify(): void {
+    for (const listener of Array.from(this.listeners)) {
+      listener();
+    }
+  }
+}
+
 // This is deliberately not a SceneObject: ad-hoc transformations must not dirty or serialize with
 // the dashboard.
 export class AdHocTransformations implements AdHocTransformationsApi {
-  private _configs: readonly DataTransformerConfig[] = NO_CONFIGS;
-  private _listeners = new Set<() => void>();
-  private _sourceSeries: readonly DataFrame[] = NO_SERIES;
-  private _stage = this._createStageOperator();
+  private _groups = new Map<string, RuntimeTransformationGroup>();
 
   public constructor(private _panel: VizPanel) {
     _panel.subscribeToState((next, prev) => {
-      if (next.pluginId !== prev.pluginId && this._configs.length > 0) {
-        this.set([]);
+      if (next.pluginId !== prev.pluginId) {
+        this._clearAll(prev.$data);
+        return;
+      }
+
+      if (next.$data !== prev.$data) {
+        this._moveGroups(prev.$data, next.$data);
       }
     });
   }
 
-  public get(): readonly DataTransformerConfig[] {
-    return this._configs;
+  public get(tag: string): readonly DataTransformerConfig[] {
+    return this._groups.get(tag)?.configs ?? NO_CONFIGS;
   }
 
-  public set(transformations: DataTransformerConfig[]): void {
-    this._configs = transformations.length === 0 ? NO_CONFIGS : Object.freeze([...transformations]);
-    // SceneDataTransformer compares operators by reference when deciding whether to reprocess.
-    this._stage = this._createStageOperator();
+  public set(tag: string, transformations: readonly DataTransformerConfig[]): void {
+    const group = this._getOrCreateGroup(tag);
+    group.configs = transformations.length === 0 ? NO_CONFIGS : Object.freeze([...transformations]);
 
-    if (this._configs.length > 0 && this._panel.state._UNSAFE_clearPreviousFieldValues) {
+    if (group.configs.length > 0 && this._panel.state._UNSAFE_clearPreviousFieldValues) {
       // Hidden fields must retain their values so they can be restored without a refetch.
       this._panel.setState({ _UNSAFE_clearPreviousFieldValues: false });
     }
 
-    if (this._configs.length === 0) {
-      this._sourceSeries = NO_SERIES;
+    const transformer = getTransformer(this._panel.state.$data);
+    if (group.configs.length > 0) {
+      transformer?.upsertRuntimeTransformations({ tag, transformations: [group.operator] });
+    } else {
+      group.sourceSeries = NO_SERIES;
+      transformer?.removeRuntimeTransformations(tag);
     }
 
-    for (const listener of Array.from(this._listeners)) {
-      listener();
+    group.notify();
+  }
+
+  public subscribe(tag: string, callback: () => void): () => void {
+    const listeners = this._getOrCreateGroup(tag).listeners;
+    listeners.add(callback);
+
+    return () => listeners.delete(callback);
+  }
+
+  public getSourceSeries(tag: string): readonly DataFrame[] {
+    const group = this._groups.get(tag);
+    if (!group || group.configs.length === 0) {
+      return getTransformer(this._panel.state.$data)?.state.data?.series ?? NO_SERIES;
     }
 
-    getTransformerFor(this._panel)?.reprocessTransformations();
+    return group.sourceSeries;
   }
 
-  public subscribe(callback: () => void): () => void {
-    this._listeners.add(callback);
-
-    return () => this._listeners.delete(callback);
-  }
-
-  public getSourceSeries(): readonly DataFrame[] {
-    if (this._configs.length === 0) {
-      return getTransformerFor(this._panel)?.state.data?.series ?? NO_SERIES;
+  private _getOrCreateGroup(tag: string): RuntimeTransformationGroup {
+    let group = this._groups.get(tag);
+    if (group) {
+      return group;
     }
 
-    return this._sourceSeries;
+    group = new RuntimeTransformationGroup();
+    this._groups.set(tag, group);
+    return group;
   }
 
-  public getSystemTransformations(): { append?: CustomTransformOperator[] } {
-    if (this._configs.length === 0) {
-      return {};
+  private _moveGroups(previousData: unknown, nextData: unknown): void {
+    const previousTransformer = getTransformer(previousData);
+    const nextTransformer = getTransformer(nextData);
+
+    for (const [tag, group] of this._groups) {
+      if (group.configs.length === 0) {
+        continue;
+      }
+
+      previousTransformer?.removeRuntimeTransformations(tag);
+      group.sourceSeries = NO_SERIES;
+      nextTransformer?.upsertRuntimeTransformations({ tag, transformations: [group.operator] });
     }
-
-    return { append: [this._stage] };
   }
 
-  private _createStageOperator(): CustomTransformOperator {
-    return (ctx) => (source) =>
-      source.pipe(
-        tap((frames) => {
-          this._sourceSeries = frames;
-        }),
-        mergeMap((frames) => transformDataFrame(Array.from(this._configs), frames, ctx))
-      );
+  private _clearAll(data: unknown): void {
+    const transformer = getTransformer(data);
+
+    for (const [tag, group] of this._groups) {
+      if (group.configs.length === 0) {
+        continue;
+      }
+
+      transformer?.removeRuntimeTransformations(tag);
+      group.configs = NO_CONFIGS;
+      group.sourceSeries = NO_SERIES;
+      group.notify();
+    }
   }
 }
 
 const holders = new WeakMap<VizPanel, AdHocTransformations>();
 
-function getTransformerFor(panel: VizPanel): SceneDataTransformer | undefined {
-  return panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : undefined;
+function getTransformer(data: unknown): SceneDataTransformer | undefined {
+  return data instanceof SceneDataTransformer ? data : undefined;
 }
 
 export function getAdHocTransformations(panel: VizPanel): AdHocTransformations | undefined {
-  if (!getTransformerFor(panel)) {
+  if (!getTransformer(panel.state.$data)) {
     return undefined;
   }
 
@@ -105,18 +150,5 @@ export function getAdHocTransformations(panel: VizPanel): AdHocTransformations |
 
   const holder = new AdHocTransformations(panel);
   holders.set(panel, holder);
-
-  // Compose onto the panel instance so the singleton plugin holds no per-panel state.
-  const getPanelSystemTransformations = panel.getSystemTransformations.bind(panel);
-  panel.getSystemTransformations = (ctx) => {
-    const panelTransformations = getPanelSystemTransformations(ctx);
-    const adHocTransformations = holder.getSystemTransformations();
-
-    return {
-      ...panelTransformations,
-      append: [...(panelTransformations.append ?? []), ...(adHocTransformations.append ?? [])],
-    };
-  };
-
   return holder;
 }
