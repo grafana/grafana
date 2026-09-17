@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook } from 'test/test-utils';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS } from '@grafana/alerting';
 
@@ -12,7 +12,6 @@ import {
   deriveDryRunState,
   parseDryRunResponse,
   summarizeMergeStats,
-  useDryRunNotifications,
   useImportNotifications,
 } from './useImport';
 
@@ -233,82 +232,6 @@ describe('promote header wiring', () => {
 
     expect(headers).toHaveLength(1);
     expect(headers[0].has('X-Grafana-Alerting-Promote')).toBe(false);
-  });
-
-  it('sends the promote header on a promote dry-run', async () => {
-    const headers = captureConvertHeaders();
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod', promote: true });
-    });
-
-    expect(headers).toHaveLength(1);
-    expect(headers[0].get('X-Grafana-Alerting-Promote')).toBe('true');
-    expect(headers[0].get('X-Grafana-Alerting-Dry-Run')).toBe('true');
-  });
-});
-
-describe('useDryRunNotifications reset', () => {
-  // Regression: once a dry-run succeeds, its result is cached. If the step later becomes invalid
-  // (e.g. a duplicate template name) the dry-run stops running, so reset() must clear the cached
-  // result or the review step keeps reporting the config as ready to import.
-  it('clears a previous successful result', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
-    });
-    await waitFor(() => expect(result.current.result?.valid).toBe(true));
-
-    act(() => {
-      result.current.reset();
-    });
-    await waitFor(() => expect(result.current.result).toBeUndefined());
-  });
-
-  // Regression: the Step 1 trigger effect depends on runDryRun/reset identity. RTK recreates the
-  // mutation's reset on every trigger, so if reset isn't stabilized its identity changes after each
-  // dry-run, re-firing that effect and triggering another dry-run — an infinite request loop.
-  it('keeps stable runDryRun and reset identities across a dry-run', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    const runDryRunBefore = result.current.runDryRun;
-    const resetBefore = result.current.reset;
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
-    });
-    await waitFor(() => expect(result.current.result?.valid).toBe(true));
-
-    expect(result.current.runDryRun).toBe(runDryRunBefore);
-    expect(result.current.reset).toBe(resetBefore);
-  });
-
-  // Regression: runDryRun only cleared its own preRunError at the start of each attempt, leaving a
-  // stale mutationError from an earlier failed attempt in RTK Query's cache. Since error prefers
-  // mutationError over preRunError, that stale backend error kept masking a fresh local one.
-  it('does not surface a stale backend error over a fresh local parse error', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ message: 'old backend conflict' }, { status: 400 })));
-    const { result } = renderHook(() => useDryRunNotifications(), { wrapper });
-
-    await act(async () => {
-      await result.current.runDryRun({ source: 'yaml', yamlFile: yamlFile(), configIdentifier: 'prod' });
-    });
-    await waitFor(() => expect(result.current.result?.error).toMatch(/old backend conflict/i));
-
-    await act(async () => {
-      await result.current.runDryRun({
-        source: 'yaml',
-        yamlFile: new File(['route:\n  receiver: default\nfoo: bar: baz\n'], 'broken.yaml', {
-          type: 'application/yaml',
-        }),
-        configIdentifier: 'prod',
-      });
-    });
-    await waitFor(() => expect(result.current.result?.error).toMatch(/syntax error/i));
   });
 });
 

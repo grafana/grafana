@@ -1,10 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { stringifyErrorLike } from '../../utils/misc';
 
 import { type NotificationsSourceParams, resolveAlertmanagerConfig } from './resolveAlertmanagerConfig';
 import type {
@@ -232,58 +231,4 @@ export function deriveDryRunState(
     return hasRenames ? 'warning' : 'success';
   }
   return 'idle';
-}
-
-/**
- * Hook to perform dry-run validation for Alertmanager config import.
- * Uses POST /api/convert/api/v1/alerts with X-Grafana-Alerting-Dry-Run: true.
- * Validates the config and checks for conflicts without saving.
- */
-export function useDryRunNotifications() {
-  const [dryRunAlertmanagerConfig, { isLoading, data, error: mutationError, reset: resetMutation }] =
-    convertToGMAApi.useDryRunAlertmanagerConfigMutation();
-  const [preRunError, setPreRunError] = useState<string>();
-
-  // RTK recreates the mutation's `reset` on every trigger (its identity tracks the in-flight request),
-  // so keep the latest in a ref and expose a stable `reset`. Callers use it as an effect dependency
-  // (Step 1 trigger effect); an unstable identity would re-fire that effect and loop dry-runs forever.
-  const resetMutationRef = useRef(resetMutation);
-  resetMutationRef.current = resetMutation;
-
-  const runDryRun = useCallback(
-    async (params: NotificationsSourceParams): Promise<void> => {
-      setPreRunError(undefined);
-      try {
-        const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
-        await dryRunAlertmanagerConfig({
-          alertmanagerConfig,
-          templateFiles,
-          configIdentifier: params.configIdentifier,
-          promote: params.promote,
-        });
-      } catch (err) {
-        // Also clear the mutation's own state: a pre-run failure here means dryRunAlertmanagerConfig
-        // never ran, so a stale mutationError from an earlier attempt would otherwise keep winning
-        // the `error` precedence below over this fresh one.
-        resetMutationRef.current();
-        setPreRunError(stringifyErrorLike(err));
-      }
-    },
-    [dryRunAlertmanagerConfig]
-  );
-
-  // Clear the cached response and any pre-run error so `result` returns to undefined. Called when the
-  // step is no longer runnable (e.g. a duplicate template name) so a previously successful dry-run
-  // can't keep reporting the config as valid once the inputs have become invalid.
-  const reset = useCallback(() => {
-    setPreRunError(undefined);
-    resetMutationRef.current();
-  }, []);
-
-  const parsed = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
-  const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
-  // Combine data and error here (error wins) so callers consume a single ready-to-use result.
-  const result = useMemo(() => deriveDryRunResult(parsed, error), [parsed, error]);
-
-  return { runDryRun, reset, isLoading, result, error };
 }
