@@ -12769,7 +12769,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
