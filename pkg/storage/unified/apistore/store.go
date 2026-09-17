@@ -191,10 +191,10 @@ func NewStorage(
 	// Validate the GVK
 	if !opts.GVK.Empty() {
 		if opts.GVK.Group == "" || opts.GVK.Version == "" || opts.GVK.Kind == "" {
-			return nil, nil, fmt.Errorf("Incomplete GVK for (%+v) %+v", s.gr, s.opts.GVK)
+			return nil, nil, fmt.Errorf("incomplete GVK for (%+v) %+v", s.gr, s.opts.GVK)
 		}
 		if opts.GVK.Group != s.gr.Group {
-			return nil, nil, fmt.Errorf("Storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
+			return nil, nil, fmt.Errorf("storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
 		}
 	}
 
