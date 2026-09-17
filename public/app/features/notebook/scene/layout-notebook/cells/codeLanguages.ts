@@ -6,10 +6,10 @@ import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 // CodeMirrorEditorLanguage anywhere: a notebook may legitimately arrive carrying a language the
 // editor cannot highlight, and that value has to survive a round trip rather than be coerced away.
 
-// A Record rather than an array so adding a ninth language to CodeMirrorEditorLanguage fails to
-// compile here until it is given a label, instead of silently missing from the picker.
+// The notebook picker offers a subset of the shared editor's languages, so adding editor support
+// does not require changing the notebook's choices.
 // Wording matches the text panel's picker so the two features read the same.
-const HIGHLIGHTED_LANGUAGES: Record<CodeMirrorEditorLanguage, string> = {
+const HIGHLIGHTED_LANGUAGES = {
   go: 'Go',
   html: 'HTML',
   json: 'JSON',
@@ -18,7 +18,7 @@ const HIGHLIGHTED_LANGUAGES: Record<CodeMirrorEditorLanguage, string> = {
   typescript: 'TypeScript',
   xml: 'XML',
   yaml: 'YAML',
-};
+} satisfies Partial<Record<CodeMirrorEditorLanguage, string>>;
 
 /**
  * Offered by the picker but rendered unhighlighted, because neither has CodeMirror highlight tags
@@ -59,15 +59,15 @@ export function normalizeLanguage(language: string): string {
 // Object.prototype, and since `language` is free-form those reach here: the value would be narrowed
 // to a language the loader has no branch for, which surfaces as a "syntax highlighting failed to
 // load" alert, and the label lookup would hand a function to React.
-function isHighlightable(language: string): language is CodeMirrorEditorLanguage {
+function isHighlightable(language: string): language is keyof typeof HIGHLIGHTED_LANGUAGES {
   return Object.hasOwn(HIGHLIGHTED_LANGUAGES, language);
 }
 
 /**
  * The language to highlight with, or undefined to render the code unhighlighted.
  *
- * CodeMirror supports eight languages against Monaco's ~80, so anything else falls back to no
- * highlighting. That includes promql and logql: `@grafana/lezer-logql` is already a root dependency
+ * Languages outside the notebook's highlighted selection fall back to no highlighting.
+ * That includes promql and logql: `@grafana/lezer-logql` is already a root dependency
  * and exports a parser, and promql has an official upstream grammar with its tags applied
  * (`@prometheus-io/lezer-promql`) — what neither has yet is CodeMirror highlight tags wired up in
  * `@grafana/ui`. Adding them is a `@grafana/ui` change, per ADDING_LANGUAGES.md.

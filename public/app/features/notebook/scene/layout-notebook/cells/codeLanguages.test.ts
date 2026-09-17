@@ -9,8 +9,7 @@ import {
   toCodeMirrorLanguage,
 } from './codeLanguages';
 
-// Every language the editor supports. Adding one to CodeMirrorEditorLanguage without adding it here
-// leaves this list short, so the exhaustiveness assertion below is what actually keeps them in step.
+// The highlighted languages offered by the notebook picker.
 const HIGHLIGHTED: CodeMirrorEditorLanguage[] = ['go', 'html', 'json', 'markdown', 'sql', 'typescript', 'xml', 'yaml'];
 
 /** Offered by the picker, but deliberately not highlighted. */
