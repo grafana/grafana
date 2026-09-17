@@ -1052,6 +1052,10 @@ export interface TableOptions {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
@@ -1076,6 +1080,7 @@ export interface TableOptions {
 export const defaultTableOptions: Partial<TableOptions> = {
   cellHeight: TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
