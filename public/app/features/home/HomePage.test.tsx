@@ -86,6 +86,20 @@ const createHomepageExtensionComponent = (
     extensionPointId
   );
 
+/** Active metrics solution served to the page; returns the fact mocks the tests observe. */
+const stubMetricsSolution = () => {
+  const datasource = jest.fn(async () => stubDatasource);
+  const needsAttention = jest.fn(async () => false);
+  const stub = stubSolution('metrics', {
+    title: 'Metrics & infrastructure',
+    signal: async () => 'active',
+    datasource,
+    needsAttention,
+  });
+  jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+  return { datasource, needsAttention };
+};
+
 describe('HomePage', () => {
   const originalBuildInfo = { ...config.buildInfo };
   const originalNamespace = config.namespace;
@@ -314,20 +328,12 @@ describe('HomePage', () => {
   it('starts card placement while extensions are still loading and hands it to the overview', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const datasource = jest.fn(async () => stubDatasource);
-    // Only placement reads this fact, so a call while the skeleton is up proves detection started at mount.
-    const needsAttention = jest.fn(async () => false);
-    const stub = stubSolution('metrics', {
-      title: 'Metrics & infrastructure',
-      signal: async () => 'active',
-      datasource,
-      needsAttention,
-    });
-    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+    const { datasource, needsAttention } = stubMetricsSolution();
 
     const { rerender } = render(<HomePage />);
 
-    // The whole-page skeleton is up, yet detection is already running.
+    // The whole-page skeleton is up, yet detection is already running. Only placement reads
+    // needsAttention, so a call at this point proves detection started at mount.
     await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
     expect(datasource).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
@@ -342,13 +348,7 @@ describe('HomePage', () => {
   describe('solutions gating', () => {
     const renderWithStubSolution = () => {
       setTestFlags({ 'grafana.growthHomepage': true });
-      const datasource = jest.fn(async () => stubDatasource);
-      const stub = stubSolution('metrics', {
-        title: 'Metrics & infrastructure',
-        signal: async () => 'active',
-        datasource,
-      });
-      jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+      const { datasource } = stubMetricsSolution();
 
       render(<HomePage />);
       return { datasource };
