@@ -5,10 +5,10 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
+import { config, reportInteraction, getAppEvents, logError } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, copyTextToClipboard } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -163,12 +163,22 @@ export function RichHistoryCard(props: Props) {
       })
       .join('\n');
 
-    copyTextToClipboard(queriesText);
-    dispatch(
-      notifyApp(
-        createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))
-      )
-    );
+    try {
+      await copyTextToClipboard(queriesText);
+      dispatch(
+        notifyApp(
+          createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))
+        )
+      );
+    } catch (error) {
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-notification.query-copy-failed', 'Could not copy query to clipboard')
+          )
+        )
+      );
+    }
   };
 
   const onCreateShortLink = async () => {

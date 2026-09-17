@@ -8935,6 +8935,7 @@
     },
     "rich-history-notification": {
       "query-copied": "Query copied to clipboard",
+      "query-copy-failed": "Could not copy query to clipboard",
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
@@ -9179,6 +9180,7 @@
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
+      "link-copy-failed": "Could not copy link to clipboard",
       "overview": "Overview",
       "path": "Path",
       "route": "Route",

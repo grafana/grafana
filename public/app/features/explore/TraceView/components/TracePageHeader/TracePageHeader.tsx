@@ -34,6 +34,7 @@ import {
   usePluginComponents,
   usePluginLinks,
   config,
+  logError,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
@@ -220,9 +221,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
-          onClick={() => {
-            copyTextToClipboard(window.location.href);
-            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          onClick={async () => {
+            try {
+              await copyTextToClipboard(window.location.href);
+              notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+            } catch (e) {
+              logError(e instanceof Error ? e : new Error(String(e)));
+              notifyApp.error(t('explore.trace-page-header.link-copy-failed', 'Could not copy link to clipboard'));
+            }
           }}
         />
         <Menu.Item
