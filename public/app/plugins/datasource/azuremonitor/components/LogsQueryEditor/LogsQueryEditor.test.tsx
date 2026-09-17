@@ -1107,6 +1107,16 @@ describe('LogsQueryEditor', () => {
   describe('tier auto-switch notification (Builder mode)', () => {
     const workspaceUri =
       '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+    let originalToggle: boolean | undefined;
+
+    beforeEach(() => {
+      originalToggle = config.featureToggles.azureMonitorLogsBuilderEditor;
+      config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.azureMonitorLogsBuilderEditor = originalToggle;
+    });
 
     const buildSchemaWithPlans = (): EngineSchema => ({
       clusterType: 'Engine',
