@@ -26,7 +26,7 @@ jest.mock('./ProxiedAlertingRoute', () => ({
   withRouteProxyForPath: jest.fn((_path: string, RoutePage: GrafanaRouteComponent) => RoutePage),
 }));
 
-const CorePage = () => null;
+const CorePage = () => <div>core alerting page</div>;
 
 function route(path: string): RouteDescriptor {
   return { path, component: CorePage };
@@ -87,6 +87,7 @@ describe('proxied', () => {
       )
     );
 
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
     expect(isPrometheusAlertingPluginEnabled).toHaveBeenCalled();
     expect(withRouteProxyForPath).not.toHaveBeenCalled();
   });
@@ -106,6 +107,7 @@ describe('proxied', () => {
       )
     );
 
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
     expect(withRouteProxyForPath).not.toHaveBeenCalled();
     expect(logger.logWarning).toHaveBeenCalledWith('Could not check Prometheus Alerting plugin availability', {
       error: 'Error: plugin lookup failed',

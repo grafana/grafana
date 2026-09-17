@@ -60,7 +60,7 @@ async function resolveRouteComponent(route: RouteDescriptor): Promise<GrafanaRou
 
 async function isPluginAvailable(): Promise<boolean> {
   const { isPrometheusAlertingPluginEnabled } = await import(
-    /* webpackChunkName: "PrometheusAlertingPluginAvailability" */ './pluginAvailability'
+    /* webpackChunkName: "PrometheusAlertingPluginAvailability", webpackPrefetch: true */ './pluginAvailability'
   );
   return isPrometheusAlertingPluginEnabled();
 }

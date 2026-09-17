@@ -38,6 +38,12 @@ describe('isPrometheusAlertingPluginEnabled', () => {
     await expect(isPrometheusAlertingPluginEnabled()).resolves.toBe(false);
   });
 
+  it('returns false when the plugin settings check fails', async () => {
+    jest.spyOn(pluginBridgeProbe, 'probePlugin').mockRejectedValue(new Error('plugin settings request failed'));
+
+    await expect(isPrometheusAlertingPluginEnabled()).resolves.toBe(false);
+  });
+
   it('returns false and logs when discovery times out', async () => {
     jest.spyOn(pluginBridgeProbe, 'probePlugin').mockReturnValue(new Promise(() => {}));
     jest.useFakeTimers();
