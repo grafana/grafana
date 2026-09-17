@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * The per-cell "add block" affordance, shown next to the drag handle in edit mode: inserts a new
+ * The per-cell "add block" button, shown next to the drag handle in edit mode: inserts a new
  * block directly below this cell.
  */
 export function NotebookCellAddButton({ index, onAdd, className }: Props) {

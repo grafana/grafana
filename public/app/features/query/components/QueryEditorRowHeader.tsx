@@ -161,6 +161,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       marginLeft: theme.spacing(0.5),
       overflow: 'hidden',
+      // The collapsed query text beside this is as long as the query itself. If the two shrink
+      // together, the query name and the data source logo end up cut in half. The text gives up its
+      // width instead, because it already ends in an ellipsis.
+      flexShrink: 0,
     }),
     queryNameWrapper: css({
       display: 'flex',
