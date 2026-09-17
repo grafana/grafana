@@ -43,18 +43,11 @@ describe('generateClients', () => {
 
   it('writes one client per served version', () => {
     expect(readdirSync(outDir).sort()).toEqual(['createBaseQuery.ts', 'v0alpha1', 'v1alpha1']);
-    expect(readdirSync(path.join(outDir, 'v1alpha1')).sort()).toEqual([
-      'baseAPI.ts',
-      'endpoints.gen.ts',
-      'index.ts',
-      'openapi.processed.json',
-    ]);
+    expect(readdirSync(path.join(outDir, 'v1alpha1')).sort()).toEqual(['baseAPI.ts', 'endpoints.gen.ts', 'index.ts']);
   });
 
   it('matches the golden output', () => {
     const got = readTree(outDir);
-    delete got['v0alpha1/openapi.processed.json'];
-    delete got['v1alpha1/openapi.processed.json'];
     if (process.env.UPDATE_GOLDEN) {
       rmSync(goldenDir, { recursive: true, force: true });
       for (const [file, content] of Object.entries(got)) {

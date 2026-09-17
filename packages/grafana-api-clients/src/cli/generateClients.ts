@@ -1,5 +1,6 @@
 import { generateEndpoints } from '@rtk-query/codegen-openapi';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { type OpenAPIV3 } from 'openapi-types';
 
@@ -41,6 +42,32 @@ export async function generateClients({ specDir, outDir, log = console.log }: Ge
   mkdirSync(outDir, { recursive: true });
   writeIfMissing(path.join(outDir, 'createBaseQuery.ts'), CREATE_BASE_QUERY_SOURCE);
 
+  // The simplified spec is only read by the codegen. Core keeps its own under packages/grafana-openapi
+  // because its pipeline hands the file between two workspaces; here both steps run in one process.
+  const tmp = mkdtempSync(path.join(tmpdir(), 'grafana-api-clients-'));
+  try {
+    await generateAll(files, { specDir, outDir, tmp, writeIfMissing, log });
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+async function generateAll(
+  files: string[],
+  {
+    specDir,
+    outDir,
+    tmp,
+    writeIfMissing,
+    log,
+  }: {
+    specDir: string;
+    outDir: string;
+    tmp: string;
+    writeIfMissing: (file: string, content: string) => void;
+    log: (message: string) => void;
+  }
+) {
   for (const file of files) {
     const raw: OpenAPIV3.Document = JSON.parse(readFileSync(path.join(specDir, file), 'utf8'));
     const { group, version } = groupVersion(raw, file);
@@ -48,8 +75,8 @@ export async function generateClients({ specDir, outDir, log = console.log }: Ge
 
     const dir = path.join(outDir, version);
     mkdirSync(dir, { recursive: true });
-    const processedFile = path.join(dir, 'openapi.processed.json');
-    writeFileSync(processedFile, JSON.stringify(spec, null, 2));
+    const processedFile = path.join(tmp, `${version}.json`);
+    writeFileSync(processedFile, JSON.stringify(spec));
 
     const apiFile = path.join(dir, 'baseAPI.ts');
     writeIfMissing(apiFile, renderPluginBaseAPI(group, version));
