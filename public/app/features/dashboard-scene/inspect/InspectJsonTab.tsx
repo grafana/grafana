@@ -346,7 +346,6 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
               height={`${height}px`}
               language="json"
               aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
-              basicSetup={{ lineNumbers: true }}
               value={jsonText}
               readOnly={!model.isEditable()}
               onChange={model.onJsonTextChange}

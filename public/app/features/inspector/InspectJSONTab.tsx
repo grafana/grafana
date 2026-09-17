@@ -153,7 +153,6 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               height={`${height}px`}
               language="json"
               aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
-              basicSetup={{ lineNumbers: true }}
               value={text || ''}
               readOnly={!isPanelJSON}
               onChange={setText}
