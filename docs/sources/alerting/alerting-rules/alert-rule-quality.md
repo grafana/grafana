@@ -4,6 +4,7 @@ description: Configure an alert rule quality policy, review findings, and option
 labels:
   products:
     - enterprise
+    - cloud
 draft: true
 ---
 
@@ -19,9 +20,11 @@ Write a short introduction after each heading. For procedures, add a stem senten
 numbered steps with one action per step, and the expected outcome.
 Use sentence case, address the reader as "you", bold UI labels, and use semantic line breaks.
 
-Before publishing: confirm product naming, minimum version, Grafana Cloud availability,
-and enablement instructions. Set labels.stage to the confirmed release stage, add cloud
-under labels.products if applicable, remove the writing prompts, and remove draft: true.
+Release target: Grafana Enterprise 13.3.x and Grafana Cloud.
+Primary audience: Grafana Cloud users.
+Before publishing: confirm product naming, Grafana Cloud rollout, and the release stage.
+Keep feature-toggle and rollout procedures in the internal runbook, not this customer workflow.
+Set labels.stage to the confirmed release stage, remove the writing prompts, and remove draft: true.
 -->
 
 # Improve alert rule quality
@@ -37,15 +40,14 @@ With alert rule quality in Grafana, you can:
 
 ## Before you begin
 
-_TODO: List the prerequisites and permissions for the workflow._
+Before you begin, check that you have the following permissions in your Grafana Cloud stack:
 
-<!--
-Cover the supported edition and version, feature availability, and how to enable it.
-Distinguish permission to view alert rules from permission to change the policy.
-Org admins can configure the policy by default; custom roles need alert.rules.quality:write
-and the rule-read permission needed by the settings page.
-For provisioned rules, the reader also needs access to their source configuration.
--->
+- **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
+- **Policy permissions:** To configure the policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
+- **Rule updates:** To fix findings, have permission to update the affected rules.
+  For provisioned rules, you also need access to their source configuration and permission to reapply it.
+
+For more information about alerting permissions and folder access, refer to [Configure RBAC](../../set-up/configure-rbac/).
 
 ## Understand policy scope
 
