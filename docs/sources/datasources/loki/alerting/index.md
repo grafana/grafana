@@ -148,14 +148,6 @@ To avoid unexpected No Data states:
 Editing and saving an alert rule resets its state to **Normal**. The rule re-enters **Pending** or **Alerting** on the next evaluation if the condition is still met. This is standard [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) behavior and isn't specific to the Loki data source.
 {{< /admonition >}}
 
-### Separate data source health alerts from application alerts
-
-A single alert rule that queries Loki conflates two different concerns: whether the thing you're monitoring (an error rate, a latency threshold, and so on) is healthy, and whether Loki itself could answer the query. When Loki is briefly unreachable—during a rolling restart, a network blip, or a closed-connection error—the query fails with an execution error, and Grafana raises a `DatasourceError` alert by default, on top of whatever the original rule was already checking.
-
-For an application-specific rule, such as the error-rate example under [Example: alert on error log rate](#example-alert-on-error-log-rate), a transient Loki error usually isn't the condition you're trying to detect. Set **Alert state if execution error or timeout** to **Normal** (or **Keep Last State**) on that rule so a query failure doesn't also fire a `DatasourceError` alert alongside your real one.
-
-To monitor Loki's own availability instead, build a separate, dedicated alert rule for it—for example, reusing the "stopped logging" query under [Supported queries for alerting](#supported-queries-for-alerting). Refer to [Build a dedicated data source health alert](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/guides/connectivity-errors/#build-a-dedicated-data-source-health-alert) for the general technique—it isn't specific to Loki, and applies the same way to any data source without a built-in `up`-style reachability metric.
-
 ## Troubleshoot alerting
 
 If your Loki alerts don't work as expected, use the following sections to diagnose common issues.
@@ -188,5 +180,3 @@ For more help, refer to [Troubleshoot Loki issues](https://grafana.com/docs/graf
 - [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
 - [Create a Grafana-managed alert rule](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
 - [Loki query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/)
-- [Handle connectivity errors in alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/guides/connectivity-errors/)
-- [No Data and Error states](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/)
