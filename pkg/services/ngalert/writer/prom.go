@@ -464,13 +464,13 @@ func extractActualError(err promremote.WriteError) string {
 	errMsg := err.Error()
 
 	// Find the body content prefix
-	bodyIndex := strings.Index(errMsg, bodyPrefix)
-	if bodyIndex == -1 {
+	_, after, ok := strings.Cut(errMsg, bodyPrefix)
+	if !ok {
 		return errMsg // Return original if no body prefix found
 	}
 
 	// Extract content after "body=" prefix
-	bodyContent := strings.TrimSpace(errMsg[bodyIndex+bodyPrefixLen:])
+	bodyContent := strings.TrimSpace(after)
 	if bodyContent == "" {
 		return errMsg // Return original if body is empty
 	}

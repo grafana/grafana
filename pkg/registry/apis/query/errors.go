@@ -14,9 +14,8 @@ var QueryError = errutil.BadRequest("query.error").MustTemplate(
 
 func MakeQueryError(refID, err error) error {
 	var pErr error
-	var utilErr errutil.Error
 	// See if this is grafana error, if so, grab public message
-	if errors.As(err, &utilErr) {
+	if utilErr, ok := errors.AsType[errutil.Error](err); ok {
 		pErr = utilErr.Public()
 	} else {
 		pErr = err

@@ -297,6 +297,8 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 			{name: "underscore", routeName: "my_route", expectErr: true, errContains: "DNS subdomain"},
 			{name: "leading hyphen", routeName: "-myroute", expectErr: true, errContains: "DNS subdomain"},
 			{name: "trailing hyphen", routeName: "myroute-", expectErr: true, errContains: "DNS subdomain"},
+			{name: "leading whitespace", routeName: "  myroute", expectErr: true, errContains: "DNS subdomain"},
+			{name: "trailing whitespace", routeName: "myroute  ", expectErr: true, errContains: "DNS subdomain"},
 			// Valid names.
 			{name: "simple lowercase", routeName: "myroute", expectErr: false},
 			{name: "with hyphens", routeName: "my-route-1", expectErr: false},

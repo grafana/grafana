@@ -256,7 +256,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Return a large number of commits that would exceed the maxCommits limit
 						commits := make([]*github.RepositoryCommit, maxCommits+1)
-						for i := 0; i < maxCommits+1; i++ {
+						for i := range maxCommits + 1 {
 							commits[i] = &github.RepositoryCommit{
 								SHA: new(fmt.Sprintf("commit%d", i)),
 								Commit: &github.Commit{
@@ -495,8 +495,8 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hooks := []*github.Hook{
-							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
-							{ID: github.Ptr(int64(456)), Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook")}},
+							{ID: new(int64(111)), Config: &github.HookConfig{URL: new("https://other.example.com/webhook")}},
+							{ID: new(int64(456)), Config: &github.HookConfig{URL: new("https://example.com/webhook")}},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(hooks))
@@ -515,10 +515,10 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(&github.Hook{
-							ID:     github.Ptr(int64(456)),
+							ID:     new(int64(456)),
 							Events: []string{"push", "pull_request"},
-							Active: github.Ptr(true),
-							Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook"), ContentType: github.Ptr("json")},
+							Active: new(true),
+							Config: &github.HookConfig{URL: new("https://example.com/webhook"), ContentType: new("json")},
 						}))
 					}),
 				),
@@ -556,7 +556,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hooks := []*github.Hook{
-							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
+							{ID: new(int64(111)), Config: &github.HookConfig{URL: new("https://other.example.com/webhook")}},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(hooks))
@@ -1189,7 +1189,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						// Create more files than the maxPRFiles limit
 						files := make([]*github.CommitFile, maxPRFiles+1)
-						for i := 0; i < maxPRFiles+1; i++ {
+						for i := range maxPRFiles + 1 {
 							files[i] = &github.CommitFile{
 								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
 								Additions: new(i + 1),
@@ -1709,6 +1709,49 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
+			name: "org-level pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-org",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify includes_parents=true is set (required to fetch org-level rulesets)
+						require.Equal(t, "true", r.URL.Query().Get("includes_parents"),
+							"GetRuleset must set includes_parents=true to resolve org-level rulesets")
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "org-branch-protection",
+							"source_type":             "Organization",
+							"source":                  "test-org",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
 			name: "pull request rule with bypass mode exempt returns no block",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
@@ -2161,7 +2204,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 }
 
 func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
-	var rulesetCalls int32
+	var rulesetCalls atomic.Int32
 	mockHandler := mockhub.NewMockedHTTPClient(
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
@@ -2189,7 +2232,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 		mockhub.WithRequestMatchHandler(
 			mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				atomic.AddInt32(&rulesetCalls, 1)
+				rulesetCalls.Add(1)
 				w.WriteHeader(http.StatusOK)
 				require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
 					"id":                      1,
@@ -2207,7 +2250,7 @@ func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Nil(t, got)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&rulesetCalls), "GetRuleset should be called once per unique RulesetID")
+	assert.Equal(t, int32(1), rulesetCalls.Load(), "GetRuleset should be called once per unique RulesetID")
 }
 
 func TestGithubClient_GetRepository(t *testing.T) {

@@ -9,19 +9,17 @@ SELECT
   COALESCE(p.datasource_type, '') as datasource_type{{ end }}
 FROM {{ .Ident .PermissionTable }} p
 INNER JOIN {{ .Ident .RoleTable }} r ON p.role_id = r.id
-LEFT JOIN {{ .Ident .UserRoleTable }} ur ON r.id = ur.role_id AND ur.org_id = r.org_id
+LEFT JOIN {{ .Ident .UserRoleTable }} ur ON r.id = ur.role_id AND ur.org_id = {{ .Arg .Query.OrgID }}
 LEFT JOIN {{ .Ident .UserTable }} u ON ur.user_id = u.id
-LEFT JOIN {{ .Ident .TeamRoleTable }} tr ON r.id = tr.role_id AND tr.org_id = r.org_id
+LEFT JOIN {{ .Ident .TeamRoleTable }} tr ON r.id = tr.role_id AND tr.org_id = {{ .Arg .Query.OrgID }}
 LEFT JOIN {{ .Ident .TeamTable }} t ON tr.team_id = t.id
-LEFT JOIN {{ .Ident .BuiltinRoleTable }} br ON r.id = br.role_id
+LEFT JOIN {{ .Ident .BuiltinRoleTable }} br ON r.id = br.role_id AND br.org_id = {{ .Arg .Query.OrgID }}
 WHERE r.name LIKE {{ .Arg .ManagedRolePattern }}
 {{ if .Query.ActionSets }}
 AND p.action IN ({{ .ArgList .Query.ActionSets }})
 {{ end }}
 AND (u.uid IS NOT NULL OR t.uid IS NOT NULL OR br.role IS NOT NULL)
-{{ if .Query.OrgID }}
-AND COALESCE(ur.org_id, tr.org_id, r.org_id) = {{ .Arg .Query.OrgID }}
-{{ end }}
+AND r.org_id = {{ .Arg .Query.OrgID }}
 {{ if eq (len .Query.Scopes) 1 }}
 AND p.scope = {{ .Arg (index .Query.Scopes 0) }}
 {{ else if gt (len .Query.Scopes) 1 }}

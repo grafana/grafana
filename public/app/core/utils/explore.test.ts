@@ -21,6 +21,7 @@ import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValu
 
 import {
   buildQueryTransaction,
+  copyStringToClipboard,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
   getExploreUrl,
@@ -434,5 +435,67 @@ describe('generateEmptyQuery', () => {
     const query = await generateEmptyQuery([{ refId: 'A' }], 2);
 
     expect(query.refId).not.toBe('A');
+  });
+});
+
+describe('copyStringToClipboard', () => {
+  const originalClipboard = navigator.clipboard;
+  const originalSecureContext = window.isSecureContext;
+  const originalExecCommand = document.execCommand;
+
+  function setClipboard(clipboard: unknown) {
+    Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true, writable: true });
+  }
+
+  function defineClipboardItem() {
+    class FakeClipboardItem {
+      constructor(public readonly items: Record<string, Promise<string> | string>) {}
+    }
+    Object.defineProperty(globalThis, 'ClipboardItem', { value: FakeClipboardItem, configurable: true });
+    return FakeClipboardItem;
+  }
+
+  afterEach(() => {
+    setClipboard(originalClipboard);
+    Object.assign(window, { isSecureContext: originalSecureContext });
+    document.execCommand = originalExecCommand;
+    Reflect.deleteProperty(globalThis, 'ClipboardItem');
+  });
+
+  it('writes via ClipboardItem while the user gesture is still active', async () => {
+    Object.assign(window, { isSecureContext: true });
+    const FakeClipboardItem = defineClipboardItem();
+    const write = jest.fn().mockResolvedValue(undefined);
+    setClipboard({ write, writeText: jest.fn() });
+
+    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+
+    expect(write).toHaveBeenCalledTimes(1);
+    const [items] = write.mock.calls[0];
+    expect(items[0]).toBeInstanceOf(FakeClipboardItem);
+    await expect(items[0].items['text/plain']).resolves.toBe('https://grafana.example/explore?spanId=abc');
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+  });
+
+  it('falls back to writeText when ClipboardItem is not available', () => {
+    Object.assign(window, { isSecureContext: true });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    setClipboard({ write: jest.fn(), writeText });
+
+    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+
+    expect(writeText).toHaveBeenCalledWith('https://grafana.example/explore?spanId=abc');
+    expect(navigator.clipboard.write).not.toHaveBeenCalled();
+  });
+
+  it('falls back to execCommand when the clipboard API is not available', () => {
+    Object.assign(window, { isSecureContext: false });
+    setClipboard(undefined);
+    const execCommand = jest.fn().mockReturnValue(true);
+    document.execCommand = execCommand;
+
+    copyStringToClipboard('https://grafana.example/explore?spanId=abc');
+
+    expect(execCommand).toHaveBeenCalledWith('copy');
   });
 });

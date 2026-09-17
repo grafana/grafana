@@ -835,7 +835,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			return err
 		}
 
-		accessAll := strings.TrimSpace(acFilter.Where) == "1 = 1"
+		accessAll, accessUserIDs := acFilter.AllowsAllRecords(), acFilter.Args
 		joins, inFilters, whereFilters, err := buildSearchUserFilters(dbHelper, query.Filters)
 		if err != nil {
 			return err
@@ -858,7 +858,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			Joins:         joins,
 			OrgID:         query.OrgID,
 			AccessAll:     accessAll,
-			AccessUserIDs: acFilter.Args,
+			AccessUserIDs: accessUserIDs,
 			QueryPattern:  searchQueryPattern(query.Query),
 			IsDisabled:    query.IsDisabled,
 			InFilters:     inFilters,
