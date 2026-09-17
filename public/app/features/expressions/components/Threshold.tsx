@@ -9,7 +9,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { type ClassicCondition, type ExpressionQuery, thresholdFunctions } from '../types';
+import type { ThresholdCondition, ThresholdExpressionQuery } from '../schemas/threshold';
+import { thresholdFunctions } from '../types';
 
 import { ThresholdSelect } from './ThresholdSelect';
 import { ToLabel } from './ToLabel';
@@ -26,40 +27,23 @@ import {
 interface Props {
   labelWidth: number | 'auto';
   refIds: Array<SelectableValue<string>>;
-  query: ExpressionQuery;
-  onChange: (query: ExpressionQuery) => void;
+  query: ThresholdExpressionQuery;
+  onChange: (query: ThresholdExpressionQuery) => void;
   onError?: (error: string | undefined) => void;
   useHysteresis?: boolean;
 }
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
 
-const defaultEvaluator: ClassicCondition = {
-  type: 'query',
-  evaluator: {
-    type: defaultThresholdFunction,
-    params: [0, 0],
-  },
-  query: {
-    params: [],
-  },
-  reducer: {
-    params: [],
-    type: 'last',
-  },
-};
-
 export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
-
   // this queryState is the source of truth for the threshold component.
   // All the changes are made to this object through the dispatch function with the thresholdReducer.
-  const [queryState, dispatch] = useReducer(thresholdReducer, initialExpression);
+  const [queryState, dispatch] = useReducer(thresholdReducer, query);
   const conditionInState = queryState.conditions[0];
 
-  const thresholdFunction = thresholdFunctions.find((fn) => fn.value === queryState.conditions[0].evaluator?.type);
+  const thresholdFunction = thresholdFunctions.find((fn) => fn.value === conditionInState.evaluator.type);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
     dispatch(updateRefId(value.value));
@@ -178,7 +162,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
 interface RecoveryThresholdRowProps {
   isRange: boolean;
-  condition: ClassicCondition;
+  condition: ThresholdCondition;
   onError?: (error: string | undefined) => void;
   dispatch: React.Dispatch<AnyAction>;
   allowOnblur: React.MutableRefObject<boolean>;

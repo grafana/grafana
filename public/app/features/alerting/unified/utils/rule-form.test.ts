@@ -1,6 +1,7 @@
 import { type PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
   type AlertDataQuery,
@@ -12,7 +13,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
+import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { setupDataSources } from '../testSetup/datasources';
 import { type AlertManagerManualRouting, RuleFormType, type RuleFormValues } from '../types/rule-form';
@@ -30,6 +31,7 @@ import {
   getDefaultExpressions,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
+  grafanaRuleDtoToFormValues,
   rulerRuleToFormValues,
 } from './rule-form';
 
@@ -681,127 +683,79 @@ function isExpressionQuery(model: unknown): model is ExpressionQuery {
 
 describe('getDefaultExpressions', () => {
   it('should create a reduce expression as the first query', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const reduceQuery = result[0];
-    const { model } = reduceQuery;
+    const [reduceQuery] = getDefaultExpressions('B', 'C');
 
-    expect(reduceQuery.refId).toBe('B');
-    expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(reduceQuery.queryType).toBe('expression');
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.type).toBe(ExpressionQueryType.reduce);
-    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
-    expect(model.reducer).toBe('last');
-  });
-
-  it('should create reduce expression with proper conditions structure', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const reduceQuery = result[0];
-    const { model } = reduceQuery;
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.conditions).toHaveLength(1);
-    expect(model.expression).toBe('A');
-    expect(model.conditions?.[0]).toEqual({
-      type: 'query',
-      evaluator: {
-        params: [],
-        type: EvalFunction.IsAbove,
-      },
-      operator: {
-        type: 'and',
-      },
-      query: {
-        params: [],
-      },
-      reducer: {
-        params: [],
-        type: 'last',
+    expect(reduceQuery).toMatchObject({
+      refId: 'B',
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: {
+        type: ExpressionQueryType.reduce,
+        refId: 'B',
+        datasource: { uid: ExpressionDatasourceUID },
+        reducer: 'last',
+        expression: 'A',
       },
     });
+  });
+
+  it('should not give the reduce expression a conditions array', () => {
+    const [reduceQuery] = getDefaultExpressions('B', 'C');
+
+    // Older versions wrote a full classic condition in here. The backend never read it, and the
+    // reduce editor never showed it.
+    expect(Object.keys(reduceQuery.model)).not.toContain('conditions');
   });
 
   it('should create a threshold expression as the second query', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
+    const [, thresholdQuery] = getDefaultExpressions('B', 'C');
 
-    expect(thresholdQuery.refId).toBe('C');
-    expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(thresholdQuery.queryType).toBe('expression');
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.type).toBe(ExpressionQueryType.threshold);
-    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
-  });
-
-  it('should create threshold expression with proper conditions structure', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.conditions).toHaveLength(1);
-    expect(model.conditions?.[0]).toEqual({
-      type: 'query',
-      evaluator: {
-        params: [0],
-        type: EvalFunction.IsAbove,
-      },
-      operator: {
-        type: 'and',
-      },
-      query: {
-        params: ['C'],
-      },
-      reducer: {
-        params: [],
-        type: 'last',
+    expect(thresholdQuery).toMatchObject({
+      refId: 'C',
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: {
+        type: ExpressionQueryType.threshold,
+        refId: 'C',
+        datasource: { uid: ExpressionDatasourceUID },
+        expression: 'B',
       },
     });
   });
 
-  it('should reference the reduce expression in the threshold expression', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
+  it('should give the threshold expression exactly one condition, which is all the backend takes', () => {
+    const [, thresholdQuery] = getDefaultExpressions('B', 'C');
 
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
+    expect(thresholdQuery.model).toMatchObject({
+      conditions: [{ evaluator: { params: [0], type: EvalFunction.IsAbove } }],
+    });
+  });
+
+  it('should not give the threshold condition the classic-only fields', () => {
+    const [, thresholdQuery] = getDefaultExpressions('B', 'C');
+    const model = thresholdQuery.model;
+
+    if (!isExpressionQuery(model) || model.type !== ExpressionQueryType.threshold) {
+      throw new Error('Expected a threshold expression');
     }
 
-    expect(model.expression).toBe('B');
+    const [condition] = model.conditions;
+    expect(Object.keys(condition)).not.toContain('query');
+    expect(Object.keys(condition)).not.toContain('reducer');
+    expect(Object.keys(condition)).not.toContain('operator');
+  });
+
+  it('should read the source query from the third refId when one is given', () => {
+    const [reduceQuery] = getDefaultExpressions('B', 'C', 'Z');
+
+    expect(reduceQuery.model).toMatchObject({ expression: 'Z' });
   });
 
   it('should properly use different refIds throughout the structure', () => {
-    const result = getDefaultExpressions('X', 'Y');
-    const reduceModel = result[0].model;
-    const thresholdModel = result[1].model;
+    const [reduceQuery, thresholdQuery] = getDefaultExpressions('X', 'Y');
 
-    if (!isExpressionQuery(reduceModel) || !isExpressionQuery(thresholdModel)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(result[0].refId).toBe('X');
-    expect(reduceModel.refId).toBe('X');
-    expect(reduceModel.conditions?.[0].query.params).toEqual([]);
-
-    expect(result[1].refId).toBe('Y');
-    expect(thresholdModel.refId).toBe('Y');
-    expect(thresholdModel.expression).toBe('X');
+    expect(reduceQuery).toMatchObject({ refId: 'X', model: { refId: 'X' } });
+    expect(thresholdQuery).toMatchObject({ refId: 'Y', model: { refId: 'Y', expression: 'X' } });
   });
 });
 
@@ -869,5 +823,254 @@ describe('fixMissingRefIdsInExpressionModel', () => {
 
     expect(result.grafana_alert.data[0].model.refId).toBe('A');
     expect(result.grafana_alert.data[1].model.refId).toBe('B');
+  });
+});
+
+describe('reading expression models out of a saved rule', () => {
+  /** A rule whose classic condition predates the reducer field, as provisioned rules often are. */
+  function ruleWithClassicConditionMissingReducer() {
+    return mockRulerGrafanaRule(
+      {},
+      {
+        condition: 'B',
+        data: [
+          { datasourceUid: 'prom-uid', refId: 'A', queryType: '', model: { refId: 'A' } },
+          {
+            datasourceUid: ExpressionDatasourceUID,
+            refId: 'B',
+            queryType: 'expression',
+            model: {
+              refId: 'B',
+              type: ExpressionQueryType.classic,
+              datasource: { type: '__expr__', uid: ExpressionDatasourceUID },
+              conditions: [
+                {
+                  type: 'query',
+                  evaluator: { params: [0], type: EvalFunction.IsAbove },
+                  query: { params: ['A'] },
+                },
+              ],
+            } as unknown as AlertDataQuery,
+          },
+        ],
+      }
+    );
+  }
+
+  // The editor reads condition.reducer.type without checking, so a rule saved without one used to
+  // break it. Filling that in is now the read boundary's job.
+  it('fills in a classic condition reducer via rulerRuleToFormValues', () => {
+    const rule = ruleWithClassicConditionMissingReducer();
+    const result = rulerRuleToFormValues(
+      mockRuleWithLocation(rule, {
+        ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+        namespace: 'Test Folder',
+        group: { name: 'my-group', interval: '1m', rules: [rule] },
+      })
+    );
+
+    expect(result.queries[1].model).toMatchObject({
+      conditions: [{ reducer: { params: [], type: 'avg' } }],
+    });
+  });
+
+  it('fills in a classic condition reducer via grafanaRuleDtoToFormValues', () => {
+    const result = grafanaRuleDtoToFormValues(ruleWithClassicConditionMissingReducer(), 'Test Folder');
+
+    expect(result.queries[1].model).toMatchObject({
+      conditions: [{ reducer: { params: [], type: 'avg' } }],
+    });
+  });
+
+  it('leaves data queries alone', () => {
+    const result = grafanaRuleDtoToFormValues(ruleWithClassicConditionMissingReducer(), 'Test Folder');
+
+    expect(result.queries[0].model).toEqual({ refId: 'A' });
+  });
+
+  it('keeps fields on the expression model that we do not describe', () => {
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        condition: 'B',
+        data: [
+          {
+            datasourceUid: ExpressionDatasourceUID,
+            refId: 'B',
+            queryType: 'expression',
+            model: {
+              refId: 'B',
+              type: ExpressionQueryType.reduce,
+              expression: 'A',
+              reducer: 'last',
+              intervalMs: 1000,
+              maxDataPoints: 43200,
+            } as unknown as AlertDataQuery,
+          },
+        ],
+      }
+    );
+
+    const result = grafanaRuleDtoToFormValues(rule, 'Test Folder');
+
+    expect(result.queries[0].model).toMatchObject({ intervalMs: 1000, maxDataPoints: 43200 });
+  });
+
+  it('leaves an expression it cannot read in place, for setQueryEditorSettings to deal with', () => {
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        condition: 'B',
+        data: [
+          {
+            datasourceUid: ExpressionDatasourceUID,
+            refId: 'B',
+            queryType: 'expression',
+            // No type at all - this can come from a dashboard panel or the API
+            model: { refId: 'B' } as unknown as AlertDataQuery,
+          },
+        ],
+      }
+    );
+
+    const result = grafanaRuleDtoToFormValues(rule, 'Test Folder');
+
+    expect(result.queries).toHaveLength(1);
+    expect(result.queries[0].model).toEqual({ refId: 'B' });
+  });
+});
+
+describe('writing expression models back out', () => {
+  function formValuesWithExpressions(model: unknown): RuleFormValues {
+    return {
+      ...getDefaultFormValues(),
+      name: 'test',
+      type: RuleFormType.grafana,
+      condition: 'B',
+      queries: [
+        { datasourceUid: 'prom-uid', refId: 'A', queryType: '', model: { refId: 'A' } },
+        {
+          datasourceUid: ExpressionDatasourceUID,
+          refId: 'B',
+          queryType: 'expression',
+          model: model as AlertDataQuery,
+        },
+      ],
+    };
+  }
+
+  // The backend rejects `settings: null` outright, so the key has to be absent rather than nulled.
+  it('leaves settings out of a reduce rather than sending null', () => {
+    const values = formValuesWithExpressions({
+      refId: 'B',
+      type: ExpressionQueryType.reduce,
+      expression: 'A',
+      reducer: 'last',
+    });
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+    const written = dto.grafana_alert.data[1].model;
+
+    expect(Object.keys(written)).not.toContain('settings');
+  });
+
+  it('keeps settings when the reduce actually has some', () => {
+    const values = formValuesWithExpressions({
+      refId: 'B',
+      type: ExpressionQueryType.reduce,
+      expression: 'A',
+      reducer: 'last',
+      settings: { mode: 'dropNN' },
+    });
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+
+    expect(dto.grafana_alert.data[1].model).toMatchObject({ settings: { mode: 'dropNN' } });
+  });
+
+  it('keeps hysteresis state on a threshold, so saving an unrelated edit does not re-fire the alert', () => {
+    const values = formValuesWithExpressions({
+      refId: 'B',
+      type: ExpressionQueryType.threshold,
+      expression: 'A',
+      conditions: [
+        {
+          evaluator: { type: EvalFunction.IsAbove, params: [10] },
+          unloadEvaluator: { type: EvalFunction.IsBelow, params: [5] },
+          loadedFingerprints: ['18446744073709551615'],
+        },
+      ],
+    });
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+
+    expect(dto.grafana_alert.data[1].model).toMatchObject({
+      conditions: [{ loadedFingerprints: ['18446744073709551615'] }],
+    });
+  });
+
+  it('keeps fields we do not describe', () => {
+    const values = formValuesWithExpressions({
+      refId: 'B',
+      type: ExpressionQueryType.reduce,
+      expression: 'A',
+      reducer: 'last',
+      intervalMs: 1000,
+    });
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+
+    expect(dto.grafana_alert.data[1].model).toMatchObject({ intervalMs: 1000 });
+  });
+
+  it('leaves data queries untouched', () => {
+    const values = formValuesWithExpressions({
+      refId: 'B',
+      type: ExpressionQueryType.reduce,
+      expression: 'A',
+      reducer: 'last',
+    });
+
+    const dto = formValuesToRulerGrafanaRuleDTO(values);
+
+    expect(dto.grafana_alert.data[0].model).toEqual({ refId: 'A' });
+  });
+});
+
+describe('round trip through the API shape', () => {
+  it('a rule read, written and read again comes back the same', () => {
+    const savedModel = {
+      refId: 'B',
+      type: ExpressionQueryType.threshold,
+      datasource: { type: '__expr__', uid: ExpressionDatasourceUID },
+      expression: 'A',
+      conditions: [{ evaluator: { type: EvalFunction.IsAbove, params: [10] } }],
+      intervalMs: 1000,
+    };
+
+    const rule = mockRulerGrafanaRule(
+      {},
+      {
+        condition: 'B',
+        data: [
+          { datasourceUid: 'prom-uid', refId: 'A', queryType: '', model: { refId: 'A' } },
+          {
+            datasourceUid: ExpressionDatasourceUID,
+            refId: 'B',
+            queryType: 'expression',
+            model: savedModel as unknown as AlertDataQuery,
+          },
+        ],
+      }
+    );
+
+    const firstRead = grafanaRuleDtoToFormValues(rule, 'Test Folder');
+    const written = formValuesToRulerGrafanaRuleDTO({ ...firstRead, name: 'test', condition: 'B' });
+    const secondRead = grafanaRuleDtoToFormValues(
+      { ...rule, grafana_alert: { ...rule.grafana_alert, data: written.grafana_alert.data } },
+      'Test Folder'
+    );
+
+    expect(secondRead.queries).toEqual(firstRead.queries);
   });
 });

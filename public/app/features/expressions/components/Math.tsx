@@ -6,12 +6,12 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack, TextLink } from '@grafana/ui';
 
-import { type ExpressionQuery } from '../types';
+import type { MathExpressionQuery } from '../schemas/math';
 
 interface Props {
   labelWidth: number | 'auto';
-  query: ExpressionQuery;
-  onChange: (query: ExpressionQuery) => void;
+  query: MathExpressionQuery;
+  onChange: (query: MathExpressionQuery) => void;
   onRunQuery: () => void;
 }
 

@@ -1,12 +1,12 @@
 import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
-import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import {
-  ExpressionDatasourceUID,
-  type ExpressionQuery,
-  ExpressionQueryType,
-  ReducerMode,
-} from 'app/features/expressions/types';
-import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
+  changeExpressionType,
+  makeClassicExpression,
+  makeResampleExpression,
+} from 'app/features/expressions/schemas/factories';
+import { ExpressionDatasourceUID, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
@@ -33,6 +33,7 @@ const reduceExpression: AlertQuery<ExpressionQuery> = {
     refId: 'B',
     settings: { mode: ReducerMode.Strict },
     expression: 'A',
+    reducer: 'last',
   },
 };
 const thresholdExpression: AlertQuery<ExpressionQuery> = {
@@ -42,6 +43,8 @@ const thresholdExpression: AlertQuery<ExpressionQuery> = {
   model: {
     type: ExpressionQueryType.threshold,
     refId: 'C',
+    expression: 'B',
+    conditions: [{ evaluator: { type: EvalFunction.IsAbove, params: [0] } }],
   },
 };
 
@@ -79,14 +82,9 @@ const alertQuery: AlertQuery = {
   },
 };
 
-const expressionQuery: AlertQuery = {
+const expressionQuery: AlertQuery<ExpressionQuery> = {
   datasourceUid: ExpressionDatasourceUID,
-  model: expressionDatasource.newQuery({
-    type: ExpressionQueryType.classic,
-    conditions: [{ ...defaultCondition, query: { params: ['A'] } }],
-    expression: '',
-    refId: 'B',
-  }),
+  model: makeClassicExpression({ refId: 'B' }),
   refId: 'B',
   queryType: '',
 };
@@ -177,10 +175,7 @@ describe('Query and expressions reducer', () => {
   });
 
   it('should update an expression', () => {
-    const newExpression: ExpressionQuery = {
-      ...expressionQuery.model,
-      type: ExpressionQueryType.math,
-    };
+    const newExpression = changeExpressionType(expressionQuery.model, ExpressionQueryType.math);
 
     const initialState: QueriesAndExpressionsState = {
       queries: [expressionQuery],
@@ -190,34 +185,20 @@ describe('Query and expressions reducer', () => {
     expect(newState).toMatchSnapshot();
   });
   it('should use time range from data source when updating an expression', () => {
-    const expressionQuery: AlertQuery = {
+    const expressionQuery: AlertQuery<ExpressionQuery> = {
       refId: 'B',
       queryType: 'expression',
       datasourceUid: '__expr__',
       relativeTimeRange: { from: 900, to: 1000 },
-      model: {
-        queryType: 'query',
-        datasource: '__expr__',
-        refId: 'B',
-        expression: 'C',
-        type: ExpressionQueryType.classic,
-        window: '10s',
-      } as ExpressionQuery,
+      model: makeResampleExpression({ refId: 'B' }, { expression: 'C', window: '10s' }),
     };
 
-    const expressionQuery2: AlertQuery = {
+    const expressionQuery2: AlertQuery<ExpressionQuery> = {
       refId: 'C',
       queryType: 'expression',
       datasourceUid: '__expr__',
       relativeTimeRange: { from: 1, to: 3 },
-      model: {
-        queryType: 'query',
-        datasource: '__expr__',
-        refId: 'C',
-        expression: 'A',
-        type: ExpressionQueryType.classic,
-        window: '10s',
-      } as ExpressionQuery,
+      model: makeResampleExpression({ refId: 'C' }, { expression: 'A', window: '10s' }),
     };
 
     const queryA: AlertQuery = {
@@ -227,10 +208,7 @@ describe('Query and expressions reducer', () => {
       model: { refId: 'A' },
       queryType: 'query',
     };
-    const newExpression: ExpressionQuery = {
-      ...expressionQuery2.model,
-      type: ExpressionQueryType.resample,
-    };
+    const newExpression = changeExpressionType(expressionQuery2.model, ExpressionQueryType.resample);
 
     const initialState: QueriesAndExpressionsState = {
       queries: [queryA, expressionQuery, expressionQuery2],
@@ -249,28 +227,15 @@ describe('Query and expressions reducer', () => {
         {
           datasourceUid: '__expr__',
           relativeTimeRange: { from: 900, to: 1000 },
-          model: {
-            datasource: '__expr__',
-            expression: 'C',
-            queryType: 'query',
-            refId: 'B',
-            type: 'classic_conditions',
-            window: '10s',
-          },
+          model: makeResampleExpression({ refId: 'B' }, { expression: 'C', window: '10s' }),
           queryType: 'expression',
           refId: 'B',
         },
         {
           datasourceUid: '__expr__',
+          // picked up from the data query it reads, which is the point of this test
           relativeTimeRange: { from: 900, to: 1000 },
-          model: {
-            datasource: '__expr__',
-            expression: 'A',
-            queryType: 'query',
-            refId: 'C',
-            type: 'resample',
-            window: '10s',
-          },
+          model: makeResampleExpression({ refId: 'C' }, { expression: 'A', window: '10s' }),
           queryType: 'expression',
           refId: 'C',
         },
@@ -293,6 +258,8 @@ describe('Query and expressions reducer', () => {
         expression: 'A',
         type: ExpressionQueryType.resample,
         window: '10s',
+        downsampler: 'mean',
+        upsampler: 'fillna',
       },
     };
     const customTimeRange: RelativeTimeRange = { from: 900, to: 1000 };
@@ -331,6 +298,8 @@ describe('Query and expressions reducer', () => {
             refId: 'B',
             type: ExpressionQueryType.resample,
             window: '10s',
+            downsampler: 'mean',
+            upsampler: 'fillna',
           },
           queryType: 'expression',
           refId: 'B',

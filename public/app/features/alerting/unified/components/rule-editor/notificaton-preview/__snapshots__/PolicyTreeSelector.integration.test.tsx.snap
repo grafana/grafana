@@ -69,25 +69,6 @@ exports[`PolicyTreeSelector new rule - collapsed default policy view adds __graf
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -111,19 +92,6 @@ exports[`PolicyTreeSelector new rule - collapsed default policy view adds __graf
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {
@@ -242,25 +210,6 @@ exports[`PolicyTreeSelector new rule - collapsed default policy view does not ad
               {
                 "datasourceUid": "__expr__",
                 "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
                   "datasource": {
                     "type": "__expr__",
                     "uid": "__expr__",
@@ -284,19 +233,6 @@ exports[`PolicyTreeSelector new rule - collapsed default policy view does not ad
                         ],
                         "type": "gt",
                       },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [
-                          "C",
-                        ],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
                     },
                   ],
                   "datasource": {

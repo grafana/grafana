@@ -1,14 +1,42 @@
 import * as z from 'zod';
 
 import { RuleFormType } from 'app/features/alerting/unified/types/rule-form';
+import { expressionQueryCodec } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-// Combined schema that supports both regular and expression queries
-export const alertingModelSchema = z.looseObject({
+/** What every query model carries, whatever it is a query for. */
+const queryModelBase = z.looseObject({
   refId: z.string(),
   maxDataPoints: z.number().optional().describe('Maximum number of data points to return'),
   intervalMs: z.number().optional().describe('Interval in milliseconds'),
 });
+
+/**
+ * Either one of Grafana's own expressions or a query for a data source.
+ *
+ * Expressions get checked properly, so a plugin sending a broken one finds out here instead of
+ * getting a confusing error from the backend later. Data source queries are left unchecked -
+ * there are far too many of them, and their shape is the data source's business.
+ */
+/** Does this model claim to be one of Grafana's expressions? */
+function looksLikeExpression(model: unknown): boolean {
+  if (typeof model !== 'object' || model === null || !('type' in model)) {
+    return false;
+  }
+
+  const type = model.type;
+  return typeof type === 'string' && Object.values(ExpressionQueryType).some((known) => known === type);
+}
+
+export const alertingModelSchema = z.union([
+  expressionQueryCodec.describe('A Grafana expression: math, reduce, resample, threshold, classic_conditions or sql'),
+  // Anything claiming to be an expression has to go through the branch above, or the check there
+  // would be pointless - a bad expression would just fall through to here and be accepted.
+  queryModelBase.describe('A data source query model').refine((model) => !looksLikeExpression(model), {
+    error: 'This looks like a Grafana expression, but it is not a valid one.',
+  }),
+]);
 
 // Main navigate to alert form schema - merged from both alertingSchemaApi and formDefaults
 export const alertingAlertRuleFormSchema = z.object({

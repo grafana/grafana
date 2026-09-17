@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type DataQuery } from '@grafana/schema';
-import { type ExpressionQuery } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 
 import { type SelectionModifiers } from '../QueryEditorContext';
 import { type Transformation } from '../types';

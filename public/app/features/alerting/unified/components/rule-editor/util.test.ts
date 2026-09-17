@@ -1,5 +1,8 @@
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { type ClassicCondition, type ExpressionQuery } from 'app/features/expressions/types';
+import { type ClassicCondition, type ClassicExpressionQuery } from 'app/features/expressions/schemas/classic';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import type { MathExpressionQuery } from 'app/features/expressions/schemas/math';
+import type { ThresholdExpressionQuery } from 'app/features/expressions/schemas/threshold';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { NEW_REDUCER_REF } from './query-and-alert-condition/reducer';
@@ -128,20 +131,20 @@ describe('rule-editor', () => {
       const queries: AlertQuery[] = [dataSource, classicCondition];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
-      const queryModel = rewiredQueries[1].model as ExpressionQuery;
+      const queryModel = rewiredQueries[1].model as ClassicExpressionQuery;
 
       const checkConditionParams = (condition: ClassicCondition) => {
         return expect(condition.query.params).toEqual(['C']);
       };
 
-      expect(queryModel.conditions?.every(checkConditionParams));
+      expect(queryModel.conditions.every(checkConditionParams));
     });
 
     it('should rewire math expressions', () => {
       const queries: AlertQuery[] = [dataSource, mathExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'Query A');
 
-      const queryModel = rewiredQueries[1].model as ExpressionQuery;
+      const queryModel = rewiredQueries[1].model as MathExpressionQuery;
 
       expect(queryModel.expression).toBe('abs(${Query A}) + ${Query A}');
     });
@@ -150,7 +153,7 @@ describe('rule-editor', () => {
       const queries: AlertQuery[] = [dataSource, reduceExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
-      const queryModel = rewiredQueries[1].model as ExpressionQuery;
+      const queryModel = rewiredQueries[1].model as MathExpressionQuery;
       expect(queryModel.expression).toBe('C');
     });
 
@@ -158,7 +161,7 @@ describe('rule-editor', () => {
       const queries: AlertQuery[] = [dataSource, resampleExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'A', 'C');
 
-      const queryModel = rewiredQueries[1].model as ExpressionQuery;
+      const queryModel = rewiredQueries[1].model as MathExpressionQuery;
       expect(queryModel.expression).toBe('C');
     });
 
@@ -166,7 +169,7 @@ describe('rule-editor', () => {
       const queries: AlertQuery[] = [dataSource, reduceExpression, thresholdExpression];
       const rewiredQueries = queriesWithUpdatedReferences(queries, 'B', NEW_REDUCER_REF);
 
-      const queryModel = rewiredQueries[2].model as ExpressionQuery;
+      const queryModel = rewiredQueries[2].model as ThresholdExpressionQuery;
       expect(queryModel.expression).toBe(NEW_REDUCER_REF);
     });
 

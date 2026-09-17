@@ -19,8 +19,9 @@ import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
 import { Threshold } from './components/Threshold';
-import { type ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
-import { getDefaults } from './utils/expressionTypes';
+import type { ExpressionQuery } from './schemas/expressionQuery';
+import { changeExpressionType, getExpressionInput, withExpressionInput } from './schemas/factories';
+import { ExpressionQueryType, expressionTypes } from './types';
 
 export type ExpressionQueryEditorProps = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 
@@ -109,16 +110,22 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
 
   const styles = useStyles2(getStyles);
 
+  // Classic conditions have no single input - each condition names its own query - so this is
+  // undefined for them.
+  const expressionInput = getExpressionInput(query);
+
   useEffect(() => {
-    setCachedExpression(query.type, query.expression);
-  }, [query.expression, query.type, setCachedExpression]);
+    setCachedExpression(query.type, expressionInput);
+  }, [expressionInput, query.type, setCachedExpression]);
 
   const onSelectExpressionType = useCallback(
     (value: ExpressionQueryType) => {
-      const cachedExpression = getCachedExpression(value!);
-      const defaults = getDefaults({ ...query, type: value! });
+      const cachedExpression = getCachedExpression(value);
+      // Build a fresh expression of the new type rather than relabelling the old one: the fields
+      // that only made sense for the previous type should not come along.
+      const next = changeExpressionType(query, value);
 
-      onChange({ ...defaults, expression: cachedExpression ?? defaults.expression });
+      onChange(cachedExpression === undefined ? next : withExpressionInput(next, cachedExpression));
     },
     [query, onChange, getCachedExpression]
   );
