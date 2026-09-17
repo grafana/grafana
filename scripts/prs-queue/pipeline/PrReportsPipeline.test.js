@@ -7,7 +7,7 @@ const test = require('node:test');
 const { CliError, helpText } = require('../cli/cli');
 const { logger } = require('../logger/logger');
 
-const { PrReportsPipeline, mayChangeWithoutUpdatedAt } = require('./PrReportsPipeline');
+const { PrReportsPipeline } = require('./PrReportsPipeline');
 const { ReportOutput } = require('./io/ReportOutput');
 const { PullRequestNormalizer } = require('./normalizer/PullRequestNormalizer');
 const { PullRequestPresenter } = require('./presenter/PullRequestPresenter');
@@ -129,19 +129,6 @@ test('sortByContributorRank: the caller sees its own array reordered', () => {
   assert.equal(prs[0].number, 2);
 });
 
-// Pending CI and unknown mergeability need refreshing even when updatedAt matches.
-test('mayChangeWithoutUpdatedAt: unsettled CI and unknown mergeability force a refetch', () => {
-  const settled = { ciStatus: 'SUCCESS', mergeable: 'MERGEABLE' };
-
-  assert.equal(mayChangeWithoutUpdatedAt(settled), false);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, ciStatus: 'PENDING' }), true);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, ciStatus: 'EXPECTED' }), true);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, ciStatus: '' }), true);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, ciStatus: undefined }), true);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, mergeable: 'UNKNOWN' }), true);
-  assert.equal(mayChangeWithoutUpdatedAt({ ...settled, mergeable: undefined }), true);
-});
-
 function node(number, overrides = {}) {
   return {
     number,
@@ -170,7 +157,7 @@ function queueApi(overrides = {}) {
     fetchTeamReviewRequestedPrs: async () => [],
     fetchAuthoredPrs: async () => [],
     fetchReviewRequestedPrs: async () => [],
-    fetchPullRequestDetails: async () => [],
+    fetchPullRequestDetails: async (numbers, readinessNumbers = []) => readinessNumbers.map((number) => node(number)),
 
     ...overrides,
   };
@@ -238,7 +225,7 @@ test('collectScope: combines overlapping searches and keeps the newest timestamp
   ]);
 });
 
-test('fetch: prunes irrelevant rows, reuses settled rows and refetches changed or unsettled rows', async (t) => {
+test('fetch: prunes irrelevant rows, refreshes readiness and refetches changed details', async (t) => {
   t.mock.method(logger, 'log', () => {});
   const row = (number, overrides = {}) => ({
     number,
@@ -262,6 +249,7 @@ test('fetch: prunes irrelevant rows, reuses settled rows and refetches changed o
   };
   const before = structuredClone(cached);
   const asked = [];
+  const readinessAsked = [];
   const pipeline = pipelineWith({
     cache: {
       read: async (key) => {
@@ -271,13 +259,13 @@ test('fetch: prunes irrelevant rows, reuses settled rows and refetches changed o
     },
     api: queueApi({
       fetchAuthoredPrs: async () => [1, 2, 3, 4, 5, 6].map((number) => ({ number, updatedAt: 'same' })),
-      fetchPullRequestDetails: async (numbers) => {
+      fetchPullRequestDetails: async (numbers, readinessNumbers) => {
         asked.push(...numbers);
+        readinessAsked.push(...readinessNumbers);
         return [
           node(2),
-          node(3),
-          node(4),
           node(6, { commits: { nodes: [{ commit: { statusCheckRollup: { state: 'FAILURE' } } }] } }),
+          ...readinessNumbers.map((number) => node(number)),
         ];
       },
     }),
@@ -285,14 +273,15 @@ test('fetch: prunes irrelevant rows, reuses settled rows and refetches changed o
 
   const fetched = await pipeline.fetch(CONFIG, {});
 
-  assert.deepEqual(asked, [2, 3, 4, 5, 6]);
+  assert.deepEqual(asked, [2, 5, 6]);
+  assert.deepEqual(readinessAsked, [1, 3, 4]);
   assert.deepEqual(
     fetched.entries.map(({ cached }) => cached.number),
     [1, 2, 3, 4, 5, 6]
   );
-  assert.deepEqual([fetched.added, fetched.removed, fetched.refetched, fetched.reused], [1, 1, 4, 1]);
+  assert.deepEqual([fetched.added, fetched.removed, fetched.refetched, fetched.reused], [1, 1, 2, 3]);
   const normalized = pipeline.normalize(fetched);
-  assert.strictEqual(normalized.prs[0], cached.prs[1]);
+  assert.deepEqual(normalized.prs[0], { ...cached.prs[1], status: '' });
   assert.strictEqual(normalized.prs[4], cached.prs[5]);
   assert.deepEqual(cached, before);
 });
@@ -312,9 +301,9 @@ test('fetch: fills missing diff counts in otherwise fresh cache records and then
       cache: { read: async () => ({ prs: { 7: cached } }) },
       api: queueApi({
         fetchAuthoredPrs: async () => [{ number: 7, updatedAt: 'same' }],
-        fetchPullRequestDetails: async (numbers) => {
+        fetchPullRequestDetails: async (numbers, readinessNumbers) => {
           requested.push(...numbers);
-          return [];
+          return readinessNumbers.map((number) => node(number));
         },
       }),
     });
@@ -352,9 +341,9 @@ test('fetch: upgrades legacy diff metadata and reuses the normalized cache on th
       cache: { read: async () => ({ prs: { 7: cached } }) },
       api: queueApi({
         fetchAuthoredPrs: async () => [{ number: 7, updatedAt: 'same' }],
-        fetchPullRequestDetails: async (numbers) => {
+        fetchPullRequestDetails: async (numbers, readinessNumbers) => {
           requested.push(...numbers);
-          return numbers.map((number) =>
+          return [...numbers, ...readinessNumbers].map((number) =>
             node(number, {
               updatedAt: 'same',
               changedFiles: 0,
@@ -659,3 +648,100 @@ test('configFor: team separators cannot collide with literal hyphens', () => {
   assert.notEqual(first.outputPath, second.outputPath);
   assert.equal(first.membersCacheKey, 'members@a-b%2Fc');
 });
+
+function cachedReadyPr() {
+  return {
+    number: 7,
+    updatedAt: 'same',
+    title: 'Cached title',
+    author: 'alice',
+    authorType: 'MEMBER',
+    labels: ['area/dashboards'],
+    reviewers: ['bob'],
+    fixes: { total: 1, issues: [{ number: 8, url: 'issue-url', comments: 2 }] },
+    changedFiles: 1,
+    churn: { additions: 1, deletions: 0, total: 1 },
+    sizeFromChurn: 'size/small',
+    ciStatus: 'FAILURE',
+    mergeable: 'MERGEABLE',
+    status: 'APPROVED',
+  };
+}
+
+test('run: refreshes readiness every time without changing timestamps or losing cached metadata', async () => {
+  let cached = cachedReadyPr();
+  const original = structuredClone(cached);
+  const updates = [
+    { ciStatus: 'SUCCESS', mergeable: 'CONFLICTING', status: 'CHANGES_REQUESTED' },
+    { ciStatus: 'PENDING', mergeable: 'UNKNOWN', status: 'REVIEW_REQUIRED' },
+    { ciStatus: '', mergeable: 'UNKNOWN', status: '' },
+  ];
+  let iteration = 0;
+  let presented;
+  const pipeline = pipelineWith({
+    cache: {
+      read: async () => ({ prs: { 7: cached } }),
+      write: async (key, value) => {
+        cached = value.prs[7];
+      },
+    },
+    api: queueApi({
+      fetchAuthoredPrs: async () => [{ number: 7, updatedAt: 'same' }],
+      fetchPullRequestDetails: async (numbers, readinessNumbers) => {
+        assert.deepEqual(numbers, []);
+        assert.deepEqual(readinessNumbers, [7]);
+        const update = updates[iteration];
+        return [
+          {
+            number: 7,
+            mergeable: iteration === 2 ? null : update.mergeable,
+            reviewDecision: update.status || null,
+            commits: {
+              nodes: [{ commit: { statusCheckRollup: update.ciStatus ? { state: update.ciStatus } : null } }],
+            },
+          },
+        ];
+      },
+    }),
+    output: {
+      writeJson: async (config, prs) => {
+        presented = prs[0];
+      },
+    },
+  });
+  for (; iteration < updates.length; iteration += 1) {
+    const before = cached;
+    await pipeline.run(CONFIG, { format: 'json' });
+    assert.deepEqual(cached, { ...original, ...updates[iteration] });
+    assert.notStrictEqual(cached, before);
+    assert.deepEqual(presented, new PullRequestPresenter().present(cached));
+  }
+});
+
+for (const missing of [false, true]) {
+  test(`run: ${missing ? 'missing' : 'failed'} readiness leaves the cache and output untouched`, async () => {
+    const cached = cachedReadyPr();
+    const original = structuredClone(cached);
+    const pipeline = pipelineWith({
+      cache: {
+        read: async () => ({ prs: { 7: cached } }),
+        write: async () => assert.fail('cache written after readiness failure'),
+      },
+      api: queueApi({
+        fetchAuthoredPrs: async () => [{ number: 7, updatedAt: 'same' }],
+        fetchPullRequestDetails: async () => {
+          if (missing) {
+            return [];
+          }
+          throw new Error('GitHub unavailable');
+        },
+      }),
+      output: { writeJson: async () => assert.fail('report emitted after readiness failure') },
+    });
+    await assert.rejects(
+      pipeline.run(CONFIG, { format: 'json' }),
+      missing ? /cannot refresh readiness/ : /GitHub unavailable/
+    );
+    assert.deepEqual(cached, original);
+  });
+}

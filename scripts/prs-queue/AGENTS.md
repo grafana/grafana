@@ -12,13 +12,18 @@ humans, or compact JSON for agents.
 ```bash
 node pr-reports.js                          # markdown, grafana/grafana + dashboards-squad
 node pr-reports.js --format json            # compact JSON on stdout, no markdown file
-node pr-reports.js --repo o/n --team org/slug
+node pr-reports.js --refresh-cache          # delete selected caches, then fetch and cache fresh data
+node pr-reports.js --no-cache               # bypass cache reads/writes, preserve existing files
+node pr-reports.js --repo grafana/scenes --team grafana/grafana-dashboards-core
 node pr-reports.js --pr https://github.com/grafana/grafana/pull/12   # one PR, one JSON object
 node pr-reports.js --help
 LOG=1 node pr-reports.js                    # with progress logging on stderr
 ```
 
 Requires the `gh` CLI, authenticated. Every network call goes through it.
+The CLI accepts only repositories and teams owned by the `grafana` organization, including
+single-PR URLs. Keep this restriction in CLI validation; shared services remain generic.
+`--repo` accepts a bare name such as `scenes`, which the CLI expands to `grafana/scenes`.
 
 ## Layout
 
@@ -104,13 +109,23 @@ member review requests. Deduplicate PR numbers and retain the newest search time
 appears in several searches. PR details are fetched in batches of 20, with at most four requests
 in flight.
 
-Cache freshness uses `updatedAt`, but pending, expected, or missing `ciStatus`, and missing or
-`UNKNOWN` mergeability force a refetch even when the timestamp matches. These rules live as
-file-level helpers in `PrReportsPipeline.js`. Cache raw normalized values, not display labels.
+Metadata freshness uses `updatedAt` and the diff-metadata checks in `PrReportsPipeline.js`.
+New or stale records receive full detail queries. Reused records receive lightweight queries for
+CI, mergeability, and review decision on every run, regardless of their cached states. Merge only
+these readiness fields into cached records; partial responses must not clear other metadata.
+Missing readiness nodes or failed requests fail the run before writing the PR cache or report.
+Full-detail and readiness requests share batches of 20 with at most four requests in flight;
+each PR alias selects the fields it needs. Summary `refetched` counts full-detail records; `reused` counts records whose metadata was
+reused and readiness refreshed. Cache raw normalized values, not display labels.
 
 Use separate `FileCacheClient` instances for PR records and team members. Configuration supplies
 `prsCacheDir` and `membersCacheDir`; the latter points to `output/cache/teams/`. Team membership is
 currently cached without a TTL.
+
+`--refresh-cache` deletes only the selected repo/team PR cache and the selected team's shared
+membership cache before fetching. `--no-cache` disables reads and writes for both caches without
+deleting files; reports are still produced, with a null cache path in the Markdown run summary.
+The flags are mutually exclusive and have no cache effect in single-PR mode.
 
 Encode each repository and team component with `encodeURIComponent` before joining cache keys
 with `@`. Team cache keys use `members@<encoded-team>`; PR cache keys use

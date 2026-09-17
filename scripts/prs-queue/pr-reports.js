@@ -20,8 +20,13 @@ async function main(argv) {
 
   const config = PrReportsPipeline.configFor(options.repo, options.team);
 
-  const cache = new FileCacheClient({ dir: config.prsCacheDir });
-  const membersCache = new FileCacheClient({ dir: config.membersCacheDir });
+  const cacheEnabled = !options.noCache && !options.pr;
+  const cache = new FileCacheClient({ dir: config.prsCacheDir, enabled: cacheEnabled });
+  const membersCache = new FileCacheClient({ dir: config.membersCacheDir, enabled: cacheEnabled });
+  if (options.refreshCache && !options.pr) {
+    await Promise.all([cache.delete(config.cacheKey), membersCache.delete(config.membersCacheKey)]);
+  }
+
   const api = new GithubApiClient({
     owner: config.owner,
     name: config.name,

@@ -102,23 +102,33 @@ test('present: every association GitHub can send reads as prose', () => {
   assert.equal(labelOf('MANNEQUIN'), 'Mannequin');
 });
 
-test('describeType: the three expected types read as their label', () => {
+test('describeType: all GitHub associations read as their label', () => {
   assert.equal(describeType('FIRST_TIME_CONTRIBUTOR'), 'First-time contributor');
+  assert.equal(describeType('FIRST_TIMER'), 'First-timer');
   assert.equal(describeType('CONTRIBUTOR'), 'Contributor');
   assert.equal(describeType('MEMBER'), 'Member');
+  assert.equal(describeType('COLLABORATOR'), 'Collaborator');
+  assert.equal(describeType('OWNER'), 'Owner');
+  assert.equal(describeType('NONE'), 'None');
+  assert.equal(describeType('MANNEQUIN'), 'Mannequin');
 });
 
-// An association GitHub can send but the queue does not rank is flagged, label or no label.
 test('describeType: an unexpected type keeps its raw name and says so', () => {
-  assert.equal(describeType('MANNEQUIN'), 'MANNEQUIN (unknown type)');
-  assert.equal(describeType('COLLABORATOR'), 'COLLABORATOR (unknown type)');
-  assert.equal(describeType('OWNER'), 'OWNER (unknown type)');
   assert.equal(describeType('SOMETHING_ELSE'), 'SOMETHING_ELSE (unknown type)');
 });
 
 // PR rows and contribution counts should use the same descriptions.
 test('describeType words a known type the same way present does', () => {
-  for (const type of ['FIRST_TIME_CONTRIBUTOR', 'CONTRIBUTOR', 'MEMBER']) {
+  for (const type of [
+    'FIRST_TIME_CONTRIBUTOR',
+    'FIRST_TIMER',
+    'CONTRIBUTOR',
+    'MEMBER',
+    'COLLABORATOR',
+    'OWNER',
+    'NONE',
+    'MANNEQUIN',
+  ]) {
     assert.equal(describeType(type), presenter.present({ number: 7, authorType: type }).authorType);
   }
 });

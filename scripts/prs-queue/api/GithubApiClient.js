@@ -13,6 +13,8 @@ const BASE_QUALIFIERS = 'is:pr is:open -is:draft';
 // Search includes updated_at, so checking cache freshness needs no extra request.
 const SEARCH_ROW_FIELDS = '.items[] | [.number, .updated_at] | @tsv';
 
+const PR_READINESS_FIELDS = `number mergeable reviewDecision commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
+
 // Keep the detail fields together so all batches request the same data.
 const PR_DETAIL_FIELDS = `number title url additions deletions changedFiles mergeable reviewDecision createdAt updatedAt author { login } authorAssociation labels(first: 50) { nodes { name } } closingIssuesReferences(first: 10) { totalCount nodes { number url issueType { name } comments { totalCount } labels(first: 20) { nodes { name } } } } latestReviews(first: 40) { nodes { author { login } state } } reviewRequests(first: 20) { nodes { requestedReviewer { ... on User { login } ... on Team { slug } } } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
 
@@ -93,8 +95,12 @@ class GithubApiClient {
     return prs;
   }
 
-  fetchPullRequestDetails(numbers) {
-    return this.#fetchPullRequestNodes(numbers);
+  fetchPullRequestDetails(numbers, readinessNumbers = []) {
+    const requests = [
+      ...numbers.map((number) => ({ number, fields: PR_DETAIL_FIELDS })),
+      ...readinessNumbers.map((number) => ({ number, fields: PR_READINESS_FIELDS })),
+    ];
+    return this.#fetchPullRequestNodes(requests);
   }
 
   async #fetchTeamMembersFromApi() {
@@ -156,21 +162,24 @@ class GithubApiClient {
   }
 
   // Log before fetching so progress is visible during slow requests.
-  async #fetchPullRequestNodes(numbers) {
-    if (numbers.length === 0) {
+  async #fetchPullRequestNodes(requests) {
+    if (requests.length === 0) {
       return [];
     }
-    logger.log(`fetch PR details (${numbers.length})`);
     const batchSize = GithubApiClient.#DETAIL_BATCH_SIZE;
 
     const batches = [];
-    for (let i = 0; i < numbers.length; i += batchSize) {
-      batches.push(numbers.slice(i, i + batchSize));
+    for (let i = 0; i < requests.length; i += batchSize) {
+      batches.push(requests.slice(i, i + batchSize));
     }
+
+    logger.log(
+      `starting fetch: ${requests.length} PRs across ${batches.length} GraphQL requests (up to ${GithubApiClient.#MAX_CONCURRENT_REQUESTS} concurrent)`
+    );
 
     const pages = await mapWithLimit(batches, GithubApiClient.#MAX_CONCURRENT_REQUESTS, (batch) =>
       this.#graphql(
-        batch.map((number, index) => `p${index}: pullRequest(number: ${number}) { ${PR_DETAIL_FIELDS} }`).join('\n')
+        batch.map(({ number, fields }, index) => `p${index}: pullRequest(number: ${number}) { ${fields} }`).join('\n')
       )
     );
     return pages.flatMap((page) => Object.values(page).filter((node) => node?.number));

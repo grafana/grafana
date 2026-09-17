@@ -353,3 +353,88 @@ test('a failing command rejects rather than returning empty', async () => {
 
   await assert.rejects(() => client.fetchAuthoredPrs(['alpha']), /not authenticated/);
 });
+
+test('fetchTeamMembers: disabled cache fetches fresh membership on every call', async (t) => {
+  const fs = require('node:fs/promises');
+  const { FileCacheClient } = require('../cache/FileCacheClient');
+  for (const method of ['readFile', 'mkdir', 'open', 'rename', 'rm']) {
+    t.mock.method(fs, method, () => assert.fail(`unexpected filesystem operation: ${method}`));
+  }
+  const run = stubRun(['alice\n', 'bob\n']);
+  const client = clientWith(run, { cache: new FileCacheClient({ dir: '/unused', enabled: false }) });
+  assert.deepEqual(await client.fetchTeamMembers(), ['alice']);
+  assert.deepEqual(await client.fetchTeamMembers(), ['bob']);
+});
+
+test('readiness fetches only volatile fields in batches of 20 with at most four requests', async () => {
+  const numbers = Array.from({ length: 85 }, (_, index) => index + 1);
+  const queries = [];
+  let active = 0;
+  let peak = 0;
+  const run = async (file, args) => {
+    const query = queryOf({ args });
+    queries.push(query);
+    const requested = [...query.matchAll(/pullRequest\(number: (\d+)\)/g)].map((match) => Number(match[1]));
+    assert.ok(requested.length <= 20);
+    assert.match(query, /number mergeable reviewDecision/);
+    assert.match(query, /commits\(last: 1\).*statusCheckRollup \{ state \}/);
+    assert.doesNotMatch(query, /title|labels|closingIssuesReferences|latestReviews|reviewRequests|additions|deletions/);
+    active += 1;
+    peak = Math.max(peak, active);
+    await new Promise((resolve) => setImmediate(resolve));
+    active -= 1;
+    return graphqlPayload(requested.map((number) => ({ number, mergeable: 'CONFLICTING' })));
+  };
+  const client = clientWith(run);
+  assert.deepEqual(await client.fetchPullRequestDetails([], []), []);
+  assert.equal(queries.length, 0);
+  const nodes = await client.fetchPullRequestDetails([], numbers);
+  assert.deepEqual(
+    nodes.map((node) => node.number),
+    numbers
+  );
+  assert.equal(queries.length, 5);
+  assert.equal(peak, 4);
+});
+
+for (const [fullCount, readinessCount] of [
+  [5, 15],
+  [25, 25],
+  [45, 40],
+]) {
+  test(`mixed batches: ${fullCount} full-detail and ${readinessCount} readiness PRs share requests`, async () => {
+    const full = Array.from({ length: fullCount }, (_, index) => index + 1);
+    const readiness = Array.from({ length: readinessCount }, (_, index) => fullCount + index + 1);
+    let requests = 0;
+    let active = 0;
+    let peak = 0;
+    const run = async (file, args) => {
+      requests += 1;
+      const query = queryOf({ args });
+      const selections = [...query.matchAll(/p\d+: pullRequest\(number: (\d+)\) \{ ([^\n]*)/g)];
+      assert.ok(selections.length <= 20);
+      for (const [, number, fields] of selections) {
+        assert.match(fields, /mergeable reviewDecision/);
+        assert.match(fields, /statusCheckRollup \{ state \}/);
+        if (full.includes(Number(number))) {
+          assert.match(fields, /title url additions deletions changedFiles/);
+          assert.match(fields, /labels\(first: 50\)/);
+        } else {
+          assert.doesNotMatch(fields, /title|labels|closingIssuesReferences|latestReviews|reviewRequests/);
+        }
+      }
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setImmediate(resolve));
+      active -= 1;
+      return graphqlPayload(selections.map(([, number]) => ({ number: Number(number) })));
+    };
+    const nodes = await clientWith(run).fetchPullRequestDetails(full, readiness);
+    assert.deepEqual(
+      nodes.map((node) => node.number),
+      [...full, ...readiness]
+    );
+    assert.equal(requests, Math.ceil((fullCount + readinessCount) / 20));
+    assert.equal(peak, Math.min(4, requests));
+  });
+}

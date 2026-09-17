@@ -85,18 +85,17 @@ test('render: preserves the supplied contribution counts and order', () => {
   ]);
 });
 
-// Flag unranked associations using their raw GitHub names.
-test('render: a type the queue cannot rank is flagged in its own key', () => {
+test('render: an unknown type is flagged in its own key', () => {
   const payload = JSON.parse(
     render({
       contributions: [
         { type: 'Member', count: 1 },
-        { type: 'COLLABORATOR (unknown type)', count: 1 },
+        { type: 'SOMETHING_ELSE (unknown type)', count: 1 },
       ],
     })
   );
 
-  assert.deepEqual(payload.contributions, { Member: 1, 'COLLABORATOR (unknown type)': 1 });
+  assert.deepEqual(payload.contributions, { Member: 1, 'SOMETHING_ELSE (unknown type)': 1 });
 });
 
 test('render: the cache block reports what the run did, zeros included', () => {

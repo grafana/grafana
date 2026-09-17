@@ -33,7 +33,7 @@ class ReportOutput {
   /**
    * @param {Object} config
    * @param {import('../types').PresentedReport} report
-   * @param {string} cachePath
+   * @param {string|null} cachePath
    */
   async writeMarkdown(config, report, cachePath) {
     const markdown = new PrReport(config).render(report);
@@ -44,7 +44,7 @@ class ReportOutput {
     const summary = new SummaryReport({
       repo: config.repo,
       team: config.team,
-      cachePath: path.relative(config.root, cachePath),
+      cachePath: cachePath == null ? null : path.relative(config.root, cachePath),
       outputPath: path.relative(config.root, config.outputPath),
     });
     this.#stdout.write(summary.render(report));

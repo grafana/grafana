@@ -183,3 +183,34 @@ test('write: serialization failure closes and removes the temporary file', async
     assert.deepEqual(await fs.readdir(dir), ['entry.cache.json']);
   });
 });
+
+test('delete: removes only the selected entry and tolerates a missing entry', async () => {
+  await withCache(async (cache, dir) => {
+    await cache.write('selected', { value: 1 });
+    await cache.write('other', { value: 2 });
+    await cache.delete('selected');
+    await cache.delete('selected');
+    assert.deepEqual(await fs.readdir(dir), ['other.cache.json']);
+    assert.equal((await cache.read('other')).value, 2);
+  });
+});
+
+test('disabled cache performs no filesystem reads or writes', async (t) => {
+  await withCache(async (cache, dir) => {
+    await cache.write('entry', { value: 'original' });
+    const before = await fs.readFile(cache.pathFor('entry'), 'utf8');
+    const disabled = new FileCacheClient({ dir, enabled: false });
+    const mocks = ['readFile', 'mkdir', 'open', 'rename', 'rm'].map((method) =>
+      t.mock.method(fs, method, () => assert.fail(`unexpected filesystem operation: ${method}`))
+    );
+    try {
+      assert.equal(await disabled.read('entry'), null);
+      await disabled.write('entry', { value: 'replacement' });
+      await disabled.write('new', { value: 'new' });
+    } finally {
+      mocks.forEach((mock) => mock.mock.restore());
+    }
+    assert.equal(await fs.readFile(cache.pathFor('entry'), 'utf8'), before);
+    assert.deepEqual(await fs.readdir(dir), ['entry.cache.json']);
+  });
+});

@@ -14,9 +14,6 @@ const CACHE_DIR = path.join(OUTPUT_DIR, 'cache');
 
 const OUTPUT_PREFIX = 'open-prs@';
 
-// Pending or missing CI results may change without a PR update.
-const UNSETTLED_CI = new Set(['PENDING', 'EXPECTED', '']);
-
 class PrReportsPipeline {
   #services;
 
@@ -65,12 +62,29 @@ class PrReportsPipeline {
     const cached = (await cache.read(config.cacheKey)) ?? { prs: {} };
     const { byNumber, removed } = pruneByRelevance(cached.prs, scope.relevant);
     const { stale, reused } = splitByFreshness(byNumber, scope);
-    const nodes = await api.fetchPullRequestDetails(stale);
+    const staleNumbers = new Set(stale);
+    const reusedNumbers = [...scope.relevant].filter((number) => !staleNumbers.has(number));
+    const nodes = await api.fetchPullRequestDetails(stale, reusedNumbers);
     const details = new Map(nodes.map((node) => [node.number, node]));
-    const entries = [...scope.relevant].map((number) => ({
-      node: details.get(number),
-      cached: byNumber[number] ?? { number },
-    }));
+    const entries = [...scope.relevant].map((number) => {
+      const cached = byNumber[number] ?? { number };
+      if (staleNumbers.has(number)) {
+        return { node: details.get(number), cached };
+      }
+      const current = details.get(number);
+      if (!current) {
+        throw new CliError(`cannot refresh readiness for ${config.repo}#${number}`);
+      }
+      // Partial nodes must not go through full normalization, which would clear cached metadata.
+      return {
+        cached: {
+          ...cached,
+          mergeable: current.mergeable ?? 'UNKNOWN',
+          status: current.reviewDecision ?? '',
+          ciStatus: current.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state ?? '',
+        },
+      };
+    });
 
     const refetched = entries.filter(({ node }) => node);
 
@@ -171,7 +185,7 @@ class PrReportsPipeline {
       return;
     }
 
-    // Cache raw GitHub states so the next run can check whether they need refreshing.
+    // Cache normalized values rather than display labels.
     await cache.write(config.cacheKey, { prs: Object.fromEntries(run.prs.map((pr) => [pr.number, pr])) });
 
     if (format === 'json') {
@@ -179,7 +193,7 @@ class PrReportsPipeline {
       return;
     }
 
-    await output.writeMarkdown(config, report, cache.pathFor(config.cacheKey));
+    await output.writeMarkdown(config, report, cache.enabled === false ? null : cache.pathFor(config.cacheKey));
   }
 }
 
@@ -203,7 +217,6 @@ function splitByFreshness(cachedPrs, scope) {
   let reused = 0;
   let added = 0;
   let updated = 0;
-  let unsettled = 0;
   let missingDiff = 0;
 
   for (const number of scope.relevant) {
@@ -214,9 +227,6 @@ function splitByFreshness(cachedPrs, scope) {
     } else if (pr.updatedAt !== scope.updatedAt.get(number)) {
       stale.push(number);
       updated += 1;
-    } else if (mayChangeWithoutUpdatedAt(pr)) {
-      stale.push(number);
-      unsettled += 1;
     } else if (
       pr.changedFiles == null ||
       pr.churn?.additions == null ||
@@ -233,17 +243,11 @@ function splitByFreshness(cachedPrs, scope) {
     }
   }
 
-  logger.log(`fetching ${stale.length} of ${scope.relevant.size} PRs; reusing ${reused} cached PRs`);
+  logger.log(`fetch plan: full details for ${stale.length} PRs; readiness only for ${reused} cached PRs`);
   logger.log(
-    `${added} new, ${updated} with changed timestamps, ${unsettled} with unchanged timestamps but unsettled CI or mergeability, ${missingDiff} missing current diff metadata`
+    `full-detail reasons: ${added} new, ${updated} with changed timestamps, ${missingDiff} missing current diff metadata`
   );
   return { stale, reused };
 }
 
-// CI and mergeability can change without updating the PR timestamp.
-// Refresh pending or unknown states even when that timestamp matches the cache.
-function mayChangeWithoutUpdatedAt(pr) {
-  return UNSETTLED_CI.has(pr.ciStatus ?? '') || !pr.mergeable || pr.mergeable === 'UNKNOWN';
-}
-
-module.exports = { PrReportsPipeline, mayChangeWithoutUpdatedAt };
+module.exports = { PrReportsPipeline };

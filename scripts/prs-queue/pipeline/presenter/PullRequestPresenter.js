@@ -1,6 +1,6 @@
 /**
  * Convert raw GitHub values into shared display values for the reports.
- * Unknown states remain blank or absent. Contributor counts flag unranked associations.
+ * Unknown states remain blank or absent. Contributor counts flag unknown associations.
  */
 class PullRequestPresenter {
   // Accept a fixed time so reports and tests can reproduce the same durations.
@@ -42,9 +42,6 @@ class PullRequestPresenter {
   }
 }
 
-// Flag associations outside the ranking, even if they have a display label.
-const KNOWN_TYPES = ['FIRST_TIME_CONTRIBUTOR', 'CONTRIBUTOR', 'MEMBER'];
-
 const LABELS = {
   FIRST_TIME_CONTRIBUTOR: 'First-time contributor',
   FIRST_TIMER: 'First-timer',
@@ -56,11 +53,13 @@ const LABELS = {
   MANNEQUIN: 'Mannequin',
 };
 
+const KNOWN_TYPES = Object.keys(LABELS);
+
 function labelFor(authorType) {
   return LABELS[authorType] ?? authorType;
 }
 
-// Keep the raw name for unranked associations so the summary makes them visible.
+// Keep the raw name for unknown associations so the summary makes them visible.
 function describeType(authorType) {
   return KNOWN_TYPES.includes(authorType) ? labelFor(authorType) : `${authorType} (unknown type)`;
 }
