@@ -55,11 +55,12 @@ export const getExpireOptions = () => {
 };
 
 // A snapshot embeds every panel's query results, so a dashboard that repeats panels over many
-// variable values can serialize to a body larger than the API accepts (web.MaxBindBodyBytes).
-// A reverse proxy in front of Grafana may also cap body size and reject the request before it
-// reaches the API at all, leaving no response we can turn into a useful message — so measure
-// the payload up front rather than posting something that cannot succeed.
-const MAX_SNAPSHOT_PAYLOAD_BYTES = 100 * 1024 * 1024;
+// variable values can serialize to a body no request can deliver. This mirrors the apiserver's
+// MaxRequestBodyBytes, the lower of the two ceilings a create request can hit, so the check is
+// valid whether the request goes to /apis or to the legacy /api endpoint. A reverse proxy in
+// front of Grafana may also cap body size and reject the request before it reaches Grafana at
+// all, leaving no response we can turn into a useful message.
+const MAX_SNAPSHOT_PAYLOAD_BYTES = 16 * 1024 * 1024;
 
 // JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
 // name or label value in the embedded data, so measure the encoded length actually sent.
@@ -68,7 +69,7 @@ export function getSnapshotPayloadSizeBytes(payload: object): number {
 }
 
 // IEC units to match the 1024-based limit above. Rounding to whole megabytes would report a
-// payload just over the limit as equal to it ("100 MB, over the 100 MB limit").
+// payload just over the limit as equal to it ("16 MB, over the 16 MB limit").
 function formatBytes(bytes: number): string {
   return formattedValueToString(getValueFormat('bytes')(bytes, 1));
 }
