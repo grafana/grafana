@@ -2199,16 +2199,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/Inspector/hooks.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/Inspector/hooks.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/DynamicConfigValueEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2294,11 +2284,6 @@
       "count": 2
     },
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/containers/NewDashboardWithDS.tsx": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
