@@ -65,7 +65,6 @@ export function setupNavTestState({
     auth: {},
     publicDashboardAccessToken: undefined,
     provisioningEnabled: false,
-    navigationAppSections: {},
     featureToggles,
     ...configOverrides,
   });

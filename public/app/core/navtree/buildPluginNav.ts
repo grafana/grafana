@@ -32,8 +32,8 @@ import {
  * Deliberately not reproduced:
  * - per-org plugin enablement: presence in the namespace counts as enabled
  * - the per-plugin scope on plugins.app:access (see the TODO below)
- * - [navigation.app_standalone_pages] overrides ([navigation.app_sections]
- *   arrives via frontend settings and is applied by appNavConfigFor)
+ * - operator nav overrides from the INI ([navigation.app_sections] and
+ *   [navigation.app_standalone_pages])
  * - assistant pages gated on per-org plugin jsonData, which the client cannot
  *   read; the deployment-mode half is reproduced in APP_NAV_CONFIG
  * - nesting includes under their path ancestor (grafana.pluginPathNesting);
@@ -149,7 +149,7 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; hasAccessi
   };
 }
 
-/** Applies the app's nav config: the built-in placement plus any [navigation.app_sections] override */
+/** Applies the app's built-in nav config: placement, weight and display overrides */
 function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
   const navConfig = appNavConfigFor(app.id);
   if (!navConfig) {

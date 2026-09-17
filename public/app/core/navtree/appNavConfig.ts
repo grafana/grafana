@@ -257,24 +257,7 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   },
 };
 
-/**
- * Resolves an app's nav config: the built-in entry above with any operator
- * [navigation.app_sections] override (delivered via frontend settings) applied
- * on top. Same merge semantics as the Go builder's readNavigationSettings:
- * the override always wins on placement, its weight only when non-zero, and
- * everything else — display overrides, hoisting, include filtering — stays
- * built-in. An override for an unknown plugin id creates a placement-only
- * config.
- */
+/** The built-in nav config for an app plugin, if it has one */
 export function appNavConfigFor(appId: string): AppNavConfig | undefined {
-  const builtIn = APP_NAV_CONFIG[appId];
-  const override = config.navigationAppSections[appId];
-  if (!override) {
-    return builtIn;
-  }
-  return {
-    ...builtIn,
-    sectionId: override.sectionId,
-    sortWeight: override.sortWeight || builtIn?.sortWeight || 0,
-  };
+  return APP_NAV_CONFIG[appId];
 }
