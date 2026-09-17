@@ -204,28 +204,46 @@ func TestListKeys_RefusesWithoutIdentity(t *testing.T) {
 	assert.Empty(t, store.calls, "a refused caller must not reach the store")
 }
 
-// Scope decides access, not identity shape. Service access policies are named per
-// deployment and per cluster, so a check against known names would refuse the very
-// callers the endpoint exists for. Which keys come back is still decided per item
-// by the resource server's own authorization.
-func TestListKeys_AdmitsAnyIdentityScopedToAllNamespaces(t *testing.T) {
+// An access policy is admitted whatever it is called. Service credentials are named
+// per deployment, and per cluster in multi-tenant, so a check against known names
+// refuses the very callers the endpoint exists for.
+func TestListKeys_AdmitsAnyServiceAccessPolicy(t *testing.T) {
+	ident := serviceIdentity()
+	// A real service policy: the right shape, a name no literal list holds.
+	ident.UserUID = "provisioning-connection-operator-system"
+
+	store := &fakeStore{}
+	rec := do(t, store, ident, `{}`)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.Len(t, store.calls, 1)
+	assert.Empty(t, store.calls[0].Options.Key.Namespace, "the read must stay cluster-wide")
+}
+
+// A wildcard namespace does not make a caller a service. On-behalf-of copies the
+// service token's namespace onto an identity typed as the actor (ext_jwt.go), so a
+// user can hold "*", and per-item authorization allows groups outside its RBAC
+// allowlist wholesale (resource/access.go). Without the type check those two let an
+// on-behalf-of user enumerate metadata in every tenant namespace.
+func TestListKeys_RefusesNonServiceCallersScopedToAllNamespaces(t *testing.T) {
 	for _, typ := range []claims.IdentityType{
-		claims.TypeAccessPolicy,
-		claims.TypeServiceAccount,
 		claims.TypeUser,
+		claims.TypeServiceAccount,
+		claims.TypeRenderService,
+		claims.TypeAnonymous,
+		claims.TypeAPIKey,
+		claims.TypeEmpty,
 	} {
 		t.Run(string(typ), func(t *testing.T) {
 			ident := serviceIdentity()
 			ident.Type = typ
-			// A real service policy: the right shape, a name no literal list holds.
-			ident.UserUID = "provisioning-connection-operator-system"
+			require.Equal(t, "*", ident.GetNamespace(), "the scope check must not be what refuses these")
 
 			store := &fakeStore{}
 			rec := do(t, store, ident, `{}`)
 
-			require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
-			require.Len(t, store.calls, 1)
-			assert.Empty(t, store.calls[0].Options.Key.Namespace, "the read must stay cluster-wide")
+			require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+			assert.Empty(t, store.calls, "a refused caller must not reach the store")
 		})
 	}
 }
