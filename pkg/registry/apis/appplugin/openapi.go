@@ -94,6 +94,11 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
 
+	// Settings routes are only installed when both legacy dependencies are present.
+	if b.contextProvider == nil || b.client == nil {
+		return oas, nil
+	}
+
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
 		prefix := root + "namespaces/{namespace}/app/{name}/" + v

@@ -291,7 +291,7 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	// declares it. Last, so it never becomes the preferred version. This also
 	// keeps the list non-empty: a group with no versions fails InstallSchema
 	// (SetVersionPriority requires exactly one group) and aborts startup.
-	if !slices.Contains(gvs, settingsGV) {
+	if !slices.Contains(gvs, settingsGV) && b.contextProvider != nil {
 		gvs = append(gvs, settingsGV)
 	}
 	return gvs
@@ -384,23 +384,26 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
-		storage[settingsRI.StoragePath()] = settingsStorage
 
-		provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
-			return b.getPluginContext(ctx, gv.Version)
-		}
+		if b.contextProvider != nil && b.client != nil {
+			storage[settingsRI.StoragePath()] = settingsStorage
 
-		storage[settingsRI.StoragePath("health")] = &subHealthREST{
-			client:          b.client,
-			contextProvider: provider,
-		}
-		storage[settingsRI.StoragePath("resources")] = &subResourceREST{
-			pluginID:        b.pluginJSON.ID,
-			client:          b.client,
-			contextProvider: provider,
-		}
-		if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
-			storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+			provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
+				return b.getPluginContext(ctx, gv.Version)
+			}
+
+			storage[settingsRI.StoragePath("health")] = &subHealthREST{
+				client:          b.client,
+				contextProvider: provider,
+			}
+			storage[settingsRI.StoragePath("resources")] = &subResourceREST{
+				pluginID:        b.pluginJSON.ID,
+				client:          b.client,
+				contextProvider: provider,
+			}
+			if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
+				storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+			}
 		}
 
 		// Configure storage for manifest-defined kinds.
@@ -435,7 +438,9 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			}
 		}
 
-		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+		if len(storage) > 0 {
+			apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+		}
 	}
 
 	b.kinds = kinds

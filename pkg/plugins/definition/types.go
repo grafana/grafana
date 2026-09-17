@@ -20,6 +20,10 @@ type PluginDefinition struct {
 
 	// When an app manifest is defined, we can use that
 	Manifest *app.ManifestData `json:"manifest,omitempty"`
+
+	// Do not expose the /app/instance
+	// NOTE: this is temporary while we continue to roll out manifests in plugins
+	ExcludeSettings bool `json:"excludeSettings,omitempty"`
 }
 
 // Internal, cloud specific type used by the router to know which MT plugins exist

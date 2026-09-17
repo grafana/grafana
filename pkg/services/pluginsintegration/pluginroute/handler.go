@@ -102,6 +102,13 @@ func APIGroup(plugin definition.PluginDefinition) (metav1.APIGroup, error) {
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
 func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
+	// When settings are excluded, don't make any legacy calls
+	if plugin.ExcludeSettings {
+		opts.PluginClient = nil
+		opts.ContextProvider = nil
+		opts.DualWrite = nil
+	}
+
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return nil, err

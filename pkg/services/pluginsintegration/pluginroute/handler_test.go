@@ -61,7 +61,8 @@ func TestHandlerServesGroupDiscovery(t *testing.T) {
 }
 
 func TestHandlerServesOpenAPIV3(t *testing.T) {
-	handler := withRequester(loadHandler(t, testPlugin(), allowAll(testOptions())))
+	opts := allowAll(testOptions())
+	handler := withRequester(loadHandler(t, testPlugin(), opts))
 
 	var oas spec3.OpenAPI
 	getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v1alpha1", &oas)
@@ -71,6 +72,44 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
+	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.Contains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+}
+
+func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
+	plugin := testPlugin()
+	plugin.ExcludeSettings = true
+	opts := allowAll(testOptions())
+	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifest.Group, plugin.JSONData.ID,
+		&pluginsettings.FakePluginSettings{})
+	// Any attempt to construct legacy dual-write storage would call a nil service.
+	opts.DualWrite = struct{ dualwrite.Service }{}
+	handler := withRequester(loadHandler(t, plugin, opts))
+
+	var oas spec3.OpenAPI
+	getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v1alpha1", &oas)
+	require.Equal(t, "example.ext.grafana.app/v1alpha1", oas.Info.Title)
+
+	root := "/apis/example.ext.grafana.app/v1alpha1/"
+	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
+	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
+	require.NotContains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+
+	var resources metav1.APIResourceList
+	getJSON(t, handler, "/apis/example.ext.grafana.app/v1alpha1", &resources)
+	names := make([]string, 0, len(resources.APIResources))
+	for _, resource := range resources.APIResources {
+		names = append(names, resource.Name)
+	}
+	require.Contains(t, names, "testkinds")
+	for _, resource := range []string{"app", "app/health", "app/resources"} {
+		require.NotContains(t, names, resource)
+	}
+	for _, suffix := range []string{"", "/health", "/resources"} {
+		res := get(t, handler, root+"namespaces/default/app/instance"+suffix)
+		require.Equal(t, http.StatusNotFound, res.Code, res.Body.String())
+	}
 }
 
 func TestHandlerServesManifestRoutes(t *testing.T) {
@@ -179,8 +218,10 @@ func allowAll(opts Options) Options {
 
 func testOptions() Options {
 	return Options{
-		BuildVersion: "12.3.4",
-		ClientV3:     stubClientV3{},
+		BuildVersion:    "12.3.4",
+		PluginClient:    struct{ appplugin.PluginClient }{},
+		ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+		ClientV3:        stubClientV3{},
 		Storage: func(_ *runtime.Scheme, codecs serializer.CodecFactory, gvs []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
 			return apistore.NewRESTOptionsGetterForClient(nil, nil,
 				storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, nil, nil), nil
@@ -283,8 +324,9 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 	}
 }
 
-func TestAPIGroupMatchesHandler(t *testing.T) {
+func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
+	plugin.ExcludeSettings = true
 	expected, err := APIGroup(plugin)
 	require.NoError(t, err)
 	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
