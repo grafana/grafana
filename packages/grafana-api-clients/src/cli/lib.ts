@@ -17,16 +17,7 @@ export function groupVersion(spec: OpenAPIV3.Document, file: string): { group: s
   return { group: m[1], version: m[2] };
 }
 
-/** Every app plugin serves a settings-only v0alpha1; it is not a kind API and gets no client. Expects a processed spec. */
-export function isSettingsOnly(spec: OpenAPIV3.Document): boolean {
-  return Object.keys(spec.paths).every((p) => p === '/' || p.startsWith('/app/instance'));
-}
-
-/**
- * Whether an endpoint of a processed spec gets a hook. Discovery, the plugin settings API (wrapped by
- * @grafana/runtime's getPluginSettings) and the per-kind search/trash routes are left out, as they are
- * for the clients in this package.
- */
+/** Same endpoint filter as the clients in this package: drop the per-kind search and trash routes. */
 export function includeEndpoint(path: string): boolean {
-  return path !== '/' && !path.startsWith('/app/instance') && !perResourceSearch.test(path);
+  return !perResourceSearch.test(path);
 }

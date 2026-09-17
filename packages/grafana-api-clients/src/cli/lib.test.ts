@@ -1,6 +1,6 @@
 import { type OpenAPIV3 } from 'openapi-types';
 
-import { groupVersion, includeEndpoint, isSettingsOnly } from './lib';
+import { groupVersion, includeEndpoint } from './lib';
 import { reducerPath } from './templates';
 
 const doc = (paths: string[]) => ({ paths: Object.fromEntries(paths.map((p) => [p, {}])) }) as OpenAPIV3.Document;
@@ -23,28 +23,13 @@ describe('groupVersion', () => {
   });
 });
 
-describe('isSettingsOnly', () => {
-  it('is true for the settings-only version every app plugin serves', () => {
-    expect(isSettingsOnly(doc(['/', '/app/instance', '/app/instance/health', '/app/instance/resources']))).toBe(true);
-  });
-
-  it('is false once a kind is served', () => {
-    expect(isSettingsOnly(doc(['/', '/app/instance', '/testresources']))).toBe(false);
-  });
-});
-
 describe('includeEndpoint', () => {
-  it('keeps kind, subresource and custom route endpoints', () => {
+  it('keeps everything but the per-kind search and trash routes, like the clients in this package', () => {
+    expect(includeEndpoint('/')).toBe(true);
+    expect(includeEndpoint('/app/instance')).toBe(true);
     expect(includeEndpoint('/testresources')).toBe(true);
     expect(includeEndpoint('/testresources/{name}/status')).toBe(true);
     expect(includeEndpoint('/testresources/{name}/bar')).toBe(true);
-    expect(includeEndpoint('/foo')).toBe(true);
-  });
-
-  it('drops discovery, settings and per-kind search/trash', () => {
-    expect(includeEndpoint('/')).toBe(false);
-    expect(includeEndpoint('/app/instance')).toBe(false);
-    expect(includeEndpoint('/app/instance/health')).toBe(false);
     expect(includeEndpoint('/testresources/search')).toBe(false);
     expect(includeEndpoint('/testresources/trash')).toBe(false);
   });

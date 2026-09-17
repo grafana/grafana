@@ -80,7 +80,7 @@ npx grafana-api-clients generate --spec openapi --out src/api/generated
 
 This writes, per served version, `<version>/baseAPI.ts`, `<version>/index.ts` (created once, safe to
 edit) and `<version>/endpoints.gen.ts` (regenerated every run), plus a shared `createBaseQuery.ts`.
-The plugin needs `@grafana/api-clients`, `@reduxjs/toolkit` and `react-redux` as dependencies, and
+Every served version gets a client, including the settings API in `v0alpha1`. The plugin needs `@grafana/api-clients`, `@reduxjs/toolkit` and `react-redux` as dependencies, and
 `api.reducer` / `api.middleware` added to its redux store.
 
 # Development (within `grafana/grafana`)

@@ -19,7 +19,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { type OpenAPIV3 } from 'openapi-types';
 
-import { groupVersion, includeEndpoint, isSettingsOnly } from './lib.ts';
+import { groupVersion, includeEndpoint } from './lib.ts';
 import { processOpenAPISpec } from './process-spec.ts';
 import { renderPluginBaseAPI, renderPluginIndexTs, CREATE_BASE_QUERY_SOURCE } from './templates.ts';
 
@@ -64,9 +64,6 @@ for (const file of files) {
   const raw: OpenAPIV3.Document = JSON.parse(readFileSync(path.join(specDir, file), 'utf8'));
   const { group, version } = groupVersion(raw, file);
   const spec = processOpenAPISpec(raw);
-  if (isSettingsOnly(spec)) {
-    continue;
-  }
 
   const dir = path.join(outDir, version);
   mkdirSync(dir, { recursive: true });
