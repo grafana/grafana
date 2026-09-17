@@ -16,11 +16,11 @@ import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
 
 /**
- * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
- * child's style from a parent needs a hand-written class plus a descendant selector — the same
- * convention as `dashboard-canvas-controls` in the dashboard layouts.
+ * Stable class name the frame's hover rule targets. Emotion generates its class names, so a parent
+ * that reveals a child's style needs a hand-written class plus a descendant selector. The dashboard
+ * layouts use the same convention, in `dashboard-canvas-controls`.
  */
-export const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+export const NOTEBOOK_CELL_CONTROLS_CLASS = 'notebook-cell-controls';
 
 /** Stable class name on the frame itself, so the cell list can see which cell the pointer is over. */
 export const NOTEBOOK_CELL_FRAME_CLASS = 'notebook-cell-frame';
@@ -96,9 +96,9 @@ interface Props {
 }
 
 /**
- * One notebook cell plus its edit-mode affordances: a drag handle and an add-cell button in the left
+ * One notebook cell plus its edit-mode controls: a drag handle and an add-cell button in the left
  * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
- * content dispatcher — everything editing-related lives here.
+ * content dispatcher, so everything about editing lives here.
  */
 export function NotebookCellFrame({
   cell,
@@ -197,7 +197,7 @@ export function NotebookCellFrame({
             isEditing && styles.frameEditing,
             !isEditorCell && styles.frameFocusable,
             dragSnapshot.isDragging && styles.dragging,
-            (dragSnapshot.isDragging || isDragActive) && styles.affordancesHidden,
+            (dragSnapshot.isDragging || isDragActive) && styles.controlsHidden,
             dropIndicator === 'top' && styles.dropLineTop,
             dropIndicator === 'bottom' && styles.dropLineBottom
           )}
@@ -206,7 +206,7 @@ export function NotebookCellFrame({
             <div
               {...dragProvided.dragHandleProps}
               aria-label={t('notebook.cell.drag-handle', 'Drag to reorder')}
-              className={cx(styles.handle, NOTEBOOK_CELL_AFFORDANCES_CLASS)}
+              className={cx(styles.handle, NOTEBOOK_CELL_CONTROLS_CLASS)}
             >
               <Tooltip content={t('notebook.cell.drag-handle', 'Drag to reorder')} placement="left">
                 <Icon name="draggabledots" size="md" />
@@ -214,9 +214,7 @@ export function NotebookCellFrame({
             </div>
           )}
 
-          {isEditing && (
-            <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
-          )}
+          {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
 
           {isEditing && onDuplicate && onDelete && (
             <>
@@ -229,7 +227,7 @@ export function NotebookCellFrame({
               <NotebookCellActions
                 onDuplicate={onDuplicate}
                 onDelete={onDelete}
-                className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
+                className={NOTEBOOK_CELL_CONTROLS_CLASS}
               />
             </>
           )}
@@ -284,7 +282,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       paddingLeft: theme.spacing(10),
       marginLeft: theme.spacing(-10),
     },
-    [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+    [`&:hover > .${NOTEBOOK_CELL_CONTROLS_CLASS}, &:focus-within > .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       opacity: 1,
       pointerEvents: 'auto',
     },
@@ -345,8 +343,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     },
   }),
-  affordancesHidden: css({
-    [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+  controlsHidden: css({
+    [`& .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       visibility: 'hidden',
     },
   }),
