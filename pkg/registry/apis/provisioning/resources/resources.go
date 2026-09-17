@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -437,11 +438,11 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-// RenameResourceFile moves the resource at previousPath to newPath. The returned
-// size is the number of bytes of the new file content written at newPath. The
-// returned bool reports a create with no matching delete -- the one outcome
-// that changes the total resource count, for the caller's quota accounting.
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
+// RenameResourceFile moves the resource at previousPath to newPath. quotaCheck
+// (nil-safe) is consulted only at the point a net-new resource is about to be
+// created -- an in-place update never calls it, so quota exhaustion cannot
+// block a rename that isn't actually adding a resource.
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, quotaCheck func() bool, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read previous file: %w", err)
@@ -468,13 +469,22 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			// resource exists, so nothing is left to orphan either way.
 			resolved := false
 			if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
-				existing, getErr := newParsed.Client.Get(ctx, newParsed.Obj.GetName(), metav1.GetOptions{})
+				// Same identity Run() itself writes with -- otherwise a
+				// mismatch can read as NotFound and wrongly choose ForceCreate.
+				identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+				if err != nil {
+					return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("set provisioning identity: %w", err)
+				}
+				existing, getErr := newParsed.Client.Get(identityCtx, newParsed.Obj.GetName(), metav1.GetOptions{})
 				switch {
 				case getErr == nil:
 					newParsed.Existing = existing
 					newParsed.SkipStrictValidation = true
 					resolved = true
 				case apierrors.IsNotFound(getErr):
+					if quotaCheck != nil && !quotaCheck() {
+						return "", "", schema.GroupVersionKind{}, size, false, quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", newPath))
+					}
 					newParsed.ForceCreate = true
 					resolved = true
 				}

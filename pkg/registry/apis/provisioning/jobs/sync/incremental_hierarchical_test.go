@@ -276,7 +276,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// Rename fails with PathCreationError for destination folder
 				progress.On("HasDirPathFailedCreation", "newfolder/file.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "newfolder/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref").
+				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref", mock.Anything).
 					Return("", "", schema.GroupVersionKind{}, 0, false, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
