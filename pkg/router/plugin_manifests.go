@@ -6,16 +6,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sync/atomic"
 	"time"
 
-	"log/slog"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
@@ -25,12 +26,13 @@ import (
 // second pacing scheme. The wire format and backend shape are unrelated to
 // aggregateTarget's, though: definition.PluginDeployments rather than a k8s
 // discovery document, and no reverse-proxy target to build (see
-// pluginManifestBackend), so this does not share
+// pluginManifestDummyBackend), so this does not share
 // discoverGroups/newAggregateBackend.
 type pluginManifestsTarget struct {
 	url      string
 	client   *http.Client
 	patterns []*regexp.Regexp
+	deps     PluginDependencies
 
 	cooldown *cooldown
 
@@ -38,7 +40,7 @@ type pluginManifestsTarget struct {
 	lastKeys atomic.Pointer[map[string]struct{}]
 }
 
-func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client) (*pluginManifestsTarget, error) {
+func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client, deps PluginDependencies) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
@@ -52,6 +54,7 @@ func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *
 	}
 
 	t := &pluginManifestsTarget{
+		deps:     deps,
 		url:      rawURL,
 		client:   client,
 		patterns: patterns,
@@ -112,9 +115,22 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		if !matchesAnyPattern(group.Name, t.patterns) {
 			continue
 		}
-		backend, err := newPluginManifestBackend(entry, group)
+
+		var backend Backend
+		if t.deps.Unified != nil && t.deps.SecureValues != nil {
+			backend, err = NewPluginBackend(entry.Definition,
+				func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+					// TODO!!! get grpc client to
+					slog.Info("TODO get plugin client from host", "pluginId", entry.Definition.JSONData.ID, "url", entry.Host)
+					return nil, nil, nil
+				}, t.deps,
+			)
+		} else {
+			backend, err = newPluginManifestDummyBackend(entry, group)
+		}
+
 		if err != nil {
-			slog.Warn("router: skipping unfingerprintable plugin manifest entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 			continue
 		}
 		backends = append(backends, backend)
@@ -160,17 +176,16 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	return deployment, nil
 }
 
-// pluginManifestBackend is a Backend for one plugin discovered from a
-// plugins_url target.
-type pluginManifestBackend struct {
+// pluginManifestDummyBackend is a dummy backend used when the full dependencies are not provided
+type pluginManifestDummyBackend struct {
 	group metav1.APIGroup
 	key   string
 	entry definition.PluginDeployment
 }
 
-var _ Backend = &pluginManifestBackend{}
+var _ Backend = &pluginManifestDummyBackend{}
 
-func newPluginManifestBackend(entry definition.PluginDeployment, group metav1.APIGroup) (Backend, error) {
+func newPluginManifestDummyBackend(entry definition.PluginDeployment, group metav1.APIGroup) (Backend, error) {
 	body, err := json.Marshal(entry)
 	if err != nil {
 		return nil, fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
@@ -178,25 +193,21 @@ func newPluginManifestBackend(entry definition.PluginDeployment, group metav1.AP
 	sum := sha256.Sum256(body)
 	key := "plugins_url:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16]
 
-	return &pluginManifestBackend{
+	return &pluginManifestDummyBackend{
 		group: group,
 		key:   key,
 		entry: entry,
 	}, nil
 }
 
-func (b *pluginManifestBackend) Group() metav1.APIGroup { return b.group }
-func (b *pluginManifestBackend) Key() string            { return b.key }
+func (b *pluginManifestDummyBackend) Group() metav1.APIGroup { return b.group }
+func (b *pluginManifestDummyBackend) Key() string            { return b.key }
 
-func (b *pluginManifestBackend) Load(context.Context) (http.Handler, error) {
+func (b *pluginManifestDummyBackend) Load(context.Context) (http.Handler, error) {
 	return b, nil
 }
 
-// ServeHTTP is a placeholder that echoes the plugin manifest entry instead
-// of proxying to the plugin's gRPC backend (entry.Host) -- routing real
-// requests here is the "Backend Mode: Plugin" work AGENTS.md's Path model
-// section marks TBD, not implemented by this discovery-side change.
-func (b *pluginManifestBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+func (b *pluginManifestDummyBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(b.entry)
 }

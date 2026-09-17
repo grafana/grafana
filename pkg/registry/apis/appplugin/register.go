@@ -236,6 +236,12 @@ func RegisterAPIService(
 			continue
 		}
 
+		// When a manifest exists, do not expose the "legacy" settings
+		if plugin.Manifest != nil && !getflag(featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings) {
+			b.contextProvider = nil
+			b.client = nil
+		}
+
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}

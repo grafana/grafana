@@ -181,9 +181,6 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
-		if strings.Contains(plugin.JSONData.ID, "appsdktest") {
-			plugin.ExcludeSettings = true // Temporary testing HACK
-		}
 		backend, err := NewPluginBackend(plugin,
 			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
 				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
