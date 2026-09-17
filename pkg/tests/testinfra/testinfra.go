@@ -905,6 +905,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningKeysOnlyReList {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
 	// Write max_repositories if explicitly set.
 	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
 	if opts.ProvisioningMaxRepositories != 10 {
@@ -1188,6 +1194,11 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
+	// connection informer's periodic re-list ask storage for keys instead of whole
+	// objects. Off by default, matching the shipped default.
+	ProvisioningKeysOnlyReList bool
+
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
 
