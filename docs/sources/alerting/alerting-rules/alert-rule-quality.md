@@ -51,21 +51,33 @@ For more information about alerting permissions and folder access, refer to [Con
 
 ## Understand policy scope
 
-_TODO: Explain the scope and the difference between assessing a rule and blocking a write._
+A single quality policy applies to Grafana-managed alert rules across folders in your organization.
+Data source-managed alert rules and recording rules are excluded.
 
-<!--
-Cover one org-wide policy, Grafana-managed alert rules, and checks for missing, empty,
-or whitespace-only annotation and label values. These checks don't validate the content.
-Explain that both detect-only and enforced requirements contribute to quality findings.
+The policy reports a finding when a required label or annotation is missing, empty, or contains only whitespace.
+These checks validate presence, not content.
+For example, requiring a runbook URL doesn't check whether the link works.
 
-Use a small assessment-versus-enforcement table if it helps:
-- Supported Terraform, kubectl, and provisioning API writes can be enforced.
-- Grafana editor writes, file provisioning, and Git Sync aren't enforced.
-- Data source-managed and recording rules are outside the assessment scope.
+### Detection and enforcement
 
-Avoid implying that all provisioned writes are enforced. Explain relevant provenance
-exceptions and that policy-read failures skip enforcement, rather than blocking rule management.
--->
+You choose a mode for each requirement:
+
+| Mode        | Behavior                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| Detect-only | Missing values appear as findings but don't block rule creation or updates.                                |
+| Enforced    | Missing values appear as findings and block rule creation or updates through supported provisioning paths. |
+
+Both modes contribute to the quality score.
+Enabling enforcement doesn't stop existing rules from evaluating or sending notifications.
+
+### Supported enforcement paths
+
+Enforcement applies to provisioned rules created or updated through Terraform, `kubectl`, or the Alerting provisioning HTTP API.
+
+Writes from the Grafana rule editor aren't enforced, but the resulting rules can still have quality findings.
+File provisioning is also excluded from enforcement.
+
+If Grafana can't read the policy, it allows the write to proceed without enforcing quality requirements.
 
 ## Configure a quality policy
 
