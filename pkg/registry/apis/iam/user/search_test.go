@@ -109,6 +109,35 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
+	const (
+		lastSeenAt = int64(1_700_000_000)
+		createdAt  = int64(1_700_000_000_000)
+	)
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:      1,
+			Name:    "user-1",
+			Title:   "User One",
+			Created: createdAt,
+			Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Name:      "user-1",
+			},
+			Labels: map[string]string{resource.SEARCH_FIELD_LEGACY_ID: "42"},
+			Fields: map[string]any{
+				builders.USER_EMAIL:                 "user@example.com",
+				builders.USER_LOGIN:                 "user-one",
+				builders.USER_LAST_SEEN_AT:          lastSeenAt,
+				builders.USER_ROLE:                  "Admin",
+				builders.USER_DISABLED:              true,
+				builders.USER_EXTERNAL_AUTH_MODULES: []string{"oauth", "saml"},
+			},
+		},
+	}}}))
+
 	fields := []string{
 		resource.SEARCH_FIELD_TITLE,
 		builders.USER_EMAIL,
@@ -132,11 +161,27 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 					Resource:  key.Resource,
 				}},
 				Fields:       fields,
+				Limit:        1,
 				ResultFormat: format,
 			}, nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, response.GetError())
 			require.Equal(t, format, response.GetResultFormat())
+
+			parsed, err := ParseResults(response)
+			require.NoError(t, err)
+			require.Len(t, parsed.Hits, 1)
+			hit := parsed.Hits[0]
+			require.Equal(t, "user-1", hit.Name)
+			require.Equal(t, "User One", hit.Title)
+			require.Equal(t, "user@example.com", hit.Email)
+			require.Equal(t, "user-one", hit.Login)
+			require.Equal(t, lastSeenAt, hit.LastSeenAt)
+			require.Equal(t, "Admin", hit.Role)
+			require.True(t, hit.Disabled)
+			require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
+			require.Equal(t, createdAt, hit.Created)
+			require.Equal(t, int64(42), hit.InternalId)
 		})
 	}
 }
