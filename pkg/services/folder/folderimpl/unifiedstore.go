@@ -269,10 +269,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
-		Options:      &resourcepb.ListOptions{Fields: fields},
-		Limit:        q.Limit,
-		Offset:       q.Limit * (q.Page - 1),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Options: &resourcepb.ListOptions{Fields: fields},
+		Limit:   q.Limit,
+		Offset:  q.Limit * (q.Page - 1),
 	}
 	hits, _, err := ss.doSearchPage(ctx, q.OrgID, req)
 	return hits, err
@@ -460,10 +459,9 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
-			Offset:       offset,
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options: &resourcepb.ListOptions{},
+			Limit:   searchPageSize,
+			Offset:  offset,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -502,10 +500,9 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options:      &resourcepb.ListOptions{Fields: fields},
-			Limit:        searchPageSize,
-			Offset:       offset,
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options: &resourcepb.ListOptions{Fields: fields},
+			Limit:   searchPageSize,
+			Offset:  offset,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {

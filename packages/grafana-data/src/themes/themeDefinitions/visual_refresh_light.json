@@ -120,6 +120,13 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "table": {
+      "headerBackground": "palette.neutral150",
+      "border": "palette.neutral250",
+      "rowStripedBackground": "palette.neutral100",
+      "rowHoverBackground": "palette.neutral250",
+      "rowSelectedBackground": "palette.amber200"
+    },
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"
