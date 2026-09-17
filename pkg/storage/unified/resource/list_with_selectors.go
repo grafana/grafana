@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -27,8 +28,10 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	}
 
 	srq := &resourcepb.ResourceSearchRequest{
-		Options: req.Options,
-		Limit:   req.Limit,
+		Options:      req.Options,
+		Limit:        req.Limit,
+		Fields:       []string{SEARCH_FIELD_RV},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	var listRv int64
@@ -69,11 +72,16 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
-	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.TotalHits)))
+	rows, err := decodeListSearchRows(searchResp)
+	if err != nil {
+		s.log.Error("Invalid search response for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+	}
+	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
 
 	// If it's the first page, set the listRv to the search response RV
 	if listRv <= 0 {
-		listRv = searchResp.ResourceVersion
+		listRv = searchResp.GetResourceVersion()
 	}
 
 	pageBytes := 0
@@ -81,14 +89,13 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		ResourceVersion: listRv,
 	}
 
-	s.log.Info("Search used for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields, "labels", req.Options.Labels)
-	// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
-	for _, row := range searchResp.GetResults().GetRows() {
+	s.log.Info("Search used for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.GetTotalHits(), "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields, "labels", req.Options.Labels)
+	for _, row := range rows {
 		// TODO: use batch reads
 		// The Read() will also handle permission checks here
 		val, err := s.Read(ctx, &resourcepb.ReadRequest{
-			Key:             row.Key,
-			ResourceVersion: row.ResourceVersion,
+			Key:             row.key,
+			ResourceVersion: row.resourceVersion,
 		})
 		if err := ErrorFromResponse(val.GetError(), err); err != nil {
 			resErr := AsErrorResult(err)
@@ -103,7 +110,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 			ResourceVersion: val.ResourceVersion,
 		})
 		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-			token, err := NewSearchContinueToken(row.GetSortFields(), listRv)
+			token, err := NewSearchContinueToken(row.sortFields, listRv)
 			if err != nil {
 				return &resourcepb.ListResponse{
 					Error: NewBadRequestError("invalid continue token"),
@@ -115,6 +122,53 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	}
 
 	return rsp, nil
+}
+
+type listSearchRow struct {
+	key             *resourcepb.ResourceKey
+	resourceVersion int64
+	sortFields      []string
+}
+
+func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSearchRow, error) {
+	if response == nil {
+		return nil, fmt.Errorf("empty search response")
+	}
+
+	var rows []listSearchRow
+	switch response.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		table := response.GetResults()
+		if table == nil {
+			return nil, nil
+		}
+		rows = make([]listSearchRow, 0, len(table.GetRows()))
+		for i, row := range table.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				return nil, fmt.Errorf("resource table row %d has no key", i)
+			}
+			rows = append(rows, listSearchRow{
+				key:             row.GetKey(),
+				resourceVersion: row.GetResourceVersion(),
+				sortFields:      row.GetSortFields(),
+			})
+		}
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows = make([]listSearchRow, 0, len(response.GetRows()))
+		for i, row := range response.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				return nil, fmt.Errorf("field-value row %d has no key", i)
+			}
+			rows = append(rows, listSearchRow{
+				key:             row.GetKey(),
+				resourceVersion: row.GetResourceVersion(),
+				sortFields:      row.GetSortFields(),
+			})
+		}
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
+	return rows, nil
 }
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other
