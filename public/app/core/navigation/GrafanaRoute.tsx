@@ -1,8 +1,10 @@
+import { type JsonValue } from '@openfeature/react-sdk';
+import { type Location } from 'history';
 import { Suspense, useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
-//import { useFlagGrafanaMtFallback } from '@grafana/runtime/internal';
+import { useFlagGrafanaMtFallback } from '@grafana/runtime/internal';
 import { ErrorBoundary, PageLoader } from '@grafana/ui';
 import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
@@ -16,12 +18,10 @@ import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
-export function GrafanaRoute(props: Props) {
-  const { chrome, keybindings } = useGrafana();
-  //const allowedUrlsList = useFlagGrafanaMtFallback();
-  //TODO use allowedUrlList values instead when the feature toggle is added to deployment-tools
-  const allowedList = ['/', '/dashboards', '/a/k6-app'];
-  const isUrlAllowed: boolean = allowedList.includes(props.location.pathname);
+const useMTFallback = (location: Location) => {
+  const flagValue = useFlagGrafanaMtFallback();
+  const urlList = getAllowedList(flagValue);
+  const isUrlAllowed: boolean = urlList?.length ? urlList.includes(location.pathname) : true;
   const [isWaiting, setIsWaiting] = useState(!isUrlAllowed);
 
   useEffect(() => {
@@ -33,7 +33,26 @@ export function GrafanaRoute(props: Props) {
     setIsWaiting(true);
     const timeout = setTimeout(() => setIsWaiting(false), 60_000);
     return () => clearTimeout(timeout);
-  }, [isUrlAllowed, props.location.pathname]);
+  }, [isUrlAllowed, location.pathname]);
+
+  return isWaiting;
+};
+
+const getAllowedList = (value: JsonValue): string[] | undefined => {
+  if (typeof value !== 'object' || !value) {
+    return;
+  }
+  const allowList = 'allowList' in value ? value.allowList : undefined;
+  if (Array.isArray(allowList)) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return allowList as string[];
+  }
+  return;
+};
+
+export function GrafanaRoute(props: Props) {
+  const { chrome, keybindings } = useGrafana();
+  const displayFallback = useMTFallback(props.location);
 
   chrome.setMatchedRoute(props.route);
 
@@ -73,7 +92,7 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageLoader />}>
-            {isWaiting ? (
+            {displayFallback ? (
               <PageFallbackLoader />
             ) : (
               <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
