@@ -1,6 +1,6 @@
 import { type OpenAPIV3 } from 'openapi-types';
 
-import { groupVersion, includeEndpoint } from './lib';
+import { groupVersion, includeEndpoint, restoreClusterPaths } from './lib';
 import { reducerPath } from './templates';
 
 const doc = (paths: string[]) => ({ paths: Object.fromEntries(paths.map((p) => [p, {}])) }) as OpenAPIV3.Document;
@@ -40,5 +40,24 @@ describe('reducerPath', () => {
     expect(reducerPath('playlist.grafana.app', 'v1')).toBe('playlistAPIv1');
     expect(reducerPath('notifications.alerting.grafana.app', 'v0alpha1')).toBe('notificationsAlertingAPIv0alpha1');
     expect(reducerPath('appsdktest.ext.grafana.app', 'v1alpha1')).toBe('appsdktestExtAPIv1alpha1');
+  });
+});
+
+describe('restoreClusterPaths', () => {
+  it('leaves namespaced paths relative and makes everything else absolute', () => {
+    const raw = doc([
+      '/apis/g/v1/',
+      '/apis/g/v1/foo',
+      '/apis/g/v1/namespaces/{namespace}/bookmarks',
+      '/apis/g/v1/namespaces/{namespace}/bookmarks/{name}/visit',
+    ]);
+    const processed = doc(['/', '/foo', '/bookmarks', '/bookmarks/{name}/visit']);
+
+    expect(Object.keys(restoreClusterPaths(processed, raw, 'g', 'v1').paths).sort()).toEqual([
+      '/apis/g/v1/',
+      '/apis/g/v1/foo',
+      '/bookmarks',
+      '/bookmarks/{name}/visit',
+    ]);
   });
 });

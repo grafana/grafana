@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { type OpenAPIV3 } from 'openapi-types';
 
-import { groupVersion, includeEndpoint } from './lib.ts';
+import { groupVersion, includeEndpoint, restoreClusterPaths } from './lib.ts';
 import { processOpenAPISpec } from './process-spec.ts';
 import { CREATE_BASE_QUERY_SOURCE, renderPluginBaseAPI, renderPluginIndexTs } from './templates.ts';
 
@@ -71,7 +71,7 @@ async function generateAll(
   for (const file of files) {
     const raw: OpenAPIV3.Document = JSON.parse(readFileSync(path.join(specDir, file), 'utf8'));
     const { group, version } = groupVersion(raw, file);
-    const spec = processOpenAPISpec(raw);
+    const spec = restoreClusterPaths(processOpenAPISpec(raw), raw, group, version);
 
     const dir = path.join(outDir, version);
     mkdirSync(dir, { recursive: true });

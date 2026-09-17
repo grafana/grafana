@@ -10,7 +10,7 @@ const injectedRtkApi = api
         GetApiResourcesApiResponse,
         GetApiResourcesApiArg
       >({
-        query: () => ({ url: `/` }),
+        query: () => ({ url: `/apis/appsdktest.ext.grafana.app/v0alpha1/` }),
         providesTags: ["API Discovery"],
       }),
       getSettings: build.query<GetSettingsApiResponse, GetSettingsApiArg>({
