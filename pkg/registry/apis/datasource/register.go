@@ -50,11 +50,23 @@ type DataSourceAPIBuilderConfig struct {
 	EnableResourceEndpoint      bool
 	EnableHealthEndpoint        bool
 	EnableChunkedQueryStreaming bool
+	// AccessEndpointFactory optionally supplies an /access storage implementation.
+	// It lets external API servers use their own authorization backend while the
+	// in-process Grafana API retains the legacy handler below.
+	AccessEndpointFactory AccessEndpointFactory
 
 	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
 	// response header on every subresource request. Set to "remote" when MultiTenancy is enabled.
 	HandlerOrigin string
 }
+
+type DataSourceAccessEndpointConfig struct {
+	Group        string
+	PluginID     string
+	AccessClient authlib.AccessClient
+}
+
+type AccessEndpointFactory func(DataSourceAccessEndpointConfig) rest.Storage
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -314,9 +326,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		storage[ds.StoragePath()] = b.store
-		storage[ds.StoragePath("access")] = &subAccessREST{
-			builder: b,
-		}
 	} else {
 		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
@@ -324,6 +333,16 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:   ds,
 			tableConverter: ds.TableConverter(),
 		}
+	}
+
+	if b.cfg.AccessEndpointFactory != nil {
+		storage[ds.StoragePath("access")] = b.cfg.AccessEndpointFactory(DataSourceAccessEndpointConfig{
+			Group:        b.GetGroupVersion().Group,
+			PluginID:     b.pluginJSON.ID,
+			AccessClient: b.accessClient,
+		})
+	} else if b.cfg.UseDualWriter {
+		storage[ds.StoragePath("access")] = &subAccessREST{builder: b}
 	}
 
 	// Frontend proxy
