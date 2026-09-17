@@ -161,6 +161,8 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // controls whether cells overflow when hovered. Selected cells always overflow.
+  hoverOverflow?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
@@ -279,6 +281,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  hoverOverflow: boolean;
   maxHeight?: number;
 }
 
@@ -306,6 +309,13 @@ export interface TypographyCtx {
   avgCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
+  /**
+   * The narrowest width at which the line counter keeps a string on one line — see
+   * `createTypographyContext`. Anything that sizes a column so its text fits has to measure with
+   * this rather than with `ctx.measureText`, or the counter and the sizing disagree about the same
+   * string and the row reserves a line the browser doesn't draw.
+   */
+  measureWidth: (text: string) => number;
 }
 
 export type MeasureCellHeight = (

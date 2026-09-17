@@ -920,6 +920,7 @@
       "button-view": "Ver",
       "export-ariaLabel-export": "Exportar",
       "export-label-export": "Exportar",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Eliminar",
       "label-manage-permissions": "Gerir permissões",
       "tooltip-history": "Ver o histórico de tentativas de notificação efetuadas para este ponto de contacto",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "A carregar..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "A carregar..."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Nenhuma regra em pausa",
         "pause-recording": "Regras de gravação em pausa",
         "policy-tree": "Árvore de políticas",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Encaminhamento das notificações",
         "routing-none": "Nenhuma árvore de políticas selecionada",
         "routing-tree": "Árvore de políticas: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Nome de ficheiro de modelo duplicado: \"{{name}}\". Os nomes dos ficheiros de modelo devem ser exclusivos.",
         "templates-label": "Modelos de notificação",
         "templates-remove": "Remover {{name}}",
-        "upload": "Carregar ficheiro YAML",
+        "upload": "",
         "validating": "A validar a configuração...",
         "validation-error": "A validação falhou",
         "validation-error-desc": "Falha ao validar a configuração.",
         "validation-success": "Validação bem-sucedida",
         "validation-success-desc": "Nenhum conflito encontrado. A configuração está pronta para importar.",
         "validation-warning": "Alguns recursos serão renomeados para evitar conflitos com os recursos existentes",
-        "yaml-file": "YAML de configuração do Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML de configuração do Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Origem dos dados",
@@ -3245,14 +3256,19 @@
         "action-disable": "Desativar sincronização",
         "add-datasource-link": "Adicionar origem de dados do Mimir",
         "badge-active": "Ativo",
+        "badge-failing": "",
         "badge-not-configured": "Não configurado",
         "badge-operator-managed": "Gerido pelo operador",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Sincronize continuamente a configuração de alerta a partir de uma origem de dados Mimir ou Cortex Alertmanager para a Grafana.",
         "disable-confirm-action": "Desativar sincronização",
         "disable-confirm-body": "A desativação interromperá a sincronização contínua da origem de dados {{uid}}. Pode reativá-la mais tarde selecionando novamente uma origem de dados.",
         "disable-confirm-body-generic": "A desativação interromperá a sincronização contínua. Pode reativá-la mais tarde selecionando novamente uma origem de dados.",
         "disable-confirm-title": "Desativar a sincronização automática do Mimir Alertmanager?",
         "disable-success": "Sincronização automática do Mimir Alertmanager desativada",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Este valor é definido pela chave <1>[unified_alerting] external_alertmanager_uid</1> em grafana.ini e não pode ser alterado a partir da IU. Edite o ficheiro de configuração e reinicie a Grafana ou remova a chave para gerir a sincronização a partir daqui.",
@@ -3271,6 +3287,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Configuração de sincronização automática"
       },
       "import": {
@@ -4611,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Adicionar LEIAME",
-      "edit-tooltip": "Editar LEIAME",
+      "edit-doc-tooltip": "",
       "empty-message": "Adicione um LEIAME para descrever o que está nesta pasta e onde encontrar os painéis certos.",
       "load-error-retry": "Tente novamente",
-      "load-error-title": "Não foi possível carregar o LEIAME",
-      "parse-error": "Não foi possível mostrar o conteúdo LEIAME."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Limpar histórico",
@@ -12241,6 +12262,10 @@
     "team-not-found": "[Equipa desconhecida]",
     "unknown-error": "Erro desconhecido"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
   },
@@ -12573,6 +12598,10 @@
     "authentication": {
       "title": "Autenticação"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Marcadores"
     },
@@ -12779,6 +12808,7 @@
       "title": "Consultas gravadas"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Relatórios"
     },
     "saved-queries": {
@@ -12793,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Pesquisar painéis de controlo"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Ver as definições definidas na sua configuração da Grafana",
@@ -16668,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
