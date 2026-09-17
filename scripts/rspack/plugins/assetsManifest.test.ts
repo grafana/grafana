@@ -168,9 +168,7 @@ describe('assets manifest', () => {
       'app.js',
       'boot.js',
       'dark.css',
-      'dark.js',
       'light.css',
-      'light.js',
       'runtime.js',
     ]);
   });
