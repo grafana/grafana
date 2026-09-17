@@ -100,6 +100,10 @@ type IdentityAccessManagementAPIBuilder struct {
 	// non-k8s api route
 	display         *display.DisplayHandler
 	userPermissions *userpermissions.Handler
+	// ssoLoginConfig serves the pre-auth login-config singleton. Constructed in
+	// RegisterAPIService; its route is gated by FlagKubernetesSsoSettingsApi in
+	// GetAPIRoutes. Nil in the standalone NewAPIService path.
+	ssoLoginConfig *sso.LoginConfigHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.

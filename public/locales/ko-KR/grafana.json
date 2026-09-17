@@ -750,6 +750,9 @@
       }
     },
     "central-alert-history": {
+      "configure-loki-description": "",
+      "configure-loki-link": "",
+      "configure-loki-title": "",
       "description": {
         "alert-events": "Grafana 관리 경고 규칙에 의해 생성된 모든 경고 이벤트의 기록을 확인하세요. 경고 비활성화 또는 알림 비활성화 시간이 설정되어 있는지 여부에 관계없이 모든 경고 이벤트가 표시됩니다.",
         "notifications": "Grafana 관리 경고 규칙에서 전송된 모든 알림의 기록을 확인하세요."
@@ -912,6 +915,7 @@
       "button-view": "보기",
       "export-ariaLabel-export": "내보내기",
       "export-label-export": "내보내기",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "삭제",
       "label-manage-permissions": "권한 관리",
       "tooltip-history": "이 연락처로 전송된 알림 시도 기록 보기",
@@ -953,7 +957,7 @@
         "jira": "'{{project}}' 프로젝트에 '{{issueType}}' 이슈 생성"
       },
       "telegram": {
-        "parse-mode-warning-body": "<3>없음(None)</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
+        "parse-mode-warning-body": "<3>None</3>이 아닌 <1>parse_mode</1> 옵션을 사용하면 잘림 현상으로 인한 메시지 무효화로 알림이 실패할 수 있습니다. 메시지가 긴 경우 대체 연락 수단을 사용하는 것이 좋습니다.",
         "parse-mode-warning-title": "Telegram 메시지는 UTF-8 문자 기준으로 4,096자까지 제한됩니다."
       },
       "used-by_other": "{{count}}개의 알림 정책에서 사용됨",
@@ -1275,7 +1279,7 @@
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
       "delete-modal-deleting": "삭제 중…",
-      "delete-modal-text": "{{folderName}}이 작업을 수행하면 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
+      "delete-modal-text": "이 작업을 수행하면 <1>{{folderName}}</1> 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
       "delete-modal-title": "삭제",
       "error": "{{error}} 폴더 작업 실행 실패:",
       "pause": {
@@ -1473,6 +1477,10 @@
     },
     "grafana-receivers-export-preview": {
       "text-loading": "로딩 중...."
+    },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
     },
     "grafana-rule-design-export-preview": {
       "text-loading": "로딩 중...."
@@ -1702,6 +1710,9 @@
         "pause-none": "일시 중지된 규칙 없음",
         "pause-recording": "기록 규칙 일시 중지됨",
         "policy-tree": "정책 트리",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
@@ -1762,14 +1773,17 @@
         "templates-duplicate": "템플릿 파일 이름 복제: \"{{name}}\". 템플릿 파일 이름은 고유해야 합니다.",
         "templates-label": "알림 템플릿",
         "templates-remove": "{{name}} 삭제",
-        "upload": "YAML 파일 업로드",
+        "upload": "",
         "validating": "구성 유효성 검사 중...",
         "validation-error": "검증에 실패했습니다",
         "validation-error-desc": "구성을 검증하지 못했습니다.",
         "validation-success": "검증에 성공했습니다",
         "validation-success-desc": "충돌 없음. 구성 가져오기 준비 완료.",
         "validation-warning": "기존 리소스와의 충돌을 방지하기 위해 일부 리소스의 이름이 변경됩니다.",
-        "yaml-file": "Alertmanager 구성 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 구성 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "데이터 소스",
@@ -3219,14 +3233,19 @@
         "action-disable": "동기화 비활성화",
         "add-datasource-link": "Mimir 데이터 소스 추가",
         "badge-active": "활성",
+        "badge-failing": "",
         "badge-not-configured": "구성되지 않음",
         "badge-operator-managed": "운영자가 관리함",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Mimir 또는 Cortex Alertmanager 데이터 소스의 알림 구성을 Grafana에 지속적으로 동기화합니다.",
         "disable-confirm-action": "동기화 비활성화",
         "disable-confirm-body": "비활성화하면 데이터 소스{{uid}}와의 지속적인 동기화가 중지됩니다. 나중에 데이터 소스를 다시 선택하여 재활성화할 수 있습니다.",
         "disable-confirm-body-generic": "비활성화하면 연속 동기화가 중지됩니다. 나중에 데이터 소스를 다시 선택하여 재활성화할 수 있습니다.",
         "disable-confirm-title": "비활성화하면 지속적인 동기화가 중지됩니다?",
         "disable-success": "Mimir Alertmanager 자동 동기화 비활성화됨",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "이 값은 grafana.ini의 <1>[unified_alerting] external_alertmanager_uid</1> 키에 의해 설정되며 UI에서는 변경할 수 없습니다. 구성 파일을 편집하고 Grafana를 다시 시작하거나, 여기에서 동기화를 관리하려면 해당 키를 제거하세요.",
@@ -3245,6 +3264,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "자동 동기화 구성"
       },
       "import": {
@@ -3282,6 +3302,8 @@
           "rules-note-body": "",
           "success-body": "",
           "success-title": "",
+          "sync-ini-managed-body": "",
+          "sync-ini-managed-title": "",
           "sync-not-cleared-body": "",
           "sync-not-cleared-title": "",
           "sync-stops-body": "",
@@ -4568,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "README 추가",
-      "edit-tooltip": "README 편집",
+      "edit-doc-tooltip": "",
       "empty-message": "이 폴더에 무엇이 포함되어 있는지와 올바른 대시보드를 어디에서 찾을 수 있는지 설명하는 README를 추가하세요.",
       "load-error-retry": "다시 시도",
-      "load-error-title": "README를 불러오지 못했습니다",
-      "parse-error": "README 콘텐츠 표시 불가."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "기록 지우기",
@@ -5697,15 +5723,15 @@
       "group-into-row": "",
       "group-into-tab": "",
       "move": "{{typeName}} 이동",
-      "panel-background": "패널 배경 변경",
-      "panel-description": "패널 설명 변경",
+      "panel-background": "",
+      "panel-description": "",
       "panel-edit": "패널 변경",
       "panel-fit-content": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-preset": "패널 사전 설정 적용",
       "panel-repeat-direction": "반복 방향",
       "panel-repeat-variable": "패널 반복 기준",
-      "panel-title": "패널 제목 변경",
+      "panel-title": "",
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "row-title": "행 제목 변경",
@@ -5731,7 +5757,7 @@
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
+      "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "layout-default-hint": "선택한 레이아웃은 모든 새 탭과 행의 기본 레이아웃으로도 사용됩니다. 나중에 '대시보드 설정 > 일반'에서 이 설정을 변경할 수 있습니다.",
@@ -6659,6 +6685,10 @@
       },
       "title-delete": "{{name}}을(를) 삭제하시겠어요?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "",
+      "unknown-transformation-title": ""
+    },
     "transformation-picker-ng": {
       "clear-search": "검색 초기화",
       "no-transformations-found": "변환을 찾을 수 없음",
@@ -6708,6 +6738,12 @@
     "view-panel": {
       "back-to-dashboard": "대시보드로 돌아가기",
       "not-found": ""
+    },
+    "viz-panel": {
+      "options": {
+        "description": "",
+        "description-as-subtitle": ""
+      }
     }
   },
   "dashboard-import": {
@@ -7713,6 +7749,9 @@
         "title": "저장되지 않은 변경 사항"
       }
     },
+    "static-options-editor": {
+      "static-dimensions-csv": ""
+    },
     "suggested-dashboard-banner": {
       "body": "찾고 있는 대시보드가 아니신가요? <2>다른 추천 대시보드</2>를 확인하거나 <6>처음부터 새로 만들기</6>를 선택하세요.",
       "title": "현재 {{title}} 보는 중"
@@ -7966,6 +8005,7 @@
       "title-label": "제목"
     },
     "json-editor": {
+      "aria-label": "",
       "save-button": "변경 사항 저장",
       "save-button-disabled-tooltip": "저장하기 전에 유효성 검사 오류를 수정하세요.",
       "save-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
@@ -8591,6 +8631,16 @@
       "title-table": "표",
       "title-traces": "트레이스"
     },
+    "explore-actions": {
+      "close-split-view-left": "",
+      "close-split-view-right": "",
+      "correlations-editor": "",
+      "open-split-view": "",
+      "run-query": "",
+      "run-query-left": "",
+      "run-query-right": "",
+      "section-explore": ""
+    },
     "explore-query-inspector": {
       "data-tab": {
         "label": {
@@ -8642,7 +8692,8 @@
     },
     "key-values-table": {
       "link-fallback-label": "링크",
-      "open-value-in": "값을 다음에서 열기"
+      "open-value-in": "값을 다음에서 열기",
+      "return-to-previous-title": ""
     },
     "legacy-create-span-link-factory": {
       "text": {
@@ -9122,6 +9173,10 @@
       "aria-label-copy": "클립보드로 복사",
       "attribute-plugin-promo": {
         "learn-more": "자세히 알아보기"
+      },
+      "cloud-provider-promo": {
+        "body": "",
+        "title": ""
       },
       "database-observability-promo": {
         "body": "Database Observability는 시각적 실행 계획, 대기 이벤트 및 쿼리 샘플을 제공하여 트레이스 스팬만으로는 파악하기 어려운 문제를 진단하는 데 도움을 줍니다.",
@@ -11334,8 +11389,7 @@
         "setup-hint": "",
         "stats": "",
         "title": "",
-        "volume": "",
-        "stats-sources_other": ""
+        "volume": ""
       },
       "metrics": {
         "data-points-per-minute": "",
@@ -12121,6 +12175,10 @@
     "team-not-found": "[알 수 없는 팀]",
     "unknown-error": "알 수 없는 오류"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
   },
@@ -12453,6 +12511,10 @@
     "authentication": {
       "title": "인증"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "북마크"
     },
@@ -12659,6 +12721,7 @@
       "title": "기록된 쿼리"
     },
     "reporting": {
+      "subtitle": "",
       "title": "보고"
     },
     "saved-queries": {
@@ -12673,6 +12736,10 @@
     },
     "search-dashboards": {
       "title": "대시보드 검색"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana 구성에 정의된 설정 보기",
@@ -13021,9 +13088,7 @@
       "copy-markdown": "",
       "download-markdown": "",
       "error": "",
-      "label": "",
-      "open-in-cursor": "",
-      "opening-in-cursor": ""
+      "label": ""
     },
     "history": {
       "add-block": "",
@@ -15906,7 +15971,7 @@
     },
     "empty-state": {
       "message": "아직 생성된 공유 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <4>자세히 알아보기</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "액세스 권한 일시 중지"
@@ -15977,7 +16042,7 @@
   "snapshot": {
     "empty-state": {
       "message": "아직 생성된 스냅샷이 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <4>자세히 알아보기</4>"
     },
     "external-badge": "외부",
     "load-error": {
@@ -16502,6 +16567,7 @@
       "tooltip-bold": "굵게",
       "tooltip-bullet-list": "글머리 기호 목록",
       "tooltip-checklist": "체크리스트",
+      "tooltip-diagram": "",
       "tooltip-heading": "제목",
       "tooltip-insert-variable": "변수 삽입",
       "tooltip-italic": "이탤릭체",
@@ -16516,7 +16582,13 @@
       "label": ""
     },
     "options": {
+      "page-size": "",
+      "page-size-description": "",
+      "page-size-placeholder": "",
       "render-mode": ""
+    },
+    "pagination": {
+      "summary": ""
     },
     "render": {
       "handlebars-error": ""
@@ -16737,6 +16809,10 @@
       "bar-stacked": "막대 차트 - 누적",
       "bar-stacked-percent": "막대 차트 - 백분율 누적형",
       "line": "선 차트"
+    },
+    "time-series-panel": {
+      "null-time-value": "",
+      "null-time-value-query": ""
     },
     "timezones-editor": {
       "tooltip-add-timezone": "시간대 추가",

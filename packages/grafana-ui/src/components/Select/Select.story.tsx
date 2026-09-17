@@ -1,5 +1,5 @@
 import { auto } from '@popperjs/core';
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import Chance from 'chance';
 import { useState } from 'react';
 import { action } from 'storybook/actions';

@@ -2,10 +2,10 @@ package git
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/nanogit/metrics"
@@ -32,56 +32,74 @@ type ClientMetrics struct {
 
 // RegisterClientMetrics builds the nanogit client metrics, registers their
 // collectors on reg, and returns the instance to thread through the repository
-// wiring. It registers on whatever registry the owning service supplies (via
-// promauto) rather than binding a package-global to the first caller, so every
-// service instance gets its own collectors.
+// wiring. It registers on whatever registry the owning service supplies rather
+// than binding a package-global to the first caller, so each registry gets its
+// own collectors. In multi-tenant deployments this provider runs more than once
+// against a shared registry, so registration reuses an already-registered
+// collector instead of panicking (see registerOrExisting).
 func RegisterClientMetrics(reg prometheus.Registerer) *ClientMetrics {
-	factory := promauto.With(reg)
 	return &ClientMetrics{
-		httpRequests: factory.NewCounterVec(
+		httpRequests: registerOrExisting(reg, prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_http_requests_total",
 				Help: "Total HTTP requests nanogit made to the Git server, by protocol operation and status code. Counts every attempt, including retries.",
 			},
 			[]string{"repository_type", "operation", "status_code"},
-		),
-		httpDuration: factory.NewHistogramVec(
+		)),
+		httpDuration: registerOrExisting(reg, prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_git_client_http_request_duration_seconds",
 				Help:    "Duration of the HTTP round trips nanogit made to the Git server, by protocol operation.",
 				Buckets: prometheus.ExponentialBucketsRange(0.001, 30, 10), // 1ms -> 30s
 			},
 			[]string{"repository_type", "operation"},
-		),
-		httpRetries: factory.NewCounterVec(
+		)),
+		httpRetries: registerOrExisting(reg, prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_http_retries_total",
 				Help: "HTTP requests to the Git server that were retries (attempt > 1), by protocol operation.",
 			},
 			[]string{"repository_type", "operation"},
-		),
-		objectsFetched: factory.NewCounterVec(
+		)),
+		objectsFetched: registerOrExisting(reg, prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_objects_fetched_total",
 				Help: "Total Git objects nanogit parsed from fetch responses.",
 			},
 			[]string{"repository_type"},
-		),
-		fetchedBytes: factory.NewCounterVec(
+		)),
+		fetchedBytes: registerOrExisting(reg, prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_fetched_bytes_total",
 				Help: "Total response bytes nanogit read while fetching objects.",
 			},
 			[]string{"repository_type"},
-		),
-		cacheAccesses: factory.NewCounterVec(
+		)),
+		cacheAccesses: registerOrExisting(reg, prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_git_client_cache_accesses_total",
 				Help: "Packfile object cache lookups nanogit did before deciding whether to fetch, by result (hit/miss).",
 			},
 			[]string{"repository_type", "result"},
-		),
+		)),
 	}
+}
+
+// registerOrExisting registers c on reg and returns it. If a collector with the
+// same descriptor is already registered — which happens when this provider runs
+// more than once against a shared registry, e.g. per tenant in multi-tenant
+// deployments — it returns the previously registered collector instead of
+// panicking. A genuine mismatch (same name, different labels) still panics,
+// because that is a programming error the caller must fix.
+func registerOrExisting[T prometheus.Collector](reg prometheus.Registerer, c T) T {
+	if err := reg.Register(c); err != nil {
+		var already prometheus.AlreadyRegisteredError
+		if errors.As(err, &already) {
+			return already.ExistingCollector.(T)
+		}
+		panic(err)
+	}
+	return c
 }
 
 // Recorder returns a metrics.Recorder that labels everything it observes with

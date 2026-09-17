@@ -49,6 +49,15 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
+var errWatchSendUnavailable = errors.New("watch send transport unavailable")
+
+func watchSendError(err error) error {
+	if status.Code(err) == codes.Unavailable {
+		return fmt.Errorf("%w: %v", errWatchSendUnavailable, err)
+	}
+	return err
+}
+
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
 func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
 	if errRes == nil || errRes.Code < 500 {
@@ -67,6 +76,10 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
+
+// filteredBookmarkDelay leaves a recovery window for late writes without
+// delaying progress from objects already sent to the client.
+const filteredBookmarkDelay = time.Minute
 
 // maxKeysPageSize caps a keys_only page by count. The byte budget also applies,
 // but it measures the wire and a key costs far less there (~20 bytes) than the
@@ -311,6 +324,10 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
+	// EmbeddingConfig is shared with the manifest watcher; consumers must read
+	// it after the initial poll and retain the registry to observe later reloads.
+	EmbeddingConfig *EmbeddingConfigRegistry
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
@@ -404,6 +421,8 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+
+	SearchBackedListConfig SearchBackedListConfig
 
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
@@ -582,6 +601,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		storageEnabled:                 true,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
+		searchBackedListResources:      opts.SearchBackedListConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -662,22 +682,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log              log.Logger
-	backend          StorageBackend
-	vectorBackend    vector.VectorBackend
-	bulkBatchOptions BulkBatchOptions
-	blob             BlobSupport
-	secure           secrets.InlineSecureValueSupport
-	search           *searchServer
-	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
-	access           claims.AccessClient
-	writeHooks       WriteAccessHooks
-	now              func() int64
-	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics   *StorageMetrics
-	overridesService *OverridesService
-	quotasConfig     QuotasConfig
+	log                       log.Logger
+	backend                   StorageBackend
+	vectorBackend             vector.VectorBackend
+	bulkBatchOptions          BulkBatchOptions
+	blob                      BlobSupport
+	secure                    secrets.InlineSecureValueSupport
+	search                    *searchServer
+	searchClient              resourcepb.ResourceIndexClient
+	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
+	access                    claims.AccessClient
+	writeHooks                WriteAccessHooks
+	now                       func() int64
+	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics            *StorageMetrics
+	overridesService          *OverridesService
+	quotasConfig              QuotasConfig
+	searchBackedListResources SearchBackedListConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1548,6 +1569,19 @@ func (s *server) GetResourceDailyStats(req *resourcepb.GetResourceDailyStatsRequ
 	return nil
 }
 
+func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ErrorResult {
+	if req.KeysOnly && req.Options.Key.Namespace != "" {
+		return requireUserNamespace(ctx, req.Options.Key.Namespace)
+	}
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	return nil
+}
+
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	defer span.End()
@@ -1577,18 +1611,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}, nil
 	}
 
-	if req.KeysOnly && req.Options.Key.Namespace != "" {
-		return &resourcepb.ListResponse{
-			Error: NewBadRequestError("keys_only lists are cluster-wide, so the namespace must be empty"),
-		}, nil
-	}
-
-	if _, ok := claims.AuthInfoFrom(ctx); !ok {
-		return &resourcepb.ListResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: "no user found in context",
-				Code:    http.StatusUnauthorized,
-			}}, nil
+	if errRes := requireListIdentity(ctx, req); errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
 	// Do not allow label query for trash/history
@@ -1624,7 +1648,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	req = filterSelectors(req)
 
-	if s.useSelectorSearch(req) {
+	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
@@ -1735,11 +1759,10 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
-			// keys_only is cluster-wide and has an empty namespace in the key, so
-			// we use the actual item namespace. FilterAuthorized still checks each
-			// item using the authenticated identity from ctx.
+			// Cross-namespace keys-only lists must authorize each item in its own
+			// namespace. Namespaced lists retain the request scope.
 			namespace := key.Namespace
-			if req.KeysOnly {
+			if req.KeysOnly && namespace == "" {
 				namespace = c.namespace
 			}
 			return authz.BatchCheckItem{
@@ -1950,12 +1973,13 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
-	// When our context is canceled (e.g. client disconnects), downstream calls
-	// like srv.Send may surface that cancellation back to us. Treat it as a
-	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
-	// branch in the watch loop. Context errors from other contexts are still
-	// propagated.
+	// Treat a closed client transport and cancellation of this watch's context
+	// as clean shutdowns. Errors from setup, storage, authorization, or another
+	// context are still propagated.
 	defer func() {
+		if errors.Is(retErr, errWatchSendUnavailable) {
+			retErr = nil
+		}
 		if retErr != nil && ctx.Err() != nil &&
 			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
 			retErr = nil
@@ -2041,8 +2065,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	lastBookmarkRV := int64(-1)
 	sendBookmark := func(rv int64) error {
-		// Don't send repeated bookmarks if no new events were received.
-		if rv <= 0 || rv == lastBookmarkRV {
+		// Don't send repeated or regressing bookmarks.
+		if rv <= 0 || rv <= lastBookmarkRV {
 			return nil
 		}
 
@@ -2050,14 +2074,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			Type:     resourcepb.WatchEvent_BOOKMARK,
 			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
 		}); err != nil {
-			return fmt.Errorf("sending bookmark: %w", err)
+			return fmt.Errorf("sending bookmark: %w", watchSendError(err))
 		}
 
 		lastBookmarkRV = rv
 		return nil
 	}
 
-	var lastEmittedRV int64 // tracks the most recent RV sent to the client
+	var processedRV int64 // Includes events deliberately excluded by watch filters.
+	var lastObjectRV int64
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2075,7 +2100,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						Version: iter.ResourceVersion(),
 					},
 				}); err != nil {
-					return err
+					return watchSendError(err)
 				}
 			}
 			return iter.Error()
@@ -2084,9 +2109,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return err
 		}
 
-		lastEmittedRV = initialEventsRV
+		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
-			if err := sendBookmark(lastEmittedRV); err != nil {
+			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
@@ -2095,12 +2120,14 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
-		since = lastEmittedRV
+		since = processedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
 		since = req.Since
 	}
+
+	_, isKVBackend := s.backend.(KVBackend)
 
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
@@ -2116,8 +2143,17 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return nil
 
 		case <-bookmarkC:
-			if err := sendBookmark(lastEmittedRV); err != nil {
-				return err
+			cutoff := time.Now().Add(-filteredBookmarkDelay)
+			cutoffRV := cutoff.UnixMicro()
+			if IsSnowflake(processedRV) {
+				cutoffRV = snowflakeFromTime(cutoff)
+			}
+			// Object sends have already advanced the client's cursor; only filtered progress is held back.
+			bookmarkRV := max(lastObjectRV, min(processedRV, cutoffRV))
+			if bookmarkRV > since {
+				if err := sendBookmark(bookmarkRV); err != nil {
+					return err
+				}
 			}
 
 		case event, ok := <-stream:
@@ -2126,11 +2162,15 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				return nil
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
-			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
-
+			if event.ResourceVersion <= since {
+				continue
+			}
+			// KV notifiers settle and order events across collections. Legacy SQL polls
+			// group/resources separately, so other collections cannot establish progress.
+			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
+				continue
+			}
+			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
 				if event.Type == resourcepb.WatchEvent_DELETED {
@@ -2162,9 +2202,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				if err := srv.Send(resp); err != nil {
-					return err
+					return watchSendError(err)
 				}
-				lastEmittedRV = event.ResourceVersion
+				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
@@ -2175,6 +2215,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 			}
+			// Progress is not a delivery cutoff: keep using the fixed starting since.
+			processedRV = max(processedRV, event.ResourceVersion)
 		}
 	}
 }

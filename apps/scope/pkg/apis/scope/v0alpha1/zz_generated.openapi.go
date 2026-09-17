@@ -103,8 +103,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeDashboardBinding{}.OpenAPIModelName()),
+										Ref: ref(ScopeDashboardBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -150,8 +149,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNavigation{}.OpenAPIModelName()),
+										Ref: ref(ScopeNavigation{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -203,8 +201,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNode{}.OpenAPIModelName()),
+										Ref: ref(ScopeNode{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -336,8 +333,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeDashboardBinding{}.OpenAPIModelName()),
+										Ref: ref(ScopeDashboardBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -400,9 +396,8 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -423,8 +418,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -445,8 +439,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingStatus(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -493,9 +486,8 @@ func schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -549,8 +541,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Scope{}.OpenAPIModelName()),
+										Ref: ref(Scope{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -642,8 +633,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationList(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNavigation{}.OpenAPIModelName()),
+										Ref: ref(ScopeNavigation{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -754,9 +744,8 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -777,8 +766,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -799,8 +787,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationStatus(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -887,8 +874,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeNode{}.OpenAPIModelName()),
+										Ref: ref(ScopeNode{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1002,9 +988,8 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1021,8 +1006,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ScopeFilter{}.OpenAPIModelName()),
+										Ref: ref(ScopeFilter{}.OpenAPIModelName()),
 									},
 								},
 							},
