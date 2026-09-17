@@ -104,15 +104,22 @@ detail query. Do not fetch or display individual CI failure names or check conte
 
 ## Fetching and caching
 
-Queue searches exclude drafts and combine team review requests, member-authored PRs, and individual
+Queue searches exclude drafts and authors in the API client's `AUTHOR_BLACKLIST` array (initially
+`dependabot[bot]`, the REST search login). Apply exclusions outside the OR group to every search; add future authors to
+the array. Explicit single-PR lookups remain available for these authors.
+Queue searches combine team review requests, member-authored PRs, and individual
 member review requests. Deduplicate PR numbers and retain the newest search timestamp when a PR
 appears in several searches. PR details are fetched in batches of 20, with at most four requests
 in flight.
 
 Metadata freshness uses `updatedAt` and the diff-metadata checks in `PrReportsPipeline.js`.
 New or stale records receive full detail queries. Reused records receive lightweight queries for
-CI, mergeability, and review decision on every run, regardless of their cached states. Merge only
-these readiness fields into cached records; partial responses must not clear other metadata.
+CI, mergeability, review decision, and linked-issue context on every run, regardless of their cached states.
+Use `PullRequestNormalizer.fromReadiness` to merge these fields into cached records without clearing
+other metadata. Both full-detail and readiness queries fetch at most six linked issues per PR,
+including their types, labels, and comment counts. Preserve the total linked-issue count so reports
+can indicate truncation. Use cached PR labels as the issue-type fallback for readiness responses;
+a fetched linked-issue total of zero clears cached issues.
 Missing readiness nodes or failed requests fail the run before writing the PR cache or report.
 Full-detail and readiness requests share batches of 20 with at most four requests in flight;
 each PR alias selects the fields it needs. Summary `refetched` counts full-detail records; `reused` counts records whose metadata was

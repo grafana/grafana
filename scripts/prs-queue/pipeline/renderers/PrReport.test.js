@@ -118,6 +118,23 @@ test('render: missing authors use the placeholder', () => {
   assert.match(new PrReport(CONFIG).render(data), /\| \(none\) \| First-time contributor/);
 });
 
+test('render: HTML in titles and labels stays literal while report links and line breaks remain intact', () => {
+  const data = reportData();
+  data.prs[0].title = 'Fix <Select> rendering &amp; sizing';
+  data.prs[0].labels = ['area/<forms> & inputs'];
+
+  const markdown = new PrReport(CONFIG).render(data);
+
+  assert.ok(markdown.includes('[Fix &lt;Select&gt; rendering &amp;amp; sizing](https://github.com/o/n/pull/7)'));
+  assert.ok(markdown.includes('area/&lt;forms&gt; &amp; inputs'));
+  assert.ok(markdown.includes('[#1](https://github.com/o/n/issues/1) (type/bug)<br>2. [#2]'));
+});
+
+test('esc: HTML tags and existing character references remain literal text', () => {
+  assert.equal(esc('<Select> & </Select>'), '&lt;Select&gt; &amp; &lt;/Select&gt;');
+  assert.equal(esc('&lt;Select&gt; &#60;'), '&amp;lt;Select&amp;gt; &amp;#60;');
+});
+
 test('esc: the characters that would break a table cell or a link are escaped', () => {
   assert.equal(esc('a | b'), 'a \\| b');
   assert.equal(esc('[x]'), '\\[x\\]');

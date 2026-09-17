@@ -20,6 +20,17 @@ class PullRequestNormalizer {
     return [...seen].sort();
   }
 
+  // Readiness nodes omit PR metadata; issue types still need the cached PR labels as a fallback.
+  fromReadiness(node, cached) {
+    return withoutUndefined({
+      ...cached,
+      mergeable: node.mergeable ?? 'UNKNOWN',
+      status: node.reviewDecision ?? '',
+      ciStatus: node.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state ?? '',
+      fixes: fixesFrom(node, cached.labels ?? [], cached),
+    });
+  }
+
   // New PRs and single-PR runs may have only a number in the cached record.
   /**
    * @param {Object} node GitHub GraphQL PR details.

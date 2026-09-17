@@ -54,7 +54,14 @@ class PrReport {
   }
 
   static esc(text) {
-    return String(text).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\\/g, '\\\\')
+      .replace(/\|/g, '\\|')
+      .replace(/\[/g, '\\[')
+      .replace(/\]/g, '\\]');
   }
 
   // Use line breaks for multiple issues inside a table cell.

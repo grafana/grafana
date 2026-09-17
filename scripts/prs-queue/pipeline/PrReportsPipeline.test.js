@@ -718,6 +718,71 @@ test('run: refreshes readiness every time without changing timestamps or losing 
   }
 });
 
+test('run: refreshes linked issues with unchanged PR timestamps while preserving PR metadata', async () => {
+  let cached = { ...cachedReadyPr(), labels: ['area/dashboards', 'type/bug'] };
+  const original = structuredClone(cached);
+  const updates = [
+    {
+      nodes: [{ number: 8, url: 'issue-url', comments: { totalCount: 5 }, issueType: { name: 'Feature' } }],
+      issues: [{ number: 8, url: 'issue-url', comments: 5, type: ['Feature'] }],
+    },
+    {
+      nodes: [
+        { number: 8, url: 'issue-url', comments: { totalCount: 6 }, labels: { nodes: [{ name: 'type/regression' }] } },
+        { number: 9, url: 'new-issue-url', comments: { totalCount: 0 } },
+      ],
+      issues: [
+        { number: 8, url: 'issue-url', comments: 6, type: ['type/regression'] },
+        { number: 9, url: 'new-issue-url', comments: 0, type: ['type/bug'] },
+      ],
+    },
+    {
+      nodes: [{ number: 9, url: 'new-issue-url', comments: { totalCount: 1 } }],
+      issues: [{ number: 9, url: 'new-issue-url', comments: 1, type: ['type/bug'] }],
+    },
+    { nodes: [], issues: [] },
+  ];
+  let current;
+  let presented;
+  const pipeline = pipelineWith({
+    cache: {
+      read: async () => ({ prs: { 7: cached } }),
+      write: async (key, value) => {
+        cached = value.prs[7];
+      },
+    },
+    api: queueApi({
+      fetchAuthoredPrs: async () => [{ number: 7, updatedAt: 'same' }],
+      fetchPullRequestDetails: async (numbers, readinessNumbers) => {
+        assert.deepEqual(numbers, []);
+        assert.deepEqual(readinessNumbers, [7]);
+        return [
+          node(7, {
+            reviewDecision: 'APPROVED',
+            commits: { nodes: [{ commit: { statusCheckRollup: { state: 'FAILURE' } } }] },
+            closingIssuesReferences: { totalCount: current.nodes.length, nodes: current.nodes },
+          }),
+        ];
+      },
+    }),
+    output: {
+      writeJson: async (config, prs) => {
+        presented = prs[0];
+      },
+    },
+  });
+
+  for (current of updates) {
+    const before = cached;
+    const snapshot = structuredClone(before);
+    await pipeline.run(CONFIG, { format: 'json' });
+    const fixes = { total: current.issues.length, issues: current.issues };
+    assert.deepEqual(cached, { ...original, fixes });
+    assert.deepEqual(before, snapshot);
+    assert.deepEqual(presented.fixes, fixes.total ? fixes : undefined);
+  }
+});
+
 for (const missing of [false, true]) {
   test(`run: ${missing ? 'missing' : 'failed'} readiness leaves the cache and output untouched`, async () => {
     const cached = cachedReadyPr();

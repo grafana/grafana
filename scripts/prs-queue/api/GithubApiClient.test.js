@@ -45,7 +45,10 @@ function graphqlPayload(nodes) {
 
 function queryOf(call) {
   const query = call.args.find((arg) => arg.startsWith('q=') || arg.startsWith('query='));
-  return query.replace(/^q=|^query=/, '');
+  return query
+    .replace(/^q=|^query=/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 test('fetchTeamMembers: a cached list is returned without running anything', async () => {
@@ -108,10 +111,13 @@ test('search: a small team fits in one request with an OR clause per login', asy
     { number: 2, updatedAt: '2026-01-02T00:00:00Z' },
   ]);
   assert.equal(run.calls.length, 1);
-  assert.equal(queryOf(run.calls[0]), 'repo:o/n is:pr is:open -is:draft (author:alpha OR author:bravo)');
+  assert.equal(
+    queryOf(run.calls[0]),
+    'repo:o/n is:pr is:open -is:draft -author:dependabot[bot] (author:alpha OR author:bravo)'
+  );
 });
 
-test('search: review-requested builds its own clause per login', async () => {
+test('search: individual review requests use direct-user clauses to exclude other teams', async () => {
   const run = stubRun(['']);
   const client = clientWith(run);
 
@@ -119,13 +125,13 @@ test('search: review-requested builds its own clause per login', async () => {
 
   assert.equal(
     queryOf(run.calls[0]),
-    'repo:o/n is:pr is:open -is:draft (review-requested:alpha OR review-requested:bravo)'
+    'repo:o/n is:pr is:open -is:draft -author:dependabot[bot] (user-review-requested:alpha OR user-review-requested:bravo)'
   );
 });
 
 for (const [method, qualifier] of [
   ['fetchAuthoredPrs', 'author'],
-  ['fetchReviewRequestedPrs', 'review-requested'],
+  ['fetchReviewRequestedPrs', 'user-review-requested'],
 ]) {
   for (const count of [6, 7, 13]) {
     test(`search: ${method} covers ${count} members without exceeding five OR operators`, async () => {
@@ -139,7 +145,7 @@ for (const [method, qualifier] of [
       for (const call of run.calls) {
         const query = queryOf(call);
         assert.ok((query.match(/ OR /g) ?? []).length <= 5);
-        assert.ok(query.startsWith('repo:o/n is:pr is:open -is:draft ('));
+        assert.ok(query.startsWith('repo:o/n is:pr is:open -is:draft -author:dependabot[bot] ('));
         assert.ok(call.args.includes('--paginate'));
         assert.ok(call.args.includes('advanced_search=true'));
         searched.push(...query.matchAll(new RegExp(`${qualifier}:(member\\d+)`, 'g')));
@@ -187,11 +193,14 @@ test('search: the team query uses the team, not its members', async () => {
 
   await client.fetchTeamReviewRequestedPrs();
 
-  assert.equal(queryOf(run.calls[0]), 'repo:o/n is:pr is:open -is:draft (team-review-requested:org/squad)');
+  assert.equal(
+    queryOf(run.calls[0]),
+    'repo:o/n is:pr is:open -is:draft -author:dependabot[bot] (team-review-requested:org/squad)'
+  );
 });
 
 // The qualifier sits outside the OR group, so it narrows the whole query instead of joining the ORs.
-test('search: every search excludes drafts, ahead of the OR group', async () => {
+test('search: every search excludes drafts and blacklisted authors ahead of the OR group', async () => {
   const run = stubRun();
   const client = clientWith(run);
 
@@ -201,11 +210,14 @@ test('search: every search excludes drafts, ahead of the OR group', async () => 
 
   for (const call of run.calls) {
     const query = queryOf(call);
-    assert.ok(query.includes(' -is:draft ('), `draft filter missing or misplaced in ${query}`);
+    assert.ok(
+      query.includes(' -is:draft -author:dependabot[bot] ('),
+      `queue exclusions missing or misplaced in ${query}`
+    );
   }
 });
 
-// Without advanced_search a repeated review-requested: silently returns a subset.
+// Without advanced_search repeated review-request qualifiers can silently return a subset.
 test('search: advanced_search and pagination are always requested', async () => {
   const run = stubRun(['']);
   const client = clientWith(run);
@@ -377,8 +389,9 @@ test('readiness fetches only volatile fields in batches of 20 with at most four 
     const requested = [...query.matchAll(/pullRequest\(number: (\d+)\)/g)].map((match) => Number(match[1]));
     assert.ok(requested.length <= 20);
     assert.match(query, /number mergeable reviewDecision/);
+    assert.match(query, /closingIssuesReferences\(first: 6\)/);
     assert.match(query, /commits\(last: 1\).*statusCheckRollup \{ state \}/);
-    assert.doesNotMatch(query, /title|labels|closingIssuesReferences|latestReviews|reviewRequests|additions|deletions/);
+    assert.doesNotMatch(query, /title|labels\(first: 50\)|latestReviews|reviewRequests|additions|deletions/);
     active += 1;
     peak = Math.max(peak, active);
     await new Promise((resolve) => setImmediate(resolve));
@@ -411,16 +424,20 @@ for (const [fullCount, readinessCount] of [
     const run = async (file, args) => {
       requests += 1;
       const query = queryOf({ args });
-      const selections = [...query.matchAll(/p\d+: pullRequest\(number: (\d+)\) \{ ([^\n]*)/g)];
+      const selections = [...query.matchAll(/p\d+: pullRequest\(number: (\d+)\) \{ (.*?)(?= p\d+: pullRequest|$)/g)];
       assert.ok(selections.length <= 20);
       for (const [, number, fields] of selections) {
         assert.match(fields, /mergeable reviewDecision/);
         assert.match(fields, /statusCheckRollup \{ state \}/);
+        assert.match(
+          fields,
+          /closingIssuesReferences\(first: 6\) \{ totalCount nodes \{ number url issueType \{ name \} comments \{ totalCount \} labels\(first: 20\)/
+        );
         if (full.includes(Number(number))) {
           assert.match(fields, /title url additions deletions changedFiles/);
           assert.match(fields, /labels\(first: 50\)/);
         } else {
-          assert.doesNotMatch(fields, /title|labels|closingIssuesReferences|latestReviews|reviewRequests/);
+          assert.doesNotMatch(fields, /title|labels\(first: 50\)|latestReviews|reviewRequests/);
         }
       }
       active += 1;

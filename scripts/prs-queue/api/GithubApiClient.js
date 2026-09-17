@@ -8,15 +8,107 @@ const { mapWithLimit } = require('./helpers');
 
 // Exclude drafts from queue searches because they are not ready for review.
 // This also avoids fetching their details.
-const BASE_QUALIFIERS = 'is:pr is:open -is:draft';
+// REST search uses bot logins with the [bot] suffix, unlike GraphQL author logins.
+const AUTHOR_BLACKLIST = ['dependabot[bot]'];
+const BASE_QUALIFIERS = [
+  'is:pr',
+  'is:open',
+  '-is:draft',
+  ...AUTHOR_BLACKLIST.map((author) => `-author:${author}`),
+].join(' ');
 
 // Search includes updated_at, so checking cache freshness needs no extra request.
 const SEARCH_ROW_FIELDS = '.items[] | [.number, .updated_at] | @tsv';
 
-const PR_READINESS_FIELDS = `number mergeable reviewDecision commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
+const PR_LINKED_ISSUE_FIELDS = `
+  closingIssuesReferences(first: 6) {
+    totalCount
+    nodes {
+      number
+      url
+      issueType {
+        name
+      }
+      comments {
+        totalCount
+      }
+      labels(first: 20) {
+        nodes {
+          name
+        }
+      }
+    }
+  }
+`;
+
+const PR_READINESS_FIELDS = `
+  number
+  mergeable
+  reviewDecision
+  ${PR_LINKED_ISSUE_FIELDS}
+  commits(last: 1) {
+    nodes {
+      commit {
+        statusCheckRollup {
+          state
+        }
+      }
+    }
+  }
+`;
 
 // Keep the detail fields together so all batches request the same data.
-const PR_DETAIL_FIELDS = `number title url additions deletions changedFiles mergeable reviewDecision createdAt updatedAt author { login } authorAssociation labels(first: 50) { nodes { name } } closingIssuesReferences(first: 10) { totalCount nodes { number url issueType { name } comments { totalCount } labels(first: 20) { nodes { name } } } } latestReviews(first: 40) { nodes { author { login } state } } reviewRequests(first: 20) { nodes { requestedReviewer { ... on User { login } ... on Team { slug } } } } commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
+const PR_DETAIL_FIELDS = `
+  number
+  title
+  url
+  additions
+  deletions
+  changedFiles
+  mergeable
+  reviewDecision
+  createdAt
+  updatedAt
+  author {
+    login
+  }
+  authorAssociation
+  labels(first: 50) {
+    nodes {
+      name
+    }
+  }
+  ${PR_LINKED_ISSUE_FIELDS}
+  latestReviews(first: 40) {
+    nodes {
+      author {
+        login
+      }
+      state
+    }
+  }
+  reviewRequests(first: 20) {
+    nodes {
+      requestedReviewer {
+        ... on User {
+          login
+        }
+        ... on Team {
+          slug
+        }
+      }
+    }
+  }
+  commits(last: 1) {
+    nodes {
+      commit {
+        statusCheckRollup {
+          state
+        }
+      }
+    }
+  }
+`;
 
 const execFileAsync = promisify(execFile);
 
@@ -90,7 +182,8 @@ class GithubApiClient {
   }
 
   async fetchReviewRequestedPrs(logins) {
-    const prs = await this.#searchPullRequests(logins.map((login) => `review-requested:${login}`));
+    // Direct requests exclude reviews requested from other teams a member belongs to.
+    const prs = await this.#searchPullRequests(logins.map((login) => `user-review-requested:${login}`));
     logger.log(`PRs with a review requested from an individual team member (${prs.length})`);
     return prs;
   }
@@ -119,7 +212,7 @@ class GithubApiClient {
   }
 
   // Combine member filters to avoid a separate request for each person.
-  // The advanced search endpoint supports OR for repeated review-requested filters.
+  // The advanced search endpoint supports OR for repeated user-review-requested filters.
   async #searchPullRequests(clauses) {
     const byNumber = new Map();
     for (let i = 0; i < clauses.length; i += GithubApiClient.#SEARCH_BATCH_SIZE) {
@@ -157,7 +250,13 @@ class GithubApiClient {
   }
 
   async #graphql(selection) {
-    const query = `query { repository(owner: "${this.#owner}", name: "${this.#name}") { ${selection} } }`;
+    const query = `
+      query {
+        repository(owner: "${this.#owner}", name: "${this.#name}") {
+          ${selection}
+        }
+      }
+    `;
     return JSON.parse(await this.#gh(['api', 'graphql', '-f', `query=${query}`], '.data.repository'));
   }
 
@@ -179,7 +278,15 @@ class GithubApiClient {
 
     const pages = await mapWithLimit(batches, GithubApiClient.#MAX_CONCURRENT_REQUESTS, (batch) =>
       this.#graphql(
-        batch.map(({ number, fields }, index) => `p${index}: pullRequest(number: ${number}) { ${fields} }`).join('\n')
+        batch
+          .map(
+            ({ number, fields }, index) => `
+              p${index}: pullRequest(number: ${number}) {
+                ${fields}
+              }
+            `
+          )
+          .join('\n')
       )
     );
     return pages.flatMap((page) => Object.values(page).filter((node) => node?.number));

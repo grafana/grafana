@@ -77,12 +77,7 @@ class PrReportsPipeline {
       }
       // Partial nodes must not go through full normalization, which would clear cached metadata.
       return {
-        cached: {
-          ...cached,
-          mergeable: current.mergeable ?? 'UNKNOWN',
-          status: current.reviewDecision ?? '',
-          ciStatus: current.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state ?? '',
-        },
+        cached: this.#services.normalizer.fromReadiness(current, cached),
       };
     });
 
@@ -243,7 +238,9 @@ function splitByFreshness(cachedPrs, scope) {
     }
   }
 
-  logger.log(`fetch plan: full details for ${stale.length} PRs; readiness only for ${reused} cached PRs`);
+  logger.log(
+    `fetch plan: full details for ${stale.length} PRs; refreshing CI, mergeability, review decision, and linked issues for ${reused} cached PRs`
+  );
   logger.log(
     `full-detail reasons: ${added} new, ${updated} with changed timestamps, ${missingDiff} missing current diff metadata`
   );
