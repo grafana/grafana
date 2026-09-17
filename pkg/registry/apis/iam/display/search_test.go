@@ -25,9 +25,17 @@ func TestBuildSearchJobsRequestsFieldValues(t *testing.T) {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, job.req.ResultFormat)
 		switch job.req.Options.Key.Resource {
 		case "users":
-			require.Equal(t, userSearchDisplayFields, job.req.Fields)
+			require.Equal(t, []string{
+				resource.SEARCH_FIELD_TITLE,
+				builders.USER_EMAIL,
+				builders.USER_LOGIN,
+				resource.SEARCH_FIELD_LEGACY_ID,
+			}, job.req.Fields)
 		case "serviceaccounts":
-			require.Equal(t, serviceAccountSearchDisplayFields, job.req.Fields)
+			require.Equal(t, []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_LEGACY_ID,
+			}, job.req.Fields)
 		default:
 			t.Fatalf("unexpected resource %q", job.req.Options.Key.Resource)
 		}
