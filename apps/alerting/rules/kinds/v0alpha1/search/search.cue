@@ -29,6 +29,13 @@ package search
 }
 
 // Retained for generic schema compatibility; rejected by the compatibility handler.
+#SearchRegexLeaf: {
+	field:   string
+	pattern: string
+	negate?: bool
+}
+
+// Retained for generic schema compatibility; rejected by the compatibility handler.
 #SearchExistsLeaf: {
 	field: string
 }
@@ -43,6 +50,7 @@ package search
 	text?:   #SearchTextLeaf
 	filter?: #SearchFilterLeaf
 	range?:  #SearchRangeLeaf
+	regex?:  #SearchRegexLeaf
 	exists?: #SearchExistsLeaf
 }
 

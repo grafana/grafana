@@ -920,6 +920,7 @@
       "button-view": "Visa",
       "export-ariaLabel-export": "Exportera",
       "export-label-export": "Exportera",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Ta bort",
       "label-manage-permissions": "Hantera behörigheter",
       "tooltip-history": "Visa historiken över aviseringsförsök som gjorts till denna kontaktpunkt",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Laddar …"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Laddar …"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Inga regler pausade",
         "pause-recording": "Inspelningsregler pausade",
         "policy-tree": "Policyträd",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Dirigering av aviseringar",
         "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Dubblerat mallfilsnamn: ”{{name}}”. Mallfilnamnen måste vara unika.",
         "templates-label": "Aviseringsmallar",
         "templates-remove": "Ta bort {{name}}",
-        "upload": "Ladda upp YAML-fil",
+        "upload": "",
         "validating": "Validerar konfiguration …",
         "validation-error": "Valideringen misslyckades",
         "validation-error-desc": "Det gick inte att validera konfigurationen.",
         "validation-success": "Valideringen lyckades",
         "validation-success-desc": "Inga konflikter hittades. Konfigurationen är redo att importeras.",
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter med befintliga resurser",
-        "yaml-file": "YAML för konfigurationen för Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML för konfigurationen för Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Datakälla",
@@ -3245,14 +3256,19 @@
         "action-disable": "Inaktivera synkonisering",
         "add-datasource-link": "Lägg till Mimir-datakälla",
         "badge-active": "Aktiv",
+        "badge-failing": "",
         "badge-not-configured": "Inte konfigurerat",
         "badge-operator-managed": "Hanteras av operatör",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Synkronisera kontinuerligt larmkonfiguration från en Mimir- eller Cortex Alertmanager-datakälla till Grafana.",
         "disable-confirm-action": "Inaktivera synkonisering",
         "disable-confirm-body": "Inaktivering kommer att stoppa kontinuerlig synkronisering från datakällan {{uid}}. Du kan aktivera den igen senare genom att välja en datakälla på nytt.",
         "disable-confirm-body-generic": "Inaktivering kommer att stoppa kontinuerlig synkronisering. Du kan aktivera den igen senare genom att välja en datakälla på nytt.",
         "disable-confirm-title": "Inaktivera automatisk synkronisering av Mimir Alertmanager?",
         "disable-success": "Automatisk synkronisering av Mimir Alertmanager har inaktiverats",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Detta värde ställs in av nyckeln <1>[unified_alerting] external_alertmanager_uid</1> i grafana.ini och kan inte ändras från användargränssnittet. Redigera konfigurationsfilen och starta om Grafana, eller ta bort nyckeln om du vill hantera synkronisering härifrån.",
@@ -3271,6 +3287,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Konfiguration av automatisk synkronisering"
       },
       "import": {
@@ -4611,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Lägg till README",
-      "edit-tooltip": "Redigera README",
+      "edit-doc-tooltip": "",
       "empty-message": "Lägg till en README för att beskriva vad som finns i den här mappen och var du hittar de rätta instrumentpanelerna.",
       "load-error-retry": "Försök igen",
-      "load-error-title": "Det gick inte att ladda README",
-      "parse-error": "Det gick inte att visa README-innehåll."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Rensa historik",
@@ -12241,6 +12262,10 @@
     "team-not-found": "[Okänt team]",
     "unknown-error": "Okänt fel"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
   },
@@ -12573,6 +12598,10 @@
     "authentication": {
       "title": "Autentisering"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bokmärken"
     },
@@ -12779,6 +12808,7 @@
       "title": "Registrerade frågor"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapportering"
     },
     "saved-queries": {
@@ -12793,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Sök instrumentpaneler"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Visa inställningarna som definierats i Grafana-konfigurationen",
@@ -16668,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
