@@ -128,8 +128,22 @@ class Parser {
 }
 
 export function createLiveMathTransform(expression: LiveMathExpression, fieldIndexes: number[] = []) {
-  const tokens = tokenize(expression.expression);
-  const evaluate = (value: unknown) => new Parser(tokens, value).parse();
+  let tokens: Token[] = [];
+  try {
+    tokens = tokenize(expression.expression);
+  } catch {
+    // Keep an invalid expression from terminating the live subscription.
+  }
+  const evaluate = (value: unknown) => {
+    if (!tokens.length) {
+      return value;
+    }
+    try {
+      return new Parser(tokens, value).parse();
+    } catch {
+      return value;
+    }
+  };
   const values = (input: unknown[][], indexes: number[] = fieldIndexes) =>
     input.map((column, index) => indexes.includes(index) ? column.map(evaluate) : column);
   return {

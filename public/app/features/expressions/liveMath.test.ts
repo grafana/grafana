@@ -20,4 +20,14 @@ describe('live math expressions', () => {
     const transform = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: 'abs($A) + floor(2.9)' }, [0]);
     expect(transform.values([[-4, 5]])).toEqual([[6, 7]]);
   });
+
+  it('does not throw for malformed expressions', () => {
+    const transform = createLiveMathTransform(
+      { sourceRefId: 'A', resultRefId: 'B', expression: '$A +' },
+      [0]
+    );
+
+    expect(() => transform.values([[1, 2]])).not.toThrow();
+    expect(transform.values([[1, 2]])).toEqual([[1, 2]]);
+  });
 });
