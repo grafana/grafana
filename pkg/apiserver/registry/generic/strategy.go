@@ -163,6 +163,17 @@ func (g *genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old r
 	newMeta.SetLabels(oldMeta.GetLabels())
 	newMeta.SetFinalizers(oldMeta.GetFinalizers())
 	newMeta.SetOwnerReferences(oldMeta.GetOwnerReferences())
+
+	// A status-subresource update must never change spec or secure values.
+	// Without this, a PATCH against /status whose ops also touch /spec or
+	// /secure would persist that change: admission skips validation entirely
+	// for a subresource request, so nothing else catches it.
+	if spec, err := oldMeta.GetSpec(); err == nil {
+		_ = newMeta.SetSpec(spec)
+	}
+	if secure, err := oldMeta.GetSecureValues(); err == nil {
+		_ = newMeta.SetSecureValues(secure)
+	}
 }
 
 func (g *genericStatusStrategy) AllowCreateOnUpdate(ctx context.Context) bool {
