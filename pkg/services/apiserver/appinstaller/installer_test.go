@@ -234,7 +234,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 			},
 		}
 		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
-		registerStorageOptions(installer, reg, logging.DefaultLogger)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
 
 		require.Equal(t, []schema.GroupResource{
 			{Group: "test.grafana.app", Resource: "foos"},
