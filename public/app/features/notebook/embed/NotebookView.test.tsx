@@ -13,7 +13,7 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 import * as transformModule from '../serialization/transformNotebookToScene';
 import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
 
-import { NotebookView } from './NotebookView';
+import { NotebookView, type DraftNotebookViewProps } from './NotebookView';
 
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
@@ -186,9 +186,10 @@ describe('NotebookView', () => {
      * A draft waits for the panel plugin metas before it builds anything, so the scene does not
      * exist until that settles. Every case here needs it settled.
      */
-    async function renderDraft(ui: ReactElement) {
+    async function renderDraft(ui: ReactElement<DraftNotebookViewProps>) {
       const result = render(ui);
-      await act(async () => {});
+      // The document heading only exists once the scene has been built from the loaded panel metas.
+      await screen.findByRole('heading', { name: ui.props.spec.title });
       return result;
     }
     /** A document with no cells, off the generated default so every field the transform reads is there. */
