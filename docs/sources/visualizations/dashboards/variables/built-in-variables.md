@@ -59,9 +59,9 @@ Approximate Calculation: `(to - from) / resolution`
 
 For example, when the time range is 1 hour and the graph is full screen, then the interval might be calculated to `2m` - points are grouped in 2 minute intervals. If the time range is 6 months and the graph is full screen, then the interval might be `1d` (1 day) - points are grouped by day.
 
-In the InfluxDB data source, the legacy variable `$interval` is the same variable. `$__interval` should be used instead.
+In the InfluxDB data source, the legacy variable `$interval` is the same variable. You should use `$__interval` instead.
 
-The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
+The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or set the minimum limit for the `$__interval` variable by using the `>` syntax, for example `>10m`.
 
 ## `$__interval_ms`
 
@@ -69,7 +69,7 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 
 ## `$__name`
 
-This variable is only available in the **Singlestat** panel and can be used in the prefix or suffix fields on the Options tab. The variable is replaced with the series name or alias.
+This variable is only available in the **Singlestat** panel and you can use it in the prefix or suffix fields on the Options tab. Grafana replaces the variable with the series name or alias.
 
 {{< admonition type="note" >}}
 The **Singlestat** panel is no longer available from Grafana 8.0.
@@ -100,7 +100,7 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 
 ## `$__rate_interval`
 
-Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-__rate_interval) for details.
+Currently only supported for Prometheus data sources. Use the `$__rate_interval` variable in the rate function. Refer to [Prometheus query variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-__rate_interval) for details.
 
 ## `$__rate_interval_ms`
 
@@ -110,16 +110,16 @@ This variable is the `$__rate_interval` variable in milliseconds, not a time-int
 
 The `$timeFilter` variable returns the active time range selection as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 
-This is used in several places, including:
+It's used in several places, including:
 
-- The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
+- The `WHERE` clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
 - Log Analytics queries in the Azure Monitor data source.
 - SQL queries in MySQL, Postgres, and MSSQL.
 - The `$__timeFilter` variable is used in the MySQL data source.
 
 ## `$__timezone`
 
-The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
+The `$__timezone` variable returns the active time zone selection, either `utc` or an entry from the IANA time zone database, such as `America/New_York`.
 
 If the active time zone selection is _Browser Time_, Grafana tries to determine your browser time zone.
 
