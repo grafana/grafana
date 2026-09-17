@@ -1,5 +1,6 @@
 import { type DataFrame, type Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
+import { FieldNameMatcherEditor } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNameMatcherEditor';
 import {
   type FieldToConfigMapHandler,
   type FieldToConfigMapping,
@@ -31,7 +32,7 @@ function evaluateDynamicFieldMappings(
 ): Record<string, DynamicHandler[]> {
   const result: Record<string, DynamicHandler[]> = {};
 
-  const fieldForName = frame.fields.find((f) => getFieldDisplayName(f, frame) === fieldNameSource);
+  const fieldForName = frame.fields.find((f) => f.name === fieldNameSource);
   if (!fieldForName || fieldForName.type !== FieldType.string) {
     throw Error(`Invalid Source Field`);
   }
@@ -41,21 +42,25 @@ function evaluateDynamicFieldMappings(
     args: HandlerArguments | undefined;
     field: Field;
   }> = [];
-  mappings.forEach((m) => {
-    const field = frame.fields.find((v) => v.name === m.fieldName);
-    if (!field) {
+
+  frame.fields.forEach((f) => {
+    if (f.name === fieldForName.name) {
       return;
     }
-
-    const fieldName = getFieldDisplayName(field, frame);
-    const h = lookUpConfigHandler(m.handlerKey || fieldName.toLowerCase());
+    const fieldName = getFieldDisplayName(f, frame);
+    const mapping = mappings.find((m) => m.fieldName === f.name);
+    const h = lookUpConfigHandler(mapping?.handlerKey || fieldName.toLowerCase());
     if (!h) {
       // TODO: There should maybe be a way to communicate this weird condition to the user?
       // Perhaps a simple fallback?
       return;
     }
 
-    handlers.push({ h, args: m.handlerArguments, field });
+    handlers.push({
+      h,
+      args: mapping?.handlerArguments,
+      field: f,
+    });
   });
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- we just asserted that the field type is a string
