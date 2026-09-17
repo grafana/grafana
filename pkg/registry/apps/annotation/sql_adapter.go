@@ -203,10 +203,16 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 		return nil, err
 	}
 
+	// The legacy repository only exposes a single substring match on Tag, so
+	// either value is passed through as-is.
+	tag := opts.Contains
+	if tag == "" {
+		tag = opts.Prefix
+	}
 	query := &annotations.TagsQuery{
 		OrgID: orgID,
 		Limit: int64(opts.Limit),
-		Tag:   opts.Prefix,
+		Tag:   tag,
 	}
 
 	result, err := a.repo.FindTags(ctx, query)
@@ -243,8 +249,11 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 		anno.Spec.PanelID = &item.PanelID
 	}
 
-	if item.UserUID != "" {
-		if m, err := utils.MetaAccessor(anno); err == nil {
+	if item.ID > 0 {
+		SetLegacyID(anno, item.ID)
+	}
+	if m, err := utils.MetaAccessor(anno); err == nil {
+		if item.UserUID != "" {
 			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
 		}
 	}

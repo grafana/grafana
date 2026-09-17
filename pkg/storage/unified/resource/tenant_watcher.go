@@ -200,7 +200,7 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 }
 
 // NewTenantWatcher creates and starts a TenantWatcher.
-func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
+func NewTenantWatcher(ctx context.Context, ds *dataStore, pds *PendingDeleteStore, writeEvent EventAppender, cfg TenantWatcherConfig) (*TenantWatcher, error) {
 	restCfg, err := NewTenantRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building tenant REST config: %w", err)
@@ -228,7 +228,7 @@ func NewTenantWatcher(ctx context.Context, ds *dataStore, writeEvent EventAppend
 
 	tw := &TenantWatcher{
 		log:                logger,
-		pendingDeleteStore: newPendingDeleteStore(ds.kv),
+		pendingDeleteStore: pds,
 		dataStore:          ds,
 		writeEvent:         writeEvent,
 		client:             client,
@@ -478,6 +478,12 @@ func (tw *TenantWatcher) Stop() {
 }
 
 func (tw *TenantWatcher) handleTenant(ctx context.Context, tenant *unstructured.Unstructured) {
+	// Skip work once the context is dead: a poll page can hold thousands of
+	// tenants, and reconciling each against a cancelled context spams error logs.
+	if ctx.Err() != nil {
+		return
+	}
+
 	name := tenant.GetName()
 	labels := tenant.GetLabels()
 	annotations := tenant.GetAnnotations()
@@ -522,6 +528,9 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(ctx context.Context, name 
 		return
 	}
 	if err != nil && !errors.Is(err, kvpkg.ErrNotFound) {
+		if errors.Is(err, context.Canceled) {
+			return
+		}
 		tw.log.Error("failed to read pending delete record, skipping reconcile to avoid overwriting existing state", "tenant", name, "error", err)
 		return
 	}

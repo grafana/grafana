@@ -91,7 +91,6 @@ export function buildNavModel(team: Team): NavModelItem {
   if (
     // If team is loading we won't show this which is probably fine so we don't end up with bad urls.
     !isLoadingTeam &&
-    config.featureToggles.teamFolders &&
     contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team)
   ) {
     // Add it after settings tab

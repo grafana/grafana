@@ -67,14 +67,17 @@ jest.mock('../utils/getVizSuggestionForQuery', () => ({
 }));
 
 jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: { panelActionClicked: jest.fn() },
+  DashboardInteractions: { panelActionClicked: jest.fn(), editSessionStarted: jest.fn() },
 }));
 
-// Only mock the two functions this component imports from utils — avoid spreading
+// Only mock the functions this component imports. Avoid spreading
 // jest.requireActual which can pull in complex scene dependencies.
 jest.mock('../utils/utils', () => ({
-  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
   findVizPanelByKey: jest.fn(),
+}));
+
+jest.mock('../utils/utils-panels', () => ({
+  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
 }));
 
 // ─── typed mock references ────────────────────────────────────────────────────
@@ -132,14 +135,12 @@ beforeEach(() => {
     subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
   });
 
-  config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
 });
 
 afterEach(() => {
   deactivateScene?.();
   deactivateScene = undefined;
-  config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
 });
 
@@ -293,6 +294,17 @@ describe('UnconfiguredPanelComp', () => {
         await user.click(screen.getByRole('button', { name: /use library panel/i }));
 
         expect(dashboard.onShowAddLibraryPanelDrawer).toHaveBeenCalled();
+      });
+
+      it('tracks the use library panel interaction', async () => {
+        const dashboard = buildDashboard({ isEditing: true });
+        jest.spyOn(dashboard, 'onShowAddLibraryPanelDrawer').mockImplementation(() => {});
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+        await user.click(screen.getByRole('button', { name: /use library panel/i }));
+
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('use_library_panel', 1, 'panel');
       });
     });
 

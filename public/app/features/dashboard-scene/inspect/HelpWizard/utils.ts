@@ -16,11 +16,12 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
-import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { isLibraryPanel } from '../../utils/utils';
 
 import { type Randomize, randomizeData } from './randomizer';
 
-export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
   if (data?.series) {
     for (const f of data.series) {

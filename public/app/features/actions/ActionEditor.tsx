@@ -4,7 +4,6 @@ import { memo, useId } from 'react';
 import {
   type Action,
   ActionType,
-  type DataSourceInstanceSettings,
   type GrafanaTheme2,
   httpMethodOptions,
   HttpRequestMethod,
@@ -12,6 +11,7 @@ import {
   type InfinityOptions,
   type FetchOptions,
   type ActionVariable,
+  type DataSourceInstanceListItem,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -136,7 +136,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
-  const onConnectionChange = (connectionType: string | DataSourceInstanceSettings) => {
+  const onConnectionChange = (connectionType: string | DataSourceInstanceListItem) => {
     const baseAction = {
       title: value.title,
       confirmation: value.confirmation,

@@ -1,5 +1,4 @@
 import { render, act } from '@testing-library/react';
-import { createRef } from 'react';
 
 import { type AnnotationQuery, type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
@@ -7,6 +6,7 @@ import { type DataQuery } from '@grafana/schema';
 
 import { updateAnnotationFromSavedQuery, getDataQueryFromAnnotationForSavedQueries } from '../utils/savedQueryUtils';
 
+import { AnnotationQueryEditorActionsWrapper } from './AnnotationQueryEditorActionsWrapper';
 import StandardAnnotationQueryEditor, { type Props as EditorProps } from './StandardAnnotationQueryEditor';
 
 const setup = (customProps: Partial<EditorProps>) => {
@@ -49,6 +49,10 @@ jest.mock('../standardAnnotationSupport', () => ({
   shouldUseLegacyRunner: jest.fn().mockReturnValue(false),
 }));
 
+jest.mock('./AnnotationQueryEditorActionsWrapper', () => ({
+  AnnotationQueryEditorActionsWrapper: jest.fn(({ children }) => children),
+}));
+
 describe('StandardAnnotationQueryEditor', () => {
   it('should fill out a default query if it is defined and pass it to the Query Editor', () => {
     const { props } = setup({
@@ -67,7 +71,7 @@ describe('StandardAnnotationQueryEditor', () => {
       expect.objectContaining({
         query: expect.objectContaining({ queryType: 'defaultAnnotationsQuery', refId: 'initialAnnotationRef' }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -85,7 +89,7 @@ describe('StandardAnnotationQueryEditor', () => {
       expect.objectContaining({
         query: expect.objectContaining({ refId: 'initialAnnotationRef' }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -204,7 +208,7 @@ describe('StandardAnnotationQueryEditor', () => {
           refId: 'A',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -242,7 +246,7 @@ describe('StandardAnnotationQueryEditor', () => {
           legendFormat: '{{method}} {{endpoint}}',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -284,7 +288,7 @@ describe('StandardAnnotationQueryEditor', () => {
           refId: 'AnnoTarget',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -320,7 +324,7 @@ describe('StandardAnnotationQueryEditor', () => {
           expr: 'up',
         }),
       }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -510,11 +514,8 @@ describe('StandardAnnotationQueryEditor', () => {
         datasource: originalAnnotation.datasource,
       });
 
-      const componentRef = createRef<StandardAnnotationQueryEditor>();
-
       const { rerender } = render(
         <StandardAnnotationQueryEditor
-          ref={componentRef}
           annotation={originalAnnotation}
           datasource={
             {
@@ -534,15 +535,19 @@ describe('StandardAnnotationQueryEditor', () => {
       // Initial mount should call prepareAnnotation once
       expect(mockPrepareAnnotation).toHaveBeenCalledTimes(1);
 
-      // Call onQueryReplace to set the skipNextVerification flag
+      // Call onQueryReplace to set the skipNextVerification flag. The component passes onQueryReplace
+      // to AnnotationQueryEditorActionsWrapper, so grab it from the mocked wrapper's props.
       const replacedQuery = {
         refId: 'B',
         expr: '{job="test"}',
         datasource: { uid: 'loki-uid', type: 'loki' },
       } as DataQuery;
 
+      const wrapperCalls = (AnnotationQueryEditorActionsWrapper as jest.Mock).mock.calls;
+      const { onQueryReplace } = wrapperCalls[wrapperCalls.length - 1][0];
+
       await act(async () => {
-        await componentRef.current!.onQueryReplace(replacedQuery);
+        await onQueryReplace(replacedQuery);
       });
 
       // Verify onQueryReplace worked correctly
@@ -564,7 +569,6 @@ describe('StandardAnnotationQueryEditor', () => {
       act(() => {
         rerender(
           <StandardAnnotationQueryEditor
-            ref={componentRef}
             annotation={newAnnotation} // New annotation object reference
             datasource={
               {

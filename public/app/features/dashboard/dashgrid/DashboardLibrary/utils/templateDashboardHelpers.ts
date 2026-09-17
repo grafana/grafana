@@ -1,4 +1,4 @@
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -11,10 +11,10 @@ export type AssistantSource = 'assistant_button' | 'assistant_chat';
 
 export function getTemplateDashboardUrl(
   dashboard: PluginDashboard | GnetDashboard,
+  testDataSource: DataSourceInstanceListItem | undefined,
   sourceEntryPoint: SourceEntryPoint,
   assistantSource?: AssistantSource
 ): string {
-  const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
   const isGnet = isGnetDashboard(dashboard);
 
   const params = new URLSearchParams({

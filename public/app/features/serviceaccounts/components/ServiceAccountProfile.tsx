@@ -101,7 +101,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   section: css({
     marginBottom: theme.spacing(4),
   }),

@@ -82,6 +82,8 @@ refs:
 
 # Transform data
 
+> **Note:** The screenshots and steps on this page reflect the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
@@ -95,7 +97,7 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
-> Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
+> **Note:** Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
 
@@ -317,6 +319,7 @@ This transformation has the following options:
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
       You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
     - Will show a table to manage the enums
@@ -746,8 +749,6 @@ After choosing the field by which you want to group your data, you can add vario
 
 #### Display options
 
-> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the `groupToNestedTableV2` feature toggle. To try out nested field overrides, enable `nestedFramesFieldOverrides`.
-
 | Option                            | Description                                                                                                                |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                    |
@@ -898,6 +899,8 @@ The result after applying the inner join transformation looks like the following
 | 3         | Michael | Physics          | PHYS101  | B     |
 
 The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
+
+If a query returns data that doesn't contain the join field, then no row can match in every query, so the result is empty. To join only some of your queries, add a [Filter data by query refId](#filter-data-by-query-refid) transformation before the join.
 
 #### Outer join (for Time Series data)
 

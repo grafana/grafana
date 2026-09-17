@@ -37,7 +37,7 @@ interface RunningQueryState {
 /*
  * This function should handle composing a PanelData from multiple responses
  */
-export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
+function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
   const request = state.panelData.request!;
   const packets: MapOfResponsePackets = {
     ...state.packets,
@@ -196,7 +196,7 @@ export function callQueryMethodWithMigration(
   return callQueryMethod(datasource, request, queryFunction);
 }
 
-export function callQueryMethod(
+function callQueryMethod(
   datasource: DataSourceApi,
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query

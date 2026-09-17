@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"maps"
 	"math"
 	"math/rand/v2"
 	"net"
@@ -65,9 +66,7 @@ func TestPointsFromFrames(t *testing.T) {
 				for i, point := range points {
 					v := extractValue(t, frames, series[i], tc.frameType)
 					expectedLabels := map[string]string{"extra": "label"}
-					for k, v := range series[i] {
-						expectedLabels[k] = v
-					}
+					maps.Copy(expectedLabels, series[i])
 					require.Equal(t, expectedLabels, point.Labels)
 					require.Equal(t, "test", point.Name)
 					require.Equal(t, now, point.Metric.T)
@@ -231,6 +230,62 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+
+	t.Run("max write message size is a non-retryable rejection", func(t *testing.T) {
+		msg := "the incoming push request has been rejected because its message size of 157568313 bytes (uncompressed) is larger than the allowed limit of 104857600 bytes (err-mimir-distributor-max-write-message-size). To adjust the related limit, configure -distributor.max-recv-msg-size, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNonRetryableWrite)
+		// It must still report as ErrRejectedWrite so existing handling keeps working,
+		// keep its verbatim message, and not leak the internal classification.
+		require.ErrorIs(t, err, ErrRejectedWrite)
+		require.Contains(t, err.Error(), "series was rejected")
+		require.NotContains(t, err.Error(), "non-retryable")
+	})
+
+	t.Run("a retryable expected rejection is not classified non-retryable", func(t *testing.T) {
+		msg := "send data to ingesters: failed pushing to ingester ingester-1: user=1: per-user series limit of 10 exceeded (err-mimir-max-series-per-user)."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
+
+	t.Run("a 429 response is classified as rate limited", func(t *testing.T) {
+		msg := "too many requests"
+		clientErr := testClientWriteError{
+			statusCode: http.StatusTooManyRequests,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRateLimited)
+		require.NotErrorIs(t, err, ErrUnexpectedWriteFailure)
+		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
 }
 
 func TestExtractActualError(t *testing.T) {
@@ -350,7 +405,7 @@ func extractValueLong(t *testing.T, frames data.Frames, labels map[string]string
 	foundLabels := make(map[string]string)
 
 	l := frame.Fields[0].Len()
-	for i := 0; i < l; i++ {
+	for i := range l {
 		for _, field := range frame.Fields[1 : len(frame.Fields)-1] {
 			foundLabels[field.Name] = field.At(i).(string)
 		}

@@ -21,4 +21,20 @@ externalGroupMappingv0alpha1: externalGroupMappingKind & {
 		"spec.teamRef.name",
 		"spec.externalGroupId",
 	]
+	searchFields: [
+		{
+			name: "team"
+			path: "spec.teamRef.name"
+			type: "string"
+			capabilities: ["filter", "retrieve"]
+			description: "The team name associated with the external group mapping"
+		},
+		{
+			name: "external_group"
+			path: "spec.externalGroupId"
+			type: "string"
+			capabilities: ["filter", "retrieve"]
+			description: "The external group name/id associated with the external group mapping"
+		},
+	]
 }

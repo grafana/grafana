@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -86,10 +87,26 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("dashboard"))...)
 }
 
+// DashboardPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for dashboard resource permissions (fixed:dashboards.permissions:reader
+// and :writer). These mirror the roles declared by ProvideDashboardPermissions
+// through resourcepermissions.New; the identity fields below must match the
+// Options passed there.
+func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       dashboardPermissionsResource,
+		APIGroup:       dashboardv1.APIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
+	})
+}
+
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService resourcepermissions.ActionSetService,
 	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
@@ -106,7 +123,7 @@ func ProvideDashboardPermissions(
 	}
 
 	options := resourcepermissions.Options{
-		Resource:          "dashboards",
+		Resource:          dashboardPermissionsResource,
 		ResourceAttribute: "uid",
 		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -158,9 +175,9 @@ func ProvideDashboardPermissions(
 			"Edit":  DashboardEditActions,
 			"Admin": DashboardAdminActions,
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
 		GetParentFolder: func(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (string, error) {
 			dashboardsGVR := schema.GroupVersionResource{
 				Group:    dashboardv1.APIGroup,
@@ -183,7 +200,7 @@ func ProvideDashboardPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService)
 	if err != nil {
 		return nil, err
 	}

@@ -25,7 +25,8 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
@@ -37,6 +38,7 @@ import { type LogLineTimestampResolution } from './LogLine';
 import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
 import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
+import { logsSupportHighlighting } from './grammar';
 import { type LogListModel } from './processing';
 
 export interface LogListContextData
@@ -70,6 +72,9 @@ export interface LogListContextData
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
   unwrappedColumns: boolean;
+  // Big log payloads can freeze or OOM the browser when highlighted. In those
+  // situations highlighting is unavailable to protect the user experience.
+  syntaxHighlightingUnavailable: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -104,6 +109,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  syntaxHighlightingUnavailable: false,
   timestampResolution: 'ns',
   wrapLogMessage: false,
   isAssistantAvailable: false,
@@ -148,7 +154,7 @@ export interface Props {
   app: CoreApp;
   allowDownload?: boolean;
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
@@ -598,6 +604,8 @@ export const LogListContextProvider = ({
     [onClickHideField]
   );
 
+  const syntaxHighlightingUnavailable = useMemo(() => !logsSupportHighlighting(logs), [logs]);
+
   return (
     <LogListContext.Provider
       value={{
@@ -656,7 +664,8 @@ export const LogListContextProvider = ({
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
-        syntaxHighlighting: logListState.syntaxHighlighting,
+        syntaxHighlighting: logListState.syntaxHighlighting && !syntaxHighlightingUnavailable,
+        syntaxHighlightingUnavailable: syntaxHighlightingUnavailable,
         timestampResolution: logListState.timestampResolution,
         unwrappedColumns,
         wrapLogMessage,
@@ -683,7 +692,7 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
-  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const datasource = await getDataSourceInstance(log.datasourceUid);
   const context = [];
   if (datasource) {
     context.push(
@@ -716,5 +725,5 @@ ${log.entry.replaceAll('`', '\\`')}
 
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
-  return width > 1200;
+  return width >= 1920;
 }

@@ -4,7 +4,7 @@ import {
   type QueryEditorOperatorValueType,
 } from './dataquery.gen';
 
-export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> extends QueryEditorOperatorBase {
+interface QueryEditorOperator<T extends QueryEditorOperatorValueType> extends QueryEditorOperatorBase {
   value?: T;
 }
 

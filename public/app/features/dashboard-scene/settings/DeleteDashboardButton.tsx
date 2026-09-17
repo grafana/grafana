@@ -70,7 +70,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
   );
 }
 
-export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
+function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: DeleteModalProps) {
   return (
     <ConfirmModal
       isOpen={true}

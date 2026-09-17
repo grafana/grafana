@@ -18,7 +18,7 @@ import { initMoveable } from './sceneAbleManagement';
 const DEFAULT_OFFSET = 10;
 const HORIZONTAL_OFFSET = 50;
 
-export const frameItemDummy: CanvasElementItem = {
+const frameItemDummy: CanvasElementItem = {
   id: 'frame',
   name: 'Frame',
   description: 'Frame',

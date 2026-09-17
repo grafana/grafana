@@ -54,8 +54,10 @@ describe('useRuleAdministrationAbility', () => {
 
   it('grants update and delete when user has permissions and ruler is available', async () => {
     setFolderAccessControl({
+      'alert.rules:read': true,
       'alert.rules:write': true,
       'alert.rules:delete': true,
+      'folders:read': true,
     });
 
     const rule = getGrafanaRule();
@@ -71,8 +73,10 @@ describe('useRuleAdministrationAbility', () => {
 
   it('matches snapshot for a Grafana rule with all permissions granted', async () => {
     setFolderAccessControl({
+      'alert.rules:read': true,
       'alert.rules:write': true,
       'alert.rules:delete': true,
+      'folders:read': true,
     });
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
@@ -97,6 +101,9 @@ describe('useRuleAdministrationAbility', () => {
 
     // Snapshot the initial loading state before the ruler resolves
     expect(result.current).toMatchSnapshot();
+
+    // Drain the async queue so the test does not leave in-flight state updates
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
   it('returns INSUFFICIENT_PERMISSIONS when user lacks folder edit permission', async () => {
@@ -143,7 +150,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('is editable (not IS_PLUGIN_MANAGED) when plugin origin label references a non-existent plugin', async () => {
-    setFolderAccessControl({ 'alert.rules:write': true });
+    setFolderAccessControl({ 'alert.rules:read': true, 'alert.rules:write': true, 'folders:read': true });
 
     const rule = getGrafanaRule({
       labels: { __grafana_origin: 'plugin/non-existent-plugin' },
@@ -190,7 +197,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('grants restore and pause for Grafana-managed rules with edit permission', async () => {
-    setFolderAccessControl({ 'alert.rules:write': true });
+    setFolderAccessControl({ 'alert.rules:read': true, 'alert.rules:write': true, 'folders:read': true });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
@@ -235,7 +242,12 @@ describe('useRuleAdministrationAbility', () => {
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
-    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+    setFolderAccessControl({
+      'alert.rules:read': true,
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
+      'folders:read': true,
+    });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
@@ -254,7 +266,12 @@ describe('useRuleAdministrationAbility', () => {
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
     jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
-    setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
+    setFolderAccessControl({
+      'alert.rules:read': true,
+      'alert.rules:write': true,
+      'alert.rules:delete': true,
+      'folders:read': true,
+    });
 
     const rule = getGrafanaRule();
     const groupId = groupIdentifier.fromCombinedRule(rule);
@@ -410,8 +427,11 @@ function makePromRule(overrides?: Partial<GrafanaPromRuleDTO>): GrafanaPromRuleD
 }
 
 describe('usePromRuleAdministrationAbility', () => {
-  it('returns all NOT_SUPPORTED when skipToken is passed', () => {
+  it('returns all NOT_SUPPORTED when skipToken is passed', async () => {
     const { result } = renderHook(() => usePromRuleAdministrationAbility(skipToken), { wrapper: wrapper() });
+
+    // Drain the async queue from useRulePluginImmutability's useAsync call
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(isNotSupported(result.current.update)).toBe(true);
     expect(isNotSupported(result.current.delete)).toBe(true);

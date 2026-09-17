@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -144,7 +145,16 @@ func (ss *FolderUnifiedStoreImpl) getFolderIdentifiers(ctx context.Context, iden
 		return nil, nil
 	}
 
-	users, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
+	// Resolving createdBy/updatedBy display info is internal metadata enrichment, not a
+	// resource the caller explicitly requested. Authorize it against the service identity so
+	// callers without users:read (e.g. viewers) can still resolve display names.
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	svcCtx := identity.WithServiceIdentityContext(ctx, requester.GetOrgID())
+
+	users, err := ss.userService.ListByIdOrUID(svcCtx, userUIDs, userIds)
 	if err != nil {
 		return nil, err
 	}

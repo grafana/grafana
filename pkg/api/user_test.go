@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -52,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -62,7 +66,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -82,15 +86,15 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -162,10 +166,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -194,10 +198,10 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "multi",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -446,11 +450,177 @@ func Test_GetUserByID(t *testing.T) {
 	}
 }
 
+func forbiddenUserErr() error {
+	return apierrors.NewForbidden(
+		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
+		"u123", errors.New("unauthorized request"),
+	)
+}
+
+func Test_GetUserByID_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				Cfg:         setting.NewCfg(),
+				userService: &usertest.FakeUserService{ExpectedError: tc.err},
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
+		})
+	}
+}
+
+func Test_GetUserByLoginOrEmail_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				Cfg:         setting.NewCfg(),
+				userService: &usertest.FakeUserService{ExpectedError: tc.err},
+			}
+
+			sc := setupScenarioContext(t, "/api/users/lookup")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByLoginOrEmail(c)
+			})
+			sc.m.Get("/api/users/lookup", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
+		})
+	}
+}
+
+func TestMiddlewareUserUIDResolver_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			userService := &usertest.FakeUserService{ExpectedError: tc.err}
+
+			sc := setupScenarioContext(t, "/api/users/u123")
+			sc.m.Get("/api/users/:id", middlewareUserUIDResolver(userService, ":id"))
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
+		})
+	}
+}
+
+func Test_GetUserByID_ExternalAuthInfoFromSpec(t *testing.T) {
+	testcases := []struct {
+		name                       string
+		authModules                []string
+		samlEnabled                bool
+		samlSkipOrgRoleSync        bool
+		expectedIsExternallySynced bool
+	}{
+		{
+			name:                       "auth proxy module marks the user external but not externally synced",
+			authModules:                []string{login.AuthProxyAuthModule},
+			expectedIsExternallySynced: false,
+		},
+		{
+			name:                       "SAML module is externally synced when enabled and org roles are synced",
+			authModules:                []string{login.SAMLAuthModule},
+			samlEnabled:                true,
+			samlSkipOrgRoleSync:        false,
+			expectedIsExternallySynced: true,
+		},
+		{
+			name:                       "multiple modules are externally synced if any one is",
+			authModules:                []string{login.AuthProxyAuthModule, login.SAMLAuthModule},
+			samlEnabled:                true,
+			samlSkipOrgRoleSync:        false,
+			expectedIsExternallySynced: true,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// user_auth returns not-found, so auth flags must come from the Kubernetes
+			// spec.externalAuthInfo modules, not the legacy fallback.
+			authInfoService := &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
+			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{AuthModules: tc.authModules}}
+			authnService := &authntest.FakeService{
+				ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+					ExpectedIsSkipOrgRoleSyncEnabled: tc.samlSkipOrgRoleSync,
+				},
+				EnabledClients: []string{},
+			}
+			if tc.samlEnabled {
+				authnService.EnabledClients = []string{authn.ClientSAML}
+			}
+
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				authInfoService: authInfoService,
+				SocialService:   &socialtest.FakeSocialService{},
+				userService:     userService,
+				authnService:    authnService,
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			var resp user.UserProfileDTO
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &resp))
+
+			expectedLabels := make([]string, 0, len(tc.authModules))
+			for _, m := range tc.authModules {
+				expectedLabels = append(expectedLabels, login.GetAuthProviderLabel(m))
+			}
+
+			assert.True(t, resp.IsExternal, "user with spec auth modules must be external")
+			assert.Equal(t, expectedLabels, resp.AuthLabels)
+			assert.Equal(t, tc.expectedIsExternallySynced, resp.IsExternallySynced)
+		})
+	}
+}
+
 func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -481,18 +651,33 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 			assert.Equal(t, 403, sc.resp.Code)
 		},
 	}, hs)
+
+	hs.userService = &usertest.FakeUserService{ExpectedError: user.ErrUserAlreadyExists}
+
+	updateUserScenario(t, updateUserContext{
+		desc:         "Should return 409 when the login or email is taken by another user",
+		url:          "/api/users/1",
+		routePattern: "/api/users/:id",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, http.StatusConflict, sc.resp.Code)
+		},
+	}, hs)
 }
 
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -717,13 +902,13 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -1203,7 +1388,7 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,

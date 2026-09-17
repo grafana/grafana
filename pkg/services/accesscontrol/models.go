@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -273,12 +274,7 @@ func (p *ResourcePermission) Contains(targetActions []string) bool {
 	}
 
 	var contain = func(arr []string, s string) bool {
-		for _, item := range arr {
-			if item == s {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(arr, s)
 	}
 
 	for _, a := range targetActions {
@@ -410,6 +406,7 @@ const (
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 	ScopeSettingsSCIM = "settings:auth.scim:*"
+	ScopeSettingsSMTP = "settings:smtp:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -537,6 +534,40 @@ const (
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
+	// Config k8s resource actions, scoped per-resource. Reads are exposed to
+	// viewers; updates are gated to admins.
+	AlertingConfigResource     = "configs"
+	AlertingConfigKind         = AlertingNotificationsApiGroup + "/" + AlertingConfigResource
+	ActionAlertingConfigRead   = AlertingConfigKind + ":get"
+	ActionAlertingConfigUpdate = AlertingConfigKind + ":update"
+	// ActionAlertingConfigStatusUpdate gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the sync worker
+	// owns it.
+	ActionAlertingConfigStatusUpdate = AlertingConfigKind + "/status:update"
+
+	// Rules Config k8s resource actions (rules.alerting.grafana.app/configs),
+	// scoped per-resource. Mirrors the AlertingConfig* actions but on the rules
+	// app group, so the notifications and rules admin configs stay fully
+	// decoupled. Reads are exposed to viewers; updates are gated to admins.
+	AlertingRulesApiGroup       = "rules.alerting.grafana.app"
+	AlertingRulesConfigResource = "configs"
+	AlertingRulesConfigKind     = AlertingRulesApiGroup + "/" + AlertingRulesConfigResource
+	// AlertingRulesConfigScopeRoot is the RBAC scope root for the rules-app
+	// Config singleton. It is intentionally distinct from the notifications
+	// AlertingConfig scope root ("configs") so the two apps' admin configs stay
+	// decoupled; the k8s resources merely share the name "configs".
+	AlertingRulesConfigScopeRoot    = "rules-configs"
+	ActionAlertingRulesConfigRead   = AlertingRulesConfigKind + ":get"
+	ActionAlertingRulesConfigUpdate = AlertingRulesConfigKind + ":update"
+	// ActionAlertingRulesConfigStatusUpdate gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the ruler sync worker
+	// owns it.
+	ActionAlertingRulesConfigStatusUpdate = AlertingRulesConfigKind + "/status:update"
+
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
@@ -546,6 +577,12 @@ const (
 	ActionLibraryPanelsRead   = "library.panels:read"
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
+
+	// Variable actions (dashboard.grafana.app/variables — stack-wide and folder-scoped)
+	ActionVariablesCreate = "variables:create"
+	ActionVariablesRead   = "variables:read"
+	ActionVariablesWrite  = "variables:write"
+	ActionVariablesDelete = "variables:delete"
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"

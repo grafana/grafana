@@ -1,11 +1,11 @@
-import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { PluginType } from '@grafana/data';
 
 import { type AzureMonitorDataSourceInstanceSettings } from '../types/types';
 
 import { type DeepPartial, mapPartialArrayObject } from './utils';
 
 export const createMockInstanceSetttings = (
-  overrides?: DeepPartial<DataSourceInstanceSettings>
+  overrides?: DeepPartial<AzureMonitorDataSourceInstanceSettings>
 ): AzureMonitorDataSourceInstanceSettings => {
   const metaOverrides = overrides?.meta;
   return {

@@ -63,7 +63,12 @@ export const DashboardLibraryInteractions = {
   }) => {
     reportDashboardLibraryInteraction('mapping_form_completed', properties);
   },
-  entryPointClicked: (properties: { entryPoint: SourceEntryPoint; contentKind: ContentKind }) => {
+  entryPointClicked: (properties: {
+    entryPoint: SourceEntryPoint;
+    /** @deprecated Use contentKinds instead. */
+    contentKind: ContentKind | undefined;
+    contentKinds: ContentKind[];
+  }) => {
     reportDashboardLibraryInteraction('entry_point_clicked', properties);
   },
 

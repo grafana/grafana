@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 import { type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -16,7 +17,6 @@ import { constructDataSourceExploreUrl } from '../utils';
 import {
   initDataSourceSettings,
   testDataSource,
-  loadDataSource,
   loadDataSources,
   loadDataSourcePlugins,
   addDataSource,
@@ -60,14 +60,6 @@ export const useLoadDataSources = () => {
   return { isLoading, dataSources };
 };
 
-export const useLoadDataSource = (uid: string) => {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(loadDataSource(uid));
-  }, [dispatch, uid]);
-};
-
 export const useLoadDataSourcePlugins = () => {
   const dispatch = useDispatch();
 
@@ -100,7 +92,10 @@ export const useDeleteLoadedDataSource = () => {
         title: t('datasources.use-delete-loaded-data-source.title.delete', 'Delete'),
         text: `Are you sure you want to delete the "${name}" data source?`,
         yesText: 'Delete',
-        onConfirm: () => dispatch(deleteLoadedDataSource()),
+        onConfirm: () => {
+          reportInteraction('connections_datasource_deleted', {}, { silent: true });
+          dispatch(deleteLoadedDataSource());
+        },
       })
     );
   };

@@ -8,6 +8,7 @@ import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import {
   FIELD_SELECTOR_MIN_WIDTH,
+  type FieldWithStats,
   getDefaultFieldSelectorWidth,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
@@ -30,6 +31,7 @@ interface Props {
   timeFieldName: string;
   bodyFieldName: string;
   levelFieldName: string;
+  getSuggestedFields?: (dataFrame: DataFrame, columns: string[], defaultColumns: string[]) => FieldWithStats[];
 }
 
 export function LogsTableFields({
@@ -44,6 +46,7 @@ export function LogsTableFields({
   levelFieldName,
   logsFrame,
   onFieldSelectorWidthChange,
+  getSuggestedFields,
 }: Props) {
   const styles = useStyles2(getStyles, fieldSelectorWidth, height);
   const dragStyles = useStyles2(getDragStyles);
@@ -142,6 +145,7 @@ export function LogsTableFields({
             setWidth={onFieldSelectorWidthChange}
             width={fieldSelectorWidth}
             toggle={toggleField}
+            getSuggestedFields={getSuggestedFields}
           />
         </Resizable>
       )}

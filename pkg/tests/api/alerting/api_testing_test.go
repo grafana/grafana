@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,7 +33,13 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	db.SetupTestDB()
+	code := m.Run()
+	if standardEnvShutdownFn != nil {
+		standardEnvShutdownFn()
+	}
+	db.CleanupTestDB()
+	os.Exit(code)
 }
 
 func TestGrafanaRuleConfig(t *testing.T) {

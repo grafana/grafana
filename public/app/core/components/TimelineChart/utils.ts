@@ -36,6 +36,7 @@ import {
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
+import { findFrameWithNullTimeValue } from 'app/features/panel/frames/validation';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
 
@@ -274,7 +275,7 @@ function getSpanNulls(field: Field) {
 /**
  * Merge values by the threshold
  */
-export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
+function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
   const thresholds = field.config.thresholds;
   if (field.type !== FieldType.number || !thresholds || !thresholds.steps.length) {
     return undefined;
@@ -476,6 +477,22 @@ export function prepareTimelineFields(
     return { warn: t('timeline.missing-field.all', 'No graphable fields') };
   }
 
+  const invalidFrame = findFrameWithNullTimeValue(frames);
+  if (invalidFrame) {
+    return {
+      warn: invalidFrame.refId
+        ? t(
+            'timeseries.time-series-panel.null-time-value-query',
+            'Query {{refId}} returned a time field with null values; filter out rows with empty timestamps',
+            { refId: invalidFrame.refId }
+          )
+        : t(
+            'timeseries.time-series-panel.null-time-value',
+            'A query returned a time field with null values; filter out rows with empty timestamps'
+          ),
+    };
+  }
+
   return { frames };
 }
 
@@ -611,7 +628,7 @@ export function prepareTimelineLegendItems(
   return getFieldLegendItem(allNonTimeFields(frames), theme);
 }
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
+function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }

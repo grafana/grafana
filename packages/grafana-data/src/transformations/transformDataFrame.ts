@@ -47,7 +47,7 @@ export const __resetTransformationCacheForTests = () => {
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) => {
-    const info = standardTransformersRegistry.get(config.id);
+    const info = standardTransformersRegistry.getIfExists(config.id);
 
     if (!info) {
       return source;

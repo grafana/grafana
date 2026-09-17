@@ -59,7 +59,7 @@ export const heatmapChangedHandler: PanelTypeChangedHandler = (panel, prevPlugin
   return {};
 };
 
-export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
+function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],

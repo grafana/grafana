@@ -21,7 +21,7 @@ import (
 //
 // Gets all existing permissions for the given dashboard.
 //
-// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
 //
 // Deprecated: true
 //
@@ -331,9 +331,9 @@ type UpdateDashboardPermissionsByUIDParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardACLCommand
+	// The dashboard UID
 	// in:path
 	// required:true
-	// description: The dashboard UID
 	UID string `json:"uid"`
 }
 

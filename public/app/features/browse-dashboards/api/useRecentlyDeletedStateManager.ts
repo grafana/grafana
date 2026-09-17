@@ -18,6 +18,17 @@ export class TrashStateManager extends SearchStateManager {
   protected sortStorageKey = SEARCH_SELECTED_SORT_DELETED;
   protected layoutStorageKey = SEARCH_SELECTED_LAYOUT_DELETED;
 
+  // Clear stale results so the skeleton shows while fresh data loads on navigation
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
+    this.setState({ result: undefined });
+    super.initStateFromUrl(folderUid, doInitialSearch);
+  }
+
+  // Clear stale results to show skeleton during post-mutation refresh
+  refreshAfterMutation() {
+    this.setState({ result: undefined });
+    return super.doSearch();
+  }
   setStateAndDoSearch(state: Partial<SearchState>) {
     const sort = state.sort || this.state.sort || store.get(this.sortStorageKey) || undefined;
 
@@ -54,7 +65,9 @@ export class TrashStateManager extends SearchStateManager {
   // Get tags from deleted dashboards cache
   getTagOptions = async (): Promise<TermCount[]> => {
     try {
-      const deletedHits = await deletedDashboardsCache.get();
+      // Unfiltered, so the options cover everything in trash rather than the current results.
+      // Trash rejects facets, so counting the rows is the only way to build this.
+      const deletedHits = await deletedDashboardsCache.searchAllForOptions();
       const tagCounts = new Map<string, number>();
 
       deletedHits.forEach((hit) => {

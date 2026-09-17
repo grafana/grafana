@@ -100,6 +100,7 @@ export const getCardContainerStyles = (
   const metaRow = `"Figure Meta ${hasTagsComponent ? 'Tags' : 'Meta'}"`;
   const descriptionRow = `"Figure Description ${hasTagsComponent ? 'Tags' : 'Description'}" 1fr`;
   const actionsRow = `"Figure Actions Secondary" / auto 1fr auto`;
+  const backgroundColor = theme.components.card.background;
 
   return {
     container: css({
@@ -115,8 +116,9 @@ export const getCardContainerStyles = (
       gridAutoFlow: 'row',
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      background: backgroundColor,
+      border: `1px solid ${theme.components.card.borderColor}`,
+      borderRadius: theme.shape.radius.lg,
       marginBottom: theme.spacing(noMargin ? 0 : 1),
       pointerEvents: disabled ? 'none' : 'auto',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
@@ -127,7 +129,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+          background: theme.colors.emphasize(backgroundColor, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },
@@ -139,14 +141,14 @@ export const getCardContainerStyles = (
       }),
 
       ...(isSelected && {
-        outline: `solid 2px ${theme.colors.primary.border}`,
+        outline: `solid 1px ${theme.colors.accent.border}`,
       }),
     }),
     oldContainer: css({
       display: 'flex',
       width: '100%',
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      background: backgroundColor,
+      borderRadius: theme.shape.radius.lg,
       position: 'relative',
       pointerEvents: disabled ? 'none' : 'auto',
       marginBottom: theme.spacing(noMargin ? 0 : 1),
@@ -158,7 +160,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+          background: theme.colors.emphasize(backgroundColor, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },

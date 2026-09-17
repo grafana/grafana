@@ -356,6 +356,57 @@ func TestAPI_Annotations(t *testing.T) {
 	}
 }
 
+func TestAPI_GetAnnotationTags(t *testing.T) {
+	tests := []struct {
+		desc          string
+		path          string
+		expectedLimit int64
+	}{
+		{
+			desc:          "applies the default limit when none is supplied",
+			path:          "/api/annotations/tags",
+			expectedLimit: defaultAnnotationsLimit,
+		},
+		{
+			desc:          "passes an explicit limit through unchanged",
+			path:          "/api/annotations/tags?limit=250",
+			expectedLimit: 250,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			repo := annotations.FakeAnnotationsRepo{}
+			var gotQuery *annotations.TagsQuery
+			repo.On("FindTags", mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					gotQuery = args.Get(1).(*annotations.TagsQuery)
+				}).
+				Return(annotations.FindTagsResult{}, nil)
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.annotationsRepo = &repo
+				hs.Features = featuremgmt.WithFeatures()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			})
+
+			permissions := []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}
+			req := webtest.RequestWithSignedInUser(
+				server.NewRequest(http.MethodGet, tt.path, nil),
+				authedUserWithPermissions(1, 1, permissions),
+			)
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			require.NotNil(t, gotQuery)
+			assert.Equal(t, tt.expectedLimit, gotQuery.Limit)
+		})
+	}
+}
+
 func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	rootDashUID := "root-dashboard"
 	folderDashUID := "folder-dashboard"

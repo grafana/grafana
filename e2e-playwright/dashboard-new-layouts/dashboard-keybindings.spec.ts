@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -11,23 +11,18 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     viewport: { width: 1280, height: 1080 },
   });
 
-  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
-
-    const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
-    await expect(panelContents).toHaveCount(5);
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('server = A, pod = Bob'))
-    ).toBeVisible();
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('server = B, pod = Bob'))
-    ).toBeVisible();
+  test('should collapse and expand all rows', async ({ gotoDashboardPage, page, panels }) => {
+    await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
+    const panelBodies = panels.getBodies();
+    await expect(panelBodies).toHaveCount(5);
+    await expect(panels.getPanel('server = A, pod = Bob')).toBeVisible();
+    await expect(panels.getPanel('server = B, pod = Bob')).toBeVisible();
 
     // Collapse all rows using keyboard shortcut: d + Shift+C
     await page.keyboard.press('d');
     await page.keyboard.press('Shift+C');
 
-    await expect(panelContents).toHaveCount(0);
+    await expect(panelBodies).toHaveCount(0);
     await expect(page.getByText('server = A, pod = Bob')).toBeHidden();
     await expect(page.getByText('server = B, pod = Bob')).toBeHidden();
 
@@ -35,16 +30,14 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await page.keyboard.press('d');
     await page.keyboard.press('Shift+E');
 
-    await expect(panelContents).toHaveCount(6);
+    await expect(panelBodies).toHaveCount(6);
     await expect(page.getByText('server = A, pod = Bob')).toBeVisible();
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });
 
-  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors }) => {
+  test('should open panel inspect', async ({ gotoDashboardPage, page, selectors, panels }) => {
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
-
-    // Find Panel #1 and press 'i' to open inspector
-    const panel1 = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel #1'));
+    const panel1 = panels.getPanel('Panel #1');
     await expect(panel1).toBeVisible();
     await panel1.press('i');
 
@@ -55,6 +48,6 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     // Press Escape to close inspector
     await page.keyboard.press('Escape');
 
-    await expect(page.getByTestId(selectors.components.PanelInspector.Json.content)).toBeHidden();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
   });
 });

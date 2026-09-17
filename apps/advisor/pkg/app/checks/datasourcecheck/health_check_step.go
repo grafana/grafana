@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -20,15 +21,15 @@ type healthCheckStep struct {
 }
 
 func (s *healthCheckStep) Title() string {
-	return "Health check"
+	return translations.StepTitle(CheckID, HealthCheckStepID)
 }
 
 func (s *healthCheckStep) Description() string {
-	return "Checks if a data source is healthy."
+	return translations.StepDescription(CheckID, HealthCheckStepID)
 }
 
 func (s *healthCheckStep) Resolution() string {
-	return "Go to the data source configuration page and address the issues reported."
+	return translations.StepResolution(CheckID, HealthCheckStepID)
 }
 
 func (s *healthCheckStep) ID() string {
@@ -43,6 +44,14 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 
 	if plugin, exists := s.PluginStore.Plugin(ctx, ds.Type); !exists || !plugin.Backend {
 		log.Debug("Skipping health check because it's missing or a frontend-only plugin", "datasource_uid", ds.UID, "datasource_type", ds.Type, "plugin_exists", exists, "plugin_backend", plugin.Backend)
+		return nil, nil
+	}
+
+	// When Forward OAuth Identity (oauthPassThru) is enabled, the health check depends on the
+	// end user's OAuth token, which is not available in this context. The result would reflect
+	// the check runner's identity rather than the data source, so we can't reliably verify it.
+	if ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool(false) {
+		log.Debug("Skipping health check because the data source uses Forward OAuth Identity", "datasource_uid", ds.UID, "datasource_type", ds.Type)
 		return nil, nil
 	}
 
@@ -71,10 +80,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 			ds.Name,
 			ds.UID,
 			[]advisor.CheckErrorLink{
-				{
-					Message: "Fix me",
-					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-				},
+				checks.NewErrorLink("fix-me", fmt.Sprintf("/connections/datasources/edit/%s", ds.UID)),
 			},
 			moreInfo,
 		)}, nil

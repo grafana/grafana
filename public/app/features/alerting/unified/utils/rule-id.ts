@@ -31,6 +31,9 @@ import {
   prometheusRuleType,
   rulerRuleType,
 } from './rules';
+import { parsePrometheusDuration } from './time';
+
+const collator = new Intl.Collator();
 
 export function fromRulerRule(
   ruleSourceName: string,
@@ -249,7 +252,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     .join('$');
 }
 
-export function hash(value: string): number {
+function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
@@ -311,14 +314,84 @@ export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
   throw new Error('Only recording and alerting rules can be hashed');
 }
 
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-export function hashQuery(query: string) {
-  // remove comments
-  query = query
+/**
+ * Strips PromQL comments from a query string.
+ * Handles both full-line comments (lines starting with #) and inline comments
+ * (# appearing after code on the same line, e.g. `or # fallback condition`).
+ * Mimir normalizes expressions by stripping comments before storing them in
+ * Prometheus state, so the ruler expression and the Prometheus query must be
+ * processed identically before comparison.
+ */
+export function stripPromQLComments(query: string): string {
+  return query
+    .replace(/#[^\n]*/g, '') // strip from # to end of line (inline and full-line comments)
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
+    .filter((line) => Boolean(line))
     .join('\n');
+}
+
+/**
+ * A PromQL string literal, in any of the three syntaxes PromQL allows. A backslash escapes the next
+ * character in a quoted string, so `"{{\"FOO\"}}"` is one string and not two – but not in a backtick
+ * raw string, where a backslash is just a backslash.
+ */
+const PROMQL_STRING = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`/;
+
+/**
+ * A PromQL duration literal – one or more `<number><unit>` parts, e.g. `5m`, `1h30m`, `500ms`.
+ *
+ * The lookbehind and lookahead keep us from matching a duration-looking tail inside an identifier,
+ * so a recording rule named `job:latency:rate5m` is left alone. They also have to exclude a dot:
+ * plain `\b` would find a boundary in the middle of `1.5h` and match just the `5h`.
+ *
+ * The interval patterns elsewhere in Grafana can't stand in for this one – they either anchor to the
+ * whole string, or they accept the units of a Grafana interval rather than a PromQL duration.
+ */
+const PROMQL_DURATION = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/;
+
+/**
+ * Strings come first, and the scan runs left to right, so an opening quote swallows the whole literal
+ * before anything inside it can be read as a duration.
+ */
+const PROMQL_STRING_OR_DURATION = new RegExp(`${PROMQL_STRING.source}|${PROMQL_DURATION.source}`, 'g');
+
+const QUOTE_CHARACTERS = ['"', "'", '`'];
+
+/**
+ * Rewrites every duration in a query to a plain number of milliseconds.
+ *
+ * Mimir parses the expression and prints it back out when it exposes the rule via the Prometheus
+ * rules API, and printing picks the largest unit that fits. A hand-written `[60m:]` in the ruler
+ * YAML therefore comes back as `[1h:]`, which would otherwise fingerprint differently.
+ *
+ * Durations inside a string are left alone. `window="60m"` and `window="1h"` select different series,
+ * so rewriting them would make two genuinely different rules look like one – as happens in the
+ * multi-window burn rate pattern, where each rule carries its own window as a label.
+ */
+export function normalizePromQLDurations(query: string): string {
+  return query.replace(PROMQL_STRING_OR_DURATION, (match) => {
+    if (QUOTE_CHARACTERS.includes(match[0])) {
+      return match;
+    }
+
+    try {
+      return `${parsePrometheusDuration(match)}ms`;
+    } catch {
+      // the two patterns could drift apart, so leave anything we can't parse exactly as we found it
+      // rather than collapsing it to a value that would make unrelated durations look identical
+      return match;
+    }
+  });
+}
+
+// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
+export function hashQuery(query: string) {
+  // remove comments (full-line and inline)
+  query = stripPromQLComments(query);
+
+  // `60m` and `1h` mean the same thing but don't look the same
+  query = normalizePromQLDurations(query);
 
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
@@ -335,6 +408,14 @@ export function hashQuery(query: string) {
   // Convert `{{.field}}` to "{{.field}}"
   query = query.replace(/`([^`]*)`/g, '"$1"');
 
+  // Mimir re-serializes the expression when exposing it via the Prometheus rules API, which drops
+  // trailing commas and empty label selectors that are legal in hand-written ruler YAML. Both have
+  // to go before hashing, or a ruler `expr` and its Prometheus `query` fingerprint differently.
+  // Convert `metric{foo="bar",}` to `metric{foo="bar"}`
+  query = query.replace(/,(?=})/g, '');
+  // Convert `metric{}` to `metric`
+  query = query.replace(/{}/g, '');
+
   // remove quotes, brackets, parentheses, backslashes, and backticks
   query = query.replace(/['"()\[\]\\`]/g, '');
 
@@ -342,8 +423,8 @@ export function hashQuery(query: string) {
   return query.split('').sort().join('');
 }
 
-export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
-  return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+  return JSON.stringify(Object.entries(item || {}).sort((a, b) => collator.compare(a[0], b[0])));
 }
 
 export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): string {

@@ -60,6 +60,17 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
+
+	// Request default permissions for new root folders via the App Platform path; the folder API
+	// server's permission setter acts on this annotation. Root-only (nested inherit from the parent).
+	if folder.IsRootFolderUID(cmd.ParentUID) {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
 		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
@@ -231,6 +242,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		q.Page = 1
 	}
 
+	// A root folder UID ("" or "general") is expanded to match both root
+	// sentinels by the search backend, so pass q.UID through unchanged.
 	fields := []*resourcepb.Requirement{{
 		Key:      resource.SEARCH_FIELD_FOLDER,
 		Operator: string(selection.In),
@@ -256,9 +269,10 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Fields: fields},
-		Limit:   q.Limit,
-		Offset:  q.Limit * (q.Page - 1),
+		Options:      &resourcepb.ListOptions{Fields: fields},
+		Limit:        q.Limit,
+		Offset:       q.Limit * (q.Page - 1),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	hits, _, err := ss.doSearchPage(ctx, q.OrgID, req)
 	return hits, err
@@ -279,10 +293,12 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			UID:       item.Name,
-			Title:     item.Title,
-			ParentUID: item.Folder,
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:   item.Name,
+			Title: item.Title,
+			// Legacy responses convey root with an empty ParentUID; the apistore
+			// now stores it as "general", so convert back here.
+			ParentUID: folder.ToLegacyFolderUID(item.Folder),
 			ManagedBy: item.ManagedBy.Kind,
 		})
 	}
@@ -323,6 +339,13 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetFolders")
 	defer span.End()
+
+	// Serve metadata-only callers from the search index to avoid the serial
+	// full-object BatchGet that dominates LIST cost on large orgs. The index is
+	// RBAC filtered the same way as the storage list path.
+	if q.MetadataOnly {
+		return ss.getFoldersMetadata(ctx, q)
+	}
 
 	out, err := ss.list(ctx, q.OrgID, v1.ListOptions{})
 	if err != nil {
@@ -370,6 +393,90 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	return hits, nil
 }
 
+// getFoldersMetadata serves GetFolders from the search index. It fetches
+// metadata for ALL readable folders (needed to resolve parent chains for the
+// full paths) then applies the UID filter client-side, mirroring the list
+// path's semantics without reading any full stored objects.
+func (ss *FolderUnifiedStoreImpl) getFoldersMetadata(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"getFoldersMetadata")
+	defer span.End()
+
+	refs, err := ss.searchAllFolders(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	folders := make([]*folder.Folder, len(refs))
+	for i, ref := range refs {
+		folders[i] = &folder.Folder{
+			ID:        ref.ID, // nolint:staticcheck
+			OrgID:     q.OrgID,
+			UID:       ref.UID,
+			ParentUID: ref.ParentUID,
+			Title:     ref.Title,
+			ManagedBy: ref.ManagedBy,
+		}
+	}
+
+	filters := make(map[string]struct{}, len(q.UIDs))
+	for _, uid := range q.UIDs {
+		filters[uid] = struct{}{}
+	}
+
+	folderMap := make(map[string]*folder.Folder)
+	relations := make(map[string]string)
+	if q.WithFullpath || q.WithFullpathUIDs {
+		for _, f := range folders {
+			folderMap[f.UID] = f
+			relations[f.UID] = f.ParentUID
+		}
+	}
+
+	hits := make([]*folder.Folder, 0, len(folders))
+	for _, f := range folders {
+		if shouldSkipFolder(f, filters) {
+			continue
+		}
+
+		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
+			if err := buildFolderFullPaths(f, relations, folderMap); err != nil {
+				return nil, err
+			}
+		}
+
+		hits = append(hits, f)
+	}
+
+	return hits, nil
+}
+
+// searchAllFolders returns metadata for every folder the caller can read,
+// paginating to exhaustion. No field requirements matches all folders; the
+// search backend applies RBAC, matching the list path's visibility.
+func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID int64) ([]*folder.FolderReference, error) {
+	ctx, span := ss.tracer.Start(ctx, tracePrefix+"searchAllFolders")
+	defer span.End()
+
+	var all []*folder.FolderReference
+	for offset := int64(0); ; {
+		req := &resourcepb.ResourceSearchRequest{
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}
+		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, hits...)
+		if raw == 0 {
+			return all, nil
+		}
+		offset += int64(raw)
+	}
+}
+
 // searchChildren returns ALL direct children of any of the given parent UIDs
 // via k8sclient.Search (multi-value `In` filter on the folder field),
 // paginating to exhaustion. Used internally by GetDescendants.
@@ -395,9 +502,10 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Fields: fields},
-			Limit:   searchPageSize,
-			Offset:  offset,
+			Options:      &resourcepb.ListOptions{Fields: fields},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -559,15 +667,13 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		return nil, err
 	}
 
+	// A resource can be reported twice, by unified storage and by the "sql-fallback"
+	// group. Resources not yet in unified storage still get an entry there with a count
+	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
-		// if stats come from unified storage, we will use them
-		if v.Group != "sql-fallback" {
-			out[v.Resource] = v.Count
-			continue
-		}
-		// if stats are from single tenant DB and they are not in unified storage, we will use them
-		if _, ok := out[v.Resource]; !ok {
+		current, seen := out[v.Resource]
+		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count
 		}
 	}
@@ -578,17 +684,22 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	fullpath := make([]string, len(parents))
 	fullpathUIDs := make([]string, len(parents))
 	for i, p := range parents {
-		fullpath[i] = p.Title
+		fullpath[i] = escapeSlashes(p.Title)
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func escapeSlashes(title string) string {
+	title = strings.ReplaceAll(title, "\\", "\\\\")
+	return strings.ReplaceAll(title, "/", "\\/")
 }
 
 func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
-	titles = append(titles, f.Title)
+	titles = append(titles, escapeSlashes(f.Title))
 	uids = append(uids, f.UID)
 
 	seen := make(map[string]bool)
@@ -611,7 +722,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 		if !exists {
 			break
 		}
-		titles = append(titles, parentFolder.Title)
+		titles = append(titles, escapeSlashes(parentFolder.Title))
 		uids = append(uids, parentFolder.UID)
 		currentUID = parentFolder.UID
 	}

@@ -9,7 +9,6 @@ import {
   type ColorScheme,
   type ColorSchemeDiff,
   type PaneView,
-  type SelectedView,
   type ViewMode,
   type TextAlign,
 } from '../types';
@@ -48,9 +47,8 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  selectedView?: SelectedView;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
 };
 
@@ -77,7 +75,6 @@ const FlameGraphCanvas = ({
   setCollapsedMap,
   collapsing,
   getExtraContextMenuButtons,
-  selectedView,
   viewMode,
   paneView,
   search,
@@ -236,7 +233,6 @@ const FlameGraphCanvas = ({
           allGroupsCollapsed={Array.from(collapsedMap.values()).every((i) => i.collapsed)}
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
-          selectedView={selectedView}
           viewMode={viewMode}
           paneView={paneView}
           search={search}
@@ -289,7 +285,7 @@ export const convertPixelCoordinatesToBarCoordinates = (
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
-  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const levelIndex = Math.floor(pos.y / PIXELS_PER_LEVEL);
   let found = undefined;
 
   while (next) {

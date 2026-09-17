@@ -1,5 +1,3 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-
 import { addRulePageEnrichmentSection } from '../../components/rule-viewer/tabs/extensions/RuleViewerExtension';
 import { useEnrichmentAbility } from '../../hooks/useAbilities';
 

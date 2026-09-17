@@ -50,12 +50,16 @@ func TestSyncer_Sync(t *testing.T) {
 		expectedError    string
 		expectedMessages []string
 		expectedFinalMsg string
+		// expectedVariance is the variance the sync must tag on the recorder. Empty
+		// means the path returns before choosing a sync and must not tag anything.
+		expectedVariance string
 	}{
 		{
 			name: "successful full sync",
 			options: provisioning.SyncJobOptions{
 				Incremental: false,
 			},
+			expectedVariance: "full",
 			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -68,7 +72,7 @@ func TestSyncer_Sync(t *testing.T) {
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -77,6 +81,7 @@ func TestSyncer_Sync(t *testing.T) {
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
 			},
+			expectedVariance: "incremental",
 			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -100,6 +105,7 @@ func TestSyncer_Sync(t *testing.T) {
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
 			},
+			expectedVariance: "full",
 			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -123,7 +129,7 @@ func TestSyncer_Sync(t *testing.T) {
 				})
 				repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil)
 				progress.On("SetMessage", mock.Anything, "full sync").Return()
-				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				fullSyncFn.EXPECT().Execute(mock.Anything, mock.Anything, mock.Anything, mock.Anything, "new-ref", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedMessages: []string{"full sync"},
 		},
@@ -152,6 +158,7 @@ func TestSyncer_Sync(t *testing.T) {
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
 			},
+			expectedVariance: "incremental",
 			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -189,6 +196,13 @@ func TestSyncer_Sync(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn, fullSyncFn, incrementalSyncFn)
 
+			// Sync must tag the recorder with the exact variance it ran. Paths that
+			// return before choosing a sync leave expectedVariance empty and set no
+			// expectation, so the strict mock fails if SetVariance is called at all.
+			if tt.expectedVariance != "" {
+				progress.EXPECT().SetVariance(tt.expectedVariance).Once()
+			}
+
 			syncer := NewSyncer(
 				compareFn.Execute,
 				fullSyncFn.Execute,
@@ -197,6 +211,7 @@ func TestSyncer_Sync(t *testing.T) {
 				10,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				false,
+				0,
 			)
 
 			quotaTracker := quotas.NewMockQuotaTracker(t)

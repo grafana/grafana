@@ -28,7 +28,6 @@ import {
   isCloudWatchMetricsQuery,
   isLogsAnomaliesQuery,
 } from './guards';
-import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import {
   type LogsSQLCompletionItemProvider,
   LogsSQLCompletionItemProviderFunc,
@@ -56,7 +55,6 @@ export class CloudWatchDatasource
   implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   defaultRegion?: string;
-  languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
   defaultLogGroups?: string[];
@@ -78,7 +76,6 @@ export class CloudWatchDatasource
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.resources = new ResourcesAPI(instanceSettings, templateSrv);
-    this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv);

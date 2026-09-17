@@ -23,6 +23,13 @@ import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardF
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
+jest.mock('../GenAI/GenAIPanelTitleButton', () => ({
+  GenAIPanelTitleButton: () => null,
+}));
+jest.mock('../GenAI/GenAIPanelDescriptionButton', () => ({
+  GenAIPanelDescriptionButton: () => null,
+}));
+
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 

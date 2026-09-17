@@ -1,8 +1,12 @@
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { AnnoKeyUpdatedBy } from 'app/features/apiserver/types';
+import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
+import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { dispatch } from 'app/types/store';
 
 import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
+import { fetchTrashPage, type TrashItem } from './trashSearchApi';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -24,9 +28,12 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
-jest.mock('app/features/apiserver/guards', () => ({
-  isResourceList: jest.fn(() => true),
+jest.mock('./trashSearchApi', () => ({
+  ...jest.requireActual('./trashSearchApi'),
+  fetchTrashPage: jest.fn(),
 }));
+
+const mockFetchTrashPage = fetchTrashPage as jest.MockedFunction<typeof fetchTrashPage>;
 const mockInitiate = iamAPIv0alpha1.endpoints.getDisplayMapping.initiate as unknown as jest.Mock;
 const mockDispatch = dispatch as unknown as jest.Mock;
 
@@ -336,25 +343,33 @@ describe('DeletedDashboardsCache', () => {
     deletedDashboardsCache.clear();
   });
 
-  function makeResourceList(uids: string[]) {
+  function makeTable(uids: string[]) {
     return {
-      apiVersion: 'v1' as const,
-      kind: 'List' as const,
+      ...EMPTY_TABLE_RESPONSE,
       metadata: { resourceVersion: '1' },
-      items: uids.map((uid) => ({
-        metadata: {
-          name: `dash-${uid}`,
-          annotations: { [AnnoKeyUpdatedBy]: uid },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: uids.map((uid) => ({
+        cells: [`dash-${uid}`, `Dashboard ${uid}`, '2024-01-01T00:00:00Z'],
+        object: {
+          metadata: {
+            name: `dash-${uid}`,
+            resourceVersion: '1',
+            creationTimestamp: '2024-01-01T00:00:00Z',
+            annotations: { [AnnoKeyUpdatedBy]: uid },
+          },
         },
-        spec: { title: `Dashboard ${uid}` },
       })),
     };
   }
 
   it('self-heals DELETED_BY_UNKNOWN on subsequent get() without clear()', async () => {
-    const resourceList = makeResourceList(['user:alice']);
+    const table = makeTable(['user:alice']);
     getDashboardAPI.mockResolvedValue({
-      listDeletedDashboards: jest.fn().mockResolvedValue(resourceList),
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
     });
 
     // First IAM call fails — batch returns an error result.
@@ -366,7 +381,7 @@ describe('DeletedDashboardsCache', () => {
 
     expect(firstResult).toHaveLength(1);
     expect(firstResult[0].field.deletedBy).toBe(DELETED_BY_UNKNOWN);
-    // ResourceList fetch was called once.
+    // Table fetch was called once.
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
 
     // Second IAM call succeeds — same UID now resolves.
@@ -378,8 +393,664 @@ describe('DeletedDashboardsCache', () => {
 
     expect(secondResult).toHaveLength(1);
     expect(secondResult[0].field.deletedBy).toBe('Alice');
-    // ResourceList fetch NOT called again — cached from first get().
+    // Table fetch NOT called again — cached from first get().
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+
+    consoleError.mockRestore();
+  });
+
+  it('accumulates rows across paginated responses', async () => {
+    const page1 = {
+      ...makeTable(['user:alice', 'user:bob']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+    const page2 = {
+      ...makeTable(['user:carol']),
+      metadata: { resourceVersion: '2' },
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    // IAM calls — one per unique UID batch
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(1, expect.objectContaining({ continue: undefined }));
+    expect(mockListDeletedDashboards).toHaveBeenNthCalledWith(2, expect.objectContaining({ continue: 'page2-token' }));
+  });
+
+  it('stops fetching when no continue token is present', async () => {
+    const table = makeTable(['user:alice']);
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(table);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns empty table when response has no rows on first page', async () => {
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    const table = await deletedDashboardsCache.getAsTable();
+
+    expect(table.rows).toHaveLength(0);
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns partial results when a subsequent page has no rows', async () => {
+    const page1 = {
+      ...makeTable(['user:alice']),
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+    };
+
+    const mockListDeletedDashboards = jest
+      .fn()
+      .mockResolvedValueOnce(page1)
+      .mockResolvedValueOnce({ unexpected: true });
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].field.deletedBy).toBe('Alice');
+    expect(mockListDeletedDashboards).toHaveBeenCalledTimes(2);
+  });
+
+  it('deduplicates rows by UID keeping the newest resourceVersion', async () => {
+    const duplicateTable = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '1' },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: [
+        {
+          cells: ['dash-a', 'Dashboard A (new)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '200',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-a', 'Dashboard A (old)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '100',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-b', 'Dashboard B', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-b',
+              resourceVersion: '150',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+            },
+          },
+        },
+      ],
+    };
+
+    const mockListDeletedDashboards = jest.fn().mockResolvedValue(duplicateTable);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockListDeletedDashboards });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.title)).toEqual(['Dashboard A (new)', 'Dashboard B']);
+  });
+
+  it('counts unique dashboards toward the limit when paging (limit applied after dedup)', async () => {
+    // page1: 3 raw rows, 2 unique (dash-a appears twice with different resourceVersions, dash-b once)
+    const page1 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '1', continue: 'page2-token' },
+      columnDefinitions: [
+        { name: 'Name', type: 'string' },
+        { name: 'Title', type: 'string' },
+        { name: 'Created At', type: 'date' },
+      ],
+      rows: [
+        {
+          cells: ['dash-a', 'Dashboard A (v1)', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '100',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-a', 'Dashboard A (v2)', '2024-01-02T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-a',
+              resourceVersion: '200',
+              creationTimestamp: '2024-01-02T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:alice' },
+            },
+          },
+        },
+        {
+          cells: ['dash-b', 'Dashboard B', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-b',
+              resourceVersion: '150',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:bob' },
+            },
+          },
+        },
+      ],
+    };
+
+    const page2 = {
+      ...EMPTY_TABLE_RESPONSE,
+      metadata: { resourceVersion: '2' },
+      columnDefinitions: page1.columnDefinitions,
+      rows: [
+        {
+          cells: ['dash-c', 'Dashboard C', '2024-01-01T00:00:00Z'],
+          object: {
+            metadata: {
+              name: 'dash-c',
+              resourceVersion: '300',
+              creationTimestamp: '2024-01-01T00:00:00Z',
+              annotations: { [AnnoKeyUpdatedBy]: 'user:carol' },
+            },
+          },
+        },
+      ],
+    };
+
+    const mockList = jest.fn().mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+    getDashboardAPI.mockResolvedValue({ listDeletedDashboards: mockList });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    const result = await deletedDashboardsCache.get();
+
+    expect(result).toHaveLength(3);
+    expect(mockList).toHaveBeenCalledTimes(2);
+    // The second page's limit must reflect 2 unique dashboards, not 3 raw rows.
+    expect(mockList).toHaveBeenNthCalledWith(2, expect.objectContaining({ limit: DELETED_DASHBOARDS_LIMIT - 2 }));
+  });
+
+  it('removeItems filters specified UIDs from the cached table', async () => {
+    const table = makeTable(['user:alice', 'user:bob', 'user:carol']);
+    getDashboardAPI.mockResolvedValue({
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
+    });
+
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([
+          { identity: { type: 'user', name: 'alice' }, displayName: 'Alice' },
+          { identity: { type: 'user', name: 'bob' }, displayName: 'Bob' },
+          { identity: { type: 'user', name: 'carol' }, displayName: 'Carol' },
+        ]),
+      })
+    );
+
+    // Populate the cache
+    await deletedDashboardsCache.get();
+
+    // Remove bob's dashboard
+    deletedDashboardsCache.removeItems(['dash-user:bob']);
+
+    const tableAfter = await deletedDashboardsCache.getAsTable();
+    expect(tableAfter.rows).toHaveLength(2);
+    expect(tableAfter.rows.map((r) => r.object.metadata.name)).toEqual(['dash-user:alice', 'dash-user:carol']);
+
+    // No additional fetch
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeItems is a no-op when cache is not populated', async () => {
+    // Should not throw
+    deletedDashboardsCache.removeItems(['dash-nonexistent']);
+
+    const table = makeTable(['user:alice']);
+    getDashboardAPI.mockResolvedValue({
+      listDeletedDashboards: jest.fn().mockResolvedValue(table),
+    });
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+
+    // Next get() fetches fresh (the removed UID was never cached)
+    const result = await deletedDashboardsCache.get();
+    expect(result).toHaveLength(1);
+    expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('deletedDashboardsCache with the trash flag on', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    deletedDashboardsCache.clear();
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: true });
+    mockInitiate.mockReturnValue('initiate-thunk');
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+  });
+
+  afterEach(() => {
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
+    deletedDashboardsCache.clear();
+  });
+
+  function makeItem(name: string, overrides: Record<string, unknown> = {}): TrashItem {
+    return {
+      resource: { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', name },
+      fields: {
+        title: `Dashboard ${name}`,
+        folder: 'my-folder',
+        tags: ['infra', 'prod'],
+        deleted_by: 'user:alice',
+        deletion_time: 1700000000000,
+        deleted_rv: '1800000000000000000',
+        ...overrides,
+      },
+    };
+  }
+
+  function page(items: TrashItem[], continueToken?: string) {
+    return {
+      metadata: { totalHits: items.length, totalHitsRelation: 'eq' as const, continue: continueToken },
+      items,
+    };
+  }
+
+  it('asks the server for the text query and the sort, and resolves the deleter', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    const result = await deletedDashboardsCache.search({ query: 'cpu', sort: 'deleted-desc' });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { text: { value: 'cpu', fields: ['title'] } },
+        sort: [{ field: 'deletion_time', direction: 'desc' }],
+      })
+    );
+    expect(result).toEqual([
+      expect.objectContaining({
+        name: 'dash-1',
+        title: 'Dashboard dash-1',
+        folder: 'my-folder',
+        tags: ['infra', 'prod'],
+        field: { deletionTimestamp: new Date(1700000000000).toISOString(), deletedBy: 'Alice' },
+      }),
+    ]);
+  });
+
+  it('asks for tags explicitly, since the server leaves them out by default', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({});
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({ fields: expect.arrayContaining(['tags']) })
+    );
+  });
+
+  it('sends a tag filter to the server rather than filtering in the browser', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['infra'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['infra'] } } })
+    );
+  });
+
+  it('does not serve an unfiltered result to a tag-filtered query', async () => {
+    // The tag options are built from an unfiltered fetch, so that entry is usually already
+    // cached by the time a tag is picked. Sharing a key with it ignores the filter entirely.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('untagged'), makeItem('tagged')]));
+    const all = await deletedDashboardsCache.search({});
+    expect(all).toHaveLength(2);
+
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('tagged')]));
+    const filtered = await deletedDashboardsCache.search({ tags: ['infra'] });
+
+    expect(filtered.map((hit) => hit.name)).toEqual(['tagged']);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares one cache entry for the same tags in a different order', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['a', 'b'] });
+    await deletedDashboardsCache.search({ tags: ['b', 'a'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires every selected tag, not any of them', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['infra', 'prod'] });
+
+    // One leaf per tag. A single In leaf listing both would match either one.
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          and: [
+            { filter: { field: 'tags', operator: 'In', values: ['infra'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['prod'] } },
+          ],
+        },
+      })
+    );
+  });
+
+  it('combines a text query and every tag into a single and', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ query: 'cpu', tags: ['infra', 'prod'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          and: [
+            { text: { value: 'cpu', fields: ['title'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['infra'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['prod'] } },
+          ],
+        },
+      })
+    );
+  });
+
+  it('skips non-string entries in the tags field', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1', { tags: ['ok', 42, null] })]));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(result[0].tags).toEqual(['ok']);
+  });
+
+  it('treats the empty and wildcard queries as "everything"', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([]));
+
+    await deletedDashboardsCache.search({ query: '*' });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(expect.not.objectContaining({ where: expect.anything() }));
+  });
+
+  it('follows the continue token until the server runs out of pages', async () => {
+    mockFetchTrashPage
+      .mockResolvedValueOnce(page([makeItem('dash-1')], 'next'))
+      .mockResolvedValueOnce(page([makeItem('dash-2')]));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+    expect(mockFetchTrashPage).toHaveBeenLastCalledWith(expect.objectContaining({ continue: 'next' }));
+    expect(result.map((hit) => hit.name)).toEqual(['dash-1', 'dash-2']);
+  });
+
+  it('caches per query, so changing the query refetches but repeating it does not', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ query: 'cpu' });
+    await deletedDashboardsCache.search({ query: 'cpu' });
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+
+    await deletedDashboardsCache.search({ query: 'memory' });
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides restored dashboards until the next cache clear', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1'), makeItem('dash-2')]));
+
+    await deletedDashboardsCache.search({});
+    deletedDashboardsCache.removeItems(['dash-1']);
+
+    const afterRestore = await deletedDashboardsCache.search({});
+    expect(afterRestore.map((hit) => hit.name)).toEqual(['dash-2']);
+
+    deletedDashboardsCache.clear();
+    const afterClear = await deletedDashboardsCache.search({});
+    expect(afterClear.map((hit) => hit.name)).toEqual(['dash-1', 'dash-2']);
+  });
+
+  it('stops paging when the server keeps offering a token but no rows', async () => {
+    // The endpoint may answer an empty page and still hand back a token, so the row count
+    // cannot end the loop on its own.
+    mockFetchTrashPage.mockResolvedValue(page([], 'never-clears'));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(result).toEqual([]);
+    expect(mockFetchTrashPage.mock.calls.length).toBeLessThanOrEqual(8);
+  });
+
+  it('shares one fetch between concurrent identical queries', async () => {
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementation(async () => {
+      await gate;
+      return page([makeItem('dash-1')]);
+    });
+
+    const first = deletedDashboardsCache.search({});
+    const second = deletedDashboardsCache.search({});
+    release(undefined);
+
+    const [a, b] = await Promise.all([first, second]);
+
+    expect(a.map((hit) => hit.name)).toEqual(['dash-1']);
+    expect(b.map((hit) => hit.name)).toEqual(['dash-1']);
+    // One page fetched, not two: the second caller joined the in-flight request.
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not repopulate the cache when clear() lands mid-fetch', async () => {
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementationOnce(async () => {
+      await gate;
+      return page([makeItem('stale')]);
+    });
+
+    const inFlight = deletedDashboardsCache.search({});
+    deletedDashboardsCache.clear();
+    release(undefined);
+    await inFlight;
+
+    // The cleared entry must not have been written back, so the next call refetches.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('fresh')]));
+    const after = await deletedDashboardsCache.search({});
+
+    expect(after.map((hit) => hit.name)).toEqual(['fresh']);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
+  const fullPage = () => Array.from({ length: DELETED_DASHBOARDS_LIMIT }, (_, i) => makeItem(`dash-${i}`));
+
+  it('reports truncation only when the server still had rows to give', async () => {
+    // The ceiling reached with a token left over: the list on screen is not everything.
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    // Exhausted the result set: nothing hidden.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-2')]));
+    await deletedDashboardsCache.search({ query: 'complete' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+  });
+
+  it('does not call short pages truncated just because a token came back', async () => {
+    // Stopping at the page cap also leaves rows behind, but the banner names 1000, and far
+    // fewer than that came back.
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')], 'never-clears'));
+
+    await deletedDashboardsCache.search({ query: 'short-pages' });
+
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+  });
+
+  it('clears truncation when the fetch fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: {} });
+    await deletedDashboardsCache.search({ query: 'then-fails' });
+
+    // No list came back, so nothing was left out of one.
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('building the tag options does not disturb what the page reports', async () => {
+    // The page is showing a truncated list.
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    // The tag dropdown asks an unfiltered question, which is not what is on screen.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-1')]));
+    await deletedDashboardsCache.searchAllForOptions();
+
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+  });
+
+  it('reports trash unavailable on 503, and retries rather than caching the failure', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: { message: 'rebuilding' } });
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(true);
+
+    // Same query again: the index may have finished rebuilding, so it must ask again.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-1')]));
+    const retry = await deletedDashboardsCache.search({});
+
+    expect(retry.map((hit) => hit.name)).toEqual(['dash-1']);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+
+    consoleError.mockRestore();
+  });
+
+  it('ignores a superseded fetch that fails after a newer one has taken over', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // First fetch is held open, and will fail with 503 once released.
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementationOnce(async () => {
+      await gate;
+      throw { status: 503, data: {} };
+    });
+
+    const superseded = deletedDashboardsCache.search({});
+
+    // clear() drops it, and a newer fetch for the same query succeeds.
+    deletedDashboardsCache.clear();
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('fresh')]));
+    const current = await deletedDashboardsCache.search({});
+    expect(current.map((hit) => hit.name)).toEqual(['fresh']);
+
+    // The old 503 lands last. It must not raise a warning over results that superseded it.
+    release(undefined);
+    await superseded;
+
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('does not report unavailable for failures other than 503', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValue({ status: 404, data: {} });
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('returns an empty list when the endpoint fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValue(new Error('trash is off'));
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
 
     consoleError.mockRestore();
   });

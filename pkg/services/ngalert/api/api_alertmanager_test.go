@@ -192,7 +192,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		cOpt := []cmp.Option{
-			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, time.Location{}),
 			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
 		}
 		if !cmp.Equal(test, exp, cOpt...) {
@@ -464,10 +464,23 @@ var validConfig = `{
 				"version": "v1",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `
@@ -491,7 +504,7 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -501,10 +514,23 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `
@@ -542,7 +568,7 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -552,10 +578,23 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `

@@ -70,7 +70,7 @@ If you have permission to view all folders, you won't see a **Shared with me**.
 
 ### Team folders
 
-If the `teamFolders` feature toggle is enabled and you belong to teams that own folders, the **Dashboards** page displays a **My team folders** section near the top of the page.
+If you belong to teams that own folders, the **Dashboards** page displays a **My team folders** section near the top of the page.
 
 For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/team-folders/).
 
@@ -131,8 +131,7 @@ For more information about dashboard permissions, refer to [Dashboard permission
 ## Restore deleted dashboards
 
 When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
-The deletion history can contain a maximum of 1000 dashboards.
-After this limit is reached, the oldest deleted dashboards are permanently removed even if the 12-month expiration period isn't over yet.
+After 12 months, Grafana permanently removes them.
 
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 

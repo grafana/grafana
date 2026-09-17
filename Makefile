@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.3
+GO_VERSION = 1.26.6
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -19,9 +19,9 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 # Backend build version and ldflags (release / packaging conventions).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
-BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
+BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse HEAD 2>/dev/null || echo "unknown"))
 BUILD_BRANCH := $(if $(BUILD_BRANCH),$(BUILD_BRANCH),$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"))
-BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell date +%s 2>/dev/null))
+BUILD_STAMP := $(or $(SOURCE_DATE_EPOCH),$(shell git log -1 --format=%ct 2>/dev/null),$(shell date +%s 2>/dev/null))
 GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 	-X main.commit=$(BUILD_COMMIT) \
 	-X main.buildBranch=$(BUILD_BRANCH) \
@@ -100,13 +100,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -126,7 +126,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -143,7 +143,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
+	$(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -271,6 +271,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: gen-app-manifests-unistore
@@ -461,10 +462,11 @@ $(DOCKER_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 .PHONY: build-docker-ubuntu
@@ -477,10 +479,11 @@ $(DOCKER_UBUNTU_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 .PHONY: build-docker-distroless
@@ -493,10 +496,11 @@ $(DOCKER_DISTROLESS_FILE): $(TARGZ_FILE)
 	--build-arg GRAFANA_TGZ=$(TARGZ_FILE) \
 	--build-arg GO_SRC=tgz-builder \
 	--build-arg JS_SRC=tgz-builder \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-distroless \
 	--tag $(DOCKER_TAG) \
-	--output type=docker,dest=$@ \
+	--output type=docker,dest=$@,rewrite-timestamp=true \
 	.
 
 MSI_FILE := dist/$(TARGZ_PACKAGE_NAME)_$(BUILD_VERSION)_$(BUILD_NUMBER)_$(OS)_$(ARCH_LABEL).msi
@@ -511,18 +515,21 @@ $(MSI_FILE): $(TARGZ_FILE)
 	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
 	bash scripts/build-msi.sh
 
+# The toggle name has a dot, so it needs `env`, not a bare VAR=value prefix.
+RSPACK_ON := $(filter 1 true,$(RSPACK))
+
 .PHONY: run
-run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
-	$(air) -c .air.toml
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(air) -c .air.toml
 
 .PHONY: run-go
-run-go: ## Build and run web server immediately.
-	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+run-go: ## Build and run web server immediately. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
-	yarn start
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild. Set RSPACK=1 to build with rspack.
+	yarn start$(if $(RSPACK_ON),:rspack)
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -677,6 +684,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-alpine \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
@@ -696,6 +704,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-ubuntu \
@@ -716,6 +725,7 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--build-arg SOURCE_DATE_EPOCH=$$(git log -1 --format=%ct) \
 	--build-arg SLIM=$(SLIM) \
 	--target=final-distroless \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-distroless \
@@ -780,6 +790,11 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
 
+.PHONY: protobuf-breaking
+protobuf-breaking: ## Check protobuf definitions for breaking changes against main
+	bash scripts/protobuf-check.sh
+	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
@@ -835,7 +850,9 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# The frontend preview deploy is opt-in and only triggers on `synchronize`, so a PR opened without a further push never produces a run for policy-bot to find.
+	sed -i.bak '/- Workflow \.github\/workflows\/deploy-frontend-preview/d' .policy.yml; rm -f .policy.yml.bak
 # Make govulncheck non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
-# Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge
-	sed -i.bak '/name: Workflow \.github\/workflows\/check-frontend-test-coverage\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
+# Make detect-breaking-changes-levitate non-blocking - accept failure so it doesn't prevent merge
+	sed -i.bak '/name: Workflow \.github\/workflows\/detect-breaking-changes-levitate\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak

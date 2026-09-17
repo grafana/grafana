@@ -1,12 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAsync, useAsyncFn } from 'react-use';
+import { useAsync } from 'react-use';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import {
+  type DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
-import { getDataSourceInstanceSettings, getDataSourceInstanceSettingsList } from './settings';
+import { getDataSourceInstanceListItem } from './listItem';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+  hasDataSourceInstance,
+} from './settings';
 
 /**
  * @public
@@ -20,14 +31,19 @@ export interface UseDataSourceInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseDataSourceInstanceSettingsListResult {
+export interface UseDataSourceInstanceListItemResult {
   isLoading: boolean;
   error?: Error;
-  /** Flattened items across all pages fetched so far. */
-  items: DataSourceInstanceSettings[];
-  hasMore: boolean;
-  /** Fetch the next page and append to items. */
-  fetchMore: () => void;
+  item?: DataSourceInstanceListItem;
+}
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceListResult {
+  isLoading: boolean;
+  error?: Error;
+  items: DataSourceInstanceListItem[];
 }
 
 /**
@@ -39,11 +55,29 @@ export interface UseDataSourceInstanceResult {
   dataSource?: DataSourceApi;
 }
 
+/**
+ * @public
+ */
+export interface UseDefaultDataSourceInstanceListItemResult {
+  isLoading: boolean;
+  error?: Error;
+  item?: DataSourceInstanceListItem;
+}
+
+/**
+ * @public
+ */
+export interface UseHasDataSourceInstanceResult {
+  isLoading: boolean;
+  error?: Error;
+  hasInstance: boolean;
+}
+
 function stableKey(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
-function filtersKey(filters: GetDataSourceListFilters | undefined): string {
+function filtersKey(filters: GetDataSourceInstanceListFilters | GetDataSourceListFilters | undefined): string {
   if (!filters) {
     return stableKey(null);
   }
@@ -70,64 +104,49 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
- * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
- * across pages; call `fetchMore` to load additional pages. Items reset when
+ * React hook wrapping {@link getDataSourceInstanceListItem}. Re-fetches when `ref`
+ * changes (compared by value, so inline objects are safe).
+ *
+ * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
+ * metadata is needed — `item` carries `uid`, `type`, `apiVersion`, `name`, `meta` and
+ * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
+ * demand.
+ *
+ * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
+ * type-only refs — yields `item: undefined` rather than the default data source. Template
+ * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
+ *
+ * @public
+ */
+export function useDataSourceInstanceListItem(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceListItemResult {
+  const refKey = stableKey(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceListItem(ref), [refKey]);
+  return { isLoading: loading, error, item: value };
+}
+
+/**
+ * React hook wrapping {@link getDataSourceInstanceList}. Re-fetches when
  * `filters` changes (compared by value, so inline objects are safe).
  * When `filters.filter` (a callback) is set, the hook re-fetches when the
  * function reference changes. Wrap inline filter callbacks in `useCallback`
  * to avoid unnecessary re-fetches.
  *
- * @internal
+ * @public
  */
-export function useDataSourceInstanceSettingsList(
-  filters?: GetDataSourceListFilters
-): UseDataSourceInstanceSettingsListResult {
+export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
-
   const filterFunc = filters?.filter;
-  const filterFuncKey = useMemo(() => {
-    if (filterFunc) {
-      return Date.now();
-    }
-    return null;
-  }, [filterFunc]);
 
-  const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
-
-  const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
+  const { loading, error, value } = useAsync(
+    () => getDataSourceInstanceList(filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filterValuesKey, filterFuncKey],
-    { loading: true }
+    [filterValuesKey, filterFunc]
   );
 
-  useEffect(() => {
-    if (!fetchState.value) {
-      return;
-    }
-    const page = fetchState.value;
-    setItems((prev) => prev.concat(page.items));
-    setCursor(page.nextCursor);
-    setHasMore(page.hasMore);
-  }, [fetchState.value]);
-
-  useEffect(() => {
-    setItems([]);
-    setCursor(undefined);
-    setHasMore(true);
-    fetchPage();
-  }, [fetchPage]);
-
-  const fetchMore = useCallback(() => {
-    if (!hasMore || fetchState.loading) {
-      return;
-    }
-    fetchPage(cursor);
-  }, [fetchPage, cursor, hasMore, fetchState.loading]);
-
-  return { isLoading: fetchState.loading, error: fetchState.error, items, hasMore, fetchMore };
+  return { isLoading: loading, error, items: value ?? [] };
 }
 
 /**
@@ -144,4 +163,25 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { loading, error, value } = useAsync(() => getDataSourceInstance(ref), [refKey]);
   return { isLoading: loading, error, dataSource: value };
+}
+
+/**
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-fetches when
+ * `type` changes.
+ *
+ * @public
+ */
+export function useDefaultDataSourceInstanceListItem(type: string): UseDefaultDataSourceInstanceListItemResult {
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(type), [type]);
+  return { isLoading: loading, error, item: value };
+}
+
+/**
+ * React hook wrapping {@link hasDataSourceInstance}. Re-fetches when `type` changes.
+ *
+ * @public
+ */
+export function useHasDataSourceInstance(type: string): UseHasDataSourceInstanceResult {
+  const { loading, error, value } = useAsync(() => hasDataSourceInstance(type), [type]);
+  return { isLoading: loading, error, hasInstance: value ?? false };
 }

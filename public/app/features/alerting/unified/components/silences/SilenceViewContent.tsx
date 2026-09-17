@@ -21,6 +21,10 @@ export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewConte
   const returnTo = createReturnTo();
   const ruleUid = metadata?.rule_uid;
 
+  const alertRuleHref = ruleUid
+    ? `/alerting/grafana/${encodeURIComponent(ruleUid)}/view?${new URLSearchParams({ returnTo }).toString()}`
+    : '';
+
   return (
     <Stack direction="column" gap={2}>
       {ruleUid && (
@@ -28,12 +32,8 @@ export function SilenceViewContent({ silence, silencedAlerts }: SilenceViewConte
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="alerting.silence-view.alert-rule">Alert rule</Trans>
           </Text>
-          {metadata.rule_title ? (
-            <TextLink
-              href={`/alerting/grafana/${encodeURIComponent(ruleUid)}/view?${new URLSearchParams({ returnTo }).toString()}`}
-            >
-              {metadata.rule_title}
-            </TextLink>
+          {metadata?.rule_title ? (
+            <TextLink href={alertRuleHref}>{metadata.rule_title}</TextLink>
           ) : (
             <MissingAlertRuleWarning ruleUid={ruleUid} />
           )}

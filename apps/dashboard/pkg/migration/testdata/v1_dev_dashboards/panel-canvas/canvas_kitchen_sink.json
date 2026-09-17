@@ -1,0 +1,582 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "color": "green",
+                  "icon": "img/icons/unicons/check-circle.svg",
+                  "index": 0,
+                  "text": "Success"
+                },
+                "2": {
+                  "color": "orange",
+                  "icon": "img/icons/unicons/exclamation-triangle.svg",
+                  "index": 1,
+                  "text": "Warning"
+                },
+                "3": {
+                  "color": "red",
+                  "icon": "img/icons/unicons/times-circle.svg",
+                  "index": 2,
+                  "text": "Error"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "success"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "1": {
+                        "color": "green",
+                        "icon": "img/icons/unicons/check-circle.svg",
+                        "index": 0,
+                        "text": "Success"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warning"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "2": {
+                        "color": "orange",
+                        "icon": "img/icons/unicons/exclamation-triangle.svg",
+                        "index": 1,
+                        "text": "Warning"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "error"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "3": {
+                        "color": "red",
+                        "icon": "img/icons/unicons/times-circle.svg",
+                        "index": 2,
+                        "text": "Error"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "unmapped"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "1": {
+                        "color": "green",
+                        "icon": "img/icons/unicons/check-circle.svg",
+                        "index": 0,
+                        "text": "Success"
+                      },
+                      "2": {
+                        "color": "orange",
+                        "icon": "img/icons/unicons/exclamation-triangle.svg",
+                        "index": 1,
+                        "text": "Warning"
+                      },
+                      "3": {
+                        "color": "red",
+                        "icon": "img/icons/unicons/times-circle.svg",
+                        "index": 2,
+                        "text": "Error"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "inlineEditing": true,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 16,
+                "text": {
+                  "fixed": "Field-based Icons (from value mappings):",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Header",
+              "placement": {
+                "height": 40,
+                "left": 20,
+                "top": 10,
+                "width": 400
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "field": "success",
+                  "fixed": "green"
+                },
+                "path": {
+                  "field": "success",
+                  "mode": "field"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Success Icon",
+              "placement": {
+                "height": 50,
+                "left": 50,
+                "top": 60,
+                "width": 50
+              },
+              "type": "icon"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "success",
+                  "fixed": "text"
+                },
+                "size": 12,
+                "text": {
+                  "field": "success",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Success Text",
+              "placement": {
+                "height": 25,
+                "left": 30,
+                "top": 115,
+                "width": 90
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "field": "warning",
+                  "fixed": "orange"
+                },
+                "path": {
+                  "field": "warning",
+                  "mode": "field"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Warning Icon",
+              "placement": {
+                "height": 50,
+                "left": 180,
+                "top": 60,
+                "width": 50
+              },
+              "type": "icon"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "warning",
+                  "fixed": "text"
+                },
+                "size": 12,
+                "text": {
+                  "field": "warning",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Warning Text",
+              "placement": {
+                "height": 25,
+                "left": 160,
+                "top": 115,
+                "width": 90
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "field": "error",
+                  "fixed": "red"
+                },
+                "path": {
+                  "field": "error",
+                  "mode": "field"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Error Icon",
+              "placement": {
+                "height": 50,
+                "left": 310,
+                "top": 60,
+                "width": 50
+              },
+              "type": "icon"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "error",
+                  "fixed": "text"
+                },
+                "size": 12,
+                "text": {
+                  "field": "error",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Error Text",
+              "placement": {
+                "height": 25,
+                "left": 290,
+                "top": 115,
+                "width": 90
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "field": "unmapped",
+                  "fixed": "#808080"
+                },
+                "path": {
+                  "field": "unmapped",
+                  "fixed": "img/icons/unicons/question-circle.svg",
+                  "mode": "field"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Unmapped Icon",
+              "placement": {
+                "height": 50,
+                "left": 440,
+                "top": 60,
+                "width": 50
+              },
+              "type": "icon"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "field": "unmapped",
+                  "fixed": "text"
+                },
+                "size": 12,
+                "text": {
+                  "fixed": "No mapping (14)",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Unmapped Text",
+              "placement": {
+                "height": 25,
+                "left": 410,
+                "top": 115,
+                "width": 110
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 14,
+                "text": {
+                  "fixed": "Fixed Relative Path:",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Relative Label",
+              "placement": {
+                "height": 30,
+                "left": 50,
+                "top": 170,
+                "width": 200
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "fixed": "blue"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/cloud.svg",
+                  "mode": "fixed"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Relative Icon",
+              "placement": {
+                "height": 50,
+                "left": 260,
+                "top": 165,
+                "width": 50
+              },
+              "type": "icon"
+            },
+            {
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "text"
+                },
+                "size": 14,
+                "text": {
+                  "fixed": "Fixed Absolute URL:",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Absolute Label",
+              "placement": {
+                "height": 30,
+                "left": 50,
+                "top": 240,
+                "width": 200
+              },
+              "type": "text"
+            },
+            {
+              "config": {
+                "fill": {
+                  "fixed": "purple"
+                },
+                "path": {
+                  "fixed": "https://grafana.com/static/assets/img/grafana_icon.svg",
+                  "mode": "fixed"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Absolute Icon",
+              "placement": {
+                "height": 50,
+                "left": 260,
+                "top": 235,
+                "width": 50
+              },
+              "type": "icon"
+            }
+          ],
+          "name": "Canvas Root",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        }
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content",
+          "csvContent": "success\n1"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content",
+          "csvContent": "warning\n2"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "C",
+          "scenarioId": "csv_content",
+          "csvContent": "error\n3"
+        },
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "D",
+          "scenarioId": "csv_content",
+          "csvContent": "unmapped\n14"
+        }
+      ],
+      "title": "Various SVG icons",
+      "type": "canvas"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["canvas", "icons", "test", "v2"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Panel tests - Canvas - Kitchen sink",
+  "uid": "canvas-icon-fix-test-v2",
+  "version": 1,
+  "weekStart": ""
+}

@@ -39,6 +39,12 @@ func NewMutator(cfg config.RuntimeConfig) *simple.Mutator {
 				return nil, err
 			}
 
+			// For backwards compatibility with the old notification settings object we need to set the default to SimplifiedRouting here
+			// we need to do this here because cog doesn't thread the default enum value for the discriminator all the way through
+			if ns := r.Spec.NotificationSettings; ns != nil && ns.SimplifiedRouting != nil && ns.SimplifiedRouting.Type == "" {
+				ns.SimplifiedRouting.Type = v1.AlertRuleNotificationSettingsTypeSimplifiedRouting
+			}
+
 			return &app.MutatingResponse{UpdatedObject: r}, nil
 		},
 	}

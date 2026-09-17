@@ -3,17 +3,19 @@ package sync
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSyncWorker_IsSupported(t *testing.T) {
@@ -91,7 +93,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 5,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
@@ -102,7 +104,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 10,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaReached,
@@ -113,7 +115,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 100,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboards.grafana.app", Resource: "dashboards", Count: 50}}},
+					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonWithinQuota,
@@ -367,6 +369,75 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 	}
 }
 
+func matchPatchPath(path string) func(map[string]interface{}) bool {
+	return func(patch map[string]interface{}) bool {
+		return patch["path"] == path
+	}
+}
+
+func matchReplacePatch(path string) func(map[string]interface{}) bool {
+	return func(patch map[string]interface{}) bool {
+		return patch["op"] == "replace" && patch["path"] == path
+	}
+}
+
+// matchSyncStatusPatch matches a replace patch on /status/sync with the given
+// state and lastRef; jobID and message are only checked when non-empty.
+func matchSyncStatusPatch(state provisioning.JobState, jobID, lastRef, message string) func(map[string]interface{}) bool {
+	return func(patch map[string]interface{}) bool {
+		syncStatus, ok := patch["value"].(provisioning.SyncStatus)
+		if !ok || patch["op"] != "replace" || patch["path"] != "/status/sync" {
+			return false
+		}
+		if jobID != "" && syncStatus.JobID != jobID {
+			return false
+		}
+		if message != "" && !slices.Contains(syncStatus.Message, message) {
+			return false
+		}
+		return syncStatus.State == state && syncStatus.LastRef == lastRef
+	}
+}
+
+// matchConditionPatch matches a /status/conditions patch containing a condition
+// with the given type, reason, and status.
+func matchConditionPatch(condType, reason string, status metav1.ConditionStatus) func(map[string]interface{}) bool {
+	return func(patch map[string]interface{}) bool {
+		if patch["path"] != "/status/conditions" {
+			return false
+		}
+		conditions, ok := patch["value"].([]metav1.Condition)
+		if !ok {
+			return false
+		}
+		for _, c := range conditions {
+			if c.Type == condType && c.Reason == reason && c.Status == status {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func matchStatsPatch(group, resource string, count int64) func(map[string]interface{}) bool {
+	return func(patch map[string]interface{}) bool {
+		if patch["path"] != "/status/stats" {
+			return false
+		}
+		value, ok := patch["value"].([]provisioning.ResourceCount)
+		if !ok || len(value) != 1 {
+			return false
+		}
+		return value[0].Group == group && value[0].Resource == resource && value[0].Count == count
+	}
+}
+
+func matchErrorMessage(msg string) func(error) bool {
+	return func(err error) bool {
+		return err != nil && err.Error() == msg
+	}
+}
+
 func TestSyncWorker_Process(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -396,15 +467,9 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Expect granular patches for state, job, and started fields
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["op"] == "replace" && patch["path"] == "/status/sync/state"
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["op"] == "replace" && patch["path"] == "/status/sync/job"
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["op"] == "replace" && patch["path"] == "/status/sync/started"
-					}),
+					mock.MatchedBy(matchReplacePatch("/status/sync/state")),
+					mock.MatchedBy(matchReplacePatch("/status/sync/job")),
+					mock.MatchedBy(matchReplacePatch("/status/sync/started")),
 				).Return(errors.New("failed to patch status"))
 			},
 			expectedError: "update repo with job status at start: failed to patch status",
@@ -436,9 +501,21 @@ func TestSyncWorker_Process(t *testing.T) {
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("failed to create repository resources client"))
 
 				// Progress.Complete should be called with the error
-				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
-					return err != nil && err.Error() == "create repository resources client: failed to create repository resources client"
-				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+				pr.On("Complete", mock.Anything, mock.MatchedBy(
+					matchErrorMessage("create repository resources client: failed to create repository resources client"),
+				)).Return(provisioning.JobStatus{
+					State:   provisioning.JobStateError,
+					Message: "create repository resources client: failed to create repository resources client",
+				})
+				pr.On("ResultReasons").Return([]string(nil))
+
+				// The terminal state, failure reason, and pull condition must be written back
+				// so the repository does not stay 'working' without explanation
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(matchSyncStatusPatch(provisioning.JobStateError, "test-job", "existing-ref",
+						"create repository resources client: failed to create repository resources client")),
+					mock.MatchedBy(matchConditionPatch(provisioning.ConditionTypePullStatus, provisioning.ReasonFailure, metav1.ConditionFalse)),
+				).Return(nil).Once()
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -473,9 +550,21 @@ func TestSyncWorker_Process(t *testing.T) {
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
 
 				// Progress.Complete should be called with the error
-				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
-					return err != nil && err.Error() == "get clients for test-repo: failed to get clients"
-				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+				pr.On("Complete", mock.Anything, mock.MatchedBy(
+					matchErrorMessage("get clients for test-repo: failed to get clients"),
+				)).Return(provisioning.JobStatus{
+					State:   provisioning.JobStateError,
+					Message: "get clients for test-repo: failed to get clients",
+				})
+				pr.On("ResultReasons").Return([]string(nil))
+
+				// The terminal state, failure reason, and pull condition must be written back
+				// so the repository does not stay 'working' without explanation
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(matchSyncStatusPatch(provisioning.JobStateError, "test-job", "existing-ref",
+						"get clients for test-repo: failed to get clients")),
+					mock.MatchedBy(matchConditionPatch(provisioning.ConditionTypePullStatus, provisioning.ReasonFailure, metav1.ConditionFalse)),
+				).Return(nil).Once()
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
@@ -510,9 +599,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Sync execution succeeds
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
-					return true // Add specific sync options validation if needed
-				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, rw, mock.Anything, mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
@@ -521,16 +608,8 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should include new ref and quota condition
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						if patch["op"] != "replace" || patch["path"] != "/status/sync" {
-							return false
-						}
-						syncStatus := patch["value"].(provisioning.SyncStatus)
-						return syncStatus.LastRef == "new-ref" && syncStatus.State == provisioning.JobStateSuccess
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchSyncStatusPatch(provisioning.JobStateSuccess, "", "new-ref", "")),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 			},
 			expectedError: "",
@@ -567,9 +646,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				syncError := errors.New("sync operation failed")
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
-					return true // Add specific sync options validation if needed
-				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("", syncError)
+				s.On("Sync", mock.Anything, rw, mock.Anything, mockRepoResources, mock.Anything, pr, mock.Anything).Return("", syncError)
 
 				// Final status updates
 				pr.On("Complete", mock.Anything, syncError).Return(provisioning.JobStatus{State: provisioning.JobStateError})
@@ -578,16 +655,8 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should preserve existing ref on failure and include quota condition
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						syncStatus := patch["value"].(provisioning.SyncStatus)
-						return patch["op"] == "replace" &&
-							patch["path"] == "/status/sync" &&
-							syncStatus.LastRef == "existing-ref" && // LastRef should not change on failure
-							syncStatus.State == provisioning.JobStateError
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchSyncStatusPatch(provisioning.JobStateError, "", "existing-ref", "")),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 			},
 			expectedError: "sync operation failed",
@@ -641,12 +710,8 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status and conditions are patched for final update
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/sync"
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchPatchPath("/status/sync")),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 
 				// Simple mocks for other calls
@@ -692,28 +757,9 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status, stats, and conditions are patched
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/sync"
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						if patch["path"] != "/status/stats" {
-							return false
-						}
-
-						value := patch["value"].([]provisioning.ResourceCount)
-						if len(value) != 1 {
-							return false
-						}
-
-						if value[0].Group != "test" || value[0].Resource != "test" || value[0].Count != 42 {
-							return false
-						}
-
-						return true
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchPatchPath("/status/sync")),
+					mock.MatchedBy(matchStatsPatch("test", "test", 42)),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 
 				// Simple mocks for other calls
@@ -769,12 +815,8 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Verify sync status and conditions are patched (multiple stats should be ignored)
 				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/sync"
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchPatchPath("/status/sync")),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 
 				// Simple mocks for other calls
@@ -818,9 +860,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
-					return true
-				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
+				s.On("Sync", mock.Anything, rw, mock.Anything, mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
 				// Complete with warning state and QuotaExceeded reason
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateWarning})
@@ -829,17 +869,8 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Final patch should preserve existing-ref despite Warning state (not Error)
 				rpf.On("Execute", mock.Anything, repoConfig,
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						if patch["op"] != "replace" || patch["path"] != "/status/sync" {
-							return false
-						}
-						syncStatus := patch["value"].(provisioning.SyncStatus)
-						return syncStatus.LastRef == "existing-ref" && // LastRef preserved on quota error
-							syncStatus.State == provisioning.JobStateWarning
-					}),
-					mock.MatchedBy(func(patch map[string]interface{}) bool {
-						return patch["path"] == "/status/conditions"
-					}),
+					mock.MatchedBy(matchSyncStatusPatch(provisioning.JobStateWarning, "", "existing-ref", "")),
+					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 			},
 			expectedError: "", // quota errors are not returned by Process

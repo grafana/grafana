@@ -40,7 +40,7 @@ func TestLoad(t *testing.T) {
   }
 }
 `,
-			expectedTemplates: map[v1.ResourceUID]v1.TemplateGroup{v1.TemplateUID(v1.TemplateKindGrafana, "email.template"): v1.NewTemplateGroup("email.template", "something with a pretty good content", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)},
+			expectedTemplates: map[v1.ResourceUID]v1.TemplateGroup{v1.TemplateUID(v1.TemplateKindGrafana, "email.template"): v1.NewTemplateGroup("", "email.template", "something with a pretty good content", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)},
 		},
 		{
 			name:          "with an empty configuration, it is not valid.",

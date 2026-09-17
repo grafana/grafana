@@ -21,6 +21,7 @@ import (
 const (
 	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
+	readEventBatchSize   = 50
 )
 
 // eventStore is a store for events.
@@ -89,6 +90,8 @@ type Event struct {
 	Action          kv.DataAction `json:"action"`
 	Folder          string        `json:"folder"`
 	PreviousRV      int64         `json:"previous_rv"`
+	PreviousAction  kv.DataAction `json:"previous_action,omitempty"`
+	PreviousFolder  string        `json:"previous_folder"`
 }
 
 func newEventStore(kv KV) *eventStore {
@@ -217,37 +220,95 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 	}
 }
 
-func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder SortOrder) iter.Seq2[Event, error] {
-	ctx, span := tracer.Start(ctx, "resource.eventStore.ListSince", trace.WithAttributes(
-		attribute.Int64("sinceRV", sinceRV),
-	))
+// ListSince returns events at or above sinceRV, in ascending key order.
+func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
+		ctx, span := tracer.Start(ctx, "resource.eventStore.ListSince", trace.WithAttributes(
+			attribute.Int64("sinceRV", sinceRV),
+		))
 		defer span.End()
-		for evtKey, err := range n.ListKeysSince(ctx, sinceRV, sortOrder) {
+
+		if err := ctx.Err(); err != nil {
+			yield(Event{}, err)
+			return
+		}
+
+		batch := make([]string, 0, readEventBatchSize)
+		flush := func() bool {
+			if err := ctx.Err(); err != nil {
+				yield(Event{}, err)
+				return false
+			}
+			// Finish both KV iterators before yielding: consumers must not pin a DB cursor.
+			events, err := n.readEventPage(ctx, batch)
+			if err != nil {
+				yield(Event{}, err)
+				return false
+			}
+			for _, event := range events {
+				if !yield(event, nil) {
+					return false
+				}
+			}
+			batch = batch[:0]
+			return true
+		}
+
+		opts := ListOptions{StartKey: fmt.Sprintf("%d", sinceRV), Sort: SortOrderAsc}
+		for key, err := range pagedKeys(ctx, n.kv, eventsSection, opts, keyPageSize) {
 			if err != nil {
 				yield(Event{}, err)
 				return
 			}
-
-			reader, err := n.kv.Get(ctx, eventsSection, evtKey)
-			if err != nil {
-				yield(Event{}, err)
-				return
-			}
-
-			var event Event
-			if err := json.NewDecoder(reader).Decode(&event); err != nil {
-				_ = reader.Close()
-				yield(Event{}, err)
-				return
-			}
-
-			_ = reader.Close()
-			if !yield(event, nil) {
+			batch = append(batch, key)
+			if len(batch) == readEventBatchSize && !flush() {
 				return
 			}
 		}
+		if err := ctx.Err(); err != nil {
+			yield(Event{}, err)
+			return
+		}
+		if len(batch) > 0 {
+			flush()
+		}
 	}
+}
+
+func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event, error) {
+	events := make([]Event, 0, len(keys))
+	for pair, err := range n.kv.BatchGet(ctx, eventsSection, keys) {
+		if err != nil {
+			if pair.Value != nil {
+				_ = pair.Value.Close()
+			}
+			return nil, err
+		}
+		if pair.Value == nil {
+			return nil, fmt.Errorf("event record %q has no reader", pair.Key)
+		}
+		var event Event
+		err = json.NewDecoder(pair.Value).Decode(&event)
+		_ = pair.Value.Close()
+		if err != nil {
+			return nil, err
+		}
+		key := EventKey{
+			Namespace: event.Namespace, Group: event.Group, Resource: event.Resource, Name: event.Name,
+			ResourceVersion: event.ResourceVersion, Action: event.Action, Folder: event.Folder,
+		}
+		if err := key.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid event record %q: %w", pair.Key, err)
+		}
+		if key.String() != pair.Key {
+			return nil, fmt.Errorf("event record does not match key %q", pair.Key)
+		}
+		events = append(events, event)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 
 // CleanupOldEvents deletes events older than the specified retention period.
@@ -304,9 +365,9 @@ func snowflakeFromTime(t time.Time) int64 {
 	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }
 
-// subtractDurationFromSnowflake subtracts a duration from a snowflake ID by
+// SubtractDurationFromSnowflake subtracts a duration from a snowflake ID by
 // converting it to time, subtracting the duration, and converting back to a snowflake ID
-func subtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
+func SubtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
 	// Extract timestamp from snowflake (returns milliseconds since epoch)
 	timestamp := snowflake.ID(snowflakeID).Time()
 	// Convert to time.Time

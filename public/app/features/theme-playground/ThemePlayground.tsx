@@ -22,6 +22,7 @@ import zen from '@grafana/data/themes/definitions/zen.json';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
@@ -93,7 +94,8 @@ export default function ThemePlayground() {
   };
   const baseId = useId();
   const chromeHeaderHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, chromeHeaderHeight);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, chromeHeaderHeight, visualRefreshEnabled);
   const dispatch = useDispatch();
 
   const [baseThemeId, setBaseThemeId] = useState(Object.keys(themeMap)[0]);
@@ -185,9 +187,9 @@ export default function ThemePlayground() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined, visualRefreshEnabled: boolean) => ({
   left: css({
-    background: theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.primary,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),

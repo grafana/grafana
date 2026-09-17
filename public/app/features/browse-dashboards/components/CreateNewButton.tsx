@@ -1,10 +1,12 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
@@ -12,10 +14,13 @@ import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppC
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
   getImportPhrase,
@@ -26,9 +31,13 @@ import {
 } from 'app/features/search/tempI18nPhrases';
 import { type FolderDTO } from 'app/types/folders';
 
-import { ManagerKind } from '../../apiserver/types';
-
 import { NewFolderForm } from './NewFolderForm';
+
+const GenerateDashboardModal = lazy(() =>
+  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
+    default: module.GenerateDashboardModal,
+  }))
+);
 
 interface Props {
   parentFolder?: FolderDTO;
@@ -49,9 +58,14 @@ export default function CreateNewButton({
   const location = useLocation();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+  const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+  const renderGenerateDashboardAction = useDashboardGenerationAvailable();
+
   const theme = useTheme2();
 
   const handleVisibleChange = () => {
@@ -62,12 +76,6 @@ export default function CreateNewButton({
     }
     setIsOpen(!isOpen);
   };
-
-  let renderPreBuiltDashboardAction = false;
-  if (config.featureToggles.dashboardTemplates) {
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    renderPreBuiltDashboardAction = testDataSources.length > 0;
-  }
 
   const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {
@@ -114,7 +122,16 @@ export default function CreateNewButton({
               })
             }
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
+            testId={selectors.components.CreateNewButton.newDashboardLink}
           />
+          {renderGenerateDashboardAction && (
+            <Menu.Item
+              label={t('browse-dashboards.create-new-button.generate-dashboard', 'Generate dashboard')}
+              icon="ai-sparkle"
+              iconColor={dashboardIconColor}
+              onClick={() => setShowGenerateDashboardPrompt(true)}
+            />
+          )}
           <Menu.Item
             label={getImportPhrase()}
             icon={ITEM_ICONS['dashboards/import']}
@@ -136,14 +153,21 @@ export default function CreateNewButton({
                 isAnalyticsFrameworkEnabled
                   ? NewDashboardLibraryInteractions.entryPointClicked({
                       entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
-                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                     })
                   : DashboardLibraryInteractions.entryPointClicked({
                       entryPoint: SOURCE_ENTRY_POINTS.BROWSE_DASHBOARDS_PAGE,
-                      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                      contentKinds: isCustomDashboardTemplatesEnabled
+                        ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                        : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newTemplateDashboardLink}
             />
           )}
         </Menu.Group>
@@ -152,7 +176,12 @@ export default function CreateNewButton({
         <>
           {canCreateDashboard && <Menu.Divider />}
           <Menu.Item
-            onClick={() => setShowNewFolderDrawer(true)}
+            onClick={() => {
+              reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {
+                from: location.pathname,
+              });
+              setShowNewFolderDrawer(true);
+            }}
             label={getNewFolderPhrase()}
             icon={ITEM_ICONS['folder']}
             // folder action use default grey, so no need to set icon color
@@ -169,6 +198,7 @@ export default function CreateNewButton({
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
           variant="secondary"
+          data-testid={selectors.components.CreateNewButton.newButton}
         >
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
@@ -181,7 +211,7 @@ export default function CreateNewButton({
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
+          {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
             <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
             <NewFolderForm
@@ -191,6 +221,15 @@ export default function CreateNewButton({
             />
           )}
         </Drawer>
+      )}
+      {showGenerateDashboardPrompt && (
+        <Suspense fallback={null}>
+          {/* Keep the draft in the folder being browsed, like the sibling "New dashboard" link. */}
+          <GenerateDashboardModal
+            seed={{ folderUid: parentFolder?.uid }}
+            onDismiss={() => setShowGenerateDashboardPrompt(false)}
+          />
+        </Suspense>
       )}
     </>
   );

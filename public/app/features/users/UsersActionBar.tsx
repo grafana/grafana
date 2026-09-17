@@ -4,6 +4,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
+import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
 import { type StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
@@ -13,7 +14,7 @@ import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
 import { getCanInviteUsersToOrg } from './utils';
 
-export interface OwnProps {
+interface OwnProps {
   showInvites: boolean;
   onShowInvites: () => void;
 }
@@ -40,6 +41,8 @@ export const UsersActionBarUnconnected = ({
   onShowInvites,
   showInvites,
 }: Props): JSX.Element => {
+  const hasUserListExtension = useUserListTabExtensions().length > 0;
+
   const options = [
     { label: t('users.users-action-bar-unconnected.options.label.users', 'Users'), value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
@@ -74,7 +77,7 @@ export const UsersActionBarUnconnected = ({
           <Trans i18nKey="users.users-action-bar-unconnected.invite">Invite</Trans>
         </LinkButton>
       )}
-      <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />
+      {!hasUserListExtension && <UsersExternalButton onExternalUserMngClick={onExternalUserMngClick} />}
     </div>
   );
 };

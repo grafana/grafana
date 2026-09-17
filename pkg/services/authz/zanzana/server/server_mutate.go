@@ -21,7 +21,7 @@ const (
 	OperationGroupPermission  OperationGroup = "permission"
 	OperationGroupUserOrgRole OperationGroup = "user_org_role"
 	OperationGroupRoleBinding OperationGroup = "role_binding"
-	OperationGroupTeamBinding OperationGroup = "team_binding"
+	OperationGroupTeamMembers OperationGroup = "team_binding"
 	OperationGroupRole        OperationGroup = "role"
 )
 
@@ -80,8 +80,8 @@ func (s *Server) mutate(ctx context.Context, req *authzextv1.MutateRequest) (*au
 			if err := s.mutateRoleBindings(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate role bindings: %w", err)
 			}
-		case OperationGroupTeamBinding:
-			if err := s.mutateTeamBindings(ctx, storeInf, operations); err != nil {
+		case OperationGroupTeamMembers:
+			if err := s.mutateTeamMemberTuples(ctx, storeInf, operations); err != nil {
 				return nil, fmt.Errorf("failed to mutate team bindings: %w", err)
 			}
 		case OperationGroupRole:
@@ -108,7 +108,7 @@ func getOperationGroup(operation *authzextv1.MutateOperation) (OperationGroup, e
 	case *authzextv1.MutateOperation_CreateRoleBinding, *authzextv1.MutateOperation_DeleteRoleBinding:
 		return OperationGroupRoleBinding, nil
 	case *authzextv1.MutateOperation_CreateTeamBinding, *authzextv1.MutateOperation_DeleteTeamBinding:
-		return OperationGroupTeamBinding, nil
+		return OperationGroupTeamMembers, nil
 	case *authzextv1.MutateOperation_CreateRole, *authzextv1.MutateOperation_DeleteRole:
 		return OperationGroupRole, nil
 	}

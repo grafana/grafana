@@ -14,6 +14,9 @@ type PullRequestOptionsApplyConfiguration struct {
 	TitleTemplate *string `json:"titleTemplate,omitempty"`
 	// When true, the PR title field in Save drawers is read-only.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
+	// Whether we should show dashboard previews for pull requests.
+	// By default, this is false (i.e. we will not create previews).
+	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 // PullRequestOptionsApplyConfiguration constructs a declarative configuration of the PullRequestOptions type for use with
@@ -35,5 +38,13 @@ func (b *PullRequestOptionsApplyConfiguration) WithTitleTemplate(value string) *
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
 func (b *PullRequestOptionsApplyConfiguration) WithEnforceTemplate(value bool) *PullRequestOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
+	return b
+}
+
+// WithGenerateDashboardPreviews sets the GenerateDashboardPreviews field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GenerateDashboardPreviews field is set to the value of the last call.
+func (b *PullRequestOptionsApplyConfiguration) WithGenerateDashboardPreviews(value bool) *PullRequestOptionsApplyConfiguration {
+	b.GenerateDashboardPreviews = &value
 	return b
 }

@@ -44,6 +44,27 @@
   {
     "type": "changedfiles",
     "matches": [
+      "pkg/services/ssosettings/**/*",
+      "pkg/services/auth/**/*",
+      "pkg/services/authn/**/*",
+      "pkg/services/ldap/**/*",
+      "pkg/services/login/**/*",
+      "pkg/services/loginattempt/**/*",
+      "pkg/services/oauthtoken/**/*",
+      "pkg/services/serviceaccounts/**/*",
+      "pkg/services/signingkeys/**/*",
+      "pkg/services/scimutil/**/*",
+      "pkg/login/**/*",
+      "public/app/features/auth-config/**/*",
+      "conf/ldap.toml",
+      "conf/ldap_multiple.toml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/auth"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
       "pkg/services/sqlstore/migrations/**/*",
       "**/*_mig.go"
     ],
@@ -83,15 +104,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/GoogleCloudMonitoring"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/cloudwatch/**/*",
       "pkg/tsdb/cloudwatch/**/*"
     ],
@@ -106,103 +118,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Graphite"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/influxdb/**/*",
-      "pkg/tsdb/influx/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/InfluxDB"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/jaeger/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Jaeger"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/loki/**/*",
-      "pkg/tsdb/loki/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Loki"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/mssql/**/*",
-      "pkg/tsdb/mssql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MSSQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/mysql/**/*",
-      "pkg/tsdb/mysql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/OpenTSDB"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/parca/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Parca"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
-      "pkg/tsdb/grafana-pyroscope-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Pyroscope"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-postgresql-datasource/**/*",
-      "pkg/tsdb/grafana-postgresql-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Postgres"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/prometheus/**/*",
-      "pkg/tsdb/prometheus/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/tempo/**/*",
-      "pkg/tsdb/tempo/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Tempo"
   },
   {
     "type": "changedfiles",
@@ -259,16 +174,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/geomap"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/panel/graph/**/*",
-      "/packages/grafana-ui/src/components/Graph/**/*",
-      "/packages/grafana-ui/src/components/GraphNG/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "area/panel/graph"
   },
   {
     "type": "changedfiles",
@@ -410,36 +315,11 @@
     }
   },
   {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/influxdb/**/*",
-      "pkg/tsdb/influx/**/*"
-    ],
+    "type": "label",
+    "name": "area/auth",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
+      "url": "https://github.com/orgs/grafana/projects/660"
     }
   },
   {

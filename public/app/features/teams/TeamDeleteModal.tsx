@@ -1,5 +1,8 @@
+import { useState } from 'react';
+
 import { t, Trans } from '@grafana/i18n';
 import { Alert, ConfirmModal, Space, Text } from '@grafana/ui';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 export interface Props {
   isOpen: boolean;
@@ -10,6 +13,22 @@ export interface Props {
 }
 
 export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss, teamName, ownedFolder }: Props) => {
+  const [deleteError, setDeleteError] = useState<string>();
+
+  const handleConfirm = async () => {
+    setDeleteError(undefined);
+
+    try {
+      await onConfirm();
+      onDismiss();
+    } catch (error) {
+      setDeleteError(
+        getMessageFromError(error) ||
+          t('teams.team-list.columns.delete-modal-error-text', 'Failed to delete team. Please try again.')
+      );
+    }
+  };
+
   return (
     <ConfirmModal
       isOpen={isOpen}
@@ -40,13 +59,18 @@ export const TeamDeleteModal = ({ isOpen, onConfirm, onDismiss, teamName, ownedF
               </Trans>
             </Alert>
           ) : null}
+          {deleteError ? (
+            <Alert
+              severity="error"
+              title={t('teams.team-list.columns.delete-modal-error-title', 'Failed to delete team')}
+            >
+              {deleteError}
+            </Alert>
+          ) : null}
         </>
       }
       onDismiss={onDismiss}
-      onConfirm={async () => {
-        await onConfirm();
-        onDismiss();
-      }}
+      onConfirm={handleConfirm}
       confirmText={t('teams.team-list.columns.delete-modal.confirm-button', 'Delete')}
       disabled={ownedFolder}
     />

@@ -1,6 +1,7 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { createRequire } from 'node:module';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -10,6 +11,8 @@ import VirtualModulesPlugin from 'webpack-virtual-modules';
 
 import { DIST_DIR } from './constants.ts';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
+
+const require = createRequire(import.meta.url);
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -65,8 +68,8 @@ export type Env = {
   [key: string]: true | string | Env;
 };
 
-const config = async (env: Env): Promise<Configuration> => {
-  const pluginJson = getPluginJson();
+const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuration> => {
+  const pluginJson = getPluginJson(pluginDir);
   // Inject module
   const virtualPublicPath = new VirtualModulesPlugin({
     'node_modules/grafana-public-path.js': `
@@ -96,14 +99,23 @@ const config = async (env: Env): Promise<Configuration> => {
 
     devtool: env.production ? 'source-map' : 'eval-source-map',
 
-    entry: await getEntries(),
+    entry: await getEntries(pluginDir),
 
     externals: [
       // Required for dynamic publicPath resolution
       { 'amd-module': 'module' },
       'lodash',
       'jquery',
-      'moment',
+      // moment stays external (served lazily by the runtime's shared dependencies), except when
+      // imported by @react-awesome-query-builder, which is redirected to a luxon-backed compat
+      // adapter through the `moment$` resolve alias below so SQL plugins don't load real moment.
+      ({ context, request }, callback) => {
+        if (request === 'moment' && !context?.includes('@react-awesome-query-builder')) {
+          return callback(undefined, 'moment');
+        }
+
+        callback();
+      },
       'slate',
       'emotion',
       '@emotion/react',
@@ -159,7 +171,9 @@ const config = async (env: Env): Promise<Configuration> => {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: 'swc-loader',
+            // Resolved from this package, which declares swc-loader. A bare specifier would be
+            // resolved from the plugin being built, and those workspaces don't depend on it.
+            loader: require.resolve('swc-loader'),
             options: {
               jsc: {
                 baseUrl: path.resolve(import.meta.dirname),
@@ -253,7 +267,7 @@ const config = async (env: Env): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
+          { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -273,7 +287,9 @@ const config = async (env: Env): Promise<Configuration> => {
           rules: [
             {
               search: /\%VERSION\%/g,
-              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
+              replace: env.commit
+                ? `${getPackageJson(pluginDir).version}-${env.commit}`
+                : getPackageJson(pluginDir).version,
             },
             {
               search: /\%TODAY\%/g,
@@ -314,6 +330,11 @@ const config = async (env: Env): Promise<Configuration> => {
     ],
 
     resolve: {
+      // only reachable from @react-awesome-query-builder imports; all other moment imports are
+      // externalized before resolution (see externals above)
+      alias: {
+        moment$: path.resolve(import.meta.dirname, '../grafana-sql/src/utils/raqbMomentCompat.ts'),
+      },
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       conditionNames: ['@grafana-app/source', '...'],
       unsafeCache: true,

@@ -62,6 +62,11 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     });
 
     this.addActivationHandler(() => {
+      if (this._dashboard.isManagedRepository()) {
+        // The view only renders an unavailable alert for repo-managed dashboards.
+        this.setState({ isLoading: false, isAppending: false });
+        return;
+      }
       this.fetchVersions();
     });
   }
@@ -225,7 +230,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       return model.versions;
     }
     const displayMap = new Map<string, string>();
-    for (const item of displayData.display) {
+    for (const item of displayData.display || []) {
       displayMap.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
       if (item.internalId) {
         displayMap.set(String(item.internalId), item.displayName);

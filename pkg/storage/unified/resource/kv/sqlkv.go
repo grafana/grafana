@@ -22,12 +22,33 @@ import (
 )
 
 const (
-	DataSection           = "unified/data"
-	EventsSection         = "unified/events"
-	LastImportTimeSection = "unified/lastimport"
-	PendingDeleteSection  = "unified/pendingdelete"
-	LeasesSection         = "unified/leases"
+	DataSection                   = "unified/data"
+	EventsSection                 = "unified/events"
+	LastImportTimeSection         = "unified/lastimport"
+	PendingDeleteSection          = "unified/pendingdelete"
+	LeasesSection                 = "unified/leases"
+	SearchSnapshotManifestSection = "search/snapshot-manifest"
+	SearchSnapshotDataSection     = "search/snapshot-data"
+	StatsDailySection             = "stats/daily"
+	StatsAggregatesSection        = "stats/aggregates"
+	NATSPeersSection              = "nats/peers"
+	VersionPolicySection          = "apiserver/versionpolicy"
 )
+
+// validSaveSections is the set of sections accepted by SqlKV.Save.
+var validSaveSections = map[string]bool{
+	DataSection:                   true,
+	EventsSection:                 true,
+	PendingDeleteSection:          true,
+	LastImportTimeSection:         true,
+	LeasesSection:                 true,
+	SearchSnapshotManifestSection: true,
+	SearchSnapshotDataSection:     true,
+	StatsDailySection:             true,
+	StatsAggregatesSection:        true,
+	NATSPeersSection:              true,
+	VersionPolicySection:          true,
+}
 
 var _ KV = &SqlKV{}
 
@@ -104,6 +125,18 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "pending_tenant_deletions"
 	case LeasesSection:
 		tableName = "kv_leases"
+	case SearchSnapshotManifestSection:
+		tableName = "search_snapshot_manifest"
+	case SearchSnapshotDataSection:
+		tableName = "search_snapshot_data"
+	case StatsDailySection:
+		tableName = "resource_stats_daily"
+	case StatsAggregatesSection:
+		tableName = "resource_stats_aggregates"
+	case NATSPeersSection:
+		tableName = "nats_discovery_peers"
+	case VersionPolicySection:
+		tableName = "resource_version_policy"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
@@ -200,10 +233,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
 	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 
 		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
 		if err != nil {
@@ -382,7 +412,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if section != DataSection && section != EventsSection && section != PendingDeleteSection && section != LastImportTimeSection && section != LeasesSection {
+	if !validSaveSections[section] {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -435,11 +465,10 @@ func (w *sqlWriteCloser) Close() error {
 
 	keyPath := getKeyPath(w.section, w.key)
 
-	// Do regular kv save: simple key_path + value insert with conflict check.
-	// Used for sections that map to dedicated key-value tables (resource_events,
-	// pending_tenant_deletions, kv_leases). DataSection still goes through the
-	// resource_history-specific path below until the legacy columns are dropped.
-	if w.section == EventsSection || w.section == PendingDeleteSection || w.section == LeasesSection {
+	// Do regular kv save for sections that map to dedicated key-value tables.
+	// DataSection still goes through the resource_history-specific path below
+	// until the legacy columns are dropped.
+	if w.section != DataSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
@@ -526,9 +555,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -644,18 +679,15 @@ func isDuplicateKeyError(err error) bool {
 		return true
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "23505"
 	}
 
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqErr.Code == "23505"
 	}
 
-	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) {
+	if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return mysqlErr.Number == 1062
 	}
 

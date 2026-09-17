@@ -5,18 +5,6 @@ import { CustomVariable } from '@grafana/scenes';
 
 import { ModalEditor } from './ModalEditor';
 
-jest.mock('@grafana/runtime', () => {
-  const actualRuntime = jest.requireActual('@grafana/runtime');
-  return {
-    ...actualRuntime,
-    config: {
-      featureToggles: {
-        multiPropsVariables: true,
-      },
-    },
-  };
-});
-
 function buildCustomVariable(options: Partial<ConstructorParameters<typeof CustomVariable>[0]> = {}) {
   return {
     variable: new CustomVariable({

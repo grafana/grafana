@@ -16,7 +16,7 @@ const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
 
 const { useLazyGetAlertmanagerConfigurationQuery, useUpdateAlertmanagerConfigurationMutation } = alertmanagerApi;
 
-export const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
+const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [],
     route: {},

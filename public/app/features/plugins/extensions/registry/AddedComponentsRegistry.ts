@@ -35,7 +35,7 @@ export class AddedComponentsRegistry extends Registry<
     registry: RegistryType<AddedComponentRegistryItem[]>,
     item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
   ): RegistryType<AddedComponentRegistryItem[]> {
-    const { pluginId, configs } = item;
+    const { pluginId, configs, pluginMeta } = item;
 
     for (const config of configs) {
       const configLog = this.logger.child({
@@ -68,6 +68,7 @@ export class AddedComponentsRegistry extends Registry<
             extensionTitle: config.title,
             Component: config.component,
             log: pointIdLog,
+            pluginMeta,
           }),
           description: config.description,
           title: config.title,

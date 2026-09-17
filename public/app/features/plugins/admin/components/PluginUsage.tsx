@@ -86,7 +86,7 @@ export function PluginUsage({ plugin }: Props) {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrap: css({
       width: '100%',

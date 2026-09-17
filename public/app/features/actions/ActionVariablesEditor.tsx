@@ -9,6 +9,8 @@ interface Props {
   value: ActionVariable[];
 }
 
+const collator = new Intl.Collator();
+
 export const ActionVariablesEditor = ({ value, onChange }: Props) => {
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
@@ -37,7 +39,7 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
     }
 
     newVariables.push({ key, name, type });
-    newVariables.sort((a, b) => a.key.localeCompare(b.key));
+    newVariables.sort((a, b) => collator.compare(a.key, b.key));
     onChange(newVariables);
 
     setKey('');

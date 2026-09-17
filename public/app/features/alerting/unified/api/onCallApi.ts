@@ -100,7 +100,7 @@ function isPaginatedResponse(
   return 'results' in response && Array.isArray(response.results);
 }
 
-export const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+export const {} = onCallApi;
 
 export function isOnCallFetchError(error: unknown): error is FetchError<{ detail: string }> {
   return isFetchError(error) && 'detail' in error.data;

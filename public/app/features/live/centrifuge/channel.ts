@@ -7,7 +7,7 @@ import {
   type SubscribedContext,
   type UnsubscribedContext,
 } from 'centrifuge';
-import { Subject, of, Observable } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 
 import {
   type LiveChannelStatusEvent,
@@ -209,25 +209,4 @@ export class CentrifugeLiveChannel<T = any> {
     this.sendStatus();
     this.disconnect();
   }
-}
-
-export function getErrorChannel<TMessage>(msg: string, id: string, addr: LiveChannelAddress) {
-  return {
-    id,
-    opened: Date.now(),
-    addr,
-
-    // return an error
-    getStream: () =>
-      of({
-        type: LiveChannelEventType.Status,
-        id,
-        timestamp: Date.now(),
-        state: LiveChannelConnectionState.Invalid,
-        error: msg,
-      }),
-
-    // already disconnected
-    disconnect: () => {},
-  };
 }

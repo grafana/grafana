@@ -1,8 +1,7 @@
-import type Map from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import { apply } from 'ol-mapbox-style';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem } from '@grafana/data';
 
 // MapLibre Style Specification constants
 const LAYER_TYPE_BACKGROUND = 'background';
@@ -15,31 +14,29 @@ export interface MaplibreConfig {
 
 const sampleURL = 'https://tiles.stadiamaps.com/styles/alidade_smooth.json';
 
-export const defaultMaplibreConfig: MaplibreConfig = {
+const defaultMaplibreConfig: MaplibreConfig = {
   url: sampleURL,
 };
 
-interface ExtendedMapLayerOptions<T> extends MapLayerOptions<T> {
-  noRepeat?: boolean;
+/**
+ * Saved panel options are only ever partial, so fill in the gaps once here and let everything
+ * downstream work with a complete config.
+ */
+function resolveMaplibreConfig(config: Partial<MaplibreConfig> = {}): MaplibreConfig {
+  return { ...config, url: config.url || defaultMaplibreConfig.url };
 }
 
-export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
+const maplibreLayer: MapLayerRegistryItem<Partial<MaplibreConfig>> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
+  // Attribution comes from the style, so the tile provider terms are unknown here
+  requiresAttribution: true,
 
-  create: async (
-    map: Map,
-    options: ExtendedMapLayerOptions<MaplibreConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (_map, options) => ({
     init: () => {
-      const cfg = { ...options.config };
-      if (!cfg.url) {
-        cfg.url = defaultMaplibreConfig.url;
-      }
+      const cfg = resolveMaplibreConfig(options.config);
       const layerOpacity = options.opacity ?? 1;
       const noRepeat = options.noRepeat ?? false;
       const layer = new LayerGroup({
@@ -62,11 +59,6 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
       // Handle async operations in the background
       const loadStyle = async () => {
         try {
-          if (!cfg.url) {
-            console.warn('No URL provided for MapLibre style, layer will be empty');
-            return;
-          }
-
           const res = await fetch(cfg.url);
           if (!res.ok) {
             console.warn(`Failed to load MapLibre style from ${cfg.url}: ${res.status} ${res.statusText}`);
@@ -98,10 +90,6 @@ export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
 
       const tryFallbackApply = async () => {
         try {
-          if (!cfg.url) {
-            console.warn('No URL available for MapLibre fallback, layer will be empty');
-            return;
-          }
           await apply(layer, cfg.url, { accessToken: cfg.accessToken });
           applyNoRepeat();
         } catch (fallbackError) {

@@ -657,7 +657,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     makeRegistryItemFromTransformer(standardTransformers.groupToNestedTable, {
       id: DataTransformerID.groupToNestedTable,
       editor: lazy(() =>
-        import('./editors/GroupToNestedTableTransformerEditor/index').then((m) => ({
+        import('./editors/GroupToNestedTableTransformerEditor').then((m) => ({
           default: m.GroupToNestedTableTransformerEditor,
         }))
       ),
@@ -674,7 +674,6 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
         TransformerCategory.CalculateNewFields,
         TransformerCategory.Reformat,
       ]),
-      state: config.featureToggles.groupToNestedTableV2 ? undefined : PluginState.beta,
       imageDark: groupToNestedTableDark,
       imageLight: groupToNestedTableLight,
     }),

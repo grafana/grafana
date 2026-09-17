@@ -5,16 +5,6 @@ import { type VariableValueOption } from '@grafana/scenes';
 
 import { VariableValuesPreview, type VariableValuesPreviewProps } from './VariableValuesPreview';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      multiPropsVariables: true,
-    },
-  },
-}));
-
 function renderPreview(props: VariableValuesPreviewProps) {
   const renderResult = render(<VariableValuesPreview options={props.options} staticOptions={props.staticOptions} />);
 

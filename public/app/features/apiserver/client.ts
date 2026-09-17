@@ -22,6 +22,7 @@ import {
   type ResourceEvent,
   type ResourceClientWriteParams,
   type GroupVersionResource,
+  type TableResponse,
 } from './types';
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
@@ -34,8 +35,8 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
-  public async get(name: string): Promise<Resource<T, S, K>> {
-    return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
+  public async get(name: string, params?: Record<string, unknown>): Promise<Resource<T, S, K>> {
+    return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`, params);
   }
 
   public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
@@ -125,6 +126,16 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<ResourceList<T, S, K>>(this.url, opts);
   }
 
+  public async listAsTable(opts?: ListOptions): Promise<TableResponse> {
+    const finalOpts = opts || {};
+    finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
+    finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
+
+    return getBackendSrv().get<TableResponse>(this.url, finalOpts, undefined, {
+      headers: { Accept: 'application/json;as=Table;g=meta.k8s.io;v=v1' },
+    });
+  }
+
   public async create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
@@ -140,11 +151,12 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
+    const { name } = obj.metadata;
+    if (!name) {
+      return Promise.reject(new Error('update requires metadata.name'));
+    }
     setSavedFromUIAnnotation(obj.metadata);
-    const url = `${this.url}/${obj.metadata.name}`;
-    return getBackendSrv().put<Resource<T, S, K>>(url, obj, {
-      params,
-    });
+    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${name}`, obj, { params });
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {
@@ -303,7 +315,7 @@ export class DatasourceAPIVersions {
   }
 }
 
-export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
+const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
   if (!Array.isArray(selector)) {
     return selector;
   }

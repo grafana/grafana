@@ -39,9 +39,17 @@ export interface Options {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
+  /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
   /**
    * Controls whether the panel should show the header
    */
@@ -59,6 +67,7 @@ export interface Options {
 export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],

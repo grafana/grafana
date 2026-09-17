@@ -12,6 +12,8 @@ func GetKinds() map[schema.GroupVersion][]sdkResource.Kind {
 		v0alpha1.GroupVersion: {
 			v0alpha1.AlertRuleKind(),
 			v0alpha1.RecordingRuleKind(),
+			v0alpha1.RuleSequenceKind(),
+			v0alpha1.ConfigKind(),
 		},
 	}
 	return result

@@ -33,7 +33,7 @@ interface ContentProps extends PropsWithChildren {
   icon: IconName;
 }
 
-export const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
+const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
   return (
     <Box ref={ref} display={'flex'} alignItems={'center'} marginRight={1}>
       <Icon name={icon} /> <Box marginLeft={1}>{children}</Box>

@@ -8,6 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -78,11 +81,22 @@ func setupSettingsService(cfg *setting.Cfg, promRegister prometheus.Registerer) 
 	}
 
 	if err := promRegister.Register(settingsService); err != nil {
-		var alreadyRegisteredErr prometheus.AlreadyRegisteredError
-		if !errors.As(err, &alreadyRegisteredErr) {
+		if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); !ok {
 			return nil, fmt.Errorf("failed to register settings service metrics: %w", err)
 		}
 	}
 
 	return settingsService, nil
+}
+
+// setupPluginsCDNService initializes the plugins CDN service from the global
+// configuration. The frontend service uses it to expose the plugins CDN base
+// URL in the frontend settings.
+func setupPluginsCDNService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*pluginscdn.Service, error) {
+	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), features)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create plugin management config: %w", err)
+	}
+
+	return pluginscdn.ProvideService(pluginManagementCfg), nil
 }

@@ -9,8 +9,8 @@ import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
-import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 
+import { type LokiQuery } from '../../../../loki-helpers/types';
 import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
@@ -141,7 +141,7 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToQuery: (existing: T, value: string | undefined) => T;
 };
 
-export function useQueryMappers(dataSourceName: string): QueryMappers {
+function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
     if (!settings) {

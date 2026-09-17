@@ -4,7 +4,6 @@ import { cloneDeep, defaults as lodashDefaults } from 'lodash';
 import { LoadingState, type VariableType, type TypedVariableModel, type VariableOption } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
-import { changeVariableNameSucceeded } from '../editor/reducer';
 import { ensureStringValues } from '../ensureStringValues';
 import { hasOptions } from '../guard';
 
@@ -181,11 +180,6 @@ const sharedReducerSlice = createSlice({
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
     },
   },
-  extraReducers: (builder) =>
-    builder.addCase(changeVariableNameSucceeded, (state, action) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.name = action.payload.data.newName;
-    }),
 });
 
 export const sharedReducer = sharedReducerSlice.reducer;

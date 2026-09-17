@@ -44,17 +44,19 @@ func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-	repo, err := c.getter.GetRepository(ctx, name)
-	if err != nil {
-		logger.Debug("failed to find repository", "error", err)
-		return nil, err
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
+		ctx = logging.Context(ctx, logger)
+
 		if r.Method != http.MethodGet {
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method))
+			return
+		}
+
+		repo, err := c.getter.GetRepository(ctx, name)
+		if err != nil {
+			logger.Debug("failed to find repository", "error", err)
+			responder.Error(err)
 			return
 		}
 

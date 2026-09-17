@@ -3,14 +3,23 @@ import { act, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
-import { PluginType } from '@grafana/data';
+import { AppPlugin, PluginType } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
+import { usePluginConfig } from '../hooks/usePluginConfig';
 import { getCatalogPluginMock } from '../mocks/mockHelpers';
 import { PluginTabIds } from '../types';
 
 import { PluginDetailsBody } from './PluginDetailsBody';
+
+jest.mock('../hooks/usePluginConfig', () => ({
+  usePluginConfig: jest.fn(),
+}));
+
+const usePluginConfigMock = jest.mocked(usePluginConfig);
 
 function renderWithStore(component: JSX.Element) {
   const store = configureStore();
@@ -23,6 +32,10 @@ function renderWithStore(component: JSX.Element) {
 }
 
 describe('PluginDetailsBody', () => {
+  beforeEach(() => {
+    usePluginConfigMock.mockReturnValue({ value: null, loading: false });
+  });
+
   const tcs = [
     {
       name: 'renderer type plugin',
@@ -116,5 +129,28 @@ describe('PluginDetailsBody', () => {
     });
 
     expect(screen.getByText('No data sources defined')).toBeVisible();
+  });
+
+  it('should mark the plugin boundary on app config pages', async () => {
+    const plugin = getCatalogPluginMock({ id: 'my-app', type: PluginType.app });
+    const appPlugin = new AppPlugin();
+    appPlugin.meta = getMockPlugin({ id: 'my-app', type: PluginType.app });
+    appPlugin.addConfigPage({
+      title: 'Settings',
+      icon: 'cog',
+      id: 'settings',
+      body: () => <div>Config page body</div>,
+    });
+    usePluginConfigMock.mockReturnValue({ value: appPlugin, loading: false });
+
+    await act(async () => {
+      renderWithStore(
+        <PluginDetailsBody plugin={plugin} info={[]} queryParams={{}} pageId="settings" showDetails={false} />
+      );
+    });
+
+    const boundary = screen.getByTestId(selectors.components.Plugins.configPage('my-app', 'settings'));
+    expect(boundary).toHaveAttribute('data-plugin-id', 'my-app');
+    expect(screen.getByText('Config page body')).toBeVisible();
   });
 });

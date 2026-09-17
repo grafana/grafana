@@ -33,8 +33,6 @@ import {
   updateConnectionsAfterGroupMove as sharedUpdateGroup,
 } from './connectionMovementUtils';
 
-export const CONNECTION_VERTEX_ID = 'vertex';
-export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
 const CONNECTION_VERTEX_ORTHO_TOLERANCE = 0.05; // Cartesian ratio against vertical or horizontal tolerance
 const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment snapping angle in radians to trigger vertex removal
 

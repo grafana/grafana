@@ -10,16 +10,16 @@ function loadJson(path: string) {
   return JSON.parse(rawJson);
 }
 
-export function getPackageJson() {
-  return loadJson(path.resolve(process.cwd(), 'package.json'));
+export function getPackageJson(dir = process.cwd()) {
+  return loadJson(path.resolve(dir, 'package.json'));
 }
 
-export function getPluginJson() {
-  return loadJson(path.resolve(process.cwd(), 'plugin.json'));
+export function getPluginJson(dir = process.cwd()) {
+  return loadJson(path.resolve(dir, 'plugin.json'));
 }
 
-export async function getEntries(): Promise<Record<string, string>> {
-  const cwd = process.cwd();
+export async function getEntries(dir = process.cwd()): Promise<Record<string, string>> {
+  const cwd = dir;
   const result: Record<string, string> = {};
 
   for await (const pluginJson of glob('**/plugin.json', { cwd, exclude: ['**/dist/**'] })) {
@@ -36,6 +36,6 @@ export async function getEntries(): Promise<Record<string, string>> {
   return result;
 }
 
-export function hasLicense() {
-  return fs.existsSync(path.resolve(process.cwd(), 'LICENSE'));
+export function hasLicense(dir = process.cwd()) {
+  return fs.existsSync(path.resolve(dir, 'LICENSE'));
 }

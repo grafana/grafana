@@ -41,7 +41,7 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(context.Context, time.Time, *models.AlertRule, eval.Results, data.Labels, state.Sender) state.StateTransitions
+	ProcessEvalResults(context.Context, time.Time, *models.AlertRule, eval.Results, data.Labels, state.Sender) (state.StateTransitions, error)
 	schedule.RuleStateProvider
 }
 
@@ -183,7 +183,10 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 				builder.AddWarn(warn)
 			}
 		}
-		states := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
+		states, err := stateMgr.ProcessEvalResults(ruleCtx, currentTime, rule, results, extraLabels, nil)
+		if err != nil {
+			return false, err
+		}
 		for _, s := range states {
 			if !historian.ShouldRecord(s) {
 				continue

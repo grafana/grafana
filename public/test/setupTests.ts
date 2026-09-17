@@ -10,6 +10,7 @@ import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
 
+import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
@@ -19,6 +20,8 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
     shouldFailOnLog: true,
     shouldFailOnDebug: true,
     shouldFailOnInfo: true,
+    // Print the message for debug. Still fails the tests.
+    shouldPrintMessage: true,
   });
 }
 
@@ -63,6 +66,10 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
 }));
 
+// Runtime consumers also need a default hook because tests do not run Grafana's startup registration.
+// Register once per suite so tests can override it with setPluginComponentsHook.
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });
@@ -106,5 +113,33 @@ if (window.performance) {
 
   if (!window.performance.clearMeasures) {
     window.performance.clearMeasures = jest.mocked<typeof window.performance.clearMeasures>(() => {});
+  }
+}
+
+// jsdom does not implement Range client-rect measurement, which CodeMirror uses
+// to position its cursor and tooltips. Provide inert stubs so editors render in
+// tests without each test having to mock them.
+if (typeof Range !== 'undefined') {
+  const emptyRect: DOMRect = {
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    toJSON: () => ({}),
+  };
+
+  if (!Range.prototype.getClientRects) {
+    Range.prototype.getClientRects = () => {
+      const list = { length: 0, item: () => null, [Symbol.iterator]: function* () {} };
+      return list as unknown as DOMRectList;
+    };
+  }
+
+  if (!Range.prototype.getBoundingClientRect) {
+    Range.prototype.getBoundingClientRect = () => emptyRect;
   }
 }

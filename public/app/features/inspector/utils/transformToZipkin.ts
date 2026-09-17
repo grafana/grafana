@@ -3,7 +3,7 @@
 // converting DataFrames to Zipkin format for existing traces tagged with traceFormat: 'zipkin'.
 import { type MutableDataFrame, type TraceKeyValuePair, type TraceLog, type TraceSpanRow } from '@grafana/data';
 
-export type ZipkinAnnotation = {
+type ZipkinAnnotation = {
   timestamp: number;
   value: string;
 };
@@ -23,7 +23,7 @@ export type ZipkinSpan = {
   shared?: boolean;
 };
 
-export type ZipkinEndpoint = {
+type ZipkinEndpoint = {
   serviceName: string;
   ipv4?: string;
   ipv6?: string;

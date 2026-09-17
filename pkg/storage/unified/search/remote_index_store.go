@@ -38,21 +38,36 @@ const (
 )
 
 const (
-	snapshotStoreOpUploadFile             = "upload_file"
-	snapshotStoreOpUploadManifest         = "upload_manifest"
-	snapshotStoreOpDownloadFile           = "download_file"
-	snapshotStoreOpReadManifest           = "read_manifest"
-	snapshotStoreOpListIndexKeys          = "list_index_keys"
-	snapshotStoreOpListNamespaces         = "list_namespaces"
-	snapshotStoreOpListNamespaceResources = "list_namespace_resources"
-	snapshotStoreOpDeleteIndex            = "delete_index"
+	snapshotStoreOpUploadFile                       = "upload_file"
+	snapshotStoreOpUploadManifest                   = "upload_manifest"
+	snapshotStoreOpDownloadFile                     = "download_file"
+	snapshotStoreOpReadManifest                     = "read_manifest"
+	snapshotStoreOpListIndexKeys                    = "list_index_keys"
+	snapshotStoreOpListIndexKeysIncludingIncomplete = "list_index_keys_including_incomplete"
+	snapshotStoreOpListNamespaces                   = "list_namespaces"
+	snapshotStoreOpListNamespaceResources           = "list_namespace_resources"
+	snapshotStoreOpDeleteIndex                      = "delete_index"
 )
 
+// snapshotStoreRetryBackoffConfig covers the per-file transfers, which only retry
+// on transient errors (see isRetryableSnapshotStoreError). Up to 10s each. Files
+// are fetched one after another, so a snapshot whose every file keeps failing costs
+// this once per file.
 var snapshotStoreRetryBackoffConfig = backoff.Config{
 	MinBackoff: 100 * time.Millisecond,
-	MaxBackoff: time.Second,
-	// dskit/backoff counts retries after the initial attempt, so this is at most three tries total.
-	MaxRetries: 2,
+	MaxBackoff: 4 * time.Second,
+	// dskit/backoff counts retries after the initial attempt, so this is seven tries.
+	MaxRetries: 6,
+}
+
+// snapshotStoreMetadataRetryBackoffConfig covers listing and manifest reads, which
+// run a few times per download rather than once per file. Failing them leaves no
+// candidate and the caller builds from scratch, which costs far more than waiting,
+// so these get about 30s against 10s for a file.
+var snapshotStoreMetadataRetryBackoffConfig = backoff.Config{
+	MinBackoff: 200 * time.Millisecond,
+	MaxBackoff: 5 * time.Second,
+	MaxRetries: 10,
 }
 
 // remoteIndexStoreRetryLogger is used only when callers do not have a contextual logger to pass in.
@@ -89,8 +104,25 @@ type IndexMeta struct {
 	// IndexFormat identifies the Bleve segment format that wrote this snapshot
 	// (for example, "zap/16"). Empty on legacy snapshots means "unknown, assume compatible".
 	IndexFormat string `json:"index_format,omitempty"`
+	// Features are the index features the snapshot was built with, letting selection
+	// skip a snapshot missing a feature this instance requires instead of finding out
+	// after downloading it. Only meaningful when FeaturesRecorded is set.
+	Features []resource.IndexFeature `json:"features,omitempty"`
+	// FeaturesRecorded distinguishes "no features" from "not recorded", which the
+	// Features field alone cannot. False for a snapshot uploaded before this field
+	// existed, and for one whose index predates index features.
+	FeaturesRecorded bool `json:"features_recorded,omitempty"`
+	// ReaderRequirements are the features an instance must understand before using
+	// this snapshot. Selection skips a snapshot declaring one it does not recognise.
+	// Empty on snapshots uploaded before this field existed.
+	ReaderRequirements []resource.IndexFeature `json:"reader_requirements,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
+	// DocCount is the number of documents in the index at upload time. Recorded
+	// for debugging and troubleshooting only; there is no reader that relies on
+	// it. Zero-value means "unknown" (legacy snapshot uploaded before this field
+	// was added).
+	DocCount uint64 `json:"doc_count,omitempty"`
 	// Files maps relative file paths to their sizes in bytes.
 	Files map[string]int64 `json:"files"`
 }
@@ -116,11 +148,14 @@ type IndexStoreLock interface {
 type RemoteIndexStore interface {
 	// LockBuildIndex acquires a distributed build/upload lock for namespace/group/resource.
 	// buildVersion scopes contention to replicas running the same exact Grafana version.
+	// When another replica holds the lock, the returned error must match errLockHeld:
+	// build coordination relies on that to keep waiting instead of building alone.
 	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error)
 
 	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
 	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
 	// in-flight upload for any resource in the namespace.
+	// When another replica holds the lock, the returned error must match errLockHeld.
 	LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error)
 
 	// WriteSnapshotFile writes one data file at relPath under the snapshot
@@ -160,12 +195,22 @@ type RemoteIndexStore interface {
 	// returned NamespacedResource.
 	ListNamespaceResources(ctx context.Context, namespace string) ([]resource.NamespacedResource, error)
 
-	// ListIndexKeys returns the ULID keys of all index snapshots under the
-	// given namespaced resource. The returned list may include incomplete
-	// uploads (snapshots whose manifest has not yet been written); callers
-	// that need to distinguish complete from incomplete snapshots should
-	// follow up with the ReadIndexSnapshotManifest helper. Ordering is unspecified.
+	// ListIndexKeys returns the ULID keys of all index snapshots known
+	// under nsResource. Implementations may include or exclude incomplete
+	// uploads (data files written without a manifest) based on what is
+	// cheap on the backend; callers that need to confirm a particular key
+	// is backed by a valid manifest follow up with ReadIndexSnapshotManifest.
+	// Callers that must see incomplete uploads — notably
+	// CleanupIncompleteIndexSnapshots — use ListIndexKeysIncludingIncomplete
+	// instead. Ordering is unspecified.
 	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+
+	// ListIndexKeysIncludingIncomplete is like ListIndexKeys but is
+	// required to include incomplete uploads (snapshots that have data
+	// files on storage but no manifest). May be more expensive than
+	// ListIndexKeys on backends that must scan extra storage to detect
+	// partial uploads. Ordering is unspecified.
+	ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
 	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
@@ -233,11 +278,20 @@ func retryRemoteIndexStore(ctx context.Context, operation string, logger log.Log
 }
 
 func retryRemoteIndexStoreValue[T any](ctx context.Context, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
+	return retryRemoteIndexStoreValueWithBackoff(ctx, snapshotStoreRetryBackoffConfig, operation, logger, fn)
+}
+
+// retryMetadataRemoteIndexStoreValue retries with the longer metadata budget.
+func retryMetadataRemoteIndexStoreValue[T any](ctx context.Context, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
+	return retryRemoteIndexStoreValueWithBackoff(ctx, snapshotStoreMetadataRetryBackoffConfig, operation, logger, fn)
+}
+
+func retryRemoteIndexStoreValueWithBackoff[T any](ctx context.Context, cfg backoff.Config, operation string, logger log.Logger, fn func() (T, error)) (T, error) {
 	if logger == nil {
 		logger = remoteIndexStoreRetryLogger
 	}
 
-	bo := backoff.New(ctx, snapshotStoreRetryBackoffConfig)
+	bo := backoff.New(ctx, cfg)
 	for {
 		result, err := fn()
 		if err == nil || !isRetryableSnapshotStoreError(ctx, err) {
@@ -439,15 +493,22 @@ func listSubdirs[T any](ctx context.Context, bucket resource.CDKBucket, prefix, 
 }
 
 // ListIndexKeys returns the ULIDs of all snapshot prefixes under nsResource.
-// Non-ULID sibling directories (e.g. /locks) are skipped silently. The list
-// may include incomplete uploads whose manifest has not yet been written;
-// callers that need to filter to complete snapshots follow up with
-// ReadIndexSnapshotManifest (or the ListIndexSnapshots helper).
+// Non-ULID sibling directories (e.g. /locks) are skipped silently. Because
+// the listing is a subdir scan, the result naturally includes incomplete
+// uploads whose manifest has not yet been written; callers that depend on
+// that visibility should use ListIndexKeysIncludingIncomplete.
 func (s *BucketRemoteIndexStore) ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
 	return listSubdirs(ctx, s.bucket, nsPrefix(nsResource), "listing index keys", func(name string) (ulid.ULID, bool) {
 		key, err := ulid.Parse(name)
 		return key, err == nil // skip non-ULID subdirs (e.g. /locks)
 	})
+}
+
+// ListIndexKeysIncludingIncomplete is identical to ListIndexKeys for the
+// bucket backend: subdir listing already surfaces incomplete uploads at
+// no extra cost.
+func (s *BucketRemoteIndexStore) ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.ListIndexKeys(ctx, nsResource)
 }
 
 // ListNamespaces returns the namespaces currently known to the store.
@@ -710,7 +771,7 @@ func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns 
 // wrapping ErrInvalidManifest if the manifest is structurally invalid
 // (oversized, unparseable, empty file list, or non-canonical paths).
 func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
-	manifest, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
+	manifest, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
 		return store.ReadSnapshotManifest(ctx, nsResource, indexKey)
 	})
 	if err != nil {
@@ -759,7 +820,7 @@ func ValidateIndexSnapshotManifest(meta *IndexMeta) error {
 // (e.g. by a concurrent cleanup pass); callers acting on the returned
 // snapshots must handle ErrSnapshotNotFound from follow-up calls.
 func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, logger log.Logger) (map[ulid.ULID]*IndexMeta, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
+	keys, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeys(ctx, nsResource)
 	})
 	if err != nil {
@@ -798,8 +859,8 @@ func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource 
 // (store.LockNamespaceForCleanup) to avoid concurrent cleanup by different
 // instances.
 func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, olderThan time.Time, logger log.Logger) (int, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
-		return store.ListIndexKeys(ctx, nsResource)
+	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeysIncludingIncomplete, logger, func() ([]ulid.ULID, error) {
+		return store.ListIndexKeysIncludingIncomplete(ctx, nsResource)
 	})
 	if err != nil {
 		return 0, fmt.Errorf("listing index keys: %w", err)

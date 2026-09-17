@@ -1,4 +1,4 @@
-import { type ObjectMeta, type ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type ObjectMeta, type ReceiverIntegration } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { type GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -27,8 +27,6 @@ export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) => {
   const provenance = getAnnotation(k8sEntity, K8sAnnotations.Provenance);
   return isProvisionedResource(provenance);
 };
-
-export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
 
 /**
  * Checks annotations on a k8s entity to see if the requesting user has the required permission

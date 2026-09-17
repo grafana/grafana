@@ -19,7 +19,7 @@ export const initialIntervalVariableModelState: IntervalVariableModel = {
   current: {},
 };
 
-export const intervalVariableSlice = createSlice({
+const intervalVariableSlice = createSlice({
   name: 'templating/interval',
   initialState: initialVariablesState,
   reducers: {

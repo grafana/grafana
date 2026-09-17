@@ -9,21 +9,21 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertingInstrument "github.com/grafana/alerting/http/instrument"
-	"github.com/grafana/alerting/http/instrument/instrumenttest"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -61,6 +61,17 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			entry := requireSingleEntry(t, res)
 			require.Contains(t, entry.Error, "oh no")
+		})
+
+		t.Run("includes error when state is Alerting with exec error", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{State: eval.Alerting, Error: fmt.Errorf("datasource timeout")})
+
+			res := StatesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Contains(t, entry.Error, "datasource timeout")
 		})
 
 		t.Run("maps NoData results", func(t *testing.T) {
@@ -1047,10 +1058,8 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	// Helper to create simple folder access override functions.
 	canReadRulesInFolders := func(folderUids ...string) func(folderUID string) (bool, error) {
 		return func(folderUID string) (bool, error) {
-			for _, f := range folderUids {
-				if folderUID == f {
-					return true, nil
-				}
+			if slices.Contains(folderUids, folderUID) {
+				return true, nil
 			}
 			return false, nil
 		}

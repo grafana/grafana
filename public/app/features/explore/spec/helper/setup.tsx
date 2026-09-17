@@ -44,23 +44,18 @@ import { configureStore } from 'app/store/configureStore';
 import { type ExploreQueryParams } from 'app/types/explore';
 
 import { type RichHistoryRemoteStorageDTO } from '../../../../core/history/RichHistoryRemoteStorage';
-import { type LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
-import { type LokiQuery } from '../../../../plugins/datasource/loki/types';
+import { type LokiDatasource, type LokiQuery } from '../../../loki-helpers/types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { mockData } from './mocks';
 
-export const setBooleanFlags = (flags: Record<string, boolean>) => {
-  setTestFlags(flags);
-};
-
-export const QueryLibraryMocks = {
+const QueryLibraryMocks = {
   data: mockData.all,
 };
 
-export const IdentityServiceMocks = {
+const IdentityServiceMocks = {
   data: mockData.identityDisplay,
 };
 
@@ -165,7 +160,7 @@ export function setupExplore(options?: SetupOptions): {
 
       return Promise.reject();
     },
-    reload() {},
+    reload: jest.fn().mockResolvedValue(undefined),
   });
 
   const previousEchoSrv = getEchoSrv();
@@ -207,7 +202,7 @@ export function setupExplore(options?: SetupOptions): {
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <Provider store={storeState}>
         <GrafanaContext.Provider value={contextMock}>
-          <Router history={history}>
+          <Router history={location.getHistory()}>
             <QueriesDrawerContextProvider>
               <FinalProvider>
                 {options?.withAppChrome ? (
@@ -339,11 +334,6 @@ export const withinExplore = (exploreId: string) => {
 
 export const withinQueryHistory = () => {
   const container = screen.getByTestId('data-testid QueryHistory');
-  return within(container);
-};
-
-export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: /Query library/ });
   return within(container);
 };
 

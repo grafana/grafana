@@ -4,6 +4,19 @@ import { byRole } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
+import { useEnrichmentAbility as useEnrichmentAbilityNew } from '../../hooks/abilities/otherAbilities';
+import {
+  usePromRuleAdministrationAbility,
+  usePromRuleExportAbility,
+  usePromRuleSilenceAbility,
+} from '../../hooks/abilities/rules/promRuleAbilities';
+import { type RuleEditAbilityResult } from '../../hooks/abilities/rules/ruleAbilities.utils';
+import {
+  useRuleAdministrationAbility,
+  useRuleExportAbility,
+  useRuleSilenceAbility,
+} from '../../hooks/abilities/rules/rulerRuleAbilities';
+import { Granted, NotSupported } from '../../hooks/abilities/types';
 import {
   AlertRuleAction,
   useAlertRuleAbility,
@@ -22,19 +35,40 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
+// Legacy hooks — still used by RuleActionsButtons (not yet migrated)
 jest.mock('../../hooks/useAbilities');
 
+// New focused ability hooks — used by AlertRuleMenu after migration
+jest.mock('../../hooks/abilities/rules/rulerRuleAbilities');
+jest.mock('../../hooks/abilities/rules/promRuleAbilities');
+jest.mock('../../hooks/abilities/otherAbilities');
+
+const deniedAdminAbilities: RuleEditAbilityResult = {
+  update: NotSupported,
+  delete: NotSupported,
+  pause: NotSupported,
+  restore: NotSupported,
+  duplicate: NotSupported,
+  deletePermanently: NotSupported,
+  loading: false,
+};
+
 const mocks = {
-  // Mock the hooks that are actually used by the components:
-  // RuleActionsButtons uses: useAlertRuleAbility (singular)
-  // AlertRuleMenu uses: useRulerRuleAbilities and useGrafanaPromRuleAbilities (plural)
-  // We can also use useGrafanaPromRuleAbility (singular) for simpler mocking
+  // Legacy hooks used by RuleActionsButtons
   useRulerRuleAbility: jest.mocked(useRulerRuleAbility),
   useAlertRuleAbility: jest.mocked(useAlertRuleAbility),
   useGrafanaPromRuleAbility: jest.mocked(useGrafanaPromRuleAbility),
   useRulerRuleAbilities: jest.mocked(useRulerRuleAbilities),
   useGrafanaPromRuleAbilities: jest.mocked(useGrafanaPromRuleAbilities),
   useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+  // New focused hooks used by AlertRuleMenu
+  useRuleAdministrationAbility: jest.mocked(useRuleAdministrationAbility),
+  useRuleSilenceAbility: jest.mocked(useRuleSilenceAbility),
+  useRuleExportAbility: jest.mocked(useRuleExportAbility),
+  usePromRuleAdministrationAbility: jest.mocked(usePromRuleAdministrationAbility),
+  usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
+  usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
+  useEnrichmentAbilityNew: jest.mocked(useEnrichmentAbilityNew),
 };
 
 setPluginLinksHook(() => ({
@@ -71,13 +105,22 @@ describe('RulesTable RBAC', () => {
     mocks.useGrafanaPromRuleAbility.mockReturnValue([false, false]);
     mocks.useEnrichmentAbility.mockReturnValue([false, false]);
 
-    // Plural hooks (used by AlertRuleMenu) - need to return arrays based on input actions
+    // Plural hooks (legacy, used by components not yet migrated)
     mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
       return actions.map(() => [false, false]);
     });
     mocks.useGrafanaPromRuleAbilities.mockImplementation((_rule, actions) => {
       return actions.map(() => [false, false]);
     });
+
+    // New focused ability hooks (used by AlertRuleMenu after migration) — default: all denied
+    mocks.useRuleAdministrationAbility.mockReturnValue(deniedAdminAbilities);
+    mocks.useRuleSilenceAbility.mockReturnValue(NotSupported);
+    mocks.useRuleExportAbility.mockReturnValue(NotSupported);
+    mocks.usePromRuleAdministrationAbility.mockReturnValue(deniedAdminAbilities);
+    mocks.usePromRuleSilenceAbility.mockReturnValue(NotSupported);
+    mocks.usePromRuleExportAbility.mockReturnValue(NotSupported);
+    mocks.useEnrichmentAbilityNew.mockReturnValue(NotSupported);
   });
 
   describe('Grafana rules action buttons', () => {
@@ -139,14 +182,13 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      // Mock the specific hooks needed for Grafana rules
       mocks.useAlertRuleAbility.mockImplementation((rule, action) => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });
-      mocks.useGrafanaPromRuleAbilities.mockImplementation((rule, actions) => {
-        return actions.map((action) => {
-          return action === AlertRuleAction.Delete ? [true, true] : [false, false];
-        });
+      // AlertRuleMenu now uses the focused ability hooks — grant delete via the prom path
+      mocks.usePromRuleAdministrationAbility.mockReturnValue({
+        ...deniedAdminAbilities,
+        delete: Granted,
       });
 
       render(<RulesTable rules={[grafanaRule]} />);
@@ -269,17 +311,13 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useRulerRuleAbility.mockImplementation((_rule, _groupIdentifier, action) => {
-        return action === AlertRuleAction.Delete ? [true, true] : [false, false];
-      });
       mocks.useAlertRuleAbility.mockImplementation((_rule, action) => {
         return action === AlertRuleAction.Delete ? [true, true] : [false, false];
       });
-      // Cloud rules only need useRulerRuleAbilities mock (useGrafanaPromRuleAbilities gets skipToken)
-      mocks.useRulerRuleAbilities.mockImplementation((_rule, _groupIdentifier, actions) => {
-        return actions.map((action) => {
-          return action === AlertRuleAction.Delete ? [true, true] : [false, false];
-        });
+      // AlertRuleMenu now uses the focused ability hooks — grant delete via the ruler path
+      mocks.useRuleAdministrationAbility.mockReturnValue({
+        ...deniedAdminAbilities,
+        delete: Granted,
       });
 
       render(<RulesTable rules={[cloudRule]} />);

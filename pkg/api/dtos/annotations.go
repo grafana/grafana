@@ -38,10 +38,3 @@ type MassDeleteAnnotationsCmd struct {
 	AnnotationId int64  `json:"annotationId"`
 	DashboardUID string `json:"dashboardUID,omitempty"`
 }
-
-type PostGraphiteAnnotationsCmd struct {
-	When int64  `json:"when"`
-	What string `json:"what"`
-	Data string `json:"data"`
-	Tags any    `json:"tags"`
-}

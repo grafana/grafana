@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { AppEvents } from '@grafana/data';
 import { setAppEvents } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
-import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 import { type appEvents } from 'app/core/app_events';
 
 import { useProvisionedRequestHandler, type RequestHandlers } from './useProvisionedRequestHandler';
@@ -21,66 +21,26 @@ jest.mock('app/features/browse-dashboards/api/services', () => ({
   PAGE_SIZE: 50,
 }));
 
+const githubRepository: RepositoryView = {
+  type: 'github',
+  name: 'test-repo',
+  target: 'folder',
+  title: 'Test Repository',
+  workflows: [],
+};
+
 describe('useProvisionedRequestHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDispatch.mockClear();
   });
 
-  describe('error handling', () => {
-    it('should call onError handler with correct parameters', () => {
-      const { request, handlers } = setup({
-        requestOverrides: {
-          isError: true,
-          isSuccess: false,
-          error: new Error('Test error'),
-        },
-      });
-
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          repository: {
-            type: 'github',
-            name: 'test-repo',
-            target: 'folder',
-            title: 'Test Repository',
-            workflows: [],
-          },
-          resourceType: 'dashboard',
-          handlers,
-        })
-      );
-
-      expect(handlers.onError).toHaveBeenCalledWith(
-        new Error('Test error'),
-        expect.objectContaining({
-          resourceType: 'dashboard',
-          repoType: 'github',
-        })
-      );
-      expect(handlers.onBranchSuccess).not.toHaveBeenCalled();
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('success handling', () => {
+  describe('handleSuccess', () => {
     it('should publish success event and call onDismiss', () => {
-      const { request, handlers, mockPublish } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: createMockResourceWrapper(),
-        },
-      });
+      const { handlers, mockPublish, render } = setup();
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          resourceType: 'dashboard',
-          handlers,
-        })
-      );
+      const { result } = render({ resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(createMockResourceWrapper());
 
       expect(mockPublish).toHaveBeenCalledWith({
         type: AppEvents.alertSuccess.name,
@@ -90,26 +50,15 @@ describe('useProvisionedRequestHandler', () => {
     });
 
     it('should call onBranchSuccess for branch workflow', () => {
-      const { request, handlers, mockPublish } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: createMockResourceWrapper({
-            ref: 'feature-branch',
-            path: '/path/to/dashboard.json',
-            urls: { compareURL: 'http://example.com/edit' },
-          }),
-        },
+      const { handlers, mockPublish, render } = setup();
+      const wrapper = createMockResourceWrapper({
+        ref: 'feature-branch',
+        path: '/path/to/dashboard.json',
+        urls: { compareURL: 'http://example.com/edit' },
       });
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          workflow: 'branch',
-          resourceType: 'dashboard',
-          handlers,
-        })
-      );
+      const { result } = render({ workflow: 'branch', resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(wrapper);
 
       expect(handlers.onBranchSuccess).toHaveBeenCalledWith(
         {
@@ -122,7 +71,8 @@ describe('useProvisionedRequestHandler', () => {
           repoType: 'git',
           workflow: 'branch',
         }),
-        expect.any(Object)
+        expect.any(Object),
+        wrapper
       );
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
       // Branch workflow should not show success alert (PR banner handles it)
@@ -130,33 +80,21 @@ describe('useProvisionedRequestHandler', () => {
     });
 
     it('should show push success with branch link pointing to configured path', () => {
-      const { request, handlers } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: createMockResourceWrapper({
-            urls: { repositoryURL: 'https://github.com/org/repo' },
-          }),
-        },
-      });
+      const { handlers, render } = setup();
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          workflow: 'write',
-          resourceType: 'dashboard',
-          repository: {
-            type: 'github',
-            name: 'test-repo',
-            target: 'folder',
-            title: 'Test Repository',
-            workflows: [],
-            branch: 'main',
-            url: 'https://github.com/org/repo',
-            path: 'dashboards',
-          },
-          handlers,
-        })
+      const { result } = render({
+        workflow: 'write',
+        resourceType: 'dashboard',
+        repository: {
+          ...githubRepository,
+          branch: 'main',
+          url: 'https://github.com/org/repo',
+          path: 'dashboards',
+        },
+        handlers,
+      });
+      result.current.handleSuccess(
+        createMockResourceWrapper({ urls: { repositoryURL: 'https://github.com/org/repo' } })
       );
 
       const component = mockDispatch.mock.calls[0][0].payload.component;
@@ -169,32 +107,20 @@ describe('useProvisionedRequestHandler', () => {
     });
 
     it('should fall back to repositoryURL when no path is configured', () => {
-      const { request, handlers } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: createMockResourceWrapper({
-            urls: { repositoryURL: 'https://github.com/org/repo' },
-          }),
-        },
-      });
+      const { handlers, render } = setup();
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          workflow: 'write',
-          resourceType: 'dashboard',
-          repository: {
-            type: 'github',
-            name: 'test-repo',
-            target: 'folder',
-            title: 'Test Repository',
-            workflows: [],
-            branch: 'main',
-            url: 'https://github.com/org/repo',
-          },
-          handlers,
-        })
+      const { result } = render({
+        workflow: 'write',
+        resourceType: 'dashboard',
+        repository: {
+          ...githubRepository,
+          branch: 'main',
+          url: 'https://github.com/org/repo',
+        },
+        handlers,
+      });
+      result.current.handleSuccess(
+        createMockResourceWrapper({ urls: { repositoryURL: 'https://github.com/org/repo' } })
       );
 
       const component = mockDispatch.mock.calls[0][0].payload.component;
@@ -207,87 +133,62 @@ describe('useProvisionedRequestHandler', () => {
     });
 
     it('should call onWriteSuccess for write workflow', () => {
-      const { request, handlers } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: createMockResourceWrapper(),
-        },
-      });
+      const { handlers, render } = setup();
+      const wrapper = createMockResourceWrapper();
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          workflow: 'write',
-          resourceType: 'dashboard',
-          handlers,
-        })
-      );
+      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(wrapper);
 
       expect(handlers.onWriteSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: 'Dashboard', metadata: expect.objectContaining({ name: 'test-dashboard' }) })
+        expect.objectContaining({ kind: 'Dashboard', metadata: expect.objectContaining({ name: 'test-dashboard' }) }),
+        wrapper
       );
       expect(handlers.onDismiss).toHaveBeenCalled();
+    });
+
+    it('should refetch folder children for write workflow when folderUID is provided', () => {
+      const { handlers, render } = setup();
+
+      const { result } = render({ workflow: 'write', folderUID: 'folder-1', handlers });
+      result.current.handleSuccess(createMockResourceWrapper());
+
+      // refetchChildren is a thunk; assert a function was dispatched alongside the notification
+      expect(mockDispatch.mock.calls.some(([action]) => typeof action === 'function')).toBe(true);
+    });
+  });
+
+  describe('overrides', () => {
+    it('should merge per-call overrides over hook options', () => {
+      const { handlers, render } = setup();
+      const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/dashboard.json' });
+
+      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(wrapper, { workflow: 'branch' });
+
+      expect(handlers.onBranchSuccess).toHaveBeenCalled();
+      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
+    });
+
+    it('should allow overriding handlers per call', () => {
+      const { handlers, render } = setup();
+      const overrideWrite = jest.fn();
+
+      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(createMockResourceWrapper(), { handlers: { onWriteSuccess: overrideWrite } });
+
+      expect(overrideWrite).toHaveBeenCalled();
+      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
     });
   });
 
   describe('edge cases', () => {
-    it('should not call any handlers when request is loading', () => {
-      const { request, handlers, mockPublish } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: false,
-          isLoading: true,
-        },
-      });
+    it('should not throw when no handlers are provided', () => {
+      const { render } = setup();
 
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          handlers,
-        })
-      );
-
-      expect(handlers.onError).not.toHaveBeenCalled();
-      expect(handlers.onBranchSuccess).not.toHaveBeenCalled();
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
-      expect(mockPublish).not.toHaveBeenCalled();
-    });
-
-    it('should not call handlers when success but no data', () => {
-      const { request, handlers, mockPublish } = setup({
-        requestOverrides: {
-          isError: false,
-          isSuccess: true,
-          data: undefined,
-        },
-      });
-
-      renderHook(() =>
-        useProvisionedRequestHandler({
-          request,
-          handlers,
-        })
-      );
-
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
-      expect(handlers.onBranchSuccess).not.toHaveBeenCalled();
-      expect(mockPublish).not.toHaveBeenCalled();
-    });
-
-    it('should not throw when optional handlers are not provided', () => {
-      const { request } = setup({
-        requestOverrides: { isError: false, isSuccess: true },
-        handlersOverrides: {},
-      });
+      const { result } = render({});
 
       expect(() => {
-        renderHook(() =>
-          useProvisionedRequestHandler({
-            request,
-            handlers: {},
-          })
-        );
+        result.current.handleSuccess(createMockResourceWrapper());
       }).not.toThrow();
     });
   });
@@ -317,43 +218,23 @@ function createMockResourceWrapper(overrides: Partial<ResourceWrapper> = {}): Re
   };
 }
 
-function setup({
-  requestOverrides = {},
-  handlersOverrides = {},
-}: {
-  requestOverrides?: Partial<{
-    isError: boolean;
-    isSuccess: boolean;
-    isLoading?: boolean;
-    error?: unknown;
-    data?: ResourceWrapper;
-  }>;
-  handlersOverrides?: Partial<RequestHandlers<Dashboard>>;
-} = {}) {
+function setup() {
   const mockPublish = jest.fn();
 
   setAppEvents({ publish: mockPublish } as unknown as typeof appEvents);
 
-  const request = {
-    isError: false,
-    isSuccess: false,
-    isLoading: false,
-    error: undefined,
-    data: undefined,
-    ...requestOverrides,
-  };
-
   const handlers: RequestHandlers<Dashboard> = {
-    onError: jest.fn(),
     onBranchSuccess: jest.fn(),
     onWriteSuccess: jest.fn(),
     onDismiss: jest.fn(),
-    ...handlersOverrides,
   };
 
+  const render = (options: Parameters<typeof useProvisionedRequestHandler<Dashboard>>[0]) =>
+    renderHook(() => useProvisionedRequestHandler<Dashboard>(options));
+
   return {
-    request,
     handlers,
     mockPublish,
+    render,
   };
 }

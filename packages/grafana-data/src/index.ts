@@ -52,9 +52,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -212,7 +211,13 @@ export {
 } from './field/overrides/processors';
 
 // Utils
-export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
+export {
+  PanelOptionsEditorBuilder,
+  FieldConfigEditorBuilder,
+  type NestedValueAccess,
+  type NestedPanelOptions,
+  isNestedPanelOptions,
+} from './utils/OptionsUIBuilders';
 export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
 export { locationUtil } from './utils/location';
 export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './utils/url';
@@ -334,7 +339,7 @@ export type { ThemeRichColor, GrafanaTheme2 } from './themes/types';
 export type { ThemeColors } from './themes/createColors';
 export type { ThemeBreakpoints, ThemeBreakpointsKey } from './themes/breakpoints';
 export type { ThemeShadows } from './themes/createShadows';
-export type { ThemeShape } from './themes/createShape';
+export type { ThemeShape, Radii } from './themes/createShape';
 export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './themes/createTypography';
 export type { ThemeTransitions } from './themes/createTransitions';
 export type { ThemeSpacing, ThemeSpacingTokens } from './themes/createSpacing';
@@ -390,6 +395,7 @@ export {
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
+  guessBrowserTimeZone,
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,
@@ -440,6 +446,7 @@ export {
 export { LayoutModes, type LayoutMode } from './types/layout';
 export {
   PanelPlugin,
+  type PanelOptionsSupplier,
   type SetFieldConfigOptionsArgs,
   type StandardOptionConfig,
   type PanelScreenshotContext,
@@ -493,6 +500,7 @@ export type {
   OAuthSettings,
   AuthSettings,
   GrafanaConfig,
+  GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
   PreinstalledPlugin,
@@ -607,6 +615,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
@@ -688,6 +697,7 @@ export {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
+  type ErrorsAndNoticesInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
   type QueryEditorHelpProps,
@@ -708,6 +718,7 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -931,6 +942,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated

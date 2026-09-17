@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -25,13 +28,12 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	features      featuremgmt.FeatureToggles
 	accessControl accesscontrol.AccessControl
 	logger        log.Logger
 }
 
 func RegisterAppInstaller(
-	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
 	accessControlService accesscontrol.Service,
 	ac accesscontrol.AccessControl,
 ) (*AppInstaller, error) {
@@ -40,13 +42,11 @@ func RegisterAppInstaller(
 	}
 
 	installer := &AppInstaller{
-		features:      features,
 		accessControl: ac,
 		logger:        log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
+		EnableReconcilers: cfg.EnablePlaylistsReconciler,
 	})
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
 
@@ -76,8 +76,7 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
+			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(ctx)) {
 				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
 				// All other roles are handled by the default role authorizer.
 				if user.GetOrgRole() != org.RoleNone {

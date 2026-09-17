@@ -454,6 +454,10 @@ func (f *failingStatusReader) GetStorageMode(_ context.Context, _ schema.GroupRe
 	return f.mode, f.err
 }
 
+func (f *failingStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
+	return "", false
+}
+
 // switchableStatusReader returns the current mode field, allowing tests to simulate runtime mode changes.
 type switchableStatusReader struct {
 	mode unifiedmigrations.StorageMode
@@ -461,4 +465,8 @@ type switchableStatusReader struct {
 
 func (s *switchableStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	return s.mode, nil
+}
+
+func (s *switchableStatusReader) GetFloorVersion(_ schema.GroupResource) (string, bool) {
+	return "", false
 }

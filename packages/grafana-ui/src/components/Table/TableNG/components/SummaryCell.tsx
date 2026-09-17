@@ -9,9 +9,9 @@ import { type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { useReducerEntries } from '../hooks';
-import { getDefaultCellStyles } from '../styles';
+import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
 import { type TableRow } from '../types';
-import { getDisplayName, getJustifyContent, type TextAlign } from '../utils';
+import { getDisplayName } from '../utils';
 
 interface SummaryCellProps {
   rows: TableRow[];
@@ -44,6 +44,7 @@ export const SummaryCell = ({
   const defaultFooterCellStyles = getDefaultCellStyles(theme, {
     textAlign: 'left', // alignment is set in footerItem
     shouldOverflow: true,
+    hoverOverflow: true,
     textWrap: false,
   });
   const displayName = getDisplayName(field);

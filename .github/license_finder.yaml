@@ -85,13 +85,6 @@
     :versions: []
     :when: 2025-05-03 13:10:00.000000000 Z
 - - :license
-  - github.com/grafana/grafana/pkg/aggregator
-  - unknown
-  - :who: Carl Bergquist
-    :why: repository is owned by Grafana Labs
-    :versions: []
-    :when: 2025-05-03 13:10:00.000000000 Z
-- - :license
   - github.com/grafana/grafana/pkg/apimachinery
   - unknown
   - :who: Carl Bergquist

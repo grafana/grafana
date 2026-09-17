@@ -18,7 +18,7 @@ export const initialCustomVariableModelState: CustomVariableModel = {
   current: {} as VariableOption,
 };
 
-export const customVariableSlice = createSlice({
+const customVariableSlice = createSlice({
   name: 'templating/custom',
   initialState: initialVariablesState,
   reducers: {

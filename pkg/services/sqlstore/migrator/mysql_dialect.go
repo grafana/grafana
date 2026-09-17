@@ -205,8 +205,7 @@ func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *MySQLDialect) isThisError(err error, errcode uint16) bool {
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		if driverErr.Number == errcode {
 			return true
 		}
@@ -220,8 +219,7 @@ func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 }
 
 func (db *MySQLDialect) ErrorMessage(err error) string {
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return driverErr.Message
 	}
 	return ""
@@ -258,7 +256,7 @@ func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols 
 	valuesStr := strings.Builder{}
 	separator = ", "
 	colPlaceHolders := colPlaceHoldersStr.String()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separator = ""
 		}
@@ -272,6 +270,10 @@ func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols 
 		setStr.String(),
 	)
 	return s, nil
+}
+
+func (db *MySQLDialect) SupportsAdvisoryLocks() bool {
+	return true
 }
 
 func (db *MySQLDialect) Lock(cfg LockCfg) error {
@@ -348,7 +350,7 @@ func (db *MySQLDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *
 		}
 
 		statements := extractStatements(string(data))
-		if err := db.executeStatements(engine, statements); err != nil {
+		if err := db.executeStatements(ctx, engine, statements); err != nil {
 			return err
 		}
 	}
@@ -395,12 +397,17 @@ func extractStatements(schema string) []string {
 	return statements
 }
 
-func (s *MySQLDialect) executeStatements(engine *xorm.Engine, statements []string) error {
-	sess := engine.NewSession()
-	for _, s := range statements {
-		_, err := sess.Exec(s)
-		if err != nil {
-			return fmt.Errorf("statement %s failed with error: %v", s, err)
+func (s *MySQLDialect) executeStatements(ctx context.Context, engine *xorm.Engine, statements []string) error {
+	// mysqldump statements rely on connection-scoped session state, so they must all use the same connection.
+	conn, err := engine.DB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection for snapshot restore: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	for _, statement := range statements {
+		if _, err := conn.ExecContext(ctx, statement); err != nil {
+			return fmt.Errorf("statement %s failed with error: %w", statement, err)
 		}
 	}
 	return nil

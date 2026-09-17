@@ -9,6 +9,7 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
+import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
@@ -71,6 +72,7 @@ describe('GroupDetailsPage', () => {
       AccessControlAction.AlertingRuleUpdate,
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
+      AccessControlAction.FoldersRead,
     ]);
   });
 
@@ -329,6 +331,12 @@ describe('GroupDetailsPage', () => {
 
       const group = alertingFactory.ruler.group.build({ name: 'test-group-cpu', interval: '11m40s' });
       setRulerRuleGroupResolver((req) => {
+        if (
+          req.params.namespace === RULER_CONFIG_API_PROBE_NAMESPACE &&
+          req.params.groupName === RULER_CONFIG_API_PROBE_GROUP
+        ) {
+          return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+        }
         if (req.params.namespace === 'test-mimir-namespace' && req.params.groupName === 'test-group-cpu') {
           return HttpResponse.json(group);
         }

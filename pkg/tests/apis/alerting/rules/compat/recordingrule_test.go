@@ -61,8 +61,9 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  rule.Title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
 					QueryType:     new(rule.Data[0].QueryType),

@@ -15,7 +15,7 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   originalQuery: null,
 };
 
-export const textBoxVariableSlice = createSlice({
+const textBoxVariableSlice = createSlice({
   name: 'templating/textbox',
   initialState: initialVariablesState,
   reducers: {

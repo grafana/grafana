@@ -6,10 +6,12 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
+import { canEditItemType } from '../permissions';
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
@@ -21,10 +23,12 @@ type NameCellProps = DashboardsTreeCellProps & {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
 };
 
-export function NameCell({ row: { original: data }, onFolderClick, treeID }: NameCellProps) {
+export function NameCell({ row: { original: data }, onFolderClick, treeID, permissions }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
+  // The tree only knows the browsed folder's permissions, which nested items inherit.
+  const canEditItem = permissions ? canEditItemType(item.kind, permissions) : true;
 
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
@@ -53,6 +57,9 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
       </>
     );
   }
+
+  // Nested rows sit beneath their managed root, so only root rows need the repository badge in this tree.
+  const showRepoBadge = !item.parentUID;
 
   return (
     <>
@@ -110,7 +117,9 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
           )}
         </Text>
 
-        <FolderRepo folder={item} />
+        {showRepoBadge && <FolderRepo folder={item} canEdit={canEditItem} />}
+
+        <DescriptionTooltip description={item.description} />
 
         {ownerReference && (
           <div className={styles.ownerReference}>

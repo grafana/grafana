@@ -66,10 +66,12 @@ export const ActiveFields = ({
     [activeFields, suggestedFields]
   );
 
-  const toggleSelectedField = useCallback(
+  const toggleSuggestedField = useCallback(
     (key: string) => {
       toggle(key);
-      reportInteraction('logs_field_selector_suggested_field_clicked');
+      reportInteraction('logs_field_selector_suggested_field_clicked', {
+        key,
+      });
     },
     [toggle]
   );
@@ -137,7 +139,7 @@ export const ActiveFields = ({
               <div className={styles.columnWrapper}>
                 {suggested.map((field) => (
                   <div className={styles.wrap} key={field.name}>
-                    <Field field={field} toggle={toggleSelectedField} />
+                    <Field field={field} toggle={toggleSuggestedField} />
                   </div>
                 ))}
               </div>

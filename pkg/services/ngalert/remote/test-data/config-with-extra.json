@@ -21,7 +21,7 @@
             "version": "v1",
             "disableResolveMessage": false,
             "settings": {
-              "addresses": "<example@email.com>"
+              "addresses": "<example@example.com>"
             }
           }
         ]

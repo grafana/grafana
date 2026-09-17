@@ -157,6 +157,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&ScopeNavigation{},
 		&ScopeNavigationList{},
 		&FindScopeNavigationsResults{},
+		&FindDefaultScope{},
 	)
 	//metav1.AddToGroupVersion(scheme, gv)
 	return nil

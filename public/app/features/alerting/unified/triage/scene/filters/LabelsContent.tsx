@@ -13,8 +13,8 @@ import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, u
 import { useLabelSectionOpen } from './labelFilter.hooks';
 import { filterLabels } from './labelFilter.utils';
 
-export const DEFAULT_VISIBLE_LABELS = 25;
-export const DEFAULT_VISIBLE_VALUES = 12;
+const DEFAULT_VISIBLE_LABELS = 25;
+const DEFAULT_VISIBLE_VALUES = 12;
 
 // --- Shared content component (also used by LabelsColumn) ---
 

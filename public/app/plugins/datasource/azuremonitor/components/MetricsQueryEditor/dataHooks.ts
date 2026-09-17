@@ -54,6 +54,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
   const { subscription } = query;
   const { metricNamespace, resources } = query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   const metricNamespaces = useAsyncState(
     async () => {
@@ -68,7 +69,13 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
           resourceGroup,
           resourceName,
         },
-        false
+        false,
+        undefined,
+        false,
+        // The batch API can't query custom metric namespaces, so exclude them from the
+        // options when it's enabled. Guest OS / WAD namespaces are filtered separately by
+        // the editor (they're detectable by name prefix).
+        batchAPIEnabled
       );
       const options = formatOptions(results, metricNamespace);
 
@@ -80,7 +87,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
       return options;
     },
     setError,
-    [subscription, metricNamespace, resourceGroup, resourceName]
+    [subscription, metricNamespace, resourceGroup, resourceName, batchAPIEnabled]
   );
 
   return metricNamespaces;
@@ -92,10 +99,14 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
   const multipleResources = (resources && resources.length > 1) ?? false;
   const region = query.azureMonitor?.region ?? '';
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   return useAsyncState(
     async () => {
       if (!subscription || !metricNamespace || !resourceGroup || !resourceName) {
+        return;
+      }
+      if (!batchAPIEnabled && multipleResources && !region) {
         return;
       }
       const results = await datasource.azureMonitorDatasource.getMetricNames(
@@ -114,7 +125,16 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
       return options;
     },
     setError,
-    [subscription, resourceGroup, resourceName, metricNamespace, customNamespace, multipleResources]
+    [
+      subscription,
+      resourceGroup,
+      resourceName,
+      metricNamespace,
+      customNamespace,
+      multipleResources,
+      region,
+      batchAPIEnabled,
+    ]
   );
 };
 
@@ -134,10 +154,17 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
   const multipleResources = (resources && resources.length > 1) ?? false;
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   // Fetch new metric metadata when the fields change
   useEffect(() => {
     if (!subscription || !resourceGroup || !resourceName || !metricNamespace || !metricName) {
+      setMetricMetadata(defaultMetricMetadata);
+      return;
+    }
+    // Mirror useMetricNames: with the batch API off, a multi-resource selection needs a region.
+    // Skip fetching metadata too, otherwise aggregations/dimensions show while the metric list is empty.
+    if (!batchAPIEnabled && multipleResources && !region) {
       setMetricMetadata(defaultMetricMetadata);
       return;
     }
@@ -173,6 +200,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     metricName,
     customNamespace,
     multipleResources,
+    batchAPIEnabled,
   ]);
 
   // Update the query state in response to the meta data changing

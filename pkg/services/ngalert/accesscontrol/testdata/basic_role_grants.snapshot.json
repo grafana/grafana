@@ -4,11 +4,13 @@
     "roles": [
       "fixed:alerting.alertmanager-imports:writer",
       "fixed:alerting.legacy:writer",
+      "fixed:alerting.notifications.config:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
       "fixed:alerting.routes:reader",
       "fixed:alerting.routes:writer",
+      "fixed:alerting.rules.config:writer",
       "fixed:alerting:admin"
     ],
     "permissions": [
@@ -209,6 +211,14 @@
         "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
       },
       {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
+      },
+      {
         "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
@@ -238,6 +248,14 @@
       {
         "action": "receivers.permissions:write",
         "scope": "receivers:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:update",
+        "scope": "rules-configs:*"
       }
     ]
   },
@@ -391,8 +409,10 @@
     "roles": [
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
+      "fixed:alerting.notifications.config:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
+      "fixed:alerting.rules.config:reader",
       "fixed:alerting.rules:reader",
       "fixed:alerting.templates:reader",
       "fixed:alerting.time-intervals:reader"
@@ -437,6 +457,14 @@
       {
         "action": "alert.silences:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
       }
     ]
   }

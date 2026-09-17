@@ -22,8 +22,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
-import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
+import { getMockFrames } from 'app/features/loki-helpers/mocks';
+import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
@@ -879,14 +879,14 @@ describe('dataFrameToLogsModel', () => {
       {
         entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
-        logLevel: 'unknown',
+        logLevel: LogLevel.unspecified,
         uniqueLabels: {},
         uid: 'A_foo',
       },
       {
         entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
-        logLevel: 'unknown',
+        logLevel: LogLevel.unspecified,
         uniqueLabels: {},
         uid: 'A_bar',
       },

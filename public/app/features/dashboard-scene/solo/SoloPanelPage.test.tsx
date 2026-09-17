@@ -19,7 +19,7 @@ jest.mock('../pages/DashboardScenePageStateManager', () => ({
   getDashboardScenePageStateManager: jest.fn(),
 }));
 
-jest.mock('../scene/SoloPanelContext', () => ({
+jest.mock('./SoloPanelContext', () => ({
   SoloPanelContextProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   useDefineSoloPanelContext: jest.fn(() => ({})),
 }));

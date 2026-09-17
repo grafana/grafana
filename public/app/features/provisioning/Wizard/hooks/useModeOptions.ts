@@ -52,7 +52,7 @@ function resolveDisabledReason(option: ModeOption, context: DisableContext) {
     );
   }
 
-  if (option.target !== 'instance' && option.target !== 'folder') {
+  if (!['instance', 'folder', 'folderless'].includes(option.target)) {
     return t('provisioning.mode-options.disabled.not-supported', 'This option is not supported yet.');
   }
 
@@ -89,6 +89,22 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
         subtitle: t(
           'provisioning.mode-options.folder.subtitle',
           'Use this option to sync external resources into a new folder without affecting the rest of your instance.'
+        ),
+        disabled: false,
+      },
+      {
+        target: 'folderless',
+        label: t(
+          'provisioning.mode-options.folderless.label',
+          'Sync external storage directly at root level without a containing folder'
+        ),
+        description: t(
+          'provisioning.mode-options.folderless.description',
+          'After setup, resources from external storage are provisioned at the top level without creating a wrapper folder. Subdirectories in external storage become top-level folders. Other repositories and resources that are not managed by this repository are left untouched.'
+        ),
+        subtitle: t(
+          'provisioning.mode-options.folderless.subtitle',
+          'Use this option to sync external resources to the top level, with no wrapper folder, while still supporting subfolders and coexisting with other content.'
         ),
         disabled: false,
       },

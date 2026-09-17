@@ -85,11 +85,24 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	additional := getAdditionalProxyHeaders(r, c.cfg)
+	c.logProxyHeaders(ctx, additional)
+
 	cacheKey, ok := getProxyCacheKey(username, additional)
 
 	if c.cfg.AuthProxy.SyncTTL != 0 && ok {
 		identity, errCache := c.retrieveIDFromCache(ctx, cacheKey, r)
 		if errCache == nil {
+			// Rehydrate ExternalGroups from the live Groups header.
+			// Safe as the groups header value is part of the cache key.
+			// Only matters when IDUseExternalGroupsForGroupsClaim is true as
+			// we rely directly on ExternalGroups to determine team membership.
+			// Sync hooks that consume ExternalGroups (e.g. team sync) are not run on a cache hit.
+			// GAP: LDAP external groups cannot be rehydrated here.
+			if c.cfg.IDUseExternalGroupsForGroupsClaim {
+				if v, ok := additional[proxyFieldGroups]; ok {
+					identity.ExternalGroups = util.SplitString(v)
+				}
+			}
 			return identity, nil
 		}
 
@@ -111,7 +124,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return nil, clientErr
 }
 
-func (c *Proxy) IsEnabled() bool {
+func (c *Proxy) IsEnabled(context.Context) bool {
 	return c.cfg.AuthProxy.Enabled
 }
 
@@ -277,18 +290,34 @@ func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]st
 	return additional
 }
 
-func getProxyCacheKey(username string, additional map[string]string) (string, bool) {
-	key := strings.Builder{}
-	key.WriteString(username)
-	for _, k := range proxyFields {
-		if v, ok := additional[k]; ok {
-			key.WriteString(v)
+func (c *Proxy) logProxyHeaders(ctx context.Context, additional map[string]string) {
+	logCtx := make([]any, 0, len(c.cfg.AuthProxy.Headers)*2)
+	for _, field := range proxyFields {
+		headerName := c.cfg.AuthProxy.Headers[field]
+		if headerName == "" {
+			continue
 		}
+		logCtx = append(logCtx, headerName, additional[field] != "")
+	}
+	c.log.FromContext(ctx).Debug("Auth proxy headers", logCtx...)
+}
+
+func getProxyCacheKey(username string, additional map[string]string) (string, bool) {
+	hash := fnv.New128a()
+
+	// Length-prefix each field so concatenation can't produce ambiguous field boundaries.
+	writeField := func(v string) bool {
+		_, err := fmt.Fprintf(hash, "%d:%s", len(v), v)
+		return err == nil
 	}
 
-	hash := fnv.New128a()
-	if _, err := hash.Write([]byte(key.String())); err != nil {
+	if !writeField(username) {
 		return "", false
+	}
+	for _, k := range proxyFields {
+		if !writeField(additional[k]) {
+			return "", false
+		}
 	}
 
 	return strings.Join([]string{proxyCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true

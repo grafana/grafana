@@ -120,7 +120,7 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
   });
 }
 
-export function RuleLink({ value, frame, rowIndex }: CustomCellRendererProps) {
+function RuleLink({ value, frame, rowIndex }: CustomCellRendererProps) {
   const ruleUIDs = frame.fields.find((field) => field.name === RULE_UID_FIELD_NAME);
   const ruleUID = ruleUIDs?.values[rowIndex];
 

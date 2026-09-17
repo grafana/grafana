@@ -31,9 +31,7 @@ refs:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -45,7 +43,7 @@ After you sync your resources, Git Sync creates a dashboard that provides a summ
 
 Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards) for more information about working with provisioned files.
 
-## View the current status of synchronization
+## View the current status of your synchronized repository
 
 Use the **View** section to see detailed information about the current status of your sync and [troubleshoot](#troubleshoot-synchronization) possible issues:
 
@@ -97,6 +95,12 @@ To update or delete your repository configuration after you complete setup:
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
+
 ## Manage folder permissions
 
 By default, users keep their roles in folders provisioned with Git Sync.
@@ -112,23 +116,34 @@ Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSIO
 ### Modify folder permissions
 
 {{< admonition type="note" >}}
-To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID, which defines a stable folder ID used to set folder permissions. Without it, the folder's permissions will be lost if you move that folder to a different path in the Git repository.
-
-For new provisioned folders managed with Git Sync, the metadata file is added automatically if you created the folder from the Grafana UI. If your folder is missing the metadata file, you'll see a warning in the UI with instructions on how to add the missing metadata.
+To modify permissions, each provisioned folder must include the `_folder.json` metadata file, which gives the folder a stable UID. Without it, the folder's permissions are lost if you move or rename that folder in the Git repository. Refer to [The Git Sync folder metadata file](#the-git-sync-folder-metadata-file) for details about this file and why it exists.
 {{< /admonition >}}
 
-You can modify folder permissions:
+Folder permissions attach to the folder's UID (stored in `_folder.json`), not to its repository path, so you can only set them after Git Sync has created the folder. To add or modify folder permissions:
 
-- From the UI, refer to [Manage dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/).
+- From the UI, select **Folder actions > Manage permissions** on the top right corner.
 - Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
+- As code with Terraform, using the folder UID from `_folder.json`. Refer to [Modify folder-level permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana/#modify-folder-level-permissions) for manual and Terraform examples.
 
-### The Git Sync folder JSON metadata file
+### The Git Sync folder metadata file
 
-Each folder in a synced repository contains a `.folder.json` file at its root:
+Each provisioned folder in a synced repository contains a `_folder.json` metadata file at its root. This file is the folder's manifest: it stores the folder's stable UID and its display name, so both survive changes to the repository layout.
+
+The file exists because a directory path isn't a stable identity. Without `_folder.json`, Grafana derives the folder UID from a hash of the directory path in the repository. If you move or rename that directory in Git, the hash changes and Grafana treats it as a different folder: everything attached to the old UID, such as custom folder permissions, bookmarks, and API references, is lost. With `_folder.json`, the UID travels with the directory, so you can reorganize your repository without breaking permissions or references.
+
+The file also separates the folder's display name from the directory name. The directory keeps a filesystem-friendly name, for example `team-platform`, while the `spec.title` field holds the name shown in the Grafana UI, for example `Team Platform`.
+
+Grafana manages this file for you:
+
+- When you create a provisioned folder from the Grafana UI, Git Sync commits the `_folder.json` file together with the folder.
+- When you rename a folder in Grafana, Git Sync updates the `spec.title` field in the file.
+- If a folder is missing the file, for example because you created the directory directly in Git, Grafana falls back to the hash-derived UID and shows a warning in the UI with instructions on how to add the missing metadata.
+
+The file has the following format:
 
 ```json
 {
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "<API_VERSION>",
   "kind": "Folder",
   "metadata": {
     "name": "<FOLDER_UID>"
@@ -141,5 +156,6 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 Where:
 
-- `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
-- `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional. If not used, the folder name will be passed instead.
+- `<API_VERSION>` is the version of the folders API. For example, `folder.grafana.app/v1`.
+- `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references. Treat this value as immutable: Grafana rejects folder UID changes, and changing it directly in Git breaks the link between the directory and the existing Grafana folder, with the same consequences as having no metadata file.
+- `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This field is optional. If it's not set, Grafana uses the directory name instead.

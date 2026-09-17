@@ -155,7 +155,11 @@ export class CentrifugeService implements CentrifugeSrv {
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.namespace}/${addr.scope}/${addr.stream}/${addr.path}`;
+    // Use toLiveChannelId so addresses from plugins still using the legacy
+    // `namespace` field (pre-rename) resolve to the same channel id as ones
+    // using `stream`. Without this, subscriptions get an id with `undefined`
+    // in place of the stream segment and silently never receive data.
+    const id = `${this.deps.namespace}/${toLiveChannelId(addr)}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;

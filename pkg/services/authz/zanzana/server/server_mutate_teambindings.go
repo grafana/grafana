@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-func (s *Server) mutateTeamBindings(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
+func (s *Server) mutateTeamMemberTuples(ctx context.Context, store *zanzana.StoreInfo, operations []*authzextv1.MutateOperation) error {
 	ctx, span := s.tracer.Start(ctx, "server.mutateTeamBindings")
 	defer span.End()
 
@@ -19,13 +19,13 @@ func (s *Server) mutateTeamBindings(ctx context.Context, store *zanzana.StoreInf
 	for _, operation := range operations {
 		switch op := operation.Operation.(type) {
 		case *authzextv1.MutateOperation_CreateTeamBinding:
-			tuple, err := zanzana.GetTeamBindingTuple(op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
+			tuple, err := zanzana.GetTeamMemberTuple(op.CreateTeamBinding.GetSubjectName(), op.CreateTeamBinding.GetTeamName(), op.CreateTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}
 			writeTuples = append(writeTuples, tuple)
 		case *authzextv1.MutateOperation_DeleteTeamBinding:
-			tuple, err := zanzana.GetTeamBindingTuple(op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
+			tuple, err := zanzana.GetTeamMemberTuple(op.DeleteTeamBinding.GetSubjectName(), op.DeleteTeamBinding.GetTeamName(), op.DeleteTeamBinding.GetPermission())
 			if err != nil {
 				return err
 			}

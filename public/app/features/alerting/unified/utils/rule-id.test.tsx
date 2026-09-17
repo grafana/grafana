@@ -19,8 +19,10 @@ import {
   hashQuery,
   hashRule,
   hashRulerRule,
+  normalizePromQLDurations,
   parse,
   stringifyIdentifier,
+  stripPromQLComments,
 } from './rule-id';
 
 const alertingRule = {
@@ -372,5 +374,186 @@ describe('hashQuery', () => {
 
     expect(hash1).toBe(hash2);
     expect(hash1).toBe(hash1.split('').sort().join(''));
+  });
+
+  it('should strip inline comments (# after code on the same line)', () => {
+    const query1 = `max by (service) (up{env="production"}) # production fallback
+or # combine with staging
+max by (service) (up{env="staging"}) * 0.8`;
+    const query2 = `max by (service) (up{env="production"}) or max by (service) (up{env="staging"}) * 0.8`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should strip mixed full-line and inline comments', () => {
+    const query1 = `# Full-line comment
+max by (environment, namespace, service) (service_condition{environment="production"}) # inline comment
+or
+# Another full-line comment
+max by (environment, namespace, service) (service_condition{environment!="production"})`;
+    const query2 = `max by (environment, namespace, service) (service_condition{environment="production"}) or max by (environment, namespace, service) (service_condition{environment!="production"})`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with and without an empty label selector', () => {
+    const query1 = `max by (cluster) (cluster:app_sync:healthy{  })`;
+    const query2 = `max by (cluster) (cluster:app_sync:healthy)`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with and without a trailing comma in a selector', () => {
+    const query1 = `group by (cluster) (
+  monitor_status{
+    cluster!~".+autotest.+",
+  }
+)`;
+    const query2 = `group by (cluster) (monitor_status{cluster!~".+autotest.+"})`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for a ruler expr and its re-serialized Prometheus query', () => {
+    const rulerExpr = `(group by (k8s_cluster) (platform_cluster_monitor_status)
+) * on(k8s_cluster) group_left() ((max by (k8s_cluster) (k8s_cluster:app_sync:healthy{  })) * on(k8s_cluster) group_left() (group by (k8s_cluster) (
+  platform_cluster_monitor_status{
+    governance_zone!~"china|fedhigh",
+  }
+)
+)
+)
+ < 1`;
+    const promQuery = `(group by (k8s_cluster) (platform_cluster_monitor_status)) * on (k8s_cluster) group_left () ((max by (k8s_cluster) (k8s_cluster:app_sync:healthy)) * on (k8s_cluster) group_left () (group by (k8s_cluster) (platform_cluster_monitor_status{governance_zone!~"china|fedhigh"}))) < 1`;
+
+    expect(hashQuery(rulerExpr)).toBe(hashQuery(promQuery));
+  });
+
+  it('should produce the same hash for equivalent durations written with different units', () => {
+    expect(hashQuery('sum_over_time(up[60m:])')).toBe(hashQuery('sum_over_time(up[1h:])'));
+    expect(hashQuery('rate(requests_total[90m])')).toBe(hashQuery('rate(requests_total[1h30m])'));
+    expect(hashQuery('rate(requests_total[3600s])')).toBe(hashQuery('rate(requests_total[1h])'));
+    expect(hashQuery('up offset 60m')).toBe(hashQuery('up offset 1h'));
+  });
+
+  it('should still produce different hashes for durations that are not equivalent', () => {
+    expect(hashQuery('rate(requests_total[5m])')).not.toBe(hashQuery('rate(requests_total[6m])'));
+  });
+
+  it('should not conflate an empty selector with a template string', () => {
+    expect(hashQuery(`label_format origin="{{.app_host}}"`)).not.toBe(hashQuery(`label_format origin="{}"`));
+  });
+
+  it('should not treat a duration-shaped label value as a duration', () => {
+    // these select different series, so they must stay distinguishable
+    expect(hashQuery('slo_burn{window="60m"}')).not.toBe(hashQuery('slo_burn{window="1h"}'));
+    expect(hashQuery("slo_burn{window='60m'}")).not.toBe(hashQuery("slo_burn{window='1h'}"));
+    expect(hashQuery('slo_burn{window=`60m`}')).not.toBe(hashQuery('slo_burn{window=`1h`}'));
+  });
+
+  it('should still normalize a range duration next to a duration-shaped label value', () => {
+    expect(hashQuery('rate(slo_burn{window="60m"}[60m])')).toBe(hashQuery('rate(slo_burn{window="60m"}[1h])'));
+  });
+
+  it('should produce the same hash for a ruler expr and a Prometheus query that rewrote its durations', () => {
+    const rulerExpr = `((sum_over_time((service_signal{check="success", sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{check="success", sensitivity="low"} < bool 100)[60m:]) >= bool 60) > bool 0) * 4`;
+    const promQuery = `((sum_over_time((service_signal{check="success",sensitivity="high"} < bool 100)[4m:]) >= bool 4 or sum_over_time((service_signal{check="success",sensitivity="low"} < bool 100)[1h:]) >= bool 60) > bool 0) * 4`;
+
+    expect(hashQuery(rulerExpr)).toBe(hashQuery(promQuery));
+  });
+});
+
+describe('normalizePromQLDurations', () => {
+  it('should rewrite durations to milliseconds', () => {
+    expect(normalizePromQLDurations('rate(up[5m])')).toBe('rate(up[300000ms])');
+    expect(normalizePromQLDurations('rate(up[1h])')).toBe('rate(up[3600000ms])');
+    expect(normalizePromQLDurations('rate(up[500ms])')).toBe('rate(up[500ms])');
+  });
+
+  it('should add up multi-part durations', () => {
+    expect(normalizePromQLDurations('rate(up[1h30m])')).toBe('rate(up[5400000ms])');
+  });
+
+  it('should rewrite both parts of a subquery', () => {
+    expect(normalizePromQLDurations('sum_over_time(up[60m:5m])')).toBe('sum_over_time(up[3600000ms:300000ms])');
+  });
+
+  it('should leave a duration-looking suffix inside an identifier alone', () => {
+    expect(normalizePromQLDurations('job:latency:rate5m')).toBe('job:latency:rate5m');
+    expect(normalizePromQLDurations('requests_5m_total')).toBe('requests_5m_total');
+  });
+
+  it('should not match part way into a decimal number', () => {
+    expect(normalizePromQLDurations('rate(up[1.5h])')).toBe('rate(up[1.5h])');
+    expect(normalizePromQLDurations('histogram_quantile(0.99, rate(up[5m]))')).toBe(
+      'histogram_quantile(0.99, rate(up[300000ms]))'
+    );
+  });
+
+  it('should leave plain numbers alone', () => {
+    expect(normalizePromQLDurations('up > bool 100')).toBe('up > bool 100');
+  });
+
+  it('should leave a query without durations unchanged', () => {
+    expect(normalizePromQLDurations('max by (cluster) (up)')).toBe('max by (cluster) (up)');
+  });
+
+  it('should leave a duration inside a string alone', () => {
+    expect(normalizePromQLDurations('slo_burn{window="60m"}')).toBe('slo_burn{window="60m"}');
+    expect(normalizePromQLDurations("slo_burn{window='60m'}")).toBe("slo_burn{window='60m'}");
+    expect(normalizePromQLDurations('slo_burn{window=`60m`}')).toBe('slo_burn{window=`60m`}');
+  });
+
+  it('should normalize a range duration alongside a duration-shaped label value', () => {
+    expect(normalizePromQLDurations('rate(slo_burn{window="60m"}[5m])')).toBe('rate(slo_burn{window="60m"}[300000ms])');
+  });
+
+  it('should not let an escaped quote end a string early', () => {
+    expect(normalizePromQLDurations('label_replace(up, "dst", "{{\\"60m\\"}}", "src", "(.*)")')).toBe(
+      'label_replace(up, "dst", "{{\\"60m\\"}}", "src", "(.*)")'
+    );
+  });
+
+  it('should normalize durations on both sides of a string', () => {
+    expect(normalizePromQLDurations('rate(up{w="60m"}[5m]) offset 90m')).toBe(
+      'rate(up{w="60m"}[300000ms]) offset 5400000ms'
+    );
+  });
+});
+
+describe('stripPromQLComments', () => {
+  it('should strip full-line comments', () => {
+    expect(stripPromQLComments('# comment\nmetric')).toBe('metric');
+  });
+
+  it('should strip inline comments', () => {
+    expect(stripPromQLComments('metric or # fallback\nother_metric')).toBe('metric or\nother_metric');
+  });
+
+  it('should strip mixed full-line and inline comments', () => {
+    const input = `# header comment
+max by (service) (up{env="production"}) # inline
+or
+# another full-line
+max by (service) (up{env="staging"})`;
+    const expected = `max by (service) (up{env="production"})
+or
+max by (service) (up{env="staging"})`;
+    expect(stripPromQLComments(input)).toBe(expected);
+  });
+
+  it('should return empty string for a comment-only query', () => {
+    expect(stripPromQLComments('# just a comment')).toBe('');
+  });
+
+  it('should return the query unchanged when there are no comments', () => {
+    expect(stripPromQLComments('rate(requests_total[5m])')).toBe('rate(requests_total[5m])');
+  });
+
+  it('should collapse lines that become empty after comment removal', () => {
+    const input = `metric1
+# this whole line is a comment
+metric2`;
+    expect(stripPromQLComments(input)).toBe('metric1\nmetric2');
   });
 });

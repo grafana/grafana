@@ -56,7 +56,7 @@ interface Props {
   dashboard: DashboardModel | DashboardScene;
 }
 
-export function ConfigPublicDashboardBase({
+function ConfigPublicDashboardBase({
   onRevoke,
   timeRange,
   hasTemplateVariables = false,
@@ -136,6 +136,7 @@ export function ConfigPublicDashboardBase({
       <Field
         label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}
         className={styles.fieldSpace}
+        noMargin
       >
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
@@ -156,7 +157,7 @@ export function ConfigPublicDashboardBase({
         />
       </Field>
 
-      <Field className={styles.fieldSpace}>
+      <Field className={styles.fieldSpace} noMargin>
         <Stack>
           <Switch
             {...register('isPaused')}
@@ -179,7 +180,7 @@ export function ConfigPublicDashboardBase({
         </Stack>
       </Field>
 
-      <Field className={styles.fieldSpace}>
+      <Field className={styles.fieldSpace} noMargin>
         <SettingsBar
           title={t('public-dashboard.config.settings-title', 'Settings')}
           headerElement={({ className }) => (
@@ -281,7 +282,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fieldSpace: css({
     label: 'field space',
     width: '100%',
-    marginBottom: 0,
   }),
   timeRange: css({
     display: 'inline-block',

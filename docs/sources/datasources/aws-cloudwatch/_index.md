@@ -19,6 +19,7 @@ labels:
 menuTitle: Amazon CloudWatch
 title: Amazon CloudWatch data source
 weight: 200
+review_date: 2026-06-23
 ---
 
 # Amazon CloudWatch data source
@@ -27,12 +28,26 @@ Amazon CloudWatch is the AWS native monitoring and observability service that co
 
 Grafana includes native support for the Amazon CloudWatch plugin, so there's no need to install a plugin.
 
+## Supported features
+
+| Feature     | Supported                                                                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metrics     | Yes                                                                                                                                                                             |
+| Logs        | Yes                                                                                                                                                                             |
+| Traces      | No. Use the [AWS Application Signals data source](https://grafana.com/docs/plugins/grafana-x-ray-datasource/latest/) (formerly the AWS X-Ray data source) for AWS X-Ray traces. |
+| Alerting    | Yes                                                                                                                                                                             |
+| Annotations | Yes                                                                                                                                                                             |
+
+## Get started
+
 The following documents will help you get started working with the CloudWatch data source:
 
 - [Configure the CloudWatch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/)
 - [CloudWatch query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/)
 - [Templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/template-variables/)
 - [Configure AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/)
+- [CloudWatch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/annotations/)
+- [CloudWatch alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/alerting/)
 - [Troubleshoot CloudWatch issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/)
 
 ## Import pre-configured dashboards
@@ -58,7 +73,7 @@ To import curated dashboards:
 
 To customize one of these dashboards, Grafana recommends saving it under a different name; otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
-## Get the most out of the data source
+## Additional features
 
 After installing and configuring the Amazon CloudWatch data source, you can:
 
@@ -92,11 +107,17 @@ Quotas are defined per account and per region.
 
 If you use multiple regions or have configured more than one CloudWatch data source to query against multiple accounts, you must request a quota increase for each account and region in which you reach the limit.
 
-To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
+To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home#!/services/monitoring/quotas/L-5E141212).
 For more information, refer to the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
 
 ## Cross-account observability
 
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
-To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions as described above.
+To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions. Refer to [Permissions reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#permissions-reference) for the cross-account observability actions.
+
+## Related resources
+
+- [Amazon CloudWatch documentation](https://docs.aws.amazon.com/cloudwatch/)
+- [Troubleshoot CloudWatch issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/)
+- [Grafana community forum](https://community.grafana.com/)

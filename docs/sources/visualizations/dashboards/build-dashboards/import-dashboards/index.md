@@ -17,22 +17,11 @@ menuTitle: Import dashboards
 title: Import dashboards
 description: Learn how to import dashboards and about Grafana's preconfigured dashboards
 weight: 5
-refs:
-  share-dashboards-and-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
-  http-api:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/
 ---
 
 # Import dashboards
 
-You can import preconfigured dashboards into your Grafana instance or Cloud stack using the UI or the [HTTP API](ref:http-api).
+You can import preconfigured dashboards into your Grafana instance or Cloud stack using the UI or the [HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/).
 
 ## Import a dashboard
 
@@ -55,8 +44,26 @@ The [Dashboards page](https://grafana.com/grafana/dashboards/) on grafana.com pr
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" alt="Preconfigured dashboards on grafana.com">}}
 
-You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels](ref:share-dashboards-and-panels).
+You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/).
 
 ## More examples
 
 Your Grafana Cloud stack comes with several default dashboards in the **Grafana Cloud** folder in **Dashboards**. If you're running your own installation of Grafana, you can find more example dashboards in the `public/dashboards/` directory.
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="Where can I find dashboards to import?" >}}
+Grafana.com provides a library of official and community-created dashboards for common technologies and applications.
+You can browse the library, copy a dashboard's URL or ID, and import it directly into your Grafana instance.
+{{< /qa >}}
+{{< qa question="Why do I need to select a data source when importing a dashboard?" >}}
+Many imported dashboards contain queries that reference a data source.
+During import, Grafana lets you map those references to data sources that exist in your environment so the dashboard can display data correctly.
+{{< /qa >}}
+{{< qa question="Can I import dashboards into both Grafana Cloud and self-managed Grafana?" >}}
+Yes.
+Dashboard import is supported in both Grafana Cloud and self-managed Grafana.
+Regardless of where your Grafana instance is running, you can import dashboards from a JSON file, by pasting dashboard JSON, or by using a dashboard URL or ID from Grafana.com.
+{{< /qa >}}
+{{< /qa-list >}}

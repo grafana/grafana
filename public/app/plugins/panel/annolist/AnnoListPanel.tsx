@@ -22,6 +22,7 @@ import { getAPINamespace } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { isK8sAnnotationsClientEnabled } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 interface DisplayItem {
   identity: { type: string; name: string };
@@ -37,8 +38,9 @@ interface UserInfo {
   id?: number;
   login?: string;
   email?: string;
-  // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
-  // Absent when the legacy path (k8s annotations client disabled) populated this entry.
+  // The creator's uid, used to filter by user on both the k8s /search and legacy
+  // /api/annotations endpoints. Sourced from the k8s identity ref ("user:<uid>") or
+  // the legacy response's userUID.
   uid?: string;
 }
 
@@ -176,7 +178,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         dashboardUID,
         from,
         to,
-        userId: queryUser?.id,
+        userUID: queryUser?.uid,
       };
       annotations = await getBackendSrv().get('/api/annotations', params, requestId);
     }
@@ -239,9 +241,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       return;
     }
 
-    const result = await getBackendSrv().get('/api/search', { dashboardUIDs: anno.dashboardUID });
-    if (result && result.length && result[0].uid === anno.dashboardUID) {
-      const dash = result[0];
+    const result = await getGrafanaSearcher().search({
+      uid: [anno.dashboardUID],
+      kind: ['dashboard'],
+      limit: 1,
+    });
+    const dash = result.view.toArray()[0];
+    if (dash?.uid === anno.dashboardUID) {
       const url = new URL(dash.url, window.location.origin);
       url.searchParams.set('from', String(params.from));
       url.searchParams.set('to', String(params.to));
@@ -300,10 +306,10 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   onUserClick = (anno: AnnotationEvent) => {
-    // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
-    // the k8s annotations client is enabled. Stash the uid so the next /search can filter by it.
+    // Normalize the creator's uid: the k8s client wraps it as "user:<uid>" in createdBy,
+    // the legacy response exposes it directly as userUID. Either way, doSearch filters by uid.
     const createdBy = 'createdBy' in anno && typeof anno.createdBy === 'string' ? anno.createdBy : undefined;
-    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
+    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : anno.userUID;
     this.setState({
       queryUser: {
         id: anno.userId,

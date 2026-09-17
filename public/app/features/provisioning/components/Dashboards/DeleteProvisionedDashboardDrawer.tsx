@@ -1,12 +1,11 @@
-import { Spinner } from '@grafana/ui';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { useDashboardRepositoryView } from '../../hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { DeleteProvisionedDashboardForm } from './DeleteProvisionedDashboardForm';
-import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
-import { OrphanedProvisionedDrawerNotice } from './OrphanedProvisionedDrawerNotice';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -18,6 +17,7 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
+  const view = useDashboardRepositoryView(dashboard);
   const {
     defaultValues,
     loadedFromRef,
@@ -27,30 +27,25 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
     repository,
     repoDataStatus,
     error,
-  } = useProvisionedDashboardData(dashboard);
-
-  if (repoDataStatus === RepoViewStatus.Loading) {
-    return <Spinner />;
-  }
-
-  if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedProvisionedDrawerNotice />;
-  }
-
-  if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {
-    return <FormLoadingErrorAlert error={error} />;
-  }
+  } = useProvisionedDashboardData(dashboard, view);
 
   return (
-    <DeleteProvisionedDashboardForm
-      dashboard={dashboard}
-      defaultValues={defaultValues}
-      loadedFromRef={loadedFromRef}
-      readOnly={readOnly}
-      repository={repository}
-      isNew={isNew}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      onDismiss={onDismiss}
-    />
+    <ProvisionedFormGate
+      isLoading={repoDataStatus === RepoViewStatus.Loading}
+      isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
+      isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
+      error={error}
+    >
+      <DeleteProvisionedDashboardForm
+        dashboard={dashboard}
+        defaultValues={defaultValues!}
+        loadedFromRef={loadedFromRef}
+        readOnly={readOnly}
+        repository={repository}
+        isNew={isNew}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+        onDismiss={onDismiss}
+      />
+    </ProvisionedFormGate>
   );
 }

@@ -6,7 +6,7 @@ import { type LineStyle } from '@grafana/schema';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
-import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
+import { VizTooltipColorIndicator as VizColorIndicatorEnum, DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR } from './types';
 import { getColorIndicatorClass } from './utils';
 
 export enum ColorIndicatorPosition {
@@ -16,7 +16,7 @@ export enum ColorIndicatorPosition {
 
 interface Props {
   color?: string;
-  colorIndicator?: ColorIndicator;
+  colorIndicator?: VizColorIndicatorEnum;
   position?: ColorIndicatorPosition;
   lineStyle?: LineStyle;
   isHollow?: boolean;
@@ -26,14 +26,14 @@ export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
 
 export const VizTooltipColorIndicator = ({
   color = FALLBACK_COLOR,
-  colorIndicator = DEFAULT_COLOR_INDICATOR,
+  colorIndicator = DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
   lineStyle,
   isHollow,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (colorIndicator === ColorIndicator.series && !isHollow) {
+  if (colorIndicator === VizColorIndicatorEnum.series && !isHollow) {
     return (
       <SeriesIcon
         color={color}

@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import {
-  type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type DataSourceVariableModel,
   matchPluginId,
   type VariableOption,
@@ -26,13 +26,13 @@ export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   refresh: VariableRefresh.onDashboardLoad,
 };
 
-export const dataSourceVariableSlice = createSlice({
+const dataSourceVariableSlice = createSlice({
   name: 'templating/datasource',
   initialState: initialVariablesState,
   reducers: {
     createDataSourceOptions: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceSettings[]; regex: RegExp | undefined }>>
+      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceListItem[]; regex: RegExp | undefined }>>
     ) => {
       const { sources, regex } = action.payload.data;
       const options: VariableOption[] = [];
@@ -78,7 +78,7 @@ export const dataSourceVariableSlice = createSlice({
   },
 });
 
-function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isValid(source: DataSourceInstanceListItem, regex?: RegExp) {
   if (!regex) {
     return true;
   }
@@ -86,7 +86,7 @@ function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
   return regex.exec(source.name);
 }
 
-function isDefault(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isDefault(source: DataSourceInstanceListItem, regex?: RegExp) {
   if (!source.isDefault) {
     return false;
   }

@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName                = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName              = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName              = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName              = "/resource.ResourceStore/Delete"
+	ResourceStore_List_FullMethodName                = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName               = "/resource.ResourceStore/Watch"
+	ResourceStore_ListStoredResources_FullMethodName = "/resource.ResourceStore/ListStoredResources"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -48,6 +49,10 @@ type ResourceStoreClient interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
+	// Discover which resource identities (namespace/group/resource) exist in
+	// storage, without returning counts. This is a cheap alternative to
+	// GetStats for callers that only need to know what is stored, not how much.
+	ListStoredResources(ctx context.Context, in *ListStoredResourcesRequest, opts ...grpc.CallOption) (*ListStoredResourcesResponse, error)
 }
 
 type resourceStoreClient struct {
@@ -141,6 +146,16 @@ func (x *resourceStoreWatchClient) Recv() (*WatchEvent, error) {
 	return m, nil
 }
 
+func (c *resourceStoreClient) ListStoredResources(ctx context.Context, in *ListStoredResourcesRequest, opts ...grpc.CallOption) (*ListStoredResourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListStoredResourcesResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_ListStoredResources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -162,6 +177,10 @@ type ResourceStoreServer interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
+	// Discover which resource identities (namespace/group/resource) exist in
+	// storage, without returning counts. This is a cheap alternative to
+	// GetStats for callers that only need to know what is stored, not how much.
+	ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error)
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -185,6 +204,9 @@ func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedResourceStoreServer) ListStoredResources(context.Context, *ListStoredResourcesRequest) (*ListStoredResourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListStoredResources not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -309,6 +331,24 @@ func (x *resourceStoreWatchServer) Send(m *WatchEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ResourceStore_ListStoredResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStoredResourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).ListStoredResources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_ListStoredResources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).ListStoredResources(ctx, req.(*ListStoredResourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -336,11 +376,186 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
 		},
+		{
+			MethodName: "ListStoredResources",
+			Handler:    _ResourceStore_ListStoredResources_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Watch",
 			Handler:       _ResourceStore_Watch_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "resource.proto",
+}
+
+const (
+	ResourceStats_RecordEvent_FullMethodName           = "/resource.ResourceStats/RecordEvent"
+	ResourceStats_GetResourceDailyStats_FullMethodName = "/resource.ResourceStats/GetResourceDailyStats"
+)
+
+// ResourceStatsClient is the client API for ResourceStats service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Generic, per-object usage analytics for unified storage. Tracked resources
+// are declared server-side; events for untracked resources are ignored.
+type ResourceStatsClient interface {
+	// Record usage events against an object. Events are buffered in memory and
+	// flushed asynchronously; a small amount of loss is acceptable. Events for
+	// untracked resources are silently dropped.
+	RecordEvent(ctx context.Context, in *RecordEventRequest, opts ...grpc.CallOption) (*RecordEventResponse, error)
+	// Read the per-day usage buckets for a single object. Results are streamed
+	// sorted ascending by day; days with no data are omitted.
+	GetResourceDailyStats(ctx context.Context, in *GetResourceDailyStatsRequest, opts ...grpc.CallOption) (ResourceStats_GetResourceDailyStatsClient, error)
+}
+
+type resourceStatsClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewResourceStatsClient(cc grpc.ClientConnInterface) ResourceStatsClient {
+	return &resourceStatsClient{cc}
+}
+
+func (c *resourceStatsClient) RecordEvent(ctx context.Context, in *RecordEventRequest, opts ...grpc.CallOption) (*RecordEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordEventResponse)
+	err := c.cc.Invoke(ctx, ResourceStats_RecordEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceStatsClient) GetResourceDailyStats(ctx context.Context, in *GetResourceDailyStatsRequest, opts ...grpc.CallOption) (ResourceStats_GetResourceDailyStatsClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceStats_ServiceDesc.Streams[0], ResourceStats_GetResourceDailyStats_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &resourceStatsGetResourceDailyStatsClient{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ResourceStats_GetResourceDailyStatsClient interface {
+	Recv() (*DailyStat, error)
+	grpc.ClientStream
+}
+
+type resourceStatsGetResourceDailyStatsClient struct {
+	grpc.ClientStream
+}
+
+func (x *resourceStatsGetResourceDailyStatsClient) Recv() (*DailyStat, error) {
+	m := new(DailyStat)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ResourceStatsServer is the server API for ResourceStats service.
+// All implementations should embed UnimplementedResourceStatsServer
+// for forward compatibility
+//
+// Generic, per-object usage analytics for unified storage. Tracked resources
+// are declared server-side; events for untracked resources are ignored.
+type ResourceStatsServer interface {
+	// Record usage events against an object. Events are buffered in memory and
+	// flushed asynchronously; a small amount of loss is acceptable. Events for
+	// untracked resources are silently dropped.
+	RecordEvent(context.Context, *RecordEventRequest) (*RecordEventResponse, error)
+	// Read the per-day usage buckets for a single object. Results are streamed
+	// sorted ascending by day; days with no data are omitted.
+	GetResourceDailyStats(*GetResourceDailyStatsRequest, ResourceStats_GetResourceDailyStatsServer) error
+}
+
+// UnimplementedResourceStatsServer should be embedded to have forward compatible implementations.
+type UnimplementedResourceStatsServer struct {
+}
+
+func (UnimplementedResourceStatsServer) RecordEvent(context.Context, *RecordEventRequest) (*RecordEventResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecordEvent not implemented")
+}
+func (UnimplementedResourceStatsServer) GetResourceDailyStats(*GetResourceDailyStatsRequest, ResourceStats_GetResourceDailyStatsServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetResourceDailyStats not implemented")
+}
+
+// UnsafeResourceStatsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ResourceStatsServer will
+// result in compilation errors.
+type UnsafeResourceStatsServer interface {
+	mustEmbedUnimplementedResourceStatsServer()
+}
+
+func RegisterResourceStatsServer(s grpc.ServiceRegistrar, srv ResourceStatsServer) {
+	s.RegisterService(&ResourceStats_ServiceDesc, srv)
+}
+
+func _ResourceStats_RecordEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStatsServer).RecordEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStats_RecordEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStatsServer).RecordEvent(ctx, req.(*RecordEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceStats_GetResourceDailyStats_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetResourceDailyStatsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ResourceStatsServer).GetResourceDailyStats(m, &resourceStatsGetResourceDailyStatsServer{ServerStream: stream})
+}
+
+type ResourceStats_GetResourceDailyStatsServer interface {
+	Send(*DailyStat) error
+	grpc.ServerStream
+}
+
+type resourceStatsGetResourceDailyStatsServer struct {
+	grpc.ServerStream
+}
+
+func (x *resourceStatsGetResourceDailyStatsServer) Send(m *DailyStat) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// ResourceStats_ServiceDesc is the grpc.ServiceDesc for ResourceStats service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ResourceStats_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.ResourceStats",
+	HandlerType: (*ResourceStatsServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RecordEvent",
+			Handler:    _ResourceStats_RecordEvent_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetResourceDailyStats",
+			Handler:       _ResourceStats_GetResourceDailyStats_Handler,
 			ServerStreams: true,
 		},
 	},

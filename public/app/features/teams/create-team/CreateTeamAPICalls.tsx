@@ -10,7 +10,7 @@ import {
 } from '@grafana/api-clients/internal/rtkq/legacy';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 
 import { useCreateFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
@@ -197,7 +197,7 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     //
     // Create a folder if requested
     //
-    if (autocreateTeamFolder && config.featureToggles.teamFolders) {
+    if (autocreateTeamFolder) {
       localUpdateState({ state: 'loading' }, 'createFolder');
       const { data: folderData, error: folderError } = await createFolderTrigger({
         title: formModel.name,

@@ -18,10 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: { version: 'test-version' },
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      useScopeSingleNodeEndpoint: true,
-    },
   },
 }));
 
@@ -839,7 +835,33 @@ describe('ScopesSelectorService', () => {
   });
 
   describe('redirect on scope selection', () => {
-    it('should redirect to the first scopeNavigation with /d/ URL when current URL is not a scopeNavigation', async () => {
+    const mockNodeWithRedirect = (redirectPath: string): ScopeNode => ({
+      metadata: { name: 'test-scope-node' },
+      spec: {
+        linkId: 'test-scope',
+        linkType: 'scope',
+        parentName: '',
+        nodeType: 'leaf',
+        title: 'test-scope-node',
+        redirectPath,
+      },
+    });
+
+    const setupNodeWithRedirect = async (redirectPath: string) => {
+      const node = mockNodeWithRedirect(redirectPath);
+      apiClient.fetchNodes = jest
+        .fn()
+        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
+          if (options.parent === '' && !options.query) {
+            return [node];
+          }
+          return [];
+        });
+      await service.filterNode('', '');
+      await service.selectScope('test-scope-node');
+    };
+
+    it('should NOT redirect when scope has no redirectPath even if scopeNavigations exist', async () => {
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
@@ -859,23 +881,24 @@ describe('ScopesSelectorService', () => {
 
       await service.changeScopes(['test-scope']);
 
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
+      expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when the first scopeNavigation does not contain /d/ (e.g., logs drilldown)', async () => {
+    it('should NOT redirect when there are no scopeNavigations and no redirectPath', async () => {
+      dashboardsService.state.scopeNavigations = [];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
+
+      await service.changeScopes(['test-scope']);
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when scope node is undefined', async () => {
       dashboardsService.state.scopeNavigations = [
         {
-          spec: {
-            scope: 'test-scope',
-            url: '/explore',
-          },
-          status: {
-            title: 'Explore',
-            groups: [],
-          },
-          metadata: {
-            name: 'explore1',
-          },
+          spec: { scope: 'test-scope', url: '/d/dashboard1' },
+          status: { title: 'Dashboard 1', groups: [] },
+          metadata: { name: 'dashboard1' },
         },
       ];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
@@ -885,7 +908,35 @@ describe('ScopesSelectorService', () => {
       expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when current URL matches a scopeNavigation', async () => {
+    it('should redirect to redirectPath when scope node has explicit redirectPath', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
+    });
+
+    it('should redirect to redirectPath even when scopeNavigations exist', async () => {
+      await setupNodeWithRedirect('/priority-redirect');
+
+      dashboardsService.state.scopeNavigations = [
+        {
+          spec: { scope: 'test-scope', url: '/d/dashboard1' },
+          status: { title: 'Dashboard 1', groups: [] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/priority-redirect');
+      expect(locationService.push).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT redirect to redirectPath when current URL matches a scopeNavigation', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
@@ -903,26 +954,95 @@ describe('ScopesSelectorService', () => {
       ];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' });
 
-      await service.changeScopes(['test-scope']);
+      await service.apply();
 
       expect(locationService.push).not.toHaveBeenCalled();
     });
 
-    it('should NOT redirect when there are no scopeNavigations', async () => {
+    it('should NOT redirect when already on the redirectPath', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/custom-redirect-url' });
+
+      await service.apply();
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when redirects are disabled', async () => {
+      service.setRedirectEnabled(false);
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      await service.apply();
+
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('should NOT redirect when the image renderer binding is present', async () => {
+      (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel = jest.fn();
+
+      try {
+        await setupNodeWithRedirect('/custom-redirect-url');
+        (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+        await service.apply();
+        expect(locationService.push).not.toHaveBeenCalled();
+      } finally {
+        delete (window as { __grafanaImageRendererMessageChannel?: unknown }).__grafanaImageRendererMessageChannel;
+      }
+    });
+
+    it('should redirect again after re-enabling redirects', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
+
+      // Disable, then re-enable — the flag should be toggleable back on.
+      service.setRedirectEnabled(false);
+      service.setRedirectEnabled(true);
+
+      await service.apply();
+
+      expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
+    });
+
+    it('should redirect to redirectPath after resolving scope node from defaultPath', async () => {
+      const scope: Scope = {
+        metadata: { name: 'scope-sea-1' },
+        spec: {
+          title: 'Seattle Datacenter 1',
+          defaultPath: ['region-us-west', 'country-usa', 'city-seattle', 'datacenter-sea-1'],
+          filters: [],
+        },
+      };
+      const nodeWithRedirect: ScopeNode = {
+        metadata: { name: 'datacenter-sea-1' },
+        spec: {
+          nodeType: 'leaf',
+          title: 'SEA-1',
+          parentName: 'city-seattle',
+          linkType: 'scope',
+          linkId: 'scope-sea-1',
+          redirectPath: '/d/from-default-path',
+        },
+      };
+
+      apiClient.fetchMultipleScopes = jest.fn().mockResolvedValue([scope]);
+      apiClient.fetchMultipleScopeNodes = jest.fn().mockResolvedValue([nodeWithRedirect]);
       dashboardsService.state.scopeNavigations = [];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
-      await service.changeScopes(['test-scope']);
+      await service.changeScopes(['scope-sea-1']);
 
-      expect(locationService.push).not.toHaveBeenCalled();
+      expect(locationService.push).toHaveBeenCalledWith('/d/from-default-path');
     });
 
-    it('should NOT redirect when scopeNavigation does not have a url property', async () => {
+    it('should NOT redirect when scope navigation entry has no url property', async () => {
+      await setupNodeWithRedirect('/custom-redirect-url');
+
       dashboardsService.state.scopeNavigations = [
         {
           spec: {
             scope: 'test-scope',
-            // Missing url property
           },
           status: {
             title: 'Dashboard 1',
@@ -935,201 +1055,9 @@ describe('ScopesSelectorService', () => {
       ] as unknown as ScopeNavigation[];
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
 
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple scopeNavigations and redirect to the first dashboard one', async () => {
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/first-dashboard',
-          },
-          status: {
-            title: 'First Dashboard',
-            groups: [],
-          },
-          metadata: {
-            name: 'first-dashboard',
-          },
-        },
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/second-dashboard',
-          },
-          status: {
-            title: 'Second Dashboard',
-            groups: [],
-          },
-          metadata: {
-            name: 'second-dashboard',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      await service.changeScopes(['test-scope']);
-
-      // Should redirect to the first one
-      expect(locationService.push).toHaveBeenCalledWith('/d/first-dashboard');
-      expect(locationService.push).toHaveBeenCalledTimes(1);
-    });
-
-    it('should NOT redirect when redirects are disabled', async () => {
-      service.setRedirectEnabled(false);
-
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/dashboard1',
-          },
-          status: {
-            title: 'Dashboard 1',
-            groups: [],
-          },
-          metadata: {
-            name: 'dashboard1',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
-
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).not.toHaveBeenCalled();
-    });
-
-    it('should redirect again after re-enabling redirects', async () => {
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: {
-            scope: 'test-scope',
-            url: '/d/dashboard1',
-          },
-          status: {
-            title: 'Dashboard 1',
-            groups: [],
-          },
-          metadata: {
-            name: 'dashboard1',
-          },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/some-other-dashboard' });
-
-      // Disable, then re-enable — the flag should be toggleable back on.
-      service.setRedirectEnabled(false);
-      service.setRedirectEnabled(true);
-
-      await service.changeScopes(['test-scope']);
-
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
-    });
-
-    it('should redirect to redirectUrl when scope node has explicit redirectUrl', async () => {
-      const mockNodeWithRedirect: ScopeNode = {
-        metadata: { name: 'test-scope-node' },
-        spec: {
-          linkId: 'test-scope',
-          linkType: 'scope',
-          parentName: '',
-          nodeType: 'leaf',
-          title: 'test-scope-node',
-          redirectPath: '/custom-redirect-url',
-        },
-      };
-
-      // Mock fetchNodes to return the node with redirectPath
-      apiClient.fetchNodes = jest
-        .fn()
-        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
-          if (options.parent === '' && !options.query) {
-            return [mockNodeWithRedirect];
-          } else {
-            return [];
-          }
-        });
-
-      // First update the node to populate the service state
-      await service.filterNode('', '');
-
-      // Then select the scope to set scopeNodeId in selectedScopes
-      await service.selectScope('test-scope-node');
-
-      // Then apply to trigger the redirect
       await service.apply();
 
       expect(locationService.push).toHaveBeenCalledWith('/custom-redirect-url');
-    });
-
-    it('should prioritize redirectUrl over scope navigation fallback', async () => {
-      const mockNodeWithRedirect: ScopeNode = {
-        metadata: { name: 'test-scope-node' },
-        spec: {
-          linkId: 'test-scope',
-          linkType: 'scope',
-          parentName: '',
-          nodeType: 'leaf',
-          title: 'test-scope-node',
-          redirectPath: '/priority-redirect',
-        },
-      };
-
-      const mockNavigations: ScopeNavigation[] = [
-        {
-          spec: { scope: 'test-scope', url: '/d/dashboard1' },
-          status: { title: 'Dashboard 1', groups: [] },
-          metadata: { name: 'dashboard1' },
-        },
-      ];
-
-      // Mock fetchNodes to return the node with redirectPath
-      apiClient.fetchNodes = jest
-        .fn()
-        .mockImplementation((options: { parent?: string; query?: string; limit?: number }) => {
-          if (options.parent === '' && !options.query) {
-            return [mockNodeWithRedirect];
-          } else {
-            return [];
-          }
-        });
-
-      dashboardsService.state.scopeNavigations = mockNavigations;
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      // First update the node to populate the service state
-      await service.filterNode('', '');
-
-      // Then select the scope to set scopeNodeId in selectedScopes
-      await service.selectScope('test-scope-node');
-
-      // Then apply to trigger the redirect
-      await service.apply();
-
-      // Should use redirectPath, not scope navigation
-      expect(locationService.push).toHaveBeenCalledWith('/priority-redirect');
-      expect(locationService.push).toHaveBeenCalledTimes(1);
-    });
-
-    it('should fall back to scope navigation when scope node is undefined', async () => {
-      // Don't add the node to the service state, so it will be undefined
-      dashboardsService.state.scopeNavigations = [
-        {
-          spec: { scope: 'test-scope', url: '/d/dashboard1' },
-          status: { title: 'Dashboard 1', groups: [] },
-          metadata: { name: 'dashboard1' },
-        },
-      ];
-      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/some-other-page' });
-
-      await service.changeScopes(['test-scope']);
-
-      // Should fall back to scope navigation since scope node is undefined
-      expect(locationService.push).toHaveBeenCalledWith('/d/dashboard1');
     });
   });
 

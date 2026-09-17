@@ -44,7 +44,6 @@ export async function generateDashboardImage({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       render: true,
-      absolute: true,
       updateQuery: {
         height: -1, // image renderer will scroll through the dashboard and set the appropriate height
         width: window.innerWidth || config.rendererDefaultImageWidth || 1000,

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -13,8 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -44,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -797,8 +801,9 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 				UID: "general",
 			},
 		},
-		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-		log: log.NewNopLogger(),
+		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
+		log:      log.NewNopLogger(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -843,7 +848,8 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
-		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
+		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
+		features: featuremgmt.WithFeatures(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -965,16 +971,85 @@ func TestDeleteDashboard(t *testing.T) {
 }
 
 func TestDeleteAllDashboards(t *testing.T) {
-	service := &DashboardServiceImpl{
-		cfg: setting.NewCfg(),
-	}
+	t.Run("deletes the collection when supported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(nil).Once()
 
-	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(ctx, 1)
 
-	err := service.DeleteAllDashboards(ctx, 1)
-	require.NoError(t, err)
-	k8sCliMock.AssertExpectations(t)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("falls back to individual deletes when collection deletion is unsupported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		methodNotSupported := apierrors.NewMethodNotSupported(
+			schema.GroupResource{Resource: "dashboards"},
+			"deletecollection",
+		)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+		})).Return(&unstructured.UnstructuredList{
+			Object: map[string]any{
+				"metadata": map[string]any{"continue": "next-page"},
+			},
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dashboard-1"}}},
+			},
+		}, nil).Once()
+		forceDelete := mock.MatchedBy(func(opts metav1.DeleteOptions) bool {
+			return opts.GracePeriodSeconds != nil && *opts.GracePeriodSeconds == 0
+		})
+		k8sCliMock.On("Delete", mock.Anything, "dashboard-1", int64(1), forceDelete).Return(nil).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == "next-page"
+		})).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dashboard-2"}}},
+			},
+		}, nil).Once()
+		notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "dashboards"}, "dashboard-2")
+		k8sCliMock.On("Delete", mock.Anything, "dashboard-2", int64(1), forceDelete).Return(notFound).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("deletes an empty organization when collection deletion is unsupported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		methodNotSupported := apierrors.NewMethodNotSupported(
+			schema.GroupResource{Resource: "dashboards"},
+			"deletecollection",
+		)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+		})).Return(&unstructured.UnstructuredList{}, nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.NoError(t, err)
+		k8sCliMock.AssertNotCalled(t, "Delete")
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("returns errors other than method not supported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		expectedErr := apierrors.NewInternalError(errors.New("storage failure"))
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(expectedErr).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.ErrorIs(t, err, expectedErr)
+		k8sCliMock.AssertExpectations(t)
+	})
 }
 
 func TestSearchDashboards(t *testing.T) {
@@ -1423,7 +1498,9 @@ func TestGetDashboardTags(t *testing.T) {
 		OrgID: 1,
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+	})).Return(&resourcepb.ResourceSearchResponse{
 		Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 			"tags": {
 				Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
@@ -1567,29 +1644,65 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("can search dashboards", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("uses unspecified result format by default", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+	})
+
+	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid"}, Cells: [][]byte{[]byte("Dashboard 1")}},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+
+		result, err := service.searchAllDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		require.Len(t, result.Hits, 1)
+		assert.Equal(t, "uid", result.Hits[0].Name)
+		assert.Equal(t, "Dashboard 1", result.Hits[0].Title)
+	})
+
+	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
+		ctx := t.Context()
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId: 1,
-			Sort:  sort.SortAlphaAsc,
+			OrgId:                1,
+			Sort:                 sort.SortAlphaAsc,
+			UseFieldValueResults: true,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// should include sort field only once
-			titleFieldCount := 0
-			for _, field := range req.Fields {
-				if field == "title" {
-					titleFieldCount++
-				}
-			}
-
-			return len(req.SortBy) == 1 &&
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+				slices.Equal(req.Fields, []string{
+					resource.SEARCH_FIELD_TITLE,
+					resource.SEARCH_FIELD_TAGS,
+					resource.SEARCH_FIELD_FOLDER,
+					resource.SEARCH_FIELD_DESCRIPTION,
+					resource.SEARCH_FIELD_LEGACY_ID,
+					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+				}) &&
+				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&
-				!req.SortBy[0].Desc &&
-				titleFieldCount == 1
+				!req.SortBy[0].Desc
 		})).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -1971,7 +2084,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 func TestCleanUpDashboard(t *testing.T) {
 	t.Run("Should delete public dashboards and clean up after delete", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2015,7 +2128,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	})
 
 	t.Run("Should not delete org-scope annotations when dashboard ID is zero", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2209,8 +2322,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup test database and utilities
-			sqlStore, _ := sqlstore.InitTestDB(t)
-			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+			sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2246,8 +2359,8 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 	t.Run("Should start and stop background job correctly", func(t *testing.T) {
 		// Setup test database and utilities
-		sqlStore, _ := sqlstore.InitTestDB(t)
-		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 
 		cfg := setting.NewCfg()
 		cfg.K8sDashboardCleanup = setting.K8sDashboardCleanupSettings{

@@ -20,7 +20,7 @@ function skipFiles(f: string): boolean {
 }
 
 const config = async (env: Env): Promise<Configuration> => {
-  const baseConfig = await grafanaConfig(env);
+  const baseConfig = await grafanaConfig(env, import.meta.dirname);
   const customConfig = {
     plugins: [
       new CopyWebpackPlugin({

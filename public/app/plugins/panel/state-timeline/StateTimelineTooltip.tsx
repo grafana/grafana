@@ -2,20 +2,20 @@ import { type ReactNode } from 'react';
 
 import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
-import { TooltipDisplayMode } from '@grafana/ui';
 import {
+  TooltipDisplayMode,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  type VizTooltipItem,
-} from '@grafana/ui/internal';
+  getFieldDisplayItems,
+  isTooltipScrollable,
+} from '@grafana/ui';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getFieldActions } from '../status-history/utils';
 import { type TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltipProps extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
@@ -35,6 +35,7 @@ export const StateTimelineTooltip = ({
   maxHeight,
   replaceVariables,
   dataLinks,
+  filterByGroupedLabels,
 }: StateTimelineTooltipProps) => {
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
@@ -45,7 +46,7 @@ export const StateTimelineTooltip = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getFieldDisplayItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
   let endTime = null;
 
   // append duration in single mode
@@ -83,7 +84,14 @@ export const StateTimelineTooltip = ({
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables!, dataIdx, visualizationType);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      footer = (
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          filterByGroupedLabels={filterByGroupedLabels}
+        />
+      );
     }
   }
 

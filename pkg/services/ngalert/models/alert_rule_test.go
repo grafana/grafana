@@ -314,7 +314,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				var existing *AlertRuleWithOptionals
-				for i := 0; i < 10; i++ {
+				for range 10 {
 					rule := gen.Generate()
 					existing = &AlertRuleWithOptionals{AlertRule: rule}
 					cloned := *existing
@@ -958,7 +958,7 @@ func TestDiff(t *testing.T) {
 
 func TestSortByGroupIndex(t *testing.T) {
 	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			rand.Shuffle(len(rules), func(i, j int) {
 				rules[i], rules[j] = rules[j], rules[i]
 			})
@@ -1052,7 +1052,7 @@ func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 
 func TestAlertRuleCopy(t *testing.T) {
 	t.Run("should return a copy of the rule", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			rule := RuleGen.GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
@@ -1067,7 +1067,7 @@ func TestAlertRuleCopy(t *testing.T) {
 		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
 	})
 	t.Run("should return an exact copy of recording rule", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			rule := RuleGen.With(RuleGen.WithAllRecordingRules()).GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
@@ -1082,18 +1082,19 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"IsPaused":       {},
 		"Record":         {},
 		"FolderFullpath": {},
+		"K8sStatus":      {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		rule := RuleGen.Generate()
 		v := reflect.ValueOf(rule)
 
@@ -1125,18 +1126,19 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"For":                         {},
 		"NotificationSettings":        {},
 		"FolderFullpath":              {},
+		"K8sStatus":                   {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		rule := RuleGen.With(RuleGen.WithAllRecordingRules()).Generate()
 		v := reflect.ValueOf(rule)
 
@@ -1485,6 +1487,74 @@ func TestWithoutPrivateLabels(t *testing.T) {
 
 			require.Equal(t, tt.expected, result)
 			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
+		})
+	}
+}
+
+func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
+	const sloOrigin = PluginGrafanaSLOOrigin
+	const otherOrigin = "plugin/grafana-other-app"
+
+	tests := []struct {
+		name           string
+		labels         map[string]string
+		expectedOrigin string // empty means key should be absent
+	}{
+		{
+			name:           "no origin label",
+			labels:         map[string]string{},
+			expectedOrigin: "",
+		},
+		{
+			name:           "origin only",
+			labels:         map[string]string{PluginGrafanaOriginLabel: otherOrigin},
+			expectedOrigin: otherOrigin,
+		},
+		{
+			name: "origin with generic uid label",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    otherOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+			},
+			expectedOrigin: otherOrigin + "|generic-uid",
+		},
+		{
+			name: "SLO origin with slo uuid fallback",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  sloOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|slo-uuid-123",
+		},
+		{
+			name: "SLO origin with both labels — generic takes precedence",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    sloOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+				PluginGrafanaSLOUUIDLabel:   "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|generic-uid",
+		},
+		{
+			name: "non-SLO origin with slo uuid label — fallback not triggered",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  otherOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: otherOrigin,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := RuleGen.With(RuleMuts.WithLabels(tt.labels)).Generate()
+			condition := rule.GetEvalCondition()
+
+			if tt.expectedOrigin == "" {
+				require.NotContains(t, condition.Metadata, "Origin")
+			} else {
+				require.Equal(t, tt.expectedOrigin, condition.Metadata["Origin"])
+			}
 		})
 	}
 }

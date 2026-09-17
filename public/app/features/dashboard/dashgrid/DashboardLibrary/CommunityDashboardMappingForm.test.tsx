@@ -20,15 +20,16 @@ interface CommunityDashboardMappingFormProps {
   onPreview: (mappings: InputMapping[]) => void;
 }
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn((uid: string) => ({
-      uid,
-      name: `DataSource ${uid}`,
-      type: 'prometheus',
-    })),
-  }),
+// Mock the async list hook directly. The real hook resolves on a microtask via
+// `useAsync`, which would trigger React `act(...)` warnings in tests that assert
+// synchronously after `render(...)`. Returning a sync value keeps the test setup simple
+// and matches the data shape the component reads (`uid`, `name`).
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({
+    isLoading: false,
+    items: [{ uid: 'loki-uid', name: 'DataSource loki-uid', type: 'loki' }],
+  })),
 }));
 
 jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({

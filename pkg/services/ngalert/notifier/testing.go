@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"testing"
 	"time"
 
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -197,10 +197,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	// Iterate backwards to get the latest applied configs.
 	var configs []*models.HistoricAlertConfiguration
 	start := len(configsByOrg) - 1
-	end := start - limit
-	if end < 0 {
-		end = 0
-	}
+	end := max(start-limit, 0)
 
 	for i := start; i >= end; i-- {
 		if configsByOrg[i].LastApplied > 0 {
@@ -649,18 +646,14 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		options.featureToggles,
 		nil,
 		false,
-		nil, // adminConfigStore - not needed when datasource sync feature flag is off
-		nil, // datasourceService - not needed when datasource sync feature flag is off
-		nil, // httpClientProvider - not needed when datasource sync feature flag is off
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed when datasource sync feature flag is off
+		// Sync deps are nil — tests do not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 		moaOpts...,
 	)
 	require.NoError(t, err)
 
 	if options.alertmanagers != nil {
-		for orgID, am := range options.alertmanagers {
-			moa.alertmanagers[orgID] = am
-		}
+		maps.Copy(moa.alertmanagers, options.alertmanagers)
 	}
 
 	if !options.skipLoad {
@@ -709,14 +702,14 @@ type FakeReceiverService struct {
 }
 
 type FakeEmailValidator struct {
-	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error
 	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
 
 func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	t.Helper()
 	return &FakeEmailValidator{
-		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 			return err
 		},
 		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
@@ -725,9 +718,9 @@ func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	}
 }
 
-func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 	if f.ValidateIntegrationFunc != nil {
-		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, decryptFn, logger)
 	}
 	return nil
 }

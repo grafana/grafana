@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { CoreApp } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Field, LoadingPlaceholder, Alert, TextLink } from '@grafana/ui';
 
 interface Props {
@@ -22,7 +22,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     if (!dsUid) {
       return;
     }
-    return getDataSourceSrv().get(dsUid);
+    return getDataSourceInstance(dsUid);
   }, [dsUid]);
 
   const QueryEditor = datasource?.components?.QueryEditor;

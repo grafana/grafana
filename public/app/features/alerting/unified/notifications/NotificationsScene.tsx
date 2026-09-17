@@ -251,7 +251,7 @@ function getQueryRunnerForNotificationsDataSource(ruleUID?: string) {
  * This function creates a SceneFlexItem with a timeseries panel that shows the notification events.
  * The query uses a runtime datasource that fetches the events from the notifications api.
  */
-export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
+function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
   return new SceneFlexItem({
     minHeight: 300,
     ySizing: 'content',
@@ -281,7 +281,7 @@ export function getNotificationsGraphSceneFlexItem(ruleUID?: string) {
   });
 }
 
-export class ClearFilterButtonScenesObject extends SceneObjectBase {
+class ClearFilterButtonScenesObject extends SceneObjectBase {
   public static Component = ClearFilterButtonObjectRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -289,7 +289,7 @@ export class ClearFilterButtonScenesObject extends SceneObjectBase {
   });
 }
 
-export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
+function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<ClearFilterButtonScenesObject>) {
   model.useState();
 
   const labelsFilterVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
@@ -354,5 +354,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export default NotificationsScene;

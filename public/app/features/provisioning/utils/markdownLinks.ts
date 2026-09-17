@@ -1,5 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isMarkdownFile } from './folderDocConventions';
 import { getRepoFileUrl, getRepoRawFileUrl } from './git';
 
 interface RewriteOptions {
@@ -9,6 +10,15 @@ interface RewriteOptions {
 }
 
 const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
+
+/**
+ * Attribute stamped on links whose target could be viewed in-app: a Grafana
+ * resource (JSON/YAML files or folder directories) or a `.md` doc (which opens
+ * as a tab on its containing folder's page). It carries the resolved repo path;
+ * the README click handler reads it to lazily resolve the link to the in-app page
+ * — untagged links (images, other files, external) always open the host URL.
+ */
+export const RESOURCE_PATH_ATTR = 'data-provisioning-repo-path';
 
 /**
  * Walk the rendered Markdown HTML and rewrite relative URLs (`<a href>` and
@@ -56,6 +66,13 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
       // No host link pattern (e.g. local repo) — strip the broken relative
       // href so it doesn't render as a clickable but non-functional link.
       anchor.removeAttribute('href');
+    }
+
+    // Tag JSON/YAML/folder/markdown links so the README click handler can resolve
+    // them to the in-app Grafana page. Done regardless of the host URL so links in
+    // repos without one (local/git) still resolve via the resource listing.
+    if (isResourceLinkCandidate(result.path)) {
+      anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
     }
   });
 
@@ -141,4 +158,21 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): { path: stri
 }
 function stripLeadingSlashes(s: string): string {
   return s.replace(/^\/+/, '');
+}
+
+/**
+ * Whether a resolved repo path could be viewed in-app: a JSON/YAML file
+ * (dashboard, playlist, folder metadata, ...), a folder directory, or a `.md`
+ * doc (which opens as a tab on its containing folder's page). Folders are matched
+ * by their trailing slash — which the resolver preserves for directory links —
+ * rather than by "no extension", so extensionless files (README, LICENSE,
+ * Makefile) aren't tagged and never trigger a lookup. Links that fail this
+ * (images, arbitrary files) are left as plain host links.
+ */
+export function isResourceLinkCandidate(path: string): boolean {
+  if (path.endsWith('/')) {
+    return true;
+  }
+  const lastSegment = path.slice(path.lastIndexOf('/') + 1);
+  return /\.(json|ya?ml)$/i.test(lastSegment) || isMarkdownFile(lastSegment);
 }

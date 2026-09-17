@@ -8,16 +8,16 @@
  *    Safe to call at module load time or in non-React contexts.
  *
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
- *    (`evaluateAccess`, `getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    (`getRulesAccess`). These are
  *    intentionally plain functions (not hooks) because they are also used in non-React
  *    contexts (route guards, panel menus). When used inside React components, wrap them
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
-import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { isGranted } from '../hooks/abilities/abilityUtils';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
@@ -55,25 +55,6 @@ export const instancesPermissions = {
   },
 };
 
-export const notificationsPermissions = {
-  read: {
-    grafana: AccessControlAction.AlertingNotificationsRead,
-    external: AccessControlAction.AlertingNotificationsExternalRead,
-  },
-  create: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  update: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  delete: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-};
-
 export const silencesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingSilenceRead,
@@ -87,12 +68,6 @@ export const silencesPermissions = {
     grafana: AccessControlAction.AlertingSilenceUpdate,
     external: AccessControlAction.AlertingInstancesExternalWrite,
   },
-};
-
-export const provisioningPermissions = {
-  read: AccessControlAction.AlertingProvisioningRead,
-  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  write: AccessControlAction.AlertingProvisioningWrite,
 };
 
 const rulesPermissions = {
@@ -129,18 +104,6 @@ export function getInstancesPermissions(rulesSourceName: string) {
   };
 }
 
-export function getNotificationsPermissions(rulesSourceName: string) {
-  const sourceType = getRulesSourceType(rulesSourceName);
-
-  return {
-    read: notificationsPermissions.read[sourceType],
-    create: notificationsPermissions.create[sourceType],
-    update: notificationsPermissions.update[sourceType],
-    delete: notificationsPermissions.delete[sourceType],
-    provisioning: provisioningPermissions,
-  };
-}
-
 export function getRulesPermissions(rulesSourceName: string) {
   const sourceType = getRulesSourceType(rulesSourceName);
 
@@ -155,20 +118,8 @@ export function getRulesPermissions(rulesSourceName: string) {
 // ── Runtime utilities ─────────────────────────────────────────────────────────
 // Plain functions (not hooks) for non-React contexts (route guards, panel menus).
 // RBAC checks delegate to get*Ability() from the central ability system.
-// evaluateAccess uses contextSrv.evaluatePermission directly (route-guard API).
 // getRulesAccess retains direct contextSrv calls only for the auxiliary
 // FoldersRead / DataSourcesRead workflow-feasibility guards.
-
-/**
- * Returns a route-guard thunk for Grafana's route config.
- * The returned function is called at navigation time to check if the user can
- * access the route.
- */
-export function evaluateAccess(actions: AccessControlAction[]) {
-  return () => {
-    return contextSrv.evaluatePermission(actions);
-  };
-}
 
 /**
  * Returns an object describing what rule-creation actions the current user can
@@ -183,26 +134,20 @@ export function evaluateAccess(actions: AccessControlAction[]) {
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasPermission(AccessControlAction.FoldersRead) && getGlobalRuleAbility(RuleAction.Create).granted,
+      contextSrv.hasPermission(AccessControlAction.FoldersRead) && isGranted(getGlobalRuleAbility(RuleAction.Create)),
     canCreateCloudRules:
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
-      getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted,
+      isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule)),
     canEditRules: (rulesSourceName: string) => {
+      // The backend requires alert.rules:read alongside alert.rules:write for all rule mutations.
+      // Check both here so RuleEditor shows "no access" immediately rather than after Save.
+      const canViewGrafanaRules = isGranted(getGlobalRuleAbility(RuleAction.View));
+      const canUpdateGrafanaRules = isGranted(getGlobalRuleAbility(RuleAction.Update));
+      const canUpdateCloudRules = isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule));
+
       return rulesSourceName === GRAFANA_SOURCE_NAME
-        ? getGlobalRuleAbility(RuleAction.Update).granted
-        : getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule).granted;
+        ? contextSrv.hasPermission(AccessControlAction.FoldersRead) && canViewGrafanaRules && canUpdateGrafanaRules
+        : canUpdateCloudRules;
     },
   };
-}
-
-/**
- * Returns whether the "Create alert rule" option should appear in panel menus.
- * Called in non-React panel-menu utilities; not a hook.
- */
-export function getCreateAlertInMenuAvailability() {
-  const { unifiedAlertingEnabled } = getConfig();
-  const canRead = getGlobalRuleAbility(RuleAction.View).granted;
-  const canUpdate = getGlobalRuleAbility(RuleAction.Update).granted;
-
-  return unifiedAlertingEnabled && canRead && canUpdate;
 }

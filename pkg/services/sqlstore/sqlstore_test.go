@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, _ := InitTestDB(t)
+	store, _ := InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	testCases := []struct {
 		desc string

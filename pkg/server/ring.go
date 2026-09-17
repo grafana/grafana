@@ -20,6 +20,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -137,6 +138,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, err
 		}
 
+		opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 		opts = append(opts, connectionBackoffOptions())
 
 		conn, err := grpc.NewClient(inst.Addr, opts...)

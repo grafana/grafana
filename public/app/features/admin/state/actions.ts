@@ -64,7 +64,7 @@ export function loadAdminUserPage(userUid: string): ThunkResult<void> {
   };
 }
 
-export function loadUserProfile(userUid: string): ThunkResult<void> {
+function loadUserProfile(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     const user = await getBackendSrv().get(`/api/users/${userUid}`, accessControlQueryParam());
     dispatch(userProfileLoadedAction(user));
@@ -115,7 +115,7 @@ export function updateUserPermissions(userUid: string, isGrafanaAdmin: boolean):
   };
 }
 
-export function loadUserOrgs(userUid: string): ThunkResult<void> {
+function loadUserOrgs(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     const orgs = await getBackendSrv().get(`/api/users/${userUid}/orgs`);
     dispatch(userOrgsLoadedAction(orgs));
@@ -148,7 +148,7 @@ export function deleteOrgUser(userUid: string, orgId: number): ThunkResult<void>
   };
 }
 
-export function loadUserSessions(userUid: string): ThunkResult<void> {
+function loadUserSessions(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
       return;

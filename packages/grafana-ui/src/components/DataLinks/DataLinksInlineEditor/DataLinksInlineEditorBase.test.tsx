@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataLink } from '@grafana/data';
@@ -12,19 +12,26 @@ const mockChildren = jest.fn((_item, _index, onSave, onCancel) => (
   </div>
 ));
 
-function setup(items?: DataLink[]) {
+async function setup(items?: DataLink[]) {
   const onChange = jest.fn();
-  render(
+  const { container } = render(
     <DataLinksInlineEditorBase<DataLink> type="link" items={items} onChange={onChange} data={[]}>
       {mockChildren}
     </DataLinksInlineEditorBase>
   );
+  await waitFor(() => {
+    expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+  });
+  await waitFor(() => {
+    expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(items?.length ?? 0);
+  });
+
   return { onChange };
 }
 
 describe('DataLinksInlineEditorBase', () => {
-  it('renders existing items', () => {
-    setup([
+  it('renders existing items', async () => {
+    await setup([
       { title: 'Link A', url: '/a' },
       { title: 'Link B', url: '/b' },
     ]);
@@ -34,7 +41,7 @@ describe('DataLinksInlineEditorBase', () => {
   });
 
   it('opens add modal when add button is clicked', async () => {
-    setup();
+    await setup();
 
     await userEvent.click(screen.getByText('Add link'));
 
@@ -43,7 +50,7 @@ describe('DataLinksInlineEditorBase', () => {
   });
 
   it('opens edit modal when edit button is clicked', async () => {
-    setup([{ title: 'My Link', url: '/link' }]);
+    await setup([{ title: 'My Link', url: '/link' }]);
 
     await userEvent.click(screen.getByRole('button', { name: /edit/i }));
 
@@ -52,7 +59,7 @@ describe('DataLinksInlineEditorBase', () => {
   });
 
   it('calls onChange without the removed item', async () => {
-    const { onChange } = setup([
+    const { onChange } = await setup([
       { title: 'Keep', url: '/keep' },
       { title: 'Remove', url: '/remove' },
     ]);

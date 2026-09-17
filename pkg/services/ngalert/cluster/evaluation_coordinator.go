@@ -14,6 +14,11 @@ const checkInterval = 5 * time.Second
 
 type ClusterPositionProvider interface {
 	Position() int
+	// WaitReady blocks until the cluster has settled or ctx is done. Until the
+	// cluster settles, every node sees only itself and Position returns 0, so
+	// the first evaluation decision must wait for readiness to avoid every node
+	// electing itself as the primary evaluator.
+	WaitReady(ctx context.Context) error
 }
 
 // EvaluationCoordinator determines whether alert rule evaluation should occur
@@ -40,6 +45,15 @@ func (c *EvaluationCoordinator) Updates(ctx context.Context) <-chan bool {
 	updates := make(chan bool, 1)
 	go func() {
 		defer close(updates)
+
+		// Wait for the cluster to settle before making the first decision.
+		// Before the gossip mesh settles, every node sees only itself and
+		// Position returns 0, which would make every node start evaluating
+		// alert rules and produce duplicate evaluations and state writes.
+		c.log.Info("Waiting for cluster to settle before evaluating alert rules")
+		if err := c.cluster.WaitReady(ctx); err != nil {
+			return
+		}
 
 		current := c.shouldEvaluate()
 		sendLatest(updates, current)

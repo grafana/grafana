@@ -3,10 +3,11 @@ import { useKBar, VisualState } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
-export const KBAR_LISTBOX = 'kbar-listbox';
-export const getListboxItemId = (id: number) => `kbar-listbox-item-${id}`;
+const KBAR_LISTBOX = 'kbar-listbox';
+const getListboxItemId = (id: number) => `kbar-listbox-item-${id}`;
 
 export function KBarSearch(
   props: React.InputHTMLAttributes<HTMLInputElement> & {
@@ -47,11 +48,12 @@ export function KBarSearch(
       /* eslint-disable-next-line jsx-a11y/no-autofocus */
       autoFocus
       autoComplete="off"
+      data-testid={selectors.components.CommandPalette.searchInput}
       role="combobox"
       spellCheck="false"
       aria-expanded={showing}
       aria-controls={KBAR_LISTBOX}
-      aria-activedescendant={getListboxItemId(activeIndex)}
+      aria-activedescendant={activeIndex >= 0 ? getListboxItemId(activeIndex) : undefined}
       value={inputValue}
       placeholder={defaultText}
       onChange={(event) => {

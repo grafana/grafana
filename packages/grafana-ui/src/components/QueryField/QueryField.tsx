@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import classnames from 'classnames';
+import classnames from 'clsx';
 import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';

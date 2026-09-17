@@ -1,9 +1,11 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -27,6 +29,33 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 		return nil, err
 	}
 	return NewCustomRouteClient(client), nil
+}
+
+type CreateGraphiteRequest struct {
+	Body    CreateGraphiteRequestBody
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) CreateGraphite(ctx context.Context, namespace string, request CreateGraphiteRequest) (*CreateGraphiteResponse, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/graphite",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateGraphiteResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateGraphiteResponse: %w", err)
+	}
+	return &cast, nil
 }
 
 type GetSearchRequest struct {

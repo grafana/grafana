@@ -13,9 +13,10 @@ import (
 )
 
 type AuthorizeFromName struct {
-	AccessClient authlib.AccessClient
-	OKNames      []string
-	Resource     map[string][]ResourceOwner // may include unknown
+	AccessClient  authlib.AccessClient
+	AllowOrgAdmin bool
+	OKNames       []string
+	Resource      map[string][]ResourceOwner // may include unknown
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -45,6 +46,13 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 			"permissions", len(res.Permissions),
 		)
 		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
+	}
+	if res.ServiceCall { // request is from an access policy with explicit permissions
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	if a.AllowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin {
+		return authorizer.DecisionAllow, "", nil
 	}
 
 	if attr.GetName() == "" {
@@ -108,4 +116,14 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	// the owner was not explicitly allowed
 	return authorizer.DecisionDeny, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (a *AuthorizeFromName) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(a.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (a *AuthorizeFromName) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }

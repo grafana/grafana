@@ -516,7 +516,7 @@ export function distortLiveApis(_originalValue: ProxyTarget): ProxyTarget | unde
   return;
 }
 
-export function distortLodash(distortions: DistortionMap) {
+function distortLodash(distortions: DistortionMap) {
   /**
    * This is a distortion for lodash clone Deep function
    * because lodash deep clones execute in the blue realm

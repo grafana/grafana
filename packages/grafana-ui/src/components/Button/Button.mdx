@@ -153,6 +153,7 @@ The secondary `Button` is the default button style and can trigger various actio
 ## Destructive
 
 Used for triggering a removing or deleting action. Because of its dominant coloring, it should be used sparingly. If you need multiple Destructive `Button` components in one view, we recommend using a secondary `Button` or Link variant instead and only use the Destructive variant to double confirm.
+If a destructive action has a confirmation step it does not need to be destructive, as long as the confirmation step has a destructive button. In tables containing delete actions we recommend using a secondary variant `Button` with trash-alt icon.
 
 <ExampleFrame>
   <Button variant="destructive" size="sm" style={{ margin: '5px' }}>

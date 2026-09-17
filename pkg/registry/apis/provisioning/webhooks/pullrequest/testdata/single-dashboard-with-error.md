@@ -1,7 +1,6 @@
-Hey there! 👋
-Grafana spotted some changes to your dashboard.
+📊 Grafana detected dashboard changes in this pull request.
 
-See the [preview](http://grafana/admin/preview) of broken.json.
+[**Broken Dashboard**](https://github.com/example/repo/blob/pr/broken.json) — [preview changes](http://grafana/admin/preview)
 
 > ⚠️ **Validation failed:** strict decoding error: unknown field "spec.invalidField"
 

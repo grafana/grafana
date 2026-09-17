@@ -2,7 +2,7 @@ import { createContext, type PropsWithChildren, useContext, useState } from 'rea
 import * as React from 'react';
 import { type FieldValues } from 'react-hook-form';
 
-export type WizardContextProps<T> = {
+type WizardContextProps<T> = {
   currentPage: number;
   nextPage: () => void;
   prevPage: () => void;
@@ -11,7 +11,7 @@ export type WizardContextProps<T> = {
   CurrentPageComponent: React.ComponentType;
 };
 
-export const WizardContext = createContext<WizardContextProps<FieldValues> | undefined>(undefined);
+const WizardContext = createContext<WizardContextProps<FieldValues> | undefined>(undefined);
 
 /**
  * Dependencies provided to Wizard component required to build WizardContext

@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
 import Feature, { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -13,16 +12,12 @@ import tinycolor from 'tinycolor2';
 import {
   type MapLayerRegistryItem,
   type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
   DataHoverEvent,
   DataHoverClearEvent,
   type DataFrame,
   FieldType,
   colorManipulator,
-  type MapLayerOptions,
 } from '@grafana/data';
-import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -47,18 +42,7 @@ const defaultOptions: RouteConfig = {
   arrow: 0,
 };
 
-export const ROUTE_LAYER_ID = 'route';
-
-// Used by default when nothing is configured
-export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
-  type: ROUTE_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-  tooltip: false,
-};
+const ROUTE_LAYER_ID = 'route';
 
 enum mapIndex {
   x1 = 0,
@@ -83,7 +67,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map, options, eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -201,6 +185,17 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const hLineFeature = new Feature({});
     const vLineFeature = new Feature({});
     const lineFeatures = [hLineFeature, vLineFeature];
+
+    // Stale crosshair geometry would otherwise pollute the "fit to data" extent.
+    const clearCrosshair = () => {
+      crosshairFeature.setGeometry(undefined);
+      crosshairFeature.setStyle(new Style({}));
+      lineFeatures.forEach((feature) => {
+        feature.setGeometry(undefined);
+        feature.setStyle(new Style({}));
+      });
+    };
+
     const crosshairRadius = (style.base.lineWidth || 6) + 3;
     const crosshairStyle = new Style({
       image: new Circle({
@@ -287,8 +282,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
-        crosshairFeature.setStyle(new Style({}));
-        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
+        clearCrosshair();
       })
     );
 
@@ -296,6 +290,9 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       init: () => layer,
       dispose: () => subscriptions.unsubscribe(),
       update: (data: PanelData) => {
+        // The crosshair refers to a row of the previous data.
+        clearCrosshair();
+
         if (!data.series?.length) {
           return; // ignore empty
         }

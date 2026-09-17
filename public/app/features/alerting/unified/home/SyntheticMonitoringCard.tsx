@@ -5,7 +5,7 @@ import AdCard from './AdCard';
 
 const LINK =
   'https://grafana.com/auth/sign-up/create-user?redirectPath=synthetic-monitoring&src=oss-grafana&cnt=alerting-synthetic-monitoring';
-const HELP_FLAG_SYNTHETIC_MONITORING = 0x0008;
+const STORAGE_KEY = 'syntheticMonitoringCardDismissed';
 
 export default function SyntheticMonitoringCard() {
   return (
@@ -32,7 +32,7 @@ export default function SyntheticMonitoringCard() {
           'Track SLOs with built-in Prometheus-style alerts — right from the UI.'
         ),
       ]}
-      helpFlag={HELP_FLAG_SYNTHETIC_MONITORING}
+      storageKey={STORAGE_KEY}
     />
   );
 }

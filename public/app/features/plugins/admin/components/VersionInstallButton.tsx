@@ -21,6 +21,7 @@ interface Props {
   disabled: boolean;
   tooltip?: string;
   onConfirmInstallation: () => void;
+  hideInstallState?: boolean;
 }
 
 export const VersionInstallButton = ({
@@ -31,6 +32,7 @@ export const VersionInstallButton = ({
   disabled,
   tooltip,
   onConfirmInstallation,
+  hideInstallState,
 }: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
@@ -38,6 +40,7 @@ export const VersionInstallButton = ({
   const styles = useStyles2(getStyles);
 
   const installState = getInstallState(installedVersion, version.version);
+  const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -46,7 +49,7 @@ export const VersionInstallButton = ({
     }
   }, [installedVersion, version.version]);
 
-  if (version.version === installedVersion) {
+  if (!hideInstallState && version.version === installedVersion) {
     return (
       <Badge
         className={styles.badge}
@@ -115,8 +118,8 @@ export const VersionInstallButton = ({
         tooltip={tooltip}
         tooltipPlacement="bottom-start"
       >
-        {getLabel(installState)}{' '}
-        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(installState)}
+        {getLabel(displayInstallState)}{' '}
+        {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(displayInstallState)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}

@@ -1,3 +1,4 @@
+import { FieldColorModeId } from '@grafana/schema';
 import {
   defaultVariableHide,
   defaultVariableSort,
@@ -10,6 +11,7 @@ import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
+  colorIdEnumToColorIdV2,
 } from './transformToV2TypesUtils';
 
 describe('transformToV2TypesUtils', () => {
@@ -52,6 +54,36 @@ describe('transformToV2TypesUtils', () => {
       expect(transformSortVariableToEnum(7)).toBe('naturalAsc');
       expect(transformSortVariableToEnum(8)).toBe('naturalDesc');
       expect(transformSortVariableToEnum(undefined)).toBe(defaultVariableSort());
+    });
+  });
+
+  describe('colorIdEnumToColorIdV2', () => {
+    it('should map known color modes to their v2 equivalents', () => {
+      expect(colorIdEnumToColorIdV2(FieldColorModeId.Thresholds)).toBe('thresholds');
+      expect(colorIdEnumToColorIdV2(FieldColorModeId.PaletteClassic)).toBe('palette-classic');
+      expect(colorIdEnumToColorIdV2(FieldColorModeId.PaletteClassicByName)).toBe('palette-classic-by-name');
+      expect(colorIdEnumToColorIdV2(FieldColorModeId.Fixed)).toBe('fixed');
+    });
+
+    // Regression: the colorblind-safe palette and gradient mode were silently dropped on
+    // save because they had no mapping here, so the converted mode was undefined and the
+    // color was removed.
+    it('should preserve the colorblind-safe palette', () => {
+      expect(colorIdEnumToColorIdV2('palette-colorblind')).toBe('palette-colorblind');
+    });
+
+    it('should preserve the gradient color mode', () => {
+      expect(colorIdEnumToColorIdV2('gradient')).toBe('gradient');
+    });
+
+    it('should preserve experimental categorical next palettes', () => {
+      expect(colorIdEnumToColorIdV2('palette-categorical-next')).toBe('palette-categorical-next');
+      expect(colorIdEnumToColorIdV2('palette-categorical-next-2')).toBe('palette-categorical-next-2');
+      expect(colorIdEnumToColorIdV2('palette-categorical-next-3')).toBe('palette-categorical-next-3');
+    });
+
+    it('should return undefined for unknown color modes', () => {
+      expect(colorIdEnumToColorIdV2('not-a-real-mode')).toBeUndefined();
     });
   });
 });

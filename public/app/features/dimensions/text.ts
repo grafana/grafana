@@ -13,10 +13,7 @@ export function getTextDimension(frame: DataFrame | undefined, config: TextDimen
   return getTextDimensionForField(field, config);
 }
 
-export function getTextDimensionForField(
-  field: Field | undefined,
-  config: TextDimensionConfig
-): DimensionSupplier<string> {
+function getTextDimensionForField(field: Field | undefined, config: TextDimensionConfig): DimensionSupplier<string> {
   let v = config.fixed;
   const mode = config.mode ?? TextDimensionMode.Fixed;
   if (mode === TextDimensionMode.Fixed) {

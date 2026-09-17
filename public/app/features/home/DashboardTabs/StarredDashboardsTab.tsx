@@ -1,10 +1,14 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { EmptyState, Icon, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
+
+import { DashboardTabError } from './DashboardTabError';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -12,10 +16,12 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  density?: 'default' | 'compact'; // 'compact' is only used in the homepage redesign
 }
 
-export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
-  const styles = useStyles2(getStyles);
+export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid, density }: Props) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const styles = useStyles2(getStyles, redesignEnabled);
 
   if (loading) {
     return <PageLoader text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
@@ -23,20 +29,10 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
 
   if (error) {
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        {/* Extra div as Alert will flex-grow by default, but we want it centered */}
-        <div>
-          <Alert
-            severity="warning"
-            title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
-            action={
-              <Button onClick={retry} variant="secondary" size="sm">
-                <Trans i18nKey="home.starred-dashboards-tab.retry">Retry</Trans>
-              </Button>
-            }
-          />
-        </div>
-      </Stack>
+      <DashboardTabError
+        title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
+        retry={retry}
+      />
     );
   }
 
@@ -68,6 +64,7 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
             layoutMode="list"
             source="homepage_starredTab"
             onStarChange={retry}
+            density={density}
           />
         </li>
       ))}
@@ -75,10 +72,10 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
   list: css({
     listStyle: 'none',
-    padding: 0,
+    padding: theme.spacing(0, redesign ? 0 : 0.5),
     margin: 0,
   }),
 });

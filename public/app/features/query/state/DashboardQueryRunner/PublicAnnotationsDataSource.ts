@@ -12,11 +12,11 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { GrafanaQueryType } from '../../../../plugins/datasource/grafana/types';
 
-export const PUBLIC_DATASOURCE = '-- Public --';
+const PUBLIC_DATASOURCE = '-- Public --';
 
 export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor() {

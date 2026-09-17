@@ -3,9 +3,14 @@ package embed
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// ErrSkip means the stored API version has no applicable embedding configuration.
+// Consumers preserve existing vectors and continue processing other resources.
+var ErrSkip = errors.New("skip embedding extraction")
 
 // Item is one chunk of a resource ready to be embedded.
 type Item struct {
@@ -13,7 +18,7 @@ type Item struct {
 	Title       string          // human-readable title for search results
 	Subresource string          // unique within the resource ("" for whole-resource, "panel/5" for sub-parts)
 	Content     string          // text to embed
-	Metadata    json.RawMessage // structured filter fields (datasource_uids, query_languages, ...)
+	Metadata    json.RawMessage // structured filter fields (datasourceUid, language, ...) — see embed/dashboard/extractor.go
 	Folder      string          // folder UID for authz filtering
 }
 
@@ -27,8 +32,13 @@ type Builder interface {
 	// MaxItemsPerResource caps the items returned by a single Extract
 	// call. 0 means uncapped.
 	MaxItemsPerResource() int
-	// Extract turns a stored value into embeddable items. folderTitle is
-	// resolved by the caller against the folder service since unified
-	// storage values don't carry it inline.
+	// Version is the re-embedding revision. Increasing it requests a backfill;
+	// generic builders use the manifest's resource-level revision.
+	Version() int
+	// Extract turns a stored value into embeddable items. folderTitle is optional
+	// context that custom builders may include in their content.
+	// Return ErrSkip (possibly wrapped) for missing or unknown API-version
+	// configuration to preserve existing vectors. Empty items with a nil error
+	// mean successful extraction with no content and may remove existing vectors.
 	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]Item, error)
 }

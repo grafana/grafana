@@ -174,6 +174,17 @@ const (
 
 	// PluginGrafanaOriginLabel is a label that indicates that the alert rule originated from a plugin.
 	PluginGrafanaOriginLabel = "__grafana_origin"
+	// PluginGrafanaOriginUIDLabel is an optional label carrying the UID of the resource within the
+	// origin plugin that owns this rule. When present it is appended to the X-Rule-Origin header
+	// as "<origin>|<uid>". Plugins that cannot set this label may use a plugin-specific fallback
+	// (see PluginGrafanaSLOUUIDLabel).
+	PluginGrafanaOriginUIDLabel = "__grafana_origin_uid"
+
+	// PluginGrafanaSLOOrigin is the __grafana_origin value set by the Grafana SLO plugin.
+	PluginGrafanaSLOOrigin = "plugin/grafana-slo-app"
+	// PluginGrafanaSLOUUIDLabel is the SLO-specific label used as a fallback source for the
+	// resource UID when PluginGrafanaOriginUIDLabel is absent.
+	PluginGrafanaSLOUUIDLabel = "grafana_slo_uuid"
 )
 
 const (
@@ -374,6 +385,10 @@ type AlertRule struct {
 	// If nil, alerts resolve after 2 missing evaluation intervals
 	// (i.e., resolution occurs during the second evaluation where data is absent).
 	MissingSeriesEvalsToResolve *int64
+	// K8sStatus is the serialized app-platform status subresource for this rule.
+	// It is opaque to ngalert internals — persisted and surfaced only by the rules
+	// API legacy storage adapter. nil when no status has been written yet.
+	K8sStatus []byte
 }
 
 type AlertRuleVersion struct {
@@ -582,6 +597,17 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
+	if origin := alertRule.Labels[PluginGrafanaOriginLabel]; origin != "" {
+		uid := alertRule.Labels[PluginGrafanaOriginUIDLabel]
+		if uid == "" && origin == PluginGrafanaSLOOrigin {
+			uid = alertRule.Labels[PluginGrafanaSLOUUIDLabel]
+		}
+		if uid != "" {
+			meta["Origin"] = origin + "|" + uid
+		} else {
+			meta["Origin"] = origin
+		}
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
@@ -613,6 +639,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 		ops,
 		cmp.Reporter(&reporter),
 		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
+		cmpopts.IgnoreFields(AlertRule{}, "K8sStatus"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
@@ -940,16 +967,12 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 
 	if alertRule.Annotations != nil {
 		result.Annotations = make(map[string]string, len(alertRule.Annotations))
-		for s, s2 := range alertRule.Annotations {
-			result.Annotations[s] = s2
-		}
+		maps.Copy(result.Annotations, alertRule.Annotations)
 	}
 
 	if alertRule.Labels != nil {
 		result.Labels = make(map[string]string, len(alertRule.Labels))
-		for s, s2 := range alertRule.Labels {
-			result.Labels[s] = s2
-		}
+		maps.Copy(result.Labels, alertRule.Labels)
 	}
 
 	if alertRule.Record != nil {
@@ -1105,8 +1128,9 @@ type ListAlertRulesQuery struct {
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).
 	DataSourceUIDs []string
-	// SearchTitle allows searching for alert rules that contain
-	// the given string in their title (case insensitive)
+	// SearchTitle allows searching for alert rules whose title contains every
+	// whitespace-separated term of the given string, in any order (case
+	// insensitive).
 	SearchTitle string
 	// SearchRuleGroup allows searching for alert rules in groups that contain
 	// the given string in their name (case insensitive)

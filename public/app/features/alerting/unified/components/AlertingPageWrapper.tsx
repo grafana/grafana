@@ -1,14 +1,18 @@
 import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { type PageProps } from 'app/core/components/Page/types';
 
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
+import { ImportToGMABanner } from './import-to-gma/ImportToGMABanner';
+import { useCanImportToGMA } from './import-to-gma/useCanImportToGMA';
 
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
@@ -76,5 +80,32 @@ const AlertManagerPagePermissionsCheck = ({ children }: PropsWithChildren) => {
     return <NoAlertManagerWarning availableAlertManagers={availableAlertManagers} />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <ImportToGMABannerForAlertmanager />
+      {children}
+    </>
+  );
 };
+
+/**
+ * Invites the user to import an external Alertmanager's configuration into
+ * Grafana-managed alerting. Only rendered once a valid Alertmanager is selected. Suppressed on edit/new forms, where the Alertmanager picker is disabled and a
+ * promo banner is noise.
+ */
+function ImportToGMABannerForAlertmanager() {
+  const { isGrafanaAlertmanager } = useAlertmanager();
+  const { canImportNotifications } = useCanImportToGMA();
+  const isEditOrNewForm = useIsDisabledAlertmanagerSelection();
+  const { disabled: importDisabled, isLoading: importStateLoading } = useImportEntrypointState();
+
+  const showBanner =
+    Boolean(config.featureToggles.alertingMigrationWizardUI) &&
+    !isGrafanaAlertmanager &&
+    canImportNotifications &&
+    !isEditOrNewForm &&
+    !importDisabled &&
+    !importStateLoading;
+
+  return showBanner ? <ImportToGMABanner /> : null;
+}

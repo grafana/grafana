@@ -33,7 +33,6 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-			featuremgmt.FlagAlertingMultiplePolicies,
 		},
 	})
 

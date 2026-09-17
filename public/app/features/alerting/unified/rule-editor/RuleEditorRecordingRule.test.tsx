@@ -4,6 +4,7 @@ import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byText } from 'testing-library-selector';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -46,6 +47,10 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 
 setupMswServer();
 mimirDataSource();
+
+beforeAll(() => {
+  mockBoundingClientRect();
+});
 
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {

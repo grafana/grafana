@@ -7,7 +7,7 @@ import { generateCopiedName } from '../utils/duplicate';
 import { GRAFANA_ORIGIN_LABEL } from '../utils/labels';
 import { getRuleName, rulerRuleType } from '../utils/rules';
 
-export function changeRuleName(rule: RulerRuleDTO, newName: string) {
+function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (rulerRuleType.grafana.rule(rule)) {
     rule.grafana_alert.title = newName;
   }

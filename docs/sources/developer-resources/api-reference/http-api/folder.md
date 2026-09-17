@@ -30,17 +30,30 @@ refs:
 weight: 100
 ---
 
-# New Folders APIs
+# Folder APIs
 
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [folder.grafana.app/v1](https://play.grafana.org/swagger?api=folder.grafana.app-v1) in Swagger.**
+
 {{< /admonition >}}
 
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
+## Endpoints
+
+| Method | URI                                                            | Summary                                 |
+| ------ | -------------------------------------------------------------- | --------------------------------------- |
+| GET    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders      | [Get all folders](#get-all-folders)     |
+| GET    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Get folder by uid](#get-folder-by-uid) |
+| POST   | /apis/folder.grafana.app/v1/namespaces/:namespace/folders      | [Create folder](#create-folder)         |
+| PUT    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Update folder](#update-folder)         |
+| DELETE | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Delete folder](#delete-folder)         |
 
 ## Get all folders
 
@@ -69,7 +82,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -115,7 +128,7 @@ The `metadata.continue` field contains a token to fetch the next page.
 GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example subsequent response**:
@@ -181,7 +194,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 GET /apis/folder.grafana.app/v1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -245,7 +258,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 POST /apis/folder.grafana.app/v1/namespaces/default/folders HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -253,10 +266,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "annotations": {
       "grafana.app/folder": "fef30w4jaxla8b"
     }
-  }
+  },
   "spec": {
     "title": "child-folder"
-  },
+  }
 }
 ```
 
@@ -329,17 +342,19 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 PUT /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
-"metadata": {
+{
+  "metadata": {
     "name": "aef30vrzxs3y8d",
     "annotations": {
       "grafana.app/folder": "xkj92m5pqw3vn4"
     }
-  }
+  },
   "spec": {
     "title": "updated title"
-  },
+  }
+}
 ```
 
 JSON Body schema:
@@ -425,7 +440,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 ```
 

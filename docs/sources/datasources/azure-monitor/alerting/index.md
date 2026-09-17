@@ -18,6 +18,7 @@ labels:
 menuTitle: Alerting
 title: Azure Monitor alerting
 weight: 500
+review_date: 2026-05-12
 ---
 
 # Azure Monitor alerting
@@ -50,12 +51,13 @@ Alert queries must return numeric data that Grafana can evaluate against a thres
 
 Alerting and recording rules run as background processes without a user context. This means they require service-level authentication and don't work with all authentication methods.
 
-| Authentication method            | Supported                             |
-| -------------------------------- | ------------------------------------- |
-| App Registration (client secret) | ✓                                     |
-| Managed Identity                 | ✓                                     |
-| Workload Identity                | ✓                                     |
-| Current User                     | ✓ (with fallback service credentials) |
+| Authentication method                 | Supported                             |
+| ------------------------------------- | ------------------------------------- |
+| App Registration (client secret)      | ✓                                     |
+| App Registration (client certificate) | ✓                                     |
+| Managed Identity                      | ✓                                     |
+| Workload Identity                     | ✓                                     |
+| Current User                          | ✓ (with fallback service credentials) |
 
 {{< admonition type="note" >}}
 If you use **Current User** authentication, you must configure **fallback service credentials** for alerting and recording rules to function. User credentials aren't available for background operations, so Grafana uses the fallback credentials instead. Refer to [configure the data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/) for details on setting up fallback credentials.
@@ -212,9 +214,11 @@ If you see authentication errors when alerts evaluate:
 
 ### Query timeout errors
 
+- **Increase the data source timeout.** The default timeout is 30 seconds, but Azure Log Analytics queries can take up to 3 minutes. Open the Azure Monitor data source settings, scroll to **Misc**, and set **Timeout** to `300`. Refer to [Query timeout](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/configure/#query-timeout).
 - Simplify complex KQL queries.
 - Reduce the time range in Log Analytics queries.
 - Add more specific filters to narrow result sets.
+- Ensure the alert evaluation interval is long enough to accommodate the query duration.
 
 For additional troubleshooting help, refer to [Troubleshoot Azure Monitor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/).
 

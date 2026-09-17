@@ -3,10 +3,13 @@ import { useCallback } from 'react';
 import { generateUUID } from '@grafana/data';
 import {
   type RepositorySpec,
+  type SecureValues,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+
+export type RepositorySecureChanges = Pick<SecureValues, 'token' | 'commitSigningKey'>;
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
@@ -14,8 +17,15 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec, token?: string) => {
-      const secure = token?.length ? { token: { create: token } } : undefined;
+    async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
+      const secureEntries: SecureValues = {};
+      if (secureChanges?.token) {
+        secureEntries.token = secureChanges.token;
+      }
+      if (secureChanges?.commitSigningKey) {
+        secureEntries.commitSigningKey = secureChanges.commitSigningKey;
+      }
+      const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails

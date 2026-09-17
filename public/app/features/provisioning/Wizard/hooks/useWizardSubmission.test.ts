@@ -20,6 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('../../utils/data', () => ({
   dataToSpec: jest.fn(() => ({ type: 'github', github: { url: 'https://github.com/test/repo' } })),
+  deriveSigningKeySecret: jest.fn(() => undefined),
 }));
 
 jest.mock('../../utils/getFormErrors', () => ({
@@ -363,7 +364,10 @@ describe('useWizardSubmission', () => {
           await result.current.handleSubmit();
         });
 
-        expect(mockSubmitData).toHaveBeenCalled();
+        expect(mockSubmitData).toHaveBeenCalledWith(expect.anything(), {
+          token: undefined,
+          commitSigningKey: undefined,
+        });
       });
 
       it('should include token when githubAuthType is pat', async () => {
@@ -381,7 +385,10 @@ describe('useWizardSubmission', () => {
           await result.current.handleSubmit();
         });
 
-        expect(mockSubmitData).toHaveBeenCalled();
+        expect(mockSubmitData).toHaveBeenCalledWith(expect.anything(), {
+          token: { create: 'my-token' },
+          commitSigningKey: undefined,
+        });
       });
     });
   });
