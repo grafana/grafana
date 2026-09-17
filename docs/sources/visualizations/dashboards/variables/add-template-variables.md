@@ -42,7 +42,9 @@ weight: 100
 
 # Add variables
 
-In addition to the built-in variables that come with Grafana, you can create your own variables.
+You can create your own variables within any dashboard, and these variables are specific to the dashboard in which you create them.
+For information on variables that you can use across dashboards, refer to the [Cross-dashboard variables documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/cross-dashboard-variables/).
+
 The following table lists the types of variables you can create:
 
 <!-- prettier-ignore-start -->

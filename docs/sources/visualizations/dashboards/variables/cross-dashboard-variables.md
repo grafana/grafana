@@ -15,8 +15,8 @@ weight: 150
 
 {{< docs/public-preview product="Cross-dashboard variables" featureFlag="`grafana.dashboardGlobalVariables`" >}}
 
-Standard variables are specific to the dashboards in which they're created. In contrast, you can use _cross-dashboard variables_, across multiple dashboards.
-This helps ensure consistent use of variables across your organization, as well as removing the need to re-create the same variables every time you add a new dashboard.
+Unlike variables that are specific to the dashboard in which you build them, you can create _cross-dashboard variables_ for use across multiple dashboards.
+These variables help ensure consistent naming across your organization and eliminate the need to re-create the same variables every time you add a new dashboard.
 
 You can scope cross-dashboard variables in two ways:
 

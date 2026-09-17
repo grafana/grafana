@@ -19,7 +19,8 @@ weight: 200
 
 # Built-in variables
 
-Grafana has global built-in variables that you can use in expressions in the query editor.
+Grafana has built-in variables that you can use in expressions in the query editor.
+These variables are globally-scoped so you can use them in any dashboard.
 This page lists them in alphabetical order and defines them.
 Most variables are useful in queries, dashboard links, panel links, and data links&mdash;but some, like `$__url_time_range`, are only intended for use in links, not query editors.
 

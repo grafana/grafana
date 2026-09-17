@@ -19,7 +19,7 @@ weight: 800
 A variable is a placeholder for a value that you can use in dashboard queries, panel titles, links, and other dashboard elements.
 When you change the value of a variable, Grafana updates every dashboard element that uses that variable.
 
-Variables are displayed as drop-down lists (or in some cases text fields) at the top of the dashboard.
+Variables display as drop-down lists (or in some cases text fields) at the top of the dashboard.
 These controls let viewers change what the dashboard displays without editing the dashboard.
 
 For example, if you need to monitor several servers, you _could_ make a dashboard for each server.
@@ -60,12 +60,12 @@ Grafana supports two broad kinds of variables:
 
 - **User-defined variables**: Variables that you define and configure. Use these variables when viewers need to choose values such as a server, data source, region, environment, or interval. These fall into two categories:
 
-  - **Dashboard-scoped variables**: Variables that you create new in a dashboard. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
+  - **Dashboard-scoped variables**: Variables that you create within a dashboard. For configuration steps, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/).
   - **Cross-dashboard variables**: Variables already defined by your organization that you can use across dashboards either globally or by folder. For configuration steps, refer to [Cross-dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/cross-dashboard-variables/).
 
 - **Built-in variables**: Built-in variables that Grafana provides automatically, such as the current time range, dashboard name, organization, or signed-in user. For the full reference, refer to [Built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/).
 
-## Choose a variable type
+## Variable types
 
 Choose a variable type based on how you want Grafana to get the value and how users interact with it.
 
