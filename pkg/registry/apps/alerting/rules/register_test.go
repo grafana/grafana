@@ -4,12 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -22,6 +25,52 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestRuleSearchReadAttributes(t *testing.T) {
+	request := func(resource, name string) authorizer.AttributesRecord {
+		return authorizer.AttributesRecord{
+			Verb:            "create",
+			Resource:        resource,
+			Name:            name,
+			ResourceRequest: true,
+		}
+	}
+
+	t.Run("compatibility search is authorized as a list", func(t *testing.T) {
+		for _, resource := range []string{
+			alertrule.ResourceInfo.GroupResource().Resource,
+			recordingrule.ResourceInfo.GroupResource().Resource,
+		} {
+			got := ruleSearchReadAttributes(request(resource, search.RouteResource))
+			require.Equal(t, "list", got.GetVerb(), resource)
+			require.Empty(t, got.GetName(), resource)
+		}
+	})
+
+	t.Run("a normal create is unchanged", func(t *testing.T) {
+		got := ruleSearchReadAttributes(request(alertrule.ResourceInfo.GroupResource().Resource, ""))
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("another resource is unchanged", func(t *testing.T) {
+		got := ruleSearchReadAttributes(request("rulesequences", search.RouteResource))
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("a subresource request is unchanged", func(t *testing.T) {
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr.Subresource = "status"
+		got := ruleSearchReadAttributes(attr)
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("a non-resource request is unchanged", func(t *testing.T) {
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, search.RouteResource)
+		attr.ResourceRequest = false
+		got := ruleSearchReadAttributes(attr)
+		require.Equal(t, "create", got.GetVerb())
+	})
+}
 
 func TestNewFolderValidatorRejectsRootFolder(t *testing.T) {
 	validate := newFolderValidator(&ngalert.AlertNG{})
