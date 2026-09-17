@@ -8,6 +8,7 @@ import (
 	"io"
 	"iter"
 	"math"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
@@ -604,19 +605,13 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
-func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
-	ctx, span := tracer.Start(ctx, "resource.dataStore.batchDelete", trace.WithAttributes(
+func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.BatchDelete", trace.WithAttributes(
 		attribute.Int("batchSize", len(keys)),
 	))
 	defer span.End()
 
-	for len(keys) > 0 {
-		batch := keys
-		if len(batch) > dataBatchSize {
-			batch = batch[:dataBatchSize]
-		}
-
-		keys = keys[len(batch):]
+	for batch := range slices.Chunk(keys, dataBatchSize) {
 		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())

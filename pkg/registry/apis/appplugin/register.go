@@ -412,7 +412,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 				for _, kind := range v.Kinds {
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
-						Scheme:            opts.Scheme,
 						StorageOptsGetter: opts.StorageOptsGetter,
 					}, defs)
 					if err != nil {

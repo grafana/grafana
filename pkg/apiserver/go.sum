@@ -88,8 +88,8 @@ github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 h1:jKXYY/6zw
 github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk/logging v0.60.0 h1:IF+yweB8jA6al9JZB///cC875nIpmcHRXcjqu4H7HB4=
-github.com/grafana/grafana-app-sdk/logging v0.60.0/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
+github.com/grafana/grafana-app-sdk/logging v0.60.2 h1:rRIbKe83GOmHsBMQHykTm3wwpQVE8Tr0k+XSZbt94J0=
+github.com/grafana/grafana-app-sdk/logging v0.60.2/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e h1:BTKk7LHuG1kmAkucwTA7DuMbKpKvJTKrGdBmUNO4dfQ=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:IA4SOwun8QyST9c5UNs/fN37XL6boXXDvRYFcFwbipg=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 h1:QGLs/O40yoNK9vmy4rhUGBVyMf1lISBGtXRpsu/Qu/o=

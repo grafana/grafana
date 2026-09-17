@@ -49,6 +49,15 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
+var errWatchSendUnavailable = errors.New("watch send transport unavailable")
+
+func watchSendError(err error) error {
+	if status.Code(err) == codes.Unavailable {
+		return fmt.Errorf("%w: %v", errWatchSendUnavailable, err)
+	}
+	return err
+}
+
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
 func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
 	if errRes == nil || errRes.Code < 500 {
@@ -1964,12 +1973,13 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
-	// When our context is canceled (e.g. client disconnects), downstream calls
-	// like srv.Send may surface that cancellation back to us. Treat it as a
-	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
-	// branch in the watch loop. Context errors from other contexts are still
-	// propagated.
+	// Treat a closed client transport and cancellation of this watch's context
+	// as clean shutdowns. Errors from setup, storage, authorization, or another
+	// context are still propagated.
 	defer func() {
+		if errors.Is(retErr, errWatchSendUnavailable) {
+			retErr = nil
+		}
 		if retErr != nil && ctx.Err() != nil &&
 			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
 			retErr = nil
@@ -2064,7 +2074,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			Type:     resourcepb.WatchEvent_BOOKMARK,
 			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
 		}); err != nil {
-			return fmt.Errorf("sending bookmark: %w", err)
+			return fmt.Errorf("sending bookmark: %w", watchSendError(err))
 		}
 
 		lastBookmarkRV = rv
@@ -2090,7 +2100,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						Version: iter.ResourceVersion(),
 					},
 				}); err != nil {
-					return err
+					return watchSendError(err)
 				}
 			}
 			return iter.Error()
@@ -2192,7 +2202,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				if err := srv.Send(resp); err != nil {
-					return err
+					return watchSendError(err)
 				}
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 

@@ -121,10 +121,10 @@ github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
 github.com/grafana/grafana-app-sdk v0.60.2 h1:iwS5GKp20aS4pcFgqqzyvGq0dkeo14zyJchHWxIJ1Pk=
 github.com/grafana/grafana-app-sdk v0.60.2/go.mod h1:W/M7GzbUdfuMefNicvaXv7z+pzwR8mrZDi4mFXs6plo=
-github.com/grafana/grafana-app-sdk/logging v0.60.0 h1:IF+yweB8jA6al9JZB///cC875nIpmcHRXcjqu4H7HB4=
-github.com/grafana/grafana-app-sdk/logging v0.60.0/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
-github.com/grafana/grafana-app-sdk/plugin v0.60.0 h1:s5EtivIm18+/LAqQnPQ+uQn8d6Ozl0ac1vTE6rFPn8k=
-github.com/grafana/grafana-app-sdk/plugin v0.60.0/go.mod h1:mk+b9l1/cQrJYCc1oLIp+duAP2R0NoljfYmJOkDSwvI=
+github.com/grafana/grafana-app-sdk/logging v0.60.2 h1:rRIbKe83GOmHsBMQHykTm3wwpQVE8Tr0k+XSZbt94J0=
+github.com/grafana/grafana-app-sdk/logging v0.60.2/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
+github.com/grafana/grafana-app-sdk/plugin v0.60.2 h1:2iCn5yCVABvrRKhDgpbP0rfimnBD7h3R2Gx177ik4Mw=
+github.com/grafana/grafana-app-sdk/plugin v0.60.2/go.mod h1:StqshoFOAX3HHNGhhtb9kzWU9CSqJCai2uE2qf3+8ko=
 github.com/grafana/grafana-plugin-sdk-go v0.296.4 h1:3+sYR2lmdb+sIk3m/eA9/lY8sztbhFyGf+6he8nwKuM=
 github.com/grafana/grafana-plugin-sdk-go v0.296.4/go.mod h1:Dza5QLa5L5/0zH6Ce2CZhfTUd6+3FFDhmEHjT0BEBuM=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=

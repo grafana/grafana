@@ -6,7 +6,7 @@ require (
 	cuelang.org/go v0.17.1
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.60.2
-	github.com/grafana/grafana-app-sdk/logging v0.60.0
+	github.com/grafana/grafana-app-sdk/logging v0.60.2
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/hashicorp/golang-lru/v2 v2.0.7

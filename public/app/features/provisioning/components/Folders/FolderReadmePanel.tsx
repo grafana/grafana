@@ -58,11 +58,13 @@ function FolderReadmePanelContent({ folderUID }: Props) {
 
   // The active tab lives in the URL so it's deep-linkable and survives reloads.
   // Falls back to the first doc, which is always the README.
+  // Matched case-insensitively like doc discovery: a README can link a doc by a
+  // name cased differently to the file, and the link carries the name as written.
   const location = useLocation();
-  const activeTab = new URLSearchParams(location.search).get(FOLDER_DOC_TAB_PARAM);
+  const activeTab = new URLSearchParams(location.search).get(FOLDER_DOC_TAB_PARAM)?.toLowerCase();
   const activeIndex = Math.max(
     0,
-    docs.findIndex((doc) => doc.fileName === activeTab)
+    docs.findIndex((doc) => doc.fileName.toLowerCase() === activeTab)
   );
   const activeDoc = docs[activeIndex];
 
