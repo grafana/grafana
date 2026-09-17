@@ -74,7 +74,10 @@ func (r *RESTOptionsGetter) WithStorageOptions(opts StorageOptions) generic.REST
 // reach this through the app-sdk installer get the Kind from the manifest.
 //
 // A GVK that contradicts the key is rejected too, so callers have to handle the
-// error rather than register storage that would persist the wrong kind.
+// error rather than register storage that would persist the wrong kind. Only the
+// group and version can be checked that way -- the key names no kind, so a caller
+// that has a source of truth for the kind (the app-sdk installer has the manifest)
+// has to reject a disagreeing Kind itself, or a typo is honoured here.
 func (r *RESTOptionsGetter) RegisterVersionedOptions(gvr schema.GroupVersionResource, opts StorageOptions) error {
 	// A GVK disagreeing with its key says this storage persists as something it
 	// does not serve, which would write objects under an apiVersion no served

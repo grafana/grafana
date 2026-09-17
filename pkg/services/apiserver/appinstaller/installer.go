@@ -307,8 +307,20 @@ func registerStorageOptions(
 					// The manifest already names the kind this GVR serves, so a provider
 					// that only cares about folder scope or a name length does not have
 					// to repeat it -- and cannot leave the GVK incomplete by omission.
-					if versionedOpts.GVK.Kind == "" {
+					//
+					// A provider that does name a kind has to name that one. The GVR key
+					// carries no kind, so RegisterVersionedOptions cannot check this and
+					// a typo would otherwise be honoured: checkGVK applies the configured
+					// kind to any write whose object arrived without complete type
+					// metadata, persisting it as a kind nothing serves. Same severity as
+					// a GVK outside its group version, for the same reason.
+					switch versionedOpts.GVK.Kind {
+					case "":
 						versionedOpts.GVK.Kind = k.Kind
+					case k.Kind: // agrees with the manifest
+					default:
+						return fmt.Errorf("storage options for %s declare kind %q, but the manifest serves %q under that resource",
+							gvr.String(), versionedOpts.GVK.Kind, k.Kind)
 					}
 					if err := reg.RegisterVersionedOptions(gvr, versionedOpts); err != nil {
 						return err // the caller names the app
@@ -323,6 +335,16 @@ func registerStorageOptions(
 				continue
 			}
 			if opts := provider.GetStorageOptions(gr); opts != nil {
+				// A GroupResource names no version, so there is nothing here to
+				// complete a GVK from or check it against, and a GVK with a Kind but
+				// no version is worse than none: checkGVK treats any non-empty one as
+				// a declaration and would persist writes with an empty apiVersion.
+				// VersionedStorageOptionsProvider is the only place a GVK can be
+				// declared coherently.
+				if !opts.GVK.Empty() {
+					return fmt.Errorf("storage options for %s declare GVK %s through the unversioned provider, which names no version; declare it through VersionedStorageOptionsProvider instead",
+						gr.String(), opts.GVK.String())
+				}
 				reg.RegisterOptions(gr, *opts)
 				registered[gr] = struct{}{}
 			}

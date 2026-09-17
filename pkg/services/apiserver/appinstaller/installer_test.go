@@ -407,6 +407,45 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		assert.False(t, resolvesPerVersion(t, reg, v2), "the declined version resolves through the shared getter")
 	})
 
+	// A provider is allowed to name the kind, as long as it names the one the
+	// manifest serves under that resource.
+	t.Run("a provider may restate the manifest kind", func(t *testing.T) {
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+				return &apistore.StorageOptions{GVK: gvr.GroupVersion().WithKind("Foo")}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		require.NoError(t, registerStorageOptions(installer, reg, logging.DefaultLogger))
+
+		assert.True(t, resolvesPerVersion(t, reg, v1))
+		assert.True(t, resolvesPerVersion(t, reg, v2))
+	})
+
+	// A Kind is the one part of the GVK that apistore cannot check, since the GVR
+	// key names no kind. So a provider typo would be honoured: checkGVK applies the
+	// configured kind to any write whose object arrived without complete type
+	// metadata, persisting objects as a kind the resource does not serve. The
+	// installer has the manifest, so it is the only place this can be caught.
+	t.Run("a kind the manifest does not serve fails startup", func(t *testing.T) {
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getVersionedOpts: func(gvr schema.GroupVersionResource) *apistore.StorageOptions {
+				return &apistore.StorageOptions{GVK: gvr.GroupVersion().WithKind("Fooo")} // typo
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		err := registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "Fooo", "the message names the kind that was declared")
+		require.Contains(t, err.Error(), "Foo", "and the kind the manifest serves")
+		require.False(t, resolvesPerVersion(t, reg, v1), "a rejected app registers nothing at all")
+	})
+
 	// A provider naming a version its resource does not serve is a config error,
 	// not something to paper over: it would store objects under an apiVersion no
 	// served version accounts for.
@@ -426,6 +465,27 @@ func TestRegisterVersionedStorageOptions(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "v9alpha1")
 		require.False(t, resolvesPerVersion(t, reg, v1), "a rejected app registers nothing at all")
+	})
+
+	// The unversioned provider is keyed by GroupResource, which names no version,
+	// so a GVK declared through it can be neither completed nor checked -- and
+	// checkGVK would take the versionless result as a declaration and persist
+	// writes with an empty apiVersion. Same severity as the versioned cases, since
+	// the consequence is the same.
+	t.Run("a GVK declared through the unversioned provider fails startup", func(t *testing.T) {
+		installer := &mockAppInstallerWithVersionedStorageOpts{
+			mockAppInstaller: &mockAppInstaller{},
+			manifest:         twoVersionManifest(group),
+			getOpts: func(schema.GroupResource) *apistore.StorageOptions {
+				return &apistore.StorageOptions{GVK: schema.GroupVersionKind{Kind: "Foo"}}
+			},
+		}
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+		err := registerStorageOptions(installer, reg, logging.DefaultLogger)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "VersionedStorageOptionsProvider",
+			"the message points at the interface that can carry a GVK")
 	})
 
 	t.Run("an installer with neither provider registers nothing", func(t *testing.T) {
