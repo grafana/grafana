@@ -107,6 +107,8 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			continue
 		}
 
+		// Remove any dependencies that may try to load settings
+		// After the manifest CRUD works, we can explore getting these wired properly
 		deps := t.deps
 		deps.PluginClient = nil
 		deps.ContextProvider = nil
