@@ -39,7 +39,13 @@ import { isNotebookScene } from '../isNotebookScene';
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
-import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import {
+  getCellDropIndicator,
+  NotebookCellFrame,
+  NOTEBOOK_CELL_AFFORDANCES_CLASS,
+  NOTEBOOK_CELL_FRAME_CLASS,
+  type NotebookDragState,
+} from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
 import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
@@ -1061,5 +1067,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   listEditing: css({
     gap: 0,
+    // Without this, the cell you type in and the cell under the pointer both show their drag handle,
+    // add button and actions bar. So the pointer wins: this hides all three on every cell the pointer
+    // is not over. Whatever holds focus stays visible, because a tab stop at opacity 0 is a focus trap.
+    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}:not(:focus-within)`]:
+      {
+        opacity: 0,
+        pointerEvents: 'none',
+      },
   }),
 });
