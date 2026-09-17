@@ -920,6 +920,7 @@
       "button-view": "Görüntüle",
       "export-ariaLabel-export": "Dışa aktar",
       "export-label-export": "Dışa aktar",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Sil",
       "label-manage-permissions": "İzinleri yönet",
       "tooltip-history": "Bu iletişim noktasına yapılan bildirim denemelerinin geçmişini görüntüleyin",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Yükleniyor..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Yükleniyor..."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Hiçbir kural duraklatılmadı",
         "pause-recording": "Kayıt kuralları duraklatıldı",
         "policy-tree": "Politika ağacı",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Bildirim yönlendirme",
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Yinelenen şablon dosyası adı: \"{{name}}\". Şablon dosyası adları benzersiz olmalıdır.",
         "templates-label": "Bildirim şablonları",
         "templates-remove": "{{name}} ögesini kaldır",
-        "upload": "YAML dosyasını yükle",
+        "upload": "",
         "validating": "Yapılandırma doğrulanıyor...",
         "validation-error": "Doğrulanamadı",
         "validation-error-desc": "Yapılandırma doğrulanamadı.",
         "validation-success": "Doğrulandı",
         "validation-success-desc": "Çakışma bulunamadı. Yapılandırma içe aktarmaya hazır.",
         "validation-warning": "Mevcut olanlarla çakışmayı önlemek için bazı kaynaklar yeniden adlandırılacak",
-        "yaml-file": "Alertmanager yapılandırması YAML'i"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager yapılandırması YAML'i",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Veri kaynağı",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "BENİOKU dosyası ekle",
-      "edit-tooltip": "BENİOKU dosyasını düzenle",
+      "edit-doc-tooltip": "",
       "empty-message": "Bu klasörde neler olduğunu ve doğru panoların nerede bulunacağını açıklayan bir BENİOKU dosyası ekleyin.",
       "load-error-retry": "Tekrar dene",
-      "load-error-title": "BENİOKU dosyası yüklenemedi",
-      "parse-error": "BENİOKU içeriği görüntülenemiyor."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Geçmişi temizle",
@@ -12247,6 +12262,10 @@
     "team-not-found": "[Bilinmeyen ekip]",
     "unknown-error": "Bilinmeyen hata"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Seçenek bulunamadı"
   },
@@ -12579,6 +12598,10 @@
     "authentication": {
       "title": "Kimlik doğrulama"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Yer imleri"
     },
@@ -12785,6 +12808,7 @@
       "title": "Kaydedilen sorgular"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Raporlama"
     },
     "saved-queries": {
@@ -12799,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Pano ara"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana yapılandırmanızda tanımlanan ayarları görüntüleyin",
@@ -16674,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
