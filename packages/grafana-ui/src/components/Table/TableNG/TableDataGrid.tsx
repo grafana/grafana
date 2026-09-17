@@ -124,7 +124,7 @@ export function TableDataGrid({
 }: TableDataGridProps) {
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
-  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
+  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex ?? 1);
   useEffect(() => {
     if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
       const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
