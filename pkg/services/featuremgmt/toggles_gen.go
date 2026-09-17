@@ -822,6 +822,10 @@ const (
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
+	// FlagApppluginsLoadAppManifestAndKeepSettings
+	// Continue to expose settings when a manifest exists
+	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -985,6 +989,10 @@ const (
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagReportingLegacyServiceUsesK8SClient
+	// Redirect legacy report service to use the Kubernetes client wrapper
+	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
 
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API

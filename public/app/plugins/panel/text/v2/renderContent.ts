@@ -10,12 +10,11 @@ import {
   type ScopedVars,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
-import { transformContent } from './utils';
+import { isTextNewFeaturesEnabled, transformContent } from './utils';
 
 /** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
 export const MAX_RENDERED_ROWS = 1000;
@@ -67,16 +66,12 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
-// Code mode is excluded: escaping would mangle the source it shows as written.
-// Not cached: the flag can change after the providers load.
-export function compilesHandlebars(mode: TextMode): boolean {
-  return mode !== TextMode.Code && getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
-}
-
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series = [], renderMode, format } = template;
 
-  const compiled = compilesHandlebars(mode) ? compileTemplate(content, replaceVariables) : undefined;
+  // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
+  const compiled =
+    isTextNewFeaturesEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables, compiled);

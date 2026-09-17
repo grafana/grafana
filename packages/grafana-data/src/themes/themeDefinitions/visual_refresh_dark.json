@@ -89,7 +89,7 @@
     "text": {
       "primary": "palette.ink150",
       "secondary": "palette.ink300",
-      "disabled": "palette.ink400",
+      "disabled": "palette.ink350",
       "link": "palette.blue400"
     },
     "border": {
@@ -120,6 +120,13 @@
     "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
   },
   "components": {
+    "table": {
+      "headerBackground": "palette.ink700",
+      "border": "palette.ink700",
+      "rowStripedBackground": "palette.ink750",
+      "rowHoverBackground": "palette.ink650",
+      "rowSelectedBackground": "palette.ink950"
+    },
     "card": {
       "background": "palette.ink850",
       "borderColor": "palette.ink700"

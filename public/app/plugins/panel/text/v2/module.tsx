@@ -1,18 +1,14 @@
 import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
+import { isTextNewFeaturesEnabled } from './utils';
 
-function newFeaturesEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
-}
-
-const showForData = (_options: Options, data?: DataFrame[]) => newFeaturesEnabled() && hasRenderableData(data);
+const showForData = (_options: Options, data?: DataFrame[]) => isTextNewFeaturesEnabled() && hasRenderableData(data);
 
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   const category = [t('textng.category-text', 'Text')];
@@ -84,7 +80,7 @@ export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);
 
-if (newFeaturesEnabled()) {
+if (isTextNewFeaturesEnabled()) {
   plugin.useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => !SUPPORTED_FIELD_CONFIGS.has(id)),
   });

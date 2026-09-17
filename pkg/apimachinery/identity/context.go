@@ -206,10 +206,11 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
 	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
 	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
-	"users:read",           // accesscontrol.ActionUsersRead,
-	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
-	"teams:read",           // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read", // serviceaccounts.ActionRead,
+	"alert.notifications.external:read",                        // accesscontrol.ActionAlertingNotificationsExternalRead — the Alertmanager datasource plugin's GET api/v1/alerts route requires this; ExternalAMSyncer fetches the upstream config through it.
+	"users:read",                                               // accesscontrol.ActionUsersRead,
+	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
+	"teams:read",                                               // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
