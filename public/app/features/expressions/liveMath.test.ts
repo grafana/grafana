@@ -12,6 +12,28 @@ describe('live math expressions', () => {
     expect(transform.values([[1000, 2000], [2, 3]])).toEqual([[1000, 2000], [5, 7]]);
   });
 
+  it('preserves null values through arithmetic and comparisons', () => {
+    const arithmetic = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '$A * 2' }, [0]);
+    const arithmeticValues = arithmetic.values([[null, 2, NaN]])[0];
+    expect(arithmeticValues[0]).toBeNull();
+    expect(arithmeticValues[1]).toBe(4);
+    expect(Number.isNaN(arithmeticValues[2] as number)).toBe(true);
+
+    const comparison = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '$A > 10' }, [0]);
+    const comparisonValues = comparison.values([[null, 20, NaN]])[0];
+    expect(comparisonValues[0]).toBeNull();
+    expect(comparisonValues[1]).toBe(1);
+    expect(Number.isNaN(comparisonValues[2] as number)).toBe(true);
+  });
+
+  it('preserves null values through unary operators and math functions', () => {
+    const unary = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '-$A' }, [0]);
+    expect(unary.values([[null, 2]])[0]).toEqual([null, -2]);
+
+    const abs = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: 'abs($A)' }, [0]);
+    expect(abs.values([[null, -2]])[0]).toEqual([null, 2]);
+  });
+
   it('extracts grafana expression references', () => {
     expect(referencedRefIds('($A * 2) + ${B}')).toEqual(['A', 'B']);
   });
