@@ -220,19 +220,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
         });
-      } else {
-        moreSubMenu.push({
-          text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
-          iconClassName: 'plus-square',
-          onClick: () => {
-            const drawer = new ShareDrawer({
-              shareView: shareDashboardType.libraryPanel,
-              panelRef: panel.getRef(),
-            });
-
-            dashboard.showModal(drawer);
-          },
-        });
       }
     }
 
@@ -240,14 +227,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       config.unifiedAlertingEnabled &&
       contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
       contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate);
-
-    if (isCreateAlertMenuOptionAvailable) {
-      moreSubMenu.push({
-        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
-        iconClassName: 'bell',
-        onClick: () => onCreateAlert(panel, dashboard),
-      });
-    }
 
     if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
@@ -307,6 +286,55 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e) => {
           e.preventDefault();
           dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
+        },
+      });
+    }
+
+    const sendToSubMenu: PanelMenuItem[] = [];
+
+    // Not gated on edit mode: putting a panel into a notebook writes to the notebook, not to the
+    // dashboard, so it needs no right to edit the dashboard you happen to be reading.
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false) && canAddPanelToNotebook()) {
+      sendToSubMenu.push({
+        text: t('panel.header-menu.notebook', 'Notebook'),
+        iconClassName: 'book',
+        onClick: () => {
+          dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
+        },
+      });
+    }
+
+    if (isCreateAlertMenuOptionAvailable) {
+      sendToSubMenu.push({
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+        iconClassName: 'bell',
+        onClick: () => onCreateAlert(panel, dashboard),
+      });
+    }
+
+    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel && !isLibraryPanel(panel)) {
+      sendToSubMenu.push({
+        text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+        iconClassName: 'plus-square',
+        onClick: () => {
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.libraryPanel,
+            panelRef: panel.getRef(),
+          });
+
+          dashboard.showModal(drawer);
+        },
+      });
+    }
+
+    if (sendToSubMenu.length) {
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.send-to', 'Send to'),
+        iconClassName: 'arrow-right',
+        subMenu: sendToSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
         },
       });
     }
@@ -385,23 +413,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         subMenu: moreSubMenu,
         onClick: (e) => {
           e.preventDefault();
-        },
-      });
-    }
-
-    // Not gated on edit mode: putting a panel into a notebook writes to the notebook, not to the
-    // dashboard, so it needs no right to edit the dashboard you happen to be reading.
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false) && canAddPanelToNotebook()) {
-      items.push({
-        text: '',
-        type: 'divider',
-      });
-
-      items.push({
-        text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
-        iconClassName: 'search',
-        onClick: () => {
-          dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
       });
     }
