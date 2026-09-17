@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -259,6 +260,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		ContextProvider: b.deps.ContextProvider,
 		Decrypter:       b.deps.Decrypter,
 		Search:          b.deps.Unified,
+		Store:           b.deps.Unified,
 		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 			AccessControl:            b.deps.AccessControl,
@@ -267,6 +269,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
 			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
+			KeysAPIEnabled:           apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		},
 		Tracer:          b.deps.Tracer,
 		Features:        b.deps.Features,

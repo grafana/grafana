@@ -69,7 +69,7 @@ func BuildWithOptions(
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
 	routes, err := BuildForServedGroupVersionsWithOptions(
-		resource.AppManifests(), servedGroupVersions(builders, installers),
+		resource.AppManifests(), builder.ServedGroupVersions(builders, installers),
 		searchEnabled, trashEnabled, tracer, index, options,
 	)
 	if err != nil {
@@ -99,7 +99,7 @@ func BuildFromManifests(
 ) []builder.GroupVersionRoutes {
 	routes, err := BuildForServedGroupVersions(
 		manifests,
-		servedGroupVersions(builders, installers),
+		builder.ServedGroupVersions(builders, installers),
 		searchEnabled,
 		trashEnabled,
 		tracer,
@@ -186,26 +186,6 @@ func BuildForServedGroupVersionsWithOptions(
 	}
 
 	return toGroupVersionRoutes(byGroupVersion), nil
-}
-
-// servedGroupVersions reports which group versions this process actually serves.
-// A manifest describes kinds that a given deployment may not serve at all.
-func servedGroupVersions(
-	builders []builder.APIGroupBuilder,
-	installers []appsdkapiserver.AppInstaller,
-) map[schema.GroupVersion]bool {
-	served := map[schema.GroupVersion]bool{}
-	for _, b := range builders {
-		for _, gv := range builder.GetGroupVersions(b) {
-			served[gv] = true
-		}
-	}
-	for _, i := range installers {
-		for _, gv := range i.GroupVersions() {
-			served[gv] = true
-		}
-	}
-	return served
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {

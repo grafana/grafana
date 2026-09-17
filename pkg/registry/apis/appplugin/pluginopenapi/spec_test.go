@@ -46,10 +46,13 @@ func TestBuildManifestVersion(t *testing.T) {
 		root,
 		// The kind, from resource storage.
 		root + "namespaces/{namespace}/testkinds",
-		// The routes the manifest declares, plus the generic ones.
+		// The routes the manifest declares, plus the generic ones. list-keys is the
+		// only generic route mounted at both scopes.
+		root + "namespaces/{namespace}/testkinds/list-keys",
 		root + "namespaces/{namespace}/testkinds/search",
 		root + "namespaces/{namespace}/testkinds/{name}",
 		root + "namespaces/{namespace}/testkinds/{name}/reload",
+		root + "testkinds/list-keys",
 	}, paths, "paths should not include the watch or all-namespace routes the server hides")
 
 	// The kind's schema, and the list wrapper around it, are the response types.
