@@ -1,6 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
@@ -197,7 +197,7 @@ export class AutoGridLayoutManager
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
       edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,

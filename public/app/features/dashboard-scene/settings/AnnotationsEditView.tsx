@@ -6,8 +6,8 @@ import {
   PageLayoutType,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
@@ -154,7 +154,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

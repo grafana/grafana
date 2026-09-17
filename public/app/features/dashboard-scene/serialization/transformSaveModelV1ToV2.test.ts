@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
 import {
@@ -97,6 +99,8 @@ jest.mock('@grafana/runtime', () => {
     config: mockConfig,
   };
 });
+
+setTestFlags({ dashboardNewLayouts: true });
 
 /*
  * V1 to V2 Dashboard Transformation Comparison Test

@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip, Spinner } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
@@ -36,12 +36,13 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
+  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
         <div className={`${styles.wrapper} ${styles.wrapperMaxWidth}`}>
-          {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
+          {dashboardNewLayoutsEnabled && dashboard instanceof DashboardScene ? (
             <NewLayoutEmpty dashboard={dashboard} styles={styles} />
           ) : (
             <OldLayoutEmpty

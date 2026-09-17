@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -49,7 +49,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       ...state,
       isSharingExternally: false,
       isViewingJSON: false,
-      exportFormat: config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic,
+      exportFormat: getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)
+        ? ExportFormat.V2Resource
+        : ExportFormat.Classic,
     });
   }
 
@@ -336,7 +338,9 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             isSharingExternally={isSharingExternally ?? false}
             exportFormat={
               exportFormat ??
-              (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
+              (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)
+                ? ExportFormat.V2Resource
+                : ExportFormat.Classic)
             }
             isViewingYAML={isViewingYAML ?? false}
             onExportFormatChange={model.onExportFormatChange}

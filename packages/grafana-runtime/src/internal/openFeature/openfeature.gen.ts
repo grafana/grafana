@@ -36,6 +36,8 @@ export const FlagKeys = {
   DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
+  /** Enables new dashboard layouts */
+  DashboardNewLayouts: "dashboardNewLayouts",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
@@ -339,6 +341,17 @@ export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvalu
  */
 export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.vectorSearch", false, options).value;
+};
+
+/**
+ * Enables new dashboard layouts
+ *
+ * **Details:**
+ * - flag key: `dashboardNewLayouts`
+ * - default value: `true`
+ */
+export const useFlagDashboardNewLayouts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardNewLayouts", true, options).value;
 };
 
 /**

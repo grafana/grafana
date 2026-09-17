@@ -1,4 +1,5 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
@@ -63,7 +64,7 @@ describe('DashboardApi', () => {
 
   describe('when dashboardNewLayouts enabled', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     it('should use v2 when v2 is passed in the params', async () => {

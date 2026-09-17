@@ -342,8 +342,7 @@ describe('DashboardScene', () => {
       });
 
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
@@ -373,13 +372,12 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
@@ -399,7 +397,7 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {

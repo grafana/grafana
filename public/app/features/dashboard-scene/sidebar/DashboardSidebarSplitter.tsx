@@ -5,7 +5,7 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -40,7 +40,8 @@ interface Props {
 }
 
 export function DashboardSidebarSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  if (dashboardNewLayoutsEnabled) {
     return <DashboardSidebarSplitterNewLayouts {...props} />;
   } else {
     return <DashboardSidebarSplitterLegacy {...props} />;

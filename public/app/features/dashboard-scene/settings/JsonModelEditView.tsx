@@ -3,8 +3,8 @@ import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -176,7 +176,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const handleValidationChange = useCallback((hasErrors: boolean) => {

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 
 import { AppEvents, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -44,6 +45,7 @@ const initialState: ImportState = {
 };
 
 export function DashboardImportK8s({ queryParams }: Props) {
+  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
   const [state, setState] = useState<ImportState>(initialState);
 
   // Handle gcom dashboard ID from query params on mount
@@ -102,7 +104,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     const json = JSON.parse(formData.dashboardJson);
 
-    if ((json.spec?.elements || json.elements) && !config.featureToggles.dashboardNewLayouts) {
+    if ((json.spec?.elements || json.elements) && !dashboardNewLayoutsEnabled) {
       appEvents.emit(AppEvents.alertError, [
         'Import failed',
         'Dashboard using new layout cannot be imported because the feature is not enabled',
