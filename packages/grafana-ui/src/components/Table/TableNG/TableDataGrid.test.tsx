@@ -5,6 +5,7 @@ import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@graf
 import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
   return {
@@ -187,6 +188,29 @@ describe('TableDataGrid', () => {
         }
       }
     );
+
+    it('keeps selected first and last column edges visible inside a transparent frame', () => {
+      render(<TableDataGrid {...makeProps({ transparent: true })} />);
+
+      const gridClasses = Array.from(screen.getByRole('grid').classList);
+      const edgeRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            gridClasses.some((className) => rule.selectorText.startsWith(`.${className}`)) &&
+            rule.selectorText.includes('[aria-selected="true"]:focus-within') &&
+            [FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS].some((className) => rule.selectorText.includes(`.${className}`))
+        );
+
+      expect(edgeRules).toHaveLength(2);
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('background-color'))).toEqual([
+        'var(--rdg-selection-color)',
+        'var(--rdg-selection-color)',
+      ]);
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-start'))).toContain('1px');
+      expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
+    });
 
     it.each([
       [true, 'none'],

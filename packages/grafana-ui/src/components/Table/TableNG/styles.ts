@@ -163,6 +163,32 @@ export const getGridStyles = memoize(
           },
         },
 
+        ...(transparent && {
+          // The transparent frame is painted above the grid so native scrollbars cannot erase its
+          // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
+          // outermost selection outline.
+          [`.rdg-cell.${FIRST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::before`]: {
+            content: '""',
+            position: 'absolute',
+            insetBlock: 0,
+            insetInlineStart: '1px',
+            inlineSize: 'var(--rdg-selection-width)',
+            backgroundColor: 'var(--rdg-selection-color)',
+            pointerEvents: 'none',
+            zIndex: 1,
+          },
+          [`.rdg-cell.${LAST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::after`]: {
+            content: '""',
+            position: 'absolute',
+            insetBlock: 0,
+            insetInlineEnd: '1px',
+            inlineSize: 'var(--rdg-selection-width)',
+            backgroundColor: 'var(--rdg-selection-color)',
+            pointerEvents: 'none',
+            zIndex: 1,
+          },
+        }),
+
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
           [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
           // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
