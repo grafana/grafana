@@ -180,6 +180,27 @@ func getGroup(builder APIGroupBuilder) (string, error) {
 	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
 }
 
+// ServedGroupVersions reports which group versions this process actually serves.
+// Builders and app installers are the two ways a kind reaches the apiserver, and
+// a manifest describes kinds a given deployment may not serve at all.
+func ServedGroupVersions(
+	builders []APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+) map[schema.GroupVersion]bool {
+	served := map[schema.GroupVersion]bool{}
+	for _, b := range builders {
+		for _, gv := range GetGroupVersions(b) {
+			served[gv] = true
+		}
+	}
+	for _, i := range installers {
+		for _, gv := range i.GroupVersions() {
+			served[gv] = true
+		}
+	}
+	return served
+}
+
 func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {
 	if v, ok := builder.(APIGroupVersionProvider); ok {
 		return []schema.GroupVersion{v.GetGroupVersion()}
