@@ -185,17 +185,9 @@ func namespaceFrom(ctx context.Context) (string, error) {
 	return namespace, nil
 }
 
-// requireAllNamespacesScope guards the cross-namespace read. The caller has to
-// hold a credential scoped to every namespace, which no end-user session is: a
-// narrower one would otherwise reach the resource server and fail partway with a
-// namespace mismatch over a partial page instead of a clean refusal.
-//
-// Scope is the whole check. Which keys come back is decided per item, in each
-// item's own namespace, by the authorization the resource server already applies,
-// so a caller sees only what it may read. Identity shape is deliberately not
-// checked: service access policies are named per deployment, and per cluster in
-// multi-tenant, so no set of literals can recognise them. The namespaced route is
-// a subset of a normal LIST there and needs no guard at all.
+// requireAllNamespacesScope guards the cross-namespace read: the caller must hold a
+// credential scoped to every namespace, which no end-user session is. Which keys come
+// back is still decided per item by the authorization the resource server applies.
 func (h *Handler) requireAllNamespacesScope(ctx context.Context, kind kindRef) error {
 	gr := schema.GroupResource{Group: kind.group, Resource: kind.resource}
 
