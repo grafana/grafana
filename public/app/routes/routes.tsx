@@ -547,6 +547,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // Learning exercise, disabled by default on the backend (served: false) — see
+      // apps/colorshapes/plan.md. Not in the left nav (see that file for why).
+      path: '/colorshapes',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ColorshapesPage"*/ 'app/features/colorshapes/ColorshapesPage')
+      ),
+    },
+    {
       path: '/playlists',
       roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])

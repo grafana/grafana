@@ -145,6 +145,16 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Icon:       "drilldown",
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
+			// "Errors" is the apps/colorshapes learning exercise (see apps/colorshapes/plan.md) —
+			// a static entry rather than the plugin-applinks mechanism real Drilldown family
+			// members use (readNavigationSettings in applinks.go), since it isn't an installed plugin.
+			Children: []*navtree.NavLink{
+				{
+					Text: "Errors",
+					Id:   "drilldown-colorshapes",
+					Url:  s.cfg.AppSubURL + "/colorshapes",
+				},
+			},
 		})
 	}
 

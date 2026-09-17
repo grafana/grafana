@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/registry/apps/colorshapes"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	colorshapesstorage "github.com/grafana/grafana/pkg/storage/colorshapes"
 )
 
 var WireSet = wire.NewSet(
@@ -34,4 +36,6 @@ var WireSet = wire.NewSet(
 	quotas.RegisterAppInstaller,
 	example.RegisterAppInstaller,
 	dashvalidator.RegisterAppInstaller,
+	colorshapesstorage.ProvideStore,
+	colorshapes.RegisterAppInstaller,
 )

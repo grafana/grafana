@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/registry/apps/colorshapes"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
@@ -49,12 +50,15 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	colorshapesAppInstaller *colorshapes.AppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsAppInstaller,
 		exampleAppInstaller,
 		quotasAppInstaller,
+		// Learning exercise, disabled by default via served:false — see apps/colorshapes/plan.md.
+		colorshapesAppInstaller,
 	}
 	installers = append(installers, shorturlAppInstaller)
 
