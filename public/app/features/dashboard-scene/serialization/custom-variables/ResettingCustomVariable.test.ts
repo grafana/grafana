@@ -68,7 +68,7 @@ describe('ResettingCustomVariable', () => {
     deactivate();
   });
 
-  it('protects a URL-set value across multiple consecutive empty resolutions before anything has resolved', () => {
+  it('protects a URL-set value across repeated empty resolutions', async () => {
     const target = new ResettingCustomVariable({ name: 'target', query: '' });
 
     // Simulate what MultiValueUrlSyncHandler.updateFromUrl does while inactive: set the
@@ -76,29 +76,71 @@ describe('ResettingCustomVariable', () => {
     target.skipNextValidation = true;
     target.changeValueTo('urlValue', 'urlValue');
 
+    // Flushing matters. Asserting in the same tick would pass even if this variable were
+    // wrongly routed through the deferred reset, because the clobber lands a microtask later.
     target.validateAndUpdate().subscribe();
+    await flushReset();
     expect(target.state.value).toBe('urlValue');
 
-    // A second consecutive empty resolution — the case where a flag consumed on the
-    // first pass would fail to protect the value, but the latch still does.
     target.validateAndUpdate().subscribe();
+    await flushReset();
     expect(target.state.value).toBe('urlValue');
   });
 
-  it('keeps the latch tripped on a clone, unlike an instance field would', async () => {
+  it('drops a pending reset when the query is edited to drop its dependency', async () => {
     const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
     const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
 
     const deactivate = activateFullSceneTree(sceneWithVariables([dep, target]));
     expect(target.state.value).toBe('scopeA');
 
-    const clone = target.clone({ query: '' });
-    clone.validateAndUpdate().subscribe();
+    // Schedule a reset, then make the query static before it lands. The pending reset is
+    // now for a query that no longer exists and must not overwrite the static resolution.
+    dep.setValue('');
+    target.setState({ query: 'a,b' });
+    target.validateAndUpdate().subscribe();
+    await flushReset();
+
+    expect(target.state.value).toBe('a');
+
+    deactivate();
+  });
+
+  it('still resets on a clone, which keeps the query and so keeps the dependency', async () => {
+    const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
+    const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
+
+    const deactivate = activateFullSceneTree(sceneWithVariables([dep, target]));
+    expect(target.state.value).toBe('scopeA');
+
+    // Panel edit, duplication, and repeats all clone. The clone must behave the same, so
+    // the signal driving the override has to be state rather than an instance field.
+    const clone = target.clone();
+    const cloneDep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
+    const deactivateClone = activateFullSceneTree(sceneWithVariables([cloneDep, clone]));
+    expect(clone.state.value).toBe('scopeA');
+
+    cloneDep.setValue('');
     await flushReset();
 
     expect(clone.state.value).toBe('');
 
+    deactivateClone();
     deactivate();
+  });
+
+  it('leaves a static query alone, so the URL-value protection it relies on still applies', async () => {
+    // The scenes#1027 case: no variable references, so zero options is not a cleared
+    // dependency and the upstream guard must keep protecting the URL value.
+    const target = new ResettingCustomVariable({ name: 'target', query: '' });
+    expect(target.variableDependency?.getNames().size).toBe(0);
+
+    target.skipNextValidation = true;
+    target.changeValueTo('urlValue', 'urlValue');
+    target.validateAndUpdate().subscribe();
+    await flushReset();
+
+    expect(target.state.value).toBe('urlValue');
   });
 
   it('resolves an includeAll variable to "All" rather than empty when a dependency clears', async () => {

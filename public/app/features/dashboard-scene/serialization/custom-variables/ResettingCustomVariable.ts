@@ -2,16 +2,15 @@ import { type Observable, asapScheduler, filter, observeOn, of, switchMap } from
 
 import { CustomVariable, type VariableGetOptionsArgs, type VariableValueOption } from '@grafana/scenes';
 
-// CustomVariable unconditionally sets skipNextValidation = true whenever its interpolated
-// query resolves to zero options (scenes PR #1033), intending to protect a value just set
-// via initial URL sync before the query has had a chance to resolve real options for the
-// first time. But the guard only checks the option count, not whether this variable has
-// ever resolved options before, so once a dependency (e.g. a scope-derived value) has
-// resolved at least once and later legitimately clears at runtime, the same guard also
-// suppresses that reset. This override restores the narrower, originally intended
-// condition: only allow the guard while this variable has never resolved a non-empty
-// option set. state.options is read before super.getValueOptions() runs, so it reflects
-// the previous resolution and survives scene cloning, unlike an instance field would.
+// CustomVariable sets skipNextValidation = true whenever its interpolated query resolves to
+// zero options (scenes PR #1033), which makes interceptStateUpdateAfterValidation revert the
+// computed update. That guard is meant for a static query producing no options whose value
+// arrived from the URL, so the URL value survives validation. It should not apply when the
+// query interpolates another variable: there, zero options means the dependency cleared, and
+// reverting suppresses a legitimate reset.
+//
+// The dependency set separates the two cases. A static query such as "1, 2" has none, so the
+// guard still protects it; "${__scopes}" has one, so validation is allowed to proceed.
 export class ResettingCustomVariable extends CustomVariable {
   // Identifies the most recent resolution. A deferred reset from a superseded one must not
   // land, so it carries the generation it was issued for and drops if that is no longer
@@ -20,15 +19,18 @@ export class ResettingCustomVariable extends CustomVariable {
   private _generation = 0;
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
-    const hasResolvedNonEmptyBefore = this.state.options.length > 0;
+    const dependsOnVariables = (this.variableDependency?.getNames()?.size ?? 0) > 0;
+
+    // Bumped on every call, including the static path below. Any resolution supersedes an
+    // earlier pending one, and a query edited to drop its dependency has to invalidate a
+    // reset scheduled while that dependency was still there.
+    const generation = ++this._generation;
 
     const options$ = super.getValueOptions(args);
 
-    if (!hasResolvedNonEmptyBefore) {
+    if (!dependsOnVariables) {
       return options$;
     }
-
-    const generation = ++this._generation;
 
     return options$.pipe(
       switchMap((options) => {
