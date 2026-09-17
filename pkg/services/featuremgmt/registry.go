@@ -411,7 +411,9 @@ var (
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true},
+			// React: true so the frontend can gate on this specifically, rather than only on the
+			// broader foldersAppPlatformAPI flag -- see useDeleteFolderMutationFacade.
+			Generate: Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:            "kubernetesFolderCountsLegacyStorage",

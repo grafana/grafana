@@ -24,6 +24,7 @@ declare module "@openfeature/core" {
     | "reportingFooterSettings"
     | "snapshots.kubernetesSnapshots"
     | "libraryelements.kubernetesLibraryPanels"
+    | "kubernetesFolderCascadeDeleteAsync"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
