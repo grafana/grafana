@@ -40,6 +40,8 @@ func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeN
 		namespaceStore:    ns,
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
+		lastAttemptAt:     make(map[int64]time.Time),
+		lastPollInterval:  make(map[int64]time.Duration),
 		cfgStore:          newCfgStore(cs, cs.nsMapper),
 	}
 }

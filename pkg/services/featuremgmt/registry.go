@@ -697,7 +697,7 @@ var (
 			Name:        "perPanelNonApplicableDrilldowns",
 			Description: "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -1429,6 +1429,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.dataSourceManagedRouteProxy",
+			Description:  "Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "alerting.manualAssistantInvestigation",
@@ -2727,14 +2736,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryFetchConfigFromSettingsService",
-			Description: "Enables the query service to fetch the configuration from the settings service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
 			Stage:       FeatureStageExperimental,
@@ -3166,6 +3167,15 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true, LegacyGo: true},
+		},
+		{
+			Name:            "reporting.legacyServiceUsesK8SClient",
+			Description:     "Redirect legacy report service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:            "reporting.redirectReportsToK8SApi",
