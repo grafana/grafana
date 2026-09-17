@@ -38,6 +38,15 @@ const cascadeDeleteControllerBatchSize = 50
 // a demo; a real implementation has no business sleeping in its reconcile loop.
 const cascadeDeleteControllerSimulatedChildDelay = 2 * time.Second
 
+// cascadeDeleteDashboardFinalizer is a PoC-only finalizer this controller stamps onto a dashboard
+// immediately before deleting it, purely so the dashboard also lingers with deletionTimestamp set
+// (instead of disappearing instantly) for the same simulated delay as a child folder -- giving the
+// frontend the same "has deletionTimestamp -> show Deleting" signal to key off for dashboards too.
+// Unlike folders, dashboards have no reconcile loop of their own here: this controller adds the
+// finalizer, deletes, sleeps, then removes the finalizer itself, all inline, rather than relying on
+// a watch-driven follow-up reconcile.
+const cascadeDeleteDashboardFinalizer = "cascade-delete"
+
 // CascadeDeleteController is a PoC, finalizer-driven controller that asynchronously deletes a
 // folder's direct children (subfolders and dashboards) once the folder both carries
 // foldersv1.CascadeDeleteFinalizer and has been marked for deletion, removing the finalizer once
@@ -253,7 +262,6 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 			continue
 		}
 		deleted++
-		simulateChildDeleteLatency(ctx)
 	}
 
 	if len(errs) > 0 {
@@ -290,6 +298,12 @@ func (c *CascadeDeleteController) deleteChildFolder(ctx context.Context, namespa
 
 // deleteDashboard deletes a direct dashboard child, mirroring cascade_delete_storage.go's
 // tolerance of a NotFound (stale index entry) and of no dashboard client being configured.
+//
+// PoC-only: stamps cascadeDeleteDashboardFinalizer on the dashboard first, so Delete sets
+// deletionTimestamp and the dashboard lingers (visible as "Deleting" in the frontend) for
+// cascadeDeleteControllerSimulatedChildDelay, then removes the finalizer itself to let the
+// apiserver actually finish deleting it. A real implementation would just delete the dashboard
+// directly, the same as this did before the simulated-latency demo was added.
 func (c *CascadeDeleteController) deleteDashboard(ctx context.Context, namespace, name string) error {
 	client, err := c.dashboardClient(ctx)
 	if err != nil {
@@ -298,11 +312,25 @@ func (c *CascadeDeleteController) deleteDashboard(ctx context.Context, namespace
 	if client == nil {
 		return nil
 	}
+
+	if err := patchAddFinalizer(ctx, *client, namespace, name, cascadeDeleteDashboardFinalizer); err != nil {
+		return fmt.Errorf("add cascade-delete finalizer to dashboard: %w", err)
+	}
+
 	err = (*client).Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil
 	}
-	return err
+	if err != nil {
+		return err
+	}
+
+	simulateChildDeleteLatency(ctx)
+
+	if err := patchRemoveFinalizer(ctx, *client, namespace, name, cascadeDeleteDashboardFinalizer); err != nil {
+		return fmt.Errorf("remove cascade-delete finalizer from dashboard: %w", err)
+	}
+	return nil
 }
 
 // simulateChildDeleteLatency is the PoC-only sleep described on
@@ -345,13 +373,17 @@ func existingCascadeDeleteStarted(obj *unstructured.Unstructured) int64 {
 	return started
 }
 
-// removeFinalizer removes just foldersv1.CascadeDeleteFinalizer (preserving any other finalizers)
-// via a JSON patch to metadata.finalizers, mirroring how the provisioning RepositoryController's
-// finalizer processing removes its finalizers once done. Retries on conflict since the read
-// (current finalizer list) and the patch aren't atomic.
+// removeFinalizer removes just foldersv1.CascadeDeleteFinalizer from a folder (preserving any other
+// finalizers).
 func (c *CascadeDeleteController) removeFinalizer(ctx context.Context, namespace, name string) error {
+	return patchRemoveFinalizer(ctx, c.folders, namespace, name, foldersv1.CascadeDeleteFinalizer)
+}
+
+// patchAddFinalizer adds finalizer to obj's metadata.finalizers if not already present, via a JSON
+// patch. Retries on conflict since the read (current finalizer list) and the patch aren't atomic.
+func patchAddFinalizer(ctx context.Context, client dynamic.NamespaceableResourceInterface, namespace, name, finalizer string) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obj, err := c.folders.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+		obj, err := client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
@@ -360,7 +392,40 @@ func (c *CascadeDeleteController) removeFinalizer(ctx context.Context, namespace
 		}
 
 		finalizers := obj.GetFinalizers()
-		idx := slices.Index(finalizers, foldersv1.CascadeDeleteFinalizer)
+		if slices.Contains(finalizers, finalizer) {
+			return nil
+		}
+		updated := append(slices.Clone(finalizers), finalizer)
+
+		patch, err := json.Marshal([]map[string]any{{
+			"op":    "replace",
+			"path":  "/metadata/finalizers",
+			"value": updated,
+		}})
+		if err != nil {
+			return err
+		}
+		_, err = client.Namespace(namespace).Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{})
+		return err
+	})
+}
+
+// patchRemoveFinalizer removes just finalizer from obj's metadata.finalizers (preserving any
+// others), via a JSON patch, mirroring how the provisioning RepositoryController's finalizer
+// processing removes its finalizers once done. Retries on conflict since the read (current
+// finalizer list) and the patch aren't atomic.
+func patchRemoveFinalizer(ctx context.Context, client dynamic.NamespaceableResourceInterface, namespace, name, finalizer string) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obj, err := client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		finalizers := obj.GetFinalizers()
+		idx := slices.Index(finalizers, finalizer)
 		if idx < 0 {
 			return nil
 		}
@@ -374,7 +439,7 @@ func (c *CascadeDeleteController) removeFinalizer(ctx context.Context, namespace
 		if err != nil {
 			return err
 		}
-		_, err = c.folders.Namespace(namespace).Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{})
+		_, err = client.Namespace(namespace).Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{})
 		return err
 	})
 }
