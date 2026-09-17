@@ -3,6 +3,7 @@ package rulesync
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,7 +26,12 @@ import (
 
 // --- fakes ---
 
+// fakeFetcher and fakeRuleService are shared across orgs within a single
+// syncAllOrgs test now that orgs sync concurrently (see maxConcurrentOrgSyncs),
+// so every field access below is mutex-guarded even though most call sites
+// are still single-org and never actually contend.
 type fakeFetcher struct {
+	mu       sync.Mutex
 	cfg      RulerConfig
 	hash     uint64
 	err      error
@@ -34,14 +40,18 @@ type fakeFetcher struct {
 }
 
 func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConfig, uint64, error) {
+	f.mu.Lock()
 	f.calls++
-	if f.panicMsg != "" {
-		panic(f.panicMsg)
+	cfg, hash, err, panicMsg := f.cfg, f.hash, f.err, f.panicMsg
+	f.mu.Unlock()
+	if panicMsg != "" {
+		panic(panicMsg)
 	}
-	return f.cfg, f.hash, f.err
+	return cfg, hash, err
 }
 
 type fakeRuleService struct {
+	mu              sync.Mutex
 	replaced        []*models.AlertRuleGroup
 	replacedManager utils.ManagerProperties
 	replacedVersion string
@@ -53,16 +63,22 @@ type fakeRuleService struct {
 }
 
 func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.replaced = groups
 	f.replacedManager = manager
 	f.replacedVersion = versionMessage
 	return nil
 }
 func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.deleted = append(f.deleted, *filterOpts)
 	return nil
 }
 func (f *fakeRuleService) SetRuleGroupsManager(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, newManager utils.ManagerProperties) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.manageErr != nil {
 		return f.manageErr
 	}
@@ -71,6 +87,8 @@ func (f *fakeRuleService) SetRuleGroupsManager(_ context.Context, _ identity.Req
 	return nil
 }
 func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	// Emulate the store's NamespaceUIDs filter so the fake is faithful to the
 	// real query the syncer relies on for folder-scoped prune.
 	if filterOpts == nil || len(filterOpts.NamespaceUIDs) == 0 {
@@ -179,7 +197,7 @@ func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fa
 		lastSyncKey:       make(map[int64]string),
 		lastAttemptAt:     make(map[int64]time.Time),
 		lastPollInterval:  make(map[int64]time.Duration),
-		cfgStore:          newCfgStore(cs, cs.nsMapper),
+		cfgStore:          newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 	}
 }
 
@@ -346,7 +364,7 @@ func TestIsManagedFolder(t *testing.T) {
 			settings:       &setting.UnifiedAlertingSettings{ExternalRulerUID: uid},
 			logger:         log.NewNopLogger(),
 			namespaceStore: ns,
-			cfgStore:       newCfgStore(cs, cs.nsMapper),
+			cfgStore:       newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 		}
 	}
 	rootResolvable := fakeNamespaceStore{

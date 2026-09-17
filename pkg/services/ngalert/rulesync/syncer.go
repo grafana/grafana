@@ -52,6 +52,10 @@ const defaultRulerSyncPollInterval = 5 * time.Minute
 // baseline is cheap.
 const baselineCheckInterval = 10 * time.Second
 
+// maxConcurrentOrgSyncs bounds syncAllOrgs' fan-out, so a large all-due
+// fleet can't flood the apiserver and outbound network in one burst.
+const maxConcurrentOrgSyncs = 8
+
 // convertedPrometheusManager marks the rules the syncer owns. Mirrors the manager
 // the convert API assigns to converted-Prometheus imports.
 var convertedPrometheusManager = utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
@@ -157,7 +161,7 @@ func NewExternalRulerSyncer(
 		lastSyncKey:       make(map[int64]string),
 		lastAttemptAt:     make(map[int64]time.Time),
 		lastPollInterval:  make(map[int64]time.Duration),
-		cfgStore:          newCfgStore(clientGenerator, namespaceMapper),
+		cfgStore:          newCfgStore(clientGenerator, namespaceMapper, logger),
 	}
 }
 
@@ -266,13 +270,22 @@ func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
 	}
 }
 
+// syncAllOrgs runs SyncOrg for every due org, up to maxConcurrentOrgSyncs at
+// once. Each goroutine shares ctx itself, never a derived one, so one org
+// failing or running long can't abort or block any other.
 func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 	orgIDs, err := s.orgStore.FetchOrgIds(ctx)
 	if err != nil {
 		s.logger.Error("Failed to fetch org IDs for external ruler sync", "error", err)
 		return
 	}
+
+	sem := make(chan struct{}, maxConcurrentOrgSyncs)
+	var wg sync.WaitGroup
 	for _, orgID := range orgIDs {
+		if ctx.Err() != nil {
+			break
+		}
 		if _, disabled := s.settings.DisabledOrgs[orgID]; disabled {
 			continue
 		}
@@ -282,8 +295,15 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 		if !s.dueForSync(orgID) {
 			continue
 		}
-		s.SyncOrg(ctx, orgID)
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(orgID int64) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			s.SyncOrg(ctx, orgID)
+		}(orgID)
 	}
+	wg.Wait()
 }
 
 // IsConfiguredForOrg reports whether external ruler sync is configured for the

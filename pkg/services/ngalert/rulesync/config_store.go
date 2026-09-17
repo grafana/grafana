@@ -12,6 +12,7 @@ import (
 
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -33,13 +34,14 @@ type cfgAccessor interface {
 type cfgStore struct {
 	clientGenerator resource.ClientGenerator
 	namespaceMapper request.NamespaceMapper
+	logger          log.Logger
 
 	mu     sync.Mutex
 	client *alertingrulesv0alpha1.ConfigClient
 }
 
-func newCfgStore(clientGenerator resource.ClientGenerator, namespaceMapper request.NamespaceMapper) *cfgStore {
-	return &cfgStore{clientGenerator: clientGenerator, namespaceMapper: namespaceMapper}
+func newCfgStore(clientGenerator resource.ClientGenerator, namespaceMapper request.NamespaceMapper, logger log.Logger) *cfgStore {
+	return &cfgStore{clientGenerator: clientGenerator, namespaceMapper: namespaceMapper, logger: logger}
 }
 
 // resolveClient lazily builds and caches the rules Config client. The
@@ -81,8 +83,8 @@ func (c *cfgStore) Get(ctx context.Context, orgID int64) (*alertingrulesv0alpha1
 }
 
 // UpdateStatus is optimistic via RetryOnConflict; best-effort by contract
-// with the syncer, which only logs on error. Unchanged status produces no
-// physical write (unified storage dedup).
+// with the syncer, which only logs the final error. Unchanged status
+// produces no physical write (unified storage dedup).
 func (c *cfgStore) UpdateStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
 	client, err := c.resolveClient()
 	if err != nil {
@@ -94,30 +96,45 @@ func (c *cfgStore) UpdateStatus(ctx context.Context, orgID int64, compute func(p
 	}
 	id := resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName}
 
+	attempt := 0
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		existing, getErr := client.Get(nsCtx, id)
-		if k8serrors.IsNotFound(getErr) {
-			// Seed .Status on Create. Unified storage persists the whole object on
-			// Create today; a future migration to a real /status subresource would
-			// silently drop this -- at that point swap to UpdateStatus.
-			r := &alertingrulesv0alpha1.Config{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName},
-				Status:     compute(nil),
-			}
-			if _, createErr := client.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
-				// AlreadyExists -> another writer raced us. Surface as a conflict so
-				// RetryOnConflict re-enters and sees the existing object.
-				if k8serrors.IsAlreadyExists(createErr) {
-					return k8serrors.NewConflict(alertingrulesv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
-				}
-				return createErr
-			}
-			return nil
+		attempt++
+		err := c.upsert(nsCtx, client, ns, id, compute)
+		// A retryable conflict on a non-final attempt would otherwise vanish
+		// silently once a later attempt succeeds; log it at Debug so it's still
+		// visible without adding noise to the common single-attempt case.
+		if err != nil {
+			c.logger.Debug("Config status write attempt failed", "org_id", orgID, "attempt", attempt, "error", err)
 		}
-		if getErr != nil {
-			return getErr
-		}
-		_, updateErr := client.UpdateStatus(nsCtx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
-		return updateErr
+		return err
 	})
+}
+
+// upsert creates the Config resource (seeding .Status from compute(nil)) if
+// absent, otherwise writes compute(&existing.Status) onto it.
+func (c *cfgStore) upsert(ctx context.Context, client *alertingrulesv0alpha1.ConfigClient, ns string, id resource.Identifier, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
+	existing, getErr := client.Get(ctx, id)
+	if k8serrors.IsNotFound(getErr) {
+		// Seed .Status on Create. Unified storage persists the whole object on
+		// Create today; a future migration to a real /status subresource would
+		// silently drop this -- at that point swap to UpdateStatus.
+		r := &alertingrulesv0alpha1.Config{
+			ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: id.Name},
+			Status:     compute(nil),
+		}
+		if _, createErr := client.Create(ctx, r, resource.CreateOptions{}); createErr != nil {
+			// AlreadyExists -> another writer raced us. Surface as a conflict so
+			// RetryOnConflict re-enters and sees the existing object.
+			if k8serrors.IsAlreadyExists(createErr) {
+				return k8serrors.NewConflict(alertingrulesv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
+			}
+			return createErr
+		}
+		return nil
+	}
+	if getErr != nil {
+		return getErr
+	}
+	_, updateErr := client.UpdateStatus(ctx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+	return updateErr
 }

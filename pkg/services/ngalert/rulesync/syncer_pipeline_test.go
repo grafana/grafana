@@ -42,7 +42,7 @@ func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeN
 		lastSyncKey:       make(map[int64]string),
 		lastAttemptAt:     make(map[int64]time.Time),
 		lastPollInterval:  make(map[int64]time.Duration),
-		cfgStore:          newCfgStore(cs, cs.nsMapper),
+		cfgStore:          newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 	}
 }
 
