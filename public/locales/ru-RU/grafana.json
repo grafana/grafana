@@ -930,6 +930,7 @@
       "button-view": "Просмотр",
       "export-ariaLabel-export": "Экспорт",
       "export-label-export": "Экспорт",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Удалить",
       "label-manage-permissions": "Управление разрешениями",
       "tooltip-history": "Просмотрите историю попыток отправить уведомление в эту точку контакта",
@@ -1498,6 +1499,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Загрузка...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Загрузка...."
     },
@@ -1726,6 +1731,9 @@
         "pause-none": "Нет приостановленных правил",
         "pause-recording": "Правила записи приостановлены",
         "policy-tree": "Дерево политик",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Маршрутизация уведомлений",
         "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
@@ -1789,14 +1797,17 @@
         "templates-duplicate": "Дублируется имя файла шаблона: «{{name}}». Имена файлов шаблонов должны быть уникальными.",
         "templates-label": "Шаблоны уведомлений",
         "templates-remove": "Удалить {{name}}",
-        "upload": "Добавить YAML-файл",
+        "upload": "",
         "validating": "Проверка конфигурации...",
         "validation-error": "Проверка не выполнена",
         "validation-error-desc": "Не удалось проверить конфигурацию.",
         "validation-success": "Проверка выполнена",
         "validation-success-desc": "Конфликты не найдены. Конфигурация готова к импорту.",
         "validation-warning": "Некоторые ресурсы будут переименованы во избежание конфликтов с уже существующими",
-        "yaml-file": "YAML-файл конфигурации обработчика оповещений Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML-файл конфигурации обработчика оповещений Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Источник данных",
@@ -4693,11 +4704,15 @@
     },
     "readme": {
       "add-readme": "Добавить README",
-      "edit-tooltip": "Редактировать README",
+      "edit-doc-tooltip": "",
       "empty-message": "Добавьте файл README, чтобы описать, что находится в этой папке и где найти нужные дашборды.",
       "load-error-retry": "Повторите попытку",
-      "load-error-title": "Не удалось загрузить README",
-      "parse-error": "Невозможно отобразить содержимое README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Очистить историю",
@@ -12421,6 +12436,10 @@
     "team-not-found": "[Неизвестная команда]",
     "unknown-error": "Неизвестная ошибка"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Параметры не найдены"
   },
@@ -12753,6 +12772,10 @@
     "authentication": {
       "title": "Аутентификация"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Закладки"
     },
@@ -12959,6 +12982,7 @@
       "title": "Записанные запросы"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Создание отчетов"
     },
     "saved-queries": {
@@ -12973,6 +12997,10 @@
     },
     "search-dashboards": {
       "title": "Поиск по дашбордам"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Просмотр параметров, заданных в конфигурации Grafana",
@@ -16918,10 +16946,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

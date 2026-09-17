@@ -915,6 +915,7 @@
       "button-view": "表示",
       "export-ariaLabel-export": "エクスポート",
       "export-label-export": "エクスポート",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "削除",
       "label-manage-permissions": "権限を管理する",
       "tooltip-history": "このコンタクトポイントへの通知試行の履歴を表示する",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "読み込み中..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "読み込み中..."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "一時停止されているルールはありません",
         "pause-recording": "記録ルールが一時停止されました",
         "policy-tree": "ポリシーツリー",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "通知ルーティング",
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "テンプレートファイル名が重複しています：「{{name}}」。テンプレートファイル名は一意である必要があります。",
         "templates-label": "通知テンプレート",
         "templates-remove": "{{name}}を削除",
-        "upload": "YAMLファイルをアップロード",
+        "upload": "",
         "validating": "設定を検証中...",
         "validation-error": "検証に失敗しました",
         "validation-error-desc": "設定の検証に失敗しました。",
         "validation-success": "検証に成功しました",
         "validation-success-desc": "競合は見つかりませんでした。構成のインポートの準備ができています。",
         "validation-warning": "既存のリソースとの競合を回避するため、一部のリソースの名前が変更されます",
-        "yaml-file": "Alertmanager設定YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager設定YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "データソース",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "READMEを追加",
-      "edit-tooltip": "READMEを編集",
+      "edit-doc-tooltip": "",
       "empty-message": "このフォルダの内容と、適切なダッシュボードの場所を説明するREADMEを追加します。",
       "load-error-retry": "もう一度試してください",
-      "load-error-title": "READMEを読み込めませんでした",
-      "parse-error": "READMEの内容を表示できませんでした。"
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "履歴をクリア",
@@ -12160,6 +12175,10 @@
     "team-not-found": "[不明なチーム]",
     "unknown-error": "不明なエラー"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
   },
@@ -12492,6 +12511,10 @@
     "authentication": {
       "title": "認証"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "ブックマーク"
     },
@@ -12698,6 +12721,7 @@
       "title": "記録されたクエリ"
     },
     "reporting": {
+      "subtitle": "",
       "title": "レポート作成"
     },
     "saved-queries": {
@@ -12712,6 +12736,10 @@
     },
     "search-dashboards": {
       "title": "ダッシュボードを検索"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana構成で定義された設定を表示する",
@@ -16552,10 +16580,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
