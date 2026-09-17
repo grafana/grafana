@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -22,7 +24,10 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -47,7 +52,6 @@ func TestHandlerServesGroupDiscovery(t *testing.T) {
 	require.Equal(t, "example.ext.grafana.app/v1alpha1", group.PreferredVersion.GroupVersion)
 	require.Equal(t, []metav1.GroupVersionForDiscovery{
 		{GroupVersion: "example.ext.grafana.app/v1alpha1", Version: "v1alpha1"},
-		{GroupVersion: "example.ext.grafana.app/v0alpha1", Version: "v0alpha1"},
 	}, group.Versions)
 
 	var resources metav1.APIResourceList
@@ -57,10 +61,11 @@ func TestHandlerServesGroupDiscovery(t *testing.T) {
 		names[r.Name] = true
 	}
 	require.True(t, names["testkinds"], "the manifest kind is served: %v", names)
-	require.True(t, names["app"], "the settings resource is served: %v", names)
+	require.False(t, names["app"], "manifest plugins do not serve settings: %v", names)
 }
 
 func TestHandlerServesOpenAPIV3(t *testing.T) {
+	keepManifestSettings(t)
 	opts := allowAll(testOptions())
 	handler := withRequester(loadHandler(t, testPlugin(), opts))
 
@@ -78,7 +83,6 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
-	plugin.ExcludeSettings = true
 	opts := allowAll(testOptions())
 	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifest.Group, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
@@ -326,8 +330,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 
 func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
-	plugin.ExcludeSettings = true
-	expected, err := APIGroup(plugin)
+	expected, err := APIGroup(plugin, testOptions())
 	require.NoError(t, err)
 	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
 	var actual metav1.APIGroup
@@ -342,7 +345,7 @@ func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 func TestHandlerWithoutManifest(t *testing.T) {
 	plugin := testPlugin()
 	plugin.Manifest = nil
-	expected, err := APIGroup(plugin)
+	expected, err := APIGroup(plugin, testOptions())
 	require.NoError(t, err)
 	require.Equal(t, plugin.JSONData.ID, expected.Name)
 	require.Equal(t, []metav1.GroupVersionForDiscovery{
@@ -470,13 +473,14 @@ func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.Admis
 }
 
 func TestHandlerLegacySettings(t *testing.T) {
+	keepManifestSettings(t)
 	for _, withManifest := range []bool{false, true} {
 		t.Run(fmt.Sprint("manifest=", withManifest), func(t *testing.T) {
 			plugin := testPlugin()
 			if !withManifest {
 				plugin.Manifest = nil
 			}
-			group, err := APIGroup(plugin)
+			group, err := APIGroup(plugin, testOptions())
 			require.NoError(t, err)
 			opts := allowAll(testOptions())
 			opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
@@ -493,4 +497,42 @@ func TestHandlerLegacySettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func keepManifestSettings(t *testing.T) {
+	t.Helper()
+	flag := featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+}
+
+func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
+	keepManifestSettings(t)
+	opts := allowAll(testOptions())
+	opts.PluginClient = nil
+	opts.ContextProvider = nil
+	plugin := testPlugin()
+	expected, err := APIGroup(plugin, opts)
+	require.NoError(t, err)
+	handler := withRequester(loadHandler(t, plugin, opts))
+	var actual metav1.APIGroup
+	getJSON(t, handler, "/apis/"+expected.Name, &actual)
+	require.Equal(t, expected.Versions, actual.Versions)
+	require.Len(t, actual.Versions, 1)
+	var oas spec3.OpenAPI
+	getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v1alpha1", &oas)
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+}
+
+func TestHandlerRejectsManifestWithoutServedVersions(t *testing.T) {
+	plugin := testPlugin()
+	for i := range plugin.Manifest.Versions {
+		plugin.Manifest.Versions[i].Served = false
+	}
+	_, err := APIGroup(plugin, testOptions())
+	require.ErrorContains(t, err, "no served versions")
+	_, err = NewHandler(plugin, testOptions())
+	require.ErrorContains(t, err, "no served versions")
 }

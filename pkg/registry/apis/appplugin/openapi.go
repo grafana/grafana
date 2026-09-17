@@ -94,8 +94,8 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
 
-	// Settings routes are only installed when both legacy dependencies are present.
-	if b.contextProvider == nil || b.client == nil {
+	// Manifest-only handlers have no settings schema to augment.
+	if !b.includeSettings() {
 		return oas, nil
 	}
 
@@ -138,6 +138,10 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		Path:     root + "namespaces/{namespace}/app",
 		IsApp:    true,
 	})
+}
+
+func (b *AppPluginAPIBuilder) includeSettings() bool {
+	return b.client != nil && b.contextProvider != nil
 }
 
 // specVersion reads the group version from the title set by the API builder.

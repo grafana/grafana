@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -141,7 +142,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
 	// failed poll doesn't clear it -- same last-known-good invariant as
 	// aggregateTarget.
-	seeded := []Backend{&pluginManifestDummyBackend{key: "seeded"}}
+	seeded := []Backend{&pluginDeploymentBackend{key: "seeded"}}
 	target.snapshot.Store(&seeded)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
@@ -155,4 +156,26 @@ func TestNewPluginManifestsTarget_RejectsNonAbsoluteURL(t *testing.T) {
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
+}
+
+func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
+	body := pluginManifestsFixture
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	dirty := make(chan struct{}, 1)
+	target.poll(t.Context(), dirty)
+	require.Len(t, target.Backends(), 1)
+	first := target.Backends()[0]
+	<-dirty
+	body = strings.ReplaceAll(body, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", "replacement:50051")
+	target.poll(t.Context(), dirty)
+	require.Len(t, target.Backends(), 1)
+	second := target.Backends()[0]
+	require.NotEqual(t, first.Key(), second.Key())
+	require.Len(t, dirty, 1)
+
 }

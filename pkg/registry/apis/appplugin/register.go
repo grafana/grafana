@@ -123,6 +123,10 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
+	if plugin.Manifest != nil && !openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{}) {
+		client = nil
+		contextProvider = nil
+	}
 	return &AppPluginAPIBuilder{
 		group:           apiGroupForPlugin(plugin),
 		manifest:        plugin.Manifest,
@@ -236,12 +240,6 @@ func RegisterAPIService(
 			continue
 		}
 
-		// When a manifest exists, do not expose the "legacy" settings
-		if plugin.Manifest != nil && !getflag(featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings) {
-			b.contextProvider = nil
-			b.client = nil
-		}
-
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
@@ -267,7 +265,7 @@ func apiGroupForPlugin(plugin definition.PluginDefinition) string {
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
-// The settings kind is registered in every version so it is always reachable.
+// Legacy settings add v0alpha1 only when settings are enabled.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	settingsGV := schema.GroupVersion{
 		Group:   b.group,
@@ -292,12 +290,8 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 			gvs = append(gvs, gv)
 		}
 	}
-	// Adding a manifest must not move a plugin's existing settings API, so
-	// v0alpha1 is served alongside the manifest versions unless the manifest
-	// declares it. Last, so it never becomes the preferred version. This also
-	// keeps the list non-empty: a group with no versions fails InstallSchema
-	// (SetVersionPriority requires exactly one group) and aborts startup.
-	if !slices.Contains(gvs, settingsGV) && b.contextProvider != nil {
+	// Keep the legacy settings version last so it does not become preferred.
+	if !slices.Contains(gvs, settingsGV) && b.includeSettings() {
 		gvs = append(gvs, settingsGV)
 	}
 	return gvs
@@ -305,6 +299,9 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return fmt.Errorf("plugin %s has no served versions", b.pluginJSON.ID)
+	}
 	for _, gv := range gvs {
 		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
 			return err
@@ -366,20 +363,22 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		return fmt.Errorf("apps require a storage options getter")
 	}
 
-	b.applyDefaultStorageConfig(opts, settingsRI)
-
-	// Share one settings store across all versions.
 	var settingsStorage rest.Storage
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI,
-		opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{EnableFolderSupport: false}))
-	if err != nil {
-		return err
-	}
-	settingsStorage = unified
-	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
-		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
+	if b.includeSettings() {
+		b.applyDefaultStorageConfig(opts, settingsRI)
+
+		// Share one settings store across all versions.
+		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI,
+			opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{EnableFolderSupport: false}))
 		if err != nil {
 			return err
+		}
+		settingsStorage = unified
+		if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
+			settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	kinds := make(map[schema.GroupVersionResource]*kindstore.Store)
@@ -391,7 +390,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 
-		if b.contextProvider != nil && b.client != nil {
+		if b.includeSettings() {
 			storage[settingsRI.StoragePath()] = settingsStorage
 
 			provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
@@ -453,7 +452,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
-		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
+		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME && settingsStorage != nil {
 			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
 		}
 

@@ -82,12 +82,15 @@ func (h *Handler) Destroy() {
 }
 
 // APIGroup describes the versions actually served, including the settings API.
-func APIGroup(plugin definition.PluginDefinition) (metav1.APIGroup, error) {
-	b, err := newBuilder(plugin, Options{})
+func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
+	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return metav1.APIGroup{}, err
 	}
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return metav1.APIGroup{}, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+	}
 	group := metav1.APIGroup{Name: gvs[0].Group}
 	for _, gv := range gvs {
 		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
@@ -102,13 +105,6 @@ func APIGroup(plugin definition.PluginDefinition) (metav1.APIGroup, error) {
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
 func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
-	// When settings are excluded, don't make any legacy calls
-	if plugin.ExcludeSettings {
-		opts.PluginClient = nil
-		opts.ContextProvider = nil
-		opts.DualWrite = nil
-	}
-
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return nil, err
@@ -117,6 +113,9 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 		return nil, fmt.Errorf("plugin %q: a storage provider is required", plugin.JSONData.ID)
 	}
 	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return nil, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+	}
 	group := gvs[0].Group
 	scheme := builder.ProvideScheme()
 	if err := b.InstallSchema(scheme); err != nil {
