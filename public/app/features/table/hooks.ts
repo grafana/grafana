@@ -71,6 +71,7 @@ type CommonTableOptions = Pick<
   | 'cellHeight'
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
+  | 'hoverOverflow'
 >;
 
 /**
@@ -97,6 +98,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       cellHeight: options.cellHeight,
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
+      hoverOverflow: options.hoverOverflow ?? true,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
@@ -111,6 +113,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.cellHeight,
       options.maxRowHeight,
       options.disableKeyboardEvents,
+      options.hoverOverflow,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,

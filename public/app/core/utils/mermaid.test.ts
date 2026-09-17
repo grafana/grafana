@@ -1,6 +1,4 @@
 import { createTheme } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { renderMermaidDiagrams } from './mermaid';
 
@@ -41,7 +39,6 @@ async function redraw(el: HTMLElement) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
   parse.mockResolvedValue(true);
   render.mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>Start</text></svg>' });
 });
@@ -51,7 +48,7 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate(FENCE);
 
     expect(el.querySelector('pre')).toBeNull();
-    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg')).not.toBeNull();
   });
 
   it('un-escapes the source so arrows reach mermaid as authored', async () => {
@@ -64,7 +61,7 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate('<pre class="mermaid">graph LR\n  A --- B\n</pre>');
 
     expect(render).toHaveBeenCalledWith(expect.any(String), 'graph LR\n  A --- B\n');
-    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg')).not.toBeNull();
   });
 
   it('gives every diagram its own id, since mermaid renders against the document', async () => {
@@ -90,7 +87,7 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate(FENCE);
 
     expect(el.querySelector('script')).toBeNull();
-    expect(el.querySelector('.textng-mermaid svg text')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg text')).not.toBeNull();
   });
 
   it('keeps the source visible and reports the error when the diagram will not parse', async () => {
@@ -100,7 +97,7 @@ describe('renderMermaidDiagrams', () => {
 
     expect(render).not.toHaveBeenCalled();
     expect(el.querySelector('code.language-mermaid')).not.toBeNull();
-    expect(el.querySelector('.textng-mermaid-error')?.textContent).toContain('invalid diagram syntax');
+    expect(el.querySelector('.mermaid-diagram-error')?.textContent).toContain('invalid diagram syntax');
   });
 
   it('reports a render failure without replacing the source', async () => {
@@ -109,7 +106,7 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate(FENCE);
 
     expect(el.querySelector('code.language-mermaid')).not.toBeNull();
-    expect(el.querySelector('.textng-mermaid-error')?.textContent).toContain('boom');
+    expect(el.querySelector('.mermaid-diagram-error')?.textContent).toContain('boom');
   });
 
   it('renders the diagrams either side of a broken one', async () => {
@@ -117,32 +114,32 @@ describe('renderMermaidDiagrams', () => {
 
     const el = await hydrate(`${FENCE}${FENCE}${FENCE}`);
 
-    expect(el.querySelectorAll('.textng-mermaid svg')).toHaveLength(2);
-    expect(el.querySelectorAll('.textng-mermaid-error')).toHaveLength(1);
+    expect(el.querySelectorAll('.mermaid-diagram svg')).toHaveLength(2);
+    expect(el.querySelectorAll('.mermaid-diagram-error')).toHaveLength(1);
   });
 
   it('drops the error message once a redraw succeeds, so a working diagram is not captioned as broken', async () => {
     parse.mockResolvedValueOnce(false);
 
     const el = await hydrate(FENCE);
-    expect(el.querySelector('.textng-mermaid-error')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram-error')).not.toBeNull();
 
     await redraw(el);
 
-    expect(el.querySelector('.textng-mermaid-error')).toBeNull();
-    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram-error')).toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg')).not.toBeNull();
   });
 
   it('puts the source back when a redraw fails, rather than leaving the previous theme drawing', async () => {
     const el = await hydrate(FENCE);
-    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg')).not.toBeNull();
 
     render.mockRejectedValue(new Error('boom'));
     await redraw(el);
 
-    expect(el.querySelector('.textng-mermaid')).toBeNull();
+    expect(el.querySelector('.mermaid-diagram')).toBeNull();
     expect(el.querySelector('pre.mermaid')?.textContent).toBe('graph TD\n  A[Start] --> B[End]\n');
-    expect(el.querySelector('.textng-mermaid-error')?.nextElementSibling).toBe(el.querySelector('pre.mermaid'));
+    expect(el.querySelector('.mermaid-diagram-error')?.nextElementSibling).toBe(el.querySelector('pre.mermaid'));
   });
 
   it('renders the restored source on a later redraw', async () => {
@@ -153,8 +150,8 @@ describe('renderMermaidDiagrams', () => {
     await redraw(el);
 
     expect(render).toHaveBeenLastCalledWith(expect.any(String), 'graph TD\n  A[Start] --> B[End]\n');
-    expect(el.querySelector('.textng-mermaid svg')).not.toBeNull();
-    expect(el.querySelector('.textng-mermaid-error')).toBeNull();
+    expect(el.querySelector('.mermaid-diagram svg')).not.toBeNull();
+    expect(el.querySelector('.mermaid-diagram-error')).toBeNull();
   });
 
   it('updates the existing message when a redraw hits the same failure', async () => {
@@ -163,7 +160,7 @@ describe('renderMermaidDiagrams', () => {
     const el = await hydrate(FENCE);
     await redraw(el);
 
-    expect(el.querySelectorAll('.textng-mermaid-error')).toHaveLength(1);
+    expect(el.querySelectorAll('.mermaid-diagram-error')).toHaveLength(1);
   });
 
   it('leaves the DOM alone when the render is aborted mid-flight', async () => {
@@ -177,7 +174,7 @@ describe('renderMermaidDiagrams', () => {
     await renderMermaidDiagrams(el, theme, controller.signal);
 
     expect(el.querySelector('code.language-mermaid')).not.toBeNull();
-    expect(el.querySelector('.textng-mermaid')).toBeNull();
+    expect(el.querySelector('.mermaid-diagram')).toBeNull();
   });
 
   it('does not load mermaid for content with no diagram, prose about mermaid included', async () => {
@@ -185,14 +182,5 @@ describe('renderMermaidDiagrams', () => {
 
     expect(initialize).not.toHaveBeenCalled();
     expect(render).not.toHaveBeenCalled();
-  });
-
-  it('does not load mermaid when the text.newFeatures flag is off', async () => {
-    setTestFlags({ [FlagKeys.TextNewFeatures]: false });
-
-    const el = await hydrate(FENCE);
-
-    expect(initialize).not.toHaveBeenCalled();
-    expect(el.querySelector('code.language-mermaid')).not.toBeNull();
   });
 });

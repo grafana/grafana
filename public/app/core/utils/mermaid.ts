@@ -1,11 +1,11 @@
+import { css, cx } from '@emotion/css';
 import type { Mermaid, MermaidConfig } from 'mermaid';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-export const DIAGRAM_CLASS = 'textng-mermaid';
-export const DIAGRAM_ERROR_CLASS = 'textng-mermaid-error';
+export const DIAGRAM_CLASS = 'mermaid-diagram';
+const DIAGRAM_ERROR_CLASS = 'mermaid-diagram-error';
 
 // Also matches already-rendered diagrams, so a theme change redraws them instead of leaving stale colors.
 const MERMAID_SELECTOR = `code.language-mermaid, pre.mermaid, .${DIAGRAM_CLASS}`;
@@ -15,11 +15,6 @@ const SOURCE_ATTR = 'data-mermaid-source';
 let diagramSeq = 0;
 
 export async function renderMermaidDiagrams(container: HTMLElement, theme: GrafanaTheme2, signal: AbortSignal) {
-  // Not cached: the flag value can change after the providers settle.
-  if (!getFeatureFlagClient().getBooleanValue('text.newFeatures', false)) {
-    return;
-  }
-
   const diagrams = Array.from(container.querySelectorAll(MERMAID_SELECTOR), (block) => {
     // A fence keeps the source in the <code>, but the <pre> is what gets replaced.
     const target = block.tagName === 'CODE' ? (block.parentElement ?? block) : block;
@@ -31,12 +26,14 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
     return;
   }
 
+  const styles = getStyles(theme);
+
   let mermaid: Mermaid;
   try {
     ({ default: mermaid } = await import(/* webpackChunkName: "mermaid" */ 'mermaid'));
     mermaid.initialize(getMermaidConfig(theme));
   } catch (error) {
-    diagrams.forEach(({ source, target }) => markFailed(target, source, asError(error)));
+    diagrams.forEach(({ source, target }) => markFailed(target, source, asError(error), styles));
     return;
   }
 
@@ -48,14 +45,14 @@ export async function renderMermaidDiagrams(container: HTMLElement, theme: Grafa
 
     if (typeof result === 'string') {
       const diagram = document.createElement('div');
-      diagram.className = DIAGRAM_CLASS;
+      diagram.className = cx(DIAGRAM_CLASS, styles.diagram);
       diagram.setAttribute(SOURCE_ATTR, source);
       diagram.innerHTML = textUtil.sanitizeSVGContent(result);
       // A recovered redraw takes the earlier message with it.
       clearError(target);
       target.replaceWith(diagram);
     } else {
-      markFailed(target, source, result);
+      markFailed(target, source, result, styles);
     }
   }
 }
@@ -65,17 +62,17 @@ async function renderDiagram(mermaid: Mermaid, source: string): Promise<string |
     // suppressErrors so a syntax error is a false, not a throw that leaves
     // mermaid's own unthemed error graphic behind.
     if (!(await mermaid.parse(source, { suppressErrors: true }))) {
-      return new Error(t('textng.mermaid.invalid-syntax', 'invalid diagram syntax'));
+      return new Error(t('mermaid.invalid-syntax', 'invalid diagram syntax'));
     }
-    const { svg } = await mermaid.render(`textng-mermaid-${++diagramSeq}`, source);
+    const { svg } = await mermaid.render(`mermaid-diagram-${++diagramSeq}`, source);
     return svg;
   } catch (error) {
     return asError(error);
   }
 }
 
-function markFailed(target: Element, source: string, error: Error) {
-  const text = t('textng.mermaid.render-error', 'Diagram error: {{message}}', { message: error.message });
+function markFailed(target: Element, source: string, error: Error, styles: Styles) {
+  const text = t('mermaid.render-error', 'Diagram error: {{message}}', { message: error.message });
 
   // A rendered diagram belongs to the old theme, so a failed redraw swaps it back to the source.
   const anchor = target.classList.contains(DIAGRAM_CLASS) ? restoreSource(target, source) : target;
@@ -83,12 +80,15 @@ function markFailed(target: Element, source: string, error: Error) {
   // A theme-change redraw may hit the same failure again; update the existing message instead of duplicating it.
   const previous = anchor.previousElementSibling;
   if (previous?.classList.contains(DIAGRAM_ERROR_CLASS)) {
+    previous.className = cx(DIAGRAM_ERROR_CLASS, styles.error);
     previous.textContent = text;
     return;
   }
 
   const message = document.createElement('div');
-  message.className = DIAGRAM_ERROR_CLASS;
+  message.className = cx(DIAGRAM_ERROR_CLASS, styles.error);
+  // Announce the failure to screen readers without stealing focus.
+  message.setAttribute('role', 'status');
   message.textContent = text;
   anchor.insertAdjacentElement('beforebegin', message);
 }
@@ -114,6 +114,27 @@ function asError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
 
+type Styles = ReturnType<typeof getStyles>;
+
+// The renderer styles what it creates, so every consumer gets a themed, responsive diagram for free.
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    diagram: css({
+      // The diagram stands in for a <pre>, which had block margins of its own.
+      margin: theme.spacing(2, 0),
+      svg: {
+        maxWidth: '100%',
+        height: 'auto',
+      },
+    }),
+    error: css({
+      color: theme.colors.error.text,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginBottom: theme.spacing(0.5),
+    }),
+  };
+}
+
 function getMermaidConfig(theme: GrafanaTheme2): MermaidConfig {
   return {
     startOnLoad: false,
@@ -122,6 +143,8 @@ function getMermaidConfig(theme: GrafanaTheme2): MermaidConfig {
     // so the shapes would survive with no text in them.
     htmlLabels: false,
     flowchart: { htmlLabels: false, useMaxWidth: true },
+    // We report failures ourselves; never let mermaid inject its own error graphic.
+    suppressErrorRendering: true,
     theme: 'base',
     fontFamily: theme.typography.fontFamily,
     themeVariables: {

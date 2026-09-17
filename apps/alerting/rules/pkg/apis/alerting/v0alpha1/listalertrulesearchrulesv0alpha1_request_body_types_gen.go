@@ -11,6 +11,7 @@ type ListAlertRuleSearchRulesV0alpha1RequestSearchWhereNode struct {
 	Text   *ListAlertRuleSearchRulesV0alpha1RequestSearchTextLeaf   `json:"text,omitempty"`
 	Filter *ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeaf `json:"filter,omitempty"`
 	Range  *ListAlertRuleSearchRulesV0alpha1RequestSearchRangeLeaf  `json:"range,omitempty"`
+	Regex  *ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf  `json:"regex,omitempty"`
 	Exists *ListAlertRuleSearchRulesV0alpha1RequestSearchExistsLeaf `json:"exists,omitempty"`
 }
 
@@ -78,6 +79,23 @@ func NewListAlertRuleSearchRulesV0alpha1RequestSearchRangeLeaf() *ListAlertRuleS
 // OpenAPIModelName returns the OpenAPI model name for ListAlertRuleSearchRulesV0alpha1RequestSearchRangeLeaf.
 func (ListAlertRuleSearchRulesV0alpha1RequestSearchRangeLeaf) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestSearchRangeLeaf"
+}
+
+// Retained for generic schema compatibility; rejected by the compatibility handler.
+type ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	Negate  *bool  `json:"negate,omitempty"`
+}
+
+// NewListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf creates a new ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf object.
+func NewListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf() *ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf {
+	return &ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf.
+func (ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestSearchRegexLeaf"
 }
 
 // Retained for generic schema compatibility; rejected by the compatibility handler.

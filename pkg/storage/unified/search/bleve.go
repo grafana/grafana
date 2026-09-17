@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"math"
 	"net/http"
 	"os"
@@ -4481,6 +4482,7 @@ func (s *batchAuthzSearcher) Close() error {
 	if s.stop != nil {
 		s.stop()
 	}
+	s.logIfNothingAuthorized()
 	if s.span != nil {
 		s.span.SetAttributes(
 			attribute.Int64("search.candidates", s.candidates.Load()),
@@ -4489,6 +4491,20 @@ func (s *batchAuthzSearcher) Close() error {
 		s.span.End()
 	}
 	return s.searcher.Close()
+}
+
+// logIfNothingAuthorized reports a search that matched documents and then returned
+// none of them. The caller sees an empty result either way, so without this the
+// only record of it is a trace.
+func (s *batchAuthzSearcher) logIfNothingAuthorized() {
+	candidates, authorized := s.candidates.Load(), s.authorized.Load()
+	if candidates == 0 || authorized > 0 {
+		return
+	}
+	s.log.Warn("Search matched documents but none passed the permission check",
+		"namespace", s.namespace, "group", s.group,
+		"resources", strings.Join(slices.Sorted(maps.Keys(s.resources)), ","),
+		"candidates", candidates, "authorized", authorized)
 }
 
 func (s *batchAuthzSearcher) Size() int {
