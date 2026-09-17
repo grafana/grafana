@@ -19,7 +19,10 @@ import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
-import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
+import { type ExpressionQuery, getExpressionIssues } from 'app/features/expressions/schemas/expressionQuery';
+import { expressionIssueMessage } from 'app/features/expressions/schemas/issueMessages';
+import { issuesElsewhere } from 'app/features/expressions/schemas/issues';
+import { RECOVERY_VALUE_PATHS } from 'app/features/expressions/schemas/threshold';
 import { ExpressionQueryType, expressionTypes, getExpressionLabel } from 'app/features/expressions/types';
 import { type AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -68,22 +71,15 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
-  const { setError, clearErrors, watch } = useFormContext<RuleFormValues>();
+  const { watch } = useFormContext<RuleFormValues>();
   const type = watch('type');
   const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
-  const onQueriesValidationError = useCallback(
-    (errorMsg: string | undefined) => {
-      if (errorMsg) {
-        setError('queries', { type: 'custom', message: errorMsg });
-      } else {
-        clearErrors('queries');
-      }
-    },
-    [setError, clearErrors]
-  );
-
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
+
+  // Problems the user has to fix before the rule will save. The recovery threshold inputs show
+  // their own, so those are left out here rather than being said twice.
+  const cardIssues = issuesElsewhere(getExpressionIssues(query), RECOVERY_VALUE_PATHS);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
 
@@ -131,7 +127,6 @@ export const Expression: FC<ExpressionProps> = ({
               query={query}
               labelWidth={'auto'}
               refIds={availableRefIds}
-              onError={onQueriesValidationError}
               useHysteresis={true}
             />
           );
@@ -157,7 +152,7 @@ export const Expression: FC<ExpressionProps> = ({
           );
       }
     },
-    [onChangeQuery, queries, onQueriesValidationError]
+    [onChangeQuery, queries]
   );
 
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
@@ -191,6 +186,16 @@ export const Expression: FC<ExpressionProps> = ({
           {warning && (
             <Alert title={t('alerting.expression.title-expression-warning', 'Expression warning')} severity="warning">
               {warning.message}
+            </Alert>
+          )}
+          {cardIssues.length > 0 && (
+            <Alert
+              title={t('alerting.expression.title-expression-incomplete', 'Finish setting up this expression')}
+              severity="warning"
+            >
+              {cardIssues.map((issue) => (
+                <div key={`${issue.id}-${issue.path.join('.')}`}>{expressionIssueMessage(issue)}</div>
+              ))}
             </Alert>
           )}
           <div className={styles.expression.description}>{selectedExpressionDescription}</div>
