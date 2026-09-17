@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
 import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useDebounce } from 'react-use';
 
 import { type DataSourceSettings, OrgRole, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -102,10 +101,6 @@ interface Step1ContentProps {
   dryRunState: DryRunState;
   /** Dry-run validation result */
   dryRunResult?: DryRunValidationResult;
-  /** Callback to trigger dry-run validation */
-  onTriggerDryRun: () => void;
-  /** Callback to clear a stale dry-run result when the step is no longer runnable */
-  onResetDryRun: () => void;
 }
 
 /**
@@ -113,13 +108,7 @@ interface Step1ContentProps {
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({
-  canImport,
-  dryRunState,
-  dryRunResult,
-  onTriggerDryRun,
-  onResetDryRun,
-}: Step1ContentProps) {
+export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1ContentProps) {
   const {
     control,
     register,
@@ -172,43 +161,6 @@ export function Step1Content({
     autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
   });
 
-  // Closes the gate immediately, before the debounce below fires — otherwise Next stays enabled
-  // on the previous value's stale result for the whole 500ms debounce window.
-  useEffect(() => {
-    onResetDryRun();
-  }, [
-    onResetDryRun,
-    notificationsSource,
-    notificationsYamlFile,
-    notificationsDatasourceUID,
-    notificationsTemplateFiles,
-    policyTreeName,
-  ]);
-
-  // Debounced, and keyed on policyTreeName too: canRunDryRunNow alone can stay true across an edit to an
-  // already-valid name, so keying only on it would validate a stale value. Resets any previous result
-  // once the step becomes unrunnable, so a stale success can't stick.
-  useDebounce(
-    () => {
-      if (canRunDryRunNow) {
-        onTriggerDryRun();
-      } else {
-        onResetDryRun();
-      }
-    },
-    500,
-    [
-      canRunDryRunNow,
-      onTriggerDryRun,
-      onResetDryRun,
-      notificationsSource,
-      notificationsYamlFile,
-      notificationsDatasourceUID,
-      notificationsTemplateFiles,
-      policyTreeName,
-    ]
-  );
-
   // Drop any leftover Policy Tree Name error once Auto-sync disables the field.
   useEffect(() => {
     if (autoSyncActive) {
@@ -225,8 +177,8 @@ export function Step1Content({
     }
   }, [isLoadingAutoSyncConfig, isSelectedDatasourceAutoSyncCapable, autoSyncNotificationsEnabled, setValue]);
 
-  // The debounced effect above already re-runs the dry-run on every edit; this just refreshes the
-  // field's own validation error on blur.
+  // Re-runs this field's own react-hook-form validation on blur (dry-run re-validation on edit
+  // now lives in ImportWizardContent, which watches the same form values directly).
   const handlePolicyTreeNameBlur = useCallback(() => {
     trigger('policyTreeName');
   }, [trigger]);
