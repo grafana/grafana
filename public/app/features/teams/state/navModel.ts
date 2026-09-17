@@ -1,10 +1,7 @@
 import { type NavModelItem, type NavModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 import { TeamPermissionLevel } from 'app/types/acl';
 import { type Team } from 'app/types/teams';
@@ -68,11 +65,6 @@ export function buildNavModel(team: Team): NavModelItem {
     url: `org/teams/edit/${team.uid}/groupsync`,
   };
 
-  if (highlightTrial()) {
-    teamGroupSync.tabSuffix = () =>
-      ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge', eventVariant: 'trial' });
-  }
-
   // With both Legacy and RBAC the tab is protected being featureEnabled
   // While team is loading we leave the teamsync tab
   // With RBAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
@@ -80,11 +72,6 @@ export function buildNavModel(team: Team): NavModelItem {
     if (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
       navModel.children!.push(teamGroupSync);
     }
-  } else if (config.featureToggles.featureHighlights) {
-    navModel.children!.push({
-      ...teamGroupSync,
-      tabSuffix: () => ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge' }),
-    });
   }
 
   // Section for team folders tab

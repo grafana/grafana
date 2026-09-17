@@ -4,15 +4,13 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { featureEnabled } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
-import config from 'app/core/config';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState, useSelector } from 'app/types/store';
 
 import { TeamFolders } from './TeamFolders';
-import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
+import TeamGroupSync from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
 import { useGetTeam } from './hooks';
@@ -97,13 +95,6 @@ const TeamPages = memo(() => {
           if (canReadTeamPermissions) {
             return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} teamUid={teamUid} />;
           }
-        } else if (config.featureToggles.featureHighlights) {
-          return (
-            <>
-              <UpgradeBox featureName={'team sync'} featureId={'team-sync'} />
-              <TeamSyncUpgradeContent />
-            </>
-          );
         }
     }
 
