@@ -1,7 +1,7 @@
 import { type JsonValue } from '@openfeature/react-sdk';
 import { type Location } from 'history';
 import { Suspense, useEffect, useLayoutEffect, useState } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
+import { matchPath, Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { useFlagGrafanaMtFallback } from '@grafana/runtime/internal';
@@ -21,7 +21,9 @@ export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'locat
 const useMTFallback = (location: Location) => {
   const flagValue = useFlagGrafanaMtFallback();
   const urlList = getAllowedList(flagValue);
-  const isUrlAllowed: boolean = urlList?.length ? urlList.includes(location.pathname) : true;
+  const isUrlAllowed: boolean = urlList?.length
+    ? urlList.some((pattern) => matchPath(pattern, location.pathname) !== null)
+    : true;
   const [isWaiting, setIsWaiting] = useState(!isUrlAllowed);
 
   useEffect(() => {
