@@ -30,7 +30,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -113,7 +112,7 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 				return
 			}
 			span.SetAttributes(attribute.String("keys.namespace", namespace))
-		} else if err := h.requireClusterWideServiceIdentity(ctx, kind); err != nil {
+		} else if err := h.requireAllNamespacesScope(ctx, kind); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
@@ -186,27 +185,28 @@ func namespaceFrom(ctx context.Context) (string, error) {
 	return namespace, nil
 }
 
-// requireClusterWideServiceIdentity guards the cross-namespace read: a narrower
-// caller would get a partial page plus a mismatch, not a clean refusal. The
-// namespaced route needs none, being a subset of a normal LIST there.
-func (h *Handler) requireClusterWideServiceIdentity(ctx context.Context, kind kindRef) error {
+// requireAllNamespacesScope guards the cross-namespace read. The caller has to
+// hold a credential scoped to every namespace, which no end-user session is: a
+// narrower one would otherwise reach the resource server and fail partway with a
+// namespace mismatch over a partial page instead of a clean refusal.
+//
+// Scope is the whole check. Which keys come back is decided per item, in each
+// item's own namespace, by the authorization the resource server already applies,
+// so a caller sees only what it may read. Identity shape is deliberately not
+// checked: service access policies are named per deployment, and per cluster in
+// multi-tenant, so no set of literals can recognise them. The namespaced route is
+// a subset of a normal LIST there and needs no guard at all.
+func (h *Handler) requireAllNamespacesScope(ctx context.Context, kind kindRef) error {
 	gr := schema.GroupResource{Group: kind.group, Resource: kind.resource}
 
 	info, ok := claims.AuthInfoFrom(ctx)
 	if !ok || info == nil {
 		return apierrors.NewUnauthorized("no identity found for request")
 	}
-	if !identity.IsServiceIdentity(ctx) {
-		h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: not the service identity",
-			"group", kind.group, "resource", kind.resource,
-			"identityType", info.GetIdentityType())
-		return apierrors.NewForbidden(gr, "",
-			fmt.Errorf("listing keys is only available to the service identity, got %q", info.GetIdentityType()),
-		)
-	}
 	if ns := info.GetNamespace(); ns != wildcardNamespace {
 		h.log.FromContext(ctx).Warn("refused cluster-wide list-keys: identity is not scoped to all namespaces",
-			"group", kind.group, "resource", kind.resource, "identityNamespace", ns)
+			"group", kind.group, "resource", kind.resource,
+			"identityType", info.GetIdentityType(), "identityNamespace", ns)
 		return apierrors.NewForbidden(gr, "",
 			fmt.Errorf("listing keys across namespaces requires an identity scoped to %q, got %q", wildcardNamespace, ns),
 		)

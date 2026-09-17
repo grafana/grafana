@@ -196,61 +196,36 @@ func TestListKeys_RejectsUnsupportedListOptions(t *testing.T) {
 
 // Asserting the store was never called matters more than the status code: it is
 // what shows the gate runs before any read.
-func TestListKeys_ServiceIdentitiesOnly(t *testing.T) {
-	withType := func(typ claims.IdentityType) claims.AuthInfo {
-		ident := serviceIdentity()
-		ident.Type = typ
-		return ident
-	}
+func TestListKeys_RefusesWithoutIdentity(t *testing.T) {
+	store := &fakeStore{}
+	rec := do(t, store, nil, `{}`)
 
-	cases := map[string]struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{
-		"no identity at all": {ident: nil, wantStatus: http.StatusUnauthorized},
-	}
-	cases["allowed: service identity"] = struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{ident: serviceIdentity(), wantStatus: http.StatusOK}
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+	assert.Empty(t, store.calls, "a refused caller must not reach the store")
+}
 
-	// The sharp case: an access policy is the right type, so only the UID
-	// distinguishes the service identity from any other token.
-	other := serviceIdentity()
-	other.UserUID = "some-other-policy"
-	cases["refused: another access policy"] = struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{ident: other, wantStatus: http.StatusForbidden}
-
+// Scope decides access, not identity shape. Service access policies are named per
+// deployment and per cluster, so a check against known names would refuse the very
+// callers the endpoint exists for. Which keys come back is still decided per item
+// by the resource server's own authorization.
+func TestListKeys_AdmitsAnyIdentityScopedToAllNamespaces(t *testing.T) {
 	for _, typ := range []claims.IdentityType{
+		claims.TypeAccessPolicy,
 		claims.TypeServiceAccount,
 		claims.TypeUser,
-		claims.TypeAPIKey,
-		claims.TypeAnonymous,
-		claims.TypeRenderService,
-		claims.TypeUnauthenticated,
-		claims.TypeProvisioning,
-		claims.TypePublic,
-		claims.TypeEmpty,
 	} {
-		cases["refused: "+string(typ)] = struct {
-			ident      claims.AuthInfo
-			wantStatus int
-		}{ident: withType(typ), wantStatus: http.StatusForbidden}
-	}
+		t.Run(string(typ), func(t *testing.T) {
+			ident := serviceIdentity()
+			ident.Type = typ
+			// A real service policy: the right shape, a name no literal list holds.
+			ident.UserUID = "provisioning-connection-operator-system"
 
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
-			rec := do(t, store, tc.ident, `{}`)
-			require.Equal(t, tc.wantStatus, rec.Code, rec.Body.String())
+			rec := do(t, store, ident, `{}`)
 
-			if tc.wantStatus == http.StatusOK {
-				assert.Len(t, store.calls, 1)
-				return
-			}
-			assert.Empty(t, store.calls, "a refused caller must not reach the store")
+			require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+			require.Len(t, store.calls, 1)
+			assert.Empty(t, store.calls[0].Options.Key.Namespace, "the read must stay cluster-wide")
 		})
 	}
 }
@@ -268,8 +243,8 @@ func TestListKeys_RequiresWildcardNamespaceScope(t *testing.T) {
 		"multi tenant stack":            {"stacks-1234", http.StatusForbidden},
 		"org scoped":                    {"org-3", http.StatusForbidden},
 		"unscoped":                      {"", http.StatusForbidden},
-		// The case the wildcard check exists for: WithProvisioningIdentity also
-		// satisfies IsServiceIdentity, but is scoped to one namespace.
+		// The case the check exists for: the provisioning identity is a service,
+		// but scoped to one namespace, so it may not read across all of them.
 		"provisioning identity": {"stacks-1234", http.StatusForbidden},
 	} {
 		t.Run(name, func(t *testing.T) {
