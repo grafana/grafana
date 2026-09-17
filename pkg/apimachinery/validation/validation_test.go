@@ -233,15 +233,16 @@ func TestValidation(t *testing.T) {
 }
 
 func TestIsReservedName(t *testing.T) {
-	for _, name := range []string{"search", "TRASH", "History", "QuErY"} {
+	for _, name := range []string{"search", "TRASH", "History", "QuErY", "list-keys", "LIST-KEYS"} {
 		require.Equal(t, []string{"name is reserved"}, validation.IsReservedName(name), "input: %s", name)
 	}
 
-	for _, name := range []string{"hello", "trash-old", "searching", "my.query", ""} {
+	for _, name := range []string{"hello", "trash-old", "searching", "my.query", "list-key", "listkeys", ""} {
 		require.Nil(t, validation.IsReservedName(name), "input: %s", name)
 	}
 
 	// Reserved names have to stay valid so data already saved under them can
 	// still be read, moved or deleted.
 	require.Nil(t, validation.IsValidGrafanaName("trash"))
+	require.Nil(t, validation.IsValidGrafanaName("list-keys"))
 }
