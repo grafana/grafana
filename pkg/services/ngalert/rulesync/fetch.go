@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 	"io"
 	"net/http"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 
@@ -32,6 +33,25 @@ type RulerConfig = map[string][]apimodels.PrometheusRuleGroup
 // failure (any non-2xx is classified as a transient fetch error). An empty ruler
 // (no rule groups) is NOT an error; see Fetch.
 var ErrNotARuler = errors.New("datasource does not expose a Mimir ruler config API")
+
+// IsRulerCandidate statically classifies ds as a plausible external ruler
+// sync source, from its stored type/JsonData alone -- no network call. It
+// catches the common, cheap-to-detect cases (wrong datasource type, vanilla
+// Prometheus) up front; it can't confirm the ruler config API is actually
+// reachable, since that requires an actual fetch (see Fetch / ErrNotARuler).
+// Used both by the admission-time check (reject obviously wrong datasources
+// synchronously, without a network round trip) and by the sync loop (fail
+// fast before attempting Fetch).
+func IsRulerCandidate(ds *datasources.DataSource) error {
+	if ds.Type != datasources.DS_PROMETHEUS {
+		return fmt.Errorf("datasource must be of type prometheus")
+	}
+	// Empty prometheusType is treated as Mimir/Cortex.
+	if ds.JsonData != nil && strings.EqualFold(ds.JsonData.Get("prometheusType").MustString(""), "prometheus") {
+		return fmt.Errorf("datasource is a vanilla Prometheus (prometheusType=Prometheus), which does not expose a ruler config API; use a Mimir or Cortex datasource")
+	}
+	return nil
+}
 
 // datasourceProxy routes an outbound request through Grafana's datasource proxy
 // service, so the datasource's configured auth/TLS/headers are honoured and the

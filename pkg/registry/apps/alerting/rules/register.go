@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	restclient "k8s.io/client-go/rest"
 
@@ -28,12 +29,15 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -83,14 +87,15 @@ func RegisterAppInstaller(
 	)
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
-		FolderValidator:               newFolderValidator(ng),
-		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
-		ReservedLabelKeys:             ngmodels.LabelsUserCannotSpecify,
-		ResolveRuleRef:                newRuleRefResolver(ng),
-		MembershipResolver:            membershipIndex,
-		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
-		WatchNamespace:                watchNamespace(cfg),
-		SearchRulesHandler:            search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
+		FolderValidator:                  newFolderValidator(ng),
+		BaseEvaluationInterval:           ng.Cfg.UnifiedAlerting.BaseInterval,
+		ReservedLabelKeys:                ngmodels.LabelsUserCannotSpecify,
+		ResolveRuleRef:                   newRuleRefResolver(ng),
+		MembershipResolver:               membershipIndex,
+		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
+		WatchNamespace:                   watchNamespace(cfg),
+		SearchRulesHandler:               search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
+		CheckExternalRulerSyncDatasource: newExternalRulerSyncDatasourceChecker(cfg, ng.DataSourceService, ng.Api.AccessControl),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -107,6 +112,55 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 	return installer, nil
+}
+
+// Rejects writes while the operator ini override is set, then verifies both
+// that the caller can read the datasource and that it's statically eligible
+// (rulesync.IsRulerCandidate) as an external ruler sync source. Deliberately
+// does NOT probe the ruler config API: that's a network call, expensive to
+// run on every admission request, and -- combined with a missing access
+// check -- was exploitable as a way to probe for datasources the caller
+// can't see. Whether the ruler config API is actually reachable is verified
+// by the sync loop instead and reflected in Config.status (see SyncOrg).
+func newExternalRulerSyncDatasourceChecker(cfg *setting.Cfg, ds datasources.DataSourceService, ac accesscontrol.AccessControl) func(ctx context.Context, uid string) error {
+	return func(ctx context.Context, uid string) error {
+		if cfg == nil {
+			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
+		}
+		if cfg.UnifiedAlerting.ExternalRulerUID != "" {
+			return fmt.Errorf("external ruler UID is managed by the operator (unified_alerting.external_ruler_uid); cannot be changed via API")
+		}
+
+		ns, err := reqns.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return fmt.Errorf("resolve org from request namespace: %w", err)
+		}
+
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("resolve requester: %w", err)
+		}
+		// Checked before GetDataSource, and denial is reported identically to
+		// not-found below, so this can't be used to probe for the existence of a
+		// datasource the caller has no access to.
+		scope := datasources.ScopeProvider.GetResourceScopeUID(uid)
+		hasAccess, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(datasources.ActionRead, scope))
+		if err != nil {
+			return fmt.Errorf("check datasource access: %w", err)
+		}
+		if !hasAccess {
+			return fmt.Errorf("datasource not found")
+		}
+
+		got, err := ds.GetDataSource(ctx, &datasources.GetDataSourceQuery{UID: uid, OrgID: ns.OrgID})
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return fmt.Errorf("datasource not found")
+			}
+			return fmt.Errorf("look up datasource: %w", err)
+		}
+		return rulesync.IsRulerCandidate(got)
+	}
 }
 
 // watchNamespace returns the namespace the RuleSequence informer should watch.
