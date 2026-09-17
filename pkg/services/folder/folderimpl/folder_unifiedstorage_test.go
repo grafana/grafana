@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
+	dashv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -894,9 +896,11 @@ func TestSearchFolders(t *testing.T) {
 
 	// The subtests above assert the request shape against a mock, which never validates the
 	// response fields — that is how #132508 shipped a request asking for "labels", a field with
-	// no typed field-value definition. Run the real request through a real folder index so any
-	// future unsupported field in dashboardsearch.FieldValueIncludeFields fails here.
-	t.Run("Search by title builds a request the folder search schema accepts", func(t *testing.T) {
+	// no typed field-value definition. Run the real request through a real, populated folder
+	// index in both result formats: an unsupported field in
+	// dashboardsearch.FieldValueIncludeFields fails here, and so does a format that stops
+	// returning the values folder search depends on.
+	t.Run("Search by title returns the same usable values in both result formats", func(t *testing.T) {
 		var captured *resourcepb.ResourceSearchRequest
 		fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			captured = req
@@ -918,17 +922,78 @@ func TestSearchFolders(t *testing.T) {
 		require.NoError(t, err)
 		t.Cleanup(backend.Stop)
 
-		// Folders index with the default searchable field set, as the server builds it.
+		// Folders index with the default searchable field set, as the server builds it, holding
+		// one folder so the response carries values rather than only a schema.
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: "default",
 			Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
 			Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
-		}, 0, "test", func(resource.ResourceIndex) (int64, error) { return 0, nil }, nil, false, time.Time{}, 0)
+		}, 1, "test", func(idx resource.ResourceIndex) (int64, error) {
+			return 1, idx.BulkIndex(&resource.BulkIndexRequest{
+				ResourceVersion: 1,
+				Items: []*resource.BulkIndexItem{{
+					Action: resource.ActionIndex,
+					Doc: (&resource.IndexableDocument{
+						Key: &resourcepb.ResourceKey{
+							Namespace: "default",
+							Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+							Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
+							Name:      "uid",
+						},
+						Name:        "uid",
+						Title:       "testing-123",
+						Description: "a folder",
+						Folder:      "parent-uid",
+						Labels:      map[string]string{utils.LabelKeyDeprecatedInternalID: "2"}, // nolint:staticcheck
+						RV:          1,
+					}).UpdateCopyFields(),
+				}},
+			})
+		}, nil, false, time.Time{}, 0)
 		require.NoError(t, err)
 
-		res, err := index.Search(ctx, nil, captured, nil, nil)
-		require.NoError(t, err)
-		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
+		// Both formats must be usable: unified storage/search may deploy separately from the API
+		// layer, so the same request can be answered either way during a rollout.
+		runFormat := func(format resourcepb.ResourceSearchRequest_ResultFormat) dashv0alpha1.SearchResults {
+			captured.ResultFormat = format
+
+			res, err := index.Search(ctx, nil, captured, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
+
+			parsed, err := dashboardsearch.ParseResults(res, 0)
+			require.NoError(t, err)
+			return parsed
+		}
+
+		fieldValues := runFormat(resourcepb.ResourceSearchRequest_FIELD_VALUES)
+		table := runFormat(resourcepb.ResourceSearchRequest_RESOURCE_TABLE)
+
+		// Compare what SearchFolders actually reads off a hit. The formats differ in the extras
+		// bag for fields with no value — the table format emits an explicit nil per requested
+		// column, field values omits the key — so comparing whole hits would fail on data the
+		// folder code never touches.
+		consumed := func(t *testing.T, results dashv0alpha1.SearchResults) map[string]any {
+			require.Len(t, results.Hits, 1)
+			hit := results.Hits[0]
+			return map[string]any{
+				"uid":         hit.Name,
+				"title":       hit.Title,
+				"folder":      hit.Folder,
+				"description": hit.Description,
+				"legacyID":    hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			}
+		}
+
+		expected := map[string]any{
+			"uid":         "uid",
+			"title":       "testing-123",
+			"folder":      "parent-uid",
+			"description": "a folder",
+			"legacyID":    int64(2),
+		}
+		require.Equal(t, expected, consumed(t, fieldValues))
+		require.Equal(t, expected, consumed(t, table), "both result formats must yield the same usable values")
 	})
 }
 
