@@ -300,16 +300,19 @@ describe('useDeleteMultipleFoldersMutationFacade', () => {
     (useDeleteFoldersMutationLegacy as jest.Mock).mockReturnValue([mockDeleteFolderLegacy]);
   });
 
-  it('deletes multiple folders and publishes success alert', async () => {
+  it('deletes multiple folders via the app platform API when the flag is on', async () => {
     config.featureToggles.foldersAppPlatformAPI = true;
-    // Same test as for legacy as right now we always use legacy API for deletes.
+    // PoC: the app platform backend now supports cascading delete
+    // (kubernetesFolderCascadeDeleteAsync), so this facade no longer forces the legacy path.
     const folderUIDs = ['uid1', 'uid2'];
     const deleteFolders = useDeleteMultipleFoldersMutationFacade();
     await deleteFolders({ folderUIDs });
 
-    // Should call deleteFolder for each UID
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledTimes(1);
-    expect(mockDeleteFolderLegacy).toHaveBeenCalledWith({ folderUIDs });
+    // Should call deleteFolder for each UID via the app platform mutation, not the legacy one
+    expect(mockDeleteFolder).toHaveBeenCalledTimes(2);
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid1' });
+    expect(mockDeleteFolder).toHaveBeenCalledWith({ name: 'uid2' });
+    expect(mockDeleteFolderLegacy).not.toHaveBeenCalled();
   });
 
   it('uses legacy call when flag is false', async () => {

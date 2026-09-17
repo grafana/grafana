@@ -5,7 +5,14 @@ import { sharedWithMeFolder, wellFormedDashboard, wellFormedFolder } from '../fi
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { type BrowseDashboardsState } from '../types';
 
-import { fetchNextChildrenPageFulfilled, setAllSelection, setFolderOpenState, setItemSelectionState } from './reducers';
+import {
+  fetchNextChildrenPageFulfilled,
+  itemCascadeDeleteFinished,
+  itemCascadeDeleteStarted,
+  setAllSelection,
+  setFolderOpenState,
+  setItemSelectionState,
+} from './reducers';
 
 function createInitialState(): BrowseDashboardsState {
   return {
@@ -18,6 +25,7 @@ function createInitialState(): BrowseDashboardsState {
       folder: {},
       panel: {},
     },
+    cascadeDeletingUIDs: {},
   };
 }
 
@@ -510,6 +518,37 @@ describe('browse-dashboards reducers', () => {
 
       expect(state.selectedItems.folder[STARRED_FOLDERS_UID]).toBeFalsy();
       expect(state.selectedItems.folder[starredChild.uid]).toBeFalsy();
+    });
+  });
+
+  describe('itemCascadeDeleteStarted and itemCascadeDeleteFinished', () => {
+    it('tracks and clears a UID undergoing cascade delete', () => {
+      const state = createInitialState();
+      const uid = 'folder-being-deleted';
+
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: uid });
+      expect(state.cascadeDeletingUIDs).toEqual({ [uid]: true });
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: uid });
+      expect(state.cascadeDeletingUIDs).toEqual({});
+    });
+
+    it('tracks multiple UIDs independently', () => {
+      const state = createInitialState();
+
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: 'folder-a' });
+      itemCascadeDeleteStarted(state, { type: 'itemCascadeDeleteStarted', payload: 'dashboard-b' });
+      expect(state.cascadeDeletingUIDs).toEqual({ 'folder-a': true, 'dashboard-b': true });
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: 'folder-a' });
+      expect(state.cascadeDeletingUIDs).toEqual({ 'dashboard-b': true });
+    });
+
+    it('is a no-op when finishing a UID that was never started', () => {
+      const state = createInitialState();
+
+      itemCascadeDeleteFinished(state, { type: 'itemCascadeDeleteFinished', payload: 'unknown' });
+      expect(state.cascadeDeletingUIDs).toEqual({});
     });
   });
 });

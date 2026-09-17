@@ -12,9 +12,12 @@ import { getIconForItem } from 'app/features/search/service/utils';
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { canEditItemType } from '../permissions';
-import { useChildrenByParentUIDState } from '../state/hooks';
+import { useChildrenByParentUIDState, useIsItemCascadeDeleting } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
+
+import { DeletingDashboardBadge } from './DeletingDashboardBadge';
+import { DeletingFolderBadge } from './DeletingFolderBadge';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -33,6 +36,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
   const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
+  const isCascadeDeleting = useIsItemCascadeDeleting(item.kind !== 'ui' ? item.uid : '');
 
   if (item.kind === 'ui') {
     return (
@@ -115,6 +119,13 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
         </Text>
 
         <FolderRepo folder={item} canEdit={canEditItem} />
+
+        {isCascadeDeleting && item.kind === 'folder' && (
+          <DeletingFolderBadge folderUID={item.uid} parentUID={item.parentUID} />
+        )}
+        {isCascadeDeleting && item.kind === 'dashboard' && (
+          <DeletingDashboardBadge dashboardUID={item.uid} parentUID={item.parentUID} />
+        )}
 
         <DescriptionTooltip description={item.description} />
 

@@ -210,6 +210,14 @@ export function setAllSelection(
   }
 }
 
+export function itemCascadeDeleteStarted(state: BrowseDashboardsState, action: PayloadAction<string>) {
+  state.cascadeDeletingUIDs[action.payload] = true;
+}
+
+export function itemCascadeDeleteFinished(state: BrowseDashboardsState, action: PayloadAction<string>) {
+  delete state.cascadeDeletingUIDs[action.payload];
+}
+
 export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<Array<string | undefined>>) {
   const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
 
