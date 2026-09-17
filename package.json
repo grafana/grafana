@@ -255,7 +255,6 @@
     "rspack-manifest-plugin": "5.2.2",
     "sass": "1.89.2",
     "sass-loader": "16.0.5",
-    "smtp-tester": "^2.1.0",
     "stylelint": "16.23.0",
     "stylelint-config-sass-guidelines": "12.1.0",
     "testing-library-selector": "0.3.1",
