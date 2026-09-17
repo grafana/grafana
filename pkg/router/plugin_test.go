@@ -20,6 +20,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -36,7 +37,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			"app-sdk-manifest.json": []byte(`{
 				"apiVersion": "apps.grafana.app/v1alpha2",
 				"spec": {"appName": "manifest", "group": "manifest.ext.grafana.app",
-					"versions": [{"name": "v1", "served": true}]}
+					"versions": [{"name": "v1", "served": true, "kinds": [{"kind": "Thing", "plural": "things", "scope": "Namespaced"}]}]}
 			}`),
 		}),
 	}}
@@ -56,8 +57,10 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
 				PluginSources: sources,
 				PluginDependencies: PluginDependencies{
-					Unified:       &resource.MockResourceClient{},
-					AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+					PluginClient:    struct{ plugins.Client }{},
+					ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+					Unified:         &resource.MockResourceClient{},
+					AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
 				},
 			})
 			require.NoError(t, err)
@@ -77,7 +80,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
-			for _, gv := range []string{"legacy-app/v0alpha1", "manifest.ext.grafana.app/v0alpha1", "manifest.ext.grafana.app/v1"} {
+			for _, gv := range []string{"legacy-app/v0alpha1", "manifest.ext.grafana.app/v1"} {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()
@@ -132,7 +135,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		Manifest: &app.ManifestData{
 			AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{
-				{Name: "v1alpha1", Served: true},
+				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Scope: "Namespaced"}}},
 				{Name: "v2alpha1", Served: false},
 			},
 		},

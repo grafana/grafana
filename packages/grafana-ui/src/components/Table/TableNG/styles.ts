@@ -46,6 +46,7 @@ export const IS_SAFARI_26 = (() => {
 export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =>
   cacheKey[0] === key[0] &&
   cacheKey[1].shouldOverflow === key[1].shouldOverflow &&
+  cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
   cacheKey[1].maxHeight === key[1].maxHeight &&
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
@@ -315,7 +316,7 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
 );
 
 export const getDefaultCellStyles: TableCellStyles = memoize(
-  (theme, { textAlign, shouldOverflow, maxHeight }) =>
+  (theme, { textAlign, shouldOverflow, hoverOverflow, maxHeight }) =>
     css({
       display: 'flex',
       alignItems: 'center',
@@ -324,7 +325,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
       ...(maxHeight && { overflowY: 'hidden' }),
       ...(shouldOverflow && { minHeight: '100%' }),
 
-      [getActiveCellSelector()]: {
+      [getActiveCellSelector(false, hoverOverflow)]: {
         ...(shouldOverflow && {
           zIndex: theme.zIndex.tooltip - 2,
           height: 'fit-content',
@@ -340,7 +341,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
 );
 
 export const getMaxHeightCellStyles: TableCellStyles = memoize(
-  (_theme, { textAlign, maxHeight }) =>
+  (_theme, { textAlign, hoverOverflow, maxHeight }) =>
     css({
       display: 'flex',
       alignItems: 'center',
@@ -349,7 +350,7 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
       maxHeight,
       width: '100%',
       overflowY: 'hidden',
-      [getActiveCellSelector(true)]: {
+      [getActiveCellSelector(true, hoverOverflow)]: {
         maxHeight: 'none',
         minHeight: '100%',
       },
@@ -441,10 +442,10 @@ const ACTIVE_CELL_SELECTORS = {
   },
 } as const;
 
-export const getActiveCellSelector = memoize((isNested?: boolean) => {
+export const getActiveCellSelector = memoize((isNested?: boolean, hoverOverflow = true) => {
   const selectors = [];
   selectors.push(ACTIVE_CELL_SELECTORS.selected[isNested ? 'nested' : 'normal']);
-  if (!IS_SAFARI_26) {
+  if (!IS_SAFARI_26 && hoverOverflow) {
     selectors.push(ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal']);
   }
   return selectors.join(', ');

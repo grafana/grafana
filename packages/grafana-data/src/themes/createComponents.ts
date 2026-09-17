@@ -1,6 +1,7 @@
 import { mergeWith } from 'lodash';
 import * as z from 'zod';
 
+import { onBackground } from './colorManipulator';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
@@ -16,6 +17,28 @@ interface TagColors {
   background: string;
   text: string;
 }
+
+const ThemeTableColorsInputSchema = z.object({
+  rowHoverBackground: z.string().describe('Opaque background for a hovered, unselected row.').optional(),
+  rowSelected: z
+    .string()
+    .describe('Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14.')
+    .optional(),
+  headerBackground: z.string().describe('Opaque header surface, distinct from body rows.').optional(),
+  border: z.string().describe('Opaque body and footer dividers.').optional(),
+  rowStripedBackground: z
+    .string()
+    .describe('Opaque background for alternating body rows; excludes headers, footers and expansion containers.')
+    .optional(),
+  rowSelectedBackground: z.string().describe('Opaque background for a selected row.').optional(),
+});
+
+type InferredThemeTableColors = Required<z.infer<typeof ThemeTableColorsInputSchema>>;
+
+type ThemeTableColors = Omit<InferredThemeTableColors, 'rowSelected'> & {
+  /** @deprecated Use `theme.components.table.rowSelectedBackground`. This property will be removed in Grafana 14. */
+  rowSelected: string;
+};
 
 const badgeColorTokens = z.object({
   text: z.string().optional(),
@@ -143,10 +166,7 @@ export const ThemeComponentsInputSchema = z
     horizontalDrawer: z.object({
       defaultHeight: z.number().optional(),
     }),
-    table: z.object({
-      rowHoverBackground: z.string().optional(),
-      rowSelected: z.string().optional(),
-    }),
+    table: ThemeTableColorsInputSchema,
     menu: z.object({
       borderRadius: z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle']).optional(),
       padding: z.number().optional(),
@@ -182,8 +202,11 @@ type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
 // The menu is overridden to preserve types that zod inference can't reproduce
 /** @beta */
-export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu'>> & {
+type InferredThemeComponents = DeepRequired<z.infer<typeof ThemeComponentsInputSchema>>;
+
+export type ThemeComponents = Omit<InferredThemeComponents, 'menu' | 'table'> & {
   menu: MenuComponentTokens;
+  table: ThemeTableColors;
 };
 
 export function createComponents(colors: ThemeColors, componentsInput: ThemeComponentsInput = {}): ThemeComponents {
@@ -274,10 +297,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     horizontalDrawer: {
       defaultHeight: 400,
     },
-    table: {
-      rowHoverBackground: colors.action.hover,
-      rowSelected: colors.action.selected,
-    },
+    table: createTableColors(colors),
     menu: {
       borderRadius: 'lg',
       padding: 0.5,
@@ -347,3 +367,23 @@ const getBadgeColorToken = (colors: ThemeColors): ThemeComponents['badge'] => {
     },
   };
 };
+
+function createTableColors(colors: ThemeColors): ThemeTableColors {
+  const background = colors.background.primary;
+  const headerBackground = onBackground(colors.secondary.main, background).toHexString();
+  const rowSelectedBackground =
+    colors.mode === 'dark'
+      ? onBackground(colors.warning.main, background).darken(37).toHexString()
+      : onBackground(colors.warning.main, background).lighten(25).toHexString();
+  const rowHoverOverlay = colors.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+  const rowHoverBackground = onBackground(rowHoverOverlay, background).toHexString();
+
+  return {
+    rowHoverBackground,
+    rowSelected: colors.action.selected,
+    headerBackground,
+    border: onBackground(colors.border.weak, background).toHexString(),
+    rowStripedBackground: colors.background.secondary,
+    rowSelectedBackground,
+  };
+}
