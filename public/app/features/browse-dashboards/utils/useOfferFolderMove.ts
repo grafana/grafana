@@ -8,7 +8,7 @@ import { MoveModal } from '../components/BrowseActions/MoveModal';
  * Returns a function that opens the existing Move modal for a single folder -- the "way out" for
  * a folder that's stuck mid cascade-delete (e.g. a legacy subfolder blocking it): moving the
  * problem folder elsewhere unblocks the parent's cascade without anyone having to figure out
- * exactly what's wrong first. Shared by DeleteModal's error state and FolderCascadeErrorBanner
+ * exactly what's wrong first. Shared by DeleteModal's error state and FolderCascadeStatusBanner
  * rather than duplicated, since both need the exact same trigger.
  */
 export function useOfferFolderMove() {

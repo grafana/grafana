@@ -1,5 +1,9 @@
 import { t } from '@grafana/i18n';
-import { Badge, LoadingBar, Stack, Tooltip } from '@grafana/ui';
+import { Badge, Stack, Tooltip } from '@grafana/ui';
+
+import { useCascadeDeleteProgress } from '../utils/useCascadeDeleteProgress';
+
+import { CascadeDeleteProgressBar } from './CascadeDeleteProgressBar';
 
 interface Props {
   /** Direct children left to delete, if known (folders only -- dashboards have no cascadeDelete status). */
@@ -19,11 +23,13 @@ interface Props {
  * delete (PoC for kubernetesFolderCascadeDeleteAsync): `metadata.deletionTimestamp` is set but the
  * item hasn't actually been removed yet. Mirrors provisioning's StatusBadge "Deleting" state
  * (public/app/features/provisioning/Shared/StatusBadge.tsx) rather than inventing a new visual
- * language, plus an indeterminate LoadingBar -- @grafana/ui has no determinate progress bar
- * component, so the decreasing remaining-child count (when known) is surfaced directly in the
- * badge text instead of a filled bar.
+ * language, plus a progress bar that actually fills up as remaining drops (see
+ * useCascadeDeleteProgress and CascadeDeleteProgressBar) so this reads as an operation that's
+ * moving, not one that might be stuck.
  */
 export function CascadeDeleteIndicator({ remaining, errors }: Props) {
+  const percent = useCascadeDeleteProgress(remaining);
+
   if (errors && errors.length > 0) {
     return (
       <Tooltip content={errors.join('\n')} interactive>
@@ -50,7 +56,7 @@ export function CascadeDeleteIndicator({ remaining, errors }: Props) {
   return (
     <Stack direction="column" gap={0.25}>
       <Badge color="red" icon="spinner" text={text} />
-      <LoadingBar width={80} ariaLabel={t('browse-dashboards.cascade-delete-indicator.loading-bar', 'Deleting')} />
+      <CascadeDeleteProgressBar percent={percent} />
     </Stack>
   );
 }

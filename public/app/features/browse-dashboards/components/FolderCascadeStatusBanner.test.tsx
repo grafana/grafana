@@ -4,7 +4,7 @@ import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
 import { useOfferFolderMove } from '../utils/useOfferFolderMove';
 
-import { FolderCascadeErrorBanner } from './FolderCascadeErrorBanner';
+import { FolderCascadeStatusBanner } from './FolderCascadeStatusBanner';
 
 jest.mock('app/api/clients/folder/v1beta1', () => ({
   ...jest.requireActual('app/api/clients/folder/v1beta1'),
@@ -42,20 +42,34 @@ function mockQueryResult(result: { data?: Folder; error?: unknown }): ReturnType
   } as unknown as ReturnType<typeof useGetFolderQuery>;
 }
 
-describe('FolderCascadeErrorBanner', () => {
+describe('FolderCascadeStatusBanner', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders nothing while the cascade is still just working', () => {
+  it('shows the remaining count while the cascade is still working', () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 3 } }) })
     );
     mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
-    render(<FolderCascadeErrorBanner folderUID="folder-1" />);
+    render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/3 items left/i)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
+  });
+
+  it('shows a generic in-progress message once nothing is left to report', () => {
+    mockUseGetFolderQuery.mockReturnValue(
+      mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 0 } }) })
+    );
+    mockUseOfferFolderMove.mockReturnValue(jest.fn());
+
+    render(<FolderCascadeStatusBanner folderUID="folder-1" />);
+
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/deleting its contents in the background/i)).toBeInTheDocument();
   });
 
   it('renders nothing once the folder no longer has a deletionTimestamp', () => {
@@ -69,7 +83,7 @@ describe('FolderCascadeErrorBanner', () => {
     );
     mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
-    render(<FolderCascadeErrorBanner folderUID="folder-1" />);
+    render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
@@ -82,7 +96,7 @@ describe('FolderCascadeErrorBanner', () => {
     );
     mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
-    render(<FolderCascadeErrorBanner folderUID="folder-1" />);
+    render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('dashboard X is locked')).toBeInTheDocument();
@@ -95,7 +109,7 @@ describe('FolderCascadeErrorBanner', () => {
     );
     mockUseOfferFolderMove.mockReturnValue(offerFolderMove);
 
-    const { user } = render(<FolderCascadeErrorBanner folderUID="folder-1" />);
+    const { user } = render(<FolderCascadeStatusBanner folderUID="folder-1" />);
     await user.click(screen.getByRole('button', { name: /move this folder instead/i }));
 
     expect(offerFolderMove).toHaveBeenCalledWith('folder-1');

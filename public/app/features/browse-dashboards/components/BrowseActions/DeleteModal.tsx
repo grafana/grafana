@@ -151,48 +151,32 @@ export const DeleteModal = ({ onConfirm, onDismiss, onSettled, selectedItems, ..
     <ConfirmModal
       body={
         <>
-          <DeletedDashboardsInfo target="folder" />
+          <DeletedDashboardsInfo target="folder" cascadeAsync={selectedFolders.length > 0 && cascadeDeleteAsyncEnabled} />
           <Space v={2} />
 
           {waitingOnFolderUIDs ? (
             <Stack direction="column" gap={1}>
-              <Text>
-                {t(
-                  'browse-dashboards.action.delete-modal-cascade-in-progress',
-                  'Deleting folder contents in the background. This can take a moment for folders with a lot of content.'
-                )}
+              <Text weight="medium">
+                {t('browse-dashboards.action.delete-modal-cascade-in-progress', 'Deleting folder contents...')}
               </Text>
               {waitingOnFolderUIDs.map((uid) => (
                 <CascadeDeleteWaiter key={uid} folderUID={uid} onSettled={handleWaiterSettled} />
               ))}
             </Stack>
           ) : (
-            <>
-              <AffectedFolderContents
-                selectedItems={selectedItems}
-                emptyMessage={t('browse-dashboards.action.delete-modal-folder-empty', '', {
-                  count: selectedFolders.length,
-                  defaultValue_one: 'Selected folder is empty',
-                  defaultValue_other: 'Selected folders are empty',
-                })}
-                nonEmptyMessage={t('browse-dashboards.action.delete-modal-folder-not-empty', '', {
-                  count: selectedFolders.length,
-                  defaultValue_one: 'Selected folder contains resources that will be deleted',
-                  defaultValue_other: 'Selected folders contain resources that will be deleted',
-                })}
-              />
-              {selectedFolders.length > 0 && cascadeDeleteAsyncEnabled && (
-                <>
-                  <Space v={1} />
-                  <Text color="secondary">
-                    {t(
-                      'browse-dashboards.action.delete-modal-cascade-async-notice',
-                      'Folder contents are deleted in the background, so this may take a moment to finish for folders with a lot of content.'
-                    )}
-                  </Text>
-                </>
-              )}
-            </>
+            <AffectedFolderContents
+              selectedItems={selectedItems}
+              emptyMessage={t('browse-dashboards.action.delete-modal-folder-empty', '', {
+                count: selectedFolders.length,
+                defaultValue_one: 'Selected folder is empty',
+                defaultValue_other: 'Selected folders are empty',
+              })}
+              nonEmptyMessage={t('browse-dashboards.action.delete-modal-folder-not-empty', '', {
+                count: selectedFolders.length,
+                defaultValue_one: 'Selected folder contains resources that will be deleted',
+                defaultValue_other: 'Selected folders contain resources that will be deleted',
+              })}
+            />
           )}
           <Space v={2} />
         </>

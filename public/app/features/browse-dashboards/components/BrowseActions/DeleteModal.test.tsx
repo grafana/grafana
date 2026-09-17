@@ -146,9 +146,7 @@ describe('browse-dashboards DeleteModal', () => {
     it('shows a notice that the delete happens in the background', async () => {
       render(<DeleteModal {...defaultProps} selectedItems={folderSelection} />);
 
-      expect(
-        await screen.findByText(/deleted in the background/i)
-      ).toBeInTheDocument();
+      expect(await screen.findByText(/happens in the background/i)).toBeInTheDocument();
     });
 
     it('keeps the modal open, showing progress, until the cascade settles', async () => {
