@@ -31,6 +31,13 @@ import (
 // progress (status.cascadeDelete.remaining ticks down) instead of one huge, un-interruptible pass.
 const cascadeDeleteControllerBatchSize = 50
 
+// cascadeDeleteControllerSimulatedChildDelay is a PoC-only artificial delay after each child
+// delete, purely so a small demo folder (a handful of children) takes visibly many seconds instead
+// of completing in under one -- long enough to actually see status.cascadeDelete.remaining tick
+// down and exercise frontend polling/progress UI. Remove entirely before this is anything more than
+// a demo; a real implementation has no business sleeping in its reconcile loop.
+const cascadeDeleteControllerSimulatedChildDelay = 2 * time.Second
+
 // CascadeDeleteController is a PoC, finalizer-driven controller that asynchronously deletes a
 // folder's direct children (subfolders and dashboards) once the folder both carries
 // foldersv1.CascadeDeleteFinalizer and has been marked for deletion, removing the finalizer once
@@ -235,6 +242,7 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 			continue
 		}
 		deleted++
+		simulateChildDeleteLatency(ctx)
 	}
 	for _, dashUID := range dashboards {
 		if deleted >= c.batchSize {
@@ -245,6 +253,7 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 			continue
 		}
 		deleted++
+		simulateChildDeleteLatency(ctx)
 	}
 
 	if len(errs) > 0 {
@@ -294,6 +303,16 @@ func (c *CascadeDeleteController) deleteDashboard(ctx context.Context, namespace
 		return nil
 	}
 	return err
+}
+
+// simulateChildDeleteLatency is the PoC-only sleep described on
+// cascadeDeleteControllerSimulatedChildDelay above. Respects ctx cancellation so it never delays
+// shutdown.
+func simulateChildDeleteLatency(ctx context.Context) {
+	select {
+	case <-time.After(cascadeDeleteControllerSimulatedChildDelay):
+	case <-ctx.Done():
+	}
 }
 
 // writeStatus sets status.cascadeDelete on a copy of obj and writes it through the status
