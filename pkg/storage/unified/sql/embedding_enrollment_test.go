@@ -18,7 +18,10 @@ import (
 func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 	configs := resource.NewEmbeddingConfigRegistry()
 	opts := &ServerOptions{
-		Cfg:           &setting.Cfg{VectorAllowedInternalCollections: []string{"notes.example.test/notes"}},
+		Cfg: &setting.Cfg{
+			EnableSearch:                     true,
+			VectorAllowedInternalCollections: []string{"notes.example.test/notes"},
+		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 		SearchOptions: resource.SearchOptions{EmbeddingConfig: configs},
 	}
@@ -51,7 +54,10 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 
 func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 	opts := &ServerOptions{
-		Cfg:           &setting.Cfg{VectorAllowedInternalCollections: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}},
+		Cfg: &setting.Cfg{
+			VectorIndexingEnabled:            true,
+			VectorAllowedInternalCollections: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"},
+		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
 	var serverOpts resource.ResourceServerOptions
@@ -68,6 +74,22 @@ func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 		require.Len(t, items, 1)
 		require.Equal(t, "title: Operations\ndescription: Service runbooks", items[0].Content)
 	}
+}
+
+func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
+	opts := &ServerOptions{
+		Cfg: &setting.Cfg{
+			EnableVectorBackend:              true,
+			VectorAllowedInternalCollections: []string{"notes.example.test/notes"},
+			VectorAllowedExternalCollections: []string{"external.example.test/articles"},
+		},
+		VectorBackend: struct{ vector.VectorBackend }{},
+	}
+	var serverOpts resource.ResourceServerOptions
+	require.NoError(t, withSearch(opts, &serverOpts))
+	require.Nil(t, serverOpts.Search.EmbeddingBuilders, "disabled consumers must not validate unavailable live declarations at startup")
+	require.Nil(t, serverOpts.Search.EmbeddingConfig)
+	require.Equal(t, opts.Cfg.VectorAllowedExternalCollections, serverOpts.Search.AllowedExternalCollections)
 }
 
 func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {

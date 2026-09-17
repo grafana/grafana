@@ -304,7 +304,7 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
-		if resourceOpts.Search.EmbeddingBuilders == nil {
+		if resourceOpts.Search.EmbeddingBuilders == nil && (opts.Cfg.EnableSearch || opts.Cfg.VectorIndexingEnabled) {
 			configs := resourceOpts.Search.EmbeddingConfig
 			if configs == nil {
 				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
