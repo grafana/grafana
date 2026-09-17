@@ -730,6 +730,55 @@ func TestRenameResourceFile(t *testing.T) {
 		require.False(t, netNew)
 	})
 
+	t.Run("old file parse error, existence check errors transiently, stays fatal", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "flaky-get-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		// Fails once, then self-heals to NotFound on Run()'s own retry -- a
+		// persistent error is already caught by Run()'s own default case, so
+		// it wouldn't distinguish this fix from having no fix at all.
+		mockClient.On("Get", mock.Anything, "flaky-get-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, fmt.Errorf("etcdserver: request timed out")).Once()
+		notFound := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "flaky-get-uid")
+		mockClient.On("Get", mock.Anything, "flaky-get-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, notFound)
+		mockClient.On("Update", mock.Anything, mock.Anything, metav1.UpdateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(nil, notFound)
+		mockClient.On("Create", mock.Anything, mock.Anything, metav1.CreateOptions{FieldValidation: "Strict"}, mock.Anything).
+			Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, netNew, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref", nil)
+
+		require.Error(t, err)
+		require.False(t, netNew)
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
