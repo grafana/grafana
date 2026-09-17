@@ -8,11 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
@@ -22,14 +24,18 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
-	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
-
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
+	target := b.upstreamForBulk(ctx, namespace, logger)
+	if target != nil {
+		logger.Debug("selected upstream for bulk eval", "namespace", namespace, "target", target.Host)
+	}
+
+	proxy, err := b.newProxy(ofrepPath, namespace, target, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "error", err)
+		logger.Error("Failed to create proxy", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -40,13 +46,13 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		}
 
 		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
-		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, b.logger) {
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, logger) {
 			return nil
 		}
 
 		var result goffmodel.OFREPBulkEvaluateSuccessResponse
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			b.logger.Error("Failed to decode bulk eval response", "error", err)
+			logger.Error("Failed to decode bulk eval response", "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
@@ -61,7 +67,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		result.Flags = filteredFlags
 		newBodyBytes, err := json.Marshal(result)
 		if err != nil {
-			b.logger.Error("Failed to encode filtered result", "error", err)
+			logger.Error("Failed to encode filtered result", "error", err)
 			return err
 		}
 
@@ -76,14 +82,18 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
-	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
-
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, r.Header.Get("User-Agent"))
+	target := b.upstreamForFlag(ctx, flagKey, namespace, logger)
+	if target != nil {
+		logger.Debug("selected upstream for flag eval", "key", flagKey, "namespace", namespace, "target", target.Host)
+	}
+
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, target, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
+		logger.Error("Failed to create proxy", "key", flagKey, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -96,14 +106,14 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			b.logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
+			logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
 
 		var result goffmodel.OFREPEvaluateSuccessResponse
 		if err := json.Unmarshal(body, &result); err != nil {
-			b.logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
+			logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 
@@ -115,7 +125,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// Not public -> respond as if the flag doesn't exist, so an unauthed
 		// caller can't use the 404-vs-401 distinction to probe which private
 		// flags exist.
-		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
+		logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
 		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
 			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
 				ErrorCode:    "FLAG_NOT_FOUND",
@@ -133,18 +143,36 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath, namespace, incomingUserAgent string) (*httputil.ReverseProxy, error) {
+func isUnknownNamespace(namespace string) bool {
+	return namespace == "" || namespace == "*"
+}
+
+func (b *APIBuilder) upstreamForFlag(ctx context.Context, flagKey, namespace string, logger log.Logger) *url.URL {
+	if b.bypassEnabled(ctx, logger) && (isUnknownNamespace(namespace) || !b.hgOverrideFlags[flagKey]) {
+		return b.goffURL
+	}
+	return b.url
+}
+
+func (b *APIBuilder) upstreamForBulk(ctx context.Context, namespace string, logger log.Logger) *url.URL {
+	if b.bypassEnabled(ctx, logger) && isUnknownNamespace(namespace) {
+		return b.goffURL
+	}
+	return b.url
+}
+
+func (b *APIBuilder) newProxy(proxyPath, namespace string, targetURL *url.URL, incomingUserAgent string) (*httputil.ReverseProxy, error) {
 	if proxyPath == "" {
 		return nil, fmt.Errorf("proxy path is required")
 	}
 
-	if b.url == nil {
+	if targetURL == nil {
 		return nil, fmt.Errorf("OpenFeatureService provider URL is not set")
 	}
 
 	director := func(req *http.Request) {
-		req.URL.Scheme = b.url.Scheme
-		req.URL.Host = b.url.Host
+		req.URL.Scheme = targetURL.Scheme
+		req.URL.Host = targetURL.Host
 		req.URL.Path = proxyPath
 		req.Header.Set("User-Agent", withStackTag(incomingUserAgent, namespace))
 	}

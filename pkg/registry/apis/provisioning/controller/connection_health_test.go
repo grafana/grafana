@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
@@ -338,6 +339,20 @@ func TestClassifyTestResultReason(t *testing.T) {
 				Errors:  []provisioning.ErrorDetails{{Detail: "permission denied"}},
 			},
 			expectedReason: provisioning.ReasonAuthenticationFailed,
+		},
+		{
+			// A write-permission-denied 403 leaves the repository accessible
+			// (isRepositoryAccessible special-cases it), so it must not classify as
+			// AuthenticationFailed alongside a genuine 403 -- job-skip logic
+			// elsewhere keys off this Reason and must not skip a repository that's
+			// actually usable.
+			name: "forbidden (403) with write permission denied is accessible, not an auth failure",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusForbidden,
+				Errors:  []provisioning.ErrorDetails{{Detail: repository.WritePermissionDeniedDetail}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
 		},
 		{
 			name: "not found (404)",

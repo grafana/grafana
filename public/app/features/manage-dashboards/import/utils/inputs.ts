@@ -778,7 +778,10 @@ function replaceVariableDatasources(
           },
           options: [],
           current: { text: '', value: '' },
-          refresh: 'onDashboardLoad' as const,
+          // Keep the author's refresh setting (e.g. onTimeRangeChanged). Options are cleared
+          // above, so 'never' has to be upgraded or the variable would never get any values.
+          refresh:
+            variable.spec.refresh && variable.spec.refresh !== 'never' ? variable.spec.refresh : 'onDashboardLoad',
         },
       };
     }
@@ -1048,7 +1051,12 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable) {
+  // adhoc and groupby variables carry the same `datasource` shape as query variables, so they
+  // need the same placeholder resolution. The v2 path already remaps all three.
+  if (
+    (variableType === 'query' || variableType === 'adhoc' || variableType === 'groupby') &&
+    'datasource' in variable
+  ) {
     const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
     if (resolved) {
       return { ...variable, datasource: resolved };

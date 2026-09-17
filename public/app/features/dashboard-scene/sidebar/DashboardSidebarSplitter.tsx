@@ -256,7 +256,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
-      zIndex: 1, // creates stacking context below header (1000)
+      // creates a stacking context above the mega menu (z-index=2, so the date pickers appear on top) and
+      // below the app top bar (z-index=1000, so the popovers appears below)
+      zIndex: 3,
     }),
     bodyWrapper: css({
       label: 'body-wrapper',

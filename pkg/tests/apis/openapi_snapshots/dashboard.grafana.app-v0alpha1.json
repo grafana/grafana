@@ -283,6 +283,12 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
               }
             }
           },
@@ -327,6 +333,11 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.TrashQuery"
+              },
+              "example": {
+                "kind": "TrashQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "limit": 10
               }
             }
           },
@@ -1571,9 +1582,7 @@
                     "fields": {
                       "description": "Sortable fields (depends on backend support)",
                       "type": "array",
-                      "items": {
-                        "default": {}
-                      }
+                      "items": {}
                     },
                     "kind": {
                       "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -1806,6 +1815,56 @@
             }
           }
         ]
+      }
+    },
+    "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search Snapshot resources in a namespace.",
+        "operationId": "listSnapshotSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/snapshots/settings": {
@@ -2135,8 +2194,7 @@
             "description": "Owner references set on the resource metadata in the format {Group}/{Kind}/{Name}",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "resource": {
@@ -2153,8 +2211,7 @@
             "description": "Filter tags",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "title": {
@@ -2592,12 +2649,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Dashboard"
             }
           },
           "kind": {
@@ -2832,12 +2884,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.LibraryPanel"
             }
           },
           "kind": {
@@ -2959,8 +3006,7 @@
             "description": "Translation warnings (mostly things that were in SQL columns but not found in the saved body)",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -3020,12 +3066,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v0alpha1.Snapshot"
             }
           },
           "kind": {
@@ -3148,8 +3189,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -3180,6 +3220,28 @@
           "lte": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": [
+          "field",
+          "pattern"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3277,15 +3339,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -3304,7 +3364,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SortField"
             }
           },
@@ -3332,7 +3391,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.FacetTerm"
               }
             }
@@ -3340,7 +3398,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResultItem"
             }
           },
@@ -3385,8 +3442,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -3409,8 +3465,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -3424,7 +3479,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SortField"
             }
           },
@@ -3448,7 +3502,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResultItem"
             }
           },
@@ -3463,14 +3516,13 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
@@ -3486,12 +3538,14 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode"
             }
           },
           "range": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.RegexPredicate"
           },
           "text": {
             "description": "Leaves.",
@@ -3666,7 +3720,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -3675,8 +3728,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -3704,8 +3756,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

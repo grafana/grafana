@@ -5,8 +5,9 @@
  * the API object that is exposed to plugins via RestrictedGrafanaApis.
  *
  * The mutation client is created/destroyed automatically when a document's scene
- * activates/deactivates, via the clientBridge. Only one document is ever mounted at
- * a time, so there is one slot.
+ * activates/deactivates, via the clientBridge. More than one document can be mounted at once —
+ * a notebook rendered outside the notebooks route sits over whatever else is on screen — so the
+ * clients form a stack and the most recently activated one serves the API.
  * Plugins access it through RestrictedGrafanaApis context -- they cannot
  * import this module directly because it lives inside the core bundle.
  */
@@ -21,37 +22,59 @@ import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
 import { allMutationCommands } from './commandRegistry';
 
-let _client: MutationClient | null = null;
+/**
+ * Mounted documents, most recently activated last. A stack rather than a single slot because
+ * unmounting one must hand the API back to whichever document is still on screen: clearing it
+ * outright left a dashboard's client dead after an embedded notebook over it went away.
+ */
+const _clients: MutationClient[] = [];
+
+function currentClient(): MutationClient | null {
+  return _clients[_clients.length - 1] ?? null;
+}
 
 provideMutationClientFactory((sceneObject, resource) => {
+  let client: MutationClient;
   try {
     if (resource === 'notebook') {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the bridge erases the scene type; `resource` is what says which it is
-      _client = new NotebookMutationClient(sceneObject as NotebookScene);
+      client = new NotebookMutationClient(sceneObject as NotebookScene);
     } else {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the bridge erases the scene type; `resource` is what says which it is
-      _client = new DashboardMutationClient(sceneObject as DashboardScene);
+      client = new DashboardMutationClient(sceneObject as DashboardScene);
     }
   } catch (error) {
     console.error('Failed to register Dashboard Mutation API:', error);
+    return () => {};
   }
 
+  _clients.push(client);
+
+  // Spliced out by identity rather than popped: documents do not always deactivate in the order
+  // they activated, and popping would evict whichever one happens to be on top.
   return () => {
-    _client = null;
+    const index = _clients.lastIndexOf(client);
+    if (index !== -1) {
+      _clients.splice(index, 1);
+    }
   };
 });
 
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
-  _client = client;
+  _clients.length = 0;
+  if (client) {
+    _clients.push(client);
+  }
 }
 
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
-    if (!_client) {
+    const client = currentClient();
+    if (!client) {
       return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
     }
-    return _client.execute(mutation);
+    return client.execute(mutation);
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
@@ -61,6 +84,6 @@ export const dashboardMutationApi: DashboardMutationAPI = {
     return cmd?.payloadSchema ?? null;
   },
   getAvailableCommands: () => {
-    return _client?.getAvailableCommands() ?? [];
+    return currentClient()?.getAvailableCommands() ?? [];
   },
 };

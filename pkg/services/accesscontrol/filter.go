@@ -32,6 +32,10 @@ type SQLFilter struct {
 	Args  []any
 }
 
+func (f SQLFilter) AllowsAllRecords() bool {
+	return f.Where == allowAllQuery.Where
+}
+
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 // Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")

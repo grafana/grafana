@@ -9,10 +9,11 @@ interface MoveElementActionHelperProps {
   source: SceneObject;
   perform: () => void;
   undo: () => void;
+  selectOnMove?: boolean;
 }
 
 export function moveElement(props: MoveElementActionHelperProps) {
-  const { movedObject, source, perform, undo } = props;
+  const { movedObject, source, perform, undo, selectOnMove } = props;
 
   const element = getEditableElementFor(movedObject);
   if (!element) {
@@ -24,6 +25,7 @@ export function moveElement(props: MoveElementActionHelperProps) {
   edit({
     description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
     movedObject,
+    selectOnMove,
     source,
     perform,
     undo,

@@ -76,6 +76,10 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	key := sanitizeIdentifier(resource)
 	if isExternal {
 		key += "_external"
+	} else if isExternalPartitionKey(key) {
+		// The suffix encodes external-ness downstream; an internal key
+		// carrying it would be misclassified.
+		return Collection{}, fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
 	}
 	if len(key) > maxPartitionKeyLen {
 		return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
