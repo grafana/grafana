@@ -5930,6 +5930,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7361,6 +7362,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
