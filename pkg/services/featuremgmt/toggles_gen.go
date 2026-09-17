@@ -890,10 +890,6 @@ const (
 	// Aligns query splitting chunks with UTC midnight
 	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
 
-	// FlagQueryFetchConfigFromSettingsService
-	// Enables the query service to fetch the configuration from the settings service
-	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
-
 	// FlagProfilesHeatmap
 	// Enables heatmap visualization support for Pyroscope profiles
 	FlagProfilesHeatmap = "profilesHeatmap"
@@ -989,6 +985,10 @@ const (
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagReportingLegacyServiceUsesK8SClient
+	// Redirect legacy report service to use the Kubernetes client wrapper
+	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
 
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
