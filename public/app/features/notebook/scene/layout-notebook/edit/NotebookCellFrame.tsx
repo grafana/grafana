@@ -20,7 +20,10 @@ import { NotebookCellAddButton } from './NotebookCellAddButton';
  * child's style from a parent needs a hand-written class plus a descendant selector — the same
  * convention as `dashboard-canvas-controls` in the dashboard layouts.
  */
-const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+export const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+
+/** Stable class name on the frame itself, so the cell list can see which cell the pointer is over. */
+export const NOTEBOOK_CELL_FRAME_CLASS = 'notebook-cell-frame';
 
 const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
@@ -189,6 +192,7 @@ export function NotebookCellFrame({
           role={!isEditorCell ? 'group' : undefined}
           aria-label={!isEditorCell ? frameLabel : undefined}
           className={cx(
+            NOTEBOOK_CELL_FRAME_CLASS,
             styles.frame,
             isEditing && styles.frameEditing,
             !isEditorCell && styles.frameFocusable,
