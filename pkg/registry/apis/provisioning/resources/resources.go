@@ -233,6 +233,14 @@ func shouldSkipStrictValidation(oldHash, newHash string) bool {
 	return oldHash != "" && oldHash == newHash
 }
 
+// QuotaGate is the minimal quota interface RenameResourceFile needs: reserve
+// a slot for a genuine create, and give it back if the write turns out not
+// to need it. quotas.QuotaTracker (and its mock) already satisfy this.
+type QuotaGate interface {
+	TryAcquire() bool
+	Release()
+}
+
 // WriteResourceOption configures optional behavior for resource write operations.
 type WriteResourceOption func(*writeResourceConfig)
 
@@ -438,11 +446,13 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-// RenameResourceFile moves the resource at previousPath to newPath. quotaCheck
+// RenameResourceFile moves the resource at previousPath to newPath. quota
 // (nil-safe) is consulted only at the point a net-new resource is about to be
 // created -- an in-place update never calls it, so quota exhaustion cannot
-// block a rename that isn't actually adding a resource.
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, quotaCheck func() bool, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
+// block a rename that isn't actually adding a resource -- and given back if
+// the write ends up not needing it after all (failure, or an update found on
+// retry).
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, quota QuotaGate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read previous file: %w", err)
@@ -465,37 +475,51 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			// the new write instead of aborting; any other parse failure falls
 			// through to the fatal return below.
 			//
-			// resolved: hash match let the Get below settle whether an old
-			// resource exists, so nothing is left to orphan either way.
-			resolved := false
-			if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
-				// Same identity Run() itself writes with -- otherwise a
-				// mismatch can read as NotFound and wrongly choose ForceCreate.
-				identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
-				if err != nil {
-					return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("set provisioning identity: %w", err)
-				}
-				existing, getErr := newParsed.Client.Get(identityCtx, newParsed.Obj.GetName(), metav1.GetOptions{})
-				switch {
-				case getErr == nil:
-					newParsed.Existing = existing
+			// One Get (regardless of hash) settles whether an old resource
+			// exists under the new identity, so quota is gated exactly once
+			// however it's reached. Hash match additionally proves the old
+			// and new identities are the same object (identical bytes, same
+			// declared name), so nothing is left to orphan either way;
+			// hash-differ leaves that unconfirmed since only the new file's
+			// declared name is known.
+			resolved := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
+			// Same identity Run() itself writes with -- otherwise a mismatch
+			// can read as NotFound and wrongly choose ForceCreate.
+			identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+			if err != nil {
+				return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("set provisioning identity: %w", err)
+			}
+			existing, getErr := newParsed.Client.Get(identityCtx, newParsed.Obj.GetName(), metav1.GetOptions{})
+			reserved := false
+			switch {
+			case getErr == nil:
+				newParsed.Existing = existing
+				if resolved {
 					newParsed.SkipStrictValidation = true
-					resolved = true
-				case apierrors.IsNotFound(getErr):
-					if quotaCheck != nil && !quotaCheck() {
+				}
+			case apierrors.IsNotFound(getErr):
+				if quota != nil {
+					if !quota.TryAcquire() {
 						return "", "", schema.GroupVersionKind{}, size, false, quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", newPath))
 					}
-					newParsed.ForceCreate = true
-					resolved = true
+					reserved = true
 				}
+				newParsed.ForceCreate = true
 			}
 			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 			if err != nil {
+				if reserved {
+					quota.Release()
+				}
 				return "", "", gvk, size, false, fmt.Errorf("failed to write resource: %w", err)
 			}
-			// No old identity means no matching delete anywhere -- a Create
-			// here is a net-new resource the caller never reserved quota for.
+			// A create with no matching delete is the one outcome that adds a
+			// resource; a fallback to update (e.g. Create raced into
+			// AlreadyExists) needs its reservation given back.
 			netNew := newParsed.Action == provisioning.ResourceActionCreate
+			if reserved && !netNew {
+				quota.Release()
+			}
 			if resolved {
 				return newName, "", gvk, size, netNew, nil
 			}

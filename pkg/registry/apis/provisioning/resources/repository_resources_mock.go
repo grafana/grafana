@@ -543,14 +543,14 @@ func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run 
 	return _c
 }
 
-// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts
-func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, quotaCheck func() bool, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
+// RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef, quota, folderOpts
+func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, quota QuotaGate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
 	_va := make([]interface{}, len(folderOpts))
 	for _i := range folderOpts {
 		_va[_i] = folderOpts[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, ctx, path, previousRef, newPath, newRef, quotaCheck)
+	_ca = append(_ca, ctx, path, previousRef, newPath, newRef, quota)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
@@ -564,41 +564,41 @@ func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path 
 	var r3 int
 	var r4 bool
 	var r5 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error)); ok {
-		return rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error)); ok {
+		return rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) string); ok {
-		r0 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) string); ok {
+		r0 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) string); ok {
-		r1 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) string); ok {
+		r1 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) schema.GroupVersionKind); ok {
-		r2 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) schema.GroupVersionKind); ok {
+		r2 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r2 = ret.Get(2).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) int); ok {
-		r3 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) int); ok {
+		r3 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r3 = ret.Get(3).(int)
 	}
 
-	if rf, ok := ret.Get(4).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) bool); ok {
-		r4 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(4).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) bool); ok {
+		r4 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r4 = ret.Get(4).(bool)
 	}
 
-	if rf, ok := ret.Get(5).(func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) error); ok {
-		r5 = rf(ctx, path, previousRef, newPath, newRef, quotaCheck, folderOpts...)
+	if rf, ok := ret.Get(5).(func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) error); ok {
+		r5 = rf(ctx, path, previousRef, newPath, newRef, quota, folderOpts...)
 	} else {
 		r5 = ret.Error(5)
 	}
@@ -617,13 +617,13 @@ type MockRepositoryResources_RenameResourceFile_Call struct {
 //   - previousRef string
 //   - newPath string
 //   - newRef string
-//   - quotaCheck func() bool
+//   - quota QuotaGate
 //   - folderOpts ...EnsurePathOption
-func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, quotaCheck interface{}, folderOpts ...interface{}) *MockRepositoryResources_RenameResourceFile_Call {
-	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", append([]interface{}{ctx, path, previousRef, newPath, newRef, quotaCheck}, folderOpts...)...)}
+func (_e *MockRepositoryResources_Expecter) RenameResourceFile(ctx interface{}, path interface{}, previousRef interface{}, newPath interface{}, newRef interface{}, quota interface{}, folderOpts ...interface{}) *MockRepositoryResources_RenameResourceFile_Call {
+	return &MockRepositoryResources_RenameResourceFile_Call{Call: _e.mock.On("RenameResourceFile", append([]interface{}{ctx, path, previousRef, newPath, newRef, quota}, folderOpts...)...)}
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string, quotaCheck func() bool, folderOpts ...EnsurePathOption)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx context.Context, path string, previousRef string, newPath string, newRef string, quota QuotaGate, folderOpts ...EnsurePathOption)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]EnsurePathOption, len(args)-6)
 		for i, a := range args[6:] {
@@ -631,11 +631,11 @@ func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx cont
 				variadicArgs[i] = a.(EnsurePathOption)
 			}
 		}
-		var quotaCheck func() bool
+		var quota QuotaGate
 		if args[5] != nil {
-			quotaCheck = args[5].(func() bool)
+			quota = args[5].(QuotaGate)
 		}
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), quotaCheck, variadicArgs...)
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), quota, variadicArgs...)
 	})
 	return _c
 }
@@ -645,7 +645,7 @@ func (_c *MockRepositoryResources_RenameResourceFile_Call) Return(_a0 string, _a
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, func() bool, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, QuotaGate, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
