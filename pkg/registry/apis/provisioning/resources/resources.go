@@ -457,22 +457,26 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	}
 
 	if oldParseErr != nil {
-		// The previous path can no longer be parsed (e.g. it fails path validation
-		// after the file was renamed away from it) -- its identity is unknown, so we
-		// cannot safely delete it or compare it against the new resource. Proceed
-		// with writing the new resource anyway: the rename's whole point is the new
-		// path, and it must not be held hostage by the old, now-irrelevant one. The
-		// old resource is left for manual cleanup instead of silently disappearing.
-		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
-			newParsed.SkipStrictValidation = true
+		if pathErr := IsPathSupported(previousPath); pathErr != nil {
+			// Unknown identity (bad path, not a content problem): proceed with
+			// the new write instead of aborting; old resource left for manual
+			// cleanup. Any other parse failure falls through to the fatal
+			// return below.
+			if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
+				// Hash match alone doesn't prove the destination was ever
+				// admitted -- the old path was never syncable. Only relax
+				// validation once that object is confirmed to already exist.
+				if _, getErr := newParsed.Client.Get(ctx, newParsed.Obj.GetName(), metav1.GetOptions{}); getErr == nil {
+					newParsed.SkipStrictValidation = true
+				}
+			}
+			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+			if err != nil {
+				return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
+			}
+			return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 		}
-		// folderName is empty in both returns below: the old resource's
-		// identity is unknown, so there is no folder to signal cleanup for.
-		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
-		if err != nil {
-			return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
-		}
-		return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
+		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
