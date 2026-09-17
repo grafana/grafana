@@ -1466,11 +1466,7 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}()
 
 	rsp := s.backend.ReadResource(ctx, req)
-	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
-		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
-	}
-
-	if errRes := s.authorizeRead(ctx, user, req.Key, rsp.Folder); errRes != nil {
+	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
 		return &resourcepb.ReadResponse{Error: errRes}, nil
 	}
 	return &resourcepb.ReadResponse{
@@ -1482,15 +1478,20 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 // authorizeRead applies the "get" access check for an already-read resource,
 // using the folder resolved by the read. It returns nil when access is allowed,
-// or the error result to surface otherwise (403, or the check failure).
-func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, folder string) *resourcepb.ErrorResult {
+// or the error result to surface otherwise (403, or the check failure). A
+// NotFound is surfaced without authorizing: a 404 reveals nothing and the read
+// resolved no folder to check.
+func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rsp *BackendReadResponse) *resourcepb.ErrorResult {
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return rsp.Error
+	}
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 		Name:      key.Name,
-	}, folder)
+	}, rsp.Folder)
 	if err != nil {
 		return AsErrorResult(err)
 	}

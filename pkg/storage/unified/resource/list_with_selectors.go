@@ -117,17 +117,13 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 					Message: "empty resource read response",
 				}}, nil
 			}
-			// A not-found hit is stale (pruned/GC'd between search and read). Surface
-			// it without authorizing, like server.read, which returns NotFound before
-			// its access check: a 404 reveals nothing and may have no folder to check.
-			if val.Error != nil && val.Error.Code == http.StatusNotFound {
-				return &resourcepb.ListResponse{Error: val.Error}, nil
-			}
 			// The batched read did no authorization, so authorize each row here (the
 			// fallback path already authorized inside Read). Do it before surfacing a
 			// read error, so an unauthorized row is skipped, not revealed as errored.
+			// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
+			// read) without authorizing, like server.read.
 			if batched && row.key != nil {
-				if errRes := s.authorizeRead(ctx, user, row.key, val.Folder); errRes != nil {
+				if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
 					if errRes.Code == http.StatusForbidden {
 						continue
 					}
