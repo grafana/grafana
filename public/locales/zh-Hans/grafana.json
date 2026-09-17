@@ -915,6 +915,7 @@
       "button-view": "查看",
       "export-ariaLabel-export": "导出",
       "export-label-export": "导出",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "删除",
       "label-manage-permissions": "管理权限",
       "tooltip-history": "查看针对此联络点的通知尝试历史记录",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "正在加载..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "正在加载..."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "没有已暂停的规则",
         "pause-recording": "录制规则已暂停",
         "policy-tree": "策略树",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "通知路由",
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "重复的模板文件名称：“{{name}}”。模板文件名称必须唯一。",
         "templates-label": "通知模板",
         "templates-remove": "移除{{name}}",
-        "upload": "上传 YAML 文件",
+        "upload": "",
         "validating": "正在验证配置...",
         "validation-error": "验证失败",
         "validation-error-desc": "验证配置失败。",
         "validation-success": "验证成功",
         "validation-success-desc": "未找到冲突。配置已准备就绪，可以导入。",
         "validation-warning": "为了避免与现有资源发生冲突，某些资源将被重命名",
-        "yaml-file": "Alertmanager 配置 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 配置 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "数据源",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "添加自述文件",
-      "edit-tooltip": "编辑自述文件",
+      "edit-doc-tooltip": "",
       "empty-message": "添加自述文件，描述此文件夹中的内容以及在哪里可以找到正确的数据面板。",
       "load-error-retry": "重试",
-      "load-error-title": "无法加载自述文件",
-      "parse-error": "无法显示自述文件内容。"
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "清除历史记录",
@@ -12160,6 +12175,10 @@
     "team-not-found": "[未知团队]",
     "unknown-error": "未知错误"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
   },
@@ -12492,6 +12511,10 @@
     "authentication": {
       "title": "身份验证"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "书签"
     },
@@ -12698,6 +12721,7 @@
       "title": "已记录查询"
     },
     "reporting": {
+      "subtitle": "",
       "title": "报告"
     },
     "saved-queries": {
@@ -12712,6 +12736,10 @@
     },
     "search-dashboards": {
       "title": "搜索仪表板"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "查看 Grafana 配置中定义的设置",
@@ -16552,10 +16580,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

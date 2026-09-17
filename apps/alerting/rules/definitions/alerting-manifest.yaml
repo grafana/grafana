@@ -1386,6 +1386,21 @@ spec:
           required:
           - field
           type: object
+        listAlertRuleSearchRulesV0alpha1SearchRegexLeaf:
+          additionalProperties: false
+          description: Retained for generic schema compatibility; rejected by the
+            compatibility handler.
+          properties:
+            field:
+              type: string
+            negate:
+              type: boolean
+            pattern:
+              type: string
+          required:
+          - field
+          - pattern
+          type: object
         listAlertRuleSearchRulesV0alpha1SearchResultHit:
           additionalProperties: false
           properties:
@@ -1492,6 +1507,8 @@ spec:
               type: array
             range:
               $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf'
+            regex:
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRegexLeaf'
             text:
               $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf'
           type: object
@@ -1596,6 +1613,21 @@ spec:
               type: number
           required:
           - field
+          type: object
+        listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf:
+          additionalProperties: false
+          description: Retained for generic schema compatibility; rejected by the
+            compatibility handler.
+          properties:
+            field:
+              type: string
+            negate:
+              type: boolean
+            pattern:
+              type: string
+          required:
+          - field
+          - pattern
           type: object
         listRecordingRuleSearchRulesV0alpha1SearchResultHit:
           additionalProperties: false
@@ -1703,6 +1735,8 @@ spec:
               type: array
             range:
               $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf'
+            regex:
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf'
             text:
               $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf'
           type: object

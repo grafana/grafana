@@ -107,12 +107,7 @@ type APIGroupOptions struct {
 // shared by every version serving a resource: whichever version registers last
 // decides for the rest. This scopes the options to the single
 // group+version+resource being installed, so versions can differ.
-//
-// Scheme defaults to the group's scheme, which is what every caller passes.
 func (o APIGroupOptions) StorageOptsGetter(storageOpts apistore.StorageOptions) generic.RESTOptionsGetter {
-	if storageOpts.Scheme == nil {
-		storageOpts.Scheme = o.Scheme
-	}
 	// Tests and the noop getter do not support scoping; they ignore storage
 	// options entirely, so falling back leaves them no worse off.
 	if getter, ok := o.OptsGetter.(apistore.StorageOptionsGetter); ok {

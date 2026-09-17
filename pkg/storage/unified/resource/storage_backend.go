@@ -586,7 +586,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 	prunerMaxLimit := LookupPrunerHistoryLimit(key.Group, key.Resource, k.dashboardVersionsToKeep)
 	counter := 0
-	deleted := 0
+	toDelete := make([]DataKey, 0)
 	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
@@ -606,12 +606,11 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 		// If we already have the configured number of versions, delete any more create or update events
 		if datakey.Action != DataActionDeleted {
-			err := k.dataStore.Delete(ctx, datakey)
-			if err != nil {
-				return err
-			}
-			deleted += 1
+			toDelete = append(toDelete, datakey)
 		}
+	}
+	if err := k.dataStore.BatchDelete(ctx, toDelete); err != nil {
+		return err
 	}
 
 	k.log.Debug("pruned history successfully",
@@ -619,7 +618,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		"group", key.Group,
 		"resource", key.Resource,
 		"name", key.Name,
-		"rows", deleted)
+		"rows", len(toDelete))
 
 	return nil
 }
@@ -788,7 +787,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			return nil
 		}
 		if !b.garbageCollection.DryRun {
-			if err := b.dataStore.batchDelete(ctx, buffer); err != nil {
+			if err := b.dataStore.BatchDelete(ctx, buffer); err != nil {
 				return fmt.Errorf("failed to batch delete keys: %s", err)
 			}
 		}
@@ -2505,7 +2504,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		previousCount := int64(len(historyKeys))
-		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
 			reportError(err, "failed to delete collection")
 			return rsp
 		}
@@ -2531,7 +2530,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.batchDelete(ctx, saved)
+		err = b.dataStore.BatchDelete(ctx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback: %s", err)
 		}
