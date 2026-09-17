@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { type LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
@@ -62,6 +62,7 @@ export function LivePublish({ height, mode, body, addr, onSave }: Props) {
         onChange={setDraft}
         onBlur={doSave}
         onSave={doSave}
+        aria-label={t('live.live-publish.message', 'Message to publish')}
       />
       <div style={{ height: 32 }}>
         <Button onClick={onPublishClicked}>

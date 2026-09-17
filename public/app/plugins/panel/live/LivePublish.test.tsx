@@ -8,8 +8,8 @@ import { MessagePublishMode } from './types';
 
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({ value, onChange }: CodeMirrorEditorProps) => (
-    <textarea aria-label="Message to publish" value={value} onChange={(event) => onChange(event.currentTarget.value)} />
+  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
+    <textarea aria-label={ariaLabel} value={value} onChange={(event) => onChange(event.currentTarget.value)} />
   ),
 }));
 

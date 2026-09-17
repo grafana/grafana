@@ -11851,6 +11851,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
