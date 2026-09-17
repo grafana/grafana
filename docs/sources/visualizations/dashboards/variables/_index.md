@@ -19,7 +19,7 @@ weight: 800
 A variable is a placeholder for a value that you can use in dashboard queries, panel titles, links, and other dashboard elements.
 When you change the value of a variable, Grafana updates every dashboard element that uses that variable.
 
-Variables display as drop-down lists (or in some cases text fields) at the top of the dashboard.
+Variables display as drop-down lists&mdash;or in some cases text fields&mdash;at the top of the dashboard.
 These controls let viewers change what the dashboard displays without editing the dashboard.
 
 For example, if you need to monitor several servers, you _could_ make a dashboard for each server.
@@ -88,10 +88,6 @@ A _template_ is any query that contains a variable.
 Queries with text that starts with `$` are templates.
 For example, if you administer a dashboard that monitors several servers, it can have panels that use a template query like this one:
 
-{{< admonition type="note">}}
-Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
-{{< /admonition >}}
-
 ```text
 groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
 ```
@@ -106,7 +102,7 @@ Grafana documentation and the application typically refer to a _template query_ 
 
 ### Variables in URLs
 
-By default, variable values are synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
+By default, Grafana syncs variable values to the URL using [query parameter syntax](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
 For example:
 
 ```text
@@ -115,12 +111,12 @@ https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolati
 
 In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
 
-You can prevent a variable from being synced to the URL by setting `skipUrlSync` to `true` in the variable definition within the dashboard JSON model. When set, the variable value won't appear as a `var-` query parameter in the URL.
+You can prevent variables from syncing to the URL by setting `skipUrlSync` to `true` in the variable definition within the dashboard JSON model. When set, the variable value won't appear as a `var-` query parameter in the URL.
 
 This is useful when you want to keep URLs clean, prevent users from overriding a variable value through the URL, or avoid exposing sensitive values in shared links.
 
 {{< admonition type="note">}}
-Constant variables have `skipUrlSync` set to `true` by default, since their value is fixed and not intended to be changed through the URL.
+Constant variables have `skipUrlSync` set to `true` by default, because their value is fixed and shouldn't be changed through the URL.
 {{< /admonition >}}
 
 For more information about URL variables, shared links, time ranges, and filters, refer to [Create dashboard URL variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/).

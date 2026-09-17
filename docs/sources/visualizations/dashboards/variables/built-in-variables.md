@@ -47,13 +47,13 @@ They're always interpolated as epoch milliseconds by default, but you can contro
 
 The syntax above also works with `${__to}`.
 
-You can use this variable in URLs, as well. For example, you can send a user to a dashboard that shows a time range from six hours ago until now: `https://play.grafana.org/d/000000012/grafana-play-home?viewPanel=2&orgId=1?from=now-6h&to=now`
+You can use this variable in URLs, as well. For example, you can send a user to a dashboard that shows a time range from six hours ago until the current time: `https://play.grafana.org/d/000000012/grafana-play-home?viewPanel=2&orgId=1?from=now-6h&to=now`
 
 ## `$__interval`
 
-You can use the `$__interval` variable as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch), or as a _summarize_ function parameter (for Graphite).
+You can use the `$__interval` variable as a parameter to group by time for InfluxDB, MySQL, Postgres, and MSSQL; as a Date histogram interval for Elasticsearch; or as a _summarize_ function parameter for Graphite.
 
-Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph, then queries can be made more efficient by grouping by a larger interval. It's more efficient to group by 1 day than by 10s when looking at 3 months of data. The graph looks the same and the query is faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
+Grafana automatically calculates an interval that you can use to group by time in queries. When there are more data points than a graph can show, grouping by a larger interval makes queries more efficient. Grouping by 1 day is more efficient than grouping by 10s when you look at 3 months of data. The graph looks the same, and the query is faster. Grafana calculates `$__interval` from the time range and the graph width in pixels.
 
 Approximate Calculation: `(to - from) / resolution`
 
@@ -77,7 +77,7 @@ The **Singlestat** panel is no longer available from Grafana 8.0.
 
 ## `$__namespace`
 
-This variable is the Kubernetes namespace that Grafana uses internally to identify the current organization. In Grafana Cloud, the value might be `stacks-123`. In self-managed Grafana, it is `default` for the default organization and `org-<id>` for other organizations. Use the variable in API URLs that require an organization namespace, such as `/apis/<group>/<version>/namespaces/${__namespace}/<resource>`.
+This variable is the Kubernetes namespace that Grafana uses internally to identify the current organization. In Grafana Cloud, the value might be `stacks-123`. In self-managed Grafana, it's `default` for the default organization and `org-<id>` for other organizations. Use the variable in API URLs that require an organization namespace, such as `/apis/<group>/<version>/namespaces/${__namespace}/<resource>`.
 
 {{< admonition type="note" >}}
 This variable is only interpolated in dashboards. In Explore, alert rule query editors, and other views outside a dashboard, it's left as written.
@@ -108,7 +108,7 @@ This variable is the `$__rate_interval` variable in milliseconds, not a time-int
 
 ## `$timeFilter` or `$__timeFilter`
 
-The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
+The `$timeFilter` variable returns the active time range selection as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
 
 This is used in several places, including:
 
@@ -121,7 +121,7 @@ This is used in several places, including:
 
 The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
 
-If the currently selected time zone is _Browser Time_, Grafana tries to determine your browser time zone.
+If the active time zone selection is _Browser Time_, Grafana tries to determine your browser time zone.
 
 ## `$__url_time_range`
 
