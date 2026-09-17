@@ -3,16 +3,21 @@ package keys
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -77,6 +82,11 @@ func specPath() string {
 func dashboardClient(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sResourceClient {
 	t.Helper()
 	return helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+}
+
+func orgBDashboardClient(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sResourceClient {
+	t.Helper()
+	return helper.GetResourceClient(apis.ResourceClientArgs{User: helper.OrgB.Admin, GVR: gvr})
 }
 
 func createDashboard(t *testing.T, client *apis.K8sResourceClient, name, title string) error {
@@ -254,4 +264,37 @@ func TestIntegrationListKeys_AbsentWhenDisabled(t *testing.T) {
 			assert.NotContains(t, servedSpecPaths(t, helper), path)
 		}
 	})
+}
+
+// Tests the cluster-wide route via handler and not over HTTP because service identity is an
+// in-process requester only.
+func TestIntegrationListKeys_ClusterWideSpansNamespaces(t *testing.T) {
+	helper := setupTest(t)
+
+	org1, orgB := adminNamespace(helper), helper.OrgB.Admin.Identity.GetNamespace()
+	require.NotEqual(t, org1, orgB, "the test only proves anything across two namespaces")
+
+	require.NoError(t, createDashboard(t, dashboardClient(t, helper), "keys-org1", "A"))
+	require.NoError(t, createDashboard(t, orgBDashboardClient(t, helper), "keys-orgb", "B"))
+
+	handler := keysapi.NewHandler(helper.GetEnv().ResourceClient, noop.NewTracerProvider().Tracer("test")).
+		ListKeysRoute(gvr.Group, gvr.Version, gvr.Resource, "Dashboard").Handler
+
+	req := httptest.NewRequest(http.MethodPost, clusterPath(), strings.NewReader(`{}`))
+	req = req.WithContext(identity.WithServiceIdentityContext(t.Context(), 1))
+	rec := httptest.NewRecorder()
+	handler(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	var list metav1.PartialObjectMetadataList
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &list))
+	assert.Equal(t, listKind, list.Kind)
+
+	got := map[string]string{}
+	for _, item := range list.Items {
+		got[item.Name] = item.Namespace
+	}
+	assert.Equal(t, org1, got["keys-org1"])
+	assert.Equal(t, orgB, got["keys-orgb"], "a pinned namespace would serve only one org")
 }
