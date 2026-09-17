@@ -1122,6 +1122,44 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Default routing tree alias", func(t *testing.T) {
+		resetPolicies(t)
+
+		t.Run("Get resolves to the default route and echoes the alias name", func(t *testing.T) {
+			got, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias))
+			require.NoError(t, err)
+
+			expected := k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
+			assert.Equal(t, expected.Spec, got.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, got.Name)
+		})
+
+		t.Run("Update modifies the root route and echoes the alias name", func(t *testing.T) {
+			updated, err := adminClient.Update(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, policy_exports.Legacy()), resource.UpdateOptions{ResourceVersion: ""})
+			require.NoError(t, err)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, updated.Name)
+
+			// Same behavior as updating via the canonical name: the root route itself was modified,
+			// not a new managed route created under the alias.
+			viaCanonicalName, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeName))
+			require.NoError(t, err)
+			assert.Equal(t, updated.Spec, viaCanonicalName.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeName, viaCanonicalName.Name)
+		})
+
+		t.Run("Create fails", func(t *testing.T) {
+			_, err := adminClient.Create(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, &defaultPolicy), resource.CreateOptions{})
+			require.Error(t, err)
+		})
+
+		t.Run("Delete resets the default route, same as deleting via the canonical name", func(t *testing.T) {
+			err := adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias), resource.DeleteOptions{})
+			require.NoError(t, err)
+
+			validateGetEqual(t, models.DefaultRoutingTreeName, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
+		})
+	})
 }
 
 // TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting route resource. It
