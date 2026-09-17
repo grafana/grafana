@@ -92,10 +92,6 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       });
 
       if (started) {
-        // Already in edit mode as a user session (new dashboards auto-enter on
-        // activation). Re-tag so the Add pane stays closed and the canvas
-        // matches a planning session that landed via editSource=assistant.
-        dashboard.onEnterEditMode('assistant');
         setAssistantDriven(true);
         reportInteraction('dashboard_prompt_planning_started', { source: 'empty_dashboard' });
       }
