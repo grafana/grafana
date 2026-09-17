@@ -58,6 +58,18 @@ function readTableSurfaces() {
   };
 }
 
+function getGridStyleRule() {
+  const gridClasses = Array.from(screen.getByRole('grid').classList);
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule &&
+        gridClasses.some((className) => rule.selectorText === `.${className}`) &&
+        Boolean(rule.style.getPropertyValue('--rdg-background-color'))
+    );
+}
+
 describe('TableDataGrid', () => {
   let origResizeObserver = global.ResizeObserver;
 
@@ -119,6 +131,7 @@ describe('TableDataGrid', () => {
         expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe('');
         expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
           headerDivider
         );
@@ -136,6 +149,9 @@ describe('TableDataGrid', () => {
         );
         expect(transparentGrid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
+        );
+        expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe(
+          `1px solid ${theme.components.table.border}`
         );
       }
     );
