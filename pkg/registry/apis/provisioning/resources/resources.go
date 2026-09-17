@@ -471,20 +471,14 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	if oldParseErr != nil {
 		if pathErr := IsPathSupported(previousPath); pathErr != nil {
-			// Unknown identity (bad path, not a content problem): proceed with
-			// the new write instead of aborting; any other parse failure falls
-			// through to the fatal return below.
-			//
-			// One Get (regardless of hash) settles whether an old resource
-			// exists under the new identity, so quota is gated exactly once
-			// however it's reached. Hash match additionally proves the old
-			// and new identities are the same object (identical bytes, same
-			// declared name), so nothing is left to orphan either way;
-			// hash-differ leaves that unconfirmed since only the new file's
-			// declared name is known.
+			// Bad path, not a content problem: proceed with the new write;
+			// other parse failures fall through to the fatal return below.
+			// One Get (regardless of hash) gates quota exactly once; hash
+			// match additionally proves old and new are the same object, so
+			// nothing is left to orphan -- hash-differ leaves that unconfirmed.
 			resolved := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
-			// Same identity Run() itself writes with -- otherwise a mismatch
-			// can read as NotFound and wrongly choose ForceCreate.
+			// Same identity Run() writes with -- a mismatch can read as
+			// NotFound and wrongly choose ForceCreate.
 			identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
 			if err != nil {
 				return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("set provisioning identity: %w", err)
@@ -505,6 +499,10 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 					reserved = true
 				}
 				newParsed.ForceCreate = true
+			default:
+				// Neither found nor not-found -- stays fatal rather than
+				// falling through with neither branch's decision made.
+				return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("check existing resource before rename recovery: %w", getErr)
 			}
 			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 			if err != nil {
