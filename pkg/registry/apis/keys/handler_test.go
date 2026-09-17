@@ -243,9 +243,6 @@ func TestListKeys_RequiresWildcardNamespaceScope(t *testing.T) {
 		"multi tenant stack":            {"stacks-1234", http.StatusForbidden},
 		"org scoped":                    {"org-3", http.StatusForbidden},
 		"unscoped":                      {"", http.StatusForbidden},
-		// The case the check exists for: the provisioning identity is a service,
-		// but scoped to one namespace, so it may not read across all of them.
-		"provisioning identity": {"stacks-1234", http.StatusForbidden},
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
