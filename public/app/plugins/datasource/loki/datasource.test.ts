@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 
 import {
@@ -208,6 +208,41 @@ describe('LokiDatasource', () => {
   afterEach(() => {
     setBackendSrv(origBackendSrv);
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  describe('query source tags', () => {
+    const runQuery = async (app: string, supportingQueryType?: string) => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const fetchMock = jest
+        .fn()
+        .mockReturnValue(of({ ...testLogsResponse, data: { results: { A: { frames: [] } } } }));
+      setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
+      const target: LokiQuery = { expr: '{a="b"}', refId: 'A', supportingQueryType };
+
+      await firstValueFrom(ds.query({ ...baseRequestOptions, app, targets: [target] }));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      expect(target.supportingQueryType).toBe(supportingQueryType);
+      return fetchMock.mock.calls[0][0].data.queries[0];
+    };
+
+    it.each([undefined, ''])('tags Explore queries with an unset source (%s)', async (source) => {
+      expect(await runQuery(CoreApp.Explore, source)).toHaveProperty('supportingQueryType', 'grafana-explore');
+    });
+
+    it.each([...Object.values(SupportingQueryType), 'grafana-lokiexplore-app'])(
+      'preserves the existing source %s',
+      async (source) => {
+        expect(await runQuery(CoreApp.Explore, source)).toHaveProperty('supportingQueryType', source);
+      }
+    );
+
+    it.each([CoreApp.Dashboard, CoreApp.Unknown, 'grafana-lokiexplore-app'])(
+      'does not tag queries from %s as Explore',
+      async (app) => {
+        expect((await runQuery(app)).supportingQueryType).toBeUndefined();
+      }
+    );
   });
 
   describe('when doing logs queries with limits', () => {
@@ -1817,6 +1852,23 @@ describe('LokiDatasource', () => {
     afterAll(() => {
       config.featureToggles.lokiQuerySplitting = false;
     });
+    it('passes the Explore source to split queries', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const query: DataQueryRequest<LokiQuery> = {
+        ...baseRequestOptions,
+        targets: [{ expr: '{a="b"}', refId: 'A' }],
+        app: CoreApp.Explore,
+      };
+
+      await firstValueFrom(ds.query(query));
+      expect(runSplitQuery).toHaveBeenLastCalledWith(
+        ds,
+        expect.objectContaining({
+          targets: [expect.objectContaining({ supportingQueryType: 'grafana-explore' })],
+        })
+      );
+    });
+
     it.each([
       [[{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]],
       [[{ expr: '{a="b"}', refId: 'A' }]],

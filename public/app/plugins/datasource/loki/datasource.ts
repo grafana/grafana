@@ -324,6 +324,8 @@ export class LokiDatasource
       .map((q) => ({
         ...q,
         maxLines: q.maxLines ?? this.maxLines,
+        // The backend turns this value into the X-Query-Tags Source header, as it does for Drilldown.
+        supportingQueryType: q.supportingQueryType || (request.app === CoreApp.Explore ? 'grafana-explore' : undefined),
         scopes:
           config.featureToggles.scopeFilters && config.featureToggles.logQLScope
             ? request.scopes?.flatMap((scope) => scope.spec.filters)

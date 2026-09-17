@@ -1,11 +1,6 @@
 import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
-import {
-  LokiDataQuery as LokiQueryFromSchema,
-  LokiQueryType,
-  SupportingQueryType,
-  LokiQueryDirection,
-} from './dataquery.gen';
+import { LokiDataQuery as LokiQueryFromSchema, LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 
 // @todo import from core
 export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
@@ -24,8 +19,8 @@ export enum LabelType {
 
 export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
-  /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
-  supportingQueryType?: SupportingQueryType;
+  /** Identifies supporting queries or the source app in Loki's X-Query-Tags header. */
+  supportingQueryType?: string;
   // CUE autogenerates `queryType` as `?string`, as that's how it is defined
   // in the parent-interface (in DataQuery).
   // the temporary fix (until this gets improved in the codegen), is to
