@@ -9,22 +9,10 @@ draft: true
 ---
 
 <!--
-Authoring outline, not finished customer-facing copy.
-
-References:
-- Style guide: https://grafana.com/docs/writers-toolkit/write/style-guide/
-- Task structure: https://grafana.com/docs/writers-toolkit/structure/topic-types/task/
-- Multiple-task template: https://github.com/grafana/writers-toolkit/blob/main/docs/static/templates/multiple-tasks-template.md
-
-Write a short introduction after each heading. For procedures, add a stem sentence,
-numbered steps with one action per step, and the expected outcome.
-Use sentence case, address the reader as "you", bold UI labels, and use semantic line breaks.
-
-Release target: Grafana Enterprise 13.3.x and Grafana Cloud.
-Primary audience: Grafana Cloud users.
+Draft pending release confirmation. Target: Grafana Enterprise 13.3.x and Grafana Cloud.
 Before publishing: confirm product naming, Grafana Cloud rollout, and the release stage.
-Keep feature-toggle and rollout procedures in the internal runbook, not this customer workflow.
-Set labels.stage to the confirmed release stage, remove the writing prompts, and remove draft: true.
+Set labels.stage, remove draft: true, and link this page from Configure alert rules.
+Keep feature-toggle and rollout procedures in the internal runbook.
 -->
 
 # Improve alert rule quality
@@ -110,58 +98,158 @@ A policy with no required annotations or labels checks nothing.
 
 ## Review alert quality
 
-_TODO: Write the procedure for opening Alert quality and interpreting the results._
+The **Alert quality** tab lists rules that don't meet your policy and shows an overall quality score.
 
-<!--
-Explain missing-field badges, Detect-only versus Enforced, and the available search filters.
-Describe the score as the proportion of assessed rules that meet every configured requirement,
-on a scale of 0 to 10. Both modes count; this isn't a score of alert usefulness or severity.
-Confirm permission-related visibility when describing the assessed rule set.
-Explain that search filters narrow the list, not the score, and distinguish an empty policy
-from a configured policy with no findings.
--->
+To review the findings, follow these steps:
+
+1. Go to **Alerting** > **Alert rules** and select **Alert quality**.
+1. Review the **Alert quality score** and the number of rules that need attention.
+1. Inspect the missing-field badges on each rule.
+
+   Each badge names the missing field and its mode, such as **Runbook URL · Detect-only** or **team · Enforced**.
+   The list shows rules with the most missing fields first.
+
+1. Use **Search** to narrow the list by rule name, folder, group, or label.
+
+### Understand the score
+
+The score represents the proportion of assessed rules that meet every configured requirement, on a scale of 0 to 10.
+For example, if 8 of 10 rules meet the policy, the score is 8.0.
+Grafana rounds the score to one decimal place.
+
+Both detect-only and enforced requirements count toward the score.
+The score measures compliance with your policy, not alert accuracy, severity, or noise.
+
+Your permissions determine which rules you can view and assess.
+Search filters change the findings list, not the score or the total rule count.
+Grafana also displays 10.0 when there are no rules to assess, so check the rule count alongside the score.
+
+If no requirements are configured, Grafana displays a message instead of a score.
+With a configured policy and no findings, Grafana displays a score of 10.0 and a completion message.
+
+### Filter the findings
+
+Enter a rule name in **Search**, or use the following filters:
+
+| Example               | Finds                                                    |
+| --------------------- | -------------------------------------------------------- |
+| `rule:cpu`            | Rules with names that contain `cpu`, regardless of case. |
+| `namespace:Platform`  | Rules in the folder named `Platform`.                    |
+| `group:production`    | Rules in the evaluation group named `production`.        |
+| `label:team=platform` | Rules with a `team` label set to `platform`.             |
+
+Combine filters to narrow the results further.
+Use quotes around values containing spaces, such as `namespace:"Platform alerts"`.
+Label filters match labels already on the rule, not missing label requirements.
 
 ## Resolve quality findings
 
-_TODO: Describe how to add missing values and confirm that the findings are resolved._
+Add meaningful values for the missing fields in each rule.
+For the example policy, set `runbook_url` to the rule's runbook URL and `team` to the owning team's name.
 
-<!--
-Lead with the provisioned workflow: update the source configuration and reapply it.
-Only direct readers to Edit for rules that are editable in Grafana.
-Continue the example from the policy configuration section and explain how to reload
-or revisit the quality view to check the result; don't promise automatic refresh.
--->
+Changing label values can affect notification routing.
+Choose values that match your team's notification policies.
+
+### Update provisioned rules
+
+For provisioned rules, make changes in the source configuration so they remain part of your provisioning workflow.
+
+To resolve a finding on a provisioned rule, follow these steps:
+
+1. Locate the rule in its source configuration, using the rule name, folder, and group shown in **Alert quality**.
+1. Add values for the missing annotations and labels.
+1. Reapply the configuration through your usual provisioning workflow.
+1. Reload the **Alert quality** page and check the rule's findings.
+
+A rule disappears from the findings list when it meets every configured requirement.
+If other required fields are still missing, the rule remains in the list with those findings.
+
+### Update rules in Grafana
+
+For rules that you can edit in Grafana, use the **Edit** action on the quality page.
+
+To resolve a finding in the rule editor, follow these steps:
+
+1. Click **Edit** for the affected rule.
+1. Fill in the missing annotations and labels in the rule editor.
+1. Click **Save**.
+1. Return to **Alert quality** and reload the page to check the findings.
 
 ## Optional: Enforce quality requirements
 
-_TODO: Write the procedure for moving selected requirements from detect-only to enforced._
+After reviewing and resolving findings, enable enforcement for the requirements you want to apply to supported provisioning writes.
+You can enforce selected requirements while keeping others detect-only.
 
-<!--
-Cover individual Enforce controls, Enforce all requirements, the mixed state, and Save.
-Enforce all changes the currently configured requirements; future additions remain detect-only.
-Switching enforcement off keeps the requirement in the policy and in quality assessment.
-Removing a requirement stops checking it altogether.
-Enabling enforcement doesn't stop existing rules from evaluating.
+To enable enforcement, follow these steps:
 
-End with verification on a test rule through a supported as-code write path:
-check that a missing enforced value rejects the write, a compliant write succeeds,
-and switching back to detect-only permits the write without hiding its quality finding.
--->
+1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
+1. Turn on **Enforce** beside each requirement you want to enforce.
+
+   For example, enforce `team` while keeping **Runbook URL** detect-only.
+   To enforce all currently configured requirements, turn on **Enforce all requirements** instead.
+
+1. Click **Save**.
+
+   Grafana displays **Policy saved** to confirm the change.
+
+When only some requirements are enforced, the form displays **Some requirements enforced**.
+New requirements still start detect-only, even if you previously enforced all requirements.
+The **Enforce all requirements** control is unavailable when the policy has no requirements.
+
+### Verify enforcement
+
+Use a non-production stack and a paused test rule so verification doesn't send notifications.
+Configure a policy in that stack with `team` enforced and `runbook_url` detect-only.
+
+To verify enforcement, follow these steps:
+
+1. Try to create the test rule through a [supported provisioning path](#supported-enforcement-paths), without a `team` label.
+   Keep the rest of the rule valid so the rejection tests the quality requirement.
+
+   Grafana rejects the write and identifies `labels.team` as missing.
+
+1. Add a `team` label and retry the write.
+
+   Grafana accepts the rule when all enforced requirements are satisfied.
+   If `runbook_url` is still missing, the quality page reports a detect-only finding for it.
+
+1. In the test stack's policy, turn off **Enforce** for `team` and click **Save**.
+1. Remove `team` from the test rule's source configuration and reapply it.
+
+   Grafana accepts the update, and the missing label remains a detect-only finding after you reload **Alert quality**.
+
+### Disable enforcement or remove a requirement
+
+To return a requirement to detect-only, turn off its **Enforce** control and click **Save**.
+The requirement remains in the policy and continues to affect the quality score.
+
+When all requirements are enforced, turn off **Enforce all requirements** and click **Save** to return them all to detect-only.
+If only some requirements are enforced, use their individual **Enforce** controls to turn them off.
+
+To stop checking a field altogether, remove its requirement and save the policy.
+For a built-in annotation, turn off its switch under **Required annotations**.
+For a label, remove its key from **Label keys**.
 
 ## Troubleshoot quality findings and rejected writes
 
-_TODO: Add concise symptom-and-action guidance for the cases readers are likely to encounter._
+Use the following guidance when you can't access the feature, resolve a finding, or apply a rule change.
 
-<!--
-Suggested cases: settings aren't visible; a provisioned rule has no Edit action;
-a rule still has findings after enforcement is disabled; a write is rejected;
-a write succeeds despite a finding; or the quality page can't load the policy or rules.
-Explain how to use the rejection's rule and field details to fix the source configuration.
-Keep internal deployment procedures and operational runbooks out of this page.
--->
+| Symptom                                                     | Action                                                                                                                                                          |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Alert quality** or **Alert rule quality** isn't visible.  | Ask your stack administrator to check your [permissions](#before-you-begin) and the feature's availability in your stack.                                       |
+| A rule has no **Edit** action.                              | If it has a **Provisioned** badge, update its source configuration. Otherwise, check your permission to update rules in that folder.                            |
+| Grafana reports that no quality policy is configured.       | Add at least one requirement in **Alert rule quality** and click **Save**. An empty policy doesn't assess any fields.                                           |
+| No findings match your search, but the score is below 10.0. | Clear **Search** to view all findings. Search filters don't change the score.                                                                                   |
+| A finding remains after enforcement is disabled.            | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                           |
+| A provisioning write is rejected by the quality policy.     | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                |
+| A write succeeds despite a quality finding.                 | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths).       |
+| Grafana can't load the rules or policy.                     | On **Alert quality**, click **Retry**. On the settings page, reload the page. If the error persists, contact your stack administrator or Grafana Cloud support. |
 
 ## Next steps
 
-_TODO: Link to relevant provisioning, annotation and label, and alerting-permission documentation._
+Use these guides to improve rule context, manage rules as code, and configure access:
 
-<!-- Use existing customer documentation rather than duplicating those procedures here. -->
+- **Rule context:** [Labels and annotations](../../fundamentals/alert-rules/annotation-label/).
+- **Provisioning:** [Use Terraform to provision alerting resources](../../set-up/provision-alerting-resources/terraform-provisioning/).
+- **API management:** [Use the HTTP API to manage alerting resources](../../set-up/provision-alerting-resources/http-api-provisioning/).
+- **Permissions:** [Configure RBAC](../../set-up/configure-rbac/).
