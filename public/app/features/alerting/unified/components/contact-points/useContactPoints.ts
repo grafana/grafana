@@ -97,7 +97,9 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
   return useListReceiverQuery(hookParams, {
     ...queryOptions,
     selectFromResult: (result) => {
-      const data = result.data?.items.map((item) => parseK8sReceiver(item));
+      // "items" is required by the generated types, but the API can omit it entirely (e.g. errors serialised as a list body),
+      // so guard at runtime to avoid crashing the entire contact points page
+      const data = result.data?.items?.map((item) => parseK8sReceiver(item));
 
       return {
         ...result,

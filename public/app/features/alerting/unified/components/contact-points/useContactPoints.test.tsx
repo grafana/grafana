@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
@@ -12,6 +13,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { setAlertmanagerConfig } from '../../mocks/server/entities/alertmanagers';
+import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { KnownProvenance } from '../../types/knownProvenance';
 
 import { useContactPointsWithStatus } from './useContactPoints';
@@ -21,7 +23,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
   return <ProviderWrapper>{children}</ProviderWrapper>;
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 const getHookResponse = async () => {
   const { result } = renderHook(
@@ -302,5 +304,34 @@ describe('useContactPoints', () => {
       // When annotations are missing, the mock handler should set provenance to undefined
       expect(contactPoint?.provenance).toBeUndefined();
     });
+  });
+
+  it('should not throw when the receivers list response has no "items"', async () => {
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () =>
+        HttpResponse.json({
+          kind: 'ReceiverList',
+          apiVersion: 'notifications.alerting.grafana.app/v1beta1',
+          metadata: {},
+        })
+      )
+    );
+
+    const { result } = renderHook(
+      () =>
+        useContactPointsWithStatus({
+          alertmanager: GRAFANA_RULES_SOURCE_NAME,
+          fetchPolicies: false,
+          fetchStatuses: false,
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.contactPoints).toEqual([]);
   });
 });
