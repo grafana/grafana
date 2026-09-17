@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"errors"
 	"iter"
 	"strconv"
 
@@ -12,8 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// keysListerPageLimit is the max keys_only page size (server cap).
+// keysListerPageLimit is the max keys_only page size. The server clamps to its own
+// cap, so this is a client-side hint and not a contract shared across the boundary.
 const keysListerPageLimit = 10000
+
+// ErrKeysOnlyUnsupported means the server answered a keys-only list with bodies
+// instead of keys. A server older than keys_only ignores the field, and its items
+// carry no namespace or name, so keys built from them would all collide.
+var ErrKeysOnlyUnsupported = errors.New("server did not honour keys_only")
 
 // Key is a resource identity from a keys-only list: no body, just what the KV
 // key carries. The controller re-fetches the object on demand.
@@ -71,6 +78,10 @@ func (l grpcKeysLister) ListKeys(ctx context.Context) (int64, iter.Seq2[Key, err
 				return
 			}
 			for _, it := range page.GetItems() {
+				if it.GetName() == "" {
+					yield(Key{}, ErrKeysOnlyUnsupported)
+					return
+				}
 				k := Key{
 					Namespace:       it.GetNamespace(),
 					Name:            it.GetName(),

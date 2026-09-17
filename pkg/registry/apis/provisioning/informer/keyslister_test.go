@@ -71,3 +71,61 @@ func TestGRPCConnectionKeysLister(t *testing.T) {
 	assert.Equal(t, Key{Namespace: "ns1", Name: "a", ResourceVersion: "10"}, keys[0])
 	assert.Equal(t, Key{Namespace: "ns1", Name: "c", ResourceVersion: "12"}, keys[2])
 }
+
+// A server older than keys_only ignores the field and answers with bodies, whose
+// items carry no name. Building keys from those would key every entry the same,
+// so the lister has to refuse rather than synthesise.
+func TestGRPCKeysLister_RefusesUnhonouredKeysOnly(t *testing.T) {
+	honoured := &resourcepb.ResourceWrapper{Namespace: "ns1", Name: "a", ResourceVersion: 10}
+	// What an older server returns: a body, and none of the key fields.
+	bodyOnly := &resourcepb.ResourceWrapper{ResourceVersion: 10, Value: []byte(`{"kind":"Connection"}`)}
+
+	for name, tc := range map[string]struct {
+		pages    []*resourcepb.ListResponse
+		wantKeys int
+	}{
+		"on the first page": {
+			pages:    []*resourcepb.ListResponse{{Items: []*resourcepb.ResourceWrapper{bodyOnly}, ResourceVersion: 100}},
+			wantKeys: 0,
+		},
+		// The guard runs per item, so a server that only degrades later is caught too.
+		"on a later page": {
+			pages: []*resourcepb.ListResponse{
+				{Items: []*resourcepb.ResourceWrapper{honoured}, NextPageToken: "tok", ResourceVersion: 100},
+				{Items: []*resourcepb.ResourceWrapper{bodyOnly}, ResourceVersion: 100},
+			},
+			wantKeys: 1,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, seq := NewGRPCConnectionKeysLister(&fakeStoreClient{pages: tc.pages}).ListKeys(context.Background())
+
+			var keys []Key
+			var gotErr error
+			for k, err := range seq {
+				if err != nil {
+					gotErr = err
+					break
+				}
+				keys = append(keys, k)
+			}
+
+			require.ErrorIs(t, gotErr, ErrKeysOnlyUnsupported)
+			assert.Len(t, keys, tc.wantKeys, "keys before the unhonoured item still stream")
+		})
+	}
+}
+
+// The guard must not fire on the shape a current server returns.
+func TestGRPCKeysLister_AcceptsHonouredKeysOnly(t *testing.T) {
+	fake := &fakeStoreClient{pages: []*resourcepb.ListResponse{{
+		Items:           []*resourcepb.ResourceWrapper{{Namespace: "ns1", Name: "a", ResourceVersion: 10}},
+		ResourceVersion: 100,
+	}}}
+
+	_, seq := NewGRPCConnectionKeysLister(fake).ListKeys(context.Background())
+	for k, err := range seq {
+		require.NoError(t, err)
+		assert.Equal(t, Key{Namespace: "ns1", Name: "a", ResourceVersion: "10"}, k)
+	}
+}
