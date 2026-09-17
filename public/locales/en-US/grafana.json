@@ -14832,6 +14832,7 @@
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
+      "editor-label": "Resource JSON",
       "existing-dashboard": "Existing dashboard",
       "history": "History",
       "message": {
