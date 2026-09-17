@@ -221,7 +221,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     json: css({
       flexGrow: 1,
-      width: '100%',
       minWidth: 0,
       minHeight: '300px',
       maxHeight: '800px',
