@@ -33,10 +33,13 @@ export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<Re
         }
       }
 
+      // Cluster-scoped kinds, version-level routes and discovery are generated with absolute paths.
+      const url = requestOptions.url.startsWith('/apis/') ? requestOptions.url : baseURL + requestOptions.url;
+
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
-          url: baseURL + requestOptions.url,
+          url,
           // Default to GET so backend_srv correctly skips success alerts for queries
           method: requestOptions.method ?? 'GET',
           showErrorAlert: requestOptions.showErrorAlert ?? false,
