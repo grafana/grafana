@@ -26,6 +26,17 @@ describe('live math expressions', () => {
     expect(Number.isNaN(comparisonValues[2] as number)).toBe(true);
   });
 
+  it('preserves null values through logical operators', () => {
+    const or = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '$A || 1' }, [0]);
+    expect(or.values([[null, 0, 2]])[0]).toEqual([null, 1, 1]);
+
+    const and = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '$A && 1' }, [0]);
+    expect(and.values([[null, 0, 2]])[0]).toEqual([null, 0, 1]);
+
+    const nan = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '$A || 1' }, [0]);
+    expect(Number.isNaN(nan.values([[NaN]])[0][0] as number)).toBe(true);
+  });
+
   it('preserves null values through unary operators and math functions', () => {
     const unary = createLiveMathTransform({ sourceRefId: 'A', resultRefId: 'B', expression: '-$A' }, [0]);
     expect(unary.values([[null, 2]])[0]).toEqual([null, -2]);
