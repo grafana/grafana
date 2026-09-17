@@ -6,7 +6,6 @@ import { useAsync } from 'react-use';
 
 import {
   type DataQuery,
-  type DataSourceRef,
   type GrafanaTheme2,
   type SelectableValue,
   DataTopic,
@@ -50,22 +49,6 @@ const topics = [
 ];
 
 export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
-
-function datasourceRefKey(ref?: DataSourceRef | string | { uid?: string; type?: string } | null): string {
-  if (ref == null) {
-    return '';
-  }
-  if (typeof ref === 'string') {
-    return ref;
-  }
-  if (ref.uid) {
-    return ref.uid;
-  }
-  if (ref.type) {
-    return `type:${ref.type}`;
-  }
-  return '';
-}
 
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
@@ -149,8 +132,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
   const dashboard = getDashboardSrv().getCurrent();
 
   // Keep the panel list sync so the Select mounts immediately; apply names after settings resolve.
-  // Key and look up by the panel ref only — never the resolved default instance — so the
-  // cache stays valid across the default-datasource load.
+  // Key by panel id so type-specific default refs (same uid, different type) do not collide.
   const { value: datasourceNames = {} } = useAsync(async () => {
     if (!dashboard) {
       return {};
@@ -159,7 +141,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     const entries = await Promise.all(
       dashboard.panels.map(async (panel) => {
         const settings = await getDataSourceInstanceSettings(panel.datasource ?? null);
-        return [datasourceRefKey(panel.datasource), settings?.name] as const;
+        return [panel.id, settings?.name] as const;
       })
     );
 
@@ -168,7 +150,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
 
   const getPanelDescription = useCallback(
     (panel: PanelModel): string => {
-      const dsname = datasourceNames[datasourceRefKey(panel.datasource)];
+      const dsname = datasourceNames[panel.id];
       const queryCount = panel.targets.length;
       return `${queryCount} ${pluralize('query', queryCount)} to ${dsname}`;
     },

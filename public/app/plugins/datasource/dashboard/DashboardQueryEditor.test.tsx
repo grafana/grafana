@@ -8,7 +8,7 @@ import {
   type PanelPluginMeta,
 } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -42,10 +42,19 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 const usePanelPluginMetasMapMock = jest.mocked(usePanelPluginMetasMap);
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const getDataSourceInstanceSettingsMock = jest.mocked(getDataSourceInstanceSettings);
 
 function mockInstanceSettings(name: string, uid: string): DataSourceInstanceSettings {
   return { name, uid } as DataSourceInstanceSettings;
+}
+
+function mockDataSourceInstance(name: string, uid: string) {
+  return {
+    name,
+    uid,
+    meta: { info: { logos: { small: `https://example.com/${uid}.svg` } } },
+  };
 }
 
 describe('DashboardQueryEditor', () => {
@@ -61,6 +70,7 @@ describe('DashboardQueryEditor', () => {
 
   beforeEach(() => {
     getDataSourceInstanceSettingsMock.mockResolvedValue(mockInstanceSettings('Default DS', 'default-ds'));
+    getDataSourceInstanceMock.mockResolvedValue(mockDataSourceInstance('Default DS', 'default-ds'));
 
     usePanelPluginMetasMapMock.mockReturnValue({
       loading: false,
@@ -254,6 +264,96 @@ describe('DashboardQueryEditor', () => {
       expect(screen.getByText('Prom panel').nextElementSibling).toHaveTextContent('1 query to Prometheus');
       expect(screen.getByText('Loki panel').nextElementSibling).toHaveTextContent('2 queries to Loki');
     });
+  });
+
+  it('shows the resolved datasource name for type-specific default refs', async () => {
+    getDataSourceInstanceSettingsMock.mockImplementation(async (ref) => {
+      if (typeof ref === 'object' && ref?.uid === 'default' && ref.type === 'prometheus') {
+        return mockInstanceSettings('Prometheus', 'prom-uid');
+      }
+      if (typeof ref === 'object' && ref?.uid === 'default' && ref.type === 'loki') {
+        return mockInstanceSettings('Loki', 'loki-uid');
+      }
+      return mockInstanceSettings('Default DS', 'default-ds');
+    });
+
+    mockDashboard = createDashboardModelFixture({
+      panels: [
+        createPanelSaveModel({
+          datasource: { uid: 'default', type: 'prometheus' },
+          targets: [{ refId: 'A' }],
+          type: 'timeseries',
+          id: 1,
+          title: 'Prom panel',
+        }),
+        createPanelSaveModel({
+          datasource: { uid: 'default', type: 'loki' },
+          targets: [{ refId: 'A' }],
+          type: 'timeseries',
+          id: 2,
+          title: 'Loki panel',
+        }),
+      ],
+    });
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+
+    render(
+      <DashboardQueryEditor
+        datasource={{} as DashboardDatasource}
+        query={mockQueries[0]}
+        data={mockPanelData}
+        onChange={mockOnChange}
+        onRunQuery={mockOnRunQueries}
+      />
+    );
+
+    await userEvent.click(screen.getByText('Choose panel'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Prom panel').nextElementSibling).toHaveTextContent('1 query to Prometheus');
+      expect(screen.getByText('Loki panel').nextElementSibling).toHaveTextContent('1 query to Loki');
+    });
+  });
+
+  it('uses the target datasource when a selected panel query has its own ref', async () => {
+    getDataSourceInstanceMock.mockImplementation(async (ref) => {
+      if (typeof ref === 'object' && ref?.uid === 'loki-uid') {
+        return mockDataSourceInstance('Loki', 'loki-uid');
+      }
+      return mockDataSourceInstance('Prometheus', 'prom-uid');
+    });
+
+    mockDashboard = createDashboardModelFixture({
+      panels: [
+        createPanelSaveModel({
+          datasource: { uid: 'prom-uid', type: 'prometheus' },
+          targets: [
+            {
+              refId: 'A',
+              datasource: { uid: 'loki-uid', type: 'loki' },
+            },
+          ],
+          type: 'timeseries',
+          id: 1,
+          title: 'Mixed-target panel',
+        }),
+      ],
+    });
+    jest.spyOn(getDashboardSrv(), 'getCurrent').mockImplementation(() => mockDashboard);
+
+    const query: DashboardQuery = { refId: 'A', panelId: 1, adHocFiltersEnabled: false };
+
+    render(
+      <DashboardQueryEditor
+        datasource={{} as DashboardDatasource}
+        query={query}
+        data={mockPanelData}
+        onChange={mockOnChange}
+        onRunQuery={mockOnRunQueries}
+      />
+    );
+
+    expect(await screen.findByRole('img', { name: 'Loki' })).toBeInTheDocument();
   });
 
   it('does not show the current panelInEdit as an option in the dropdown', async () => {
