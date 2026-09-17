@@ -348,17 +348,6 @@ func applyIncrementalChanges(
 				}
 				renameFolderSpan.End()
 			} else {
-				// An unsupported previous path drives RenameResourceFile into a
-				// create-only fallback (see its own doc) -- reserve quota for it.
-				reservedQuota := resources.IsPathSupported(change.PreviousPath) != nil
-				if reservedQuota && !quotaTracker.TryAcquire() {
-					progress.Record(ctx, resultBuilder.
-						WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", change.Path))).
-						AsSkipped().
-						Build())
-					continue
-				}
-
 				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
 				var renameOpts []resources.EnsurePathOption
 				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
@@ -366,10 +355,7 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
-				name, oldFolderName, gvk, size, netNew, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
-				if reservedQuota && !netNew {
-					quotaTracker.Release()
-				}
+				name, oldFolderName, gvk, size, _, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, quotaTracker.TryAcquire, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))

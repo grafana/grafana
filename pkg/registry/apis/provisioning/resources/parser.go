@@ -507,7 +507,17 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 			createSpan.RecordError(err)
 		}
 		createSpan.End()
-		return err
+
+		if err == nil {
+			return nil
+		}
+		// The existence check that set ForceCreate can be wrong (e.g. an
+		// identity/RBAC mismatch reads as NotFound) -- fall through to the
+		// same update path a normal create does on conflict, rather than
+		// failing a resource that turns out to already exist.
+		if !apierrors.IsAlreadyExists(err) {
+			return err
+		}
 	}
 
 	// If we don't have existing resource from DryRun or a prior check, fetch it now
