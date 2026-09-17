@@ -5,7 +5,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction, getAppEvents, logError } from '@grafana/runtime';
+import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, copyTextToClipboard } from '@grafana/ui';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
