@@ -206,8 +206,7 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 }
 
 // searchReadChunkSize caps the over-read to one chunk while keeping reads
-// batched. Kept small because BatchReadResource has no byte budget: a page that
-// fills after one body still materializes the whole chunk first (see #985).
+// batched. Kept small because BatchReadResource has no byte budget.
 const searchReadChunkSize = 10
 
 func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*BackendReadResponse, bool, error) {
