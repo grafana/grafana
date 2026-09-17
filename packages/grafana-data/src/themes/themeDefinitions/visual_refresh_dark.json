@@ -120,6 +120,13 @@
     "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
   },
   "components": {
+    "table": {
+      "headerBackground": "palette.ink700",
+      "border": "palette.ink700",
+      "rowStripedBackground": "palette.ink750",
+      "rowHoverBackground": "palette.ink650",
+      "rowSelectedBackground": "palette.black"
+    },
     "card": {
       "background": "palette.ink850",
       "borderColor": "palette.ink700"

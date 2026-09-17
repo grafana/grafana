@@ -236,6 +236,20 @@ describe('FolderReadmePanel', () => {
       expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', contributing.path);
     });
 
+    it('selects the doc when ?docTab= is cased differently to the file', () => {
+      // A README links docs by the name the author typed, which may not match the
+      // casing of the file in the repo.
+      const contributing = doc('contributing', 'contributing.md');
+      setDocs({ docs: [readmeDoc, contributing] });
+
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/?docTab=CONTRIBUTING.md'] },
+      });
+
+      expect(screen.getByRole('tab', { name: 'Contributing' })).toHaveAttribute('aria-selected', 'true');
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-repo', contributing.path);
+    });
+
     it('falls back to the README when ?docTab= names a doc that is not in the folder', () => {
       // Typo, or the file was removed by a later pull.
       setDocs({ docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md')] });
