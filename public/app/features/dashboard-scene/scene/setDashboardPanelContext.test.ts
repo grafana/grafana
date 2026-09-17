@@ -89,6 +89,7 @@ describe('setDashboardPanelContext', () => {
       const { context } = buildTestScene({ dashboardCanEdit: false });
 
       expect(context.adHocTransformations).toBeDefined();
+      expect(context.adHocTransformations).toBe(context.adHocTransformations);
       expect(context.adHocTransformations?.get('test:viewer')).toEqual([]);
     });
   });
