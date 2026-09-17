@@ -890,10 +890,6 @@ const (
 	// Aligns query splitting chunks with UTC midnight
 	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
 
-	// FlagQueryFetchConfigFromSettingsService
-	// Enables the query service to fetch the configuration from the settings service
-	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
-
 	// FlagProfilesHeatmap
 	// Enables heatmap visualization support for Pyroscope profiles
 	FlagProfilesHeatmap = "profilesHeatmap"
