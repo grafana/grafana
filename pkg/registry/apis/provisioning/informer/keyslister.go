@@ -17,10 +17,11 @@ import (
 // cap, so this is a client-side hint and not a contract shared across the boundary.
 const keysListerPageLimit = 10000
 
-// ErrKeysOnlyUnsupported means the server answered a keys-only list with bodies
-// instead of keys. A server older than keys_only ignores the field, and its items
-// carry no namespace or name, so keys built from them would all collide.
-var ErrKeysOnlyUnsupported = errors.New("server did not honour keys_only")
+// ErrKeysOnlyUnsupported means the server did not answer with keys: over gRPC a
+// server older than keys_only ignores the field and returns bodies, whose items
+// carry no name, and over HTTP the endpoint is off and the route is absent.
+// Either way the full-object list is the answer, so callers fall back on it.
+var ErrKeysOnlyUnsupported = errors.New("server did not serve a keys-only list")
 
 // Key is a resource identity from a keys-only list: no body, just what the KV
 // key carries. The controller re-fetches the object on demand.

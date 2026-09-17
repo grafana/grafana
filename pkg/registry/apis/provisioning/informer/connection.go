@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -51,6 +52,12 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 // gRPC, for the in-process server.
 func NewGRPCConnectionKeysLister(store resourcepb.ResourceStoreClient) KeysLister {
 	return NewGRPCKeysLister(store, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
+}
+
+// NewHTTPConnectionKeysLister lists connection keys through the apiserver, for
+// the out-of-process operator.
+func NewHTTPConnectionKeysLister(client rest.Interface) KeysLister {
+	return NewHTTPKeysLister(client, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
 }
 
 // NewConnectionInformer builds an Informer for connections. When keys is
