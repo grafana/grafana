@@ -1,24 +1,10 @@
 import { t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
-import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { CODE_MIRROR_LANGUAGES, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 // The spec stores `language` as a free-form string, so it is deliberately NOT narrowed to
 // CodeMirrorEditorLanguage anywhere: a notebook may legitimately arrive carrying a language the
 // editor cannot highlight, and that value has to survive a round trip rather than be coerced away.
-
-// The notebook picker offers a subset of the shared editor's languages, so adding editor support
-// does not require changing the notebook's choices.
-// Wording matches the text panel's picker so the two features read the same.
-const HIGHLIGHTED_LANGUAGES = {
-  go: 'Go',
-  html: 'HTML',
-  json: 'JSON',
-  markdown: 'Markdown',
-  sql: 'SQL',
-  typescript: 'TypeScript',
-  xml: 'XML',
-  yaml: 'YAML',
-} satisfies Partial<Record<CodeMirrorEditorLanguage, string>>;
 
 /**
  * Offered by the picker but rendered unhighlighted, because neither has CodeMirror highlight tags
@@ -59,14 +45,14 @@ export function normalizeLanguage(language: string): string {
 // Object.prototype, and since `language` is free-form those reach here: the value would be narrowed
 // to a language the loader has no branch for, which surfaces as a "syntax highlighting failed to
 // load" alert, and the label lookup would hand a function to React.
-function isHighlightable(language: string): language is keyof typeof HIGHLIGHTED_LANGUAGES {
-  return Object.hasOwn(HIGHLIGHTED_LANGUAGES, language);
+function isHighlightable(language: string): language is CodeMirrorEditorLanguage {
+  return Object.hasOwn(CODE_MIRROR_LANGUAGES, language);
 }
 
 /**
  * The language to highlight with, or undefined to render the code unhighlighted.
  *
- * Languages outside the notebook's highlighted selection fall back to no highlighting.
+ * Languages not supported by the shared editor fall back to no highlighting.
  * That includes promql and logql: `@grafana/lezer-logql` is already a root dependency
  * and exports a parser, and promql has an official upstream grammar with its tags applied
  * (`@prometheus-io/lezer-promql`) — what neither has yet is CodeMirror highlight tags wired up in
@@ -106,7 +92,7 @@ export function codeLanguageLabel(language: string): string {
   }
 
   if (isHighlightable(canonical)) {
-    return HIGHLIGHTED_LANGUAGES[canonical];
+    return CODE_MIRROR_LANGUAGES[canonical];
   }
 
   return Object.hasOwn(UNHIGHLIGHTED_LANGUAGES, canonical) ? UNHIGHLIGHTED_LANGUAGES[canonical] : canonical;
@@ -120,7 +106,7 @@ export function codeLanguageLabel(language: string): string {
 export function getCodeLanguageOptions(current: string): Array<ComboboxOption<string>> {
   const offered: Array<ComboboxOption<string>> = [
     { value: PLAIN_TEXT_LANGUAGE, label: codeLanguageLabel(PLAIN_TEXT_LANGUAGE) },
-    ...Object.entries(HIGHLIGHTED_LANGUAGES).map(([value, label]) => ({ value, label })),
+    ...Object.entries(CODE_MIRROR_LANGUAGES).map(([value, label]) => ({ value, label })),
     ...Object.entries(UNHIGHLIGHTED_LANGUAGES).map(([value, label]) => ({ value, label })),
   ];
 
