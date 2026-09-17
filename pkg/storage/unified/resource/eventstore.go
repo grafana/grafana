@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -309,6 +310,28 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 		return nil, err
 	}
 	return events, nil
+}
+
+// latest reads metadata newest-first so oldest-first cleanup can only shorten
+// the retained tail, not leave holes. Missing records are skipped;
+func (n *eventStore) latest(ctx context.Context, limit int) ([]Event, error) {
+	keys := make([]string, 0, limit)
+	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}) {
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	events := make([]Event, 0, len(keys))
+	for page := range slices.Chunk(keys, readEventBatchSize) {
+		batch, err := n.readEventPage(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, batch...)
+	}
+	slices.Reverse(events)
+	return events, ctx.Err()
 }
 
 // CleanupOldEvents deletes events older than the specified retention period.
