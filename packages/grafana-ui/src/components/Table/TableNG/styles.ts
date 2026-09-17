@@ -112,7 +112,7 @@ export const getGridStyles = memoize(
           '&::after': {
             content: '""',
             position: 'absolute',
-            inset: '-1px',
+            inset: 0,
             pointerEvents: 'none',
             zIndex: 1,
             border: `1px solid ${table.border}`,

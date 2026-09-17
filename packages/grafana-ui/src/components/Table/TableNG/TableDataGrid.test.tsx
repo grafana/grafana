@@ -179,6 +179,7 @@ describe('TableDataGrid', () => {
         if (transparent) {
           const frameRule = getGridFrameOverlayStyleRule();
           expect(frameRule?.style.getPropertyValue('border')).toBe(`1px solid ${theme.components.table.border}`);
+          expect(frameRule?.style.getPropertyValue('inset')).toBe('0');
           expect(frameRule?.style.getPropertyValue('border-end-start-radius')).toBe(
             'var(--table-header-corner-radius)'
           );
