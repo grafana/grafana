@@ -109,7 +109,7 @@ describe('CARTO basemap', () => {
 
   describe('styling beyond the tiles', () => {
     // OpenLayers measures zoom in 256px worlds, so CARTO's 512px tiles run out at view zoom 1 and
-    // anything wider used to fall below every style rule's first zoom stop, leaving a flat colour.
+    // anything wider used to fall below every style rule's first zoom stop, leaving a flat color.
     const WIDEST_TILE = 78271.51696402048;
 
     async function initWithTiles() {
