@@ -14170,6 +14170,7 @@
       "title": "You can also use Git Sync on Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "Code example",
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
