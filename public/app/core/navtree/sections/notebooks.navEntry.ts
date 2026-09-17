@@ -15,7 +15,7 @@ export const notebooksNavEntry: NavEntryBuilder = {
   build: () => ({
     text: 'Notebooks',
     id: NavID.notebooks,
-    subTitle: 'Investigation notebooks created from workspaces, dashboards, alerts, and incidents.',
+    subTitle: 'Create and manage notebooks to tell a story with your data',
     icon: 'book',
     sortWeight: NavWeight.notebooks,
     url: '/notebooks',
