@@ -27,7 +27,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button-api-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
-  global-variables:
+  built-in-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
@@ -220,7 +220,7 @@ These variables allow you to include the current time range in the data link or 
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
-For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
+For more information about these variables, refer to the [Built-in variables documentation](ref:built-in-variables).
 
 ### Series variables
 
