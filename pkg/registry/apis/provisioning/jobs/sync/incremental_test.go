@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -267,7 +268,7 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
-					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, false, nil)
 
 				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"renamed-dashboard",
@@ -820,6 +821,130 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/new.json" && result.Error() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "rename recovery is blocked when quota is exhausted",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "dashboards/new.json",
+						PreviousPath: "dashboards/old&path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var qe *quotas.QuotaExceededError
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "dashboards/new.json" &&
+						result.Warning() != nil &&
+						errors.As(result.Warning(), &qe) &&
+						result.Warning().Error() == "resource quota exceeded, skipping recovery of dashboards/new.json"
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "rename recovery that creates a resource keeps the reserved quota",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "dashboards/recovered.json",
+						PreviousPath: "dashboards/old&path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/second.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/recovered.json").Return(false)
+				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
+
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref").
+					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, true, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var qe *quotas.QuotaExceededError
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "dashboards/second.json" &&
+						result.Warning() != nil &&
+						errors.As(result.Warning(), &qe) &&
+						result.Warning().Error() == "resource quota exceeded, skipping creation of dashboards/second.json"
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "rename recovery that turns into an update releases the reserved quota",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "dashboards/recovered.json",
+						PreviousPath: "dashboards/old&path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/second.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/recovered.json").Return(false)
+				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
+
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref").
+					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, false, nil)
+
+				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/second.json", "new-ref").
+					Return("second-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/second.json" && result.Error() == nil
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -1762,6 +1887,27 @@ func TestDeleteFolders(t *testing.T) {
 
 		deleteFolders(context.Background(), []folderDeletion{
 			{Path: "alpha/", UID: "bad-uid"},
+		}, repoResources, progress, tracer)
+	})
+
+	t.Run("a folder that never existed is not a failure", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "bad&path/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "bad&path/").Return(false)
+		progress.On("HasChildPathFailedCreation", "bad&path/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "bad&path/").Return(false)
+		notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "never-existed-uid")
+		repoResources.On("RemoveFolder", mock.Anything, "never-existed-uid").Return(notFound)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionDeleted &&
+				r.Name() == "never-existed-uid" &&
+				r.Error() == nil
+		})).Return()
+
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "bad&path/", UID: "never-existed-uid"},
 		}, repoResources, progress, tracer)
 	})
 

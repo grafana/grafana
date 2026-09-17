@@ -438,45 +438,60 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 }
 
 // RenameResourceFile moves the resource at previousPath to newPath. The returned
-// size is the number of bytes of the new file content written at newPath.
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
+// size is the number of bytes of the new file content written at newPath. The
+// returned bool reports a create with no matching delete -- the one outcome
+// that changes the total resource count, for the caller's quota accounting.
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, bool, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read previous file: %w", err)
 	}
 	oldParsed, oldParseErr := r.parser.Parse(ctx, oldInfo)
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, false, fmt.Errorf("failed to read new file: %w", err)
 	}
 	size := len(newInfo.Data)
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
 	if oldParseErr != nil {
 		if pathErr := IsPathSupported(previousPath); pathErr != nil {
 			// Unknown identity (bad path, not a content problem): proceed with
-			// the new write instead of aborting; old resource left for manual
-			// cleanup. Any other parse failure falls through to the fatal
-			// return below.
+			// the new write instead of aborting; any other parse failure falls
+			// through to the fatal return below.
+			//
+			// resolved: hash match let the Get below settle whether an old
+			// resource exists, so nothing is left to orphan either way.
+			resolved := false
 			if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
-				// Hash match alone doesn't prove the destination was ever
-				// admitted -- the old path was never syncable. Only relax
-				// validation once that object is confirmed to already exist.
-				if _, getErr := newParsed.Client.Get(ctx, newParsed.Obj.GetName(), metav1.GetOptions{}); getErr == nil {
+				existing, getErr := newParsed.Client.Get(ctx, newParsed.Obj.GetName(), metav1.GetOptions{})
+				switch {
+				case getErr == nil:
+					newParsed.Existing = existing
 					newParsed.SkipStrictValidation = true
+					resolved = true
+				case apierrors.IsNotFound(getErr):
+					newParsed.ForceCreate = true
+					resolved = true
 				}
 			}
 			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 			if err != nil {
-				return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
+				return "", "", gvk, size, false, fmt.Errorf("failed to write resource: %w", err)
 			}
-			return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
+			// No old identity means no matching delete anywhere -- a Create
+			// here is a net-new resource the caller never reserved quota for.
+			netNew := newParsed.Action == provisioning.ResourceActionCreate
+			if resolved {
+				return newName, "", gvk, size, netNew, nil
+			}
+			return newName, "", gvk, size, netNew, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 		}
-		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
+		return "", "", schema.GroupVersionKind{}, size, false, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
@@ -484,14 +499,14 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if !oldParsed.SameIdentity(newParsed) {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, size, fmt.Errorf("failed to delete old resource: %w", err)
+			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, size, false, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else {
 		// Delete dry-run fetches the existing object (with ownership validation)
 		// without mutating it, populating oldParsed.Existing for identity comparison.
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.DryRun(ctx); err != nil {
-			return "", "", schema.GroupVersionKind{}, size, err
+			return "", "", schema.GroupVersionKind{}, size, false, err
 		}
 		// Pure path-only rename (git blob hash unchanged): the file content is
 		// byte-identical, so the UPDATE we are about to send carries the same
@@ -511,7 +526,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
-		return oldParsed.Obj.GetName(), oldFolderName, gvk, size, fmt.Errorf("failed to write resource: %w", err)
+		return oldParsed.Obj.GetName(), oldFolderName, gvk, size, false, fmt.Errorf("failed to write resource: %w", err)
 	}
 
 	// When the resource's parent folder didn't change (e.g. the entire
@@ -522,7 +537,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, size, nil
+	return newName, oldFolderName, gvk, size, false, nil
 }
 
 // RemoveResourceFromFile deletes the resource described by the file at path/ref.

@@ -157,6 +157,10 @@ type ParsedResource struct {
 	// schemas were enforced) must remain renameable.
 	SkipStrictValidation bool
 
+	// ForceCreate skips Run()'s own existence check -- for a caller that
+	// already checked once and would otherwise race that check.
+	ForceCreate bool
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
@@ -488,8 +492,26 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	// If we don't have existing resource from DryRun, fetch it now
-	if f.DryRunResponse == nil {
+	if f.ForceCreate {
+		createFieldValidation := "Strict"
+		if skipsStrictValidation(f.GVR) {
+			createFieldValidation = "Ignore"
+		}
+		f.Action = provisioning.ResourceActionCreate
+		createCtx, createSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.force_create")
+		createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+		f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
+			FieldValidation: createFieldValidation,
+		})
+		if err != nil {
+			createSpan.RecordError(err)
+		}
+		createSpan.End()
+		return err
+	}
+
+	// If we don't have existing resource from DryRun or a prior check, fetch it now
+	if f.DryRunResponse == nil && f.Existing == nil {
 		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
 	}
 
