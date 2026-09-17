@@ -2593,9 +2593,8 @@
       "default-info": "Alert instances are routed using the default notification policy tree.",
       "default-policy": "Default policy",
       "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "missing-policy": "This policy tree is not in your list. It may have been deleted, or you may not have permission to view it. It stays assigned to this rule unless you pick a different one.",
       "placeholder": "Select a policy...",
-      "reset": "Reset to default",
-      "reset-aria": "Reset to default policy",
       "view-policies": "View policies",
       "view-policies-aria": "View notification policies"
     },

@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { RoutingTreeSelector, isDefaultRoutingTree, useListRoutingTrees } from '@grafana/alerting/unstable';
+import {
+  RoutingTreeSelector,
+  findRoutingTreeByName,
+  isDefaultRoutingTree,
+  useListRoutingTrees,
+} from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Field, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Box, Button, Field, Icon, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
@@ -26,7 +31,8 @@ import {
  * UX behavior:
  * - For new rules or rules using the default policy: shows a collapsed view with a "Change" button
  * - For existing rules with a custom policy: shows the dropdown directly
- * - A "Reset to default" button allows quickly returning to the default policy
+ * - A policy that isn't in the dropdown's list is kept and flagged with a warning, rather than
+ *   being silently replaced
  */
 export function PolicyTreeSelector() {
   const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
@@ -59,6 +65,16 @@ export function PolicyTreeSelector() {
   }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
+
+  // The rule can name a tree the list doesn't contain. The combobox still shows the name, which on
+  // its own is indistinguishable from a valid pick, so warn instead of quietly replacing it - we
+  // can't tell a deleted tree from one this user isn't allowed to read, and guessing either way
+  // would mean rewriting someone's routing behind their back.
+  const isPolicyMissingFromList =
+    !isLoading &&
+    Boolean(policies?.length) &&
+    !isUsingDefaultPolicy &&
+    !findRoutingTreeByName(policies ?? [], currentPolicyValue);
 
   // Expanded state: collapsed when using default policy, expanded when custom policy is selected
   const [isExpanded, setIsExpanded] = useState(!isUsingDefaultPolicy);
@@ -110,11 +126,6 @@ export function PolicyTreeSelector() {
     }
   };
 
-  const handleResetToDefault = () => {
-    updatePolicyValue('');
-    setIsExpanded(false);
-  };
-
   const handleChangeClick = () => {
     setIsExpanded(true);
   };
@@ -146,19 +157,6 @@ export function PolicyTreeSelector() {
                   placeholder={t('alerting.policy-tree-selector.placeholder', 'Select a policy...')}
                 />
               </Field>
-              {!isUsingDefaultPolicy && (
-                <Button
-                  variant="secondary"
-                  fill="text"
-                  size="sm"
-                  icon="history"
-                  type="button"
-                  onClick={handleResetToDefault}
-                  aria-label={t('alerting.policy-tree-selector.reset-aria', 'Reset to default policy')}
-                >
-                  <Trans i18nKey="alerting.policy-tree-selector.reset">Reset to default</Trans>
-                </Button>
-              )}
               <TextLink
                 href={ALERTING_PATHS.ROUTES}
                 external
@@ -167,6 +165,17 @@ export function PolicyTreeSelector() {
                 <Trans i18nKey="alerting.policy-tree-selector.view-policies">View policies</Trans>
               </TextLink>
             </Stack>
+            {isPolicyMissingFromList && (
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Icon name="exclamation-triangle" size="sm" />
+                <Text color="warning" variant="bodySmall">
+                  <Trans i18nKey="alerting.policy-tree-selector.missing-policy">
+                    This policy tree is not in your list. It may have been deleted, or you may not have permission to
+                    view it. It stays assigned to this rule unless you pick a different one.
+                  </Trans>
+                </Text>
+              </Stack>
+            )}
           </>
         ) : (
           // Collapsed: show default policy info with a change button

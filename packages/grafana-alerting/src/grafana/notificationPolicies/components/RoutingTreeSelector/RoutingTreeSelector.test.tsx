@@ -129,6 +129,14 @@ describe('pre-selection', () => {
 
     expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
   });
+
+  it('should still show a value that is not in the list', async () => {
+    // The tree may have been deleted, or the list may only contain the trees this user can read.
+    // Either way the input must not go blank, or the caller's current value becomes invisible.
+    render(<RoutingTreeSelector value="tree-not-in-the-list" onChange={jest.fn()} />);
+
+    expect(await screen.findByDisplayValue('tree-not-in-the-list')).toBeInTheDocument();
+  });
 });
 
 describe('clearable behavior', () => {
