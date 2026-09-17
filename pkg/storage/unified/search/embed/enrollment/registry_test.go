@@ -212,8 +212,8 @@ func TestRegistryPartitionValidation(t *testing.T) {
 		{name: "logical resource preserved", resources: []string{"foo-bar"}, groups: []string{"a.test"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			var allowed []string
-			var custom []embed.Builder
+			allowed := make([]string, 0, len(tt.resources))
+			custom := make([]embed.Builder, 0, len(tt.resources))
 			for i, name := range tt.resources {
 				allowed = append(allowed, tt.groups[i]+"/"+name)
 				custom = append(custom, &testCustomBuilder{group: tt.groups[i], resource: name})
