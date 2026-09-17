@@ -35,7 +35,7 @@ func TestAddAutogenConfig(t *testing.T) {
 		}
 
 		for _, receiver := range receivers {
-			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
+			cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
 				Name: receiver,
 			})
 		}

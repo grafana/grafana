@@ -277,7 +277,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	s.opts.DeprecatedInternalID = DeprecatedID_Required
-	s.opts.Index = &fakeSearchIndex{inUse: map[string]bool{"100": true}}
+	searchIndex := &fakeSearchIndex{inUse: map[string]bool{"100": true}}
+	s.opts.Index = searchIndex
 
 	t.Run("Should generate internal id", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
@@ -309,6 +310,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchIndex.lastRequest.GetResultFormat())
+		require.Equal(t, []string{"name"}, searchIndex.lastRequest.GetFields())
 	})
 
 	t.Run("Should fail if deprecated ID if already in use", func(t *testing.T) {
@@ -836,22 +839,72 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 // value is listed in inUse, and reports no hits otherwise.
 type fakeSearchIndex struct {
 	resourcepb.ResourceIndexClient
-	inUse map[string]bool // deprecatedInternalID label values that already exist
+	inUse       map[string]bool // deprecatedInternalID label values that already exist
+	lastRequest *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	rsp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	f.lastRequest = req
+	rsp := &resourcepb.ResourceSearchResponse{ResultFormat: req.GetResultFormat()}
 	for _, label := range req.GetOptions().GetLabels() {
 		if label.GetKey() != utils.LabelKeyDeprecatedInternalID {
 			continue
 		}
 		for _, v := range label.GetValues() {
-			if f.inUse[v] {
+			if !f.inUse[v] {
+				continue
+			}
+			if req.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+				rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
+			} else {
+				if rsp.Results == nil {
+					rsp.Results = &resourcepb.ResourceTable{}
+				}
 				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
 			}
 		}
 	}
 	return rsp, nil
+}
+
+func TestSearchResponseHasRows(t *testing.T) {
+	for name, tc := range map[string]struct {
+		response *resourcepb.ResourceSearchResponse
+		want     bool
+		wantErr  bool
+	}{
+		"nil response": {wantErr: true},
+		"old server table": {
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Rows: []*resourcepb.ResourceTableRow{{}},
+			}},
+			want: true,
+		},
+		"explicit table without rows": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE},
+		},
+		"field values": {
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{{}},
+			},
+			want: true,
+		},
+		"unsupported format": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)},
+			wantErr:  true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got, err := searchResponseHasRows(tc.response)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
 
 // fakeOrder builds an immutable version-order snapshot for a single group (highest first).

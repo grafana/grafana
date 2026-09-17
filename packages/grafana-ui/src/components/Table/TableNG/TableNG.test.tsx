@@ -2314,6 +2314,30 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
     });
 
+    it('only expands a selected cell when hover overflow is disabled', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG data={createJsonDataFrame(false)} width={800} height={600} hoverOverflow={false} />
+      );
+
+      const cell = container.querySelectorAll('[role="gridcell"]')[1];
+      const expansionRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .filter(
+          (rule) =>
+            Array.from(cell.classList).some((className) => rule.selectorText.includes(`.${className}`)) &&
+            rule.style.getPropertyValue('max-width') === '600px'
+        );
+
+      expect(expansionRules).not.toHaveLength(0);
+      expect(expansionRules.every((rule) => rule.selectorText.includes('aria-selected'))).toBe(true);
+      expect(expansionRules.every((rule) => !rule.selectorText.includes(':hover'))).toBe(true);
+
+      await user.click(cell);
+      expect(window.getComputedStyle(cell).getPropertyValue('max-width')).toBe('600px');
+    });
+
     it('collapses a click-expanded JSON cell once focus leaves the table', async () => {
       // react-data-grid keeps a cell selected after the grid loses focus and exposes no way to clear
       // it, so the expanded state hangs off `:focus-within` rather than the selection alone. Without

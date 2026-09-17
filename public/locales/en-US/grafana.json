@@ -5930,6 +5930,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5970,6 +5971,7 @@
     "inspect-json": {
       "dataframe-description": "Raw data without transformations and field config applied. ",
       "dataframe-label": "DataFrame JSON (from Query)",
+      "editor-label": "JSON content",
       "panel-data-description": "The raw model passed to the panel visualization",
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
@@ -7361,6 +7363,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7750,6 +7753,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Resource"
       },
+      "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
@@ -11164,6 +11168,7 @@
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
+      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11223,6 +11228,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
+      "empty-selected-team": "No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
@@ -11846,6 +11852,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
@@ -12193,6 +12200,10 @@
     "enable-log-details": {
       "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
+    },
+    "hover-overflow": {
+      "description": "Expand overflowing cell content on hover. Selected cells always expand.",
+      "name": "Cell hover overflow"
     },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
@@ -12758,7 +12769,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
