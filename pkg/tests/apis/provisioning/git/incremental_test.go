@@ -494,25 +494,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Recovers
-// reproduces grafana#130899. A file committed at a path safepath.IsSafe rejects
-// (here, containing '&') can never be created by sync -- parser.Parse enforces
-// IsPathSupported on every call. On this branch alone (independent of #131449,
-// which is what would turn a silently-skipped new file into a recorded
-// warning), the very first full sync of such a file is a complete no-op:
-// Changes() only emits a FileActionCreated when IsPathSupported passes, so the
-// file produces neither a change nor a warning -- "no changes to sync",
-// zero dashboards, job state success. The repo's lastRef still advances,
-// though, so a later incremental sync can still diff against it.
-// The user's actual fix is to rename the file to a safe path. Incremental
-// sync's rename detection is git-level (base/ref commit diff), independent of
-// IsPathSupported, so it still calls RenameResourceFile with the old,
-// still-invalid path. Before this PR's fix, that function returned early on
-// the old-path parse failure, so the *new* file was never even read and the
-// dashboard stayed missing -- matching #130899's report that even a full,
-// non-incremental pull did not recover it. After the fix, the write for the
-// new path still proceeds; RenameResourceFile's own error wraps the old-path
-// parse failure only to flag it for review, which is a warning, not a
-// failure.
+// reproduces grafana#130899. IsPathSupported rejects the '&' in the old path,
+// so the first full sync is a silent no-op (independent of #131449) -- but
+// still advances lastRef, and incremental rename-detection is git-level, so it
+// reaches RenameResourceFile regardless. Before this PR's fix that aborted
+// there; now a single Get settles that the dashboard was never synced, and
+// the write goes through as a plain create.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Recovers(t *testing.T) {
 	helper := sharedGitHelper(t)
 
@@ -523,8 +510,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Rec
 		"bad&path/dashboard.json": common.DashboardJSON(uid, "Recovered Dashboard", 1),
 	}, "write", "branch")
 
-	// Silently skipped, not even a warning, on this branch -- see the doc
-	// comment above. Still advances lastRef so the rename below is diffable.
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	helper.RequireRepoDashboardCount(t, repoName, 0)
 
@@ -536,9 +521,41 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Rec
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	// Still a warning: RenameResourceFile's own error wraps the old-path parse
-	// failure to flag it for review, even though the write below succeeds.
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
+	})
+}
+
+// TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers is
+// the full-sync counterpart Roberto asked for. Full sync's own rename
+// detection (DetectRenames) never calls RenameResourceFile -- it pairs a
+// FileActionDeleted (from Grafana's stored list) with a FileActionCreated by
+// hash, so it was never exposed to this bug. Nothing existed to pair against
+// here, so this hits the plain-create side, not the hash-match side -- but it
+// still answers #130899's literal claim: a full pull does recover it.
+func TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "git-full-rename-invalid-old-path"
+	const uid = "invalid-old-path-full-001"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"bad&path/dashboard.json": common.DashboardJSON(uid, "Recovered Dashboard", 1),
+	}, "write", "branch")
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	helper.RequireRepoDashboardCount(t, repoName, 0)
+
+	require.NoError(t, local.CreateDirPath("good-path"))
+	_, err := local.Git("mv", "bad&path/dashboard.json", "good-path/dashboard.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename away from the invalid path")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
 	})
