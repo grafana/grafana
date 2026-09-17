@@ -13,7 +13,7 @@
 
 import type * as z from 'zod';
 
-import type { MutationCommand, MutationContext } from './commands/types';
+import type { LazyMutationCommand, MutationCommand, MutationContext } from './commands/types';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 /** All this dispatcher needs from a scene: somewhere to push a re-render after a write. */
@@ -31,34 +31,48 @@ interface CommandRegistration<TScene> {
 }
 
 export class SceneMutationClient<TScene extends MutationTargetScene> implements MutationClient {
-  private commands: Map<string, CommandRegistration<TScene>> = new Map();
+  private commands: Map<string, () => Promise<CommandRegistration<TScene>>> = new Map();
 
   constructor(
     private scene: TScene,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary per command; each is validated against its own schema before dispatch
-    commands: Array<MutationCommand<any, TScene>>
+    commands: Array<MutationCommand<any, TScene> | LazyMutationCommand<TScene>>
   ) {
     for (const cmd of commands) {
-      this.commands.set(cmd.name, {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: the payload is validated with cmd.payloadSchema before dispatch
-        handler: cmd.handler as MutationHandler<TScene>,
-        canExecute: cmd.permission,
-        readOnly: cmd.readOnly ?? false,
-        payloadSchema: cmd.payloadSchema,
-      });
+      if ('load' in cmd) {
+        let registration: Promise<CommandRegistration<TScene>> | undefined;
+        this.commands.set(cmd.name, () => {
+          registration ??= cmd.load().then(createCommandRegistration);
+          return registration;
+        });
+      } else {
+        const registration = createCommandRegistration(cmd);
+        this.commands.set(cmd.name, () => Promise.resolve(registration));
+      }
     }
   }
 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
-    const registration = this.commands.get(type);
-    if (!registration) {
+    const loadRegistration = this.commands.get(type);
+    if (!loadRegistration) {
       // Name what IS here: an unknown command is usually a caller aimed at the wrong document, and the
       // list says what to send instead.
       return {
         success: false,
         error: `Unknown command type: ${type}. Available commands: ${this.getAvailableCommands().join(', ')}.`,
+        changes: [],
+      };
+    }
+
+    let registration: CommandRegistration<TScene>;
+    try {
+      registration = await loadRegistration();
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
         changes: [],
       };
     }
@@ -100,6 +114,16 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   getAvailableCommands(): string[] {
     return Array.from(this.commands.keys());
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload type is erased after schema validation
+function createCommandRegistration<TScene>(cmd: MutationCommand<any, TScene>): CommandRegistration<TScene> {
+  return {
+    handler: cmd.handler,
+    canExecute: cmd.permission,
+    readOnly: cmd.readOnly ?? false,
+    payloadSchema: cmd.payloadSchema,
+  };
 }
 
 /** Flattens Zod issues into `<path>: <message>`, the shape a caller can act on and an agent can correct from. */

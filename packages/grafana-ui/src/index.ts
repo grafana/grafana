@@ -67,11 +67,8 @@ export {
 } from './components/DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './components/List/List';
-export {
-  InteractiveTable,
-  type FetchDataArgs,
-  type FetchDataFunc,
-} from './components/InteractiveTable/InteractiveTable';
+export { InteractiveTable } from './components/InteractiveTable/InteractiveTableLazy';
+export type { FetchDataArgs, FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';
 export { Pagination } from './components/Pagination/Pagination';

@@ -8,6 +8,10 @@ import { SaveDashboardAsForm, type SaveDashboardAsFormProps } from './SaveDashbo
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
+jest.mock('../../GenAI/LazyGenAIButtons', () => ({
+  LazyGenAIDashTitleButton: () => null,
+  LazyGenAIDashDescriptionButton: () => null,
+}));
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
     validateNewDashboardName: () => true,

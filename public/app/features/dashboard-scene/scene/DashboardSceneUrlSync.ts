@@ -3,8 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
-import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { loadShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
@@ -12,6 +11,14 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type DashboardSceneState } from './types/dashboard';
+
+async function loadDashboardEditView(editview: string) {
+  const { createDashboardEditViewFor } = await import(
+    /* webpackChunkName: "dashboard-settings" */ '../settings/createDashboardEditViewFor'
+  );
+
+  return createDashboardEditViewFor(editview);
+}
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -22,6 +29,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * panel whose fetch fails) loses the editor for good.
    */
   private _heldEditPanelId?: string;
+  private _heldEditViewKey?: string;
+  private _heldShareView?: string;
   private _libPanelSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
@@ -36,11 +45,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     return {
       autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanel,
-      editview: state.editview?.getUrlKey(),
+      editview: state.editview?.getUrlKey() ?? this._heldEditViewKey,
       // The hold only stands while the dashboard is still editing. Leaving edit mode clears the
       // param through its own navigation, and reporting the held id here would put it back.
       editPanel: state.editPanel?.getUrlKey() || (state.isEditing ? this._heldEditPanelId : undefined),
-      shareView: state.shareView,
+      shareView: state.shareView ?? this._heldShareView,
     };
   }
 
@@ -58,6 +67,62 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._heldEditPanelId = undefined;
   }
 
+  private _releaseEditView() {
+    this._heldEditViewKey = undefined;
+  }
+
+  private _enterEditView(editViewKey: string) {
+    if (this._scene.state.editview?.getUrlKey() === editViewKey || this._heldEditViewKey === editViewKey) {
+      return;
+    }
+
+    this._heldEditViewKey = editViewKey;
+    loadDashboardEditView(editViewKey)
+      .then((editview) => {
+        if (this._heldEditViewKey !== editViewKey) {
+          return;
+        }
+
+        this._heldEditViewKey = undefined;
+        this._scene.setState({ editview });
+      })
+      .catch((error) => {
+        if (this._heldEditViewKey === editViewKey) {
+          this._heldEditViewKey = undefined;
+          this._scene.setState({ editview: undefined });
+        }
+        console.error('Failed to load dashboard settings', error);
+      });
+  }
+
+  private _releaseShareView() {
+    this._heldShareView = undefined;
+  }
+
+  private _enterShareView(shareView: string) {
+    if (this._heldShareView === shareView) {
+      return;
+    }
+
+    this._heldShareView = shareView;
+    loadShareDrawer({ shareView })
+      .then((overlay) => {
+        if (this._heldShareView !== shareView) {
+          return;
+        }
+
+        this._heldShareView = undefined;
+        this._scene.setState({ shareView, overlay });
+      })
+      .catch((error) => {
+        if (this._heldShareView === shareView) {
+          this._heldShareView = undefined;
+          this._scene.setState({ shareView: undefined, overlay: undefined });
+        }
+        console.error('Failed to load share drawer', error);
+      });
+  }
+
   private getAutoFitPanels(): string | undefined {
     if (this._scene.state.body instanceof DefaultGridLayoutManager) {
       return this._scene.state.body.state.grid.state.UNSAFE_fitPanels ? 'true' : undefined;
@@ -71,8 +136,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
-      update.editview = createDashboardEditViewFor(values.editview);
-
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         if (this._scene.state.editable) {
@@ -80,10 +143,19 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
           // The reason for the timeout is for this change to happen after the url sync has completed
           setTimeout(() => this._scene.onEnterEditMode());
         } else {
+          this._releaseEditView();
           update.editview = undefined;
         }
       }
+
+      if (isEditing || this._scene.state.editable) {
+        if (this._scene.state.editview?.getUrlKey() !== values.editview) {
+          update.editview = undefined;
+          this._enterEditView(values.editview);
+        }
+      }
     } else if (values.hasOwnProperty('editview')) {
+      this._releaseEditView();
       update.editview = undefined;
     }
 
@@ -137,13 +209,17 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
 
     if (typeof values.shareView === 'string') {
-      update.shareView = values.shareView;
-      update.overlay = new ShareDrawer({
-        shareView: values.shareView,
-      });
+      if (shareView !== values.shareView) {
+        update.shareView = undefined;
+        update.overlay = undefined;
+        this._enterShareView(values.shareView);
+      }
     } else if (shareView && values.shareView === null) {
+      this._releaseShareView();
       update.overlay = undefined;
       update.shareView = undefined;
+    } else if (values.shareView === null) {
+      this._releaseShareView();
     }
 
     const layout = this._scene.state.body;

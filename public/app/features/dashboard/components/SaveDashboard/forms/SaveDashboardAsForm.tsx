@@ -6,8 +6,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
-import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
-import { GenAIDashTitleButton } from '../../GenAI/GenAIDashTitleButton';
+import { LazyGenAIDashDescriptionButton, LazyGenAIDashTitleButton } from '../../GenAI/LazyGenAIButtons';
 import { type SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
@@ -114,7 +113,7 @@ export const SaveDashboardAsForm = ({
                     <Label htmlFor="title">
                       <Trans i18nKey="dashboard.save-dashboard-as-form.title">Title</Trans>
                     </Label>
-                    {isNew && <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />}
+                    {isNew && <LazyGenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />}
                   </Stack>
                 }
                 invalid={!!errors.title}
@@ -145,7 +144,9 @@ export const SaveDashboardAsForm = ({
                     <Label htmlFor="description">
                       <Trans i18nKey="dashboard.save-dashboard-as-form.description">Description</Trans>
                     </Label>
-                    {isNew && <GenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />}
+                    {isNew && (
+                      <LazyGenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />
+                    )}
                   </Stack>
                 }
                 invalid={!!errors.description}

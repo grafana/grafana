@@ -5,28 +5,21 @@
  * model.
  */
 
-import * as z from 'zod';
+import type * as z from 'zod';
 
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
+import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
-const getSpecPayloadSchema = z
-  .object({
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the serialized spec against the v2 schema and fail if it is invalid.'),
-  })
-  .strict();
+const getSpecPayloadSchema = payloads.getSpec;
 
 export type GetSpecPayload = z.infer<typeof getSpecPayloadSchema>;
 
 export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   name: 'GET_SPEC',
-  description: 'Return the entire dashboard as a v2 DashboardSpec JSON object.',
+  description: payloads.getSpec.description ?? '',
 
   payloadSchema: getSpecPayloadSchema,
   permission: readOnly,

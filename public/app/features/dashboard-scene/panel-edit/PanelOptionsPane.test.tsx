@@ -12,8 +12,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
