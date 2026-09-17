@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -179,11 +180,11 @@ func TestKVWatchSeedAllBulkBoundary(t *testing.T) {
 func TestKVWatchSeedUnreadablePayload(t *testing.T) {
 	store := &unreadableValueKV{KV: setupBadgerKV(t), nameMatch: "playlist-", err: errors.New("unreadable payload")}
 	backend := setupTestStorageBackend(t, withKV(store))
-	saveWatchEvent(t, backend, durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour))))
-	seed, stream, err := backend.watchWriteEventsWithSeed(t.Context())
+	event := durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour)))
+	saveWatchEvent(t, backend, event)
+	seed, err := backend.loadWatchSeed(t.Context(), event.ResourceVersion)
 	require.ErrorContains(t, err, "unreadable payload")
 	require.Equal(t, watchSeed{}, seed)
-	require.Nil(t, stream)
 }
 
 func TestKVWatchSeedPreviousMetadataAndBulkFiltering(t *testing.T) {
@@ -311,6 +312,7 @@ func TestKVWatchSeedSkipsMissingPayloads(t *testing.T) {
 type watchSeedFaultKV struct {
 	KV
 	section string
+	after   int
 }
 
 func (k *watchSeedFaultKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
@@ -318,20 +320,32 @@ func (k *watchSeedFaultKV) BatchGet(ctx context.Context, section string, keys []
 		return k.KV.BatchGet(ctx, section, keys)
 	}
 	return func(yield func(kv.KeyValue, error) bool) {
+		if k.after > 0 {
+			read := 0
+			for obj, err := range k.KV.BatchGet(ctx, section, keys) {
+				if !yield(obj, err) || err != nil {
+					return
+				}
+				read++
+				if read == k.after {
+					break
+				}
+			}
+		}
 		yield(kv.KeyValue{}, errors.New("seed read failed"))
 	}
 }
 
-func TestKVWatchSeedFailureReturnsNoStream(t *testing.T) {
+func TestKVWatchSeedReadFailure(t *testing.T) {
 	for _, section := range []string{eventsSection, dataSection} {
 		t.Run(section, func(t *testing.T) {
 			store := &watchSeedFaultKV{KV: setupBadgerKV(t), section: section}
 			backend := setupTestStorageBackend(t, withKV(store))
-			saveWatchEvent(t, backend, durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour))))
-			seed, stream, err := backend.watchWriteEventsWithSeed(t.Context())
+			event := durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour)))
+			saveWatchEvent(t, backend, event)
+			seed, err := backend.loadWatchSeed(t.Context(), event.ResourceVersion)
 			require.ErrorContains(t, err, "seed read failed")
 			require.Equal(t, watchSeed{}, seed)
-			require.Nil(t, stream)
 		})
 	}
 }
@@ -491,7 +505,8 @@ func TestKVWatchCancelDuringSeedRead(t *testing.T) {
 		close(reading)
 		<-ctx.Done()
 	}}
-	backend := setupTestStorageBackend(t, withKV(store))
+	logger := &logtest.Fake{}
+	backend := setupTestStorageBackend(t, withKV(store), withLogger(logger))
 	done := make(chan error, 1)
 	go func() {
 		_, _, err := backend.watchWriteEventsWithSeed(ctx)
@@ -502,6 +517,7 @@ func TestKVWatchCancelDuringSeedRead(t *testing.T) {
 	select {
 	case err := <-done:
 		require.ErrorIs(t, err, context.Canceled)
+		require.Zero(t, logger.WarnLogs.Calls, "shutdown must not trigger the empty-cache fallback")
 	case <-time.After(time.Second):
 		t.Fatal("cancellation did not stop seed loading")
 	}
@@ -690,15 +706,18 @@ func (n *gatedShutdownNotifier) Watch(ctx context.Context, opts WatchOptions) <-
 func (n *gatedShutdownNotifier) Publish(Event) {}
 
 func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
-	for _, startupFailure := range []bool{false, true} {
-		t.Run(fmt.Sprintf("startupFailure=%t", startupFailure), func(t *testing.T) {
+	for _, startup := range []string{"ready", "fallback", "failure"} {
+		t.Run(startup, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				backend, _ := setupWatchEventWorker(t)
 				notifier := &gatedShutdownNotifier{events: make(chan Event), canceled: make(chan struct{}), release: make(chan struct{})}
 				backend.notifier = notifier
 				backend.watchOpts.SettleDelay = time.Millisecond
-				if startupFailure {
+				saveWatchEvent(t, backend, durableWatchEvent(100))
+				if startup == "fallback" {
 					backend.eventStore.kv = &seedScanFailureKV{KV: backend.eventStore.kv}
+				} else if startup == "failure" {
+					backend.eventStore.kv = &watchHandoffFaultKV{KV: backend.eventStore.kv, err: errors.New("boundary read failed")}
 				}
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
@@ -713,7 +732,7 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 					}
 					done <- err
 				}()
-				if !startupFailure {
+				if startup != "failure" {
 					<-started
 					cancel()
 				}
@@ -723,8 +742,8 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 				close(notifier.release)
 				err := <-done
 				require.False(t, returnedEarly, "startup failure and stream closure must wait for notifier shutdown")
-				if startupFailure {
-					require.ErrorContains(t, err, "seed scan failed")
+				if startup == "failure" {
+					require.ErrorContains(t, err, "boundary read failed")
 				} else {
 					require.NoError(t, err)
 				}
@@ -736,16 +755,15 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 func TestKVWatchSeedScanFailure(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	backend.eventStore.kv = &seedScanFailureKV{KV: backend.eventStore.kv}
-	seed, stream, err := backend.watchWriteEventsWithSeed(t.Context())
+	seed, err := backend.loadWatchSeed(t.Context(), snowflakeFromTime(time.Now()))
 	require.ErrorContains(t, err, "seed scan failed")
 	require.Equal(t, watchSeed{}, seed)
-	require.Nil(t, stream)
 }
 
 type seedScanFailureKV struct{ KV }
 
 func (k *seedScanFailureKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
-	if section == eventsSection && opts.Limit == defaultCacheSize {
+	if section == eventsSection && opts.Limit == defaultCacheSize && opts.Sort == SortOrderDesc {
 		return func(yield func(string, error) bool) { yield("", errors.New("seed scan failed")) }
 	}
 	return k.KV.Keys(ctx, section, opts)

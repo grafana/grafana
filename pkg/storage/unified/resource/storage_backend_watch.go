@@ -158,7 +158,11 @@ func (k *kvStorageBackend) watchWriteEventsWithSeed(ctx context.Context) (watchS
 	}
 	seed, err := k.loadWatchSeed(ctx, handoffRV)
 	if err != nil {
-		return watchSeed{}, nil, err
+		if ctx.Err() != nil {
+			return watchSeed{}, nil, ctx.Err()
+		}
+		k.log.Warn("failed to load watch seed, starting with an empty watch cache", "error", err, "handoff_rv", handoffRV)
+		seed = watchSeed{initialCacheFloor: handoffRV, highestRV: handoffRV}
 	}
 	select {
 	case <-ctx.Done():
