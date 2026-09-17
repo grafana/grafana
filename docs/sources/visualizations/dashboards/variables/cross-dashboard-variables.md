@@ -26,7 +26,7 @@ You can scope cross-dashboard variables in two ways:
 The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder.
 In the following image, there are variables in "Core metrics" and "Grafana Cloud" folders and then a number of variables that aren't in any folders; these ones are global:
 
-<!-- TODO: screenshot here -->
+![Cross-dashboard variables page](/media/docs/grafana/dashboards/screenshot-xdash-variables-v13.3.png)
 
 When you add cross-dashboard variables to a dashboard, only the ones that share the same scope as your dashboard are available for you to select.
 
@@ -34,7 +34,7 @@ For example, in the preceding image, there was a variable in the "Core metrics" 
 The following image shows a dashboard in the "Core metrics" folder.
 As a result, the variable in the "Core metrics" folder is available to that dashboard, as well as all the global variables:
 
-<!-- TODO: screenshot here -->
+![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png)
 
 Variables in other folders aren't available to that dashboard.
 
@@ -75,13 +75,13 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Click **Edit**.
 1. Click the cross-dashboard variables icon in the sidebar:
 
-  <!-- TODO: image here -->
+   ![Add cross-dashboard variables icon](/media/docs/grafana/dashboards/screenshot-xdash-variables-icon-v13.3.png)
 
 1. Select the variables you want to add to the dashboard:
 
-  <!-- TODO: image here -->
+   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-xdash-variable-selected-v13.3.png)
 
-  To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
+   To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
 
 1. Update variable values as needed.
 1. Click **Save**.
