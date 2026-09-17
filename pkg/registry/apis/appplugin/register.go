@@ -30,6 +30,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -73,6 +74,7 @@ type AppPluginRunnerOptions struct {
 
 	SearchAPIEnabled bool
 	TrashAPIEnabled  bool
+	KeysAPIEnabled   bool
 
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
@@ -95,6 +97,7 @@ type AppPluginAPIBuilder struct {
 	accessChecker   PluginAccessChecker
 	features        featuremgmt.FeatureToggles
 	search          resourcepb.ResourceIndexClient
+	store           resourcepb.ResourceStoreClient
 	tracer          tracing.Tracer
 
 	// optional configuration
@@ -119,6 +122,7 @@ func NewAppPluginAPIBuilder(
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
 	search resourcepb.ResourceIndexClient,
+	store resourcepb.ResourceStoreClient,
 	opts AppPluginRunnerOptions, // can change without updating wire :)
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
@@ -139,6 +143,7 @@ func NewAppPluginAPIBuilder(
 		decrypter:       decrypter,
 		accessChecker:   accessChecker,
 		search:          search,
+		store:           store,
 		opts:            opts,
 		features:        features,
 		tracer:          tracer,
@@ -173,6 +178,7 @@ func RegisterAPIService(
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 
 	// Find all local plugins
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
@@ -205,6 +211,7 @@ func RegisterAPIService(
 			decrypter,
 			NewPluginAccessChecker(accessControl),
 			unified, // search support
+			unified, // list-keys reads the resource store
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
 				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
@@ -216,6 +223,7 @@ func RegisterAPIService(
 
 				SearchAPIEnabled: searchAPIEnabled,
 				TrashAPIEnabled:  trashAPIEnabled,
+				KeysAPIEnabled:   keysAPIEnabled,
 			},
 			tracer,
 			features,
