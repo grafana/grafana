@@ -81,16 +81,32 @@ If Grafana can't read the policy, it allows the write to proceed without enforci
 
 ## Configure a quality policy
 
-_TODO: Write the procedure for selecting requirements and saving a detect-only policy._
+Start with detect-only requirements to identify missing information before enabling enforcement.
+The following example requires a runbook URL and a `team` label.
 
-<!--
-Verify the navigation to the Alert rule quality settings page against the UI.
-Cover built-in annotations, label-key suggestions, adding a label key, and Save.
-Explain that new requirements start detect-only and an empty policy checks nothing.
-If covering custom annotations, distinguish API-configured keys shown in the UI from
-keys the UI can create; don't promise a custom-annotation creation control.
-Use one small example, such as requiring runbook_url and team, throughout the page.
--->
+To configure a quality policy, follow these steps:
+
+1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
+1. Under **Required annotations**, turn on **Runbook URL**.
+
+   You can also require **Summary** and **Description**.
+
+1. Under **Required labels**, enter `team` in **Label keys** and select the matching option.
+
+   You can select keys already used by your rules or add a new key.
+
+1. Keep **Enforce** off for the requirements you add.
+
+   New requirements start in detect-only mode.
+
+1. Click **Save**.
+
+   Grafana displays **Policy saved** to confirm the change.
+
+The saved policy identifies rules with missing or empty `runbook_url` annotations or `team` labels.
+Continue to [Review alert quality](#review-alert-quality) to inspect the findings.
+
+A policy with no required annotations or labels checks nothing.
 
 ## Review alert quality
 
