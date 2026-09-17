@@ -16,6 +16,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
+import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
 import { useIncidents } from './useIncidents';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
@@ -34,8 +35,6 @@ setupMockServer();
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
-const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
-
 const activeIncidents: IncidentPreview[] = [
   {
     incidentID: '101',
@@ -50,14 +49,6 @@ const activeIncidents: IncidentPreview[] = [
     createdTime: '2024-01-01T09:00:00Z',
   },
 ];
-
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  server.use(
-    http.post(QUERY_PREVIEWS_PATH, () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
-    )
-  );
-}
 
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -115,20 +106,13 @@ describe('IncidentsCard', () => {
   });
 
   it('names the selected team in the empty message and scopes the request to it', async () => {
-    const queries: string[] = [];
-    server.use(
-      http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
-        const body = (await request.json()) as { query: { queryString: string } };
-        queries.push(body.query.queryString);
-        return HttpResponse.json({ incidentPreviews: [], cursor: { hasMore: false } });
-      })
-    );
+    const queries = mockIncidents([]);
 
     render(<IncidentsCardWithData team="Team C" />);
 
     expect(await screen.findByText('No active incidents for Team C.')).toBeInTheDocument();
     expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
-    expect(queries).toEqual(['isdrill:false status:active field:team:"Team C"']);
+    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:team:"Team C"`]);
   });
 
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {

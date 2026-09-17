@@ -22,8 +22,6 @@ import { type IncidentsData } from './useIncidents';
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
 
-const TEAM_FILTER_ROW_HEIGHT = 48;
-
 type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
 
 // Prefixed because these land in the global DOM id namespace, and the bare tab ids are
@@ -71,30 +69,6 @@ export function AlertIncidentTabs({
   const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
   const incidentTeamValues = useIncidentTeamValues(canViewIncidents);
 
-  // Each tab keeps its own selection: the two option lists rarely match, so a shared
-  // pick would often name a team the other tab's field can't hold.
-  const teamFilter =
-    activeTab === ALERTS_TAB_ID
-      ? {
-          // Undefined while loading or on error, which hides the dropdown.
-          teamValues: alertTeamValues,
-          selectedTeam: alertsTeam,
-          onChange: onAlertsTeamChange,
-          offersYourTeams: hasTeams,
-          ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
-        }
-      : {
-          teamValues: incidentTeamValues,
-          selectedTeam: incidentsTeam,
-          onChange: onIncidentsTeamChange,
-          // Incidents have no "your teams" scope: the unfiltered default is every active incident.
-          offersYourTeams: false,
-          ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
-        };
-  const teamValues = teamFilter.teamValues ?? [];
-  const hasTeamFilter = teamValues.length > 0;
-  const listHeight = DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN - (hasTeamFilter ? TEAM_FILTER_ROW_HEIGHT : 0);
-
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
@@ -125,6 +99,8 @@ export function AlertIncidentTabs({
         ? t('home.alerts-incidents.title-incidents', 'Incidents')
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
+  // Each tab keeps its own team selection: the two option lists rarely match, so a shared
+  // pick would often name a team the other tab's field can't hold.
   const tabs = [
     ...(canViewAlerts
       ? [
@@ -133,6 +109,13 @@ export function AlertIncidentTabs({
             label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
             // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
             counter: loading ? undefined : count,
+            teamFilter: {
+              teamValues: alertTeamValues,
+              selectedTeam: alertsTeam,
+              onChange: onAlertsTeamChange,
+              offersYourTeams: hasTeams,
+              ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
+            },
           },
         ]
       : []),
@@ -146,10 +129,19 @@ export function AlertIncidentTabs({
             // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
             counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
+            teamFilter: {
+              teamValues: incidentTeamValues,
+              selectedTeam: incidentsTeam,
+              onChange: onIncidentsTeamChange,
+              // Incidents have no "your teams" scope: the unfiltered default is every active incident.
+              offersYourTeams: false,
+              ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
+            },
           },
         ]
       : []),
   ];
+  const teamFilter = tabs.find((tab) => tab.id === activeTab)?.teamFilter;
 
   return (
     <Stack direction="column" gap={1} minWidth={0} ref={containerRef}>
@@ -178,15 +170,18 @@ export function AlertIncidentTabs({
           ))}
         </TabsBar>
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
-          {hasTeamFilter && (
-            <Box paddingTop={2} paddingBottom={0}>
-              <TeamFilterCombobox key={activeTab} {...teamFilter} teamValues={teamValues} />
-            </Box>
-          )}
-          <ScrollContainer showScrollIndicators maxHeight={`${listHeight}px`} minHeight={`${listHeight}px`}>
-            {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
-            {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
-          </ScrollContainer>
+          {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
+          <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
+            {teamFilter && teamFilter.teamValues.length > 0 && (
+              <Box paddingTop={2}>
+                <TeamFilterCombobox {...teamFilter} />
+              </Box>
+            )}
+            <ScrollContainer showScrollIndicators>
+              {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
+              {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
+            </ScrollContainer>
+          </Box>
 
           <Box padding={1} paddingTop={1.5}>
             {/* Alerts tab footer */}

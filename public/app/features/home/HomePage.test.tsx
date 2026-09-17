@@ -16,6 +16,7 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
 import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
@@ -134,22 +135,12 @@ describe('HomePage', () => {
     });
     window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
     window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
-    const queries: string[] = [];
-    server.use(
-      http.post(
-        '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews',
-        async ({ request }) => {
-          const body = (await request.json()) as { query: { queryString: string } };
-          queries.push(body.query.queryString);
-          return HttpResponse.json({ incidentPreviews: [], cursor: { hasMore: false } });
-        }
-      )
-    );
+    const queries = mockIncidents([]);
 
     render(<HomePage />);
 
     await waitFor(() => expect(queries).toHaveLength(1));
-    expect(queries[0]).toBe('isdrill:false status:active field:team:"platform"');
+    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"platform"`);
   });
 
   it('renders the OSS welcome message', async () => {

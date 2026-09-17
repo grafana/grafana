@@ -27,6 +27,13 @@ import {
   INCIDENTS_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
+import {
+  ACTIVE_INCIDENTS_QUERY,
+  GET_FIELDS_PATH,
+  mockIncidentTeamField,
+  mockIncidents,
+  mockNoIncidentFields,
+} from './mockIncidentsApi';
 import { type TeamSelection } from './teamFilter';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
@@ -121,42 +128,6 @@ function mockIrmPlugin(settings?: Partial<PluginMeta>) {
   );
 }
 
-const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
-const GET_FIELDS_PATH = '/api/plugins/:pluginId/resources/api/v1/FieldsService.GetFields';
-const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
-
-/** Mocks the incident previews endpoint; returns the `queryString` of each request received. */
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  const queries: string[] = [];
-  server.use(
-    http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
-      const body = (await request.json()) as { query: { queryString: string } };
-      queries.push(body.query.queryString);
-      return HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } });
-    })
-  );
-  return queries;
-}
-
-/** Org custom fields with a `team` select field offering the given values. */
-function mockIncidentTeamField(values: string[]) {
-  server.use(
-    http.post(GET_FIELDS_PATH, () =>
-      HttpResponse.json({
-        fields: [
-          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical' }] },
-          {
-            slug: 'team',
-            archived: false,
-            // Blank values would collide with the default-scope selection.
-            selectoptions: [...values.map((value) => ({ value })), { value: '  ' }],
-          },
-        ],
-      })
-    )
-  );
-}
-
 /**
  * Wire form of useFiringAlerts' tolerant own-teams pattern for one team name:
  * its letter/digit runs joined by separator gaps. quoteWithEscape doubles the
@@ -195,7 +166,7 @@ beforeEach(async () => {
   // Tests that need the incidents tab layer mockIrmPlugin() on top.
   mockNoIrmPlugin();
   // No `team` custom field by default, so the incidents dropdown stays hidden.
-  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields: [] })));
+  mockNoIncidentFields();
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
   await act(async () => {
@@ -862,13 +833,7 @@ describe('AlertIncidentTabs', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();
       mockIncidentTeamField(['Team A', 'Team B']);
-      server.use(
-        http.post(QUERY_PREVIEWS_PATH, async ({ request }) => {
-          const body = (await request.json()) as { query: { queryString: string } };
-          const isTeamB = body.query.queryString.includes('field:team:"Team B"');
-          return HttpResponse.json({ incidentPreviews: isTeamB ? [] : [activeIncident], cursor: { hasMore: false } });
-        })
-      );
+      mockIncidents((queryString) => (queryString.includes('field:team:"Team B"') ? [] : [activeIncident]));
 
       const { user } = render(<AlertIncidentTabsWithData />);
 

@@ -43,10 +43,15 @@ interface GetFieldsResponse {
 
 const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
 
-// No escape form in the Incident lexer, so use the quote the value lacks. A value with both
-// can't be expressed; the server rejects it, which is acceptable for admin-set names.
+// No escape form in the Incident lexer, so use the quote the value lacks.
 function quoteQueryValue(value: string) {
   return value.includes('"') ? `'${value}'` : `"${value}"`;
+}
+
+// A value with both quote kinds can't be quoted, so it's never offered as an option.
+// Blank values would render as an empty row and '' collides with the default-scope selection.
+function isFilterableTeamValue(value: string) {
+  return value.trim() !== '' && !(value.includes('"') && value.includes("'"));
 }
 
 function buildActiveIncidentsQuery(team?: string) {
@@ -94,10 +99,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
       }),
       transformResponse: (response: GetFieldsResponse): string[] => {
         const teamField = response.fields?.find((field) => field.slug === 'team' && !field.archived);
-        // Blank values would render as an empty row and '' collides with the default-scope selection.
-        return (teamField?.selectoptions ?? [])
-          .filter((option) => option.value.trim() !== '')
-          .map((option) => option.value);
+        return (teamField?.selectoptions ?? []).map((option) => option.value).filter(isFilterableTeamValue);
       },
     }),
   }),
