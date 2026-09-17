@@ -9,6 +9,7 @@ import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './typ
 const languageOptions: CodeMirrorEditorLanguage[] = [
   'go',
   'html',
+  'ini',
   'json',
   'markdown',
   'sql',

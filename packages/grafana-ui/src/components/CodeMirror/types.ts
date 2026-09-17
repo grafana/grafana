@@ -19,7 +19,16 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
+export type CodeMirrorEditorLanguage =
+  | 'go'
+  | 'html'
+  | 'ini'
+  | 'json'
+  | 'markdown'
+  | 'sql'
+  | 'typescript'
+  | 'xml'
+  | 'yaml';
 
 /**
  * SQL dialect used for syntax highlighting and keyword completion when

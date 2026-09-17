@@ -82,7 +82,7 @@ describe('loadLanguageExtension', () => {
     });
   });
 
-  it.each(['go', 'html', 'json', 'markdown', 'typescript', 'xml', 'yaml'] as const)(
+  it.each(['go', 'html', 'ini', 'json', 'markdown', 'typescript', 'xml', 'yaml'] as const)(
     'loads and memoizes the %s extension',
     async (language) => {
       await jest.isolateModulesAsync(async () => {
@@ -97,6 +97,37 @@ describe('loadLanguageExtension', () => {
       });
     }
   );
+
+  it('highlights INI sections, keys, values, and comments', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { syntaxTree, HighlightStyle } = await import('@codemirror/language');
+      const { EditorState } = await import('@codemirror/state');
+      const { highlightTree, tags } = await import('@lezer/highlight');
+      const extension = await loadLanguageExtension('ini');
+      const doc = '[server]\nhttp_port = 3000\n; comment\n# comment';
+      const state = EditorState.create({ doc, extensions: extension ? [extension] : [] });
+      const style = HighlightStyle.define([
+        { tag: tags.heading, class: 'section' },
+        { tag: tags.definition(tags.variableName), class: 'key' },
+        { tag: tags.quote, class: 'value' },
+        { tag: tags.comment, class: 'comment' },
+      ]);
+      const highlighted: Array<[string, string]> = [];
+
+      highlightTree(syntaxTree(state), style, (from, to, style) => {
+        highlighted.push([doc.slice(from, to), style]);
+      });
+
+      expect(highlighted).toEqual([
+        ['[server]', 'section'],
+        ['http_port ', 'key'],
+        [' 3000', 'value'],
+        ['; comment', 'comment'],
+        ['# comment', 'comment'],
+      ]);
+    });
+  });
 
   it('configures the typescript loader for TypeScript syntax', async () => {
     await jest.isolateModulesAsync(async () => {
