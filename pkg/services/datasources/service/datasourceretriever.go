@@ -29,6 +29,6 @@ func (r *DataSourceRetrieverImpl) GetDataSource(ctx context.Context, query *data
 }
 
 // GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
-func (r *DataSourceRetrieverImpl) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	return r.store.GetDataSourceInNamespace(ctx, namespace, name, group)
+func (r *DataSourceRetrieverImpl) GetDataSourceInNamespace(ctx context.Context, namespace, name string, pluginTypes []string) (*datasources.DataSource, error) {
+	return r.store.GetDataSourceInNamespace(ctx, namespace, name, pluginTypes)
 }

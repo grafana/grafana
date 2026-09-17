@@ -66,17 +66,63 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, namespace, name string, pluginTypes []string) (*datasources.DataSource, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
 	for _, dataSource := range d.res {
-		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
-			return dataSource, nil
+		if name != dataSource.UID || ns.OrgID != dataSource.OrgID {
+			continue
+		}
+		for _, t := range pluginTypes {
+			if t == dataSource.Type {
+				return dataSource, nil
+			}
 		}
 	}
 	return nil, datasources.ErrDataSourceNotFound
+}
+
+func TestUnitService_GetDataSourceInNamespace(t *testing.T) {
+	retriever := &dataSourceMockRetriever{[]*datasources.DataSource{
+		{OrgID: 10, UID: "ds1", Type: "postgres"},
+	}}
+	pluginStore := pluginstore.NewFakePluginStore(pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:       "grafana-postgresql-datasource",
+			AliasIDs: []string{"postgres"},
+		},
+	})
+	s := &Service{retriever: retriever, pluginStore: pluginStore}
+
+	t.Run("resolves the canonical plugin ID to a datasource stored under its legacy alias", func(t *testing.T) {
+		ds, err := s.GetDataSourceInNamespace(context.Background(), "org-10", "ds1", "grafana-postgresql-datasource")
+		require.NoError(t, err)
+		require.Equal(t, "ds1", ds.UID)
+	})
+
+	t.Run("resolves the legacy alias directly", func(t *testing.T) {
+		ds, err := s.GetDataSourceInNamespace(context.Background(), "org-10", "ds1", "postgres")
+		require.NoError(t, err)
+		require.Equal(t, "ds1", ds.UID)
+	})
+
+	t.Run("returns not found for an unrelated type", func(t *testing.T) {
+		_, err := s.GetDataSourceInNamespace(context.Background(), "org-10", "ds1", "influxdb")
+		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
+	})
+
+	t.Run("falls back to the literal type when the plugin isn't registered", func(t *testing.T) {
+		unregisteredRetriever := &dataSourceMockRetriever{[]*datasources.DataSource{
+			{OrgID: 10, UID: "ds2", Type: "some-unregistered-type"},
+		}}
+		unregistered := &Service{retriever: unregisteredRetriever, pluginStore: pluginstore.NewFakePluginStore()}
+
+		ds, err := unregistered.GetDataSourceInNamespace(context.Background(), "org-10", "ds2", "some-unregistered-type")
+		require.NoError(t, err)
+		require.Equal(t, "ds2", ds.UID)
+	})
 }
 
 func TestIntegrationService_AddDataSource(t *testing.T) {

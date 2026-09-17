@@ -128,12 +128,15 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 	return s.SQLStore.Count(ctx, scopeParams)
 }
 
+type dataSourceGetter interface {
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+}
+
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
-	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	dataSourceGetter
 	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
-	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
+	GetDataSourceInNamespace(ctx context.Context, namespace, name string, pluginTypes []string) (*datasources.DataSource, error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -194,7 +197,16 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 }
 
 func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	return s.retriever.GetDataSourceInNamespace(ctx, namespace, name, group)
+	pluginTypes := []string{group}
+	if p, found := s.pluginStore.Plugin(ctx, group); found {
+		pluginTypes = []string{p.ID}
+		for _, alias := range p.AliasIDs {
+			if alias != p.ID {
+				pluginTypes = append(pluginTypes, alias)
+			}
+		}
+	}
+	return s.retriever.GetDataSourceInNamespace(ctx, namespace, name, pluginTypes)
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {

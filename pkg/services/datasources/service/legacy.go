@@ -21,7 +21,7 @@ type LegacyDataSourceLookup interface {
 }
 
 var (
-	_ DataSourceRetriever    = (*Service)(nil)
+	_ dataSourceGetter       = (*Service)(nil)
 	_ LegacyDataSourceLookup = (*cachingLegacyDataSourceLookup)(nil)
 	_ LegacyDataSourceLookup = (*NoopLegacyDataSourcLookup)(nil)
 )
@@ -36,7 +36,7 @@ func (s *NoopLegacyDataSourcLookup) GetDataSourceFromDeprecatedFields(ctx contex
 }
 
 type cachingLegacyDataSourceLookup struct {
-	retriever DataSourceRetriever
+	retriever dataSourceGetter
 	cache     map[string]cachedValue
 	cacheMu   sync.Mutex
 	log       log.Logger
