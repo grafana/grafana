@@ -152,7 +152,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolbar: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
+    justifyContent: 'safe flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,

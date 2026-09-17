@@ -1312,6 +1312,33 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"listAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"negate": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"pattern": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"pattern",
+							},
+						},
+					},
 					"listAlertRuleSearchRulesV0alpha1SearchResultHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -1517,6 +1544,12 @@ var appManifestData = app.ManifestData{
 										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf"),
 									},
 								},
+								"regex": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRegexLeaf"),
+									},
+								},
 								"text": {
 									SchemaProps: spec.SchemaProps{
 
@@ -1715,6 +1748,33 @@ var appManifestData = app.ManifestData{
 							},
 							Required: []string{
 								"field",
+							},
+						},
+					},
+					"listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"negate": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"pattern": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"pattern",
 							},
 						},
 					},
@@ -1921,6 +1981,12 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 
 										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"),
+									},
+								},
+								"regex": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf"),
 									},
 								},
 								"text": {

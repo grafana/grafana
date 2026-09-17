@@ -11,7 +11,7 @@ The Alerting Provisioning HTTP API can be used to create, modify, and delete res
 > If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 {{< admonition type="warning" >}}
-The contact points, notification policies, notification template groups, and mute timings endpoints in this API are deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead.
+The contact points, notification policies, notification template groups, and mute timings endpoints in this API are deprecated and will be removed in a future release. These endpoints don't return resources from a staged Alertmanager configuration. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead.
 {{< /admonition >}}
 
 ## Grafana-managed endpoints
@@ -321,6 +321,8 @@ Content-Type: application/json
 - Set `for` to `0s` for recording rules as they do not have a pending state.
 
 ### Contact points
+
+The contact point endpoints support only v1 integrations. `GET` requests omit integrations that use another version. `PUT` and `DELETE` requests for those integrations return `404 Not Found`.
 
 | Method | URI                                        | Name                                                              | Summary                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |

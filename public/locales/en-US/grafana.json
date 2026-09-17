@@ -920,6 +920,7 @@
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
+      "export-legacy-integration-tooltip": "Export is not available for contact points that contain legacy integrations",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
@@ -1483,6 +1484,10 @@
     },
     "grafana-receivers-export-preview": {
       "text-loading": "Loading...."
+    },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and v1 integrations are exported without their legacy integrations.",
+      "warning-v0-integrations-title": "Legacy integrations are not included"
     },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
@@ -4623,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit document",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
-      "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "load-error-title": "Couldn't load this document",
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display this document.",
+      "tab-contributing": "Contributing",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -12184,6 +12193,10 @@
     "enable-log-details": {
       "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
+    },
+    "hover-overflow": {
+      "description": "Expand overflowing cell content on hover. Selected cells always expand.",
+      "name": "Cell hover overflow"
     },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
