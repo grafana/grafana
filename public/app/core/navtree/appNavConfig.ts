@@ -25,7 +25,7 @@ export interface AppNavConfig {
    * (grafana-auth-app under Users and access).
    */
   singlePage?: boolean;
-  /** Drops includes the app should not show in this deployment, on top of the RBAC checks */
+  /** Drops the `includes` that the app should not show in this deployment, on top of the RBAC checks */
   filterInclude?: (include: PluginInclude) => boolean;
 }
 
@@ -157,7 +157,7 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   [SERVICECENTER_APP_ID]: {
     sectionId: NavID.alertsAndIncidents,
     sortWeight: 1,
-    text: 'Service center',
+    text: 'Service Center',
   },
   'grafana-irm-app': {
     sectionId: NavID.alertsAndIncidents,

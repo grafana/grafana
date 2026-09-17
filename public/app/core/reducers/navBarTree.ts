@@ -145,9 +145,8 @@ const navTreeSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // The payload is a freshly built merged tree (untranslated), with the
-    // runtime-populated children carried over. On failure the tree is left
-    // as-is; a later successful refetch rebuilds from scratch anyway.
+    // Replace rather than merge: the payload is already a complete tree built
+    // from scratch, so anything kept from the old state would be a duplicate.
     builder.addCase(pluginNavLoaded, (_, action) => translateNav(action.payload.tree));
   },
 });

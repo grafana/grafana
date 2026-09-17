@@ -66,9 +66,8 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  // Empty attachment-parent shells (connections, cfg/access) are intentionally
-  // kept here: the plugin nav merge needs them as targets. Pruning happens when
-  // the merge completes, mirroring the server's post-hook pruning.
+  // The empty connections and cfg shells stay: the plugin merge attaches to
+  // them, and prunes whatever is still empty once it completes.
   return applyAppSubUrl(buildStaticNavTree());
 }
 

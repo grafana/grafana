@@ -105,7 +105,7 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
         children: [
           ...(section.children ?? []),
           {
-            text: 'Service center',
+            text: 'Service Center',
             id: standalonePluginPageId('slo-services'),
             subTitle:
               'Centralizes service-level operational data including SLOs, alerts, and incidents by grouping resources through shared labels or tags',

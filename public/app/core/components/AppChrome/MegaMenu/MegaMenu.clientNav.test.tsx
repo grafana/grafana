@@ -1,3 +1,7 @@
+// Separate from MegaMenu.test.tsx because every test here needs the client-nav
+// flags and its own preloaded static tree, and that file has its own harness
+// (a starred-dashboard searcher, a module-level @grafana/runtime mock) and its
+// own renderMegaMenu with a different signature.
 import { HttpResponse } from 'msw';
 import { act, render, screen } from 'test/test-utils';
 

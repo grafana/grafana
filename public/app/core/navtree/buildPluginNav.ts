@@ -24,45 +24,33 @@ import {
   standalonePluginPageIdFromText,
 } from './utils';
 
-const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
-
 /**
- * Merges app-plugin nav items, fetched from the plugins.grafana.app metas API
- * via the grafana-runtime pluginMeta service, into the client-built nav tree.
- * Returns a new tree; the input is not mutated. (While the server builder
- * still exists, the equivalent Go logic is addAppLinks in
- * pkg/services/navtree/navtreeimpl/applinks.go — kept behaviourally in sync.)
+ * Merges app-plugin nav items into the client-built tree and returns a new
+ * tree. The Go equivalent is addAppLinks in
+ * pkg/services/navtree/navtreeimpl/applinks.go, kept behaviourally in sync.
  *
- * Known divergences from the server-built tree, accepted for the client-side
- * build:
- * - per-org plugin enablement is not checked (presence in the namespace
- *   counts as enabled)
- * - the plugins.app:access permission is evaluated without its per-plugin
- *   scope
- * - INI standalone-page overrides ([navigation.app_standalone_pages]) are
- *   unsupported ([navigation.app_sections] is: delivered via frontend
- *   settings, applied by appNavConfigFor)
- * - assistant includes gated on per-org plugin jsonData (the Investigations
- *   page, trial-mode and ossMode restrictions) are not reproduced — jsonData
- *   is not readable client-side; the deployment-mode filtering is (see
- *   APP_NAV_CONFIG's filterInclude)
- * - nesting page includes under their nearest path ancestor
- *   (grafana.pluginPathNesting) is not reproduced yet; the flag has only just
- *   gained a React target, so the client build still appends includes flat
- * - page includes without a path are skipped (the meta spec carries no slug
- *   for the legacy /plugins/<id>/page/<slug> fallback URL)
+ * Deliberately not reproduced:
+ * - per-org plugin enablement: presence in the namespace counts as enabled
+ * - the per-plugin scope on plugins.app:access (see the TODO below)
+ * - [navigation.app_standalone_pages] overrides ([navigation.app_sections]
+ *   arrives via frontend settings and is applied by appNavConfigFor)
+ * - assistant pages gated on per-org plugin jsonData, which the client cannot
+ *   read; the deployment-mode half is reproduced in APP_NAV_CONFIG
+ * - nesting includes under their path ancestor (grafana.pluginPathNesting);
+ *   includes are appended flat for now
+ * - page includes with no path, which have no URL to link to
  */
 export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] {
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
 
-  // Merge into a freshly built static tree rather than the current slice
-  // state: re-merges (e.g. after a remount refetch) into an already-merged
-  // tree would otherwise duplicate every plugin item, and a failed fetch may
-  // have left the current tree without its attachment shells. Runtime-filled
-  // containers (starred, bookmarks) are the dispatcher's concern — see
-  // carryOverRuntimeChildren.
+  // Build a fresh static tree rather than merging into the current slice
+  // state, so a re-merge cannot duplicate plugin items. Runtime-filled
+  // containers are carried over separately by carryOverRuntimeChildren.
   let tree = buildStaticNavTree();
 
+  // TODO: evaluate this per plugin (plugins:id:<id>) as the server does. The
+  // scoped work is ready on navigation/scoped-plugin-nav-access; this coarse
+  // check goes when that lands.
   if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
     for (const app of apps) {
       try {
@@ -98,7 +86,7 @@ function addAppToTree(tree: NavModelItem[], app: AppPluginConfig): NavModelItem[
   }
 
   const link = placeAsLeaf ? { ...appLink, isSection: false } : appLink;
-  return placeAppInSection(tree, app, withNavConfigOverrides(app, link));
+  return placeAppInSection(tree, app, withAppNavConfig(app, link));
 }
 
 /** Builds the app's nav link from its page and dashboard includes */
@@ -113,33 +101,33 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; hasAccessi
       continue;
     }
 
-    if (include.type === PluginIncludeType.page) {
-      // Pathless page includes are component pages; without the legacy slug
-      // there is no URL to link to.
-      if (!include.path) {
-        continue;
-      }
-      hasAccessiblePages = true;
-
-      if (include.defaultNav && include.addToNav) {
-        appUrl = include.path;
-      }
-
-      if (include.addToNav) {
+    if (include.type === PluginIncludeType.dashboard) {
+      if (include.addToNav && include.uid) {
         children.push({
+          url: `/d/${include.uid}`,
           text: include.name,
-          icon: toIconName(include.icon),
           pluginId: app.id,
-          url: include.path,
         });
       }
+      continue;
     }
 
-    if (include.type === PluginIncludeType.dashboard && include.addToNav && include.uid) {
+    // Pathless page includes are component pages: no URL to link to
+    if (include.type !== PluginIncludeType.page || !include.path) {
+      continue;
+    }
+    hasAccessiblePages = true;
+
+    if (include.defaultNav && include.addToNav) {
+      appUrl = include.path;
+    }
+
+    if (include.addToNav) {
       children.push({
-        url: `/d/${include.uid}`,
         text: include.name,
+        icon: toIconName(include.icon),
         pluginId: app.id,
+        url: include.path,
       });
     }
   }
@@ -161,8 +149,8 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; hasAccessi
   };
 }
 
-/** Applies the app's APP_NAV_CONFIG display overrides (name, icon, subtitle, badge) */
-function withNavConfigOverrides(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
+/** Applies the app's nav config: the built-in placement plus any [navigation.app_sections] override */
+function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
   const navConfig = appNavConfigFor(app.id);
   if (!navConfig) {
     return appLink;
@@ -269,6 +257,8 @@ export function carryOverRuntimeChildren(tree: NavModelItem[], currentTree: NavM
 // legacy role check applies: the user's org role must rank at or above the
 // include's role.
 function hasAccessToInclude(include: PluginInclude): boolean {
+  const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
+
   if (include.action) {
     return contextSrv.hasPermission(include.action);
   }
