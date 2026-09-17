@@ -4,12 +4,9 @@ import { act, render, screen } from 'test/test-utils';
 import { setLogger } from '@grafana/runtime/unstable';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import * as pluginBridgeHooks from '../hooks/usePluginBridge';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource } from '../mocks';
-import { addPlugin, disablePlugin } from '../mocks/server/configure';
 import { setupDataSources } from '../testSetup/datasources';
-import { pluginMeta } from '../testSetup/plugins';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { withRouteProxy } from './ProxiedAlertingRoute';
@@ -116,39 +113,17 @@ function mountedProxy(override?: (proxy: RouteProxy) => Partial<RouteProxy>) {
 
 describe('withRouteProxy', () => {
   it('renders the Grafana page for a Grafana-managed URL', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     renderProxiedRoute(GRAFANA_URL);
 
     // There on the very first render — the URL isn't data source managed, so the page never waits
     // on the plugin check.
     expect(screen.getByText('core alerting page')).toBeInTheDocument();
 
-    // Let the (unused) plugin check settle, then confirm we stayed put.
-    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
-    expect(screen.queryByText(`Redirected to ${PLUGIN_TARGET}`)).not.toBeInTheDocument();
-  });
-
-  it('renders the Grafana page when the plugin is not installed', async () => {
-    renderProxiedRoute(DATA_SOURCE_URL);
-
-    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
-  });
-
-  it('renders the Grafana page when the plugin is installed but disabled', async () => {
-    // usePluginBridge reports `installed: false` for a disabled plugin, so a disabled plugin is
-    // treated the same as an absent one — we keep serving the page ourselves.
-    disablePlugin(SupportedPlugin.PrometheusAlerting);
-
-    renderProxiedRoute(DATA_SOURCE_URL);
-
     expect(await screen.findByText('core alerting page')).toBeInTheDocument();
     expect(screen.queryByText(`Redirected to ${PLUGIN_TARGET}`)).not.toBeInTheDocument();
   });
 
   it('redirects a data source managed URL once the plugin is installed', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     renderProxiedRoute(DATA_SOURCE_URL);
 
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
@@ -156,8 +131,6 @@ describe('withRouteProxy', () => {
   });
 
   it('never renders the Grafana page on the way to a redirect', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     renderProxiedRoute(DATA_SOURCE_URL);
 
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
@@ -168,16 +141,12 @@ describe('withRouteProxy', () => {
   });
 
   it('keeps the query string when redirecting', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     renderProxiedRoute(DATA_SOURCE_URL, '?tab=instances');
 
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}?tab=instances`)).toBeInTheDocument();
   });
 
   it('does not hand out the last URL’s target when the URL changes under it', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     const { ProxiedPage, at } = mountedProxy();
 
     const { rerender } = render(<ProxiedPage {...at(DATA_SOURCE_URL)} />);
@@ -191,8 +160,6 @@ describe('withRouteProxy', () => {
   });
 
   it('says it is redirecting while it works out where the page belongs', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     renderProxiedRoute(DATA_SOURCE_URL);
 
     expect(screen.getByText('Redirecting…')).toBeInTheDocument();
@@ -204,9 +171,6 @@ describe('withRouteProxy', () => {
   });
 
   it('keeps waiting when the URL moves on after a timeout', async () => {
-    jest
-      .spyOn(pluginBridgeHooks, 'probePlugin')
-      .mockResolvedValue({ settings: pluginMeta[SupportedPlugin.PrometheusAlerting] });
     jest.useFakeTimers();
 
     // Never settles for the first URL, works normally for anything else.
@@ -233,11 +197,6 @@ describe('withRouteProxy', () => {
   });
 
   it('falls back to Grafana and logs when the handler takes too long to resolve a URL', async () => {
-    // The plugin answers straight away, so the only thing left to wait on is the handler, which
-    // is what this test is about.
-    jest
-      .spyOn(pluginBridgeHooks, 'probePlugin')
-      .mockResolvedValue({ settings: pluginMeta[SupportedPlugin.PrometheusAlerting] });
     jest.useFakeTimers();
 
     // A handler that never settles — without a ceiling of its own this would load forever.
@@ -253,25 +212,6 @@ describe('withRouteProxy', () => {
     expect(logError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Timed out while resolving the Prometheus Alerting plugin URL' }),
       { timeout: '5000', path: ROUTE_PATH }
-    );
-  });
-
-  it('falls back to Grafana and logs when plugin discovery times out', async () => {
-    // A plugin check that never comes back. Without a ceiling of its own the page would sit on
-    // "Redirecting…" forever.
-    jest.spyOn(pluginBridgeHooks, 'probePlugin').mockReturnValue(new Promise(() => {}));
-    jest.useFakeTimers();
-
-    renderProxiedRoute(DATA_SOURCE_URL);
-
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(5_000);
-    });
-
-    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
-    expect(logError).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Timed out while checking Prometheus Alerting plugin status' }),
-      { timeout: '5000' }
     );
   });
 });

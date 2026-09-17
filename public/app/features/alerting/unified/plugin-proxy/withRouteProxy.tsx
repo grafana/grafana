@@ -1,12 +1,8 @@
 /**
- * Hands data source managed alerting URLs over to the `grafana-prometheusalerting-app` plugin.
- *
- * The alerting route table imports this module while the app is starting up, so everything it
- * reaches ends up in the first bundle the browser downloads — which is why it holds no opinion
- * about which URLs the plugin serves. Routes name themselves by calling `proxied()`, and the table
- * saying what to do with them lives in `proxies.ts`, fetched the first time someone opens one.
+ * Opts alerting routes into the `grafana-prometheusalerting-app` proxy without adding the proxy
+ * table to Grafana's initial bundle.
  */
-import { lazy } from 'react';
+import { use } from 'react';
 
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -17,75 +13,70 @@ import {
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
-function proxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
-  const RoutePage = route.component;
+/** Wraps a route only when the route proxy and unified alerting are enabled. */
+export function proxied(route: RouteDescriptor): RouteDescriptor {
+  const proxyEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingDataSourceManagedRouteProxy, false);
 
-  const LazyProxiedRoute = lazy(() =>
-    import(/* webpackChunkName: "AlertingRouteProxy" */ './ProxiedAlertingRoute')
-      .then(({ withRouteProxyForPath }) => ({ default: withRouteProxyForPath(route.path, RoutePage) }))
-      .catch((error) => {
-        // Most likely a stale bundle after a deploy. Serving Grafana's own page is the same
-        // fallback we use when the plugin isn't installed, and it's the page the person asked for,
-        // so there's no reason to make them sit through a reload for it.
-        getLogger('features.alerting').logWarning('Could not load the alerting route proxy', {
-          path: route.path,
-          error: String(error),
-        });
-        return { default: RoutePage };
-      })
-  );
-
-  // Whether this particular URL needs the plugin is decided inside `ProxiedAlertingRoute`, once
-  // the table has loaded. Grafana-managed URLs therefore wait on that fetch too — the trade we
-  // accepted to keep the proxy out of the boot bundle entirely. The chunk is small and shared by
-  // every proxied route, so it costs one request per session.
-  //
-  // That wait needs no Suspense boundary of its own: `GrafanaRoute` already wraps every route
-  // component in one, showing the same `PageLoader` every other route shows while it loads. Which
-  // is the right thing to show here — most URLs on these routes are Grafana's own and aren't going
-  // anywhere, so a "Redirecting…" notice would tell the majority of people something that isn't
-  // happening to them. Once we know a redirect is coming, `ProxiedAlertingRoute` says so itself.
-  //
-  // Named, and returned as a component rather than handing `LazyProxiedRoute` back directly, so
-  // the route table carries something `routes.test.tsx` can recognise as proxied.
-  function MaybeProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
-    return <LazyProxiedRoute {...props} />;
+  if (!proxyEnabled || !config.unifiedAlertingEnabled) {
+    return route;
   }
 
-  return MaybeProxiedAlertingRoute;
+  return { ...route, component: createProxiedComponent(route) };
 }
 
-/**
- * Marks an alerting route as one the `grafana-prometheusalerting-app` plugin might serve, so that
- * data source managed URLs on it get handed over. Wrap the route descriptor where it is declared:
- *
- *     proxied({ path: '/alerting/silences', roles: …, component: … })
- *
- * Whether a given URL on that route actually belongs to the plugin is decided later, from the
- * table in `proxies.ts`. Grafana-managed URLs end up back on the page below, so opting a route in
- * is safe even when most of its traffic is Grafana's own.
- *
- * Does nothing unless the `alerting.dataSourceManagedRouteProxy` flag is on. Handing the route
- * straight back means an instance without the plugin does no proxy work at all — no wrapper, no
- * chunk to fetch, no plugin lookup — which is why the flag is read here rather than inside the
- * proxy. It has to be a flag: nothing else can say whether the plugin is there at the moment the
- * route table is assembled, because the plugin metadata is only available asynchronously.
- *
- * Also does nothing when unified alerting is switched off — every alerting route serves the
- * "alerting is not enabled" page then, and someone who turned alerting off didn't ask us to find
- * them another way in.
- *
- * Both are read per call rather than once at import, because neither is populated until after this
- * module is evaluated.
- */
-export function proxied(route: RouteDescriptor): RouteDescriptor {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingDataSourceManagedRouteProxy, false)) {
-    return route;
+function createProxiedComponent(route: RouteDescriptor): GrafanaRouteComponent {
+  let routeComponentPromise: Promise<GrafanaRouteComponent> | undefined;
+
+  function getRouteComponent(): Promise<GrafanaRouteComponent> {
+    routeComponentPromise ??= resolveRouteComponent(route);
+    return routeComponentPromise;
   }
 
-  if (!config.unifiedAlertingEnabled) {
-    return route;
+  // GrafanaRoute provides the Suspense boundary. The route-local promise must remain stable across
+  // React's retries or discovery would restart after every suspension.
+  function ProxiedAlertingRoute(props: GrafanaRouteComponentProps) {
+    const RouteComponent = use(getRouteComponent());
+    return <RouteComponent {...props} />;
   }
 
-  return { ...route, component: proxiedComponent(route) };
+  return ProxiedAlertingRoute;
+}
+
+async function resolveRouteComponent(route: RouteDescriptor): Promise<GrafanaRouteComponent> {
+  try {
+    const pluginAvailable = await isPluginAvailable();
+    if (!pluginAvailable) {
+      return route.component;
+    }
+  } catch (error) {
+    getLogger('features.alerting').logWarning('Could not check Prometheus Alerting plugin availability', {
+      error: String(error),
+    });
+    return route.component;
+  }
+
+  return loadProxiedRoute(route);
+}
+
+async function isPluginAvailable(): Promise<boolean> {
+  const { isPrometheusAlertingPluginEnabled } = await import(
+    /* webpackChunkName: "PrometheusAlertingPluginAvailability" */ './pluginAvailability'
+  );
+  return isPrometheusAlertingPluginEnabled();
+}
+
+async function loadProxiedRoute(route: RouteDescriptor): Promise<GrafanaRouteComponent> {
+  try {
+    const { withRouteProxyForPath } = await import(
+      /* webpackChunkName: "AlertingRouteProxy" */ './ProxiedAlertingRoute'
+    );
+    return withRouteProxyForPath(route.path, route.component);
+  } catch (error) {
+    // A stale deployment chunk should fall back to the page the user requested.
+    getLogger('features.alerting').logWarning('Could not load the alerting route proxy', {
+      path: route.path,
+      error: String(error),
+    });
+    return route.component;
+  }
 }

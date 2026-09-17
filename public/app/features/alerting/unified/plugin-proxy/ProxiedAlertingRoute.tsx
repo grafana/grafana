@@ -1,6 +1,6 @@
 /**
- * The part of the route proxy that only a data source managed URL needs: check the plugin is
- * there, work out where in it the URL belongs, and send the browser on.
+ * The part of the route proxy that only an installation with the Prometheus Alerting plugin needs:
+ * work out where in the plugin a URL belongs, and send the browser on.
  *
  * Loaded on demand from `withRouteProxy.tsx`, so this module is free to import whatever it needs.
  */
@@ -14,15 +14,12 @@ import { LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponent, type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { isPluginEnabled, probePlugin } from '../hooks/usePluginBridge';
-import { SupportedPlugin } from '../types/pluginBridges';
 import { withTimeout } from '../utils/promise';
 
 import { findRouteProxy } from './proxies';
 import { buildProxyContext, stripSubPath } from './resolve';
 import { type ProxyContext, type RouteProxy } from './types';
 
-const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
 /**
  * Handlers look up data sources to swap names for UIDs, which can reach the backend. Without a
  * ceiling of its own, a request that never comes back would leave the page loading forever.
@@ -62,28 +59,10 @@ function timedOut(message: string, timeoutMs: number, path?: string): Error {
 }
 
 /**
- * Works out where in the plugin a URL belongs: first whether the plugin is there at all, then
- * whether it has a page for this particular URL. Undefined either way means we keep serving the
- * Grafana page.
- *
- * Both steps are in one chain on purpose. Asking about the plugin in a hook of its own makes its
- * answer an input to the second step, and `useAsync` holds on to its last result when its inputs
- * change — so there would be a render where the plugin has just been found but this still says
- * "nowhere to go", and we'd mount the Grafana page and fire off all of its requests for a page
- * we're about to leave.
+ * Works out where in the plugin a URL belongs. The eager gate has already established that the
+ * plugin is installed and enabled before this chunk is requested.
  */
 async function resolveTarget(proxy: RouteProxy, context: ProxyContext): Promise<string | undefined> {
-  const { settings } = await withTimeout(
-    probePlugin(SupportedPlugin.PrometheusAlerting),
-    PLUGIN_DISCOVERY_TIMEOUT_MS,
-    () => timedOut('Timed out while checking Prometheus Alerting plugin status', PLUGIN_DISCOVERY_TIMEOUT_MS)
-  );
-
-  // A plugin that's installed but switched off is treated the same as one that was never there.
-  if (!isPluginEnabled(settings)) {
-    return undefined;
-  }
-
   return withTimeout(proxy.handler(context), TARGET_RESOLUTION_TIMEOUT_MS, () =>
     timedOut('Timed out while resolving the Prometheus Alerting plugin URL', TARGET_RESOLUTION_TIMEOUT_MS, proxy.path)
   );
@@ -102,8 +81,8 @@ function useProxyContext(routePath: string): ProxyContext {
 
 /**
  * Wraps an alerting page so that data source managed URLs are handed over to the
- * `grafana-prometheusalerting-app` plugin. If the URL isn't data source managed, or the plugin isn't
- * installed and enabled, the page renders exactly as it does today.
+ * `grafana-prometheusalerting-app` plugin. If the URL isn't data source managed, the page renders
+ * exactly as it does today. Plugin availability is checked before this module is loaded.
  *
  * Access control is left to the plugin — we only decide where the URL should be served from.
  */
@@ -150,7 +129,7 @@ export function withRouteProxy(proxy: RouteProxy, RoutePage: GrafanaRouteCompone
       return <RedirectingPage />;
     }
 
-    // Either the plugin isn't available, or we couldn't work out where in it this URL belongs.
+    // We couldn't work out where in the plugin this URL belongs.
     if (!resolved?.url) {
       return <RoutePage {...props} />;
     }
