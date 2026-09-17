@@ -38,13 +38,16 @@ func TestKVWatchSeedBoundaries(t *testing.T) {
 			for i := range count {
 				saveWatchEvent(t, backend, durableWatchEvent(base+int64(i)))
 			}
-			emptyBoundary := snowflakeFromTime(time.Now())
-			seed, err := backend.loadWatchSeed(t.Context(), emptyBoundary)
+			handoffRV := snowflakeFromTime(time.Now())
+			if count > 0 {
+				handoffRV = base + int64(count-1)
+			}
+			seed, err := backend.loadWatchSeed(t.Context(), handoffRV)
 			require.NoError(t, err)
 			require.Len(t, seed.events, min(count, defaultCacheSize))
 			if count == 0 {
-				require.Equal(t, emptyBoundary, seed.initialCacheFloor)
-				require.Equal(t, emptyBoundary, seed.highestRV)
+				require.Equal(t, handoffRV, seed.initialCacheFloor)
+				require.Equal(t, handoffRV, seed.highestRV)
 			} else {
 				require.Equal(t, base+int64(max(0, count-defaultCacheSize)), seed.initialCacheFloor)
 				require.Equal(t, base+int64(count-1), seed.highestRV)
@@ -109,13 +112,13 @@ func TestIntegrationKVWatchSeedConcurrentCleanup(t *testing.T) {
 						return backend.kv.BatchGet(ctx, section, keys)
 					}
 					backend.eventStore = newEventStore(probe)
-					emptyBoundary := snowflakeFromTime(time.Now())
-					seed, err := backend.loadWatchSeed(t.Context(), emptyBoundary)
+					handoffRV := events[count-1].ResourceVersion
+					seed, err := backend.loadWatchSeed(t.Context(), handoffRV)
 					require.NoError(t, err)
 					require.Len(t, seed.events, count-tc.first)
 					if tc.first == count {
-						require.Equal(t, emptyBoundary, seed.initialCacheFloor)
-						require.Equal(t, emptyBoundary, seed.highestRV)
+						require.Equal(t, handoffRV, seed.initialCacheFloor)
+						require.Equal(t, handoffRV, seed.highestRV)
 					} else {
 						require.Equal(t, events[tc.first].ResourceVersion, seed.initialCacheFloor)
 						require.Equal(t, events[count-1].ResourceVersion, seed.highestRV)
@@ -125,7 +128,7 @@ func TestIntegrationKVWatchSeedConcurrentCleanup(t *testing.T) {
 						}
 					}
 					probe.assertClosed()
-					require.Equal(t, []ListOptions{{Sort: SortOrderDesc, Limit: defaultCacheSize}}, probe.scans)
+					require.Equal(t, []ListOptions{{Sort: SortOrderDesc, Limit: defaultCacheSize, EndKey: fmt.Sprintf("%d", handoffRV+1)}}, probe.scans)
 					require.Len(t, probe.batches, 3)
 					for i, batch := range probe.batches {
 						require.Len(t, batch, readEventBatchSize)
@@ -166,7 +169,7 @@ func TestKVWatchSeedAllBulkBoundary(t *testing.T) {
 	event := durableWatchEvent(snowflakeFromTime(time.Now().Add(-time.Hour)))
 	event.PreviousRV = -1
 	require.NoError(t, backend.eventStore.Save(t.Context(), event))
-	seed, err := backend.loadWatchSeed(t.Context(), snowflakeFromTime(time.Now()))
+	seed, err := backend.loadWatchSeed(t.Context(), event.ResourceVersion)
 	require.NoError(t, err)
 	require.Empty(t, seed.events)
 	require.Equal(t, event.ResourceVersion, seed.initialCacheFloor)
@@ -214,7 +217,7 @@ func TestKVWatchSeedPreviousMetadataAndBulkFiltering(t *testing.T) {
 			bulk.PreviousRV = -1
 			// Excluded bulk events don't require a watch payload.
 			require.NoError(t, backend.eventStore.Save(t.Context(), bulk))
-			seed, err := backend.loadWatchSeed(t.Context(), rv)
+			seed, err := backend.loadWatchSeed(t.Context(), bulk.ResourceVersion)
 			require.NoError(t, err)
 			require.Len(t, seed.events, 3)
 			require.Equal(t, bulk.ResourceVersion, seed.highestRV)
@@ -224,7 +227,7 @@ func TestKVWatchSeedPreviousMetadataAndBulkFiltering(t *testing.T) {
 				require.Equal(t, event.PreviousFolder, seed.events[i].PreviousFolder)
 			}
 			require.NoError(t, backend.dataStore.Delete(t.Context(), eventDataKey(created)))
-			seed, err = backend.loadWatchSeed(t.Context(), rv)
+			seed, err = backend.loadWatchSeed(t.Context(), bulk.ResourceVersion)
 			require.NoError(t, err)
 			require.Len(t, seed.events, 2)
 			require.Equal(t, updated.ResourceVersion, seed.initialCacheFloor)
@@ -451,7 +454,6 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 				saveWatchEvent(t, backend, captured)
 				backend.notifier.Publish(captured)
 			}
-			before := snowflakeFromTime(time.Now())
 			seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
 			defer func() {
 				cancel()
@@ -462,7 +464,7 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 			}()
 			require.NoError(t, err)
 			require.Empty(t, seed.events)
-			require.GreaterOrEqual(t, seed.initialCacheFloor, before)
+			require.Equal(t, old.ResourceVersion, seed.initialCacheFloor)
 			require.Equal(t, seed.initialCacheFloor, seed.highestRV)
 			require.Greater(t, captured.ResourceVersion, seed.highestRV)
 			live := durableWatchEvent(backend.snowflake.Generate().Int64())

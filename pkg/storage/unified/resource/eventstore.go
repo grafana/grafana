@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -312,11 +313,15 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 	return events, nil
 }
 
-// latest reads metadata newest-first so oldest-first cleanup can only shorten
-// the retained tail, not leave holes. Missing records are skipped;
-func (n *eventStore) latest(ctx context.Context, limit int) ([]Event, error) {
+// latest reads metadata at or below throughRV newest-first so oldest-first
+// cleanup can only shorten the retained tail, not leave holes. Missing records are skipped.
+func (n *eventStore) latest(ctx context.Context, limit int, throughRV int64) ([]Event, error) {
 	keys := make([]string, 0, limit)
-	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}) {
+	opts := ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}
+	if throughRV < math.MaxInt64 {
+		opts.EndKey = fmt.Sprintf("%d", throughRV+1)
+	}
+	for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
 		if err != nil {
 			return nil, err
 		}
