@@ -261,6 +261,19 @@ describe('TextNGPanel', () => {
       expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
     });
 
+    it('opens the editor on the split view', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = Object.assign({}, defaultProps, {
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+    });
+
     it('merges a language change made in the editor into the existing code options', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const onOptionsChange = jest.fn();
@@ -761,6 +774,45 @@ describe('TextNGPanel', () => {
 
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
+    });
+  });
+
+  describe('mermaid', () => {
+    const fence = '```mermaid\ngraph TD; A-->B;\n```';
+
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
+    it('renders a mermaid fence as a diagram', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      await screen.findByText('A');
+      expect(content.querySelector('.mermaid-diagram svg')).not.toBeNull();
+      expect(content.querySelector('code.language-mermaid')).toBeNull();
+    });
+
+    it('leaves the fence as code when the text.newFeatures flag is off', async () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      mermaidRender.mockClear();
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      // Let any pending lazy import settle before asserting nothing rendered.
+      await act(async () => {});
+      expect(content.querySelector('code.language-mermaid')).not.toBeNull();
+      expect(mermaidRender).not.toHaveBeenCalled();
     });
   });
 

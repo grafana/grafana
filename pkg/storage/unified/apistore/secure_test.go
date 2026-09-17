@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
 
 	claims "github.com/grafana/authlib/types"
@@ -517,7 +518,8 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 			return &resourcepb.ResourceKey{Namespace: "default", Resource: "customkinds", Name: "test"}, nil
 		},
 		opts: StorageOptions{
-			Scheme:               runtime.NewScheme(),
+			// Declared so encode serializes the object directly; this Storage has no codec.
+			GVK:                  schema.GroupVersionKind{Group: "something.grafana.app", Version: "v1beta1", Kind: "CustomKind"},
 			SecureValues:         secureStore,
 			MaximumNameLength:    100,
 			DeprecatedInternalID: DeprecatedID_None,

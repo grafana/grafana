@@ -920,6 +920,7 @@
       "button-view": "Afficher",
       "export-ariaLabel-export": "Exporter",
       "export-label-export": "Exporter",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Supprimer",
       "label-manage-permissions": "Gérer les autorisations",
       "tooltip-history": "Afficher l’historique des tentatives d’envoi de notification à ce point de contact",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Chargement…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Chargement…"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Aucune règle n’est suspendue",
         "pause-recording": "Règles d’enregistrement suspendues",
         "policy-tree": "Arborescence de la politique",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Routage des notifications",
         "routing-none": "Aucune arborescence de politique sélectionnée",
         "routing-tree": "Arborescence de la politique : {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Nom de fichier de modèle dupliqué : « {{name}} ». Les noms de fichiers de modèles doivent être uniques.",
         "templates-label": "Modèles de notification",
         "templates-remove": "Supprimer {{name}}",
-        "upload": "Importer le fichier YAML",
+        "upload": "",
         "validating": "Validation de la configuration…",
         "validation-error": "Échec de la validation",
         "validation-error-desc": "Échec de la validation de la configuration.",
         "validation-success": "Validation réussie",
         "validation-success-desc": "Aucun conflit n’a été trouvé. La configuration est prête pour l’importation.",
         "validation-warning": "Certaines ressources seront renommées afin d’éviter les conflits avec les ressources existantes",
-        "yaml-file": "Fichier YAML de configuration Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "Fichier YAML de configuration Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Source de données",
@@ -3245,14 +3256,19 @@
         "action-disable": "Désactiver la synchronisation",
         "add-datasource-link": "Ajoutez une source de données Mimir",
         "badge-active": "Actif",
+        "badge-failing": "",
         "badge-not-configured": "Non configuré",
         "badge-operator-managed": "Géré par l’opérateur",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Synchronisez en continu la configuration d’alerte depuis une source de données Mimir ou Cortex Alertmanager vers Grafana.",
         "disable-confirm-action": "Désactiver la synchronisation",
         "disable-confirm-body": "La désactivation arrêtera la synchronisation continue depuis la source de données {{uid}}. Vous pourrez la réactiver plus tard en sélectionnant à nouveau une source de données.",
         "disable-confirm-body-generic": "La désactivation arrêtera la synchronisation continue. Vous pourrez la réactiver plus tard en sélectionnant à nouveau une source de données.",
         "disable-confirm-title": "Désactiver la synchronisation automatique de Mimir Alertmanager ?",
         "disable-success": "Synchronisation automatique de Mimir Alertmanager désactivée",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Cette valeur est définie par la clé <1>[unified_alerting] external_alertmanager_uid</1> dans grafana.ini et ne peut pas être modifiée depuis l’interface utilisateur. Modifiez le fichier de configuration puis redémarrez Grafana, ou supprimez la clé pour gérer la synchronisation d’ici.",
@@ -3271,6 +3287,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Configuration de la synchronisation automatique"
       },
       "import": {
@@ -4611,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Ajoutez un README",
-      "edit-tooltip": "Modifiez le README",
+      "edit-doc-tooltip": "",
       "empty-message": "Ajoutez un fichier README pour décrire le contenu de ce dossier et indiquer où trouver les bons tableaux de bord.",
       "load-error-retry": "Réessayer",
-      "load-error-title": "Impossible de charger le README",
-      "parse-error": "Impossible d’afficher le contenu du README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Effacer l’historique",
@@ -12241,6 +12262,10 @@
     "team-not-found": "[Équipe inconnue]",
     "unknown-error": "Erreur inconnue"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
   },
@@ -12573,6 +12598,10 @@
     "authentication": {
       "title": "Authentification"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Signets"
     },
@@ -12779,6 +12808,7 @@
       "title": "Requêtes enregistrées"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapports"
     },
     "saved-queries": {
@@ -12793,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -16668,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
