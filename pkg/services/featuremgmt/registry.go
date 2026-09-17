@@ -2491,6 +2491,16 @@ var (
 			HideFromDocs:    true,
 		},
 		{
+			Name:            "appplugins.loadAppManifestAndKeepSettings",
+			Description:     "Continue to expose settings when a manifest exists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -3156,6 +3166,15 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{Go: true, LegacyGo: true},
+		},
+		{
+			Name:            "reporting.legacyServiceUsesK8SClient",
+			Description:     "Redirect legacy report service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:            "reporting.redirectReportsToK8SApi",

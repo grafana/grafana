@@ -920,6 +920,7 @@
       "button-view": "Weergave",
       "export-ariaLabel-export": "Exporteren",
       "export-label-export": "Exporteren",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Verwijderen",
       "label-manage-permissions": "Toestemmingen beheren",
       "tooltip-history": "De geschiedenis bekijken van meldingspogingen naar dit contactpunt",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Laden...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Laden...."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Geen regels gepauzeerd",
         "pause-recording": "Opnameregels gepauzeerd",
         "policy-tree": "Beleidsboom",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Meldingsroutering",
         "routing-none": "Geen beleidsboom geselecteerd",
         "routing-tree": "Beleidsboom: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Sjabloonbestandsnaam: \"{{name}}\" dupliceren. Namen van sjabloonbestanden moeten uniek zijn.",
         "templates-label": "Meldingsjablonen",
         "templates-remove": "Verwijder {{name}}",
-        "upload": "YAML-bestand uploaden",
+        "upload": "",
         "validating": "Configuratie valideren...",
         "validation-error": "Validatie is mislukt",
         "validation-error-desc": "Kan de configuratie niet valideren.",
         "validation-success": "Validatie is geslaagd",
         "validation-success-desc": "Geen conflicten gevonden. De configuratie is klaar om te importeren.",
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten met bestaande bronnen te voorkomen",
-        "yaml-file": "YAML voor configuratie van Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML voor configuratie van Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Databron",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "README toevoegen",
-      "edit-tooltip": "README bewerken",
+      "edit-doc-tooltip": "",
       "empty-message": "Voeg een README toe om te beschrijven wat er in deze map staat en waar je de juiste dashboards kunt vinden.",
       "load-error-retry": "Probeer het opnieuw",
-      "load-error-title": "Kan README niet laden",
-      "parse-error": "Kan de inhoud van de README niet weergeven."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Geschiedenis wissen",
@@ -12247,6 +12262,10 @@
     "team-not-found": "[Onbekend team]",
     "unknown-error": "Onbekende fout"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
   },
@@ -12579,6 +12598,10 @@
     "authentication": {
       "title": "Autorisate"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bladwijzers"
     },
@@ -12785,6 +12808,7 @@
       "title": "Geregistreerde query's"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapporteren"
     },
     "saved-queries": {
@@ -12799,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Dashboards doorzoeken"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Bekijk de instellingen die zijn gedefinieerd in je Grafana-configuratie",
@@ -16674,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

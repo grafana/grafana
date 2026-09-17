@@ -915,6 +915,7 @@
       "button-view": "Lihat",
       "export-ariaLabel-export": "Ekspor",
       "export-label-export": "Ekspor",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Hapus",
       "label-manage-permissions": "Kelola izin",
       "tooltip-history": "Lihat riwayat upaya notifikasi yang dilakukan ke titik kontak ini",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Memuat...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Memuat...."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "Tidak ada aturan yang dijeda",
         "pause-recording": "Aturan perekaman dijeda",
         "policy-tree": "Pohon kebijakan",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Perutean notifikasi",
         "routing-none": "Tidak ada pohon kebijakan yang dipilih",
         "routing-tree": "Pohon kebijakan: {{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "Nama file templat duplikat: \"{{name}}\". Nama file templat harus unik.",
         "templates-label": "Templat notifikasi",
         "templates-remove": "Hapus {{name}}",
-        "upload": "Unggah file YAML",
+        "upload": "",
         "validating": "Memvalidasi konfigurasi...",
         "validation-error": "Validasi gagal",
         "validation-error-desc": "Gagal memvalidasi konfigurasi.",
         "validation-success": "Validasi berhasil",
         "validation-success-desc": "Tidak ada konflik yang ditemukan. Konfigurasi siap diimpor.",
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik dengan sumber daya yang sudah ada",
-        "yaml-file": "YAML konfigurasi Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML konfigurasi Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Sumber data",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "Tambahkan README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "",
       "empty-message": "Tambahkan README untuk menjelaskan apa yang ada dalam folder ini dan di mana menemukan dasbor yang tepat.",
       "load-error-retry": "Coba lagi",
-      "load-error-title": "Tidak dapat memuat README",
-      "parse-error": "Tidak dapat menampilkan konten README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Hapus riwayat",
@@ -12160,6 +12175,10 @@
     "team-not-found": "[Tim tidak diketahui]",
     "unknown-error": "Kesalahan tidak diketahui"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
   },
@@ -12492,6 +12511,10 @@
     "authentication": {
       "title": "Autentikasi"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bookmark"
     },
@@ -12698,6 +12721,7 @@
       "title": "Kueri yang direkam"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Pelaporan"
     },
     "saved-queries": {
@@ -12712,6 +12736,10 @@
     },
     "search-dashboards": {
       "title": "Cari dasbor"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Lihat pengaturan yang ditentukan dalam konfigurasi Grafana Anda",
@@ -16552,10 +16580,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

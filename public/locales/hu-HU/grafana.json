@@ -920,6 +920,7 @@
       "button-view": "Nézet",
       "export-ariaLabel-export": "Exportálás",
       "export-label-export": "Exportálás",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Törlés",
       "label-manage-permissions": "Engedélyek kezelése",
       "tooltip-history": "Az ehhez a kapcsolattartási ponthoz tartozó értesítési kísérletek előzményeinek megtekintése",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Betöltés…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Betöltés…"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Nincs szüneteltetett szabály",
         "pause-recording": "Felvételkészítési szabályok szüneteltetve",
         "policy-tree": "Házirendfa",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Értesítési útválasztás",
         "routing-none": "Nincs kijelölt házirendfa",
         "routing-tree": "Házirendfa: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Duplikált sablonfájlnév: „{{name}}”. A sablonfájlok neveinek egyedinek kell lenniük.",
         "templates-label": "Értesítéssablonok",
         "templates-remove": "{{name}} eltávolítása",
-        "upload": "YAML-fájl feltöltése",
+        "upload": "",
         "validating": "Konfiguráció validálása…",
         "validation-error": "Sikertelen validálás",
         "validation-error-desc": "A konfiguráció validálása nem sikerült.",
         "validation-success": "Sikeres validálás",
         "validation-success-desc": "Nem található ütközés. A konfiguráció készen áll az importálásra.",
         "validation-warning": "A meglévő erőforrásokkal való ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve",
-        "yaml-file": "Riasztáskezelési konfigurációs YAML"
+        "yaml-desc": "",
+        "yaml-file": "Riasztáskezelési konfigurációs YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Adatforrás",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "README fájl hozzáadása",
-      "edit-tooltip": "README fájl szerkesztése",
+      "edit-doc-tooltip": "",
       "empty-message": "Adjon hozzá egy README fájlt, amely leírja, hogy mi van ebben a mappában, és hol találhatók a megfelelő irányítópultok.",
       "load-error-retry": "Próbálja újra",
-      "load-error-title": "A README fájl betöltése nem sikerült",
-      "parse-error": "Nem lehet megjeleníteni a README fájl tartalmát."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Előzmények törlése",
@@ -12247,6 +12262,10 @@
     "team-not-found": "[Ismeretlen csapat]",
     "unknown-error": "Ismeretlen hiba"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nem található beállítás"
   },
@@ -12579,6 +12598,10 @@
     "authentication": {
       "title": "Hitelesítés"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Könyvjelzők"
     },
@@ -12785,6 +12808,7 @@
       "title": "Rögzített lekérdezések"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Jelentéskészítés"
     },
     "saved-queries": {
@@ -12799,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Irányítópultok keresése"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Megtekintheti a Grafana-konfigurációban meghatározott beállításokat",
@@ -16674,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

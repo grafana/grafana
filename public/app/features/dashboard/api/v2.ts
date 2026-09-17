@@ -155,9 +155,10 @@ export class K8sDashboardV2API
       [AnnoKeyGrantPermissions]: 'default',
     };
 
+    // remove resource version when updating
+    delete obj.metadata.resourceVersion;
+
     if (obj.metadata.name) {
-      // remove resource version when updating
-      delete obj.metadata.resourceVersion;
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
