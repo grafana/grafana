@@ -10,7 +10,7 @@ import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Toggletip } from '../Toggletip/Toggletip';
 
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
 
@@ -84,41 +84,41 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
-    <div className={styles.popover}>
-      <div className={styles.popoverHeader}>
-        <Stack direction="row" gap={1} alignItems="center">
-          <span className={styles.popoverTitle}>
-            {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
+    <Stack direction="column" gap={1}>
+      {sortedItems.map((item, index) => (
+        <div key={`${item.severity}-${index}`} className={styles.item}>
+          <span className={styles.itemIcon}>
+            <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
           </span>
-        </Stack>
-        {onInvestigateErrors && (
-          <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
-            {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
-                host asks the assistant to explain in that case. */}
-            {topSeverity === 'error'
-              ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
-              : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
-          </Button>
-        )}
-      </div>
-      <Stack direction="column" gap={1}>
-        {sortedItems.map((item, index) => (
-          <div key={`${item.severity}-${index}`} className={styles.item}>
-            <span className={styles.itemIcon}>
-              <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
-            </span>
-            <span className={styles.itemText}>{item.text}</span>
-          </div>
-        ))}
-      </Stack>
-    </div>
+          <span className={styles.itemText}>{item.text}</span>
+        </div>
+      ))}
+    </Stack>
+  );
+
+  // Assistant stays on the left, Inspect on the right, regardless of whether the assistant action
+  // is shown — an empty placeholder keeps Inspect pinned to the end.
+  const footer = (
+    <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+      {onInvestigateErrors ? (
+        <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
+          {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
+              host asks the assistant to explain in that case. */}
+          {topSeverity === 'error'
+            ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
+            : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
+        </Button>
+      ) : (
+        <span />
+      )}
+      <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+        {t('grafana-ui.panel-chrome.inspect', 'Inspect')}
+      </Button>
+    </Stack>
   );
 
   return (
-    // `onInspect` on the trigger opens the inspector directly on click — the tooltip itself only
-    // opens on hover/focus. `trapFocus` lets keyboard users then Tab from the trigger into the
-    // Fix/Explain with Assistant button instead of Tab skipping over the popover entirely.
-    <Tooltip content={content} placement="bottom-start" interactive trapFocus>
+    <Toggletip content={content} footer={footer} placement="bottom-start">
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}
@@ -126,29 +126,12 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
         size="sm"
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
-        onClick={onInspect}
       />
-    </Tooltip>
+    </Toggletip>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  popover: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1),
-  }),
-  popoverHeader: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(2),
-    width: '100%',
-  }),
-  popoverTitle: css({
-    color: theme.colors.text.secondary,
-  }),
   item: css({
     display: 'flex',
     alignItems: 'flex-start',
