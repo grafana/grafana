@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
@@ -24,7 +22,15 @@ import { type IncidentsData } from './useIncidents';
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
 
+const TEAM_FILTER_ROW_HEIGHT = 48;
+
 type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
+
+// Prefixed because these land in the global DOM id namespace, and the bare tab ids are
+// generic enough to collide with plugin content on the same page.
+const PANEL_ID = 'alerts-incidents-panel';
+const tabElementId = (id: TabId) => `alerts-incidents-tab-${id}`;
+
 export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
 };
@@ -46,7 +52,6 @@ export function AlertIncidentTabs({
   onIncidentsTeamChange: (team: TeamSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
-  const styles = useStyles2(getStyles);
   const canViewIncidents = !!incidentsData.enabled;
   const canViewAlerts = alertsData.enabled;
 
@@ -88,6 +93,7 @@ export function AlertIncidentTabs({
         };
   const teamValues = teamFilter.teamValues ?? [];
   const hasTeamFilter = teamValues.length > 0;
+  const listHeight = DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN - (hasTeamFilter ? TEAM_FILTER_ROW_HEIGHT : 0);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -154,104 +160,57 @@ export function AlertIncidentTabs({
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
-        <div className={styles.cardBody}>
-          <div className={styles.tabsHeader}>
-            <TabsBar hideBorder className={styles.tabs}>
-              {tabs.map((tab) => (
-                <Tab
-                  key={tab.id}
-                  label={tab.label}
-                  active={activeTab === tab.id}
-                  counter={tab.counter}
-                  onChangeTab={() => {
-                    setActiveTab(tab.id);
-                    tabChanged({ tab: tab.id });
-                  }}
-                  counterCappedAt={tab.counterCappedAt}
-                />
-              ))}
-            </TabsBar>
-            {hasTeamFilter && (
-              <div className={styles.teamFilter}>
-                <TeamFilterCombobox key={activeTab} {...teamFilter} teamValues={teamValues} />
-              </div>
-            )}
-          </div>
-          <TabContent>
-            <ScrollContainer
-              showScrollIndicators
-              maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
-              minHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
-            >
-              {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
-              {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
-            </ScrollContainer>
-
-            <Box padding={1} paddingTop={1.5}>
-              {/* Alerts tab footer */}
-              {isAlertActionsVisible && (
-                <CreateAndViewAlertsButtons
-                  hasAlerts={hasAlerts}
-                  canCreate={canCreate}
-                  newRuleHref={newRuleHref}
-                  viewAllHref={viewAllHref}
-                />
-              )}
-
-              {/* Incidents tab footer */}
-              {isIncidentsActionsVisible && (
-                <DeclareAndViewIncidentsButtons
-                  pluginId={incidentsPluginId}
-                  hasIncidents={incidentsData.count > 0}
-                  canDeclare={incidentsCanDeclare}
-                  canAccess={incidentsCanAccess}
-                />
-              )}
+        <TabsBar>
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.id}
+              id={tabElementId(tab.id)}
+              aria-controls={PANEL_ID}
+              label={tab.label}
+              active={activeTab === tab.id}
+              counter={tab.counter}
+              onChangeTab={() => {
+                setActiveTab(tab.id);
+                tabChanged({ tab: tab.id });
+              }}
+              counterCappedAt={tab.counterCappedAt}
+            />
+          ))}
+        </TabsBar>
+        <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
+          {hasTeamFilter && (
+            <Box paddingTop={2} paddingBottom={0}>
+              <TeamFilterCombobox key={activeTab} {...teamFilter} teamValues={teamValues} />
             </Box>
-          </TabContent>
-        </div>
+          )}
+          <ScrollContainer showScrollIndicators maxHeight={`${listHeight}px`} minHeight={`${listHeight}px`}>
+            {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
+            {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
+          </ScrollContainer>
+
+          <Box padding={1} paddingTop={1.5}>
+            {/* Alerts tab footer */}
+            {isAlertActionsVisible && (
+              <CreateAndViewAlertsButtons
+                hasAlerts={hasAlerts}
+                canCreate={canCreate}
+                newRuleHref={newRuleHref}
+                viewAllHref={viewAllHref}
+              />
+            )}
+
+            {/* Incidents tab footer */}
+            {isIncidentsActionsVisible && (
+              <DeclareAndViewIncidentsButtons
+                pluginId={incidentsPluginId}
+                hasIncidents={incidentsData.count > 0}
+                canDeclare={incidentsCanDeclare}
+                canAccess={incidentsCanAccess}
+              />
+            )}
+          </Box>
+        </TabContent>
       </HomeSection>
     </Stack>
   );
 }
-
-// Inner card width below which the tabs, their counters and the filter stop fitting on one row.
-const FILTER_INLINE_WIDTH = 460;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  // Query the card's own width, not the viewport: the grid column count and the assistant
-  // sidebar both narrow the card without changing the window.
-  cardBody: css({
-    containerType: 'inline-size',
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-  }),
-  tabsHeader: css({
-    display: 'flex',
-    flexDirection: 'column',
-    rowGap: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    [theme.breakpoints.container.up(FILTER_INLINE_WIDTH)]: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      columnGap: theme.spacing(1),
-      paddingBottom: 0,
-    },
-  }),
-  // Take the space left by the team filter; TabsBar scrolls horizontally when the tabs don't fit.
-  tabs: css({
-    [theme.breakpoints.container.up(FILTER_INLINE_WIDTH)]: {
-      flex: 1,
-      minWidth: 0,
-    },
-  }),
-  // Stacked, line the control up with the tab labels (4px tab item + 12px link padding).
-  teamFilter: css({
-    paddingLeft: theme.spacing(2),
-    [theme.breakpoints.container.up(FILTER_INLINE_WIDTH)]: {
-      paddingLeft: 0,
-    },
-  }),
-});

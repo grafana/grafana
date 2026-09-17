@@ -79,6 +79,7 @@ export function TeamFilterCombobox({ teamValues, selectedTeam, onChange, offersY
       width="auto"
       minWidth={20}
       maxWidth={24}
+      prefixIcon="users-alt"
       options={loadOptions}
       value={valueOption}
       onChange={(option) => {

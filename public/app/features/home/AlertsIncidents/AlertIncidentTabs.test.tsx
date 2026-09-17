@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { useState, type Ref } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { PluginIncludeType, type PluginMeta } from '@grafana/data';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
@@ -471,6 +471,28 @@ describe('AlertIncidentTabs', () => {
 
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
       expect(fetchTagValues).toHaveBeenCalledTimes(1);
+    });
+
+    it('puts each tab team filter inside the panel named after that tab', async () => {
+      mockTeamLabelValues(['Team A']);
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team B']);
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      // The panel takes its name from the active tab, so the filter it contains
+      // can only be read as scoped to that tab.
+      const alertsPanel = await screen.findByRole('tabpanel', { name: /firing alerts/i });
+      expect(await within(alertsPanel).findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      const incidentsPanel = await screen.findByRole('tabpanel', { name: /incidents/i });
+      expect(
+        await within(incidentsPanel).findByRole('combobox', { name: /filter incidents by team/i })
+      ).toBeInTheDocument();
     });
 
     it('refetches alerts filtered to only the selected team', async () => {
