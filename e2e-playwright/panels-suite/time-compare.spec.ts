@@ -152,7 +152,7 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
       });
 
       const primary = await recorder.waitForRequest(['A']);
-      const compare = await recorder.waitForRequest(['A-compare']);
+      const compare = await recorder.waitForRequest(['A-compare'], { after: primary });
 
       expect(primary.from).toBe(1756900000000);
       expect(compare.from).toBe(1756813600000);
@@ -171,7 +171,7 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
       await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: rollingRange() });
 
       const firstPrimary = await recorder.waitForRequest(['A']);
-      const firstCompare = await recorder.waitForRequest(['A-compare']);
+      const firstCompare = await recorder.waitForRequest(['A-compare'], { after: firstPrimary });
 
       expect(firstCompare.from).toBe(firstPrimary.from - ONE_DAY_MS);
       expect(firstCompare.to).toBe(firstPrimary.to - ONE_DAY_MS);
@@ -179,8 +179,11 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
       // Drop the load's requests so the next ones can only have come from the refresh.
       recorder.reset();
 
+      // If the reset above happened between a refresh's primary and compare, the leftover compare
+      // would be matched here against the next refresh's primary, and the offset checks below would
+      // be out by one refresh interval. Anchoring the compare to this primary avoids that.
       const nextPrimary = await recorder.waitForRequest(['A']);
-      const nextCompare = await recorder.waitForRequest(['A-compare']);
+      const nextCompare = await recorder.waitForRequest(['A-compare'], { after: nextPrimary });
 
       // `now` advanced, so both windows have to advance with it. A comparison window pinned to the
       // range resolved at load time would still satisfy the offset assertions below.

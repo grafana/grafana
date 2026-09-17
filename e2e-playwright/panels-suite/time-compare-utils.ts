@@ -7,13 +7,16 @@ import { expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
  */
 export type EmptyResponseShape = 'no-frames' | 'empty-frame';
 
-/** Requests the fixture has seen. `from`/`to` are epoch milliseconds. */
-type RecordedRequest = { from: number; to: number; refIds: string[] };
+/**
+ * A request the fixture has seen. `from`/`to` are epoch milliseconds. `seq` counts up as requests
+ * are sent and keeps counting after a `reset`, so it can be used to tell which came first.
+ */
+type RecordedRequest = { from: number; to: number; refIds: string[]; seq: number };
 
 export type QueryApiRecorder = {
   requests: RecordedRequest[];
   reset: () => void;
-  waitForRequest: (refIds: string[]) => Promise<RecordedRequest>;
+  waitForRequest: (refIds: string[], options?: { after?: RecordedRequest }) => Promise<RecordedRequest>;
 };
 
 /**
@@ -82,6 +85,7 @@ function panelQueryRefIds(request: Request): string[] | undefined {
  */
 export function observeQueryApi(page: Page): QueryApiRecorder {
   const requests: RecordedRequest[] = [];
+  let nextSeq = 0;
 
   page.on('request', (request) => {
     const refIds = panelQueryRefIds(request);
@@ -89,12 +93,15 @@ export function observeQueryApi(page: Page): QueryApiRecorder {
       return;
     }
     const body = request.postDataJSON();
-    requests.push({ from: Number(body.from), to: Number(body.to), refIds });
+    requests.push({ from: Number(body.from), to: Number(body.to), refIds, seq: nextSeq++ });
   });
 
-  const findRequest = (refIds: string[]) =>
+  const findRequest = (refIds: string[], after?: RecordedRequest) =>
     requests.find(
-      (request) => request.refIds.length === refIds.length && request.refIds.every((id, idx) => id === refIds[idx])
+      (request) =>
+        (after === undefined || request.seq > after.seq) &&
+        request.refIds.length === refIds.length &&
+        request.refIds.every((id, idx) => id === refIds[idx])
     );
 
   return {
@@ -104,22 +111,31 @@ export function observeQueryApi(page: Page): QueryApiRecorder {
       requests.length = 0;
     },
 
-    // Resolves once a request carrying exactly `refIds` has been recorded.
-    waitForRequest: async (refIds: string[]) => {
-      const wanted = `saw [${refIds.join(', ')}]`;
+    /**
+     * Resolves once a request carrying exactly `refIds` has been recorded.
+     *
+     * Pass `after` to only match a request sent after that one. A panel sends its primary and
+     * compare queries one after the other, so when the range keeps refreshing you can end up
+     * matching a compare from one refresh against a primary from the next. Anchoring the compare
+     * to its own primary keeps the pair together.
+     */
+    waitForRequest: async (refIds: string[], options: { after?: RecordedRequest } = {}) => {
+      const { after } = options;
+      const anchor = after ? ` after [${after.refIds.join(', ')}]` : '';
+      const wanted = `saw [${refIds.join(', ')}]${anchor}`;
 
       // Reported as the polled value so a failed request is named
       await expect
         .poll(() => {
-          if (findRequest(refIds)) {
+          if (findRequest(refIds, after)) {
             return wanted;
           }
           const seen = requests.map((request) => `[${request.refIds.join(', ')}]`).join(', ');
-          return `expected [${refIds.join(', ')}], saw ${seen || 'no requests'}`;
+          return `expected [${refIds.join(', ')}]${anchor}, saw ${seen || 'no requests'}`;
         })
         .toBe(wanted);
 
-      return findRequest(refIds)!;
+      return findRequest(refIds, after)!;
     },
   };
 }
