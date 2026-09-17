@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,8 +22,6 @@ type Registry struct {
 	custom          map[schema.GroupResource]embed.Builder
 	skippedVersions *prometheus.CounterVec
 	log             log.Logger
-	mu              sync.Mutex
-	warned          map[schema.GroupResource]bool
 }
 
 var _ embed.BuilderProvider = (*Registry)(nil)
@@ -40,7 +37,6 @@ func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []e
 		custom:          make(map[schema.GroupResource]embed.Builder, len(custom)),
 		skippedVersions: skippedVersions,
 		log:             log.New("embedding-enrollment"),
-		warned:          make(map[schema.GroupResource]bool),
 	}
 	seen := make(map[schema.GroupResource]bool, len(allowed))
 	for _, entry := range allowed {
@@ -134,18 +130,9 @@ func (r *Registry) Builders() ([]embed.Builder, error) {
 		}
 		partitions[partition] = gr
 		if isCustom && hasDeclaration {
-			r.warnCustomDeclaration(gr)
+			r.log.Warn("Custom embedding builder overrides manifest embedding declarations", "group", gr.Group, "resource", gr.Resource)
 		}
 		builders = append(builders, builder)
 	}
 	return builders, nil
-}
-
-func (r *Registry) warnCustomDeclaration(gr schema.GroupResource) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if !r.warned[gr] {
-		r.log.Warn("Custom embedding builder overrides manifest embedding declarations", "group", gr.Group, "resource", gr.Resource)
-		r.warned[gr] = true
-	}
 }
