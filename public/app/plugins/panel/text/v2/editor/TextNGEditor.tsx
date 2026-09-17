@@ -15,6 +15,7 @@ import { catchTemplateError, interpolateTemplate, type RowWindow } from '../rend
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
+import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
@@ -274,6 +275,7 @@ export function TextNGEditor({
             </Stack>
           </Button>
         </Dropdown>
+        <TextNGFeedbackButton />
       </Stack>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
