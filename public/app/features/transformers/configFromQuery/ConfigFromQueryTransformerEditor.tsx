@@ -1,14 +1,43 @@
 import { css } from '@emotion/css';
 
-import { FieldMatcherID, type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import {
+  FieldMatcherID,
+  Registry,
+  type GrafanaTheme2,
+  type SelectableValue,
+  type TransformerUIProps,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaConfigFromQueryDynamicName } from '@grafana/runtime/internal';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 
-import { type ConfigFromQueryTransformOptions } from './configFromQuery';
+import { CustomCFQMatchers, type ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
+
+const getDynamicFieldNameMatcherOptions: () => FieldMatcherUIRegistryItem<string> = () => {
+  const base = fieldMatchersUI.get(FieldMatcherID.byName);
+  return {
+    ...base,
+    id: CustomCFQMatchers.dynamicFieldName,
+    name: t(
+      'transformers.config-from-query-transformer-editor.name-dynamic-field-name-matcher',
+      'Fields with dynamic names'
+    ),
+    description: t(
+      'grafana-ui.matchers-ui.description-fields-by-query',
+      'Set properties for field names that are returned by your config query'
+    ),
+  };
+};
+
+const customFieldMatchers = new Registry<FieldMatcherUIRegistryItem<string>>(() => [
+  ...fieldMatchersUI.list(),
+  getDynamicFieldNameMatcherOptions(),
+]);
 
 export function ConfigFromQueryTransformerEditor({ input, onChange, options }: Props) {
   const styles = useStyles2(getStyles);
@@ -20,7 +49,10 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
 
   const currentRefId = options.configRefId || 'config';
   const currentMatcher = options.applyTo ?? { id: FieldMatcherID.byType, options: 'number' };
-  const matcherUI = fieldMatchersUI.getIfExists(currentMatcher.id) ?? fieldMatchersUI.get(FieldMatcherID.byType);
+  const enableDynamicFieldName = useFlagGrafanaConfigFromQueryDynamicName();
+
+  const fieldMatchersRegistry = enableDynamicFieldName ? customFieldMatchers : fieldMatchersUI;
+  const matcherUI = fieldMatchersRegistry.getIfExists(currentMatcher.id) ?? fieldMatchersUI.get(FieldMatcherID.byType);
   const configFrame = input.find((x) => x.refId === currentRefId);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
@@ -38,7 +70,9 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = useFieldMatchersOptions();
+  const matchers = fieldMatchersRegistry.selectOptions().options;
+  const inputData =
+    currentMatcher.id === CustomCFQMatchers.dynamicFieldName ? (configFrame ? [configFrame] : []) : input;
 
   return (
     <>
@@ -67,7 +101,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
           <matcherUI.component
             id={matcherUI.id}
             matcher={matcherUI.matcher}
-            data={input}
+            data={inputData}
             options={currentMatcher.options}
             onChange={onMatcherConfigChange}
             scope={currentMatcher.scope}
@@ -77,10 +111,15 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
       <InlineFieldRow>
         {configFrame && (
           <FieldToConfigMappingEditor
-            frame={configFrame}
+            frame={{
+              ...configFrame,
+              fields: configFrame.fields.filter(
+                (v) => options.applyTo?.id !== CustomCFQMatchers.dynamicFieldName || v.name !== options.applyTo?.options
+              ),
+            }}
             mappings={options.mappings}
             onChange={(mappings) => onChange({ ...options, mappings })}
-            withReducers
+            withReducers={options.applyTo?.id !== CustomCFQMatchers.dynamicFieldName}
           />
         )}
       </InlineFieldRow>
