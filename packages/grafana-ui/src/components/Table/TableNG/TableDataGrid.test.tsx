@@ -58,15 +58,13 @@ function readTableSurfaces() {
   };
 }
 
-function getGridFrameStyleRule() {
+function getGridFrameOverlayStyleRule() {
   const frameClasses = Array.from(screen.getByRole('grid').parentElement!.classList);
   return Array.from(document.styleSheets)
     .flatMap((sheet) => Array.from(sheet.cssRules))
     .find(
       (rule): rule is CSSStyleRule =>
-        rule instanceof CSSStyleRule &&
-        frameClasses.some((className) => rule.selectorText === `.${className}`) &&
-        Boolean(rule.style.getPropertyValue('--table-header-corner-radius'))
+        rule instanceof CSSStyleRule && frameClasses.some((className) => rule.selectorText === `.${className}::after`)
     );
 }
 
@@ -179,7 +177,7 @@ describe('TableDataGrid', () => {
           expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
         }
         if (transparent) {
-          const frameRule = getGridFrameStyleRule();
+          const frameRule = getGridFrameOverlayStyleRule();
           expect(frameRule?.style.getPropertyValue('border')).toBe(`1px solid ${theme.components.table.border}`);
           expect(frameRule?.style.getPropertyValue('border-end-start-radius')).toBe(
             'var(--table-header-corner-radius)'
@@ -240,9 +238,7 @@ describe('TableDataGrid', () => {
         expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border')).toBe('');
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe('');
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe('');
+        expect(getGridFrameOverlayStyleRule()).toBeUndefined();
         expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
           headerDivider
         );
@@ -261,13 +257,13 @@ describe('TableDataGrid', () => {
         expect(transparentGrid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border')).toBe(
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
           `1px solid ${theme.components.table.border}`
         );
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
           'var(--table-header-corner-radius)'
         );
-        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe(
+        expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe(
           'var(--table-header-corner-radius)'
         );
       }

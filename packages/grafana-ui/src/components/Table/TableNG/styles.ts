@@ -99,16 +99,32 @@ export const getGridStyles = memoize(
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         boxSizing: 'border-box',
         ...(transparent && {
-          // Keep the visible frame outside the scrolling element. Native scrollbars paint their
-          // bottom corner over the scroll container's own border, which otherwise leaves a gap.
-          border: `1px solid ${table.border}`,
+          // Reserve the same space as the visible frame without putting that frame underneath the
+          // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
+          border: '1px solid transparent',
           borderEndStartRadius: cornerRadius,
           borderEndEndRadius: cornerRadius,
           ...(tableRefreshEnabled && {
             borderStartStartRadius: cornerRadius,
             borderStartEndRadius: cornerRadius,
           }),
+          // Paint the frame after the scrolling grid so the native scrollbar corner cannot cover it.
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            inset: '-1px',
+            pointerEvents: 'none',
+            zIndex: 1,
+            border: `1px solid ${table.border}`,
+            borderEndStartRadius: cornerRadius,
+            borderEndEndRadius: cornerRadius,
+            ...(tableRefreshEnabled && {
+              borderStartStartRadius: cornerRadius,
+              borderStartEndRadius: cornerRadius,
+            }),
+          },
         }),
+        position: 'relative',
       }),
       grid: css({
         '--rdg-background-color': bgColor,
@@ -135,10 +151,6 @@ export const getGridStyles = memoize(
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
-        ...(transparent && {
-          borderEndStartRadius: cornerRadius,
-          borderEndEndRadius: cornerRadius,
-        }),
 
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
