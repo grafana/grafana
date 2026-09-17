@@ -1,20 +1,20 @@
-import { type Page } from '@playwright/test';
+import { type Locator, type Page, type Request } from '@playwright/test';
 
 import { expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
-
-const COMPARE_REF_ID_SUFFIX = '-compare';
-
-/** refIds this fixture owns; anything else (e.g. annotations) reaches the real backend. */
-const OWNED_REF_ID = /^[A-F](-compare)?$/;
 
 /**
  * Support testing both ways a datasource may return no data
  */
 export type EmptyResponseShape = 'no-frames' | 'empty-frame';
 
-export function seriesLabelFor(refId: string) {
-  return `${refId.replace(COMPARE_REF_ID_SUFFIX, '')}-series`;
-}
+/** Requests the fixture has seen. `from`/`to` are epoch milliseconds. */
+type RecordedRequest = { from: number; to: number; refIds: string[] };
+
+export type QueryApiRecorder = {
+  requests: RecordedRequest[];
+  reset: () => void;
+  waitForRequest: (refIds: string[]) => Promise<RecordedRequest>;
+};
 
 /**
  * Builds a timeseries frame for `refId`.
@@ -27,7 +27,7 @@ function buildFrame(refId: string, window?: { from: number; to: number }) {
   if (window) {
     const pointCount = 6;
     const step = (window.to - window.from) / (pointCount - 1);
-    const base = refId.endsWith(COMPARE_REF_ID_SUFFIX) ? 10 : 100;
+    const base = refId.endsWith('-compare') ? 10 : 100;
 
     for (let i = 0; i < pointCount; i++) {
       times.push(Math.round(window.from + step * i));
@@ -41,7 +41,7 @@ function buildFrame(refId: string, window?: { from: number; to: number }) {
       meta: { type: 'timeseries-multi', typeVersion: [0, 1] },
       fields: [
         { name: 'time', type: 'time' },
-        { name: 'Value', type: 'number', labels: { series: seriesLabelFor(refId) } },
+        { name: 'Value', type: 'number', labels: { series: `${refId}-series` } },
       ],
     },
     data: { values: [times, values] },
@@ -49,47 +49,47 @@ function buildFrame(refId: string, window?: { from: number; to: number }) {
 }
 
 /**
- * Intercepts the datasource query API and returns deterministic frames, recording the time range
- * and refIds of every request.
+ * The refIds of a panel query request, or undefined if this is not one.
+ *
+ * The fixture dashboard declares no annotations or variables, so every request to this endpoint is
+ * a panel query. Rather than allowlisting the fixture's refIds - which would silently ignore a new
+ * panel's queries and make waitForRequest fail as "saw no requests" - anything that is not a panel
+ * query is excluded by shape.
  */
-export async function mockQueryApi(
-  page: Page,
-  selectors: E2ESelectorGroups,
-  // refIds that should return no data, mapped to the shape used to express it.
-  options: { emptyRefIds?: Record<string, EmptyResponseShape> } = {}
-) {
-  /** Requests the mock has fulfilled, in arrival order. `from`/`to` are epoch milliseconds. */
-  const requests: Array<{ from: number; to: number; refIds: string[] }> = [];
-  const emptyRefIds = options.emptyRefIds ?? {};
+function panelQueryRefIds(request: Request): string[] | undefined {
+  if (request.method() !== 'POST' || !request.url().includes('/api/ds/query')) {
+    return undefined;
+  }
 
-  await page.route(selectors.apis.DataSource.queryPattern, async (route) => {
-    const body = route.request().postDataJSON();
-    const refIds: string[] = (body?.queries ?? []).map((query: { refId: string }) => query.refId);
+  let body;
+  try {
+    body = request.postDataJSON();
+  } catch {
+    return undefined;
+  }
 
-    if (!refIds.length || !refIds.every((refId) => OWNED_REF_ID.test(refId))) {
-      await route.continue();
+  const queries: Array<{ refId?: string }> = body?.queries ?? [];
+  if (!queries.length || !queries.every((query) => typeof query.refId === 'string' && query.refId)) {
+    return undefined;
+  }
+
+  return queries.map((query) => query.refId!);
+}
+
+/**
+ * Records the time range and refIds of every datasource query request, without intercepting any of
+ * them, so responses come from the real backend.
+ */
+export function observeQueryApi(page: Page): QueryApiRecorder {
+  const requests: RecordedRequest[] = [];
+
+  page.on('request', (request) => {
+    const refIds = panelQueryRefIds(request);
+    if (!refIds) {
       return;
     }
-
-    const from = Number(body.from);
-    const to = Number(body.to);
-    // Recorded even when the response is empty, so a test can tell "returned no data" apart from "was never queried"
-    requests.push({ from, to, refIds });
-
-    const results = Object.fromEntries(
-      refIds.map((refId) => {
-        const empty = emptyRefIds[refId];
-        return [
-          refId,
-          {
-            status: 200,
-            frames: empty === 'no-frames' ? [] : [buildFrame(refId, empty ? undefined : { from, to })],
-          },
-        ];
-      })
-    );
-
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results }) });
+    const body = request.postDataJSON();
+    requests.push({ from: Number(body.from), to: Number(body.to), refIds });
   });
 
   const findRequest = (refIds: string[]) =>
@@ -122,4 +122,59 @@ export async function mockQueryApi(
       return findRequest(refIds)!;
     },
   };
+}
+
+/**
+ * Serves every panel query, returning no data for the refIds named in `emptyRefIds`.
+ *
+ * This will have timing issues if mixed with real API calls
+ */
+export async function mockQueryApi(
+  page: Page,
+  selectors: E2ESelectorGroups,
+  // refIds that should return no data, mapped to the shape used to express it.
+  options: { emptyRefIds: Record<string, EmptyResponseShape> }
+) {
+  const recorder = observeQueryApi(page);
+  const { emptyRefIds } = options;
+
+  await page.route(selectors.apis.DataSource.queryPattern, async (route) => {
+    const request = route.request();
+    const refIds = panelQueryRefIds(request);
+
+    if (!refIds) {
+      await route.continue();
+      return;
+    }
+
+    const body = request.postDataJSON();
+    const from = Number(body.from);
+    const to = Number(body.to);
+
+    const results = Object.fromEntries(
+      refIds.map((refId) => {
+        const empty = emptyRefIds[refId];
+        return [
+          refId,
+          {
+            status: 200,
+            frames: empty === 'no-frames' ? [] : [buildFrame(refId, empty ? undefined : { from, to })],
+          },
+        ];
+      })
+    );
+
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results }) });
+  });
+
+  return recorder;
+}
+
+/**
+ * The panel's legend, once uPlot has drawn. Gating on the draw keeps assertions about which series
+ * are present from passing before the panel has rendered any.
+ */
+export async function drawnLegend(panel: Locator, selectors: E2ESelectorGroups) {
+  await expect(panel.locator('.u-over')).toBeVisible();
+  return panel.getByTestId(selectors.components.VizLegend.legend);
 }
