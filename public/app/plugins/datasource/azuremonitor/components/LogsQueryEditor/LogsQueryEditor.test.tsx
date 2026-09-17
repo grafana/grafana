@@ -770,6 +770,17 @@ describe('LogsQueryEditor', () => {
   });
 
   describe('schema loading and auto-completion', () => {
+    let originalToggle: boolean | undefined;
+
+    beforeEach(() => {
+      originalToggle = config.featureToggles.azureMonitorLogsBuilderEditor;
+      config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.azureMonitorLogsBuilderEditor = originalToggle;
+    });
+
     it('keeps Raw schema unavailable in Builder until table plans finish loading', async () => {
       const table = {
         columns: [{ name: 'TimeGenerated', type: 'datetime' }],
@@ -1136,15 +1147,6 @@ describe('LogsQueryEditor', () => {
         minorVersion: 0,
         entityGroups: [],
       },
-    });
-
-    let originalToggle: boolean | undefined;
-    beforeEach(() => {
-      originalToggle = config.featureToggles.azureMonitorLogsBuilderEditor;
-      config.featureToggles.azureMonitorLogsBuilderEditor = true;
-    });
-    afterEach(() => {
-      config.featureToggles.azureMonitorLogsBuilderEditor = originalToggle;
     });
 
     it('renders an info Alert when picking a Basic-plan table from an Analytics query and reverts on click', async () => {
