@@ -920,6 +920,7 @@
       "button-view": "Anzeigen",
       "export-ariaLabel-export": "Exportieren",
       "export-label-export": "Exportieren",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Löschen",
       "label-manage-permissions": "Berechtigungen verwalten",
       "tooltip-history": "Verlauf der Benachrichtigungsversuche für diesen Kontaktpunkt anzeigen",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Lädt ...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Lädt ...."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Keine Regeln pausiert",
         "pause-recording": "Aufnahmeregeln pausiert",
         "policy-tree": "Richtlinienstruktur",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Benachrichtigungs-Routing",
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Vorlagendateinamen duplizieren: „{{name}}“. Vorlagendateinamen müssen eindeutig sein.",
         "templates-label": "Benachrichtigungsvorlagen",
         "templates-remove": "{{name}} entfernen",
-        "upload": "YAML-Datei hochladen",
+        "upload": "",
         "validating": "Konfiguration wird validiert …",
         "validation-error": "Validierung fehlgeschlagen",
         "validation-error-desc": "Die Konfiguration konnte nicht validiert werden.",
         "validation-success": "Validierung erfolgreich",
         "validation-success-desc": "Keine Konflikte gefunden. Die Konfiguration ist bereit zum Importieren.",
         "validation-warning": "Einige Ressourcen werden umbenannt, um Konflikte mit bestehenden Ressourcen zu vermeiden",
-        "yaml-file": "Alertmanager-Konfigurations-YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager-Konfigurations-YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Datenquelle",
@@ -3245,14 +3256,19 @@
         "action-disable": "Synchronisierung deaktivieren",
         "add-datasource-link": "Mimir-Datenquelle hinzufügen",
         "badge-active": "Aktiv",
+        "badge-failing": "",
         "badge-not-configured": "Nicht konfiguriert",
         "badge-operator-managed": "Verwaltet von Operator",
+        "badge-pending": "",
+        "badge-stopped": "",
         "description": "Synchronisieren Sie die Warnungskonfiguration kontinuierlich aus einer Datenquelle von Mimir oder Cortex Alertmanager in Grafana.",
         "disable-confirm-action": "Synchronisierung deaktivieren",
         "disable-confirm-body": "Durch die Deaktivierung wird die kontinuierliche Synchronisierung von der Datenquelle {{uid}} beendet. Sie können sie später durch erneute Auswahl einer Datenquelle wieder aktivieren.",
         "disable-confirm-body-generic": "Durch die Deaktivierung wird die kontinuierliche Synchronisierung beendet. Sie können sie später durch erneute Auswahl einer Datenquelle wieder aktivieren.",
         "disable-confirm-title": "Automatische Synchronisierung von Mimir Alertmanager deaktivieren?",
         "disable-success": "Automatische Synchronisierung von Mimir Alertmanager deaktiviert",
+        "merge-committed-info": "",
+        "merge-committed-title": "",
         "not-ready-body": "",
         "not-ready-title": "",
         "operator-managed-info": "Dieser Wert wird durch den Schlüssel <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini festgelegt und kann über die Benutzeroberfläche nicht geändert werden. Bearbeiten Sie die Konfigurationsdatei und starten Sie Grafana neu oder entfernen Sie den Schlüssel, um die Synchronisierung von hier zu verwalten.",
@@ -3271,6 +3287,7 @@
         "staged-conflict-active-title": "",
         "staged-conflict-body": "",
         "staged-conflict-title": "",
+        "sync-failed-title": "",
         "title": "Konfiguration der automatischen Synchronisierung"
       },
       "import": {
@@ -4611,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "README hinzufügen",
-      "edit-tooltip": "README bearbeiten",
+      "edit-doc-tooltip": "",
       "empty-message": "Fügen Sie eine README-Datei hinzu, um zu beschreiben, was dieser Ordner enthält und wo die richtigen Dashboards zu finden sind.",
       "load-error-retry": "Erneut versuchen",
-      "load-error-title": "README konnte nicht geladen werden",
-      "parse-error": "Der Inhalt der README-Datei kann nicht angezeigt werden."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Verlauf löschen",
@@ -12241,6 +12262,10 @@
     "team-not-found": "[Unbekanntes Team]",
     "unknown-error": "Unbekannter Fehler"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
   },
@@ -12573,6 +12598,10 @@
     "authentication": {
       "title": "Authentifizierung"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Lesezeichen"
     },
@@ -12779,6 +12808,7 @@
       "title": "Aufgezeichnete Abfragen"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Meldung"
     },
     "saved-queries": {
@@ -12793,6 +12823,10 @@
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -16668,10 +16702,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
