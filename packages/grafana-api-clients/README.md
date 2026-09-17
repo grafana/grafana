@@ -67,6 +67,22 @@ const store = configureStore({
 });
 ```
 
+## Generating a client for an app plugin
+
+The same generator that produces the clients in this package is available as a CLI for plugins that
+serve their own kinds through the app platform. Render the OpenAPI documents Grafana serves for the
+plugin's `app-sdk-manifest.json`, then turn them into clients:
+
+```bash
+grafana cli write-openapi dist/app-sdk-manifest.json -o openapi
+npx grafana-api-clients generate --spec openapi --out src/api/generated
+```
+
+This writes, per served version, `<version>/baseAPI.ts`, `<version>/index.ts` (created once, safe to
+edit) and `<version>/endpoints.gen.ts` (regenerated every run), plus a shared `createBaseQuery.ts`.
+The plugin needs `@grafana/api-clients`, `@reduxjs/toolkit` and `react-redux` as dependencies, and
+`api.reducer` / `api.middleware` added to its redux store.
+
 # Development (within `grafana/grafana`)
 
 ## Generating RTK Query API Clients

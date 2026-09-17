@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { processOpenAPISpec } from './process-spec.ts';
+import { processOpenAPISpec } from '../../../grafana-api-clients/src/cli/process-spec.ts';
 
 /**
  * Process all files in a source directory and write results to output directory
