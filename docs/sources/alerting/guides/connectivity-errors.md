@@ -203,7 +203,7 @@ Then, for each alert rule, choose the error-handling behavior based on whether y
 
 ### Build a dedicated data source health alert
 
-`up` and `probe_success` detect whether a Prometheus scrape target is reachable—but that check itself depends on Prometheus being reachable in the first place. If the data source you're querying becomes unreachable from Grafana, any rule querying it (including an `up` rule) fails with an execution error instead of returning a value. Detecting that layer of failure, the data source itself being unreachable, uses a different mechanism: the execution-error handling built into Grafana Alerting.
+Any alert rule query can fail to reach its data source, including one built specifically to check reachability. Prometheus-style data sources expose metrics such as `up` and `probe_success` for target-level availability, but those are still queries, and they fail the same way if the data source itself becomes unreachable. In any case, detecting that the data source itself is unreachable uses a different mechanism: the execution-error handling built into Grafana Alerting.
 
 Create a separate alert rule dedicated to detecting when the data source itself is unreachable, distinct from any application-specific rules that happen to query it:
 
