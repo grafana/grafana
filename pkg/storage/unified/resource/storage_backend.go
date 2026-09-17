@@ -1358,7 +1358,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		}
 
 		rv := ToSnowflakeRV(req.ResourceVersion)
-		if rv > 0 && rv > latestRV {
+		if rv > latestRV {
 			responses[i] = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
 			continue
 		}
