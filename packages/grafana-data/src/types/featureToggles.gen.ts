@@ -234,6 +234,11 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
+  * Handle datasource proxy requests through the datasource API group endpoint.
+  * @default false
+  */
+  datasourcesApiServerEnableProxyEndpoint?: boolean;
+  /**
   * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
@@ -319,11 +324,6 @@ export interface FeatureToggles {
   * @default false
   */
   reportRenderBinding?: boolean;
-  /**
-  * On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.
-  * @default false
-  */
-  reportRenderQueryDebounce?: boolean;
   /**
   * Allow pan and zoom in canvas panel
   * @default false

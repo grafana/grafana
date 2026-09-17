@@ -29,7 +29,7 @@ import (
 
 const (
 	annotationTagKeyColumnMaxLength   = 100
-	annotationTagValueColumnMaxLength = 100
+	annotationTagValueColumnMaxLength = 512
 )
 
 var errRuleUIDRequired = errutil.BadRequest(

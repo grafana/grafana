@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -76,23 +75,9 @@ func (l *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 	return resourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-// EncodeName builds the deterministic object name for a (userUID, authModule) pair.
-func EncodeName(userUID, authModule string) string {
-	return userUID + "." + strings.ReplaceAll(authModule, "_", "-")
-}
-
-// decodeName reverses EncodeName.
-func decodeName(name string) (userUID, authModule string, ok bool) {
-	userUID, encodedModule, ok := strings.Cut(name, ".")
-	if !ok {
-		return "", "", false
-	}
-	return userUID, strings.ReplaceAll(encodedModule, "-", "_"), true
-}
-
 // resolveName maps an object name back to the legacy (userID, authModule) pair it identifies.
 func (l *LegacyStore) resolveName(ctx context.Context, ns claims.NamespaceInfo, name string) (userID int64, userUID string, authModule string, err error) {
-	userUID, authModule, ok := decodeName(name)
+	userUID, authModule, ok := iamv0alpha1.DecodeName(name)
 	if !ok {
 		return 0, "", "", resourceInfo.NewNotFound(name)
 	}
@@ -217,7 +202,7 @@ func (l *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	userUID := authInfoObj.Spec.UserRef.Name
 	authModule := authInfoObj.Spec.AuthModule
 
-	expectedName := EncodeName(userUID, authModule)
+	expectedName := iamv0alpha1.EncodeName(userUID, authModule)
 	if authInfoObj.Name != "" && authInfoObj.Name != expectedName {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("metadata.name must be %q for spec.userRef.name %q and spec.authModule %q", expectedName, userUID, authModule))
 	}
@@ -350,7 +335,7 @@ func (l *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.UserAuth) iamv0alpha1.AuthInfo {
 	result := iamv0alpha1.AuthInfo{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              EncodeName(userUID, ua.AuthModule),
+			Name:              iamv0alpha1.EncodeName(userUID, ua.AuthModule),
 			Namespace:         ns.Value,
 			ResourceVersion:   fmt.Sprintf("%d", ua.Created.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(ua.Created),

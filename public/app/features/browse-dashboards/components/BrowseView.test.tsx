@@ -1,19 +1,24 @@
 import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+
 import { BrowseView } from './BrowseView';
 
-const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
-  getFolderFixtures();
+const [
+  mockTree,
+  { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty, folderC },
+] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -139,6 +144,33 @@ describe('browse-dashboards BrowseView', () => {
     expect(grandparentCheckbox).toBePartiallyChecked();
   });
 
+  it('renders a dashboard whose UID matches its parent folder', async () => {
+    // Unified storage namespaces UIDs per kind, so a dashboard may share its parent folder's UID
+    const folder: DashboardViewItem = { kind: 'folder', uid: 'same-uid', title: 'Folder same-uid' };
+    const dashboard: DashboardViewItem = {
+      kind: 'dashboard',
+      uid: 'same-uid',
+      title: 'Dashboard same-uid',
+      parentUID: 'same-uid',
+    };
+
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: fullyLoadedViewItemCollection([folder]),
+          childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
+          openFolders: { 'same-uid': true },
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+        },
+      },
+    });
+
+    // Rendering each row's checkbox calls isSelected, which walks hasSelectedDescendants; the dashboard row must be a
+    // leaf even though childrenByParentUID has an entry under its UID. Each row is labelled by its own title.
+    expect(await screen.findByRole('row', { name: folder.title })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
+  });
+
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(
@@ -168,21 +200,32 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   describe('inline README row', () => {
-    function mockReadme(markdownContent = '# README\n\nbody') {
-      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: {
-          name: 'r',
-          target: 'folder',
-          title: 'r',
-          type: 'github',
-          url: 'https://github.com/o/r',
-          branch: 'main',
-          workflows: [],
-        } as never,
+    const mockRepository = {
+      name: 'r',
+      target: 'folder',
+      title: 'r',
+      type: 'github',
+      url: 'https://github.com/o/r',
+      branch: 'main',
+      workflows: [],
+    } as never;
+
+    const readmeDoc = { key: 'readme' as const, path: 'README.md', fileName: 'README.md' };
+
+    // useFolderDocs always lists a README tab first, synthesized when the file is absent.
+    function mockDocs(docs: useFolderDocsModule.UseFolderDocsResult['docs'] = [readmeDoc]) {
+      jest.spyOn(useFolderDocsModule, 'useFolderDocs').mockReturnValue({
+        repository: mockRepository,
         folder: undefined,
-        readmePath: 'README.md',
-        status: 'ok',
+        docs,
         isLoading: false,
+      });
+    }
+
+    function mockReadme(markdownContent = '# README\n\nbody') {
+      mockDocs();
+      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        status: 'ok',
         markdownContent,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -190,20 +233,9 @@ describe('browse-dashboards BrowseView', () => {
     }
 
     function mockReadmeMissing() {
+      mockDocs();
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
-        repository: {
-          name: 'r',
-          target: 'folder',
-          title: 'r',
-          type: 'github',
-          url: 'https://github.com/o/r',
-          branch: 'main',
-          workflows: [],
-        } as never,
-        folder: undefined,
-        readmePath: 'README.md',
         status: 'missing',
-        isLoading: false,
         markdownContent: undefined,
         refetch: jest.fn(),
         syncFinished: undefined,
@@ -231,7 +263,7 @@ describe('browse-dashboards BrowseView', () => {
         />
       );
 
-      expect(await screen.findByText('README.md')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'README' })).toBeInTheDocument();
     });
 
     it('does not append the README row when the toggle is off', async () => {
@@ -249,7 +281,7 @@ describe('browse-dashboards BrowseView', () => {
       );
       await screen.findByText(folderA_folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('does not append the README row when the folder is not provisioned', async () => {
@@ -259,7 +291,7 @@ describe('browse-dashboards BrowseView', () => {
       render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
       await screen.findByText(folderA_folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('does not append the README row when there is no folderUID (root)', async () => {
@@ -277,7 +309,7 @@ describe('browse-dashboards BrowseView', () => {
       );
       await screen.findByText(folderA.item.title);
 
-      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'README' })).not.toBeInTheDocument();
     });
 
     it('appends the README panel for empty provisioned folders', async () => {
@@ -295,7 +327,7 @@ describe('browse-dashboards BrowseView', () => {
       );
 
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('README.md')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'README' })).toBeInTheDocument();
     });
 
     it('shows the Add README CTA for empty provisioned folders without a README', async () => {
@@ -314,6 +346,44 @@ describe('browse-dashboards BrowseView', () => {
 
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: /Add README/i })).toBeInTheDocument();
+    });
+
+    it('keeps a ?docTab= deep link when navigating from one folder to another', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockDocs([readmeDoc, { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' }]);
+      const readmeSpy = jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        status: 'ok',
+        markdownContent: '# README',
+        refetch: jest.fn(),
+        syncFinished: undefined,
+      });
+
+      // Two empty folders, so the panel is mounted at the same spot before and after.
+      const { rerender } = render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      expect(await screen.findByRole('tab', { name: 'README' })).toHaveAttribute('aria-selected', 'true');
+
+      // A markdown link to another folder's doc lands on that folder with the tab in the URL.
+      act(() => locationService.push(`/dashboards/f/${folderC.item.uid}?docTab=SECURITY.md`));
+      rerender(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderC.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByRole('tab', { name: 'Security' })).toHaveAttribute('aria-selected', 'true');
+      expect(readmeSpy).toHaveBeenLastCalledWith('r', 'SECURITY.md');
     });
   });
 });

@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
-import { type Count, varPreLine } from 'uwrap';
+import { type Count, type uWrap, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -247,7 +247,7 @@ export function createTypographyContext(
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. 1234567890 ALL CAPS TO HELP WITH MEASUREMENT.";
   const txtWidth = ctx.measureText(txt).width;
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
-  const { count } = varPreLine(ctx);
+  const uwrap = varPreLine(ctx);
 
   return {
     ctx,
@@ -255,7 +255,34 @@ export function createTypographyContext(
     letterSpacing,
     avgCharWidth,
     estimateHeight: getTextHeightEstimator(avgCharWidth),
-    measureHeight: getTextHeightMeasurerFromUwrapCount(count),
+    measureHeight: getTextHeightMeasurerFromUwrapCount(uwrap.count),
+    measureWidth: createFitWidthMeasurer(ctx, uwrap),
+  };
+}
+
+/**
+ * @internal The narrowest width at which the line counter agrees the text fits on one line.
+ *
+ * Not `measureText(text).width`: that is kerned end to end, while uwrap sums its own per-character
+ * widths and so reads most strings ~1px wider. Size a column to the kerned number and uwrap wraps
+ * the label anyway. uwrap doesn't export its width table, so it arbitrates instead: start from the
+ * kerned width, which never over-shoots, and nudge up until `test` agrees. Cheap enough for the
+ * handful of labels a header has, but it is work per call — not for every cell.
+ */
+export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: uWrap): (text: string) => number {
+  return (text: string) => {
+    let widest = 0;
+    // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
+    // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
+    // regardless, so measure them separately: the widest is what the whole string needs.
+    for (const segment of text.split('\n')) {
+      let width = Math.ceil(ctx.measureText(segment).width);
+      while (test(segment, width)) {
+        width++;
+      }
+      widest = Math.max(widest, width);
+    }
+    return widest;
   };
 }
 
@@ -327,9 +354,21 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
   };
 }
 
-const PILLS_FONT_SIZE = 12;
-const PILLS_SPACING = 12; // 6px horizontal padding on each side
-const PILLS_GAP = 4; // gap between pills
+const getPillMetrics = (theme?: GrafanaTheme2) => {
+  if (!theme) {
+    throw new Error('A theme is required to measure pill cells');
+  }
+
+  const refreshed = theme.flags.visualDesignRefresh;
+  const fontSize = refreshed ? theme.typography.size.xs : theme.typography.size.sm;
+  const horizontalPadding = refreshed ? theme.spacing.x1 : theme.spacing(0.75);
+
+  return {
+    fontSize: extractPixelValue(fontSize),
+    spacing: 2 * extractPixelValue(horizontalPadding),
+    gap: extractPixelValue(theme.spacing(0.5)),
+  };
+};
 
 // Fuzzy chrome estimates for the other inline-run cell types (see measureInlineRunWidth). Used only
 // for auto-width sizing, so approximate values that slightly over-reserve are fine.
@@ -338,7 +377,11 @@ const LINK_GAP = 2; // separator border between inline data links
 const ACTION_SPACING = 20; // horizontal padding of a small action Button
 const ACTION_GAP = 6; // theme.spacing(0.75) gap between action buttons
 
-export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
+export function getPillCellHeightMeasurer(
+  measureWidth: (value: string) => number,
+  spacing: number,
+  gap: number
+): MeasureCellHeight {
   // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
   // appears in many rows) and across column widths, so a resize never re-measures pill text.
   const pillWidthCache: Record<string, number> = {};
@@ -364,7 +407,7 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
           rawWidth = measureWidth(strPill);
           pillWidthCache[strPill] = rawWidth;
         }
-        return rawWidth + PILLS_SPACING;
+        return rawWidth + spacing;
       });
       pillWidthsByValue.set(strValue, pillWidths);
     }
@@ -378,17 +421,17 @@ export function getPillCellHeightMeasurer(measureWidth: (value: string) => numbe
     let lines = 0;
     let currentLineUse = width;
     for (const pillWidth of pillWidths) {
-      if (currentLineUse + pillWidth + PILLS_GAP > width) {
+      if (currentLineUse + pillWidth + gap > width) {
         lines++;
         currentLineUse = pillWidth;
       } else {
-        currentLineUse += pillWidth + PILLS_GAP;
+        currentLineUse += pillWidth + gap;
       }
     }
 
     // default line height happens to be the height of a pill, but maybe we need a custom
     // const here to make sure this doesn't get out of sync with the actual pill height.
-    return lines * lineHeight + (lines - 1) * PILLS_GAP;
+    return lines * lineHeight + (lines - 1) * gap;
   };
 }
 
@@ -424,6 +467,7 @@ const spaceRegex = /[\s-]/;
 export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
+  theme: GrafanaTheme2,
   maxHeight?: number
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
@@ -438,12 +482,16 @@ export function buildCellHeightMeasurers(
     [TableCellDisplayMode.DataLinks]: () => [getDataLinksHeightMeasurer(), undefined],
     // pills use a different font size, so they require their own typography context.
     [TableCellDisplayMode.Pill]: () => {
+      const { fontSize, spacing, gap } = getPillMetrics(theme);
       const pillTypographyCtx = createTypographyContext(
-        PILLS_FONT_SIZE,
+        fontSize,
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
-      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
+      return [
+        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width, spacing, gap),
+        undefined,
+      ];
     },
   } as const;
 
@@ -1275,10 +1323,16 @@ export interface ContentAwareColWidthsOptions {
    */
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  /**
+   * Whether the table renders a header row. When it doesn't, the header label is not a lower bound on
+   * the column, so it is left out of the measurement entirely. Defaults to true.
+   */
+  hasHeader?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
+  theme?: GrafanaTheme2;
   /**
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
@@ -1393,36 +1447,51 @@ function measureInlineRunWidth(
  * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
  * that shifts every other column's share of the leftover space).
  */
-function measureHeaderWidth(
+export interface HeaderAffordanceOptions {
+  showTypeIcons: boolean;
+  tableRefreshEnabled: boolean;
+  /** Whether a filter is currently active on this column — only the refreshed header marks that. */
+  isFiltered: boolean;
+}
+
+/**
+ * @internal Horizontal space the header's affordances take beside the label.
+ *
+ * The single description of what sits next to a header's text, so the two paths that care can't
+ * drift: `measureHeaderWidth` adds it when sizing an auto column, and `useHeaderHeight` subtracts it
+ * to find the room a wrapped label has.
+ */
+export function getHeaderAffordanceWidth(
   field: Field,
-  ctx: TypographyCtx,
-  showTypeIcons: boolean,
-  isSortable: boolean,
-  tableRefreshEnabled: boolean,
-  isFiltered: boolean
+  { showTypeIcons, tableRefreshEnabled, isFiltered }: HeaderAffordanceOptions
 ): number {
   const isFilterable = field.config.custom?.filterable ?? false;
-  let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
-  headerWidth += CELL_HORIZONTAL_CHROME;
-  headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
+  let width = 0;
+  width += showTypeIcons ? HEADER_ICON_SPACE : 0;
+  // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
+  // gain a line (shifting the whole grid down) the moment it's sorted.
+  width += isSortableField(field) ? HEADER_ICON_SPACE : 0;
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
-  headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
     // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
+    width += isFilterable ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
-    headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
+    width += isFiltered ? HEADER_ICON_SPACE : 0;
   } else {
     // the classic header renders its filter icon inline whenever the column is filterable, whether
     // or not a filter is currently active.
-    headerWidth += isFilterable ? HEADER_ICON_SPACE : 0;
+    width += isFilterable ? HEADER_ICON_SPACE : 0;
   }
-  return headerWidth;
+  return width;
+}
+
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, opts: HeaderAffordanceOptions): number {
+  return ctx.measureWidth(getDisplayName(field)) + CELL_HORIZONTAL_CHROME + getHeaderAffordanceWidth(field, opts);
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
@@ -1462,6 +1531,8 @@ function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
     if (value != null) {
       valueText = FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
     }
+    // kerned whole-string widths, deliberately: footer text is `nowrap` and never line-counted, so
+    // unlike a header label it wants the width the browser draws, not the width uwrap would assume.
     const rowWidth =
       headerCtx.ctx.measureText(label).width + FOOTER_LABEL_GAP + headerCtx.ctx.measureText(valueText).width;
     widest = Math.max(widest, rowWidth);
@@ -1474,6 +1545,7 @@ interface ColWidthMeasureCtx {
   typographyCtx: TypographyCtx;
   /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
   getActions?: GetActionsFunctionLocal;
+  theme?: GrafanaTheme2;
 }
 
 /**
@@ -1490,16 +1562,20 @@ const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 // fixed default reads better than the graphical default.
 const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
-const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureInlineRunWidth(
-    sampleIndices(field.values.length, sampleSize),
-    // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
-    // value mappings/units are reflected. formatCellValue falls back to String() with no display.
-    (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
-    typographyCtx.avgCharWidth,
-    PILLS_SPACING,
-    PILLS_GAP
-  ) + CELL_HORIZONTAL_CHROME;
+const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, theme }) => {
+  const { spacing, gap } = getPillMetrics(theme);
+  return (
+    measureInlineRunWidth(
+      sampleIndices(field.values.length, sampleSize),
+      // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
+      // value mappings/units are reflected. formatCellValue falls back to String() with no display.
+      (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
+      typographyCtx.avgCharWidth,
+      spacing,
+      gap
+    ) + CELL_HORIZONTAL_CHROME
+  );
+};
 
 const measureDataLinksColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureInlineRunWidth(
@@ -1591,7 +1667,8 @@ function growthWeight(type: FieldType): number {
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
  * that exact width. Every other ("auto") column is sized to fit its content:
  *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
- *      graphical cells, whichever applies, unioned with its header label width;
+ *      graphical cells, whichever applies, unioned with its header label width (skipped when the
+ *      header row is hidden);
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
  *   3. then, if the auto columns don't fill the available width, the leftover is distributed by a
  *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
@@ -1611,8 +1688,10 @@ export function computeContentAwareColWidths(
     typographyCtx,
     headerTypographyCtx,
     showTypeIcons = false,
+    hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
+    theme,
     filter,
     sampleSize,
     noPanelPadding = false,
@@ -1642,7 +1721,7 @@ export function computeContentAwareColWidths(
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
@@ -1653,14 +1732,14 @@ export function computeContentAwareColWidths(
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(
-      field,
-      headerTypographyCtx,
-      showTypeIcons,
-      isSortableField(field),
-      tableRefreshEnabled,
-      filteredKeys.has(getDisplayName(field))
-    );
+    // A hidden header row has no label to fit, so it doesn't bound the column at all.
+    const headerWidth = hasHeader
+      ? measureHeaderWidth(field, headerTypographyCtx, {
+          showTypeIcons,
+          tableRefreshEnabled,
+          isFiltered: filteredKeys.has(getDisplayName(field)),
+        })
+      : 0;
 
     // Size to content (unioned with header width below), even for wrapped columns — the cap bounds
     // it, wrapping adds height instead. Registered measurer picks pill/link/action/graphical; default is text.

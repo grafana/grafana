@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -280,26 +279,8 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			return nil, err
 		}
 		if ds != nil {
-			// If both name+plugin exist, we need to verify the type
-			if query.Plugin != "" && ds.Type != query.Plugin {
-				p, _ := s.pluginStore.Plugin(ctx, ds.Type)
-				if !(slices.Contains(p.AliasIDs, query.Plugin)) {
-					return result, nil
-				}
-			}
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
-	} else if query.Plugin != "" {
-		q := &datasources.GetDataSourcesByTypeQuery{
-			OrgID: ns.OrgID,
-			Type:  query.Plugin,
-		}
-		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
-		if !found {
-			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
-		}
-		q.AliasIDs = p.AliasIDs
-		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,

@@ -49,6 +49,15 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
 
+var errWatchSendUnavailable = errors.New("watch send transport unavailable")
+
+func watchSendError(err error) error {
+	if status.Code(err) == codes.Unavailable {
+		return fmt.Errorf("%w: %v", errWatchSendUnavailable, err)
+	}
+	return err
+}
+
 // logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
 func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
 	if errRes == nil || errRes.Code < 500 {
@@ -315,6 +324,10 @@ type SearchOptions struct {
 	// stored in an index's IndexBuildInfo. May be nil.
 	SearchFields *SearchFieldsRegistry
 
+	// EmbeddingConfig is shared with the manifest watcher; consumers must read
+	// it after the initial poll and retain the registry to observe later reloads.
+	EmbeddingConfig *EmbeddingConfigRegistry
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
@@ -408,6 +421,8 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+
+	SearchBackedListConfig SearchBackedListConfig
 
 	// BookmarkFrequency controls how often periodic bookmark events are sent to
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
@@ -586,6 +601,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		storageEnabled:                 true,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
+		searchBackedListResources:      opts.SearchBackedListConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -666,22 +682,23 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	log              log.Logger
-	backend          StorageBackend
-	vectorBackend    vector.VectorBackend
-	bulkBatchOptions BulkBatchOptions
-	blob             BlobSupport
-	secure           secrets.InlineSecureValueSupport
-	search           *searchServer
-	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
-	access           claims.AccessClient
-	writeHooks       WriteAccessHooks
-	now              func() int64
-	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
-	storageMetrics   *StorageMetrics
-	overridesService *OverridesService
-	quotasConfig     QuotasConfig
+	log                       log.Logger
+	backend                   StorageBackend
+	vectorBackend             vector.VectorBackend
+	bulkBatchOptions          BulkBatchOptions
+	blob                      BlobSupport
+	secure                    secrets.InlineSecureValueSupport
+	search                    *searchServer
+	searchClient              resourcepb.ResourceIndexClient
+	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
+	access                    claims.AccessClient
+	writeHooks                WriteAccessHooks
+	now                       func() int64
+	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
+	storageMetrics            *StorageMetrics
+	overridesService          *OverridesService
+	quotasConfig              QuotasConfig
+	searchBackedListResources SearchBackedListConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -1631,7 +1648,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	req = filterSelectors(req)
 
-	if s.useSelectorSearch(req) {
+	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
@@ -1956,12 +1973,13 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
-	// When our context is canceled (e.g. client disconnects), downstream calls
-	// like srv.Send may surface that cancellation back to us. Treat it as a
-	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
-	// branch in the watch loop. Context errors from other contexts are still
-	// propagated.
+	// Treat a closed client transport and cancellation of this watch's context
+	// as clean shutdowns. Errors from setup, storage, authorization, or another
+	// context are still propagated.
 	defer func() {
+		if errors.Is(retErr, errWatchSendUnavailable) {
+			retErr = nil
+		}
 		if retErr != nil && ctx.Err() != nil &&
 			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
 			retErr = nil
@@ -2056,7 +2074,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			Type:     resourcepb.WatchEvent_BOOKMARK,
 			Resource: &resourcepb.WatchEvent_Resource{Version: rv},
 		}); err != nil {
-			return fmt.Errorf("sending bookmark: %w", err)
+			return fmt.Errorf("sending bookmark: %w", watchSendError(err))
 		}
 
 		lastBookmarkRV = rv
@@ -2082,7 +2100,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						Version: iter.ResourceVersion(),
 					},
 				}); err != nil {
-					return err
+					return watchSendError(err)
 				}
 			}
 			return iter.Error()
@@ -2184,7 +2202,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				if err := srv.Send(resp); err != nil {
-					return err
+					return watchSendError(err)
 				}
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
