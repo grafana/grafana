@@ -885,6 +885,12 @@ interface ReviewStepProps {
   rulesFromDatasource?: RulerRulesConfigDTO;
 }
 
+// True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
+// Typed as a guard so callers get `file` narrowed to `File` afterwards, instead of a bare boolean.
+function hasYamlUpload(source: string, file: File | null): file is File {
+  return source === 'yaml' && file !== null;
+}
+
 function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFromDatasource }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
@@ -932,7 +938,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
       }
 
       let content = '';
-      if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
+      if (hasYamlUpload(formData.notificationsSource, formData.notificationsYamlFile)) {
         const rawContent = await formData.notificationsYamlFile.text();
         content = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
       } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
@@ -974,7 +980,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
       }
 
       let content = '';
-      if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
+      if (hasYamlUpload(formData.rulesSource, formData.rulesYamlFile)) {
         const rawContent = await formData.rulesYamlFile.text();
         content = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
       } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
