@@ -76,7 +76,7 @@ class Parser {
   }
   private peek(value: string) { return this.tokens[this.index]?.value === value; }
   private take(value: string) { if (this.peek(value)) { this.index++; return true; } return false; }
-  private number(v: unknown) { return v == null ? NaN : Number(v); }
+  private number(v: unknown): number | null { return v == null ? null : Number(v); }
   private truthy(v: unknown) { return v != null && v !== false && Number(v) !== 0 && !Number.isNaN(Number(v)); }
   private logicalOr() {
     let v = this.logicalAnd();
@@ -94,12 +94,87 @@ class Parser {
     }
     return v;
   }
-  private equality() { let v = this.relational(); while (this.peek('==') || this.peek('!=')) { const op = this.tokens[this.index++].value; const r = this.relational(); v = op === '==' ? (v === r ? 1 : 0) : (v !== r ? 1 : 0); } return v; }
-  private relational() { let v = this.additive(); while (this.peek('<') || this.peek('>') || this.peek('<=') || this.peek('>=')) { const op = this.tokens[this.index++].value; const a = this.number(v), b = this.number(this.additive()); v = op === '<' ? (a < b ? 1 : 0) : op === '>' ? (a > b ? 1 : 0) : op === '<=' ? (a <= b ? 1 : 0) : (a >= b ? 1 : 0); } return v; }
-  private additive() { let v = this.multiplicative(); while (this.peek('+') || this.peek('-')) { const op = this.tokens[this.index++].value; const r = this.number(this.multiplicative()); v = op === '+' ? this.number(v) + r : this.number(v) - r; } return v; }
-  private multiplicative() { let v = this.power(); while (this.peek('*') || this.peek('/') || this.peek('%')) { const op = this.tokens[this.index++].value; const a = this.number(v), b = this.number(this.power()); v = op === '*' ? a * b : op === '/' ? a / b : a % b; } return v; }
-  private power() { const v = this.unary(); return this.take('**') ? Math.pow(this.number(v), this.number(this.power())) : v; }
-  private unary() { if (this.take('!')) {return this.truthy(this.unary()) ? 0 : 1;} if (this.take('-')) {return -this.number(this.unary());} if (this.take('+')) {return this.number(this.unary());} return this.primary(); }
+  private equality() {
+    let v = this.relational();
+    while (this.peek('==') || this.peek('!=')) {
+      const op = this.tokens[this.index++].value;
+      const r = this.relational();
+      if (v == null || r == null) {
+        v = null;
+      } else if (Number.isNaN(Number(v)) || Number.isNaN(Number(r))) {
+        v = NaN;
+      } else {
+        v = op === '==' ? (v === r ? 1 : 0) : (v !== r ? 1 : 0);
+      }
+    }
+    return v;
+  }
+  private relational() {
+    let v = this.additive();
+    while (this.peek('<') || this.peek('>') || this.peek('<=') || this.peek('>=')) {
+      const op = this.tokens[this.index++].value;
+      const r = this.additive();
+      if (v == null || r == null) {
+        v = null;
+        continue;
+      }
+      const a = Number(v);
+      const b = Number(r);
+      if (Number.isNaN(a) || Number.isNaN(b)) {
+        v = NaN;
+      } else {
+        v = op === '<' ? (a < b ? 1 : 0) : op === '>' ? (a > b ? 1 : 0) : op === '<=' ? (a <= b ? 1 : 0) : (a >= b ? 1 : 0);
+      }
+    }
+    return v;
+  }
+  private additive() {
+    let v = this.multiplicative();
+    while (this.peek('+') || this.peek('-')) {
+      const op = this.tokens[this.index++].value;
+      const r = this.multiplicative();
+      const a = this.number(v);
+      const b = this.number(r);
+      v = a == null || b == null ? null : op === '+' ? a + b : a - b;
+    }
+    return v;
+  }
+  private multiplicative() {
+    let v = this.power();
+    while (this.peek('*') || this.peek('/') || this.peek('%')) {
+      const op = this.tokens[this.index++].value;
+      const r = this.power();
+      const a = this.number(v);
+      const b = this.number(r);
+      v = a == null || b == null ? null : op === '*' ? a * b : op === '/' ? a / b : a % b;
+    }
+    return v;
+  }
+  private power() {
+    const v = this.unary();
+    if (!this.take('**')) {
+      return v;
+    }
+    const exponent = this.power();
+    const a = this.number(v);
+    const b = this.number(exponent);
+    return a == null || b == null ? null : Math.pow(a, b);
+  }
+  private unary() {
+    if (this.take('!')) {
+      const value = this.unary();
+      return value == null ? null : this.truthy(value) ? 0 : 1;
+    }
+    if (this.take('-')) {
+      const value = this.number(this.unary());
+      return value == null ? null : -value;
+    }
+    if (this.take('+')) {
+      const value = this.number(this.unary());
+      return value == null ? null : value;
+    }
+    return this.primary();
+  }
   private primary(): unknown {
     const token = this.tokens[this.index++];
     if (!token) {throw new Error('unexpected end of expression');}
@@ -112,11 +187,21 @@ class Parser {
       if (!this.peek(')')) { do {args.push(this.logicalOr());} while (this.take(',')); }
       if (!this.take(')')) {throw new Error(`missing closing parenthesis for ${token.value}`);}
       const n = (x = args[0]) => this.number(x);
+      const unaryMath = (fn: (value: number) => number) => {
+        const value = n();
+        return value == null ? null : fn(value);
+      };
       switch (token.value) {
-        case 'abs': return Math.abs(n()); case 'ceil': return Math.ceil(n()); case 'floor': return Math.floor(n()); case 'round': return Math.round(n());
-        case 'exp': return Math.exp(n()); case 'log': return Math.log(n()); case 'log10': return Math.log10(n()); case 'sqrt': return Math.sqrt(n());
-        case 'sin': return Math.sin(n()); case 'cos': return Math.cos(n()); case 'tan': return Math.tan(n()); case 'pow': return Math.pow(n(), this.number(args[1]));
-        case 'min': return Math.min(...args.map((v) => n(v))); case 'max': return Math.max(...args.map((v) => n(v)));
+        case 'abs': return unaryMath(Math.abs); case 'ceil': return unaryMath(Math.ceil); case 'floor': return unaryMath(Math.floor); case 'round': return unaryMath(Math.round);
+        case 'exp': return unaryMath(Math.exp); case 'log': return unaryMath(Math.log); case 'log10': return unaryMath(Math.log10); case 'sqrt': return unaryMath(Math.sqrt);
+        case 'sin': return unaryMath(Math.sin); case 'cos': return unaryMath(Math.cos); case 'tan': return unaryMath(Math.tan);
+        case 'pow': {
+          const base = n();
+          const exponent = this.number(args[1]);
+          return base == null || exponent == null ? null : Math.pow(base, exponent);
+        }
+        case 'min': return args.some((v) => v == null) ? null : Math.min(...args.map((v) => Number(v)));
+        case 'max': return args.some((v) => v == null) ? null : Math.max(...args.map((v) => Number(v)));
         case 'is_inf': return typeof args[0] === 'number' && Number.isFinite(args[0]) === false && Number.isNaN(args[0]) === false ? 1 : 0;
         case 'is_nan': return typeof args[0] === 'number' && Number.isNaN(args[0]) ? 1 : 0; case 'is_null': return args[0] == null ? 1 : 0;
         case 'is_number': return typeof args[0] === 'number' && Number.isFinite(args[0]) ? 1 : 0; case 'inf': return Infinity; case 'infn': return -Infinity; case 'nan': return NaN; case 'null': return null;
