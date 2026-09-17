@@ -110,14 +110,14 @@ function getPillColors(
 }
 
 export const getStyles: TableCellStyles = memoize(
-  (theme, { textWrap, shouldOverflow, maxHeight }) =>
+  (theme, { textWrap, shouldOverflow, hoverOverflow, maxHeight }) =>
     css({
       display: 'inline-flex',
       gap: theme.spacing(0.5),
       flexWrap: textWrap ? 'wrap' : 'nowrap',
 
       ...(shouldOverflow && {
-        [getActiveCellSelector(Boolean(maxHeight))]: {
+        [getActiveCellSelector(Boolean(maxHeight), hoverOverflow)]: {
           flexWrap: 'wrap',
         },
       }),
