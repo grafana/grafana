@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
-import { LinkButton, Stack } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 
@@ -53,19 +53,16 @@ function ExploreLink({ panel, queryRunner }: { panel: VizPanel; queryRunner: Sce
   }
 
   return (
-    <Stack justifyContent="flex-end" alignItems="center">
-      <LinkButton
-        variant="secondary"
-        fill="text"
-        size="sm"
-        icon="compass"
-        href={url}
-        target="_blank"
-        // LinkButton spreads props onto its anchor and adds no rel of its own, unlike Menu.Item.
-        rel="noopener noreferrer"
-      >
-        {t('notebook.cell.panel.open-in-explore', 'Explore')}
-      </LinkButton>
-    </Stack>
+    <LinkButton
+      variant="secondary"
+      fill="text"
+      size="sm"
+      icon="compass"
+      tooltip={t('notebook.cell.panel.open-in-explore', 'Explore')}
+      href={url}
+      target="_blank"
+      // LinkButton spreads props onto its anchor and adds no rel of its own, unlike Menu.Item.
+      rel="noopener noreferrer"
+    />
   );
 }

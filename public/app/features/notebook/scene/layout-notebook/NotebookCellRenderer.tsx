@@ -98,9 +98,17 @@ function PanelCell({
 }) {
   const styles = useStyles2(getStyles);
 
+  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
+  // panels, so this notebook-only chrome is layered on here instead.
+  //
+  // hoverHeader: false keeps the icon always visible rather than fading in only on hover — otherwise
+  // PanelChrome wraps header content in a floating, boxed HoverWidget instead of rendering it inline.
+  useEffect(() => {
+    panel.setState({ headerActions: <OpenInExploreButton panel={panel} />, hoverHeader: false });
+  }, [panel]);
+
   return (
     <Stack direction="column" gap={1}>
-      <OpenInExploreButton panel={panel} />
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
