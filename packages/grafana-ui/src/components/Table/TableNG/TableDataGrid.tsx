@@ -180,35 +180,37 @@ export function TableDataGrid({
 
   return (
     <>
-      <DataGrid<TableRow, TableSummaryRow, string>
-        {...dataGridOverrides}
-        {...commonDataGridProps}
-        role={role}
-        ref={gridRef}
-        className={clsx(styles.grid, className)}
-        columns={columns}
-        rows={rows}
-        rowClass={(row, rowIdx) =>
-          clsx(
-            rowClass?.(row, rowIdx),
-            (tableRefreshEnabled || transparent) && role === 'grid' && rowIdx === rows.length - 1 && styles.lastRow
-          )
-        }
-        rowKeyGetter={rowKeyGetter}
-        isRowSelectionDisabled={() => initialRowIndex !== undefined}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
-        onColumnResize={onColumnResize}
-        onCellClick={onCellClick}
-        onCellKeyDown={onCellKeyDown}
-        renderers={{
-          renderRow: renderers.renderRow,
-          renderCell: renderers.renderCell,
-          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-        }}
-      />
+      <div className={styles.gridFrame}>
+        <DataGrid<TableRow, TableSummaryRow, string>
+          {...dataGridOverrides}
+          {...commonDataGridProps}
+          role={role}
+          ref={gridRef}
+          className={clsx(styles.grid, className)}
+          columns={columns}
+          rows={rows}
+          rowClass={(row, rowIdx) =>
+            clsx(
+              rowClass?.(row, rowIdx),
+              (tableRefreshEnabled || transparent) && role === 'grid' && rowIdx === rows.length - 1 && styles.lastRow
+            )
+          }
+          rowKeyGetter={rowKeyGetter}
+          isRowSelectionDisabled={() => initialRowIndex !== undefined}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={setSelectedRows}
+          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+          headerRowHeight={headerHeight}
+          onColumnResize={onColumnResize}
+          onCellClick={onCellClick}
+          onCellKeyDown={onCellKeyDown}
+          renderers={{
+            renderRow: renderers.renderRow,
+            renderCell: renderers.renderCell,
+            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+          }}
+        />
+      </div>
 
       {showPagination && (
         <div className={styles.paginationContainer}>

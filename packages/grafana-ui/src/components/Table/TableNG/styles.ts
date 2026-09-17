@@ -83,12 +83,33 @@ export const getGridStyles = memoize(
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
     // Each grid sets this variable itself so nested grids reset to their own radius instead of
     // inheriting an outer table's panel-matching override.
+    const cornerRadiusValue = noPanelPadding
+      ? `var(--grafana-panel-content-corner-radius, ${theme.shape.radius.default})`
+      : theme.shape.radius.default;
     const cornerRadius = 'var(--table-header-corner-radius)';
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
 
     return {
+      gridFrame: css({
+        '--table-header-corner-radius': cornerRadiusValue,
+        // Give pagination controls their room back, so the frame and pager together still fit the
+        // panel (see getPaginationChromeHeight).
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        boxSizing: 'border-box',
+        ...(transparent && {
+          // Keep the visible frame outside the scrolling element. Native scrollbars paint their
+          // bottom corner over the scroll container's own border, which otherwise leaves a gap.
+          border: `1px solid ${table.border}`,
+          borderEndStartRadius: cornerRadius,
+          borderEndEndRadius: cornerRadius,
+          ...(tableRefreshEnabled && {
+            borderStartStartRadius: cornerRadius,
+            borderStartEndRadius: cornerRadius,
+          }),
+        }),
+      }),
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
@@ -100,9 +121,7 @@ export const getGridStyles = memoize(
 
         '--rdg-selection-color': theme.colors.action.selectedBorder,
         '--rdg-selection-width': '0.5px',
-        '--table-header-corner-radius': noPanelPadding
-          ? `var(--grafana-panel-content-corner-radius, ${theme.shape.radius.default})`
-          : theme.shape.radius.default,
+        '--table-header-corner-radius': cornerRadiusValue,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -111,27 +130,14 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
         '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        blockSize: '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
         ...(transparent && {
-          borderInline: `1px solid ${table.border}`,
-          borderBlockStart: `1px solid ${table.border}`,
-          borderBlockEnd: `1px solid ${table.border}`,
           borderEndStartRadius: cornerRadius,
           borderEndEndRadius: cornerRadius,
-          [`.rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            borderEndStartRadius: cornerRadius,
-            overflow: 'hidden',
-          },
-          [`.rdg-bottom-summary-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
-            borderEndEndRadius: cornerRadius,
-            overflow: 'hidden',
-          },
         }),
 
         '.rdg-cell': {
@@ -268,16 +274,6 @@ export const getGridStyles = memoize(
       }),
       lastRow: css({
         '& > .rdg-cell': { borderBlockEnd: 'none' },
-        ...(transparent && {
-          [`& > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            borderEndStartRadius: cornerRadius,
-            overflow: 'hidden',
-          },
-          [`& > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
-            borderEndEndRadius: cornerRadius,
-            overflow: 'hidden',
-          },
-        }),
       }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no

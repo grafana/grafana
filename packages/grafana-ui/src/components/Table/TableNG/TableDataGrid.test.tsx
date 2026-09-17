@@ -5,7 +5,6 @@ import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@graf
 import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
-import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
   return {
@@ -59,15 +58,15 @@ function readTableSurfaces() {
   };
 }
 
-function getGridStyleRule() {
-  const gridClasses = Array.from(screen.getByRole('grid').classList);
+function getGridFrameStyleRule() {
+  const frameClasses = Array.from(screen.getByRole('grid').parentElement!.classList);
   return Array.from(document.styleSheets)
     .flatMap((sheet) => Array.from(sheet.cssRules))
     .find(
       (rule): rule is CSSStyleRule =>
         rule instanceof CSSStyleRule &&
-        gridClasses.some((className) => rule.selectorText === `.${className}`) &&
-        Boolean(rule.style.getPropertyValue('--rdg-background-color'))
+        frameClasses.some((className) => rule.selectorText === `.${className}`) &&
+        Boolean(rule.style.getPropertyValue('--table-header-corner-radius'))
     );
 }
 
@@ -141,7 +140,6 @@ describe('TableDataGrid', () => {
       'sets the final body border with table.refresh=$tableRefreshEnabled, footer=$hasFooter, transparent=$transparent, role=$role',
       ({ tableRefreshEnabled, hasFooter, transparent, role, omitLastBorder }) => {
         const theme = createTheme();
-        const edgeClasses = `${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`;
         const { container } = render(
           <TableDataGrid
             {...makeProps({
@@ -154,8 +152,6 @@ describe('TableDataGrid', () => {
                 {
                   key: 'value',
                   name: 'Value',
-                  cellClass: edgeClasses,
-                  summaryCellClass: edgeClasses,
                   renderSummaryCell: () => 'Total',
                 },
               ],
@@ -183,17 +179,12 @@ describe('TableDataGrid', () => {
           expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
         }
         if (transparent) {
-          const gridRule = getGridStyleRule();
-          expect(gridRule?.style.getPropertyValue('border-block-end')).toBe(
-            `1px solid ${theme.components.table.border}`
+          const frameRule = getGridFrameStyleRule();
+          expect(frameRule?.style.getPropertyValue('border')).toBe(`1px solid ${theme.components.table.border}`);
+          expect(frameRule?.style.getPropertyValue('border-end-start-radius')).toBe(
+            'var(--table-header-corner-radius)'
           );
-          expect(gridRule?.style.getPropertyValue('border-end-start-radius')).toBe('var(--table-header-corner-radius)');
-          expect(gridRule?.style.getPropertyValue('border-end-end-radius')).toBe('var(--table-header-corner-radius)');
-          expect(screen.getByRole('gridcell', { name: hasFooter ? 'Total' : 'Last' })).toHaveStyle({
-            borderEndStartRadius: 'var(--table-header-corner-radius)',
-            borderEndEndRadius: 'var(--table-header-corner-radius)',
-            overflow: 'hidden',
-          });
+          expect(frameRule?.style.getPropertyValue('border-end-end-radius')).toBe('var(--table-header-corner-radius)');
         }
       }
     );
@@ -249,11 +240,9 @@ describe('TableDataGrid', () => {
         expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe('');
-        expect(getGridStyleRule()?.style.getPropertyValue('border-block-start')).toBe('');
-        expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe('');
-        expect(getGridStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe('');
-        expect(getGridStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe('');
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border')).toBe('');
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe('');
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe('');
         expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
           headerDivider
         );
@@ -272,19 +261,13 @@ describe('TableDataGrid', () => {
         expect(transparentGrid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
           theme.components.table.rowHoverBackground
         );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-inline')).toBe(
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border')).toBe(
           `1px solid ${theme.components.table.border}`
         );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-block-start')).toBe(
-          `1px solid ${theme.components.table.border}`
-        );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-block-end')).toBe(
-          `1px solid ${theme.components.table.border}`
-        );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-start-radius')).toBe(
           'var(--table-header-corner-radius)'
         );
-        expect(getGridStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe(
+        expect(getGridFrameStyleRule()?.style.getPropertyValue('border-end-end-radius')).toBe(
           'var(--table-header-corner-radius)'
         );
       }
