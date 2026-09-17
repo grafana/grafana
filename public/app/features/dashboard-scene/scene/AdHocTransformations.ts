@@ -34,10 +34,7 @@ class AdHocTransformations implements AdHocTransformationsApi {
     _panel.subscribeToState((next, prev) => {
       if (next.pluginId !== prev.pluginId) {
         this._updateTransformer(prev.$data, undefined, true);
-        return;
-      }
-
-      if (next.$data !== prev.$data) {
+      } else if (next.$data !== prev.$data) {
         this._updateTransformer(prev.$data, next.$data);
       }
     });
