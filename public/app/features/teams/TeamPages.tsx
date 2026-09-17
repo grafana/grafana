@@ -91,10 +91,8 @@ const TeamPages = memo(() => {
       case PageTypes.Folders:
         return canReadTeam && <TeamFolders teamUid={teamUid} />;
       case PageTypes.GroupSync:
-        if (isSyncEnabled.current) {
-          if (canReadTeamPermissions) {
-            return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} teamUid={teamUid} />;
-          }
+        if (isSyncEnabled.current && canReadTeamPermissions) {
+          return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} teamUid={teamUid} />;
         }
     }
 

@@ -57,21 +57,19 @@ export function buildNavModel(team: Team): NavModelItem {
     });
   }
 
-  const teamGroupSync: NavModelItem = {
-    active: false,
-    icon: 'sync',
-    id: `team-groupsync-${team.uid}`,
-    text: t('teams.build-nav-model.team-group-sync.text.external-group-sync', 'External group sync'),
-    url: `org/teams/edit/${team.uid}/groupsync`,
-  };
-
-  // With both Legacy and RBAC the tab is protected being featureEnabled
-  // While team is loading we leave the teamsync tab
-  // With RBAC the External Group Sync tab is available when user has ActionTeamsPermissionsRead for this team
-  if (featureEnabled('teamsync')) {
-    if (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
-      navModel.children!.push(teamGroupSync);
-    }
+  // The tab is license-gated for both Legacy and RBAC; while the team is still loading we keep it,
+  // with RBAC it needs ActionTeamsPermissionsRead for this team.
+  if (
+    featureEnabled('teamsync') &&
+    (isLoadingTeam || contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team))
+  ) {
+    navModel.children!.push({
+      active: false,
+      icon: 'sync',
+      id: `team-groupsync-${team.uid}`,
+      text: t('teams.build-nav-model.team-group-sync.text.external-group-sync', 'External group sync'),
+      url: `org/teams/edit/${team.uid}/groupsync`,
+    });
   }
 
   // Section for team folders tab

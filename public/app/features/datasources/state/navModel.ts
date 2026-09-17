@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
+import { OrangeBadge } from 'app/core/components/Branding/OrangeBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
@@ -58,74 +58,54 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  const shouldEnableFeatureHighlights = isOpenSourceBuildOrUnlicenced();
-
-  const permissionsExperimentId = 'feature-highlights-data-source-permissions-badge';
-  const dsPermissions: NavModelItem = {
-    active: false,
-    icon: 'lock',
-    id: `datasource-permissions-${dataSource.uid}`,
-    text: t('datasources.build-nav-model.ds-permissions.text.permissions', 'Permissions'),
-    url: `datasources/edit/${dataSource.uid}/permissions`,
+  // OSS and unlicensed builds show every Pro tab with a badge; licensed builds show a tab
+  // only when the license includes the feature and the user may read it.
+  const showProTabs = isOpenSourceBuildOrUnlicenced();
+  const addProTab = (tab: NavModelItem, canUse: boolean) => {
+    if (showProTabs) {
+      navModel.children!.push({ ...tab, tabSuffix: OrangeBadge });
+    } else if (canUse) {
+      navModel.children!.push(tab);
+    }
   };
 
-  if (shouldEnableFeatureHighlights) {
-    dsPermissions.tabSuffix = () => ProBadge({ experimentId: permissionsExperimentId, eventVariant: 'trial' });
-  }
+  addProTab(
+    {
+      active: false,
+      icon: 'lock',
+      id: `datasource-permissions-${dataSource.uid}`,
+      text: t('datasources.build-nav-model.ds-permissions.text.permissions', 'Permissions'),
+      url: `datasources/edit/${dataSource.uid}/permissions`,
+    },
+    featureEnabled('dspermissions.enforcement') &&
+      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource)
+  );
 
-  if (featureEnabled('dspermissions.enforcement') || shouldEnableFeatureHighlights) {
-    if (
-      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource) ||
-      shouldEnableFeatureHighlights
-    ) {
-      navModel.children!.push(dsPermissions);
-    }
-  }
-
-  if (config.analytics?.enabled || shouldEnableFeatureHighlights) {
-    const analyticsExperimentId = 'feature-highlights-data-source-insights-badge';
-    const analytics: NavModelItem = {
+  addProTab(
+    {
       active: false,
       icon: 'info-circle',
       id: `datasource-insights-${dataSource.uid}`,
       text: t('datasources.build-nav-model.analytics.text.insights', 'Insights'),
       url: `datasources/edit/${dataSource.uid}/insights`,
-    };
+    },
+    Boolean(config.analytics?.enabled) &&
+      featureEnabled('analytics') &&
+      contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)
+  );
 
-    if (shouldEnableFeatureHighlights) {
-      analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
-    }
-
-    if (featureEnabled('analytics') || shouldEnableFeatureHighlights) {
-      if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead) || shouldEnableFeatureHighlights) {
-        navModel.children!.push(analytics);
-      }
-    }
-  }
-
-  const cachingExperimentId = 'feature-highlights-query-caching-badge';
-
-  const caching: NavModelItem = {
-    active: false,
-    icon: 'database',
-    id: `datasource-cache-${dataSource.uid}`,
-    text: t('datasources.build-nav-model.caching.text.cache', 'Cache'),
-    url: `datasources/edit/${dataSource.uid}/cache`,
-    hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
-  };
-
-  if (shouldEnableFeatureHighlights) {
-    caching.tabSuffix = () => ProBadge({ experimentId: cachingExperimentId, eventVariant: 'trial' });
-  }
-
-  if (featureEnabled('caching') || shouldEnableFeatureHighlights) {
-    if (
-      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource) ||
-      shouldEnableFeatureHighlights
-    ) {
-      navModel.children!.push(caching);
-    }
-  }
+  addProTab(
+    {
+      active: false,
+      icon: 'database',
+      id: `datasource-cache-${dataSource.uid}`,
+      text: t('datasources.build-nav-model.caching.text.cache', 'Cache'),
+      url: `datasources/edit/${dataSource.uid}/cache`,
+      hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
+    },
+    featureEnabled('caching') &&
+      contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource)
+  );
 
   return navModel;
 }
