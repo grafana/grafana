@@ -6,31 +6,24 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sync/atomic"
 	"time"
 
-	"log/slog"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
-// pluginManifestsTarget polls a plugin-manifests operator's GET /plugins on
-// a cooldown -- same pacing/dirty-signal shape as aggregateTarget (see
-// aggregate_poller.go), reused here for consistency rather than inventing a
-// second pacing scheme. The wire format and backend shape are unrelated to
-// aggregateTarget's, though: definition.PluginDeployments rather than a k8s
-// discovery document, and no reverse-proxy target to build (see
-// pluginManifestBackend), so this does not share
-// discoverGroups/newAggregateBackend.
+// pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
 	url      string
 	client   *http.Client
 	patterns []*regexp.Regexp
+	deps     PluginDependencies
 
 	cooldown *cooldown
 
@@ -38,7 +31,7 @@ type pluginManifestsTarget struct {
 	lastKeys atomic.Pointer[map[string]struct{}]
 }
 
-func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client) (*pluginManifestsTarget, error) {
+func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client, deps PluginDependencies) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
@@ -52,6 +45,7 @@ func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *
 	}
 
 	t := &pluginManifestsTarget{
+		deps:     deps,
 		url:      rawURL,
 		client:   client,
 		patterns: patterns,
@@ -112,13 +106,35 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		if !matchesAnyPattern(group.Name, t.patterns) {
 			continue
 		}
-		backend, err := newPluginManifestBackend(entry, group)
+
+		// Remove any dependencies that may try to load settings
+		// After the manifest CRUD works, we can explore getting these wired properly
+		deps := t.deps
+		deps.PluginClient = nil
+		deps.ContextProvider = nil
+		deps.PluginSettings = nil
+		deps.DualWrite = nil
+		backend, err := NewPluginBackend(entry.Definition,
+			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+				// TODO -- But not in this PR!
+				// we need to load a real client based on Host
+				return nil, nil, nil
+			}, deps,
+		)
+
 		if err != nil {
-			slog.Warn("router: skipping unfingerprintable plugin manifest entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 			continue
 		}
-		backends = append(backends, backend)
-		keys[backend.Key()] = struct{}{}
+		// The host is outside PluginDefinition, but changing it must reload the backend.
+		key, keyErr := pluginDeploymentKey(entry)
+		if keyErr != nil {
+			slog.Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+			continue
+		}
+		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
+		backends = append(backends, deploymentBackend)
+		keys[deploymentBackend.Key()] = struct{}{}
 	}
 
 	t.snapshot.Store(&backends)
@@ -160,43 +176,18 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	return deployment, nil
 }
 
-// pluginManifestBackend is a Backend for one plugin discovered from a
-// plugins_url target.
-type pluginManifestBackend struct {
-	group metav1.APIGroup
-	key   string
-	entry definition.PluginDeployment
-}
-
-var _ Backend = &pluginManifestBackend{}
-
-func newPluginManifestBackend(entry definition.PluginDeployment, group metav1.APIGroup) (Backend, error) {
+func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 	body, err := json.Marshal(entry)
 	if err != nil {
-		return nil, fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
+		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}
 	sum := sha256.Sum256(body)
-	key := "plugins_url:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16]
-
-	return &pluginManifestBackend{
-		group: group,
-		key:   key,
-		entry: entry,
-	}, nil
+	return "plugins_url:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }
 
-func (b *pluginManifestBackend) Group() metav1.APIGroup { return b.group }
-func (b *pluginManifestBackend) Key() string            { return b.key }
-
-func (b *pluginManifestBackend) Load(context.Context) (http.Handler, error) {
-	return b, nil
+type pluginDeploymentBackend struct {
+	Backend
+	key string
 }
 
-// ServeHTTP is a placeholder that echoes the plugin manifest entry instead
-// of proxying to the plugin's gRPC backend (entry.Host) -- routing real
-// requests here is the "Backend Mode: Plugin" work AGENTS.md's Path model
-// section marks TBD, not implemented by this discovery-side change.
-func (b *pluginManifestBackend) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(b.entry)
-}
+func (b *pluginDeploymentBackend) Key() string { return b.key }

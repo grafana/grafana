@@ -3,6 +3,9 @@ package pluginopenapi
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -55,4 +58,23 @@ func (offlineSearchClient) VectorSearch(context.Context, *resourcepb.VectorSearc
 
 func (offlineSearchClient) HybridSearch(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, errOffline
+}
+
+var _ appplugin.PluginClient = offlinePluginClient{}
+var _ appplugin.PluginContextWrapper = offlinePluginContext{}
+
+type offlinePluginClient struct{}
+
+func (offlinePluginClient) CheckHealth(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return nil, errOffline
+}
+
+func (offlinePluginClient) CallResource(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error {
+	return errOffline
+}
+
+type offlinePluginContext struct{}
+
+func (offlinePluginContext) PluginContextForApp(ctx context.Context, _ string, _ *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
+	return ctx, backend.PluginContext{}, errOffline
 }
