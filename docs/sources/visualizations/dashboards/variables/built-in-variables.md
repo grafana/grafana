@@ -2,7 +2,7 @@
 aliases:
   - ../../../variables/global-variables/ # /docs/grafana/next/variables/global-variables/
   - ../../../variables/variable-types/global-variables/ # /docs/grafana/next/variables/variable-types/global-variables/
-  - # /docs/grafana/next/visualizations/dashboards/variables/global-variables/
+  - ../../../visualizations/dashboards/variables/global-variables/ # /docs/grafana/next/visualizations/dashboards/variables/global-variables/
 keywords:
   - variables
   - standard
@@ -13,15 +13,15 @@ labels:
     - enterprise
     - oss
 title: Built-in variables
-description: Use Grafana built-in global variables to reference dashboard metadata, time ranges, intervals, and user context in queries, links, and panel titles.
+description: Use Grafana built-in variables to reference dashboard metadata, time ranges, intervals, and user context in queries, links, and panel titles.
 weight: 200
 ---
 
 # Built-in variables
 
-Grafana has global built-in variables that can be used in expressions in the query editor.
+Grafana has global built-in variables that you can use in expressions in the query editor.
 This page lists them in alphabetical order and defines them.
-Most variables are useful in queries, dashboard links, panel links, and data links — but some, like `$__url_time_range`, are intended only for use in links, not query editors.
+Most variables are useful in queries, dashboard links, panel links, and data links&mdash;but some, like `$__url_time_range`, are only intended for use in links, not query editors.
 
 ## `$__dashboard`
 
