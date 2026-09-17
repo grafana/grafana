@@ -59,7 +59,7 @@ export const getExpireOptions = () => {
 // A reverse proxy in front of Grafana may also cap body size and reject the request before it
 // reaches the API at all, leaving no response we can turn into a useful message — so measure
 // the payload up front rather than posting something that cannot succeed.
-export const MAX_SNAPSHOT_PAYLOAD_BYTES = 100 * 1024 * 1024;
+const MAX_SNAPSHOT_PAYLOAD_BYTES = 100 * 1024 * 1024;
 
 // JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
 // name or label value in the embedded data, so measure the encoded length actually sent.
