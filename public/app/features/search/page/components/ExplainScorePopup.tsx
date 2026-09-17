@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import { type DataFrame } from '@grafana/data';
-import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 export interface Props {
@@ -43,15 +44,7 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
     >
       <TabContent>
         {activeTab === tabs[0].value && (
-          <CodeEditor
-            width="100%"
-            height="70vh"
-            language="json"
-            showLineNumbers={false}
-            showMiniMap={true}
-            value={JSON.stringify(explain, null, 2)}
-            readOnly={false}
-          />
+          <JsonEditor label={tabs[0].label} initialValue={JSON.stringify(explain, null, 2)} />
         )}
         {activeTab === tabs[1].value && (
           <div>
@@ -59,21 +52,32 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
           </div>
         )}
         {activeTab === tabs[2].value && (
-          <CodeEditor
-            width="100%"
-            height="70vh"
-            language="json"
-            showLineNumbers={false}
-            showMiniMap={false}
-            value={(() => {
+          <JsonEditor
+            label={tabs[2].label}
+            initialValue={(() => {
               const allowedActions = frame.fields.find((f) => f.name === 'allowed_actions')?.values?.[row];
               const dsUids = frame.fields.find((f) => f.name === 'ds_uid')?.values?.[row];
               return JSON.stringify({ dsUids: dsUids ?? [], allowedActions: allowedActions ?? [] }, null, 2);
             })()}
-            readOnly={false}
           />
         )}
       </TabContent>
     </Modal>
+  );
+}
+
+function JsonEditor({ initialValue, label }: { initialValue: string; label: string }) {
+  const [value, setValue] = useState(initialValue);
+
+  return (
+    <CodeMirrorEditor
+      aria-label={label}
+      height="70vh"
+      language="json"
+      basicSetup={{ lineNumbers: false }}
+      value={value}
+      onChange={setValue}
+      readOnly={false}
+    />
   );
 }
