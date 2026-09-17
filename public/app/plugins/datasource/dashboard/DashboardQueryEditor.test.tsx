@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  type DataSourceApi,
   type DataSourceInstanceSettings,
   getDefaultTimeRange,
   LoadingState,
@@ -49,12 +50,12 @@ function mockInstanceSettings(name: string, uid: string): DataSourceInstanceSett
   return { name, uid } as DataSourceInstanceSettings;
 }
 
-function mockDataSourceInstance(name: string, uid: string) {
+function mockDataSourceInstance(name: string, uid: string): DataSourceApi {
   return {
     name,
     uid,
     meta: { info: { logos: { small: `https://example.com/${uid}.svg` } } },
-  };
+  } as DataSourceApi;
 }
 
 describe('DashboardQueryEditor', () => {
