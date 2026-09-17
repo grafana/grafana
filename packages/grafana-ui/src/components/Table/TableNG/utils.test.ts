@@ -1298,25 +1298,43 @@ describe('TableNG utils', () => {
   });
 
   describe('getPillCellHeightMeasurer', () => {
+    // horizontal chrome of a legacy pill: 6px of padding on each side.
+    const PILL_SPACING = 12;
+    // a refreshed pill is a Tag, with theme.spacing.x1 of padding on each side.
+    const REFRESHED_PILL_SPACING = 16;
+    const PILL_GAP = 4;
+
     it('counts up the number of lines using the pill measuring method', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING, PILL_GAP);
       measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       measurer('tag1,tag2', 100, {} as Field, 0, 20);
       measurer('tag2', 200, {} as Field, 0, 20);
@@ -1326,7 +1344,7 @@ describe('TableNG utils', () => {
 
     it('does not re-measure pill text when only the column width changes (resize)', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING, PILL_GAP);
       const value = 'aaaa,bbbb,cccc';
       measurer(value, 100, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
@@ -1337,21 +1355,44 @@ describe('TableNG utils', () => {
     });
 
     it('returns a consistent height when the same value and width are measured repeatedly', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       // react-data-grid re-measures every row on each layout pass; repeats must be stable
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
     });
 
     it('wraps to more lines as the column narrows', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
       const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       expect(narrow).toBeGreaterThan(wide);
     });
 
+    it('wraps sooner when the pills carry the wider refreshed chrome', () => {
+      const measureWidth = jest.fn((str: string) => str.length * 5);
+      const value = 'tag1,tag2,tag3';
+      // 3 pills of 20px text: 3*(20+12) + 2*4 = 104, so all three fit one 110px line.
+      expect(getPillCellHeightMeasurer(measureWidth, PILL_SPACING, PILL_GAP)(value, 110, {} as Field, 0, 20)).toBe(20);
+      // the same pills at 16px chrome need 3*(20+16) + 2*4 = 116, so one wraps to a second line.
+      expect(
+        getPillCellHeightMeasurer(measureWidth, REFRESHED_PILL_SPACING, PILL_GAP)(value, 110, {} as Field, 0, 20)
+      ).toBe(44);
+    });
+
     it('scales the height with the caller line height at the same width', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
       // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
       expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
@@ -1404,6 +1445,7 @@ describe('TableNG utils', () => {
   });
 
   describe('buildCellHeightMeasurers', () => {
+    const theme = createTheme();
     const ctx = {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
@@ -1424,7 +1466,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].fieldIdxs).toEqual([0, 1]);
     });
@@ -1440,7 +1482,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].fieldIdxs).toEqual([1]);
     });
 
@@ -1453,7 +1495,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // pills are measured precisely (the cheap estimate was removed because it mis-ranked columns)
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
@@ -1473,7 +1515,7 @@ describe('TableNG utils', () => {
           ]),
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('http://example.com/1', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
       expect(measurers![0].fieldIdxs).toEqual([0]);
@@ -1491,7 +1533,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
       expect(measurers).toBeDefined();
       expect(measurers![0].fieldIdxs).toEqual([1]);
@@ -1508,7 +1550,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers).toBeDefined();
       expect(measurers![0].fieldIdxs).toEqual([0]);
     });
@@ -1524,7 +1566,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // Gauge cells don't use AutoCellRenderer, so no measurer is set up
       expect(measurers).toBeUndefined();
     });
@@ -1535,7 +1577,7 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers).toBeUndefined();
     });
 
@@ -1548,11 +1590,11 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
 
       fields[0].config!.custom!.maxHeight = 50;
-      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, 50);
+      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, theme, 50);
       expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
     });
   });
@@ -1847,6 +1889,7 @@ describe('TableNG utils', () => {
     // 0, which would otherwise make both meaningless). CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
     const CHAR_W = 8;
     const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    const theme = createTheme();
 
     const makeTypographyCtx = () => {
       const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
@@ -1864,6 +1907,7 @@ describe('TableNG utils', () => {
       computeContentAwareColWidths(fields, availWidth, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
+        theme,
         showTypeIcons,
       });
 
@@ -2541,16 +2585,26 @@ describe('TableNG utils', () => {
         config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill } } },
       });
 
-      const computeWithPills = (fields: Field[], availWidth: number) =>
+      const computeWithPills = (fields: Field[], availWidth: number, pillTheme = theme) =>
         computeContentAwareColWidths(fields, availWidth, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
+          theme: pillTheme,
         });
 
       it('sizes to fit an average row of pills across a couple of entries, not the longest value', () => {
         // one row: "AB" (2*8+12=28) + gap 4 + "CDE" (3*8+12=36) => rowTotal 68; +CELL_CHROME 13 = 81.
         const [width] = computeWithPills([pillField('a', [['AB', 'CDE']])], 81);
         expect(width).toBe(81);
+      });
+
+      it('uses the active theme to measure pill padding', () => {
+        const refreshTheme = createTheme();
+        refreshTheme.flags.visualDesignRefresh = true;
+        const field = pillField('a', [['AB', 'CDE']]);
+
+        expect(computeWithPills([field], 1)).toEqual([81]);
+        expect(computeWithPills([field], 1, refreshTheme)).toEqual([89]);
       });
 
       it('never sizes below the widest single pill, so no chip is clipped', () => {

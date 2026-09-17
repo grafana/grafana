@@ -915,6 +915,7 @@
       "button-view": "보기",
       "export-ariaLabel-export": "내보내기",
       "export-label-export": "내보내기",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "삭제",
       "label-manage-permissions": "권한 관리",
       "tooltip-history": "이 연락처로 전송된 알림 시도 기록 보기",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "로딩 중...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "로딩 중...."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "일시 중지된 규칙 없음",
         "pause-recording": "기록 규칙 일시 중지됨",
         "policy-tree": "정책 트리",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "템플릿 파일 이름 복제: \"{{name}}\". 템플릿 파일 이름은 고유해야 합니다.",
         "templates-label": "알림 템플릿",
         "templates-remove": "{{name}} 삭제",
-        "upload": "YAML 파일 업로드",
+        "upload": "",
         "validating": "구성 유효성 검사 중...",
         "validation-error": "검증에 실패했습니다",
         "validation-error-desc": "구성을 검증하지 못했습니다.",
         "validation-success": "검증에 성공했습니다",
         "validation-success-desc": "충돌 없음. 구성 가져오기 준비 완료.",
         "validation-warning": "기존 리소스와의 충돌을 방지하기 위해 일부 리소스의 이름이 변경됩니다.",
-        "yaml-file": "Alertmanager 구성 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 구성 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "데이터 소스",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "README 추가",
-      "edit-tooltip": "README 편집",
+      "edit-doc-tooltip": "",
       "empty-message": "이 폴더에 무엇이 포함되어 있는지와 올바른 대시보드를 어디에서 찾을 수 있는지 설명하는 README를 추가하세요.",
       "load-error-retry": "다시 시도",
-      "load-error-title": "README를 불러오지 못했습니다",
-      "parse-error": "README 콘텐츠 표시 불가."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "기록 지우기",
@@ -12160,6 +12175,10 @@
     "team-not-found": "[알 수 없는 팀]",
     "unknown-error": "알 수 없는 오류"
   },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
+  },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
   },
@@ -12492,6 +12511,10 @@
     "authentication": {
       "title": "인증"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "북마크"
     },
@@ -12698,6 +12721,7 @@
       "title": "기록된 쿼리"
     },
     "reporting": {
+      "subtitle": "",
       "title": "보고"
     },
     "saved-queries": {
@@ -12712,6 +12736,10 @@
     },
     "search-dashboards": {
       "title": "대시보드 검색"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana 구성에 정의된 설정 보기",
@@ -16552,10 +16580,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

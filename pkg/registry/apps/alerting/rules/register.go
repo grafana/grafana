@@ -24,11 +24,13 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -132,7 +134,7 @@ func resolveOrgID(ctx context.Context) int64 {
 // newFolderValidator returns a callback that validates folder existence using the folder service.
 func newFolderValidator(ng *ngalert.AlertNG) func(ctx context.Context, folderUID string) (bool, error) {
 	return func(ctx context.Context, folderUID string) (bool, error) {
-		if folderUID == "" {
+		if folder.IsRootFolderUID(folderUID) {
 			return false, nil
 		}
 		orgID := resolveOrgID(ctx)
@@ -230,6 +232,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return rulesequence.Authorize(ctx, authz, a)
 			case search.RouteResource:
 				return search.Authorize(ctx, authz, a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
@@ -237,6 +241,12 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	// Config is a per-org singleton with no folder concept; the rules-app
+	// group's other kinds (AlertRule, RecordingRule, RuleSequence) all live in
+	// folders, so this must be scoped per-kind rather than blanket-true.
+	if gr == config.ResourceInfo.GroupResource() {
+		return &apistore.StorageOptions{}
+	}
 	return &apistore.StorageOptions{
 		EnableFolderSupport: true,
 	}
@@ -250,6 +260,10 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	case alertrule.ResourceInfo.GroupVersionResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case rulesequence.ResourceInfo.GroupVersionResource():
+		return nil
+	case config.ResourceInfo.GroupVersionResource():
+		// Config has no legacy backend — returning nil makes the apiserver serve
+		// it directly from unified storage (no dual writer).
 		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())

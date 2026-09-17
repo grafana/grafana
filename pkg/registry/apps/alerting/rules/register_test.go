@@ -1,8 +1,12 @@
 package rules
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -10,6 +14,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewFolderValidatorRejectsRootFolder(t *testing.T) {
+	validate := newFolderValidator(&ngalert.AlertNG{})
+
+	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
+		valid, err := validate(context.Background(), uid)
+		require.NoError(t, err)
+		require.False(t, valid)
+	}
+}
 
 func TestWatchNamespace(t *testing.T) {
 	tests := []struct {
@@ -56,4 +70,14 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetStorageOptions(t *testing.T) {
+	a := &AppInstaller{}
+
+	got := a.GetStorageOptions(config.ResourceInfo.GroupResource())
+	require.False(t, got.EnableFolderSupport, "the Config singleton is a per-org object with no folder concept")
+
+	got = a.GetStorageOptions(alertrule.ResourceInfo.GroupResource())
+	require.True(t, got.EnableFolderSupport, "other rules-app kinds still live in folders")
 }
