@@ -101,8 +101,6 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
-	fullPage := req.Limit > 0 && len(rows) >= int(req.Limit)
-
 	// Chunked so a large page neither buffers every body nor lets a later hit's
 	// error fail a page the client never reaches.
 	for chunk := range slices.Chunk(rows, searchReadChunkSize) {
@@ -157,8 +155,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}
 	}
 
-	// Authorization can leave a full search page short or empty even when more results may exist.
-	if fullPage && len(rows) > 0 {
+	if searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
 		sortFields := rows[len(rows)-1].sortFields
 		if len(sortFields) == 0 {
 			s.log.Warn("Cannot continue search-backed List: last row has no sort fields", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource)
@@ -174,6 +171,12 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	}
 
 	return rsp, nil
+}
+
+func searchListNeedsContinue(limit int64, rowCount int, totalHitsExact bool) bool {
+	// Authorization can shrink a full page, and post-rank authorization can stop
+	// before filling one. An inexact total cannot rule out more matching rows.
+	return limit > 0 && rowCount > 0 && (rowCount >= int(limit) || !totalHitsExact)
 }
 
 type listSearchRow struct {

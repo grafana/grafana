@@ -500,6 +500,7 @@ func TestListWithSelectors(t *testing.T) {
 		lastSortFields []string
 		batched        bool
 		emptyResults   bool
+		inexactTotal   bool
 		previousRV     int64
 		wantItems      int
 		wantToken      bool
@@ -512,6 +513,12 @@ func TestListWithSelectors(t *testing.T) {
 		{name: "filtered full page without final sort fields has no token", limit: 2, forbidden: map[string]struct{}{"b": {}}, wantItems: 1},
 		{name: "filtered unlimited page has no token", forbidden: map[string]struct{}{"b": {}}, lastSortFields: []string{"s2"}, wantItems: 1},
 		{name: "empty search results have no token", limit: 2, emptyResults: true},
+		{name: "short page with an inexact total continues", limit: 10, lastSortFields: []string{"s2"}, inexactTotal: true, wantItems: 2, wantToken: true},
+		{name: "short page with an exact total ends", limit: 10, lastSortFields: []string{"s2"}, wantItems: 2},
+		{name: "short filtered page with an inexact total continues", limit: 10, forbidden: map[string]struct{}{"a": {}, "b": {}}, lastSortFields: []string{"s2"}, batched: true, inexactTotal: true, wantToken: true},
+		{name: "short page with an inexact total without sort fields ends", limit: 10, inexactTotal: true, wantItems: 2},
+		{name: "empty search results with an inexact total end", limit: 10, emptyResults: true, inexactTotal: true},
+		{name: "unlimited page with an inexact total ends", lastSortFields: []string{"s2"}, inexactTotal: true, wantItems: 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
@@ -524,6 +531,7 @@ func TestListWithSelectors(t *testing.T) {
 			}
 			searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
+				TotalHitsExact:  !tc.inexactTotal,
 				Results:         &resourcepb.ResourceTable{Rows: rows},
 			}}
 			s := createTestServer(searchClient, 1024)
@@ -561,6 +569,16 @@ func TestListWithSelectors(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"s2"}, token.SearchAfter)
 				require.Equal(t, wantRV, token.ResourceVersion)
+
+				searchClient.resp = &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv + 1}
+				req.NextPageToken = resp.NextPageToken
+				lastPage, err := s.listWithSelectors(ctx, req)
+				require.NoError(t, err)
+				require.Nil(t, lastPage.Error)
+				require.Empty(t, lastPage.Items)
+				require.Empty(t, lastPage.NextPageToken)
+				require.Equal(t, []string{"s2"}, searchClient.last.SearchAfter)
+				require.Equal(t, wantRV, lastPage.ResourceVersion)
 			} else {
 				require.Empty(t, resp.NextPageToken)
 			}
@@ -572,6 +590,7 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
+				TotalHitsExact:  true,
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
@@ -603,6 +622,7 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
+				TotalHitsExact:  true,
 				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Rows: []*resourcepb.ResourceSearchRow{
 					{
