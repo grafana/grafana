@@ -9,8 +9,10 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  NESTED_ROW_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -57,7 +59,8 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    zebraStriping?: boolean
   ) => {
     const table = theme.components.table;
     const bgColor = transparent
@@ -145,6 +148,33 @@ export const getGridStyles = memoize(
             backgroundColor: 'var(--rdg-row-selected-background-color)',
           },
         },
+
+        // Which rows carry a stripe is decided in `makeStripedRowClass`, not by react-data-grid's
+        // own `rdg-row-odd` — see that function for why. Selection still wins over the stripe, and
+        // has to be excluded by hand rather than left to win on specificity: react-data-grid paints
+        // it inside its own `@layer rdg.Row`, and an unlayered rule — which everything in here is —
+        // beats a layered one whatever its specificity.
+        ...(zebraStriping && {
+          [`.${STRIPED_ROW_CLASS}:not([aria-selected='true'])`]: {
+            backgroundColor: table.rowStripedBackground,
+            // A `.rdg-cell` inherits its background from the row, which is how the row rule reaches
+            // the cells at all (rows are `display: contents`, so they paint no box of their own).
+            // Frozen cells are the exception: they set an opaque background so they can occlude the
+            // cells scrolling behind them, so the stripe has to be repeated here or a striped row's
+            // frozen column falls back to the plain row background.
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: table.rowStripedBackground,
+            },
+          },
+        }),
+
+        // Repeat the hover surface on striped cells, including frozen cells. Nested containers must
+        // be excluded because hovering their children also hovers the expansion container.
+        ...(zebraStriping && {
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell`]: {
+            backgroundColor: table.rowHoverBackground,
+          },
+        }),
 
         '.rdg-header-row, .rdg-summary-row': {
           '.rdg-cell': {
