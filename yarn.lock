@@ -5657,9 +5657,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/maplibre-gl-style-spec@npm:^26.4.0":
-  version: 26.4.1
-  resolution: "@maplibre/maplibre-gl-style-spec@npm:26.4.1"
+"@maplibre/maplibre-gl-style-spec@npm:^26.4.1":
+  version: 26.4.3
+  resolution: "@maplibre/maplibre-gl-style-spec@npm:26.4.3"
   dependencies:
     "@mapbox/jsonlint-lines-primitives": "npm:^2.0.3"
     "@mapbox/unitbezier": "npm:^1.0.0"
@@ -5671,7 +5671,7 @@ __metadata:
     gl-style-format: dist/gl-style-format.mjs
     gl-style-migrate: dist/gl-style-migrate.mjs
     gl-style-validate: dist/gl-style-validate.mjs
-  checksum: 10/22ecb955dc50ad4844f76e722e127c9ce60904d1221e49a81292c23174a5265a48b977c18897038b90d7adfc16a4acd353f57de3e095827b7af792854b67cc19
+  checksum: 10/da243f0dca45eb48fbea69b2a81a711f83cd57c002e795fdc704da84c05959f384ad484a84accf362a9f84f26f8ffe266f564d2b5aec0ce8fdaf8a01d3159c6a
   languageName: node
   linkType: hard
 
@@ -21485,10 +21485,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-address@npm:10.7.0, ip-address@npm:^10.2.0":
-  version: 10.7.0
-  resolution: "ip-address@npm:10.7.0"
-  checksum: 10/81d954eb5806e82460cb749b9651a2040630cadf4db9d53abc13122e60e4ae6f9ae8555282386c63a11093dd6380a62f64f7a22aba18abc6109ff316a6660b0a
+"ip-address@npm:10.7.1, ip-address@npm:^10.2.0":
+  version: 10.7.1
+  resolution: "ip-address@npm:10.7.1"
+  checksum: 10/651a0dd6a8c87c070c5be59a2170fb250753c4b0719f70774dee835cc37456404548b8283b368d95bf60f56a24d44cf96d0bdc598cae202e4cecbf27b9ab2fd2
   languageName: node
   linkType: hard
 
@@ -27154,14 +27154,14 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^13.0.1":
-  version: 13.4.3
-  resolution: "ol-mapbox-style@npm:13.4.3"
+  version: 13.5.0
+  resolution: "ol-mapbox-style@npm:13.5.0"
   dependencies:
-    "@maplibre/maplibre-gl-style-spec": "npm:^26.4.0"
+    "@maplibre/maplibre-gl-style-spec": "npm:^26.4.1"
     mapbox-to-css-font: "npm:^3.2.0"
   peerDependencies:
     ol: "*"
-  checksum: 10/e05efcb8d10dda2b9ec33dfe3e11c45c301b035924636c6b0662015cf82992b384baaea23007531539a3ff03c324ae82e1ce0c6fd28ed3fe2bd363204b6823f9
+  checksum: 10/7928efb8028134c7a568b484e25675f4f5aa13cdec27dbce7922db91fee3c66a68a51f1a1ab3a9d936f24097fa23394e6110055cb0df04e9b32a30720a498406
   languageName: node
   linkType: hard
 
@@ -33342,8 +33342,8 @@ __metadata:
   linkType: hard
 
 "terser-webpack-plugin@npm:^5.3.16, terser-webpack-plugin@npm:^5.4.0":
-  version: 5.4.0
-  resolution: "terser-webpack-plugin@npm:5.4.0"
+  version: 5.6.1
+  resolution: "terser-webpack-plugin@npm:5.6.1"
   dependencies:
     "@jridgewell/trace-mapping": "npm:^0.3.25"
     jest-worker: "npm:^27.4.5"
@@ -33352,13 +33352,31 @@ __metadata:
   peerDependencies:
     webpack: ^5.1.0
   peerDependenciesMeta:
+    "@minify-html/node":
+      optional: true
     "@swc/core":
+      optional: true
+    "@swc/css":
+      optional: true
+    "@swc/html":
+      optional: true
+    clean-css:
+      optional: true
+    cssnano:
+      optional: true
+    csso:
       optional: true
     esbuild:
       optional: true
+    html-minifier-terser:
+      optional: true
+    lightningcss:
+      optional: true
+    postcss:
+      optional: true
     uglify-js:
       optional: true
-  checksum: 10/f4618b18cec5dd41fca4a53f621ea06df04ff7bb2b09d3766559284e171a91df2884083e5c143aaacee2000870b046eb7157e39d1d2d8024577395165a070094
+  checksum: 10/75e5ebb6759ccd85f34a5af04c2f1693f61d7691a4a1614f0892a1d2caf29c12395d1d04d4f4014d4c4a77b63f9f7f36ac9241fcbcc24085a7575d4a4310d70f
   languageName: node
   linkType: hard
 
