@@ -126,25 +126,23 @@ export const ConfirmContent = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Stack justifyContent={justifyButtons} gap={2} wrap="wrap">
-          <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
-            {dismissButtonLabel}
+        <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
+          {dismissButtonLabel}
+        </Button>
+        <Button
+          type="submit"
+          variant={confirmButtonVariant}
+          disabled={isDisabled}
+          ref={confirmButtonRef}
+          data-testid={selectors.pages.ConfirmModal.delete}
+        >
+          {confirmButtonLabel}
+        </Button>
+        {onAlternative ? (
+          <Button variant="primary" onClick={onAlternative}>
+            {alternativeButtonLabel}
           </Button>
-          <Button
-            type="submit"
-            variant={confirmButtonVariant}
-            disabled={isDisabled}
-            ref={confirmButtonRef}
-            data-testid={selectors.pages.ConfirmModal.delete}
-          >
-            {confirmButtonLabel}
-          </Button>
-          {onAlternative ? (
-            <Button variant="primary" onClick={onAlternative}>
-              {alternativeButtonLabel}
-            </Button>
-          ) : null}
-        </Stack>
+        ) : null}
       </Modal.ButtonRow>
     </form>
   );
