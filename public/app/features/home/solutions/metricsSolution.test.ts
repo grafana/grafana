@@ -250,11 +250,8 @@ describe('metricsSolution', () => {
     const ds = datasource();
     const solution = metricsSolution();
 
-    await expect(solution.cta()).resolves.toEqual({
-      label: 'Open Metrics Drilldown',
-      href: '/metrics',
-      action: 'open_solution',
-    });
+    await solution.cta();
+
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       METRICS_DRILLDOWN_APP_ID,

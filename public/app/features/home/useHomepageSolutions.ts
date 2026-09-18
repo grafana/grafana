@@ -34,7 +34,7 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics] = await Promise.all([
+      const [metrics, logs, traces, kubernetes, appObservability, synthetics] = await Promise.all([
         byId.metrics.signal().catch(() => 'unknown' as const),
         byId.logs.signal().catch(() => 'unknown' as const),
         byId.traces.signal().catch(() => 'unknown' as const),
@@ -42,7 +42,7 @@ export function useHomepageSolutions(): HomepageSolutions {
         byId['app-observability'].signal().catch(() => 'unknown' as const),
         byId.synthetics.signal().catch(() => 'unknown' as const),
       ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
+      return { metrics, logs, traces, kubernetes, 'app-observability': appObservability, synthetics };
     };
 
     return {

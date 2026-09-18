@@ -1,13 +1,6 @@
 import memoize from 'micro-memoize';
 
-import {
-  formattedValueToString,
-  getValueFormat,
-  locationUtil,
-  serializeStateToUrlParam,
-  type DataSourceInstanceListItem,
-  urlUtil,
-} from '@grafana/data';
+import { locationUtil, serializeStateToUrlParam, type DataSourceInstanceListItem, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
@@ -17,6 +10,7 @@ import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, prometheusHasRecentMetrics } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
+import { formatCount } from './solutionStats';
 import {
   fetchMetricsActivity,
   fetchMetricsDiskHoursToFull,
@@ -25,8 +19,6 @@ import {
 } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
 import { type Solution } from './types';
-
-const formatUsageNumber = getValueFormat('short');
 
 function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>): string {
   return urlUtil.renderUrl(locationUtil.assureBaseUrl('/explore'), {
@@ -147,7 +139,7 @@ export function metricsSolution(): Solution {
       const secondary =
         metrics.dataPointsPerMinute != null
           ? t('home.solutions.metrics.data-points-per-minute', '{{value}} data points/min', {
-              value: formattedValueToString(formatUsageNumber(Math.ceil(metrics.dataPointsPerMinute))),
+              value: formatCount(Math.ceil(metrics.dataPointsPerMinute)),
             })
           : metrics.hosts != null
             ? t('home.solutions.metrics.stats-hosts', '', {
@@ -158,7 +150,7 @@ export function metricsSolution(): Solution {
             : t('home.solutions.metrics.stats', 'active');
 
       const { kind, value } = metrics.count;
-      const formatted = formattedValueToString(formatUsageNumber(Math.ceil(value)));
+      const formatted = formatCount(Math.ceil(value));
       return {
         primary:
           kind === 'series'

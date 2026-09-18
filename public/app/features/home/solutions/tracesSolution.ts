@@ -1,6 +1,5 @@
 import memoize from 'micro-memoize';
 
-import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { HOSTED_TRACES_APP_ID } from './appPluginIds';
@@ -9,11 +8,10 @@ import { datasourceFact } from './probeUtils';
 import { probeFound, tempoHasTraces } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
+import { formatCount } from './solutionStats';
 import { fetchTracesActivity, fetchTracesServices } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
 import { type Solution } from './types';
-
-const formatUsageNumber = getValueFormat('short');
 
 function buildTracesStats(spans: number | null, services: number | null, lookbackHours: number) {
   if (spans == null) {
@@ -22,7 +20,7 @@ function buildTracesStats(spans: number | null, services: number | null, lookbac
   return {
     primary: t('home.solutions.traces.spans', '', {
       count: Math.ceil(spans),
-      value: formattedValueToString(formatUsageNumber(Math.ceil(spans))),
+      value: formatCount(Math.ceil(spans)),
       defaultValue_one: '{{value}} span',
       defaultValue_other: '{{value}} spans',
     }),

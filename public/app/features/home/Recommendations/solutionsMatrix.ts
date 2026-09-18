@@ -124,8 +124,8 @@ export interface RecommendationSelection {
  * `metrics` inactive is unreachable — solutionState enforces the invariant.
  */
 export function selectRecommendations(state: SolutionState): RecommendationSelection {
-  const { metrics, logs, traces, kubernetes, spanMetrics, synthetics } = state;
-  // The core-signal short-circuit deliberately excludes spanMetrics and synthetics: they each gate one card.
+  const { metrics, logs, traces, kubernetes, 'app-observability': appObservability, synthetics } = state;
+  // The core-signal short-circuit deliberately excludes App Observability and Synthetics: they each gate one card.
   if (metrics === 'unknown' || logs === 'unknown' || traces === 'unknown' || kubernetes === 'unknown') {
     return { cards: [], baseRow: 'unknown' };
   }
@@ -143,8 +143,8 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
     return { cards: ['connect-metrics'], baseRow: 'partial_telemetry' };
   }
 
-  // Synthetic Monitoring rides the Kubernetes rows and the metrics-only row; like spanMetrics
-  // gating App O11y, only a definitive inactive shows the card.
+  // Synthetic Monitoring rides the Kubernetes rows and the metrics-only row; like App Observability's
+  // own card, only a definitive inactive shows it.
   const syntheticMonitoring: RecommendedCardId[] = synthetics === 'inactive' ? ['synthetic-monitoring'] : [];
 
   if (logs === 'inactive') {
@@ -162,8 +162,8 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
       : { cards: ['hosted-traces', 'kubernetes-monitoring'], baseRow: 'ml_no_traces' };
   }
 
-  // M+L+T (OTel starters): App Observability unless span metrics show it is already in use.
-  const appO11y: RecommendedCardId[] = spanMetrics === 'inactive' ? ['application-observability'] : [];
+  // M+L+T (OTel starters): App Observability unless it is already in use.
+  const appO11y: RecommendedCardId[] = appObservability === 'inactive' ? ['application-observability'] : [];
   return kubernetes === 'active'
     ? { cards: appO11y, baseRow: 'fully_active' }
     : { cards: [...appO11y, 'kubernetes-monitoring'], baseRow: 'mlt' };

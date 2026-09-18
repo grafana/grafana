@@ -123,7 +123,7 @@ describe('useHomepageSolutions', () => {
       logs: 'inactive',
       traces: 'unknown',
       kubernetes: 'active',
-      spanMetrics: 'active',
+      'app-observability': 'active',
       synthetics: 'inactive',
     });
     expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);

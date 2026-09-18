@@ -1,6 +1,6 @@
 import memoize from 'micro-memoize';
 
-import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import {
@@ -8,14 +8,13 @@ import {
   fetchAppObservabilityStats,
   probeSpanMetrics,
 } from './appObservabilityData';
-import { APP_OBSERVABILITY_APP_ID } from './appPluginIds';
+import { APP_OBSERVABILITY_APP_ID, APP_OBSERVABILITY_SETUP_PATH } from './appPluginIds';
 import { accessibleAppPage, drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
+import { countRatioStats } from './solutionStats';
 import { type Solution } from './types';
-
-const formatUsageNumber = getValueFormat('short');
 
 export function appObservabilitySolution(): Solution {
   const detect = memoize(() => detectSignal(probeSpanMetrics));
@@ -42,9 +41,7 @@ export function appObservabilitySolution(): Solution {
       ),
       setupHint: t('home.solutions.app-observability.setup-hint', 'requires instrumentation'),
       setupCta: async () => {
-        // /landing is the app's onboarding page; it only explains external instrumentation,
-        // so page access is the whole permission check.
-        const page = await accessibleAppPage(APP_OBSERVABILITY_APP_ID, '/landing');
+        const page = await accessibleAppPage(APP_OBSERVABILITY_APP_ID, APP_OBSERVABILITY_SETUP_PATH);
         return page
           ? {
               label: t('home.solutions.app-observability.setup', 'Set up Application Observability'),
@@ -60,24 +57,18 @@ export function appObservabilitySolution(): Solution {
     alert: async () => null,
     stats: async () => {
       const usage = await stats();
-      if (!usage?.services || usage.services <= 0) {
-        return null;
-      }
-      const serviceCount = Math.ceil(usage.services);
-      return {
-        primary: t('home.solutions.app-observability.services', '', {
-          count: serviceCount,
-          value: formattedValueToString(formatUsageNumber(serviceCount)),
-          defaultValue_one: '{{value}} service',
-          defaultValue_other: '{{value}} services',
-        }),
-        secondary:
-          usage.errorRatio != null
-            ? t('home.solutions.app-observability.stats', '{{percent}}% errors · 24h', {
-                percent: parseFloat((usage.errorRatio * 100).toFixed(1)),
-              })
-            : undefined,
-      };
+      return countRatioStats(
+        usage?.services,
+        usage?.errorRatio,
+        (count, value) =>
+          t('home.solutions.app-observability.services', '', {
+            count,
+            value,
+            defaultValue_one: '{{value}} service',
+            defaultValue_other: '{{value}} services',
+          }),
+        (percent) => t('home.solutions.app-observability.stats', '{{percent}}% errors · 24h', { percent })
+      );
     },
     refinedStats: async () => null,
     sparkline: async () => {

@@ -10,8 +10,8 @@ import {
 } from './solutionsMatrix';
 
 function state(m: SignalStatus, l: SignalStatus, t: SignalStatus, k: SignalStatus): SolutionState {
-  // spanMetrics/synthetics inactive = App Observability / Synthetic Monitoring not in use; cases override.
-  return { metrics: m, logs: l, traces: t, kubernetes: k, spanMetrics: 'inactive', synthetics: 'inactive' };
+  // App Observability / Synthetics inactive = not in use; cases override.
+  return { metrics: m, logs: l, traces: t, kubernetes: k, 'app-observability': 'inactive', synthetics: 'inactive' };
 }
 
 const on = 'active' as const;
@@ -37,37 +37,39 @@ describe('selectRecommendations', () => {
   });
 
   // A single unknown core signal blanks the selection even when the settled signals would produce cards.
-  it.each<Exclude<keyof SolutionState, 'spanMetrics' | 'synthetics'>>(['metrics', 'logs', 'traces', 'kubernetes'])(
-    'short-circuits to no cards when %s is unknown',
-    (signal) => {
-      const cardProducing = state(on, on, off, off);
-      expect(selectRecommendations({ ...cardProducing, [signal]: 'unknown' })).toEqual({
-        cards: [],
-        baseRow: 'unknown',
-      });
-    }
-  );
+  it.each<Exclude<keyof SolutionState, 'app-observability' | 'synthetics'>>([
+    'metrics',
+    'logs',
+    'traces',
+    'kubernetes',
+  ])('short-circuits to no cards when %s is unknown', (signal) => {
+    const cardProducing = state(on, on, off, off);
+    expect(selectRecommendations({ ...cardProducing, [signal]: 'unknown' })).toEqual({
+      cards: [],
+      baseRow: 'unknown',
+    });
+  });
 
-  it('drops the App Observability card when span metrics show it is already in use', () => {
-    expect(selectRecommendations({ ...state(on, on, on, off), spanMetrics: 'active' })).toEqual({
+  it('drops the App Observability card when App Observability is already active', () => {
+    expect(selectRecommendations({ ...state(on, on, on, off), 'app-observability': 'active' })).toEqual({
       cards: ['kubernetes-monitoring'],
       baseRow: 'mlt',
     });
-    expect(selectRecommendations({ ...state(on, on, on, on), spanMetrics: 'active' })).toEqual({
+    expect(selectRecommendations({ ...state(on, on, on, on), 'app-observability': 'active' })).toEqual({
       cards: [],
       baseRow: 'fully_active',
     });
   });
 
-  it('fails the App Observability card toward hiding on an unknown span-metrics probe, without blanking', () => {
-    expect(selectRecommendations({ ...state(on, on, on, off), spanMetrics: 'unknown' })).toEqual({
+  it('fails the App Observability card toward hiding on an unknown App Observability signal, without blanking', () => {
+    expect(selectRecommendations({ ...state(on, on, on, off), 'app-observability': 'unknown' })).toEqual({
       cards: ['kubernetes-monitoring'],
       baseRow: 'mlt',
     });
   });
 
-  it('ignores span metrics outside the M+L+T rows', () => {
-    expect(selectRecommendations({ ...state(on, on, off, off), spanMetrics: 'active' })).toEqual({
+  it('ignores the App Observability signal outside the M+L+T rows', () => {
+    expect(selectRecommendations({ ...state(on, on, off, off), 'app-observability': 'active' })).toEqual({
       cards: ['hosted-traces', 'kubernetes-monitoring'],
       baseRow: 'ml_no_traces',
     });

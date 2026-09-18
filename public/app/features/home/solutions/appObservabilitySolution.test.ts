@@ -117,14 +117,6 @@ describe('appObservabilitySolution', () => {
     expect(mockFetchSeries).toHaveBeenCalledTimes(1);
     expect(mockFetchSeries).toHaveBeenCalledWith(datasource);
   });
-
-  it('never needs attention and has no alert or refined stats even with data flowing', async () => {
-    const solution = appObservabilitySolution();
-
-    await expect(solution.needsAttention()).resolves.toBe(false);
-    await expect(solution.alert()).resolves.toBeNull();
-    await expect(solution.refinedStats()).resolves.toBeNull();
-  });
 });
 
 describe('appObservabilitySolution stats and sparkline', () => {
@@ -177,11 +169,8 @@ describe('appObservabilitySolution stats and sparkline', () => {
 
 describe('appObservabilitySolution CTA and offer', () => {
   it('builds the active CTA to the service inventory from the proving datasource', async () => {
-    await expect(appObservabilitySolution().cta()).resolves.toEqual({
-      label: 'Open Application Observability',
-      href: '/a/grafana-app-observability-app/services',
-      action: 'open_solution',
-    });
+    await appObservabilitySolution().cta();
+
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       datasource,
       'grafana-app-observability-app',

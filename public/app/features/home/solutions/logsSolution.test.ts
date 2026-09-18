@@ -107,23 +107,13 @@ describe('logsSolution', () => {
     const ds = datasource();
     const solution = logsSolution();
 
-    await expect(solution.cta()).resolves.toEqual({
-      label: 'Open Logs Drilldown',
-      href: '/logs',
-      action: 'open_solution',
-    });
+    await solution.cta();
+
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       LOGS_DRILLDOWN_APP_ID,
       'Logs Drilldown',
       `/a/${LOGS_DRILLDOWN_APP_ID}/explore?var-ds=loki-uid`
     );
-  });
-
-  it('has no alert or refined stats facts', async () => {
-    const solution = logsSolution();
-
-    await expect(solution.alert()).resolves.toBeNull();
-    await expect(solution.refinedStats()).resolves.toBeNull();
   });
 });

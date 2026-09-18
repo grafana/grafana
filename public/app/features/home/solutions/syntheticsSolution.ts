@@ -1,15 +1,20 @@
 import memoize from 'micro-memoize';
 
-import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
+import {
+  SYNTHETIC_MONITORING_APP_ID,
+  SYNTHETIC_MONITORING_CHECKS_WRITE,
+  SYNTHETIC_MONITORING_SETUP_PATH,
+} from './appPluginIds';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
+import { countRatioStats } from './solutionStats';
 import {
   fetchSyntheticsHealth,
   fetchSyntheticsStats,
@@ -17,8 +22,6 @@ import {
   probeSyntheticChecks,
 } from './syntheticsData';
 import { type Solution } from './types';
-
-const formatUsageNumber = getValueFormat('short');
 
 export function syntheticsSolution(): Solution {
   const detect = memoize(() => detectSignal(probeSyntheticChecks));
@@ -75,7 +78,7 @@ export function syntheticsSolution(): Solution {
         if (!contextSrv.hasPermission(SYNTHETIC_MONITORING_CHECKS_WRITE)) {
           return null;
         }
-        const page = await accessibleAppPage(SYNTHETIC_MONITORING_APP_ID, '/checks/choose-type');
+        const page = await accessibleAppPage(SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_SETUP_PATH);
         return page
           ? {
               label: t('home.solutions.synthetics.create-check', 'Create a check'),
@@ -90,24 +93,18 @@ export function syntheticsSolution(): Solution {
     alert,
     stats: async () => {
       const usage = await stats();
-      if (!usage?.checks || usage.checks <= 0) {
-        return null;
-      }
-      const checkCount = Math.ceil(usage.checks);
-      return {
-        primary: t('home.solutions.synthetics.checks', '', {
-          count: checkCount,
-          value: formattedValueToString(formatUsageNumber(checkCount)),
-          defaultValue_one: '{{value}} check',
-          defaultValue_other: '{{value}} checks',
-        }),
-        secondary:
-          usage.successRatio != null
-            ? t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', {
-                percent: parseFloat((usage.successRatio * 100).toFixed(1)),
-              })
-            : undefined,
-      };
+      return countRatioStats(
+        usage?.checks,
+        usage?.successRatio,
+        (count, value) =>
+          t('home.solutions.synthetics.checks', '', {
+            count,
+            value,
+            defaultValue_one: '{{value}} check',
+            defaultValue_other: '{{value}} checks',
+          }),
+        (percent) => t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', { percent })
+      );
     },
     sparkline: async () => {
       const series = await successSeries();

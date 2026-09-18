@@ -1,22 +1,15 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
 import { withDeadline } from './probeUtils';
+import { type SolutionId } from './types';
 
 /** Hard ceiling on one signal's detection; past it the signal settles unknown. */
 export const SIGNAL_BUDGET_MS = 30_000;
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 
-export interface SolutionState {
-  metrics: SignalStatus;
-  logs: SignalStatus;
-  traces: SignalStatus;
-  kubernetes: SignalStatus;
-  /** Span metrics prove App Observability use. Unlike core signals, `unknown` does not blank recommendations. */
-  spanMetrics: SignalStatus;
-  /** Gates only the Synthetics card; like spanMetrics, 'unknown' never blanks recommendations. */
-  synthetics: SignalStatus;
-}
+/** Every solution's settled signal, keyed by solution id. */
+export type SolutionState = Record<SolutionId, SignalStatus>;
 
 /** A settled signal: whether data is flowing, and the datasource that proved it. */
 export interface SignalDetection {

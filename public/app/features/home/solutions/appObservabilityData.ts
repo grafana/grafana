@@ -2,14 +2,7 @@ import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type 
 
 import { PROBE_TIMEOUT_MS } from './probeUtils';
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
-import {
-  APP_SPAN_KINDS,
-  CLOUD_UTILITY_PROM_DATASOURCE_UIDS,
-  DATA_LOOKBACK_HOURS,
-  probeFound,
-  SPAN_METRICS_CALL_NAMES,
-  SPAN_METRICS_PROBE,
-} from './solutionDataProbes';
+import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, DATA_LOOKBACK_HOURS, probeFound } from './solutionDataProbes';
 
 export interface AppObservabilityStats {
   services: number | null;
@@ -19,6 +12,22 @@ export interface AppObservabilityStats {
 
 // "Seen recently" lookback matching the shared data probes.
 const LOOKBACK = `${DATA_LOOKBACK_HOURS}h`;
+
+// Span metrics prove App Observability is in use; one entry per emitter naming the plugin
+// supports: Tempo metrics-generator/Beyla, OTel collector >=0.109, older collectors.
+const SPAN_METRICS_CALL_NAMES = [
+  'traces_spanmetrics_calls_total',
+  'traces_span_metrics_calls_total',
+  'calls_total',
+] as const;
+
+// The plugin's own service-inventory selector; reduces false positives from unrelated
+// counters sharing the bare calls_total name.
+const APP_SPAN_KINDS = 'span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"';
+
+const SPAN_METRICS_PROBE = SPAN_METRICS_CALL_NAMES.map(
+  (m) => `count(last_over_time(${m}{${APP_SPAN_KINDS}}[${LOOKBACK}]))`
+).join(' or ');
 
 // The app's "server-side" definition: SERVER plus CONSUMER, so message-queue consumers count
 // as request handlers.
