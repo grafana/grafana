@@ -146,7 +146,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   const backgroundHover = theme.flags.visualDesignRefresh
     ? theme.colors.secondary.backgroundEmphasis
     : theme.colors.secondary.shade;
-  const border = theme.flags.visualDesignRefresh ? theme.colors.secondary.subtleBorder : theme.colors.secondary.border;
 
   const defaultOld = css({
     color: theme.colors.text.primary,
@@ -174,7 +173,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
-      border: `1px solid ${border}`,
+      border: `1px solid ${theme.colors.secondary.subtleBorder}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
