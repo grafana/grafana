@@ -13,13 +13,13 @@ type provenances = map[string]models.Provenance
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	// Remove the receiver from the configuration.
-	rev.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
+	rev.Config.Receivers = slices.DeleteFunc(rev.Config.Receivers, func(r *v1.PostableApiReceiver) bool {
 		return NameToUid(r.GetName()) == uid
 	})
 }
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
-	exists := slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
+	exists := slices.ContainsFunc(rev.Config.Receivers, func(r *v1.PostableApiReceiver) bool {
 		return NameToUid(r.Name) == receiver.GetUID()
 	})
 	if exists {
@@ -35,7 +35,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
+	rev.Config.Receivers = append(rev.Config.Receivers, postable)
 
 	if err := rev.validateReceiver(postable); err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
-	existingIdx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(postable *v1.PostableApiReceiver) bool {
+	existingIdx := slices.IndexFunc(rev.Config.Receivers, func(postable *v1.PostableApiReceiver) bool {
 		return NameToUid(postable.GetName()) == receiver.GetUID()
 	})
 	if existingIdx < 0 {
@@ -61,7 +61,7 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 		return nil, err
 	}
 
-	rev.Config.AlertmanagerConfig.Receivers[existingIdx] = newReceiver
+	rev.Config.Receivers[existingIdx] = newReceiver
 
 	if err := rev.validateReceiver(newReceiver); err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 }
 
 func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Receiver, error) {
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+	for _, r := range rev.Config.Receivers {
 		if NameToUid(r.GetName()) != uid {
 			continue
 		}
@@ -110,10 +110,10 @@ func (rev *ConfigRevision) GetReceiver(uid string, prov provenances) (*models.Re
 func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*models.Receiver, error) {
 	capacity := len(uids)
 	if capacity == 0 {
-		capacity = len(rev.Config.AlertmanagerConfig.Receivers)
+		capacity = len(rev.Config.Receivers)
 	}
 	receivers := make([]*models.Receiver, 0, capacity)
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+	for _, r := range rev.Config.Receivers {
 		uid := NameToUid(r.GetName())
 		if len(uids) > 0 && !slices.Contains(uids, uid) {
 			continue
@@ -129,8 +129,8 @@ func (rev *ConfigRevision) GetReceivers(uids []string, prov provenances) ([]*mod
 
 // GetReceiversNames returns a map of receiver names
 func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
-	result := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+	result := make(map[string]struct{}, len(rev.Config.Receivers))
+	for _, r := range rev.Config.Receivers {
 		result[r.GetName()] = struct{}{}
 	}
 	return result
@@ -139,7 +139,7 @@ func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
 // validateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
 // We only check the receiver being modified to prevent existing issues from other receivers being reported.
 func (rev *ConfigRevision) validateReceiver(p *v1.PostableApiReceiver) error {
-	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
+	uids := make(map[string]struct{}, len(rev.Config.Receivers))
 	for _, integrations := range p.GrafanaManagedReceivers {
 		if _, exists := uids[integrations.UID]; exists {
 			return models.ErrReceiverInvalid(fmt.Errorf("integration with UID %q already exists", integrations.UID))
@@ -147,7 +147,7 @@ func (rev *ConfigRevision) validateReceiver(p *v1.PostableApiReceiver) error {
 		uids[integrations.UID] = struct{}{}
 	}
 
-	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
+	for _, r := range rev.Config.Receivers {
 		if p == r {
 			// Skip the receiver itself.
 			continue

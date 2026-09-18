@@ -2727,14 +2727,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryFetchConfigFromSettingsService",
-			Description: "Enables the query service to fetch the configuration from the settings service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
 			Stage:       FeatureStageExperimental,
