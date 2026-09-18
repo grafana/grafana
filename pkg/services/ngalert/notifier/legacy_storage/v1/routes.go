@@ -107,9 +107,8 @@ func writeToHash(sum hash.Hash, r *Route) {
 			writeBytes(nil)
 			return
 		}
-		// #nosec G103
 		// avoid allocation when converting string to byte slice
-		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
+		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s))) // #nosec G103 nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 	}
 
 	// this temp slice is used to convert ints to bytes.
