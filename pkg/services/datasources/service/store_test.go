@@ -530,11 +530,15 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, []string{datasources.DS_ES})
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: datasources.DS_ES,
+			})
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 
-			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds2.UID, []string{datasources.DS_ES})
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds2.UID, Type: datasources.DS_ES,
+			})
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceNotFound, err)
 		})
@@ -554,15 +558,21 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, []string{"grafana-postgresql-datasource", "postgres"})
+			dataSource, err := ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: "grafana-postgresql-datasource", AliasIDs: []string{"postgres"},
+			})
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 
-			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, []string{"grafana-postgresql-datasource"})
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID, Type: "grafana-postgresql-datasource",
+			})
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceNotFound, err)
 
-			_, err = ss.GetDataSourceInNamespace(context.Background(), "org-10", ds.UID, nil)
+			_, err = ss.GetDataSourceInNamespace(context.Background(), &datasources.GetDataSourceInNamespaceQuery{
+				Namespace: "org-10", Name: ds.UID,
+			})
 			require.EqualError(t, err, "no datasource type provided")
 		})
 	})
