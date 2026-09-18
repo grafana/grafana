@@ -333,6 +333,25 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
+	// A client that started paging on the store scan has to finish there, even if
+	// this gate would now pick search: its token records a position in the store,
+	// which search cannot resume from. Without this, a client paging while the gate
+	// changes would get its next page rejected.
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, true) {
+			return false
+		}
+	}
+
+	// Labels are indexed for every kind, so a list filtered only by labels does not
+	// need to know the kind. Selectable fields are different: they are mapped into
+	// the index from the manifests compiled into this binary, so a field selector on
+	// any other group would ask the index for a field it never indexed and get
+	// nothing back.
+	if len(req.Options.Fields) == 0 {
+		return true
+	}
+
 	// TODO have a way of including enterprise manifests
 	manifests := AppManifestsWithKinds(AppManifests()...)
 	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {

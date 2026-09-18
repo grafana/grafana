@@ -170,6 +170,58 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
+		"false when fields are selected on a group with no manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when labels only on a group with no manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"true when no selectors and an allowlisted resource has no manifest": {
+			allowlist: []string{"mobile.ext.grafana.app/mobileusersettings"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when continuing a list that started on the store scan": {
+			req: &resourcepb.ListRequest{
+				Source:        resourcepb.ListRequest_STORE,
+				NextPageToken: ContinueToken{Namespace: "nsx", Name: "item-42", ResourceVersion: 7}.String(),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when continuing a list that started on search": {
+			req: &resourcepb.ListRequest{
+				Source:        resourcepb.ListRequest_STORE,
+				NextPageToken: ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: 7}.String(),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
 	}
 
 	for name, tc := range tests {
