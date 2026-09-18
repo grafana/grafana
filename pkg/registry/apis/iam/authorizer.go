@@ -14,6 +14,7 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
@@ -80,19 +81,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.AuthInfoResourceInfo.GetName()] = serviceIdentityAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
-	// The SSOSetting kind had no k8s-API consumers, so no authorizer was ever
-	// registered. Interim: allow authenticated identities; real settings:write
-	// RBAC is a follow-up (tracked with the SSO settings migration).
-	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil || requester == nil {
-			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
-		}
-		if requester.IsIdentityType(authlib.TypeAnonymous) {
-			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
-		}
-		return authorizer.DecisionAllow, "", nil
-	})
+	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = newSSOSettingAuthorizer(accessClient)
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
@@ -208,6 +197,43 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 		"groups":       getPermissions,
 		"addmember":    update,
 		"removemember": update,
+	})
+
+	return allowListAuthorizer(base)
+}
+
+// newSSOSettingAuthorizer authorizes ssosettings against the legacy settings RBAC:
+// the check targets the foreign setting.grafana.app/settings resource named
+// auth.<provider>. Nameless list is allowed (the read path filters per-provider).
+func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	base := authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// The "~" login singleton is public and secret-free, not a provider; skip RBAC.
+		if attr.GetVerb() == utils.VerbGet && attr.GetName() == sso.LoginConfigName {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		requester, err := identity.GetRequester(ctx)
+		if err != nil || requester == nil {
+			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
+		}
+		if requester.IsIdentityType(authlib.TypeAnonymous) {
+			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+		}
+
+		res, err := accessClient.Check(ctx, requester, authlib.CheckRequest{
+			Verb:      attr.GetVerb(),
+			Group:     sso.SettingsAuthzGroup,
+			Resource:  sso.SettingsAuthzResource,
+			Namespace: attr.GetNamespace(),
+			Name:      "auth." + attr.GetName(),
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
+		if !res.Allowed {
+			return authorizer.DecisionDeny, "requires settings permission for the provider", nil
+		}
+		return authorizer.DecisionAllow, "", nil
 	})
 
 	return allowListAuthorizer(base)
