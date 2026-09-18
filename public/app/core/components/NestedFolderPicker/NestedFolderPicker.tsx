@@ -256,7 +256,7 @@ export function NestedFolderPicker({
       }
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
-      if (!rootFolderUID) {
+      if (!rootFolderUID && !rootFolderItem) {
         flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       }
     } else {
@@ -274,6 +274,7 @@ export function NestedFolderPicker({
     teamFolderTreeItems,
     starredFolderTreeItems,
     rootFolderUID,
+    rootFolderItem,
   ]);
 
   const isItemLoaded = useCallback(
@@ -583,7 +584,6 @@ function filterRootItem(items: DashboardsTreeItem[]) {
   return itemsFiltered;
 }
 
-// Rows form a pre-order flat tree, so a rejected row takes its descendants (the deeper rows that follow it) with it.
 function filterItems(
   items: DashboardsTreeItem[],
   excludeUIDs: string[] | undefined,
@@ -592,22 +592,9 @@ function filterItems(
   if (!excludeUIDs?.length && !folderFilter) {
     return items;
   }
-
-  const kept: DashboardsTreeItem[] = [];
-  let prunedBelow = Infinity;
-  for (const row of items) {
-    if (row.level > prunedBelow) {
-      continue;
-    }
-    const { item } = row;
-    const rejected =
-      excludeUIDs?.includes(item.uid) || (item.kind === 'folder' && folderFilter !== undefined && !folderFilter(item));
-    prunedBelow = rejected ? row.level : Infinity;
-    if (!rejected) {
-      kept.push(row);
-    }
-  }
-  return kept;
+  return items.filter(
+    ({ item }) => !excludeUIDs?.includes(item.uid) && (item.kind !== 'folder' || !folderFilter || folderFilter(item))
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
