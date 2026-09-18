@@ -18,6 +18,7 @@
     "secondary": {
       "main": "palette.ink700",
       "background": "palette.ink700",
+      "transparent": "palette.ink850",
       "shade": "palette.ink650",
       "backgroundEmphasis": "palette.ink650",
       "border": "palette.ink650",

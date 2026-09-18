@@ -343,17 +343,14 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   }
 
   if (fill === 'outline') {
-    if (visualRefreshEnabled) {
-      outlineBorderColor = color.text;
-    }
     return {
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
 
       '&:hover, &:focus': {
-        background: visualRefreshEnabled ? color.background : color.transparent,
-        borderColor: visualRefreshEnabled ? color.textEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
+        background: color.transparent,
+        borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
 

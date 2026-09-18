@@ -18,6 +18,7 @@
     "secondary": {
       "main": "palette.neutral200",
       "background": "palette.neutral200",
+      "transparent": "palette.neutral150",
       "shade": "palette.neutral300",
       "backgroundEmphasis": "palette.neutral300",
       "border": "palette.neutral300",
