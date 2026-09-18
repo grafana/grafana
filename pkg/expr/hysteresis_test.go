@@ -175,7 +175,7 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			result, err := FingerprintsFromFrame(testCase.frame)
+			result, err := fingerprintsFromFrame(testCase.frame)
 			if testCase.expectedError {
 				require.Error(t, err)
 			} else {
@@ -212,8 +212,8 @@ func TestFingerprintsToFrame(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			frame := FingerprintsToFrame(testCase.input)
-			actual, err := FingerprintsFromFrame(frame)
+			frame := fingerprintsToFrame(testCase.input)
+			actual, err := fingerprintsFromFrame(frame)
 			require.NoError(t, err)
 			require.EqualValues(t, testCase.expected, actual)
 		})

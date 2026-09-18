@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "启用基本日志"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "批量 API",
+      "description-batch-api": "在单个请求中查询多个资源，从而提高大型数据面板的性能。需要 <6>metrics.monitor.azure.com</6> 上订阅范围内的 <2>Monitoring Reader</2> 角色。超出免费套餐范围<9>可能产生额外费用</9>。",
+      "label-enable-batch-api": "启用批量 API"
     },
     "config-editor": {
       "description-additional-settings": "附加设置是可选设置，通过配置，可对数据源进行更精细的控制。这包括安全 Socks 代理、请求超时和转发的 Cookie。",
@@ -105,7 +105,11 @@
       "load-subscriptions": "加载订阅"
     },
     "dimension-fields": {
-      "aria-label-remove": "删除",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "维度",
       "placeholder-field": "字段",
       "placeholder-operation": "运算",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "指标命名空间"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "您可以跨订阅和区域选择相同资源类型的项目。不同订阅或区域中的资源在单独的请求中查询，并且可能会单独失败。要选择其他资源类型的资源，请先取消选中当前选择。",
+      "selection-notice-standard": "您可以选择资源类型和位置相同的项目。要选择其他资源类型或位置的资源，请先取消选中当前选择。"
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "特色"
     },
     "nested-row": {
       "text-loading": "加载中..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "在 {{maxPages}} 页后停止加载；某些结果可能会被省略。",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "从 Azure Monitor 请求元数据时发生错误"

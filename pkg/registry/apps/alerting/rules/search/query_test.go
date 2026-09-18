@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -351,6 +350,34 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	t.Run("paused accepts boolean", func(t *testing.T) {
 		require.NoError(t, build(filterLeaf(fieldPaused, opIn, "true")))
 	})
+
+	// Both backends parse these values again themselves and disagree on the forms
+	// they accept, so the request carries one spelling of each.
+	t.Run("scalar values are normalized", func(t *testing.T) {
+		for _, tc := range []struct {
+			field, value, want string
+		}{
+			{fieldPaused, "TRUE", "true"},
+			{fieldPaused, "True", "true"},
+			{fieldPaused, "1", "true"},
+			{fieldPaused, "t", "true"},
+			{fieldPaused, "0", "false"},
+			{fieldPanelID, "+10", "10"},
+			{fieldPanelID, "010", "10"},
+		} {
+			body := model.CreateSearchRulesRequestBody{Where: andNode(filterLeaf(tc.field, opIn, tc.value))}
+			req, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
+			require.NoError(t, err, "%s=%s", tc.field, tc.value)
+
+			var got []string
+			for _, r := range req.Options.Fields {
+				if r.Key == tc.field {
+					got = r.Values
+				}
+			}
+			require.Equal(t, []string{tc.want}, got, "%s=%s", tc.field, tc.value)
+		}
+	})
 	t.Run("type rejects NotIn", func(t *testing.T) {
 		require.Error(t, build(filterLeaf(fieldType, model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn, "alertrule")))
 	})
@@ -408,7 +435,7 @@ func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.Resource
 // that no kind declares has no column definition to encode against.
 func TestResultColumnsCoverSearchFields(t *testing.T) {
 	want := map[string]struct{}{fieldTitle: {}, fieldFolder: {}}
-	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	for _, gr := range []schema.GroupResource{
 		alertrule.ResourceInfo.GroupResource(),
 		recordingrule.ResourceInfo.GroupResource(),
@@ -433,7 +460,7 @@ func TestResultColumnsCoverSearchFields(t *testing.T) {
 // the value at request time, and a unified hit would decode against a type it
 // was not encoded with.
 func TestSearchFieldsAgreeAcrossKinds(t *testing.T) {
-	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
 		out := map[string]resource.SearchFieldDefinition{}
 		for _, sfd := range provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}) {

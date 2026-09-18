@@ -258,7 +258,7 @@ export function NestedFolderPicker({
       // Add "Team folders" at the top of the tree list.
       return filterExcludedItems(fullTree, excludeUIDs);
     } else {
-      flatTree = searchResultsToTreeItems(searchResults?.items || []);
+      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
       return filterExcludedItems(flatTree, excludeUIDs);
     }
   }, [
@@ -309,7 +309,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={getSelectedFolderResult.data} />
+      <FolderRepo folder={getSelectedFolderResult.data} canEdit={permission === 'edit'} />
     </Stack>
   ) : (
     ''
@@ -404,6 +404,7 @@ export function NestedFolderPicker({
           requestLoadMore={handleLoadMore}
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
+          canEdit={permission === 'edit'}
         />
       </fieldset>
     </>
@@ -552,22 +553,6 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>, permission
   return { starredFolderTreeItems, error: error ? new Error(getMessageFromError(error)) : undefined };
 }
 
-function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {
-  return (
-    items.map((item) => ({
-      isOpen: false,
-      level: 0,
-      item: {
-        kind: 'folder' as const,
-        title: item.title,
-        uid: item.uid,
-        parentUID: item.parentUID,
-        parentTitle: item.parentTitle,
-      },
-    })) ?? []
-  );
-}
-
 function filterRootItem(items: DashboardsTreeItem[]) {
   const rootUid = getRootFolderItem().item.uid;
   const hasRootItem = items.some((item) => item.item.uid === rootUid);
@@ -596,6 +581,7 @@ function filterExcludedItems(items: DashboardsTreeItem[], excludeUIDs: string[] 
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     button: css({
       maxWidth: '100%',
@@ -603,11 +589,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     error: css({
       marginBottom: 0,
     }),
-    tableWrapper: css({
-      boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: theme.zIndex.portal,
-    }),
+    tableWrapper: css(
+      {
+        boxShadow: theme.shadows.z3,
+        position: 'relative',
+        zIndex: theme.zIndex.portal,
+      },
+      visualRefreshEnabled && {
+        boxShadow: theme.shadows.z2,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        overflow: 'hidden',
+      }
+    ),
     loader: css({
       position: 'absolute',
       top: 0,

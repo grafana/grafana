@@ -17,7 +17,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import React, { useCallback, useMemo } from 'react';
 
 import {
-  type CoreApp,
+  CoreApp,
   type DataFrame,
   dateTimeFormat,
   type GrafanaTheme2,
@@ -50,6 +50,7 @@ import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
+import { isDrilldownContext } from './LogsLink';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
@@ -109,14 +110,14 @@ const useResourceAttributesExtensionLinks = ({
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
-    limitPerPlugin: 10,
+    limitPerPlugin: 15,
     context,
   });
 
   const resourceLinksGetter = useCallback(
     (pairs: TraceKeyValuePair[], index: number) => {
       const { key } = pairs[index] ?? {};
-      return links.filter((link) => link.category === key);
+      return links.filter((link) => (link.group?.name ?? link.category) === key);
     },
     [links]
   );
@@ -296,7 +297,7 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -464,7 +465,13 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     spanStartTime: startTime,
   });
-  const promoGetter = useAttributePluginPromoGetter();
+  const promoAttributeKeys = useMemo(
+    () => [...tags.map((tag) => tag.key), ...(process.tags ?? []).map((tag) => tag.key)],
+    [tags, process.tags]
+  );
+  const promoGetter = useAttributePluginPromoGetter(promoAttributeKeys);
+  // Explore, Traces Drilldown, and embedded drilldown (Unknown). Dashboard panels stay new-tab.
+  const openLinksInSameTab = app === CoreApp.Explore || isDrilldownContext(app);
 
   const listOfContentCards = [];
 
@@ -477,6 +484,8 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         onToggle={() => summaryAttributesToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
+        openLinksInSameTab={openLinksInSameTab}
       />
     );
   }
@@ -490,33 +499,35 @@ export default function SpanDetail(props: SpanDetailProps) {
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
       promoGetter={promoGetter}
+      datasourceType={datasourceType}
+      openLinksInSameTab={openLinksInSameTab}
     />
   );
 
-  if (process.tags) {
-    listOfContentCards.push(
-      <AccordionCategorizedKeyValues
-        data={process.tags}
-        sectionType="resource"
-        label={
-          isSummarySpan ? (
-            <>
-              {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
-              <span className={styles.inheritedNote}>
-                {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
-              </span>
-            </>
-          ) : (
-            t('explore.span-detail.label-resource-attributes', 'Resource attributes')
-          )
-        }
-        linksGetter={resourceLinksGetter}
-        isOpen={isProcessOpen}
-        onToggle={() => processToggle(spanID)}
-        promoGetter={promoGetter}
-      />
-    );
-  }
+  listOfContentCards.push(
+    <AccordionCategorizedKeyValues
+      data={process.tags ?? []}
+      sectionType="resource"
+      label={
+        isSummarySpan ? (
+          <>
+            {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
+            <span className={styles.inheritedNote}>
+              {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
+            </span>
+          </>
+        ) : (
+          t('explore.span-detail.label-resource-attributes', 'Resource attributes')
+        )
+      }
+      linksGetter={resourceLinksGetter}
+      isOpen={isProcessOpen}
+      onToggle={() => processToggle(spanID)}
+      promoGetter={promoGetter}
+      datasourceType={datasourceType}
+      openLinksInSameTab={openLinksInSameTab}
+    />
+  );
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(

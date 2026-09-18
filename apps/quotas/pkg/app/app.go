@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
-	unifiedStorage "github.com/grafana/grafana/pkg/storage/unified/resource"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -22,11 +20,11 @@ import (
 )
 
 type QuotasAppConfig struct {
-	ResourceClient unifiedStorage.ResourceClient
+	ResourceClient resourcepb.QuotasClient
 }
 
 type QuotasHandler struct {
-	ResourceClient unifiedStorage.ResourceClient
+	ResourceClient resourcepb.QuotasClient
 }
 
 func NewQuotasHandler(cfg *QuotasAppConfig) *QuotasHandler {

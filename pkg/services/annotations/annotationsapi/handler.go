@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -392,11 +393,19 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 }
 
 func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) {
+	// Legacy API defaults an unset time to now and silently accepts negative values;
+	// the new API rejects both, so the proxy normalizes them here to keep legacy behavior unchanged
+	epoch := item.Epoch
+	if epoch <= 0 {
+		epoch = time.Now().UnixMilli()
+	}
+
 	spec := annotationV0.AnnotationSpec{
 		Text: item.Text,
-		Time: item.Epoch,
+		Time: epoch,
 		Tags: item.Tags,
 	}
+
 	if item.EpochEnd != 0 {
 		spec.TimeEnd = &item.EpochEnd
 	}

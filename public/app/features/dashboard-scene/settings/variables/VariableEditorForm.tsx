@@ -9,7 +9,16 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
 import { type VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Alert, Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ConfirmModal,
+  FieldSet,
+  LoadingPlaceholder,
+  ModalsController,
+  Stack,
+  useStyles2,
+} from '@grafana/ui';
 import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -124,51 +133,53 @@ export function VariableEditorForm({
     >
       <VariableTypeSelect onChange={onVariableTypeChange} type={type} standalone={standalone} />
 
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
-      </VariableLegend>
-      <VariableTextField
-        name={t('dashboard-scene.variable-editor-form.name-name', 'Name')}
-        description={t(
-          'dashboard-scene.variable-editor-form.description-template-variable-characters',
-          'The name of the template variable. (Max. 50 characters)'
-        )}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
-        defaultValue={name ?? ''}
-        onChange={onNameChange}
-        onBlur={onNameBlur}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
-        maxLength={VariableNameConstraints.MaxSize}
-        required
-        invalid={!!(nameError || externalNameError)}
-        error={nameError || externalNameError}
-      />
-      {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
-      <VariableTextField
-        name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
-        description={t(
-          'dashboard-scene.variable-editor-form.description-optional-display-name',
-          'Optional display name'
-        )}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-label-name', 'Label name')}
-        defaultValue={label ?? ''}
-        onBlur={onLabelBlur}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
-      />
-      <VariableTextAreaField
-        name={t('dashboard-scene.variable-editor-form.name-description', 'Description')}
-        defaultValue={description ?? ''}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
-        onBlur={onDescriptionBlur}
-        width={52}
-      />
+      <FieldSet>
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
+        </VariableLegend>
+        <VariableTextField
+          name={t('dashboard-scene.variable-editor-form.name-name', 'Name')}
+          description={t(
+            'dashboard-scene.variable-editor-form.description-template-variable-characters',
+            'The name of the template variable. (Max. 50 characters)'
+          )}
+          placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
+          defaultValue={name ?? ''}
+          onChange={onNameChange}
+          onBlur={onNameBlur}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
+          maxLength={VariableNameConstraints.MaxSize}
+          required
+          invalid={!!(nameError || externalNameError)}
+          error={nameError || externalNameError}
+        />
+        {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
+        <VariableTextField
+          name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
+          description={t(
+            'dashboard-scene.variable-editor-form.description-optional-display-name',
+            'Optional display name'
+          )}
+          placeholder={t('dashboard-scene.variable-editor-form.placeholder-label-name', 'Label name')}
+          defaultValue={label ?? ''}
+          onBlur={onLabelBlur}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
+        />
+        <VariableTextAreaField
+          name={t('dashboard-scene.variable-editor-form.name-description', 'Description')}
+          defaultValue={description ?? ''}
+          placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
+          onBlur={onDescriptionBlur}
+          width={52}
+        />
 
-      <VariableDisplaySelect
-        onChange={onDisplayChange}
-        display={display || defaultVariableModel.hide!}
-        type={type}
-        topPlacementLabel={topPlacementLabel}
-      />
+        <VariableDisplaySelect
+          onChange={onDisplayChange}
+          display={display || defaultVariableModel.hide!}
+          type={type}
+          topPlacementLabel={topPlacementLabel}
+        />
+      </FieldSet>
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 

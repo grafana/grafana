@@ -13,7 +13,7 @@ labels:
 menuTitle: Annotations
 title: OpenTSDB annotations
 weight: 450
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB annotations
@@ -87,7 +87,7 @@ This query retrieves annotations attached to the `deploy.myapp` metric, showing 
 
 ### Monitor infrastructure-wide events
 
-Capture system-wide events such as network changes or datacenter maintenance:
+Capture system-wide events such as network changes or data center maintenance:
 
 | Field                   | Value                   |
 | ----------------------- | ----------------------- |
@@ -111,11 +111,11 @@ Mark incident start and resolution times:
 
 Track when configuration changes are applied:
 
-| Field                   | Value           |
-| ----------------------- | --------------- |
-| Name                    | Config Changes  |
-| OpenTSDB metrics query  | `events.config` |
-| Show Global Annotations | disabled        |
+| Field                   | Value                 |
+| ----------------------- | --------------------- |
+| Name                    | Configuration changes |
+| OpenTSDB metrics query  | `events.config`       |
+| Show Global Annotations | disabled              |
 
 ### Correlate multiple event types
 

@@ -20,7 +20,6 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestGraphiteHandler(t *testing.T) {
@@ -31,7 +30,7 @@ func TestGraphiteHandler(t *testing.T) {
 	// (the created Annotation) when the call succeeds.
 	run := func(t *testing.T, adapter *k8sRESTAdapter, body string) (annotationV0.Annotation, error) {
 		t.Helper()
-		handler := newGraphiteHandler(adapter, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newGraphiteHandler(adapter, ProvideMetrics(nil), log.NewNopLogger())
 		writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
 		err := handler(ctx, writer, newGraphiteRequest(body))
 		var resp annotationV0.Annotation

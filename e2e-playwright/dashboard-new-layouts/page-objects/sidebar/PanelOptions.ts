@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject, type PageObjectArgs } from '../PageObject';
 
@@ -10,8 +10,8 @@ import { RepeatOptions } from './shared/RepeatOptions';
  * background toggle, plus the shared repeat and conditional rendering option groups
  */
 export class PanelOptions extends PageObject {
-  public conditionalRenderingOptions: ConditionalRenderingOptions;
-  public repeatOptions: RepeatOptions;
+  readonly conditionalRenderingOptions: ConditionalRenderingOptions;
+  readonly repeatOptions: RepeatOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
@@ -20,7 +20,7 @@ export class PanelOptions extends PageObject {
   }
 
   /** Returns the panel title input */
-  getTitleInput() {
+  getTitleInput(): Locator {
     return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
   }
 
@@ -34,10 +34,14 @@ export class PanelOptions extends PageObject {
   }
 
   /** Returns the panel description textarea */
-  getDescriptionTextarea() {
+  getDescriptionTextarea(): Locator {
     return this.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description')
     ).locator('textarea');
+  }
+
+  getSubtitleSwitch() {
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch'));
   }
 
   /** Toggles the panel's transparent background switch */

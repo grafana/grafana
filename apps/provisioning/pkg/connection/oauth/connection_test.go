@@ -1,4 +1,4 @@
-package oauth_test
+package oauth
 
 import (
 	"encoding/json"
@@ -16,7 +16,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -100,8 +99,8 @@ func TestConnection_Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := newMockProvider(t, "")
-			provider.EXPECT().ListRepositories(mock.Anything, "access").Return(nil, tt.listErr).Maybe()
-			conn := oauth.NewConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			provider.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr).Maybe()
+			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			results, err := conn.Test(t.Context())
 			require.NoError(t, err)
@@ -164,7 +163,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			value, err := conn.GenerateRepositoryToken(t.Context(), tt.repo)
 			if tt.expectedErr != "" {
@@ -182,10 +181,9 @@ func TestConnection_ListRepositories(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		provider := newMockProvider(t, "")
-		provider.EXPECT().ListRepositories(mock.Anything, "access").Return(repos, nil)
-		conn := oauth.NewConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-			Token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
-		})
+		provider.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
+		conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "",
+			marshalTestToken(t, &oauth2.Token{AccessToken: "access"}))
 
 		result, err := conn.ListRepositories(t.Context())
 		require.NoError(t, err)
@@ -193,7 +191,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 	})
 
 	t.Run("failure - no token stored", func(t *testing.T) {
-		conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{})
+		conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", "")
 
 		_, err := conn.ListRepositories(t.Context())
 		require.ErrorIs(t, err, connection.ErrAuthentication)
@@ -207,6 +205,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 		response     map[string]any
 		responseCode int
 		expectedErr  string
+		wantAuthErr  bool // error must be classified as connection.ErrAuthentication (user-actionable)
 		validate     func(t *testing.T, token *oauth2.Token)
 	}{
 		{
@@ -242,32 +241,86 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			name:        "failure - no refresh token",
 			token:       marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
 			expectedErr: "no refresh token available; authorize the OAuth application again",
+			wantAuthErr: true,
 		},
 		{
-			name:         "failure - token endpoint rejects refresh",
+			name:         "failure - invalid_grant (revoked/expired) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_grant"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub bad_refresh_token (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "bad_refresh_token"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - GitHub incorrect_client_credentials (HTTP 200) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusOK,
+			response:     map[string]any{"error": "incorrect_client_credentials"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - invalid_client (HTTP 400) is user-actionable",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusBadRequest,
+			response:     map[string]any{"error": "invalid_client"},
+			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 401 is user-actionable",
 			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
 			responseCode: http.StatusUnauthorized,
 			expectedErr:  "refresh access token",
+			wantAuthErr:  true,
+		},
+		{
+			name:         "failure - token endpoint 429 stays system-caused (retryable)",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusTooManyRequests,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
+		},
+		{
+			name:         "failure - token endpoint 5xx stays system-caused",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "old-access", RefreshToken: "old-refresh"}),
+			responseCode: http.StatusInternalServerError,
+			expectedErr:  "refresh access token",
+			wantAuthErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := oauth.NewConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-				ClientSecret: "client-secret",
-				Token:        tt.token,
-			})
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", tt.token)
 
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
 				require.ErrorContains(t, err, tt.expectedErr)
+				if tt.wantAuthErr {
+					assert.ErrorIs(t, err, connection.ErrAuthentication, "expected a user-actionable authentication error")
+				} else {
+					assert.NotErrorIs(t, err, connection.ErrAuthentication, "expected a system-caused error")
+				}
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
+			// The persisted expiration mirrors the access token's expiry (Equal
+			// ignores the monotonic-clock reading the live token carries).
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 			tt.validate(t, token)
 		})
 	}
@@ -304,9 +357,7 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := oauth.NewConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-				ClientSecret: "client-secret",
-			})
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", "")
 
 			raw, err := conn.ExchangeAuthorizationCode(t.Context(), tt.code, "https://grafana.example/callback")
 			if tt.expectedErr != "" {
@@ -314,11 +365,14 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			require.NotNil(t, raw)
 
 			token := &oauth2.Token{}
-			require.NoError(t, json.Unmarshal([]byte(raw), token))
+			require.NoError(t, json.Unmarshal([]byte(raw.Token), token))
 			assert.Equal(t, "access", token.AccessToken)
 			assert.Equal(t, "refresh", token.RefreshToken)
+			// The persisted expiration mirrors the exchanged token's expiry.
+			assert.True(t, token.Expiry.Equal(raw.ExpiresAt))
 		})
 	}
 }
@@ -359,7 +413,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			tokenExpiry, err := conn.ValidateToken()
 			if tt.expectedErr != "" {
@@ -374,8 +428,8 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 var testOAuthConfig = provisioning.ConnectionOAuthConfig{ClientID: "client-id"}
 
-func newMockProvider(t *testing.T, tokenURL string) *oauth.MockProvider {
-	provider := oauth.NewMockProvider(t)
+func newMockProvider(t *testing.T, tokenURL string) *MockProvider {
+	provider := NewMockProvider(t)
 	provider.EXPECT().Endpoint().Return(oauth2.Endpoint{TokenURL: tokenURL}).Maybe()
 	return provider
 }
@@ -391,6 +445,15 @@ func newTokenServer(t *testing.T, code int, response map[string]any) *httptest.S
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if code != 0 {
+			// A non-nil response with an error status returns a JSON OAuth error
+			// body (e.g. {"error":"invalid_grant"}) so oauth2 populates
+			// RetrieveError.ErrorCode; otherwise a plain status is returned.
+			if response != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(code)
+				require.NoError(t, json.NewEncoder(w).Encode(response))
+				return
+			}
 			http.Error(w, "denied", code)
 			return
 		}

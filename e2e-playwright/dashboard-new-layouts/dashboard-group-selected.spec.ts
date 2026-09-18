@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { expectVisibleRow, importTestDashboard } from './utils';
+import { expectRowVisibility, flows } from './helpers';
 
 test.use({
   featureToggles: {
@@ -23,7 +23,7 @@ test.describe(
       rows,
       tabs,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected rows into tab');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected rows into tab');
       await controls.enterEditMode();
 
       // Start from three rows: "New row" (wraps the imported panels), then two empty rows.
@@ -56,7 +56,7 @@ test.describe(
       panels,
       rows,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected panels into row');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected panels into row');
       await controls.enterEditMode();
 
       // The fixture has three "New panel"s in a grid. Select the first and last by position
@@ -64,12 +64,12 @@ test.describe(
       await panels.selectByIndex([0, 2]);
       await sidebar.groupOptions.groupElementsInto('row');
 
-      const firstRowContent = await expectVisibleRow('New row', rows);
-      const secondRowContent = await expectVisibleRow('New row 1', rows);
+      const firstRow = await expectRowVisibility('New row', rows, 'visible');
+      const secondRow = await expectRowVisibility('New row 1', rows, 'visible');
 
       // Selected panels in the first row, the leftover panel in the second.
-      await expect(panels.getPanels('New panel', firstRowContent)).toHaveCount(2);
-      await expect(panels.getPanels('New panel', secondRowContent)).toHaveCount(1);
+      await expect(panels.getPanels('New panel', firstRow.content)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', secondRow.content)).toHaveCount(1);
     });
 
     test('offers "Group into tab" as disabled for a tabs selection', async ({
@@ -80,7 +80,7 @@ test.describe(
       canvas,
       tabs,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected tabs');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected tabs');
       await controls.enterEditMode();
 
       // Start from two tabs.
@@ -91,8 +91,8 @@ test.describe(
 
       // Tabs can be grouped into a row, but not into another tab (one level of tabs) — the
       // button is shown but disabled. A disabled Button with a tooltip renders aria-disabled.
-      await expect(sidebar.groupOptions.getGroupIntoButton('row')).toBeEnabled();
-      await expect(sidebar.groupOptions.getGroupIntoButton('tab')).toHaveAttribute('aria-disabled', 'true');
+      await expect(sidebar.groupOptions.getGroupElementsIntoButton('row')).toBeEnabled();
+      await expect(sidebar.groupOptions.getGroupElementsIntoButton('tab')).toHaveAttribute('aria-disabled', 'true');
     });
   }
 );

@@ -9,7 +9,7 @@ import { PageObject } from '../PageObject';
  */
 export class GroupOptions extends PageObject {
   /** Returns the "Group into row"/"Group into tab" button */
-  getGroupIntoButton(target: 'row' | 'tab'): Locator {
+  getGroupElementsIntoButton(target: 'row' | 'tab'): Locator {
     return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('button', {
       name: target === 'row' ? 'Group into row' : 'Group into tab',
     });
@@ -18,7 +18,7 @@ export class GroupOptions extends PageObject {
   /** Groups the selected elements into a row or tab */
   async groupElementsInto(target: 'row' | 'tab') {
     await test.step(`Click "Group into ${target}" in sidebar`, async () => {
-      await this.getGroupIntoButton(target).click();
+      await this.getGroupElementsIntoButton(target).click();
     });
   }
 }

@@ -33,6 +33,8 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 	return &AMConfigV1{
 		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
+		TimeIntervals:      TimeIntervalsToModel(in.AlertmanagerConfig.MuteTimeIntervals, in.AlertmanagerConfig.TimeIntervals),
+		Receivers:          ReceiversToModel(in.AlertmanagerConfig.Receivers),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
@@ -42,29 +44,29 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:        in.Global,
-			Route:         RouteToModel(in.Route),
-			InhibitRules:  slices.Clone(in.InhibitRules),
-			Templates:     slices.Clone(in.Templates),
-			TimeIntervals: TimeIntervalsToModel(in.MuteTimeIntervals, in.TimeIntervals),
+			Global:       in.Global,
+			Route:        RouteToModel(in.Route),
+			InhibitRules: slices.Clone(in.InhibitRules),
+			Templates:    slices.Clone(in.Templates),
 		},
-		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) []TimeInterval {
+func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) map[ResourceUID]TimeInterval {
 	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
-	// Fold mute time intervals into time intervals, mute first. A name cannot appear in both lists
-	// because Config rejects duplicates across them at unmarshal time, so the order only needs to be
-	// stable; mute-first matches what the config was previously flattened to when applied.
-	out := make([]TimeInterval, 0, len(muteIntervals)+len(timeIntervals))
+	// Fold the deprecated mute time intervals into time intervals. Merging both lists under one set
+	// of UIDs is safe because Config rejects duplicate names across them at unmarshal time, so no
+	// definition can silently overwrite another here.
+	out := make(map[ResourceUID]TimeInterval, len(muteIntervals)+len(timeIntervals))
 	for _, interval := range muteIntervals {
-		out = append(out, TimeInterval(interval))
+		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		out[ti.UID] = ti
 	}
 	for _, interval := range timeIntervals {
-		out = append(out, TimeInterval(interval))
+		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		out[ti.UID] = ti
 	}
 	return out
 }
@@ -207,10 +209,13 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		return nil, nil
 	}
 	dbModel := AMConfigDB{
-		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
-		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
+		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
+			Receivers: ReceiversToDB(in.Receivers),
+		},
+		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
 	}
 
 	var errs []error
@@ -223,27 +228,26 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
-	return definition.PostableApiAlertingConfig{
-		Config: definition.Config{
-			Global:        in.Global,
-			Route:         RouteToDB(in.Route),
-			InhibitRules:  slices.Clone(in.InhibitRules),
-			Templates:     slices.Clone(in.Templates),
-			TimeIntervals: TimeIntervalsToDB(in.TimeIntervals),
-		},
-		Receivers: ReceiversToDB(in.Receivers),
+func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.Config {
+	return definition.Config{
+		Global:       in.Global,
+		Route:        RouteToDB(in.Route),
+		InhibitRules: slices.Clone(in.InhibitRules),
+		Templates:    slices.Clone(in.Templates),
+		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+		TimeIntervals: TimeIntervalsToDB(timeIntervals),
 	}
 }
 
 func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
-	if in == nil {
+	// Keep the DB model free of an empty time_intervals array when there are none.
+	if len(in) == 0 {
 		return nil
 	}
 	out := make([]config.TimeInterval, 0, len(in))
 	for _, interval := range in {
 		out = append(out, config.TimeInterval{
-			Name:          interval.Name,
+			Name:          interval.Title,
 			TimeIntervals: interval.TimeIntervals,
 		})
 	}

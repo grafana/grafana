@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"cmp"
 	"errors"
 	"testing"
 
@@ -125,12 +126,46 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 
 func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 	tests := []struct {
-		name      string
-		newOAuth  *provisioning.ConnectionOAuthConfig
-		newSecure provisioning.ConnectionSecure
-		oldOAuth  *provisioning.ConnectionOAuthConfig
-		wantToken common.InlineSecureValue
+		name         string
+		newType      provisioning.ConnectionType
+		newURL       string
+		newServerURL string
+		oldServerURL string
+		newOAuth     *provisioning.ConnectionOAuthConfig
+		newSecure    provisioning.ConnectionSecure
+		oldOAuth     *provisioning.ConnectionOAuthConfig
+		wantToken    common.InlineSecureValue
 	}{
+		{
+			name:      "removes token when connection type is changed",
+			newType:   provisioning.GitlabOAuthConnectionType,
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:      "removes token when connection URL is changed",
+			newURL:    "https://gitlab.example.com",
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:         "removes token when github enterprise server URL is changed",
+			newServerURL: "https://new-ghes.example.com",
+			oldServerURL: "https://old-ghes.example.com",
+			newOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken:    common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:         "keeps token when github enterprise server URL is unchanged",
+			newServerURL: "https://ghes.example.com",
+			oldServerURL: "https://ghes.example.com",
+			newOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken:    common.InlineSecureValue{},
+		},
 		{
 			name:      "keeps token when oauth credentials are unchanged",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
@@ -174,6 +209,16 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			name:      "keeps token when connection is not oauth",
 			wantToken: common.InlineSecureValue{},
 		},
+		{
+			name:      "removes token when connection switches away from oauth",
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "old-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:      "removes token when connection switches to oauth",
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "new-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -184,16 +229,19 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GithubConnectionType,
-					OAuth: tt.newOAuth,
+					Type:                  cmp.Or(tt.newType, provisioning.GithubConnectionType),
+					URL:                   tt.newURL,
+					OAuth:                 tt.newOAuth,
+					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.newServerURL),
 				},
 				Secure: tt.newSecure,
 			}
 			old := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GithubConnectionType,
-					OAuth: tt.oldOAuth,
+					Type:                  provisioning.GithubConnectionType,
+					OAuth:                 tt.oldOAuth,
+					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.oldServerURL),
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token:        common.InlineSecureValue{Name: "old-token"},
@@ -206,6 +254,13 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			assert.Equal(t, tt.wantToken, obj.Secure.Token)
 		})
 	}
+}
+
+func githubEnterpriseConfig(serverURL string) *provisioning.GitHubEnterpriseOAuthConnectionConfig {
+	if serverURL == "" {
+		return nil
+	}
+	return &provisioning.GitHubEnterpriseOAuthConnectionConfig{ServerURL: serverURL}
 }
 
 func TestCopySecureValues(t *testing.T) {

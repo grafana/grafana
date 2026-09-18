@@ -7,10 +7,10 @@ export type DragHandlePosition = 'middle' | 'start' | 'end';
 export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandlePosition) => {
   const position = handlePosition || 'middle';
   const baseColor = theme.colors.emphasize(theme.colors.background.secondary, 0.15);
-  const hoverColor = theme.colors.accent.main;
-  const clickTargetSize = theme.spacing(2);
-  const handlebarThickness = 4;
-  const handlebarWidth = 200;
+  const hoverColor = theme.colors.accent.background;
+  const clickTargetSize = theme.spacing(1);
+  const handlebarThickness = 2;
+  const handlebarWidth = theme.spacing(6);
   let verticalOffset = '50%';
   let horizontalOffset = '50%';
 
@@ -53,23 +53,24 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
 
     '&:hover': {
       '&:before': {
-        borderColor: hoverColor,
+        background: hoverColor,
       },
 
       '&:after': {
-        background: hoverColor,
+        background: theme.colors.accent.main,
       },
     },
   });
 
   const beforeVertical = {
-    borderRight: '1px solid transparent',
+    width: theme.spacing(0.5),
     height: '100%',
     left: verticalOffset,
     transform: 'translateX(-50%)',
   };
 
   const beforeHorizontal = {
+    height: theme.spacing(0.5),
     borderTop: '1px solid transparent',
     top: horizontalOffset,
     transform: 'translateY(-50%)',
@@ -91,6 +92,13 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
           height: handlebarWidth,
           width: handlebarThickness,
         },
+
+        '&:hover': {
+          '&:after': {
+            background: theme.colors.accent.main,
+            width: handlebarThickness * 2,
+          },
+        },
       })
     ),
     dragHandleHorizontal: cx(
@@ -106,6 +114,13 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
           top: horizontalOffset,
           height: handlebarThickness,
           width: handlebarWidth,
+        },
+
+        '&:hover': {
+          '&:after': {
+            background: theme.colors.accent.main,
+            height: handlebarThickness * 2,
+          },
         },
       })
     ),

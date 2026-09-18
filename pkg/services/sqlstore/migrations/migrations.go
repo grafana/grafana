@@ -93,6 +93,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
 	accesscontrol.AddManagedFolderLibraryPanelActionsMigration(mg)
+	accesscontrol.AddManagedFolderVariableActionsMigration(mg)
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
@@ -188,4 +189,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleStateBigIntMigration(mg)
 
 	mg.AddObsoleteMigration(obsolete.PlaylistMigrations())
+
+	ualert.CollateBinAlertRuleFolderFullpath(mg)
 }

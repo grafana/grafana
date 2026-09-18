@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { flows, type Variable } from './utils';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -28,7 +28,7 @@ test.describe(
         value: 'gdev-cloudwatch',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.datasource.selectType('CloudWatch');
       await sidebar.variableOptions.datasource.setNameFilter('cloud');

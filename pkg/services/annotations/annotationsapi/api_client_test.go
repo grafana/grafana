@@ -343,9 +343,9 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		assert.Equal(t, http.MethodGet, req.method)
 		assert.Equal(t, base+"/tags", req.path, "tags hangs off the namespace, not the annotations collection")
 		assert.Equal(t, url.Values{
-			"prefix": {"out"},
-			"limit":  {"25"},
-		}, req.query, "the legacy tag term becomes a prefix match")
+			"contains": {"out"},
+			"limit":    {"25"},
+		}, req.query, "the legacy tag term becomes a contains match")
 	})
 
 	t.Run("ListTags omits parameters the query leaves unset", func(t *testing.T) {

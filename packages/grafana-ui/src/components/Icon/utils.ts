@@ -51,10 +51,14 @@ export function getIconRoot(): string {
     return iconRoot;
   }
 
-  const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
-  if (grafanaPublicPath) {
-    iconRoot = grafanaPublicPath + 'build/img/icons/';
+  // Read through a window global rather than __webpack_public_path__: in a plugin bundle
+  // that resolves to the plugin's public path, not Grafana's.
+  const buildPath = typeof window !== 'undefined' && window.__grafana_build_path__;
+  if (buildPath) {
+    iconRoot = buildPath + 'img/icons/';
   } else {
+    // No entry point has run (server-side rendering, unit tests), so assume the default
+    // build directory.
     iconRoot = 'public/build/img/icons/';
   }
 

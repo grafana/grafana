@@ -205,10 +205,13 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       height: theme.spacing(2.5),
       borderRadius: theme.shape.radius.sm,
       border: 'none',
-      background: theme.colors.primary.main,
-      color: theme.colors.primary.contrastText,
+      background: theme.colors.secondary.main,
+      color: theme.colors.secondary.contrastText,
       cursor: 'pointer',
       padding: 0,
+      // Never let the row's flex layout shrink this below its own content — the section title
+      // wraps to make room instead.
+      flexShrink: 0,
       willChange: 'transform',
       transform: alwaysVisible ? 'translateZ(0)' : 'translateY(-50%) translateZ(0)',
 
@@ -232,7 +235,7 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       }),
 
       '&:hover': {
-        background: theme.colors.primary.shade,
+        background: theme.colors.secondary.shade,
       },
 
       '&:active': {
@@ -240,6 +243,8 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       },
 
       '&:focus-visible': {
+        // Intentionally not theme.colors.secondary.border — that token is a faint decorative
+        // border for the solid fill and is nearly invisible as a focus ring against it.
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
         ...(!alwaysVisible && {

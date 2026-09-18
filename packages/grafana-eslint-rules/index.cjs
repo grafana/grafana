@@ -7,6 +7,7 @@ const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-p
 const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
 const noRestrictedSyntaxRules = require('./rules/no-restricted-syntax.cjs');
 const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
+const serializableE2ESelectors = require('./rules/serializable-e2e-selectors.cjs');
 const themeTokenUsage = require('./rules/theme-token-usage.cjs');
 
 /** @type {import('eslint').Linter.Plugin} */
@@ -21,6 +22,7 @@ module.exports = {
     'no-plugin-external-import-paths': noPluginExternalImportPaths,
     'no-invalid-css-properties': noInvalidCssProperties,
     'define-feature-events': defineFeatureEvents,
+    'serializable-e2e-selectors': serializableE2ESelectors,
     ...noRestrictedSyntaxRules.rules,
   },
 };

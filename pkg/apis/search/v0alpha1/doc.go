@@ -11,4 +11,4 @@
 // (search.grafana.app) is deliberately separate from the kind being searched
 // so the request/response schema can evolve independently of any searched
 // kind.
-package v0alpha1 // import "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+package v0alpha1

@@ -57,8 +57,8 @@ export class Controls extends PageObject {
   }
 
   /** Returns to the dashboard by clicking the "Back to dashboard" button in the edit toolbar */
-  async clickBackToDashboard() {
-    await test.step('Click back to dashboard', async () => {
+  async goBackToDashboard() {
+    await test.step('Go back to dashboard', async () => {
       await this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton).click();
     });
   }
@@ -67,6 +67,12 @@ export class Controls extends PageObject {
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
+    });
+  }
+
+  async refresh() {
+    await test.step('Refresh', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.RefreshPicker.runButtonV2).click();
     });
   }
 

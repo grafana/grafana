@@ -72,7 +72,7 @@ export class GridLayoutOptions extends PageObject {
   }
 
   /** Clears the custom min column width */
-  async clickClearCustomMinColumnWidth() {
+  async clearCustomMinColumnWidth() {
     await test.step('Clear custom min column width', async () => {
       await this.getByGrafanaSelector(
         this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth
@@ -126,7 +126,7 @@ export class GridLayoutOptions extends PageObject {
   }
 
   /** Clears the custom row height */
-  async clickClearCustomRowHeight() {
+  async clearCustomRowHeight() {
     await test.step('Clear custom row height', async () => {
       await this.getByGrafanaSelector(
         this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight

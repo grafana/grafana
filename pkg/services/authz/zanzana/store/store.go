@@ -140,13 +140,17 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 }
 
 func sqliteConnectionString(v string) string {
-	// handle test setup by replacing grafana-test with zanzana-test
-	if strings.Contains(v, "grafana-test/grafana-test") {
-		name := v[strings.LastIndex(v, "/")+1:]
-		name = strings.Replace(name, "grafana-test", "zanzana-test", 1)
-		return v[0:strings.LastIndex(v, "/")+1] + name
+	// v is a file: URI, possibly with query params — path.Dir/Base would Clean
+	// (rewrite) it, so split on the last slash instead.
+	i := strings.LastIndex(v, "/") + 1
+	dir, name := v[:i], v[i:]
+
+	// Test databases (legacy shared and sqlstore.NewTestStore) have grafana-test in the
+	// filename; a per-database sibling file keeps isolated tests from sharing one zanzana.db.
+	if strings.Contains(name, "grafana-test") {
+		return dir + strings.Replace(name, "grafana-test", "zanzana-test", 1)
 	}
 
 	// hardcode zanzana.db for now
-	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
+	return dir + "zanzana.db"
 }

@@ -2,6 +2,7 @@ package backfill
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"iter"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeListIterator implements resource.ListIterator. It carries a reference
@@ -172,10 +174,6 @@ func (f *fakeStorage) WatchWriteEvents(context.Context) (<-chan *resource.Writte
 	panic("not implemented")
 }
 func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResource, int) ([]resource.ResourceStats, error) {
-	panic("not implemented")
-}
-
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	panic("not implemented")
 }
 
@@ -367,6 +365,10 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
 	return nil
 }
+func (f *fakeVector) UpdateMetadata(_ context.Context, _, _ string, _ *filter.Filter, _ json.RawMessage, _ []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }

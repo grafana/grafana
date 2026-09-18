@@ -181,6 +181,7 @@ describe('useCommonTableProps', () => {
     cellHeight: undefined,
     maxRowHeight: 100,
     disableKeyboardEvents: true,
+    hoverOverflow: false,
     frameIndex: 0,
   };
 
@@ -198,8 +199,26 @@ describe('useCommonTableProps', () => {
       cellHeight: undefined,
       maxRowHeight: 100,
       disableKeyboardEvents: true,
+      hoverOverflow: false,
       disableSanitizeHtml: false,
+      contentAwareWidthsEnabled: false,
+      tableRefreshEnabled: false,
     });
+  });
+
+  it('passes the table-refresh flag through', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  it('enables hover overflow when the option is undefined', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, hoverOverflow: undefined }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.hoverOverflow).toBe(true);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

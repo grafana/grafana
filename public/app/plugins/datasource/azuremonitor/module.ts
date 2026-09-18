@@ -1,20 +1,23 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { initPluginTranslations } from '@grafana/i18n';
-import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor/QueryEditor';
 import { AzureQueryType, ResultFormat } from './dataquery.gen';
 import Datasource from './datasource';
+import { initFeatureFlags, isBatchAPIFlagEnabled } from './featureFlags';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { type AzureMonitorQuery } from './types/query';
 import { type AzureMonitorDataSourceJsonData } from './types/types';
 
-// don't load plugin translations in test environments
-// we don't use them anyway, and top-level await won't work currently in jest
+// skip in tests: top-level await doesn't work in jest, and tests control
+// flags via mocks or the config.featureToggles fallback rather than the
+// host's OFREP provider
 if (process.env.NODE_ENV !== 'test') {
   await initPluginTranslations(pluginJson.id);
+  initFeatureFlags();
 }
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
@@ -30,12 +33,13 @@ interface Statistics {
 }
 
 // queryUsesBatchAPI reports whether a metrics query targets a datasource with
-// the Metrics Batch API enabled (feature toggle + datasource setting), i.e.
-// whether it will execute via the batch path. Settings resolve synchronously
-// from bootstrap config, so provisioned datasources are included — which
-// config-editor interactions alone cannot capture.
+// the Metrics Batch API setting enabled, i.e. whether it will execute via the
+// batch path when the feature flag is on (callers check the flag once per
+// dashboard, not per query). Settings resolve synchronously from bootstrap
+// config, so provisioned datasources are included — which config-editor
+// interactions alone cannot capture.
 function queryUsesBatchAPI(query: AzureMonitorQuery): boolean {
-  if (!config.featureToggles.azureMonitorBatchAPI || !query.datasource) {
+  if (!query.datasource) {
     return false;
   }
   try {
@@ -90,13 +94,16 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       unknown: { ...common },
     };
 
+    // Evaluated once per dashboard load; the flag cannot change mid-loop.
+    const batchAPIFlagEnabled = isBatchAPIFlagEnabled();
+
     azureQueries.forEach((query) => {
       if (query.queryType === AzureQueryType.AzureMonitor) {
         stats[AzureQueryType.AzureMonitor][query.hide ? 'hidden' : 'visible']++;
         if (query.azureMonitor?.resources && query.azureMonitor.resources.length > 1) {
           stats[AzureQueryType.AzureMonitor].multiResource++;
         }
-        if (queryUsesBatchAPI(query)) {
+        if (batchAPIFlagEnabled && queryUsesBatchAPI(query)) {
           stats[AzureQueryType.AzureMonitor].batchAPI++;
         }
       }

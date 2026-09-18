@@ -8,21 +8,21 @@ import { PageObject } from '../PageObject';
  */
 export class AddOptions extends PageObject {
   /** Adds a new panel by clicking the "Panel" button */
-  async clickNewPanelButton() {
+  async addPanel() {
     await test.step('Add new panel from sidebar', async () => {
       await this.getByGrafanaSelector(this.selectors.components.Sidebar.newPanelButton).click();
     });
   }
 
   /** Adds a new tab; the button is labeled "Add tab" or "Group into tabs" depending on the current layout */
-  async clickAddTabButton() {
+  async addTab() {
     await test.step('Add new tab from sidebar', async () => {
       await this.getByGrafanaSelector(this.selectors.components.Sidebar.addNewTabButton).click();
     });
   }
 
   /** Adds a new variable by clicking the "Variable" button */
-  async clickNewVariableButton() {
+  async addVariable() {
     await test.step('Add new variable from sidebar', async () => {
       await this.getByGrafanaSelector(this.selectors.components.Sidebar.addNewVariableButton).click();
     });

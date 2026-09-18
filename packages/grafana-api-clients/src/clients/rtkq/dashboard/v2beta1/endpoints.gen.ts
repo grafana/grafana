@@ -954,6 +954,7 @@ export type DashboardQueryOptionsSpec = {
   timeCompare?: string;
   timeFrom?: string;
   timeShift?: string;
+  timeTo?: string;
 };
 export type DashboardMatcherConfig = {
   /** The matcher id. This is used to find the matcher implementation from registry. */
@@ -1867,6 +1868,7 @@ export type NotebookQueryOptionsSpec = {
   timeCompare?: string;
   timeFrom?: string;
   timeShift?: string;
+  timeTo?: string;
 };
 export type NotebookMatcherConfig = {
   /** The matcher id. This is used to find the matcher implementation from registry. */

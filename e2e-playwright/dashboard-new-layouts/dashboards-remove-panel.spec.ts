@@ -27,7 +27,7 @@ test.describe(
       const panelTitle = /^Panel #1$/;
       await panels.selectByTitle(panelTitle);
 
-      await sidebar.clickDeleteButton();
+      await sidebar.deleteSelection();
 
       await expect(page.getByRole('dialog', { name: 'Delete panel?' })).toBeVisible();
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
@@ -48,7 +48,7 @@ test.describe(
 
       const panelTitles = [/^Panel #1$/, /^Panel #2$/, /^Panel #3$/];
       await panels.selectByTitle(panelTitles);
-      await sidebar.clickDeleteButton();
+      await sidebar.deleteSelection();
 
       await expect(page.getByRole('dialog', { name: 'Multiple panels' })).toBeVisible();
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();

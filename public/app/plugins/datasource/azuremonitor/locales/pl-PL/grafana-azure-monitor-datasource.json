@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Interfejs API operacji zbiorczych",
+      "description-batch-api": "Przesyła zapytania do wielu zasobów w ramach jednego żądania, poprawiając wydajność w przypadku dużych pulpitów. Wymaga roli <2>Odczytujący dane monitorowania</2> w zakresie subskrypcji pod adresem <6>metrics.monitor.azure.com</6>. Poza bezpłatnym poziomem mogą <9>zostać naliczone dodatkowe koszty</9>.",
+      "label-enable-batch-api": "Włącz interfejs API operacji zbiorczych"
     },
     "config-editor": {
       "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmują one Secure Socks Proxy, limit czasu żądania i przekazywane pliki cookie.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Załaduj subskrypcje"
     },
     "dimension-fields": {
-      "aria-label-remove": "Usuń",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Wymiary",
       "placeholder-field": "Pole",
       "placeholder-operation": "Operacja",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Przestrzeń nazw wskaźników"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Możesz wybrać elementy z tym samym typem zasobu w różnych subskrypcjach i regionach. Zasoby w różnych subskrypcjach lub regionach są odpytywane w oddzielnych żądaniach i mogą niezależnie od siebie zakończyć się niepowodzeniem. Aby wybrać zasoby innego typu, najpierw usuń zaznaczenie bieżącego wyboru.",
+      "selection-notice-standard": "Możesz wybrać elementy z tym samym typem zasobu i tą samą lokalizacją. Aby wybrać zasoby innego typu lub w innej lokalizacji, najpierw usuń zaznaczenie bieżącego wyboru."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkcje"
     },
     "nested-row": {
       "text-loading": "Ładowanie…"
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Sortuj wyniki na podstawie jednej lub kilku kolumn w kolejności rosnącej lub malejącej."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Wczytywanie zostało przerwane po {{maxPages}} stronach. Niektóre wyniki mogły zostać pominięte.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Podczas wysyłania żądania metadanych do narzędzia Azure Monitor wystąpił błąd"
