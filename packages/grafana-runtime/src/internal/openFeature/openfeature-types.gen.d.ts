@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "datasources.azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
+    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"

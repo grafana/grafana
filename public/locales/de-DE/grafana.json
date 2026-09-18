@@ -920,6 +920,7 @@
       "button-view": "Anzeigen",
       "export-ariaLabel-export": "Exportieren",
       "export-label-export": "Exportieren",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Löschen",
       "label-manage-permissions": "Berechtigungen verwalten",
       "tooltip-history": "Verlauf der Benachrichtigungsversuche für diesen Kontaktpunkt anzeigen",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Lädt ...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Lädt ...."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Keine Regeln pausiert",
         "pause-recording": "Aufnahmeregeln pausiert",
         "policy-tree": "Richtlinienstruktur",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Benachrichtigungs-Routing",
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Vorlagendateinamen duplizieren: „{{name}}“. Vorlagendateinamen müssen eindeutig sein.",
         "templates-label": "Benachrichtigungsvorlagen",
         "templates-remove": "{{name}} entfernen",
-        "upload": "YAML-Datei hochladen",
+        "upload": "",
         "validating": "Konfiguration wird validiert …",
         "validation-error": "Validierung fehlgeschlagen",
         "validation-error-desc": "Die Konfiguration konnte nicht validiert werden.",
         "validation-success": "Validierung erfolgreich",
         "validation-success-desc": "Keine Konflikte gefunden. Die Konfiguration ist bereit zum Importieren.",
         "validation-warning": "Einige Ressourcen werden umbenannt, um Konflikte mit bestehenden Ressourcen zu vermeiden",
-        "yaml-file": "Alertmanager-Konfigurations-YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager-Konfigurations-YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Datenquelle",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "README hinzufügen",
-      "edit-tooltip": "README bearbeiten",
+      "edit-doc-tooltip": "",
       "empty-message": "Fügen Sie eine README-Datei hinzu, um zu beschreiben, was dieser Ordner enthält und wo die richtigen Dashboards zu finden sind.",
       "load-error-retry": "Erneut versuchen",
-      "load-error-title": "README konnte nicht geladen werden",
-      "parse-error": "Der Inhalt der README-Datei kann nicht angezeigt werden."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Verlauf löschen",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
+      "add-visualization-description": "",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatisches Raster",
       "auto-grid-description": "Die Größe der Panels wird zur Bildung einheitlicher Raster angepasst",
+      "build-assistant": "",
       "custom-grid": "Benutzerdefiniertes Raster",
       "custom-grid-description": "Positionieren und ändern Sie die Größe jedes Panels einzeln",
       "description": "Fügen Sie zur Visualisierung Ihrer Daten ein Panel hinzu",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "layout-default-hint": "Das ausgewählte Layout wird auch als Standard für alle neuen Tabs und Zeilen verwendet. Sie können dies zu einem späteren Zeitpunkt unter Dashboard-Einstellungen > Allgemein ändern.",
+      "or-start-blank": "",
       "select-layout-header": "Layout auswählen",
       "title": "Neues Dashboard"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Feldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String-Werte",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Daten",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Rohdaten ohne Transformationen und angewendete Feldkonfiguration. ",
       "dataframe-label": "Datenrahmen-JSON (aus Abfrage)",
+      "editor-label": "",
       "panel-data-description": "Das Rohmodell wurde an die Panel-Visualisierung übertragen",
       "panel-data-label": "Panel-Daten",
       "panel-json-description": "Das im Dashboard-JSON gespeicherte Modell, das konfiguriert, wie alles funktioniert.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Feldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String-Werte",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Daten",
@@ -7735,6 +7761,7 @@
         "model-label": "Modell",
         "v2-resource": "V2-Ressource"
       },
+      "json-preview-label": "",
       "label-description": "Beschreibung",
       "label-folder-name": "Ordnername",
       "label-target-folder": "Zielordner",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Vorfälle",
       "team-filter-all": "Alle Teams",
       "team-filter-label": "Warnungen nach Team filtern",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Vorfall angeben",
       "empty": "Keine aktiven Vorfälle.",
+      "empty-selected-team": "",
       "error-title": "Es konnten keine aktiven Vorfälle geladen werden",
       "title": "Aktive Vorfälle",
       "view-all": "Alle Vorfälle anzeigen"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Warten auf Daten:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Veröffentlichen"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Wenn dies aktiviert ist, werden Log-Details für jede Zeile angezeigt.",
       "name": "Log-Details aktivieren"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeilen-Link“ in der ersten Spalte jeder Zeile",
       "name": "Schaltfläche „Log-Link kopieren“ anzeigen"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "Das ausgewählte Team wurde nicht gefunden, oder Sie haben nicht die erforderlichen Berechtigungen, um es anzuzeigen.",
     "team-not-found": "[Unbekanntes Team]",
     "unknown-error": "Unbekannter Fehler"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Authentifizierung"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Lesezeichen"
     },
@@ -12785,6 +12827,7 @@
       "title": "Aufgezeichnete Abfragen"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Meldung"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Annehmen",
-      "alert-text": "Wenn Sie dieses Dashboard extern teilen, ist es für jeden mit dem Link vollständig zugänglich.",
+      "alert-text": "",
       "cancel-button": "Abbrechen",
       "learn-more-button": "Mehr erfahren",
       "public-ack": "Mir ist bewusst, dass das gesamte Dashboard öffentlich sein wird.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
