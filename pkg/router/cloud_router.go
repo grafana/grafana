@@ -329,10 +329,16 @@ func (l *cloudLoader) running(ctx context.Context) error {
 			return nil
 		})
 	}
+	if l.singleTenantFallback != nil {
+		g.Go(func() error {
+			l.singleTenantFallback.notifyDiscoveryChanges(gctx, l.dirty)
+			return nil
+		})
+	}
 	if err := g.Wait(); err != nil {
 		return err
 	}
-	// A fallback-only loader has no informer or poller to keep it running.
+	// An empty loader still remains available until shutdown.
 	<-ctx.Done()
 	return nil
 }

@@ -7,11 +7,14 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -40,9 +43,10 @@ type singleTenantHost struct {
 // resolve ALL /apis requests regardless where they live (MT, or ST)
 type singleTenantFallback struct {
 	cache         *lru.Cache[int64, singleTenantHost]
+	breakerMu     sync.Mutex
+	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
 	lookups       singleflight.Group
 	resolveHost   func(context.Context, int64) (string, error)
-	fallback      http.Handler
 	discoveryHost *url.URL
 	transport     *http.Transport
 }
@@ -71,8 +75,10 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 	}
 
+	// The host cache above has already validated the capacity.
+	breakers, _ := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.cacheSize)
 	return &singleTenantFallback{
-		fallback:      http.NotFoundHandler(),
+		breakers:      breakers,
 		cache:         cache,
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
@@ -97,7 +103,7 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 		return host, nil
 	}
 
-	result := st.lookups.DoChan(namespace, func() (any, error) {
+	result := st.lookups.DoChan(strconv.FormatInt(info.StackID, 10), func() (any, error) {
 		return st.lookupHost(ctx, info.StackID)
 	})
 	select {
@@ -141,37 +147,39 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if (req.URL.Path == apisPrefix || req.URL.Path == apisPrefix+"/") && st.discoveryHost != nil {
+	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
+		host, err := st.hostForNamespace(req.Context(), parts[4])
+		if err != nil {
+			http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if host == nil {
+			http.NotFound(w, req)
+			return
+		}
+		st.forward(host, w, req)
+		return
+	}
+	// The discovery host supplies metadata, never tenant resources or mutations.
+	if st.discoveryHost != nil && (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
 		st.forward(st.discoveryHost, w, req)
 		return
 	}
-	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
-	if len(parts) > 1 && parts[1] != "" {
-		switch parts[0] {
-		case "apis":
-			if len(parts) > 4 && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
-				host, err := st.hostForNamespace(req.Context(), parts[4])
-				if err != nil {
-					http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
-					return
-				}
-				if host == nil { // unknown host
-					st.fallback.ServeHTTP(w, req)
-					return
-				}
-				st.forward(host, w, req)
-				return
-			}
-			fallthrough // same behavior as openapi
-		case "openapi":
-			if st.discoveryHost != nil {
-				st.forward(st.discoveryHost, w, req)
-				return
-			}
-		}
-	}
+	http.NotFound(w, req)
+}
 
-	st.fallback.ServeHTTP(w, req)
+func isSingleTenantDiscoveryPath(path string) bool {
+	path = strings.TrimSuffix(path, "/")
+	if path == apisPrefix || path == openapiV3Prefix {
+		return true
+	}
+	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
+		parts := strings.Split(rest, "/")
+		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+	}
+	_, _, ok := parseOpenAPIGroupVersionPath(path)
+	return ok
 }
 
 func (st *singleTenantFallback) forward(host *url.URL, w http.ResponseWriter, req *http.Request) {
@@ -182,7 +190,22 @@ func (st *singleTenantFallback) forward(host *url.URL, w http.ResponseWriter, re
 		Transport:      st.transport,
 		ModifyResponse: rejectBackendRedirects,
 	}
-	proxy.ServeHTTP(w, req)
+	serveThroughBreaker(st.breakerForHost(host), proxy, w, req)
+}
+
+// ST groups span multiple hosts, so their handler owns circuit breaking by destination.
+func (*singleTenantFallback) managesCircuitBreaking() {}
+
+func (st *singleTenantFallback) breakerForHost(host *url.URL) *gobreaker.CircuitBreaker[struct{}] {
+	key := host.Scheme + "://" + host.Host
+	st.breakerMu.Lock()
+	defer st.breakerMu.Unlock()
+	if breaker, ok := st.breakers.Get(key); ok {
+		return breaker
+	}
+	breaker := newGroupBreaker(key)
+	st.breakers.Add(key, breaker)
+	return breaker
 }
 
 // Helper function called when the fallback is directly used as a loader (testing)
@@ -217,8 +240,34 @@ func (st *singleTenantFallback) Load(ctx context.Context) ([]Backend, error) {
 	return backends, nil
 }
 
-func (st *singleTenantFallback) Notify(context.Context) (<-chan struct{}, error) {
-	return make(<-chan struct{}), nil
+func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, error) {
+	dirty := make(chan struct{}, 1)
+	go func() {
+		defer close(dirty)
+		st.notifyDiscoveryChanges(ctx, dirty)
+	}()
+	return dirty, nil
+}
+
+func (st *singleTenantFallback) notifyDiscoveryChanges(ctx context.Context, dirty chan<- struct{}) {
+	if st.discoveryHost == nil {
+		<-ctx.Done()
+		return
+	}
+	// Run performs the initial load; periodic signals retry failures and refresh group membership.
+	ticker := time.NewTicker(defaultAggregatePollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			select {
+			case dirty <- struct{}{}:
+			default:
+			}
+		}
+	}
 }
 
 var (

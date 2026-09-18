@@ -267,20 +267,13 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	// Cache miss or stale key: proxy through, capturing the response so it can
 	// be cached on success. Strip conditional headers first — see
 	// stripConditionalHeaders' doc comment for why. Gated by the same
-	// per-group breaker as the main dispatch — this is still a real proxy
+	// breaker selection as the main dispatch — this is still a real proxy
 	// call to the backend, so an outage must fail fast here too.
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
-	_, err := entry.breaker.Execute(func() (struct{}, error) {
-		entry.handler.ServeHTTP(rec, proxyReq)
-		return struct{}{}, breakerOutcome(proxyReq, rec.statusCode)
-	})
-	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
-		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
-		return
-	}
+	serveThroughBreaker(entry.breaker, entry.handler, rec, proxyReq)
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their

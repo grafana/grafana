@@ -193,7 +193,7 @@ func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 		synctest.Wait()
 		second := make(chan *url.URL, 1)
 		go func() {
-			host, err := st.hostForNamespace(t.Context(), "stacks-123")
+			host, err := st.hostForNamespace(t.Context(), "stacks-0123")
 			if err != nil {
 				t.Error(err)
 			}
@@ -362,7 +362,7 @@ func TestSingleTenantFallbackForwardRequest(t *testing.T) {
 }
 
 func TestSingleTenantFallbackDiscovery(t *testing.T) {
-	for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/widgets", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
+	for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
 		t.Run(path, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
 			st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
