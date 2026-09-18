@@ -752,12 +752,15 @@ func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceInfo {
-	return []apiutils.ResourceInfo{
+	infos := []apiutils.ResourceInfo{
 		provisioning.RepositoryResourceInfo,
 		provisioning.ConnectionResourceInfo,
 		provisioning.JobResourceInfo,
-		provisioning.HistoricJobResourceInfo,
 	}
+	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+		infos = append(infos, provisioning.HistoricJobResourceInfo)
+	}
+	return infos
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {

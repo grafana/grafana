@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -22,12 +23,24 @@ func TestAPIBuilderAdvertisesItsResources(t *testing.T) {
 		return
 	}
 
-	infos := provider.GetResourceInfos(schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v1beta1"})
-	names := make([]string, 0, len(infos))
-	for i := range infos {
-		names = append(names, infos[i].GetName())
-	}
-	assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "historicjobs"}, names)
+	t.Run("storage-backed history", func(t *testing.T) {
+		infos := provider.GetResourceInfos(schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v1beta1"})
+		names := make([]string, 0, len(infos))
+		for i := range infos {
+			names = append(names, infos[i].GetName())
+		}
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs", "historicjobs"}, names)
+	})
+
+	t.Run("Loki-backed history", func(t *testing.T) {
+		provider := &APIBuilder{jobHistoryConfig: &JobHistoryConfig{Loki: &loki.Config{}}}
+		infos := provider.GetResourceInfos(schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v1beta1"})
+		names := make([]string, 0, len(infos))
+		for i := range infos {
+			names = append(names, infos[i].GetName())
+		}
+		assert.ElementsMatch(t, []string{"repositories", "connections", "jobs"}, names)
+	})
 }
 
 func TestReplaceOpenAPIVersion(t *testing.T) {
