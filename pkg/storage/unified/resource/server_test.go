@@ -2290,6 +2290,12 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
 	defer cancel()
 
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	since, err := srv.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+		Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+	}}, func(ListIterator) error { return nil })
+	require.NoError(t, err)
+
 	// Create two resources before the watch starts. The broadcaster will absorb
 	// these events into its replay cache and hand them to any future subscriber.
 	require.NoError(t, createTestPlaylist(ctx, srv))
@@ -2299,9 +2305,9 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV. Delay each Send so the component
-	// metrics can prove that transport scheduling time is separated from the
-	// upstream commit-to-send-start latency.
+	// Resume from the LIST taken before both writes. Delay each Send so the
+	// component metrics can prove that transport scheduling time is separated
+	// from the upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
 	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
@@ -2310,7 +2316,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: since,
 		}, mock)
 	})
 
