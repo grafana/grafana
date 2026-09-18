@@ -101,6 +101,8 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
+	fullPage := req.Limit > 0 && len(rows) >= int(req.Limit)
+
 	// Chunked so a large page neither buffers every body nor lets a later hit's
 	// error fail a page the client never reaches.
 	for chunk := range slices.Chunk(rows, searchReadChunkSize) {
@@ -153,6 +155,22 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 				return rsp, nil
 			}
 		}
+	}
+
+	// Authorization can leave a full search page short or empty even when more results may exist.
+	if fullPage && len(rows) > 0 {
+		sortFields := rows[len(rows)-1].sortFields
+		if len(sortFields) == 0 {
+			s.log.Warn("Cannot continue search-backed List: last row has no sort fields", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource)
+			return rsp, nil
+		}
+		token, err := NewSearchContinueToken(sortFields, listRv)
+		if err != nil {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("invalid continue token"),
+			}, nil
+		}
+		rsp.NextPageToken = token
 	}
 
 	return rsp, nil
