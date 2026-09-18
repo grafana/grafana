@@ -1,6 +1,5 @@
-import { clone, sampleSize } from 'lodash';
-import memoize from 'micro-memoize';
 import { type Header, type Row } from '@tanstack/react-table';
+import { clone, sampleSize } from 'lodash';
 
 import {
   type DataFrame,
@@ -57,15 +56,14 @@ export function getColumns(
       // Make an expander cell
       header: () => null, // No header
       id: 'expander', // It needs an ID
-      cell: RowExpander,
       size: EXPANDER_WIDTH,
       minSize: EXPANDER_WIDTH,
-      filter: (_rows: Row[], _id: string, _filterValues?: SelectableValue[]) => {
-        return [];
-      },
-      justifyContent: 'left',
-      field: data.fields[0],
       sortingFn: 'basic',
+      meta: {
+        cellComponent: RowExpander,
+        justifyContent: 'left',
+        field: data.fields[0],
+      },
     });
 
     availableWidth -= EXPANDER_WIDTH;
@@ -100,21 +98,21 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
-      cell: Cell,
       id: fieldIndex.toString(),
-      field: field,
       header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
       accessorFn: (_row, i) => field.values[i],
       sortingFn: selectSortType(field.type),
       size: fieldTableOptions.width,
       minSize: fieldTableOptions.minWidth ?? columnMinWidth,
       enableResizing: fieldTableOptions.resizable !== false,
-      filter: memoize(filterByValue(field)),
-      filterFn: (row, id, filterValues) => filterByValue(field)([row], id, filterValues).length > 0,
-      justifyContent: getTextAlign(field),
-      footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
+      filterFn: (row, id, filterValues) => matchesFilterValues(row, id, field, filterValues),
+      footer: () => getFooterValue(fieldIndex, footerValues, isCountRowsSet),
+      meta: {
+        cellComponent: getCellComponent(fieldTableOptions.cellOptions?.type, field),
+        justifyContent: getTextAlign(field),
+        field: field,
+      },
     });
   }
 
@@ -186,7 +184,7 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field): Cell
 }
 
 export function filterByValue(field?: Field) {
-  return function (rows: Row[], id: string, filterValues?: SelectableValue[]) {
+  return function (rows: Array<Row<unknown>>, id: string, filterValues?: SelectableValue[]) {
     if (rows.length === 0) {
       return rows;
     }
@@ -199,20 +197,17 @@ export function filterByValue(field?: Field) {
       return rows;
     }
 
-    return rows.filter((row) => {
-      const value = getRowValue(row, id);
-      if (value === undefined && !row.getAllCells?.().some((cell) => cell.column.id === id)) {
-        return false;
-      }
-      const fieldValue = rowToFieldValue(row, field);
-      return filterValues.find((filter) => filter.value === fieldValue) !== undefined;
-    });
+    return rows.filter((row) => matchesFilterValues(row, id, field, filterValues));
   };
 }
 
-function getRowValue(row: Row, id: string): unknown {
-  const values = (row as Row & { values?: Record<string, unknown> }).values;
-  return values ? values[id] : row.getValue(id);
+function matchesFilterValues(row: Row<unknown>, id: string, field: Field, filterValues?: SelectableValue[]): boolean {
+  if (!filterValues || !row.getAllCells().some((cell) => cell.column.id === id)) {
+    return false;
+  }
+
+  const value = rowToFieldValue(row, field);
+  return filterValues.find((filter) => filter.value === value) !== undefined;
 }
 
 export function calculateUniqueFieldValues(rows: any[], field?: Field) {
@@ -282,14 +277,14 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 
 const caseInsensitiveCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
-export function sortCaseInsensitive(a: Row, b: Row, id: string) {
-  return caseInsensitiveCollator.compare(String(getRowValue(a, id)), String(getRowValue(b, id)));
+export function sortCaseInsensitive(a: Row<unknown>, b: Row<unknown>, id: string) {
+  return caseInsensitiveCollator.compare(String(a.getValue(id)), String(b.getValue(id)));
 }
 
 // sortNumber needs to have great performance as it is called a lot
-export function sortNumber(rowA: Row, rowB: Row, id: string) {
-  const a = toNumber(getRowValue(rowA, id));
-  const b = toNumber(getRowValue(rowB, id));
+export function sortNumber(rowA: Row<unknown>, rowB: Row<unknown>, id: string) {
+  const a = toNumber(rowA.getValue(id));
+  const b = toNumber(rowB.getValue(id));
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
@@ -391,18 +386,16 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
 }
 
 // This strips the raw vales from the `rows` object.
-export function createFooterCalculationValues(rows: Row[]): any[number] {
+export function createFooterCalculationValues(rows: Array<Row<unknown>>): any[number] {
   const values: any[number] = [];
 
-  for (const key in rows) {
-    const rowValues =
-      (rows[key] as Row & { values?: Record<string, unknown> }).values ??
-      Object.fromEntries(rows[key].getAllCells().map((cell) => [cell.column.id, cell.getValue()]));
-    for (const [valKey, val] of Object.entries(rowValues)) {
+  for (const row of rows) {
+    for (const cell of row.getAllCells()) {
+      const valKey = cell.column.id;
       if (values[valKey] === undefined) {
         values[valKey] = [];
       }
-      values[valKey].push(val);
+      values[valKey].push(cell.getValue());
     }
   }
 
@@ -472,7 +465,7 @@ export function calculateAroundPointThreshold(timeField: Field): number {
  */
 export function guessTextBoundingBox(
   text: string,
-  headerGroup: Header<unknown, unknown>,
+  headerGroup: Header<unknown, unknown> | undefined,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
   defaultRowHeight: number,

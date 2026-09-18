@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import { type HeaderGroup } from '@tanstack/react-table';
+import { render, screen } from '@testing-library/react';
 
 import { HeaderRow } from './HeaderRow';
 import { type TableStyles } from './styles';

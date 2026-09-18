@@ -1,19 +1,18 @@
-import { type Property } from 'csstype';
-import { type FC } from 'react';
 import {
   type Cell,
   type CellContext,
   type ColumnDef,
   type Row,
-  type SortingFn,
+  type RowData,
   type TableState,
 } from '@tanstack/react-table';
+import { type Property } from 'csstype';
+import { type FC } from 'react';
 
 import {
   type DataFrame,
   type Field,
   type KeyValue,
-  type SelectableValue,
   type TimeRange,
   type FieldConfigSource,
   type ActionModel,
@@ -55,8 +54,18 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends Omit<CellContext<any, unknown>, 'cell'> {
-  cell: Cell<any, unknown> & { value: unknown };
+/** Link props the table implementation can pass down to its cell renderers. */
+export interface TableCellUserProps {
+  href?: string;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+}
+
+/**
+ * Props passed to a cell renderer. TanStack Table only passes its own `CellContext`, the rest of the props
+ * are added by `TableCell` when it renders the cell.
+ */
+export interface TableCellProps extends Omit<CellContext<unknown, unknown>, 'cell'> {
+  cell: Cell<unknown, unknown> & { value: any };
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
@@ -65,19 +74,40 @@ export interface TableCellProps extends Omit<CellContext<any, unknown>, 'cell'> 
   frame: DataFrame;
   actions?: ActionModel[]; // unused in NG
   setInspectCell?: TableInspectCellCallback;
+  timeRange?: TimeRange;
+  userProps?: TableCellUserProps;
+  rowStyled?: boolean;
+  rowExpanded?: boolean;
+  textWrapped?: boolean;
+  height?: number;
+  showFilters?: boolean;
 }
 
 export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GrafanaTableColumn = ColumnDef<any, unknown> & {
-  id: string;
+export interface GrafanaColumnMeta {
   field: Field;
-  sortingFn: 'basic' | SortingFn<any>;
-  filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
   justifyContent: Property.JustifyContent;
+  /** Renderer for the cells of this column. It is rendered by `TableCell`, which adds the Grafana specific props. */
+  cellComponent: CellComponent;
+}
+
+declare module '@tanstack/react-table' {
+  // Grafana specific column configuration. TanStack Table only passes `meta` through, it never reads it.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    field?: Field;
+    justifyContent?: Property.JustifyContent;
+    cellComponent?: CellComponent;
+  }
+}
+
+export type GrafanaTableColumn = ColumnDef<unknown, unknown> & {
+  id: string;
   minSize: number;
+  meta: GrafanaColumnMeta;
 };
 
 export interface TableFooterCalc {

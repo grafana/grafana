@@ -707,7 +707,7 @@ describe('Table', () => {
 
       // Sort rows, and check the new order
       const table = getTable();
-      await userEvent.click(within(table).getAllByTitle('Toggle SortBy')[0]);
+      await userEvent.click(within(table).getAllByRole('button', { name: /Sort by column/ })[0]);
       rows = within(table).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
@@ -731,7 +731,7 @@ describe('Table', () => {
 
       // Sort again rows
       tables = screen.getAllByRole('table');
-      await userEvent.click(within(tables[0]).getAllByTitle('Toggle SortBy')[0]);
+      await userEvent.click(within(tables[0]).getAllByRole('button', { name: /Sort by column/ })[0]);
       rows = within(table).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([

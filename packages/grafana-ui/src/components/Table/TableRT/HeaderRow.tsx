@@ -1,5 +1,4 @@
 import { flexRender, type Header, type HeaderGroup } from '@tanstack/react-table';
-import { type CSSProperties } from 'react';
 
 import { type Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,7 +12,7 @@ import { Filter } from './Filter';
 import { type TableStyles } from './styles';
 
 export interface HeaderRowProps {
-  headerGroups: HeaderGroup[];
+  headerGroups: Array<HeaderGroup<unknown>>;
   showTypeIcons?: boolean;
   tableStyles: TableStyles;
 }
@@ -24,7 +23,12 @@ export const HeaderRow = (props: HeaderRowProps) => {
 
   return (
     <div role="rowgroup" className={tableStyles.headerRow}>
-      {headerGroups.map((headerGroup: HeaderGroup) => {
+      {headerGroups.map((headerGroup) => {
+        // TanStack Table always builds a header group, even when there are no columns
+        if (headerGroup.headers.length === 0) {
+          return null;
+        }
+
         return (
           <div
             className={tableStyles.thead}
@@ -43,7 +47,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
 
 function renderHeaderCell(header: Header<unknown, unknown>, tableStyles: TableStyles, showTypeIcons?: boolean) {
   const { column } = header;
-  const field: Field = (column.columnDef as { field?: Field }).field ?? null;
+  const field: Field | undefined = column.columnDef.meta?.field;
   const tableFieldOptions: TableFieldOptions | undefined = field?.config.custom;
   const isSorted = column.getIsSorted();
   const canResize = column.getCanResize();
@@ -72,10 +76,12 @@ function renderHeaderCell(header: Header<unknown, unknown>, tableStyles: TableSt
       {column.getCanFilter() && <Filter column={column} tableStyles={tableStyles} field={field} />}
     </>
   );
-  if (sortHeaderContent && tableFieldOptions?.headerComponent) {
-    sortHeaderContent = <tableFieldOptions.headerComponent field={field} defaultContent={sortHeaderContent} />;
-  } else if (tableFieldOptions?.headerComponent) {
-    headerContent = <tableFieldOptions.headerComponent field={field} defaultContent={headerContent} />;
+  if (field && tableFieldOptions?.headerComponent) {
+    if (sortHeaderContent) {
+      sortHeaderContent = <tableFieldOptions.headerComponent field={field} defaultContent={sortHeaderContent} />;
+    } else {
+      headerContent = <tableFieldOptions.headerComponent field={field} defaultContent={headerContent} />;
+    }
   }
 
   return (
@@ -85,7 +91,7 @@ function renderHeaderCell(header: Header<unknown, unknown>, tableStyles: TableSt
       role="columnheader"
       style={{
         position: 'absolute',
-        justifyContent: (column.columnDef as { justifyContent?: CSSProperties['justifyContent'] }).justifyContent,
+        justifyContent: column.columnDef.meta?.justifyContent,
         left: column.getStart(),
         width: column.getSize(),
         userSelect: canResize && column.getIsResizing() ? 'none' : 'auto',
@@ -97,6 +103,8 @@ function renderHeaderCell(header: Header<unknown, unknown>, tableStyles: TableSt
         <Filter column={column} tableStyles={tableStyles} field={field} />
       )}
       {canResize && (
+        // resizing is a pointer only affordance, column widths are not keyboard adjustable
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
         <div
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}

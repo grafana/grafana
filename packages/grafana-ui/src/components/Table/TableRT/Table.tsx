@@ -1,4 +1,3 @@
-import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   functionalUpdate,
   getCoreRowModel,
@@ -13,6 +12,7 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type VariableSizeList } from 'react-window';
 
 import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, getFieldDisplayName } from '@grafana/data';
@@ -146,7 +146,7 @@ export const Table = memo((props: Props) => {
   });
   const resizingColumnRef = useRef<string | false>(false);
 
-  const tableInstance = useReactTable({
+  const tableInstance = useReactTable<unknown>({
     columns: memoizedColumns,
     data: memoizedData,
     state: { sorting, expanded, columnSizing, columnSizingInfo },
@@ -159,9 +159,13 @@ export const Table = memo((props: Props) => {
     getRowCanExpand: () => hasNestedData,
     enableColumnResizing: resizable,
     columnResizeMode: 'onChange',
+    // TanStack Table sorts number columns descending first, react-table always started ascending
+    sortDescFirst: false,
     autoResetPageIndex: false,
     autoResetExpanded: !hasUniqueId,
-    getRowId: hasUniqueId ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) : undefined,
+    getRowId: hasUniqueId
+      ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
+      : undefined,
     onSortingChange: (updater) => {
       setSorting((current) => {
         const next = functionalUpdate(updater, current);
@@ -244,7 +248,7 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      headerGroups[0].headers,
+      headerGroups[0].headers.map((header) => ({ id: header.column.id, field: header.column.columnDef.meta?.field })),
       createFooterCalculationValues(rows),
       footerOptions,
       theme
@@ -362,6 +366,7 @@ export const Table = memo((props: Props) => {
             )}
             {itemCount > 0 ? (
               <div
+                role="rowgroup"
                 data-testid={selectors.components.Panels.Visualization.Table.body}
                 ref={variableSizeListScrollbarRef}
               >

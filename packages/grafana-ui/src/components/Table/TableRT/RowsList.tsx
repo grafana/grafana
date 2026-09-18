@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
+import { type Row, type TableState, type HeaderGroup } from '@tanstack/react-table';
 import { type CSSProperties, type UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { type Row, type TableState, type HeaderGroup } from '@tanstack/react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
@@ -36,7 +36,7 @@ import { type TableStyles } from './styles';
 
 interface RowsListProps {
   data: DataFrame;
-  rows: Row[];
+  rows: Array<Row<unknown>>;
   enableSharedCrosshair: boolean;
   headerHeight: number;
   rowHeight: number;
@@ -54,7 +54,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
-  headerGroups: HeaderGroup[];
+  headerGroups: Array<HeaderGroup<unknown>>;
   longestField?: Field;
   textWrapField?: Field;
   getActions?: GetActionsFunction;
@@ -314,8 +314,11 @@ export const RowsList = (props: RowsListProps) => {
         style.height = bbox.height;
       }
       return (
+        // rows are not focusable, the hover handlers only drive the shared crosshair
+        // eslint-disable-next-line jsx-a11y/interactive-supports-focus
         <div
           key={row.id}
+          role="row"
           style={style}
           {...additionalProps}
           className={cx(tableStyles.row, expandedRowStyle)}
@@ -334,7 +337,7 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
-          {row.getVisibleCells().map((cell, index: number) => (
+          {row.getVisibleCells().map((cell, index) => (
             <TableCell
               key={index}
               tableStyles={tableStyles}
