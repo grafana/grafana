@@ -89,6 +89,7 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
   } = props;
 
   const theme = useTheme2();
@@ -193,6 +194,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     filter,
     noPanelPadding,
+    preventHorizontalOverflow,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(

@@ -859,6 +859,10 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	}
 
 	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
+	if errors.Is(err, embed.ErrSkip) {
+		statusLabel = "skipped_extract"
+		return nil
+	}
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)

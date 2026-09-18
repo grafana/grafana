@@ -307,7 +307,6 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		Limit:        int64(limit),
 		Offset:       int64(offset),
 		Page:         int64(page),
-		Explain:      queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
