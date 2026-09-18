@@ -475,6 +475,28 @@ describe('TableNG hooks', () => {
   });
 
   describe('usePaginatedRows', () => {
+    it.each([
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
+    ])(
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, pageSize=$pageSize',
+      ({ expected, ...options }) => {
+        const { rows } = setupData();
+        const { result } = renderHook(() =>
+          usePaginatedRows(rows, {
+            ...options,
+            enabled: true,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+          })
+        );
+        expect(result.current.rowsPerPage).toBe(expected);
+      }
+    );
     it('should return defaults for pagination values when pagination is disabled', () => {
       const { rows } = setupData();
       const { result } = renderHook(() =>
@@ -1103,6 +1125,36 @@ describe('TableNG hooks', () => {
   });
 
   describe('useRowHeight', () => {
+    it.each([0, 6])('measures the last column with %ipx extra padding', (lastColumnExtraPadding) => {
+      const frame = createDataFrame({
+        fields: [{ name: 'text', type: FieldType.string, values: ['wrapped'], config: { custom: { wrapText: true } } }],
+      });
+      const measureHeight = jest.fn<number, Parameters<TypographyCtx['measureHeight']>>(() => 40);
+      const { result } = renderHook(() =>
+        useRowHeight({
+          fields: frame.fields,
+          columnWidths: [100],
+          defaultHeight: 30,
+          defaultNestedHeight: 30,
+          typographyCtx: {
+            ...createTypographyContext(14, 'Arial'),
+            measureHeight,
+            estimateHeight: () => 40,
+          },
+          hasNestedFrames: true,
+          visibleNestedRowCounts: [],
+          nestedRows: [],
+          nestedFields: [],
+          nestedColWidths: [],
+          lastColumnExtraPadding,
+        })
+      );
+      if (typeof result.current !== 'function') {
+        throw new Error('Expected a row height function');
+      }
+      expect(result.current({ __index: 0, __depth: 0, text: 'wrapped' })).toBeGreaterThan(30);
+      expect(measureHeight.mock.calls[0][1]).toBe(lastColumnExtraPadding === 6 ? 81 : 87);
+    });
     const typographyCtx = createTypographyContext(14, 'sans-serif');
     const expectHeightWithoutNestedTablePadding = (height: number, tableRefreshEnabled = false) =>
       expect(height - (tableRefreshEnabled ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING : NESTED_TABLE_VERTICAL_PADDING));

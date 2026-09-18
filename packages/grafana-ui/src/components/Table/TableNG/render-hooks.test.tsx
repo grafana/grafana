@@ -410,6 +410,15 @@ describe('useColumnBuilderFromFields', () => {
     expect(typeof result.cellRootRenderers['B']).toBe('function');
   });
 
+  it('reserves last-column padding only for the outer grid', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const outer = hook.result.current(frame.fields, [100, 100], frame, rows, rows, 6);
+    const inner = hook.result.current(frame.fields, [100, 100], frame, rows, rows);
+    expect(getCellRendererProps(outer.columns[0], rows[0]).width).toBe(87);
+    expect(getCellRendererProps(outer.columns[1], rows[0]).width).toBe(81);
+    expect(getCellRendererProps(inner.columns[1], rows[0]).width).toBe(87);
+  });
+
   it('marks columns frozen when index is within frozen range', () => {
     const config = makeConfig({ frozenColumns: 1, numFrozenColsFullyInView: 2 });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config });

@@ -162,6 +162,7 @@ export interface ColumnBuildConfig {
    * carries the inset itself.
    */
   firstColumnExtraPadding?: number;
+  lastColumnExtraPadding?: number;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
   getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>;
@@ -186,7 +187,8 @@ export type FromFieldsFn = (
   widths: number[],
   frame: DataFrame,
   rawRows: TableRow[],
-  visibleRows: TableRow[]
+  visibleRows: TableRow[],
+  lastColumnExtraPadding?: number
 ) => FromFieldsResult;
 
 /**
@@ -268,6 +270,7 @@ function buildColumnsFromFields(
     tableRefreshEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
+    lastColumnExtraPadding = 0,
     typographyCtx,
   } = config;
 
@@ -342,7 +345,11 @@ function buildColumnsFromFields(
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
-    const contentWidth = width - CELL_HORIZONTAL_CHROME - (i === 0 ? firstColumnExtraPadding : 0);
+    const contentWidth =
+      width -
+      CELL_HORIZONTAL_CHROME -
+      (i === 0 ? firstColumnExtraPadding : 0) -
+      (i === fields.length - 1 ? lastColumnExtraPadding : 0);
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -627,11 +634,14 @@ export function useColumnBuilderFromFields(
   nestedRows?: NestedRowEntry[]
 ): FromFieldsFn {
   return useCallback(
-    (fields, widths, frame, rawRows, visibleRows) => {
+    (fields, widths, frame, rawRows, visibleRows, lastColumnExtraPadding = 0) => {
       const parentIndex = visibleRows[0]?.__parentIndex;
       const resolvedFilterResult =
         parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
-      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, config);
+      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, {
+        ...config,
+        lastColumnExtraPadding,
+      });
     },
     [filterResult, nestedRows, config]
   );

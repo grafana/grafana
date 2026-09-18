@@ -266,6 +266,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
+  const lastColumnExtraPadding = tableRefreshEnabled ? TABLE.CELL_PADDING : 0;
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -273,6 +274,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
+    lastColumnExtraPadding,
     tableRefreshEnabled,
     filter,
   });
@@ -323,6 +325,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     fields: preparedFields,
     hasNestedFrames: true,
     defaultHeight: defaultRowHeight,
+    lastColumnExtraPadding,
     defaultNestedHeight: defaultNestedRowHeight,
     visibleNestedRowCounts,
     typographyCtx,
@@ -353,6 +356,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     hasNestedFrames: true,
     pageSize,
     noPanelPadding,
+    tableRefreshEnabled,
   });
 
   const showPagination = enablePagination && numRows > 0;
@@ -625,7 +629,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   }, [rows, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
 
     if (!firstRowNestedData) {
       markEdgeColumns(result);
@@ -668,6 +672,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortedRows,
     visibleFields,
     widths,
+    lastColumnExtraPadding,
   ]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

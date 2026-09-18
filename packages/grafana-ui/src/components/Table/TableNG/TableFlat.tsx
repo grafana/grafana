@@ -256,6 +256,7 @@ export function TableFlat(props: TableNGProps) {
     rowHeight,
     pageSize,
     noPanelPadding,
+    tableRefreshEnabled,
   });
   const showPagination = enablePagination && numRows > 0;
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
