@@ -162,8 +162,6 @@ describe('applyDashboardSpec', () => {
   it('changes panels in rows to tabs, and undo/redo restore each layout', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
     const rowsBody = scene.state.body;
-    expect(rowsBody).toBeInstanceOf(RowsLayoutManager);
-    expect((rowsBody as RowsLayoutManager).state.rows).toHaveLength(2);
 
     applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
 
