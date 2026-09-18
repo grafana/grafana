@@ -91,6 +91,7 @@ const v2Dashboard: DashboardV2Spec = {
   cursorSync: 'Off',
   liveNow: false,
   preload: false,
+  stickyControls: true,
   tags: [],
   timeSettings: {
     timezone: 'browser',

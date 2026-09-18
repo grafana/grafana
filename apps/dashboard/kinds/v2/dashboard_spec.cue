@@ -30,6 +30,10 @@ DashboardSpec: {
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: bool | *false
 
+	// When set to false, the dashboard controls (variables, time picker, links) scroll
+	// away with the dashboard instead of staying pinned below the header.
+	stickyControls?: bool | *true
+
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: uint16

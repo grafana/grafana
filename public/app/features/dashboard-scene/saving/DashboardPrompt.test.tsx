@@ -313,6 +313,7 @@ describe('DashboardPrompt', () => {
             cursorSync: 'Off',
             liveNow: false,
             preload: false,
+            stickyControls: true,
           };
           const emptyMetadata: ObjectMeta = {
             name: '',

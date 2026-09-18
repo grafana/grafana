@@ -212,6 +212,9 @@ func convertDashboardSpec_V1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2al
 	out.Tags = getStringSlice(dashboard, "tags")
 	out.CursorSync = transformCursorSyncToEnum(getIntField(dashboard, "graphTooltip", 0))
 	out.Preload = getBoolField(dashboard, "preload", dashboardDefaults.Preload)
+	if stickyControls, ok := dashboard["stickyControls"].(bool); ok {
+		out.StickyControls = &stickyControls
+	}
 
 	// Add frontend-style default values
 	// Set default editable: true to match frontend behavior

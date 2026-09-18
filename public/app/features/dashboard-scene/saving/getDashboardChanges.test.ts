@@ -553,6 +553,7 @@ describe('getRawDashboardV2Changes - section variables', () => {
     links: [],
     tags: [],
     preload: false,
+    stickyControls: true,
     liveNow: false,
     timeSettings: {
       from: 'now-6h',
@@ -618,6 +619,7 @@ describe('getRawDashboardV2Changes - section variables', () => {
       links: [],
       tags: [],
       preload: false,
+      stickyControls: true,
       liveNow: false,
       timeSettings: {
         from: 'now-6h',
@@ -696,6 +698,7 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
     links: [],
     tags: [],
     preload: false,
+    stickyControls: true,
     liveNow: false,
     timeSettings: {
       from: 'now-6h',
