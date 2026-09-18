@@ -111,6 +111,10 @@ const templateSrv: TemplateSrv = {
     if (value === '${missing}') {
       return 'Nonexistent';
     }
+    // Charlie's numeric id. Reachable only through the id map: '3' is neither a uid nor a name.
+    if (value === '${dsById}') {
+      return '3';
+    }
     return value ?? '';
   },
   containsTemplate: () => false,
@@ -222,6 +226,15 @@ describe('instanceSettings', () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const result = await getDataSourceInstanceSettings('3');
       expect(result?.name).toBe('Charlie');
+    });
+
+    it('resolves a template variable that interpolates to a numeric datasource id', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const result = await getDataSourceInstanceSettings('${dsById}');
+
+      expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-charlie' });
+      expect(result?.name).toBe('${dsById}');
+      expect(result?.uid).toBe('${dsById}');
     });
 
     it('returns undefined when a template variable resolves to a missing datasource', async () => {

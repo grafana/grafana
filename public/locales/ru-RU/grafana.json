@@ -930,6 +930,7 @@
       "button-view": "Просмотр",
       "export-ariaLabel-export": "Экспорт",
       "export-label-export": "Экспорт",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Удалить",
       "label-manage-permissions": "Управление разрешениями",
       "tooltip-history": "Просмотрите историю попыток отправить уведомление в эту точку контакта",
@@ -1498,6 +1499,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Загрузка...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Загрузка...."
     },
@@ -1726,6 +1731,9 @@
         "pause-none": "Нет приостановленных правил",
         "pause-recording": "Правила записи приостановлены",
         "policy-tree": "Дерево политик",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Маршрутизация уведомлений",
         "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
@@ -1789,14 +1797,17 @@
         "templates-duplicate": "Дублируется имя файла шаблона: «{{name}}». Имена файлов шаблонов должны быть уникальными.",
         "templates-label": "Шаблоны уведомлений",
         "templates-remove": "Удалить {{name}}",
-        "upload": "Добавить YAML-файл",
+        "upload": "",
         "validating": "Проверка конфигурации...",
         "validation-error": "Проверка не выполнена",
         "validation-error-desc": "Не удалось проверить конфигурацию.",
         "validation-success": "Проверка выполнена",
         "validation-success-desc": "Конфликты не найдены. Конфигурация готова к импорту.",
         "validation-warning": "Некоторые ресурсы будут переименованы во избежание конфликтов с уже существующими",
-        "yaml-file": "YAML-файл конфигурации обработчика оповещений Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML-файл конфигурации обработчика оповещений Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Источник данных",
@@ -4693,11 +4704,15 @@
     },
     "readme": {
       "add-readme": "Добавить README",
-      "edit-tooltip": "Редактировать README",
+      "edit-doc-tooltip": "",
       "empty-message": "Добавьте файл README, чтобы описать, что находится в этой папке и где найти нужные дашборды.",
       "load-error-retry": "Повторите попытку",
-      "load-error-title": "Не удалось загрузить README",
-      "parse-error": "Невозможно отобразить содержимое README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Очистить историю",
@@ -5862,16 +5877,24 @@
       "add-library-panel-header": "Импорт панели",
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
+      "add-visualization-description": "",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Автоматическая сетка",
       "auto-grid-description": "Размер панелей изменяется для создания однородной сетки",
+      "build-assistant": "",
       "custom-grid": "Пользовательская сетка",
       "custom-grid-description": "Задайте расположение и размер каждой отдельной панели",
       "description": "Добавьте панель для визуализации данных",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <2>grafana.com</2>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "layout-default-hint": "Выбранный макет также будет использоваться по умолчанию для всех новых вкладок и строк. Вы можете изменить этот выбор позже в разделе «Настройки дашборда > Общие».",
+      "or-start-blank": "",
       "select-layout-header": "Выберите макет",
       "title": "Новый дашборд"
     },
@@ -5999,6 +6022,7 @@
       "randomize-field-names-label-field-names": "Названия полей",
       "randomize-labels-label-labels": "Метки",
       "randomize-string-values-label-string-values": "Строковые значения",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Данные",
@@ -6039,6 +6063,7 @@
     "inspect-json": {
       "dataframe-description": "Необработанные данные без применения преобразований и конфигурации полей. ",
       "dataframe-label": "Фрейм данных JSON (из запроса)",
+      "editor-label": "",
       "panel-data-description": "Необработанная модель, переданная в визуализацию панели.",
       "panel-data-label": "Данные панели",
       "panel-json-description": "Модель, сохраненная в формате JSON, которая настраивает всю работу дашборда.",
@@ -7436,6 +7461,7 @@
       "randomize-field-names-label-field-names": "Названия полей",
       "randomize-labels-label-labels": "Метки",
       "randomize-string-values-label-string-values": "Строковые значения",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Данные",
@@ -7829,6 +7855,7 @@
         "model-label": "Модель",
         "v2-resource": "Ресурс V2"
       },
+      "json-preview-label": "",
       "label-description": "Описание",
       "label-folder-name": "Имя папки",
       "label-target-folder": "Целевая папка",
@@ -11275,6 +11302,7 @@
       "incident-tab-label": "Инциденты",
       "team-filter-all": "Все команды",
       "team-filter-label": "Фильтр оповещений по команде",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -11338,6 +11366,7 @@
     "incidents-card": {
       "declare": "Сообщить об инциденте",
       "empty": "Нет активных инцидентов.",
+      "empty-selected-team": "",
       "error-title": "Не удалось загрузить активные инциденты",
       "title": "Активные инциденты",
       "view-all": "Посмотреть все инциденты"
@@ -11999,6 +12028,7 @@
       "waiting-for-data": "Ожидание данных:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Опубликовать"
     }
   },
@@ -12353,6 +12383,10 @@
       "description": "Когда этот параметр включен, отображаются сведения о журнале для каждой строки.",
       "name": "Включить сведения о журнале"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
       "name": "Отображение кнопки копирования ссылки на журнал"
@@ -12420,6 +12454,10 @@
     "selected-team-not-found": "Выбранная команда не найдена, или у вас нет необходимых разрешений для ее просмотра.",
     "team-not-found": "[Неизвестная команда]",
     "unknown-error": "Неизвестная ошибка"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Параметры не найдены"
@@ -12753,6 +12791,10 @@
     "authentication": {
       "title": "Аутентификация"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Закладки"
     },
@@ -12959,6 +13001,7 @@
       "title": "Записанные запросы"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Создание отчетов"
     },
     "saved-queries": {
@@ -12973,6 +13016,10 @@
     },
     "search-dashboards": {
       "title": "Поиск по дашбордам"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Просмотр параметров, заданных в конфигурации Grafana",
@@ -15317,7 +15364,7 @@
     },
     "public-sharing": {
       "accept-button": "Принять",
-      "alert-text": "Если вы откроете внешний общий доступ к дашборду, он станет доступен всем, у кого есть ссылка.",
+      "alert-text": "",
       "cancel-button": "Отмена",
       "learn-more-button": "Подробнее",
       "public-ack": "Я понимаю, что дашборд будет общедоступным.*",
@@ -16918,10 +16965,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

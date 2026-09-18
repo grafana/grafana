@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
-import { createTheme } from '@grafana/data';
+import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
@@ -37,6 +37,24 @@ function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridPr
     onTooltipClose: jest.fn(),
     onInspectCellDismiss: jest.fn(),
     ...overrides,
+  };
+}
+
+function getRegisteredTheme(id: string) {
+  const theme = getThemeById(id);
+  return {
+    ...theme,
+    flags: { ...theme.flags, visualDesignRefresh: id.startsWith('visual_refresh') },
+  };
+}
+
+function readTableSurfaces() {
+  const grid = window.getComputedStyle(screen.getByRole('grid'));
+  return {
+    background: grid.getPropertyValue('--rdg-background-color'),
+    header: grid.getPropertyValue('--rdg-header-background-color'),
+    hover: grid.getPropertyValue('--rdg-row-hover-background-color'),
+    border: grid.getPropertyValue('--rdg-border-color'),
   };
 }
 
@@ -272,6 +290,135 @@ describe('TableDataGrid', () => {
     it('is not rendered without table.refresh', () => {
       const { container } = render(<TableDataGrid {...makeProps()} />);
       expect(container.querySelectorAll('div[role="presentation"]')).toHaveLength(0);
+    });
+  });
+
+  describe('table theme colors', () => {
+    it.each(['dark', 'light', 'visual_refresh_dark', 'visual_refresh_light'])(
+      'uses the %s table surfaces in opaque and transparent panels',
+      (id) => {
+        const theme = getRegisteredTheme(id);
+        const body = theme.components.panel.background;
+        const transparentBody = theme.flags.visualDesignRefresh
+          ? theme.colors.background.page
+          : theme.colors.background.canvas;
+        const headerDivider = colorManipulator
+          .onBackground(theme.colors.secondary.shade, theme.components.table.headerBackground)
+          .toHexString();
+        const props = makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] });
+        const { rerender } = render(
+          <ThemeContext.Provider value={theme}>
+            <TableDataGrid {...props} />
+          </ThemeContext.Provider>
+        );
+        const grid = window.getComputedStyle(screen.getByRole('grid'));
+        expect(grid.getPropertyValue('--rdg-background-color')).toBe(body);
+        expect(grid.getPropertyValue('--rdg-row-background-color')).toBe(body);
+        expect(grid.getPropertyValue('--rdg-header-background-color')).toBe(theme.components.table.headerBackground);
+        expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
+          theme.components.table.rowHoverBackground
+        );
+        expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
+          headerDivider
+        );
+
+        rerender(
+          <ThemeContext.Provider value={theme}>
+            <TableDataGrid {...props} transparent />
+          </ThemeContext.Provider>
+        );
+        const transparentGrid = window.getComputedStyle(screen.getByRole('grid'));
+        expect(transparentGrid.getPropertyValue('--rdg-background-color')).toBe(transparentBody);
+        expect(transparentGrid.getPropertyValue('--rdg-row-background-color')).toBe(transparentBody);
+        expect(transparentGrid.getPropertyValue('--rdg-header-background-color')).toBe(
+          theme.components.table.headerBackground
+        );
+        expect(transparentGrid.getPropertyValue('--rdg-row-hover-background-color')).toBe(
+          theme.components.table.rowHoverBackground
+        );
+      }
+    );
+
+    it.each([
+      ['dark', 'visual_refresh_dark'],
+      ['light', 'visual_refresh_light'],
+    ])('renders distinct table surfaces for %s and %s', (classicId, refreshedId) => {
+      const props = makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] });
+      const { rerender } = render(
+        <ThemeContext.Provider value={getRegisteredTheme(classicId)}>
+          <TableDataGrid {...props} />
+        </ThemeContext.Provider>
+      );
+      const classicSurfaces = readTableSurfaces();
+
+      rerender(
+        <ThemeContext.Provider value={getRegisteredTheme(refreshedId)}>
+          <TableDataGrid {...props} />
+        </ThemeContext.Provider>
+      );
+
+      expect(readTableSurfaces()).not.toEqual(classicSurfaces);
+    });
+
+    it.each([false, true])('honors table overrides with visualDesignRefresh=%s', (visualDesignRefresh) => {
+      const customColors = {
+        panel: '#123456',
+        header: '#234567',
+        border: '#345678',
+        headerDivider: '#456789',
+        hover: '#56789a',
+        selected: '#6789ab',
+        selection: '#89abcd',
+      };
+      const baseTheme = createTheme({
+        colors: {
+          mode: 'dark',
+          background: { primary: customColors.panel },
+          secondary: { shade: customColors.headerDivider },
+          action: { selectedBorder: customColors.selection },
+        },
+        components: {
+          panel: { background: customColors.panel },
+          table: {
+            headerBackground: customColors.header,
+            border: customColors.border,
+            rowHoverBackground: customColors.hover,
+            rowSelectedBackground: customColors.selected,
+          },
+        },
+      });
+      const theme = { ...baseTheme, flags: { ...baseTheme.flags, visualDesignRefresh } };
+      render(
+        <ThemeContext.Provider value={theme}>
+          <TableDataGrid {...makeProps({ tableRefreshEnabled: true, columns: [{ key: 'value', name: 'Value' }] })} />
+        </ThemeContext.Provider>
+      );
+      const grid = window.getComputedStyle(screen.getByRole('grid'));
+      expect(grid.getPropertyValue('--rdg-background-color')).toBe(customColors.panel);
+      expect(grid.getPropertyValue('--rdg-header-background-color')).toBe(customColors.header);
+      expect(grid.getPropertyValue('--rdg-border-color')).toBe(customColors.border);
+      expect(grid.getPropertyValue('--rdg-summary-border-color')).toBe(customColors.border);
+      expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(customColors.hover);
+      expect(grid.getPropertyValue('--rdg-row-selected-background-color')).toBe(customColors.selected);
+      expect(grid.getPropertyValue('--rdg-row-selected-hover-background-color')).toBe(
+        theme.colors.emphasize(customColors.selected, 0.05)
+      );
+      expect(grid.getPropertyValue('--rdg-selection-color')).toBe(customColors.selection);
+      expect(window.getComputedStyle(screen.getByRole('row')).getPropertyValue('--rdg-border-color')).toBe(
+        customColors.headerDivider
+      );
+    });
+
+    it('keeps the header on the body surface when table.refresh is disabled', () => {
+      const theme = getRegisteredTheme('visual_refresh_dark');
+      render(
+        <ThemeContext.Provider value={theme}>
+          <TableDataGrid {...makeProps()} />
+        </ThemeContext.Provider>
+      );
+      const grid = window.getComputedStyle(screen.getByRole('grid'));
+      expect(grid.getPropertyValue('--rdg-header-background-color')).toBe(theme.components.panel.background);
+      expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(theme.components.table.rowHoverBackground);
     });
   });
 

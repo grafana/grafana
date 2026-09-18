@@ -134,6 +134,8 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether cells overflow when hovered. Selected cells always overflow.
+	hoverOverflow?: bool | *true
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
