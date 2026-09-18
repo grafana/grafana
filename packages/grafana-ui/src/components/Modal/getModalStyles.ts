@@ -23,13 +23,20 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       maxHeight: '80%',
       display: 'flex',
       flexDirection: 'column',
+      // This padding is here instead of content div to ensure it is below the scrollbar
+      paddingBottom: theme.spacing(2.5),
       // Centre the modal vertically on smaller height screens
       // this allows us to fill the full height for maximum usability
-      ['@media (max-height: 750px)']: {
+      [theme.breakpoints.down('md')]: {
         maxHeight: '100%',
         top: '50%',
         transform: 'translateY(-50%)',
       },
+
+      [theme.breakpoints.down('sm')]: {
+        paddingBottom: theme.spacing(2),
+      },
+
       [theme.transitions.handleMotion('no-preference')]: {
         transition: theme.transitions.create(['opacity', 'scale'], {
           duration: theme.transitions.duration.shortest,
@@ -91,12 +98,12 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3, 3, 2.5, 3),
+      padding: theme.spacing(3, 3, 0, 3),
       scrollbarWidth: 'thin',
       width: '100%',
 
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(1, 2, 2, 2),
+        padding: theme.spacing(1, 2, 0, 2),
       },
 
       '&:focus-visible': {
