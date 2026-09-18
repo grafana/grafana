@@ -72,7 +72,7 @@ The scenarios are organized into the following categories. Use the table below t
 | [Flaky Query](#flaky-query)                                         | Error testing         | Intermittent errors with configurable rate.        |
 | [Errors and notices](#errors-and-notices)                           | Error testing         | Series with info, warning, and error notices.      |
 | [No Data Points](#no-data-points)                                   | Error testing         | Empty result with no data.                         |
-| [Data Points Outside Range](#data-points-outside-range)             | Error testing         | Data point outside the visible time range.         |
+| [Datapoints Outside Range](#datapoints-outside-range)             | Error testing         | Data point outside the visible time range.         |
 | [Slow Query](#slow-query)                                           | Error testing         | Configurable delay before returning data.          |
 | [Query Metadata](#query-metadata)                                   | Metadata              | Returns query context metadata.                    |
 
