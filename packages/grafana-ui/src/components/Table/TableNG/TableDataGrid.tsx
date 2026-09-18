@@ -141,17 +141,18 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
+  const hasGridFrame = tableRefreshEnabled && !noPanelPadding;
   const bodyHeight =
     height -
     headerHeight -
     footerHeight -
     (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0) -
-    (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2);
+    (hasGridFrame ? TABLE.FRAME_BORDER_WIDTH * 2 : 0);
   const visibleRowsHeight = useMemo(
     () => rows.reduce((combinedHeight, row) => combinedHeight + getRowHeight(row), 0),
     [getRowHeight, rows]
   );
-  const omitFinalRowBorder = visibleRowsHeight >= bodyHeight;
+  const omitFinalRowBorder = tableRefreshEnabled && visibleRowsHeight >= bodyHeight;
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const commonDataGridProps = useMemo(

@@ -97,33 +97,30 @@ export const getGridStyles = memoize(
         // panel (see getPaginationChromeHeight).
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         boxSizing: 'border-box',
-        ...(!noPanelPadding && {
-          // Reserve the same space as the visible frame without putting that frame underneath the
-          // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
-          border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
-          borderEndStartRadius: cornerRadius,
-          borderEndEndRadius: cornerRadius,
-          ...(tableRefreshEnabled && {
-            borderStartStartRadius: cornerRadius,
-            borderStartEndRadius: cornerRadius,
-          }),
-          overflow: 'hidden',
-          // Paint the frame after the scrolling grid so the native scrollbar corner cannot cover it.
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            zIndex: 1,
-            border: `${TABLE.FRAME_BORDER_WIDTH}px solid ${table.border}`,
+        ...(tableRefreshEnabled &&
+          !noPanelPadding && {
+            // Reserve the same space as the visible frame without putting that frame underneath the
+            // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
+            border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
             borderEndStartRadius: cornerRadius,
             borderEndEndRadius: cornerRadius,
-            ...(tableRefreshEnabled && {
+            borderStartStartRadius: cornerRadius,
+            borderStartEndRadius: cornerRadius,
+            overflow: 'hidden',
+            // Paint the frame after the scrolling grid so the native scrollbar corner cannot cover it.
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 1,
+              border: `${TABLE.FRAME_BORDER_WIDTH}px solid ${table.border}`,
+              borderEndStartRadius: cornerRadius,
+              borderEndEndRadius: cornerRadius,
               borderStartStartRadius: cornerRadius,
               borderStartEndRadius: cornerRadius,
-            }),
-          },
-        }),
+            },
+          }),
         position: 'relative',
       }),
       grid: css({
@@ -136,7 +133,7 @@ export const getGridStyles = memoize(
         '--rdg-summary-border-width': '1px',
 
         '--rdg-selection-color': theme.colors.action.selectedBorder,
-        '--rdg-selection-width': '0.5px',
+        ...(tableRefreshEnabled && { '--rdg-selection-width': '0.5px' }),
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
@@ -161,31 +158,32 @@ export const getGridStyles = memoize(
           },
         },
 
-        ...(!noPanelPadding && {
-          // The frame is painted above the grid so native scrollbars cannot erase its
-          // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
-          // outermost selection outline.
-          [`.rdg-cell.${FIRST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::before`]: {
-            content: '""',
-            position: 'absolute',
-            insetBlock: 0,
-            insetInlineStart: '1px',
-            inlineSize: 'var(--rdg-selection-width)',
-            backgroundColor: 'var(--rdg-selection-color)',
-            pointerEvents: 'none',
-            zIndex: 1,
-          },
-          [`.rdg-cell.${LAST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::after`]: {
-            content: '""',
-            position: 'absolute',
-            insetBlock: 0,
-            insetInlineEnd: '1px',
-            inlineSize: 'var(--rdg-selection-width)',
-            backgroundColor: 'var(--rdg-selection-color)',
-            pointerEvents: 'none',
-            zIndex: 1,
-          },
-        }),
+        ...(tableRefreshEnabled &&
+          !noPanelPadding && {
+            // The frame is painted above the grid so native scrollbars cannot erase its
+            // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
+            // outermost selection outline.
+            [`.rdg-cell.${FIRST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::before`]: {
+              content: '""',
+              position: 'absolute',
+              insetBlock: 0,
+              insetInlineStart: '1px',
+              inlineSize: 'var(--rdg-selection-width)',
+              backgroundColor: 'var(--rdg-selection-color)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            },
+            [`.rdg-cell.${LAST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::after`]: {
+              content: '""',
+              position: 'absolute',
+              insetBlock: 0,
+              insetInlineEnd: '1px',
+              inlineSize: 'var(--rdg-selection-width)',
+              backgroundColor: 'var(--rdg-selection-color)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            },
+          }),
 
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
           [`&.${OVERFLOW_CELL_CLASS}`]: {
@@ -245,7 +243,7 @@ export const getGridStyles = memoize(
           },
         },
 
-        ...((tableRefreshEnabled || !noPanelPadding) && {
+        ...(tableRefreshEnabled && {
           // The footer's top border separates it from the rows. Its bottom border would duplicate
           // the grid frame, or leave an extra line along a refreshed borderless table.
           '.rdg-bottom-summary-row > .rdg-cell': {
@@ -546,5 +544,5 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   if (IS_SAFARI_26) {
     return '';
   }
-  return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
+  return isNested ? '.rdg-cell:hover &' : '&:hover';
 });

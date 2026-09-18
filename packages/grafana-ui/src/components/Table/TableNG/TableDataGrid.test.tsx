@@ -98,11 +98,12 @@ describe('TableDataGrid', () => {
 
       unmount();
 
-      // The classic header stays square while the bottom of the table remains rounded.
+      // Classic tables keep their original unframed geometry.
       render(<TableDataGrid {...makeProps()} />);
       const classicFrame = window.getComputedStyle(screen.getByRole('grid').parentElement!);
       expect(classicFrame.getPropertyValue('border-start-start-radius')).toBe('');
-      expect(classicFrame.getPropertyValue('border-end-start-radius')).toBe(radius);
+      expect(classicFrame.getPropertyValue('border-end-start-radius')).toBe('');
+      expect(classicFrame.overflow).toBe('');
     });
 
     it.each([
@@ -119,14 +120,14 @@ describe('TableDataGrid', () => {
         hasFooter: false,
         noPanelPadding: false,
         role: 'grid' as const,
-        omitLastBorder: true,
+        omitLastBorder: false,
       },
       {
         tableRefreshEnabled: false,
         hasFooter: true,
         noPanelPadding: false,
         role: 'grid' as const,
-        omitLastBorder: true,
+        omitLastBorder: false,
       },
       {
         tableRefreshEnabled: true,
@@ -141,7 +142,7 @@ describe('TableDataGrid', () => {
         hasFooter: false,
         noPanelPadding: true,
         role: 'grid' as const,
-        omitLastBorder: true,
+        omitLastBorder: false,
       },
       {
         tableRefreshEnabled: true,
@@ -199,23 +200,25 @@ describe('TableDataGrid', () => {
         expect(window.getComputedStyle(firstCell).borderBlockEnd).not.toBe('none');
         expect(window.getComputedStyle(lastCell).borderBlockEnd === 'none').toBe(omitLastBorder);
         if (hasFooter) {
-          expect(window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd).toBe('none');
+          expect(
+            window.getComputedStyle(screen.getByRole('gridcell', { name: 'Total' })).borderBlockEnd === 'none'
+          ).toBe(tableRefreshEnabled);
         }
-        if (!noPanelPadding) {
+        if (tableRefreshEnabled && !noPanelPadding) {
           const frameRule = getGridFrameOverlayStyleRule(role);
           expect(frameRule?.style.getPropertyValue('border')).toBe(`1px solid ${theme.components.table.border}`);
           expect(frameRule?.style.getPropertyValue('inset')).toBe('0');
-          if (tableRefreshEnabled) {
-            expect(frameRule?.style.getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
-          }
+          expect(frameRule?.style.getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
           expect(frameRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
           expect(frameRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
+        } else {
+          expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
         }
       }
     );
 
     it('keeps selected first and last column edges visible inside the frame', () => {
-      render(<TableDataGrid {...makeProps()} />);
+      render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
 
       const gridClasses = Array.from(screen.getByRole('grid').classList);
       const edgeRules = Array.from(document.styleSheets)
@@ -237,9 +240,9 @@ describe('TableDataGrid', () => {
       expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
     });
 
-    it('renders the outer border unless the table is flush with its panel', () => {
+    it('renders the refreshed outer border unless the table is flush with its panel', () => {
       const theme = createTheme();
-      const props = makeProps();
+      const props = makeProps({ tableRefreshEnabled: true });
       const { rerender } = render(<TableDataGrid {...props} />);
 
       expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(

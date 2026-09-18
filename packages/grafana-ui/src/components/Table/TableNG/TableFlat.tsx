@@ -164,8 +164,8 @@ export function TableFlat(props: TableNGProps) {
   // A scrollbar appearing/disappearing changes how much room the columns have. An inset table's
   // frame also lives inside `width`, so its two borders are not available to the columns.
   const availableWidth = useMemo(
-    () => width - scrollbarWidth - (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2),
-    [width, scrollbarWidth, noPanelPadding]
+    () => width - scrollbarWidth - (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
+    [width, scrollbarWidth, tableRefreshEnabled, noPanelPadding]
   );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);

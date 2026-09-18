@@ -227,8 +227,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       width -
       (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) -
       scrollbarWidth -
-      (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2),
-    [width, scrollbarWidth, firstRowNestedData, noPanelPadding]
+      (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
+    [width, scrollbarWidth, firstRowNestedData, tableRefreshEnabled, noPanelPadding]
   );
   const nestedAvailableWidth = useMemo(() => availableWidth - TABLE.CELL_PADDING - 1, [availableWidth]);
 
@@ -329,6 +329,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     nestedFields: nestedPreparedFields,
     nestedRows,
     nestedFooterHeight,
+    tableRefreshEnabled,
   });
 
   const {
@@ -547,7 +548,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
               columns={nestedColumns}
               rows={expandedRecords}
               rowClass={(_, rowIdx) => {
-                if (rowIdx !== expandedRecords.length - 1) {
+                if (!tableRefreshEnabled || rowIdx !== expandedRecords.length - 1) {
                   return undefined;
                 }
 
@@ -582,6 +583,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       nestedRows,
       noValue,
       onCellClick,
+      tableRefreshEnabled,
       uniqueId,
       nestedColWidths,
       nestedResizeHandler,

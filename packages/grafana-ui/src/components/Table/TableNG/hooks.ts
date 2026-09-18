@@ -37,6 +37,7 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   getPaginationChromeHeight,
   NESTED_TABLE_VERTICAL_PADDING,
+  REFRESHED_NESTED_TABLE_VERTICAL_PADDING,
   TABLE,
 } from './constants';
 import { IS_SAFARI_26 } from './styles';
@@ -485,6 +486,7 @@ interface UseRowHeightOptions {
   nestedFields: Field[];
   nestedColWidths: number[];
   nestedFooterHeight?: number;
+  tableRefreshEnabled?: boolean;
 }
 
 const getTrueColWidths = (cw: number[], noPanelPadding = false): number[] =>
@@ -505,6 +507,7 @@ export function useRowHeight({
   nestedColWidths,
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
+  tableRefreshEnabled = false,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const nestedMeasurers = useMemo(
@@ -610,8 +613,11 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
+        const nestedTableVerticalPadding = tableRefreshEnabled
+          ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
+          : NESTED_TABLE_VERTICAL_PADDING;
         return (
-          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + NESTED_TABLE_VERTICAL_PADDING + scrollbarHeight
+          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + nestedTableVerticalPadding + scrollbarHeight
         );
       }
 
@@ -628,6 +634,7 @@ export function useRowHeight({
     nestedHasOverflow,
     nestedRows,
     nestedData,
+    tableRefreshEnabled,
     visibleNestedRowCounts,
   ]);
 

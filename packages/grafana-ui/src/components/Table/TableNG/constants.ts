@@ -45,8 +45,9 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
-/** Outer cell padding plus the nested table's block-axis inset. */
-export const NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 4;
+/** Block-axis space around a nested table. */
+export const NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 2;
+export const REFRESHED_NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 4;
 
 /**
  * Marker classes stamped onto the first and last columns once the final column list is assembled.

@@ -888,7 +888,7 @@ describe('TableNG', () => {
       const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
 
       const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
-      expect(grid).toHaveStyle({ gridTemplateColumns: '399px 399px' });
+      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
     });
   });
 
@@ -1311,6 +1311,24 @@ describe('TableNG', () => {
     });
   });
 
+  describe('Visual refresh borders', () => {
+    it.each([
+      [false, '', ''],
+      [true, 'solid', '0.5px'],
+    ] as const)(
+      'renders the refreshed frame and selection width only when table.refresh=%s',
+      (tableRefreshEnabled, expectedFrameStyle, expectedSelectionWidth) => {
+        const { container } = render(
+          <TableNG data={createBasicDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
+        );
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+
+        expect(window.getComputedStyle(grid.parentElement!).borderTopStyle).toBe(expectedFrameStyle);
+        expect(window.getComputedStyle(grid).getPropertyValue('--rdg-selection-width')).toBe(expectedSelectionWidth);
+      }
+    );
+  });
+
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
@@ -1357,6 +1375,21 @@ describe('TableNG', () => {
 
       const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
       expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).toBe('none');
+    });
+
+    it("preserves the footer cells' bottom border when table.refresh is disabled", () => {
+      const baseFrame = createBasicDataFrame();
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+      const { container } = render(<TableNG data={frameWithReducers} width={800} height={600} />);
+
+      const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
+      expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).not.toBe('none');
     });
   });
 
@@ -3119,18 +3152,22 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('199px 199px');
+      expect(columnTemplate(container)).toBe('200px 200px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('449px 449px');
+      expect(columnTemplate(container)).toBe('450px 450px');
     });
 
-    it('does not reserve frame width when the table is flush with its panel', () => {
+    it('reserves frame width only for refreshed tables that are not flush with their panel', () => {
       const data = frameWithFields([
         { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
         valueField,
       ]);
-      const { container } = render(<TableNG data={data} width={400} height={300} noPanelPadding />);
+      const { container, rerender } = render(<TableNG data={data} width={400} height={300} tableRefreshEnabled />);
+
+      expect(columnTemplate(container)).toBe('199px 199px');
+
+      rerender(<TableNG data={data} width={400} height={300} tableRefreshEnabled noPanelPadding />);
 
       expect(columnTemplate(container)).toBe('200px 200px');
     });
@@ -3138,10 +3175,10 @@ describe('TableNG', () => {
     it('applies width changes immediately for an auto-sized pill column', () => {
       const data = frameWithFields([pillField(), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('199px 199px');
+      expect(columnTemplate(container)).toBe('200px 200px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('449px 449px');
+      expect(columnTemplate(container)).toBe('450px 450px');
     });
 
     it('applies width changes immediately when an auto-sized column wraps its text', () => {
@@ -3155,10 +3192,10 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('199px 199px');
+      expect(columnTemplate(container)).toBe('200px 200px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('449px 449px');
+      expect(columnTemplate(container)).toBe('450px 450px');
     });
 
     // Toggling text wrapping changes the field config but the same table component renders throughout,
@@ -3186,10 +3223,10 @@ describe('TableNG', () => {
     it('applies width changes immediately when the pill column has a configured width', () => {
       const data = frameWithFields([pillField({ width: 100 }), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('100px 298px');
+      expect(columnTemplate(container)).toBe('100px 300px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('100px 798px');
+      expect(columnTemplate(container)).toBe('100px 800px');
     });
 
     it('applies width changes immediately when only a nested table has a width-sensitive column', () => {

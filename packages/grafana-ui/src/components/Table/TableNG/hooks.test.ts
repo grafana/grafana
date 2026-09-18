@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
+import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
@@ -1102,7 +1102,8 @@ describe('TableNG hooks', () => {
 
   describe('useRowHeight', () => {
     const typographyCtx = createTypographyContext(14, 'sans-serif');
-    const expectHeightWithoutNestedTablePadding = (height: number) => expect(height - NESTED_TABLE_VERTICAL_PADDING);
+    const expectHeightWithoutNestedTablePadding = (height: number, tableRefreshEnabled = false) =>
+      expect(height - (tableRefreshEnabled ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING : NESTED_TABLE_VERTICAL_PADDING));
 
     it('returns the default height if there are no wrapped columns or nested frames', () => {
       const { fields } = setupData();
@@ -1274,7 +1275,7 @@ describe('TableNG hooks', () => {
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
       });
 
-      it('calculates the height to return using default height', () => {
+      it.each([false, true])('calculates the height with table.refresh=%s', (tableRefreshEnabled) => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
         const fieldNames = frame.fields.map((f) => f.name);
@@ -1299,6 +1300,7 @@ describe('TableNG hooks', () => {
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
+              tableRefreshEnabled,
             });
             if (typeof rowHeight !== 'function') {
               throw new Error('Expected rowHeight to be a function');
@@ -1308,7 +1310,8 @@ describe('TableNG hooks', () => {
               __depth: 1,
               data: frame,
             });
-          }).result.current
+          }).result.current,
+          tableRefreshEnabled
         ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + scrollbar
       });
 
