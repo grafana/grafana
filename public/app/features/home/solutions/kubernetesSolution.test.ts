@@ -190,58 +190,49 @@ describe('kubernetesSolution stats and sparkline', () => {
     });
   });
 
-  it('returns the CPU trend with its 24-hour caption', async () => {
-    const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
-    mockFetchCpu.mockResolvedValue(series);
-
-    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
-      series,
-      caption: 'Cluster CPU · last 24h',
-    });
-  });
-
-  it('scopes every fact and the caption to a selection saved for the resolved datasource', async () => {
-    const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
-    mockFetchCpu.mockResolvedValue(series);
+  it('scopes every fact to a selection saved for the resolved datasource', async () => {
     const values = { cluster: 'prod', namespaces: ['team-a'] };
     const solution = kubernetesSolution({ datasourceUid: 'k8s-uid', values });
 
-    await expect(solution.sparkline()).resolves.toEqual({ series, caption: 'Namespace CPU · last 24h' });
     await solution.stats();
     await solution.needsAttention();
+    await solution.sparkline();
 
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, values);
     expect(mockFetchInventory).toHaveBeenCalledWith(datasource, values);
     expect(mockFetchHealth).toHaveBeenCalledWith(datasource, values);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, values);
   });
 
-  it('runs unscoped with the cluster caption when the selection was saved for another datasource', async () => {
-    const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
-    mockFetchCpu.mockResolvedValue(series);
+  it('runs unscoped when the selection was saved for another datasource', async () => {
     const solution = kubernetesSolution({ datasourceUid: 'other-uid', values: { cluster: 'prod', nodes: ['node-1'] } });
 
-    await expect(solution.sparkline()).resolves.toEqual({ series, caption: 'Cluster CPU · last 24h' });
     await solution.stats();
     await solution.needsAttention();
+    await solution.sparkline();
 
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
     expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
     expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
   });
 
-  it('captions the CPU trend as node CPU when a node filter is active, over the namespace caption', async () => {
+  it.each([
+    { desc: 'no selection', selection: null, caption: 'Cluster CPU · last 24h' },
+    {
+      desc: 'a namespace filter',
+      selection: { datasourceUid: 'k8s-uid', values: { namespaces: ['team-a'] } },
+      caption: 'Namespace CPU · last 24h',
+    },
+    // Nodes are the narrower scope, so they win the caption when both filters are set.
+    {
+      desc: 'namespace and node filters',
+      selection: { datasourceUid: 'k8s-uid', values: { namespaces: ['team-a'], nodes: ['node-1'] } },
+      caption: 'Node CPU · last 24h',
+    },
+  ])('captions the CPU trend for $desc', async ({ selection, caption }) => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
 
-    await expect(
-      kubernetesSolution({
-        datasourceUid: 'k8s-uid',
-        values: { namespaces: ['team-a'], nodes: ['node-1'] },
-      }).sparkline()
-    ).resolves.toEqual({
-      series,
-      caption: 'Node CPU · last 24h',
-    });
+    await expect(kubernetesSolution(selection).sparkline()).resolves.toEqual({ series, caption });
   });
 
   it('omits the sparkline when the CPU metric is unavailable', async () => {

@@ -46,92 +46,59 @@ const openGear = async (user: UserEvent, name = 'Customize Kubernetes monitoring
   return screen.findByRole('dialog', { name: 'Customize Kubernetes monitoring' });
 };
 
+const pick = async (user: UserEvent, input: HTMLElement, option: string) => {
+  await user.click(input);
+  await user.click(await screen.findByRole('option', { name: option }));
+};
+
+const closed = () => waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
 describe('KubernetesFiltersButton', () => {
-  it('opens the modal when the gear is clicked', async () => {
+  it('saves the chosen cluster, namespaces, and nodes bound to the datasource, closes, and shows the badge', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-
-    const dialog = await openGear(user);
-
-    expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeInTheDocument();
-  });
-
-  it('shows the filtered badge, active tooltip, and seeds the pickers from persisted filters', async () => {
-    persist({ cluster: 'prod', namespaces: ['default'] });
-
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    expect(screen.getByText('Filtered')).toBeInTheDocument();
-
-    const dialog = await openGear(user, 'Customize Kubernetes monitoring (filters active)');
-
-    expect(within(dialog).getByDisplayValue('prod')).toBeInTheDocument();
-    expect(within(dialog).getByText('default')).toBeInTheDocument();
-  });
-
-  it('saves the chosen cluster, namespaces, and nodes, closes, and shows the badge', async () => {
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
+    expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
 
     await openGear(user);
-
     const [clusterInput, namespaceInput, nodeInput] = screen.getAllByRole('combobox');
-
-    await user.click(clusterInput);
-    await user.click(await screen.findByRole('option', { name: 'prod' }));
-
-    await user.click(namespaceInput);
-    await user.click(await screen.findByRole('option', { name: 'default' }));
-
-    await user.click(nodeInput);
-    await user.click(await screen.findByRole('option', { name: 'node-1' }));
-
+    await pick(user, clusterInput, 'prod');
+    await pick(user, namespaceInput, 'default');
+    await pick(user, nodeInput, 'node-1');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(persisted()).toBe(saved({ cluster: 'prod', namespaces: ['default'], nodes: ['node-1'] }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await closed();
     expect(screen.getByText('Filtered')).toBeInTheDocument();
   });
 
-  it('closes without saving when Cancel is clicked', async () => {
+  it('closes without saving on Cancel, offering no Clear while nothing is saved', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await closed();
     expect(persisted()).toBeNull();
   });
 
-  it('hides Clear filters without persisted filters', async () => {
+  it('shows the saved selection as badge, tooltip, and picker values, and clears it on Clear filters', async () => {
+    persist({ cluster: 'prod', namespaces: ['default'] });
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
+    expect(screen.getByText('Filtered')).toBeInTheDocument();
 
-    await openGear(user);
-
-    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
-  });
-
-  it('clears persisted filters when Clear filters is clicked', async () => {
-    persist({ cluster: 'prod' });
-
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    await openGear(user, 'Customize Kubernetes monitoring (filters active)');
-
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    const dialog = await openGear(user, 'Customize Kubernetes monitoring (filters active)');
+    expect(within(dialog).getByDisplayValue('prod')).toBeInTheDocument();
+    expect(within(dialog).getByText('default')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Clear filters' }));
 
     expect(persisted()).toBe('');
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await closed();
     expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
   });
 
   it('does not apply a selection saved for another datasource, seeds the modal empty, and rebinds on save', async () => {
     persist({ cluster: 'prod', namespaces: ['default'] }, 'other-uid');
-
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
     expect(screen.getByText('Filters not applied')).toBeInTheDocument();
     expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
 
@@ -139,10 +106,8 @@ describe('KubernetesFiltersButton', () => {
     expect(within(dialog).queryByDisplayValue('prod')).not.toBeInTheDocument();
     expect(within(dialog).queryByText('default')).not.toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
-
     const [clusterInput] = screen.getAllByRole('combobox');
-    await user.click(clusterInput);
-    await user.click(await screen.findByRole('option', { name: 'staging' }));
+    await pick(user, clusterInput, 'staging');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(persisted()).toBe(saved({ cluster: 'staging' }));
@@ -150,65 +115,41 @@ describe('KubernetesFiltersButton', () => {
     expect(screen.queryByText('Filters not applied')).not.toBeInTheDocument();
   });
 
-  it('warns when some options fail to load but still lists the loaded picker values', async () => {
-    mockFetchOptions.mockResolvedValue({ clusters: null, namespaces: ['default'], nodes: ['node-1'] });
-
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    await openGear(user);
-
-    expect(await screen.findByText(/Could not load some options/)).toBeInTheDocument();
-
-    const [, namespaceInput] = screen.getAllByRole('combobox');
-    await user.click(namespaceInput);
-
-    expect(await screen.findByRole('option', { name: 'default' })).toBeInTheDocument();
-  });
-
-  it('loads the options once and reuses them across reopens', async () => {
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    await openGear(user);
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await openGear(user);
-
-    const [clusterInput] = screen.getAllByRole('combobox');
-    await user.click(clusterInput);
-    expect(await screen.findByRole('option', { name: 'prod' })).toBeInTheDocument();
-    expect(mockFetchOptions).toHaveBeenCalledTimes(1);
-  });
-
-  it('retries the options on reopen after a picker failed to load', async () => {
+  it('warns when a picker fails to load, keeps the loaded values, retries once on reopen, then reuses the options', async () => {
     mockFetchOptions.mockResolvedValueOnce({ clusters: null, namespaces: ['default'], nodes: ['node-1'] });
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
     expect(await screen.findByText(/Could not load some options/)).toBeInTheDocument();
+    const [, namespaceInput] = screen.getAllByRole('combobox');
+    await user.click(namespaceInput);
+    expect(await screen.findByRole('option', { name: 'default' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await openGear(user);
+    await closed();
 
+    await openGear(user);
     const [clusterInput] = screen.getAllByRole('combobox');
     await user.click(clusterInput);
     expect(await screen.findByRole('option', { name: 'prod' })).toBeInTheDocument();
     expect(screen.queryByText(/Could not load some options/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await closed();
+
+    // Complete options are kept for the card's lifetime: a third open costs no query.
+    await openGear(user);
     expect(mockFetchOptions).toHaveBeenCalledTimes(2);
   });
 
   it('accepts typed custom values while the options are still loading', async () => {
     mockFetchOptions.mockReturnValue(new Promise(() => {}));
-
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-
     const [clusterInput, namespaceInput] = screen.getAllByRole('combobox');
     await user.type(clusterInput, 'edge');
     await user.click(await screen.findByRole('option', { name: /^edge/ }));
     await user.type(namespaceInput, 'team-z');
     await user.click(await screen.findByRole('option', { name: /^team-z/ }));
-
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(persisted()).toBe(saved({ cluster: 'edge', namespaces: ['team-z'] }));

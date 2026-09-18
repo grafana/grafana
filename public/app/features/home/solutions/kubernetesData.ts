@@ -258,14 +258,15 @@ export interface KubernetesFilterOptions {
 export async function fetchKubernetesFilterOptions(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<KubernetesFilterOptions> {
-  const read = (refId: string, expr: string, label: string) =>
-    runInstantQueries({ [refId]: expr }, ds)
-      .then((frames) => readLabelValues(frames, refId, label))
+  // The label doubles as the refId.
+  const read = (label: string, expr: string) =>
+    runInstantQueries({ [label]: expr }, ds)
+      .then((frames) => readLabelValues(frames, label, label))
       .catch(() => null);
   const [clusters, namespaces, nodes] = await Promise.all([
-    read('clusters', 'group by (cluster) (kube_node_info{cluster!=""})', 'cluster'),
-    read('namespaces', 'group by (namespace) (kube_namespace_status_phase{cluster!=""})', 'namespace'),
-    read('nodes', 'group by (node) (kube_node_info{cluster!=""})', 'node'),
+    read('cluster', 'group by (cluster) (kube_node_info{cluster!=""})'),
+    read('namespace', 'group by (namespace) (kube_namespace_status_phase{cluster!=""})'),
+    read('node', 'group by (node) (kube_node_info{cluster!=""})'),
   ]);
   return { clusters, namespaces, nodes };
 }
