@@ -348,6 +348,38 @@ func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	})
 }
 
+type deleteAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+	AuthModule    string
+}
+
+func (q deleteAuthInfoQuery) Validate() error { return nil }
+
+func (s *Store) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := deleteAuthInfoQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserID:        cmd.UserAuth.UserId,
+			AuthModule:    cmd.UserAuth.AuthModule,
+		}
+		querySQL, err := sqltemplate.Execute(deleteAuthInfoTemplate, query)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
+		return err
+	})
+}
+
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
 func (s *Store) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
