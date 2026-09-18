@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -795,14 +796,17 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * Both the visibility classes and edge offsets are written straight to the wrapper rather than
- * held in state, so scrolling never re-renders the grid.
+ * Visibility classes are owned by React; scrolling only updates state when visibility changes.
+ * Edge offsets are written directly to the wrapper to avoid renders for geometry-only changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
+  const [className, setClassName] = useState('');
+  const classNameRef = useRef('');
+
   const sync = useCallback(() => {
     const el = ref.current?.element;
     const wrapper = el?.parentElement;
@@ -818,8 +822,14 @@ export function useScrollShadows(
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
     wrapper.style.setProperty('--table-scroll-shadow-top', `${topOffset}px`);
     wrapper.style.setProperty('--table-scroll-shadow-bottom', `${bottomOffset + scrollbarHeight}px`);
-    wrapper.classList.toggle(SCROLL_SHADOW_TOP_CLASS, scrollTop > SCROLL_SHADOW_THRESHOLD);
-    wrapper.classList.toggle(SCROLL_SHADOW_BOTTOM_CLASS, scrollBottom > SCROLL_SHADOW_THRESHOLD);
+    const nextClassName = clsx({
+      [SCROLL_SHADOW_TOP_CLASS]: scrollTop > SCROLL_SHADOW_THRESHOLD,
+      [SCROLL_SHADOW_BOTTOM_CLASS]: scrollBottom > SCROLL_SHADOW_THRESHOLD,
+    });
+    if (classNameRef.current !== nextClassName) {
+      classNameRef.current = nextClassName;
+      setClassName(nextClassName);
+    }
   }, [ref, enabled, topOffset, bottomOffset]);
 
   // Content height changes arrive through a render: rows change, nested rows expand, or resized
@@ -839,7 +849,7 @@ export function useScrollShadows(
     return () => resizeObserver.disconnect();
   }, [ref, enabled, sync]);
 
-  return sync;
+  return { className: enabled ? className : '', onScroll: sync };
 }
 
 /**
