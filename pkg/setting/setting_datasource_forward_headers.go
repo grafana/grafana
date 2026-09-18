@@ -72,7 +72,7 @@ func readDataSourceForwardHeadersSettings(iniFile *ini.File, cfg *Cfg) error {
 	switch {
 	case hasKillSwitch:
 		cfg.DataSourceForwardHeadersDenyList = []string{"[]"}
-	case mode == "replace" && rawList != "":
+	case mode == "replace" && len(configured) > 0:
 		cfg.DataSourceForwardHeadersDenyList = configured
 	default:
 		merged := make([]string, 0, len(DefaultDataSourceForwardHeadersDenyList)+len(configured))

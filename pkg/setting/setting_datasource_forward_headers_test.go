@@ -41,6 +41,23 @@ func TestDataSourceForwardHeadersSettings_ReplaceEmptyFallsBackToDefaults(t *tes
 	require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
 }
 
+func TestDataSourceForwardHeadersSettings_ReplaceWhitespaceOnlyFallsBackToDefaults(t *testing.T) {
+	// A whitespace-only deny_list is not the same as an absent one, but it
+	// still contains no real entries and must not wipe the built-in
+	// deny-list in replace mode.
+	cfg := loadCfgWithSection(t, "datasource_forward_headers", "deny_list = \"   \"\ndeny_list_mode = replace\n")
+	require.Equal(t, "replace", cfg.DataSourceForwardHeadersDenyListMode)
+	require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
+}
+
+func TestDataSourceForwardHeadersSettings_ReplaceCommaOnlyFallsBackToDefaults(t *testing.T) {
+	// A comma-only deny_list yields zero parsed entries after trimming, and
+	// must not wipe the built-in deny-list in replace mode either.
+	cfg := loadCfgWithSection(t, "datasource_forward_headers", "deny_list = \" , \"\ndeny_list_mode = replace\n")
+	require.Equal(t, "replace", cfg.DataSourceForwardHeadersDenyListMode)
+	require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
+}
+
 func TestDataSourceForwardHeadersSettings_KillSwitch(t *testing.T) {
 	cfg := loadCfgWithSection(t, "datasource_forward_headers", "deny_list = [], X-Anything\n")
 	require.Equal(t, []string{"[]"}, cfg.DataSourceForwardHeadersDenyList)

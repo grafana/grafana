@@ -82,8 +82,7 @@ func TestForwardHeadersMiddleware_FeatureToggleOff(t *testing.T) {
 	require.NoError(t, err)
 	// Feature toggle off: header must not be forwarded even though it is
 	// allow-listed and present on the incoming request.
-	require.NotContains(t, cdt.QueryDataReq.Headers, "X-Scope-Orgid")
-	require.NotContains(t, cdt.QueryDataReq.Headers, "X-Scope-OrgID")
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID"))
 }
 
 func TestForwardHeadersMiddleware_NoAllowList(t *testing.T) {
@@ -103,7 +102,7 @@ func TestForwardHeadersMiddleware_NoAllowList(t *testing.T) {
 		Headers:       map[string]string{},
 	})
 	require.NoError(t, err)
-	require.Empty(t, cdt.QueryDataReq.Headers)
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 }
 
 func TestForwardHeadersMiddleware_ExactMatch(t *testing.T) {
@@ -124,8 +123,11 @@ func TestForwardHeadersMiddleware_ExactMatch(t *testing.T) {
 		Headers:       map[string]string{},
 	})
 	require.NoError(t, err)
-	require.Equal(t, "tenant-a", cdt.QueryDataReq.Headers["X-Scope-Orgid"])
-	require.NotContains(t, cdt.QueryDataReq.Headers, "X-Other")
+	// Assert via GetHTTPHeader, the same accessor the SDK's outbound HTTP
+	// client middleware uses -- this is what actually reaches the plugin's
+	// downstream HTTP requests, not just the raw Headers map entry.
+	require.Equal(t, "tenant-a", cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID"))
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeader("X-Other"))
 }
 
 func TestForwardHeadersMiddleware_CaseInsensitiveAllowMatch(t *testing.T) {
@@ -147,7 +149,7 @@ func TestForwardHeadersMiddleware_CaseInsensitiveAllowMatch(t *testing.T) {
 		Headers:       map[string]string{},
 	})
 	require.NoError(t, err)
-	require.Equal(t, "tenant-a", cdt.QueryDataReq.Headers["X-Scope-Orgid"])
+	require.Equal(t, "tenant-a", cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID"))
 }
 
 func TestForwardHeadersMiddleware_PrefixMatch(t *testing.T) {
@@ -169,9 +171,9 @@ func TestForwardHeadersMiddleware_PrefixMatch(t *testing.T) {
 		Headers:       map[string]string{},
 	})
 	require.NoError(t, err)
-	require.Equal(t, "t1", cdt.QueryDataReq.Headers["X-Tenant-Id"])
-	require.Equal(t, "c1", cdt.QueryDataReq.Headers["X-Tenant-Cluster"])
-	require.NotContains(t, cdt.QueryDataReq.Headers, "X-Unrelated")
+	require.Equal(t, "t1", cdt.QueryDataReq.GetHTTPHeader("X-Tenant-Id"))
+	require.Equal(t, "c1", cdt.QueryDataReq.GetHTTPHeader("X-Tenant-Cluster"))
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeader("X-Unrelated"))
 }
 
 func TestForwardHeadersMiddleware_DenyListWins(t *testing.T) {
@@ -196,8 +198,8 @@ func TestForwardHeadersMiddleware_DenyListWins(t *testing.T) {
 	require.NoError(t, err)
 	// Authorization is on the default deny list and must be stripped even
 	// though the datasource allow-lists everything.
-	require.NotContains(t, cdt.QueryDataReq.Headers, "Authorization")
-	require.Equal(t, "tenant-a", cdt.QueryDataReq.Headers["X-Scope-Orgid"])
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeader("Authorization"))
+	require.Equal(t, "tenant-a", cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID"))
 }
 
 func TestForwardHeadersMiddleware_KillSwitch(t *testing.T) {
@@ -217,14 +219,14 @@ func TestForwardHeadersMiddleware_KillSwitch(t *testing.T) {
 		Headers:       map[string]string{},
 	})
 	require.NoError(t, err)
-	require.Empty(t, cdt.QueryDataReq.Headers)
+	require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
 }
 
 func TestForwardHeadersMiddleware_DoesNotClobberExisting(t *testing.T) {
 	enableForwardHeadersFlag(t)
 
 	// An earlier middleware (OAuth, tracing, cookies) may have already set a
-	// header on req.Headers. ForwardHeadersMiddleware must not overwrite it.
+	// header via SetHTTPHeader. ForwardHeadersMiddleware must not overwrite it.
 	req := newForwardHeadersReq(t)
 	req.Header.Set("X-Scope-OrgID", "from-incoming")
 
@@ -234,12 +236,12 @@ func TestForwardHeadersMiddleware_DoesNotClobberExisting(t *testing.T) {
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 
-	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
-		PluginContext: pluginCtx,
-		Headers:       map[string]string{"X-Scope-Orgid": "prior-value"},
-	})
+	priorReq := &backend.QueryDataRequest{PluginContext: pluginCtx}
+	priorReq.SetHTTPHeader("X-Scope-OrgID", "prior-value")
+
+	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), priorReq)
 	require.NoError(t, err)
-	require.Equal(t, "prior-value", cdt.QueryDataReq.Headers["X-Scope-Orgid"])
+	require.Equal(t, "prior-value", cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID"))
 }
 
 func TestForwardHeadersMiddleware_CallResourceMultiValue(t *testing.T) {
@@ -284,7 +286,7 @@ func TestForwardHeadersMiddleware_QueryDataMultiValueJoins(t *testing.T) {
 	require.NoError(t, err)
 	// QueryData carries a string-valued map, so RFC 9110 5.3 field-line
 	// combining applies: repeated values are joined with ", ".
-	require.Equal(t, "a, b", cdt.QueryDataReq.Headers["X-Multi"])
+	require.Equal(t, "a, b", cdt.QueryDataReq.GetHTTPHeader("X-Multi"))
 }
 
 func TestForwardHeadersMiddleware_AllRequestTypes(t *testing.T) {
@@ -308,7 +310,7 @@ func TestForwardHeadersMiddleware_AllRequestTypes(t *testing.T) {
 			Headers:       map[string]string{},
 		}, nopChunkedWriter{})
 		require.NoError(t, err)
-		require.Equal(t, "tenant-a", cdt.QueryChunkedDataReq.Headers["X-Scope-Orgid"])
+		require.Equal(t, "tenant-a", cdt.QueryChunkedDataReq.GetHTTPHeader("X-Scope-OrgID"))
 	})
 
 	t.Run("CheckHealth", func(t *testing.T) {
@@ -318,7 +320,7 @@ func TestForwardHeadersMiddleware_AllRequestTypes(t *testing.T) {
 			Headers:       map[string]string{},
 		})
 		require.NoError(t, err)
-		require.Equal(t, "tenant-a", cdt.CheckHealthReq.Headers["X-Scope-Orgid"])
+		require.Equal(t, "tenant-a", cdt.CheckHealthReq.GetHTTPHeader("X-Scope-OrgID"))
 	})
 
 	t.Run("CallResource", func(t *testing.T) {
