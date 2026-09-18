@@ -1313,18 +1313,18 @@ describe('TableNG', () => {
 
   describe('Visual refresh borders', () => {
     it.each([
-      [false, '', ''],
-      [true, 'solid', '0.5px'],
+      [false, ''],
+      [true, 'solid'],
     ] as const)(
-      'renders the refreshed frame and selection width only when table.refresh=%s',
-      (tableRefreshEnabled, expectedFrameStyle, expectedSelectionWidth) => {
+      'renders the expected frame and a thin selection border when table.refresh=%s',
+      (tableRefreshEnabled, expectedFrameStyle) => {
         const { container } = render(
           <TableNG data={createBasicDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
         );
         const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
 
         expect(window.getComputedStyle(grid.parentElement!).borderTopStyle).toBe(expectedFrameStyle);
-        expect(window.getComputedStyle(grid).getPropertyValue('--rdg-selection-width')).toBe(expectedSelectionWidth);
+        expect(window.getComputedStyle(grid).getPropertyValue('--rdg-selection-width')).toBe('0.5px');
       }
     );
   });
