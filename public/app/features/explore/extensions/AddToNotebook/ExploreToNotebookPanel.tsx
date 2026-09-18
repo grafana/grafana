@@ -22,8 +22,7 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
 
   const buildPanel = async () => {
-    // The builder is synchronous and reads the panel metas map. Explore can reach this before
-    // anything else has loaded it: the toolbar item is offered with or without a query.
+    // buildPanelElementFromExplore is synchronous and reads the panel metas map.
     await getPanelPluginMetasMap();
 
     return buildPanelElementFromExplore({

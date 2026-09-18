@@ -123,8 +123,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         return;
       }
 
-      // Panel cells are built synchronously below, and their data provider reads the panel metas map
-      // to decide whether a panel takes queries at all.
+      // Panel cells are built synchronously below.
       await getPanelPluginMetasMap();
 
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
@@ -167,13 +166,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    */
   public async newNotebook(): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
-    // with whichever one the page was previously asked for. Bumped before the await, or a load
-    // starting during it would not be superseded.
+    // with whichever one the page was previously asked for. Bumped before the await below, so a load
+    // starting during it is superseded too.
     this.requestSeq++;
 
-    // The blank notebook holds no panels itself, but this route loads nothing else, and the first
-    // visualization block someone inserts is built synchronously by the layout manager with no
-    // await of its own.
+    // The first visualization block inserted into the blank notebook is built synchronously.
     await getPanelPluginMetasMap();
 
     const spec: NotebookSpec = {

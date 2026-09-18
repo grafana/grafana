@@ -126,10 +126,8 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
 }
 
 /**
- * Waits for the panel plugin metas before building anything. A draft is built synchronously, and a
- * host can render one on a route where nothing has loaded them: without the map, a panel cell that
- * takes no queries would be given a query runner. Splitting the wait from the build below is what
- * keeps that build a one-shot — the inner component mounts once, with the metas already in hand.
+ * Split from the build below so that build stays a one-shot: the inner component mounts once, with
+ * the panel metas its synchronous transform needs already in hand.
  */
 function DraftNotebookView(props: DraftNotebookViewProps) {
   const { value: panelMetas, error } = usePanelPluginMetasMap();

@@ -182,16 +182,13 @@ describe('NotebookView', () => {
   // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is
   // edited against the conversation and only becomes a resource when someone publishes it.
   describe('a draft', () => {
-    /**
-     * A draft waits for the panel plugin metas before it builds anything, so the scene does not
-     * exist until that settles. Every case here needs it settled.
-     */
+    /** The heading only exists once the panel metas have loaded and the scene has been built. */
     async function renderDraft(ui: ReactElement<DraftNotebookViewProps>) {
       const result = render(ui);
-      // The document heading only exists once the scene has been built from the loaded panel metas.
       await screen.findByRole('heading', { name: ui.props.spec.title });
       return result;
     }
+
     /** A document with no cells, off the generated default so every field the transform reads is there. */
     function aDraftSpec(title = 'Untitled investigation'): NotebookSpec {
       return { ...defaultNotebookSpec(), title };
