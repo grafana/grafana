@@ -29,11 +29,12 @@ const thingAPIVersion = testAppGroup + "/v1"
 
 // The manifest declares only v1, but a plugin's settings API must keep working
 // after a manifest ships, so v0alpha1 is served alongside the manifest versions.
-func TestIntegrationPluginManifestDiscovery(t *testing.T) {
+func TestIntegrationPluginManifestDiscoveryWithSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := setupHelperWithManifest(t, rest.Mode5,
-		featuremgmt.FlagGrafanaUseRouterMiddleware, // The new router
+		featuremgmt.FlagGrafanaUseRouterMiddleware,
+		featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings,
 	)
 
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
@@ -224,28 +225,38 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 func TestIntegrationPluginManifestOpenAPIV3(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	for _, keepSettings := range []bool{false, true} {
+		t.Run(fmt.Sprintf("keepSettings=%t", keepSettings), func(t *testing.T) {
+			features := []string{featuremgmt.FlagGrafanaUseRouterMiddleware}
+			if keepSettings {
+				features = append(features, featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings)
+			}
+			helper := setupHelperWithManifest(t, rest.Mode5, features...)
 
-	disco := helper.NewDiscoveryClient()
-	paths, err := disco.OpenAPIV3().Paths()
-	require.NoError(t, err)
-	require.Contains(t, paths, "apis/"+testAppGroup+"/v1")
-	require.Contains(t, paths, "apis/"+testAppGroup+"/v0alpha1")
-	require.Contains(t, paths, "apis/folder.grafana.app/v1", "embedded APIs must remain discoverable")
+			disco := helper.NewDiscoveryClient()
+			paths, err := disco.OpenAPIV3().Paths()
+			require.NoError(t, err)
+			require.Contains(t, paths, "apis/"+testAppGroup+"/v1")
+			_, hasSettingsVersion := paths["apis/"+testAppGroup+"/v0alpha1"]
+			require.Equal(t, keepSettings, hasSettingsVersion)
+			require.Contains(t, paths, "apis/folder.grafana.app/v1", "embedded APIs must remain discoverable")
 
-	raw, err := paths["apis/"+testAppGroup+"/v1"].Schema("application/json")
-	require.NoError(t, err)
-	doc, err := openapi3.NewLoader().LoadFromData(raw)
-	require.NoError(t, err, "all schema references must resolve")
-	path := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things/{name}"
-	thing := doc.Paths.Find(path)
-	require.NotNil(t, thing)
-	response := thing.Get.Responses.Status(http.StatusOK)
-	require.NotNil(t, response)
-	spec := response.Value.Content["application/json"].Schema.Value.Properties["spec"]
-	require.NotNil(t, spec)
-	require.True(t, spec.Value.Properties["foo"].Value.Type.Is("string"))
-	require.True(t, spec.Value.Properties["count"].Value.Type.Is("integer"))
+			raw, err := paths["apis/"+testAppGroup+"/v1"].Schema("application/json")
+			require.NoError(t, err)
+			doc, err := openapi3.NewLoader().LoadFromData(raw)
+			require.NoError(t, err, "all schema references must resolve")
+			require.Equal(t, keepSettings, doc.Paths.Find("/apis/"+testAppGroup+"/v1/namespaces/{namespace}/app/instance") != nil)
+			path := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things/{name}"
+			thing := doc.Paths.Find(path)
+			require.NotNil(t, thing)
+			response := thing.Get.Responses.Status(http.StatusOK)
+			require.NotNil(t, response)
+			spec := response.Value.Content["application/json"].Schema.Value.Properties["spec"]
+			require.NotNil(t, spec)
+			require.True(t, spec.Value.Properties["foo"].Value.Type.Is("string"))
+			require.True(t, spec.Value.Properties["count"].Value.Type.Is("integer"))
+		})
+	}
 }
 
 // newThing is the body of a valid Thing, ready to be given a name.
@@ -676,4 +687,24 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	// preserves APIStatus errors and their Kubernetes Status body.
 	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 	require.Contains(t, string(raw), "does not implement ClientV3")
+}
+
+func TestIntegrationPluginManifestDiscovery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
+	require.NoError(t, err)
+	var versions []struct {
+		Version   string `json:"version"`
+		Resources []struct {
+			Resource string `json:"resource"`
+		} `json:"resources"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
+	require.Len(t, versions, 1)
+	require.Equal(t, "v1", versions[0].Version)
+	require.NotEmpty(t, versions[0].Resources)
+	for _, resource := range versions[0].Resources {
+		require.NotEqual(t, "app", resource.Resource)
+	}
 }

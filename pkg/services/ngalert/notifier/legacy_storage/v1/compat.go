@@ -34,6 +34,7 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
 		TimeIntervals:      TimeIntervalsToModel(in.AlertmanagerConfig.MuteTimeIntervals, in.AlertmanagerConfig.TimeIntervals),
+		Receivers:          ReceiversToModel(in.AlertmanagerConfig.Receivers),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
@@ -48,7 +49,6 @@ func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) P
 			InhibitRules: slices.Clone(in.InhibitRules),
 			Templates:    slices.Clone(in.Templates),
 		},
-		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
@@ -71,13 +71,14 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) []*PostableApiReceiver {
+func ReceiversToModel(in []*definition.PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
-	out := make([]*PostableApiReceiver, 0, len(in))
+	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, receiver := range in {
-		out = append(out, PostableApiReceiverToModel(receiver))
+		m := PostableApiReceiverToModel(receiver)
+		out[ReceiverUID(m.Name)] = *m
 	}
 	return out
 }
@@ -209,10 +210,13 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		return nil, nil
 	}
 	dbModel := AMConfigDB{
-		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
+		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
+			Receivers: ReceiversToDB(in.GetReceivers()),
+		},
+		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
 	}
 
 	var errs []error
@@ -225,17 +229,14 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.PostableApiAlertingConfig {
-	return definition.PostableApiAlertingConfig{
-		Config: definition.Config{
-			Global:       in.Global,
-			Route:        RouteToDB(in.Route),
-			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
-			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
-			TimeIntervals: TimeIntervalsToDB(timeIntervals),
-		},
-		Receivers: ReceiversToDB(in.Receivers),
+func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.Config {
+	return definition.Config{
+		Global:       in.Global,
+		Route:        RouteToDB(in.Route),
+		InhibitRules: slices.Clone(in.InhibitRules),
+		Templates:    slices.Clone(in.Templates),
+		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+		TimeIntervals: TimeIntervalsToDB(timeIntervals),
 	}
 }
 

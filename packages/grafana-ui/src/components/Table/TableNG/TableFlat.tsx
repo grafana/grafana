@@ -62,6 +62,7 @@ export function TableFlat(props: TableNGProps) {
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -88,6 +89,7 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
   } = props;
 
   const theme = useTheme2();
@@ -192,6 +194,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     filter,
     noPanelPadding,
+    preventHorizontalOverflow,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -284,6 +287,7 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
@@ -304,6 +308,7 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       setFilter,
       showTypeIcons,
