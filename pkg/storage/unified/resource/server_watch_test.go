@@ -139,6 +139,66 @@ func TestKVWatchSeedReadsPreviousPayloadOnReplay(t *testing.T) {
 	require.Equal(t, 2, keysAfter-keysBefore, "previous revisions are read at delivery time")
 }
 
+func TestKVWatchOmitsPrunedPreviousPayload(t *testing.T) {
+	for _, delivery := range []string{"replay", "live"} {
+		for _, eventType := range []resourcepb.WatchEvent_Type{resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED} {
+			t.Run(delivery+"/"+eventType.String(), func(t *testing.T) {
+				backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+					opts.WatchOptions.MinBackoff = time.Millisecond
+				})
+				base := snowflakeFromTime(time.Now().Add(-time.Hour))
+				saveWatchEvent(t, backend, durableWatchEvent(base))
+				previous := durableWatchEvent(base + 1)
+				saveWatchEvent(t, backend, previous)
+				current := previous
+				current.ResourceVersion++
+				current.PreviousRV = previous.ResourceVersion
+				current.Action = DataActionUpdated
+				if eventType == resourcepb.WatchEvent_DELETED {
+					current.Action = DataActionDeleted
+				}
+				if delivery == "replay" {
+					saveWatchEvent(t, backend, current)
+				}
+				require.NoError(t, backend.dataStore.Delete(t.Context(), eventDataKey(previous)))
+
+				srv := initWatchServer(t, backend)
+				require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+				defer cancel()
+				stream := newMockWatchServer(ctx)
+				req := bookmarkWatchRequest()
+				req.Since = base
+				req.Options.Key.Name = current.Name
+				done := make(chan error, 1)
+				go func() { done <- srv.Watch(req, stream) }()
+				if delivery == "live" {
+					requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
+					saveWatchEvent(t, backend, current)
+					backend.notifier.Publish(current)
+				}
+				select {
+				case event := <-stream.events:
+					require.Equal(t, eventType, event.Type)
+					require.Equal(t, current.ResourceVersion, event.Resource.Version)
+					require.Nil(t, event.Previous)
+					if eventType == resourcepb.WatchEvent_DELETED {
+						require.Empty(t, event.Resource.Value)
+					} else {
+						require.NotEmpty(t, event.Resource.Value)
+					}
+				case err := <-done:
+					t.Fatalf("watch stopped before delivering the event: %v", err)
+				case <-time.After(time.Second):
+					t.Fatal("missing event with pruned previous revision")
+				}
+				cancel()
+				require.NoError(t, <-done)
+			})
+		}
+	}
+}
+
 func TestKVWatchFreshListIdleStore(t *testing.T) {
 	for _, empty := range []bool{false, true} {
 		t.Run(map[bool]string{false: "idle", true: "empty"}[empty], func(t *testing.T) {
