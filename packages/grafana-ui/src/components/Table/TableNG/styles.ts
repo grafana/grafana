@@ -320,8 +320,16 @@ export const getGridStyles = memoize(
         scrollbarColor: `${theme.colors.scrollbar} transparent`,
         ...(tableRefreshEnabled && {
           borderInline: `1px solid ${nestedBorderColor}`,
+          borderStartStartRadius: theme.shape.radius.default,
+          borderStartEndRadius: theme.shape.radius.default,
           borderEndStartRadius: theme.shape.radius.default,
           borderEndEndRadius: theme.shape.radius.default,
+          // The nested grid owns its bottom edge. Refreshed outer tables drop the summary cells'
+          // bottom border because PanelChrome supplies that edge, but a nested grid has no wrapper
+          // border there.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: `1px solid ${nestedBorderColor}`,
+          },
           [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${FIRST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]:
             {
               borderEndStartRadius: theme.shape.radius.default,

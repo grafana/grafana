@@ -546,9 +546,13 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
               onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
-              rowClass={(_, rowIdx) =>
-                !hasNestedFooter && rowIdx === expandedRecords.length - 1 ? NESTED_LAST_ROW_CLASS : undefined
-              }
+              rowClass={(_, rowIdx) => {
+                if (rowIdx !== expandedRecords.length - 1) {
+                  return undefined;
+                }
+
+                return hasNestedFooter ? styles.lastRowWithoutBorder : NESTED_LAST_ROW_CLASS;
+              }}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
               columnWidths={nestedColWidths}
@@ -569,6 +573,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       styles.gridNested,
       styles.headerRow,
       styles.displayNone,
+      styles.lastRowWithoutBorder,
       styles.noDataNested,
       data.fields.length,
       commonDataGridProps,

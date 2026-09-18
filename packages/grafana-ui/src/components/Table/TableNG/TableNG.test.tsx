@@ -794,6 +794,8 @@ describe('TableNG', () => {
           `1px solid ${borderToken === 'medium' ? theme.colors.border.medium : theme.components.table.border}`
         );
         expect(nestedGridRule?.style.getPropertyValue('overflow-x')).toBe('auto');
+        expect(nestedGridRule?.style.getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-start-end-radius')).toBe(theme.shape.radius.default);
         expect(nestedGridRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
         expect(nestedGridRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
 
@@ -827,9 +829,13 @@ describe('TableNG', () => {
 
       const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
       const footer = nestedGrid?.querySelector('.rdg-bottom-summary-row');
+      const nestedRows = nestedGrid?.querySelectorAll<HTMLElement>('.rdg-row:not(.rdg-summary-row)');
+      const finalNestedRow = nestedRows?.[nestedRows.length - 1];
       expect(nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`)).not.toBeInTheDocument();
+      expect(window.getComputedStyle(finalNestedRow!.querySelector('.rdg-cell')!).borderBlockEnd).toBe('none');
       expect(footer?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
         borderEndStartRadius: theme.shape.radius.default,
+        borderBlockEnd: `1px solid ${theme.colors.border.medium}`,
       });
       expect(footer?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
         borderEndEndRadius: theme.shape.radius.default,

@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import {
-  CoreApp,
   type DataFrame,
   getFrameDisplayName,
   type GrafanaTheme2,
@@ -51,7 +50,7 @@ export function TablePanel(props: Props) {
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
-  const noPanelPadding = commonTableProps.tableRefreshEnabled && panelContext.app !== CoreApp.Explore; // Explore adds padding
+  const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
