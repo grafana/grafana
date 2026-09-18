@@ -250,6 +250,22 @@ func TestChanges(t *testing.T) {
 		require.Empty(t, changes, "folder should be kept when it contains invalid hidden paths")
 	})
 
+	t.Run("hidden file that also fails an earlier check is not reported as unsupported", func(t *testing.T) {
+		// "&" trips ErrInvalidCharacters before IsSafe ever reaches the
+		// hidden-path check.
+		source := []repository.FileTreeEntry{
+			{Path: "folder/.hidden & broken.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Empty(t, changes, "hidden file must not be reported as unsupported just because it also fails an earlier check")
+	})
+
 	t.Run("keep folder with hidden folders", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "folder/.hidden/valid.json", Hash: "xyz", Blob: true},

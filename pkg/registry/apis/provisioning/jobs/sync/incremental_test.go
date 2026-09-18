@@ -685,6 +685,38 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
+			name:         "hidden file that also fails an earlier check is not reported as unsupported",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// "&" trips ErrInvalidCharacters before IsSafe ever reaches the
+				// hidden-path check.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/.hidden & broken.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/.hidden & broken.json").Return(false)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder/", "new-ref").
+					Return("folder-uid", nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Error() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
 			name:         "error writing resource",
 			quotaTracker: permissiveQt,
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {

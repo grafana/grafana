@@ -204,9 +204,10 @@ func Changes(
 		// the extension directly avoids depending on validatePathBasics running
 		// after the extension check. README.md, .keep and .gitignore fall out
 		// here; a hidden resource file (e.g. .dashboard.yaml) is still normal,
-		// not unsupported.
+		// not unsupported -- checked the same independent way as the extension,
+		// since IsPathSupported can mask ErrHiddenPath behind an earlier error.
 		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
-			!errors.Is(pathErr, safepath.ErrHiddenPath) && resources.HasResourceExtension(file.Path) {
+			!safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
 			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
 		}
 
