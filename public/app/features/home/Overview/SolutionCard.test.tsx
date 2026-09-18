@@ -11,7 +11,7 @@ import {
   subscribeKubernetesFilters,
 } from '../solutions/kubernetesFilters';
 import { stubSolution } from '../solutions/test-utils';
-import { type Solution, type SolutionId, type SolutionOffer } from '../solutions/types';
+import { type SolutionOffer } from '../solutions/types';
 
 import { AvailableSolutionCard, SolutionCard } from './SolutionCard';
 
@@ -210,7 +210,7 @@ const kubernetesDatasource: DataSourceInstanceListItem = {
 describe('SolutionCard Kubernetes filters gear', () => {
   it('shows the gear without a Filtered badge when no filters are set', async () => {
     mockGetFilters.mockResolvedValue({});
-    const item = solution('kubernetes', {
+    const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
       datasource: async () => kubernetesDatasource,
     });
@@ -224,7 +224,7 @@ describe('SolutionCard Kubernetes filters gear', () => {
   it('shows the Filtered badge and active tooltip when filters are set', async () => {
     mockGetFiltersVersion.mockReturnValue(1);
     mockGetFilters.mockResolvedValue({ cluster: 'prod' });
-    const item = solution('kubernetes', {
+    const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
       datasource: async () => kubernetesDatasource,
     });
@@ -238,7 +238,7 @@ describe('SolutionCard Kubernetes filters gear', () => {
   });
 
   it('omits the gear for non-Kubernetes solutions', async () => {
-    const item = solution('metrics', {
+    const item = stubSolution('metrics', {
       title: 'Metrics & infrastructure',
       datasource: async () => kubernetesDatasource,
     });
@@ -250,7 +250,7 @@ describe('SolutionCard Kubernetes filters gear', () => {
   });
 
   it('omits the gear when the Kubernetes datasource is null', async () => {
-    const item = solution('kubernetes', {
+    const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
       datasource: async () => null,
     });
