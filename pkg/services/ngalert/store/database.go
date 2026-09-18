@@ -4,15 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TimeNow makes it possible to test usage of time
@@ -30,32 +25,28 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
-// DBstore stores the alert definitions and instances in the database.
+// DBstore stores the Alertmanager configuration, admin configuration, alert instances and images
+// in the database. Alert rules live in ngalert/store/rules and provisioning provenance lives in
+// ngalert/store/provenance; neither is re-exported here on purpose, so that every caller names the
+// store it actually depends on.
 type DBstore struct {
-	Cfg            setting.UnifiedAlertingSettings
+	// FeatureToggles has no use inside this package, but is read by callers that only hold a
+	// DBstore.
+	// TODO(rule-store-split): inject featuremgmt.FeatureToggles into
+	// pkg/services/provisioning.ProvisioningServiceImpl directly and drop this field.
 	FeatureToggles featuremgmt.FeatureToggles
 	SQLStore       db.DB
 	Logger         log.Logger
-	AccessControl  accesscontrol.AccessControl
-	Bus            bus.Bus
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg,
 	featureToggles featuremgmt.FeatureToggles,
 	sqlstore db.DB,
-	folderService folder.Service,
-	dashboards dashboards.DashboardService,
-	ac accesscontrol.AccessControl,
-	bus bus.Bus,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:            cfg.UnifiedAlerting,
 		FeatureToggles: featureToggles,
 		SQLStore:       sqlstore,
 		Logger:         log.New("ngalert.dbstore"),
-		AccessControl:  ac,
-		Bus:            bus,
 	}
 	return &store, nil
 }
