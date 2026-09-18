@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/apis/example"
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
@@ -195,7 +196,11 @@ func TestIntegrationWatch(t *testing.T) {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
-			assert.NoError(t, err)
+			require.NoError(t, err)
+			// Anchor the first LIST RV in durable history so asynchronous watch startup
+			// cannot expire an empty-store cursor before the delivery assertions run.
+			baseline := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "baseline", Namespace: "watch-baseline"}}
+			require.NoError(t, store.Create(ctx, storagetesting.KeyFunc(baseline.Namespace, baseline.Name), baseline, &example.Pod{}, 0))
 			storagetesting.RunTestWatch(ctx, t, store)
 		})
 	}
@@ -355,6 +360,48 @@ func TestEtcdWatchSemantics(t *testing.T) {
 			defer destroyFunc()
 			assert.NoError(t, err)
 			storagetesting.RunWatchSemantics(ctx, t, store)
+		})
+	}
+}
+
+func TestKVWatchExpiredResourceVersion(t *testing.T) {
+	for _, allowBookmarks := range []bool{false, true} {
+		t.Run(fmt.Sprintf("allowWatchBookmarks=%t", allowBookmarks), func(t *testing.T) {
+			ctx, store, destroyFunc, err := testSetup(t, withStorageType(StorageTypeFile))
+			require.NoError(t, err)
+			defer destroyFunc()
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+
+			opts := storage.ListOptions{
+				ResourceVersion:   "1",
+				Recursive:         true,
+				Predicate:         storage.Everything,
+				SendInitialEvents: new(false),
+			}
+			opts.Predicate.AllowWatchBookmarks = allowBookmarks
+			w, err := store.Watch(ctx, storagetesting.KeyFunc("expired", ""), opts)
+			require.NoError(t, err)
+			defer w.Stop()
+
+			select {
+			case event, ok := <-w.ResultChan():
+				require.True(t, ok, "watch closed without reporting expiry")
+				require.Equal(t, watch.Error, event.Type)
+				s, ok := event.Object.(*metav1.Status)
+				require.True(t, ok, "expected a status object, got %T", event.Object)
+				require.EqualValues(t, 410, s.Code)
+				require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+				require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+			case <-ctx.Done():
+				t.Fatal("watch did not report expiry")
+			}
+			select {
+			case _, ok := <-w.ResultChan():
+				require.False(t, ok, "expired watch must close without delivering more events")
+			case <-ctx.Done():
+				t.Fatal("expired watch did not close")
+			}
 		})
 	}
 }
