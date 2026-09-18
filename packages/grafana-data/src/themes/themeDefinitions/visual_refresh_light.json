@@ -148,7 +148,8 @@
       "borderColor": "palette.neutral200"
     },
     "checkbox": {
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange700",
+      "activeBackgroundHover": "palette.orange800"
     },
     "drawer": {
       "background": "palette.neutral50",
@@ -165,7 +166,8 @@
       "borderColor": "palette.neutral200"
     },
     "switch": {
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange700",
+      "activeBackgroundHover": "palette.orange800"
     },
     "tooltip": {
       "borderColor": "palette.neutral200"
@@ -199,6 +201,9 @@
         { "background": "palette.lavender50", "text": "palette.lavender800" },
         { "background": "palette.rose50", "text": "palette.rose800" }
       ]
+    },
+    "textHighlight": {
+      "background": "palette.amber600"
     },
     "input": {
       "background": "palette.white"

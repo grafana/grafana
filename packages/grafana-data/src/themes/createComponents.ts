@@ -244,12 +244,12 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       borderColor: 'transparent',
     },
     checkbox: {
-      activeBackground: colors.accent.background,
-      activeBackgroundHover: colors.accent.backgroundEmphasis,
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
     },
     switch: {
-      activeBackground: colors.accent.background,
-      activeBackgroundHover: colors.accent.backgroundEmphasis,
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
     },
     panel: {
       padding: 1,
@@ -292,7 +292,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     textHighlight: {
       text: colors.warning.contrastText,
-      background: colors.warning.background,
+      background: colors.warning.main,
     },
     horizontalDrawer: {
       defaultHeight: 400,

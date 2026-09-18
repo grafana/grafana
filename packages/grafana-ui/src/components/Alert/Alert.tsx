@@ -52,6 +52,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
+    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
@@ -67,10 +68,30 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.surface}>
-          <Box paddingRight={2}>
+        <Box
+          data-testid={selectors.components.Alert.alertV2(severity)}
+          display="flex"
+          backgroundColor={severity}
+          borderRadius="lg"
+          paddingY={1}
+          paddingX={2}
+          borderStyle="solid"
+          borderColor={severity}
+          alignItems="stretch"
+          boxShadow={elevated ? 'z3' : undefined}
+        >
+          <Box
+            display="flex"
+            paddingTop={visualRefreshEnabled ? 0.5 : 1}
+            paddingBottom={visualRefreshEnabled ? 0.5 : 0}
+            paddingRight={2}
+          >
             <div className={styles.iconBox}>
-              <Icon size="lg" name={getIconFromSeverity(severity)} className={styles.icon} />
+              <Icon
+                size={visualRefreshEnabled ? 'lg' : 'xl'}
+                name={getIconFromSeverity(severity)}
+                className={styles.icon}
+              />
             </div>
           </Box>
 
@@ -103,7 +124,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </div>
+        </Box>
       </div>
     );
   }
@@ -134,16 +155,11 @@ const getStyles = (
 ) => {
   const color = theme.colors[severity];
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const surfaceBackground = visualRefreshEnabled ? color.subtleBackground : color.transparent;
-  const surfaceBorder = visualRefreshEnabled ? color.subtleBorder : color.borderTransparent;
   // In light mode, color.text is claimed by the matching solid button (a different shade), so the
   // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
   // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
   const iconColor = color.text;
   const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
-  const iconBackground = visualRefreshEnabled
-    ? `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`
-    : 'transparent';
 
   return {
     wrapper: css({
@@ -164,24 +180,26 @@ const getStyles = (
         zIndex: -1,
       },
     }),
-    surface: css({
-      display: 'flex',
-      alignItems: 'center',
-      borderRadius: theme.shape.radius.lg,
-      padding: theme.spacing(1, 2),
-      border: `1px solid ${surfaceBorder}`,
-      backgroundColor: surfaceBackground,
-      boxShadow: elevated ? theme.shadows.z3 : undefined,
-    }),
-    iconBox: css({
-      display: 'inline-flex',
-      padding: theme.spacing(1),
-      borderRadius: theme.shape.radius.default,
-      backgroundColor: iconBackground,
-    }),
-    icon: css({
-      color: iconColor,
-    }),
+    iconBox: css(
+      {
+        alignSelf: 'flex-start',
+        display: 'inline-flex',
+        borderRadius: theme.shape.radius.default,
+      },
+      visualRefreshEnabled && {
+        backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+        padding: theme.spacing(1),
+      }
+    ),
+    icon: css(
+      {
+        color: iconColor,
+      },
+      !visualRefreshEnabled && {
+        position: 'relative',
+        top: '-1px',
+      }
+    ),
     title: css({
       color: textColor,
     }),
