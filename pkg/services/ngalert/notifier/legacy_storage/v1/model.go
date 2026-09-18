@@ -513,6 +513,8 @@ func (r *Route) ResourceID() string {
 type Provenance string
 
 type PostableApiReceiver struct {
+	ResourceMetadata
+
 	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }
