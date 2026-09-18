@@ -227,5 +227,8 @@
         "border": "palette.neutral200"
       }
     }
+  },
+  "typography": {
+    "fontWeightBold": 600
   }
 }
