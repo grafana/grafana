@@ -432,6 +432,10 @@ describe('TextNGPanel', () => {
   });
 
   describe('pagination', () => {
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
     const reportRowIndex: InterpolateFunction = (target, scopedVars) => {
       const rowIndex = scopedVars?.__dataContext?.value.rowIndex;
       return rowIndex === undefined ? target : `row-${rowIndex}`;
@@ -525,11 +529,35 @@ describe('TextNGPanel', () => {
       expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('row');
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     });
+
+    // A panel saved while the flag was on keeps its per-row mode, so the gate has to
+    // hold at render time and not only in the options pane.
+    it('renders a saved per-row panel once, unpaged, when the text.newFeatures flag is off', () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+
+      setupPaged({ pageSize: 10 });
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('row');
+      expect(renderedRows()).toEqual([]);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+    });
   });
 
   describe('frame selector', () => {
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
     const frameA = toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] });
     const frameB = toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] });
+
+    // Reports how many frames the render pass was handed, so the flag-off case covers
+    // the selection itself and not only the missing picker.
+    const reportFrameCount: InterpolateFunction = (_target, scopedVars) =>
+      `${scopedVars?.__dataContext?.value.data.length} frames`;
 
     it('does not show a frame picker for a single frame', () => {
       setup(createProps(replaceVariablesMock, { data: createData([frameA]) }), CoreApp.Dashboard);
@@ -576,6 +604,21 @@ describe('TextNGPanel', () => {
 
       expect(within(left).getByRole('combobox')).toHaveValue('Frame C');
       expect(center).toHaveTextContent('1 - 10 of 150 rows');
+    });
+
+    it('hides the picker and ignores a saved frame index when the text.newFeatures flag is off', () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+      const props = createProps(reportFrameCount, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown, frameIndex: 1 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('2 frames');
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
     it('holds the frame selector in the editor footer while editing, not in a row of its own', async () => {

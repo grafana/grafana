@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.33.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.32.0 // @grafana/grafana-backend-group
-	cloud.google.com/go/storage v1.66.0 // @grafana/grafana-backend-group
+	cloud.google.com/go/storage v1.67.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
 	filippo.io/age v1.3.2 // @grafana/identity-access-team
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // @grafana/data-sources-plugins
@@ -75,7 +75,7 @@ require (
 	github.com/go-logr/logr v1.4.4 // @grafana/grafana-app-platform-squad
 	github.com/go-openapi/loads v0.25.2 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.33.0 // @grafana/alerting-backend
-	github.com/go-openapi/strfmt v0.27.0 // @grafana/alerting-backend
+	github.com/go-openapi/strfmt v0.27.2 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
@@ -90,7 +90,7 @@ require (
 	github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5 // @grafana/grafana-app-platform-squad
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
-	github.com/googleapis/gax-go/v2 v2.24.0 // @grafana/grafana-backend-group
+	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8 // @grafana/alerting-backend
