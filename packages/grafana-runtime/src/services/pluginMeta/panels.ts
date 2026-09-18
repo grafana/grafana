@@ -66,7 +66,6 @@ function setMetas(metas: PluginMetasResponse | null) {
 }
 
 function seedFromBootData(): boolean {
-  // The multi-tenant frontend service sends no panels in boot data, so there is nothing to seed from.
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return false;
   }
