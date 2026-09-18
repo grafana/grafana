@@ -1,8 +1,8 @@
 rules:
-  - id: resource-search-requires-field-values
+  - id: direct-go-resource-search-requires-field-values
     languages: [go]
     message: >-
-      New ResourceSearchRequest clients must request FIELD_VALUES and decode the
+      New direct Go ResourceSearchRequest clients must request FIELD_VALUES and decode the
       response's actual ResultFormat for mixed-version compatibility. Suppress
       this rule at the allocation with a reason when compatibility requires a
       different format.

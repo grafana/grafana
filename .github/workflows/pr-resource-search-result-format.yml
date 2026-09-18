@@ -1,4 +1,4 @@
-name: Resource Search Result Format
+name: Direct Go Resource Search Result Format
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   check:
-    name: Require FIELD_VALUES for new search clients
+    name: Require FIELD_VALUES for new direct Go search clients
     runs-on: ubuntu-x64-small
     timeout-minutes: 5
     container:
@@ -24,13 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Test rule
         run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-field-values.yaml pkg/storage/unified/semgrep/resource-search-field-values.go
 
-      - name: Check new search clients
+      - name: Check new direct Go search clients
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           SEMGREP_SEND_METRICS: 'off'
