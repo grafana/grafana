@@ -15,7 +15,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
@@ -24,15 +23,15 @@ var (
 )
 
 type RouteService interface {
-	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error)
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (v1.ManagedRoutes, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error)
 	DeleteManagedRoute(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string, user identity.Requester) error
-	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error)
-	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
+	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, user identity.Requester) (*v1.ManagedRoute, error)
+	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, version string, user identity.Requester) (*v1.ManagedRoute, error)
 }
 
 type MetadataService interface {
-	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*legacy_storage.ManagedRoute) (map[string]alerting_models.RoutePermissionSet, error)
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*v1.ManagedRoute) (map[string]alerting_models.RoutePermissionSet, error)
 }
 
 type legacyStorage struct {

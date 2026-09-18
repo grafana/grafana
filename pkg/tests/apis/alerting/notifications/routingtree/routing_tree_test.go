@@ -32,7 +32,6 @@ import (
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -542,7 +541,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		t.Helper()
 		routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
-		managedRoute := legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &route)
+		managedRoute := v1model.NewManagedRoute(models.DefaultRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
 		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
@@ -961,10 +960,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Helper()
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
-			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
+			_ = db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
+		_ = db.SetProvenance(ctx, v1model.NewManagedRoute(models.DefaultRoutingTreeName, &v1model.Route{}), org1.OrgID, "")
 		_ = adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
@@ -982,7 +981,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		allCreatedRoutes[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
@@ -1066,7 +1065,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1088,14 +1087,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
 
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					assert.Error(t, err)
 					assert.ErrorContains(t, err, "provenance")
 
 					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
@@ -1510,7 +1509,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
-	managedRoute := legacy_storage.NewManagedRoute(name, r)
+	managedRoute := v1model.NewManagedRoute(name, r)
 	allPermissions := models.NewRoutePermissionSet()
 	allPermissions.Set(models.RoutePermissionWrite, true)
 	allPermissions.Set(models.RoutePermissionDelete, true)
