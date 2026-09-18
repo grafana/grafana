@@ -35,7 +35,7 @@ To add a dashboard annotation query that uses TestData:
 1. Select the **Annotations** tab.
 1. Click **Add annotation query**.
 1. Enter a name for the annotation.
-1. Select the **TestData** data source.
+1. From the **Data source** drop-down, select **TestData**. The drop-down only lists data sources that support annotations.
 1. Set the **Count** field to the number of events you want to generate. Default: `10`.
 1. Click **Save dashboard**.
 
@@ -43,14 +43,17 @@ TestData distributes the generated events evenly across the current dashboard ti
 
 ## Use the Annotations scenario in a panel
 
-You can also generate annotation data as a panel query using the **Annotations** scenario. This returns annotation-shaped data frames directly to the panel instead of registering a dashboard-wide annotation query.
+You can also generate annotation data as a panel query using the **Annotations** scenario. This scenario returns data on the annotations data topic, so Grafana renders the events as markers overlaid on the panel rather than plotting them as a series.
 
-To use the Annotations scenario:
+Because the Annotations scenario doesn't return a visible series on its own, add a second query that returns data to give the markers something to overlay:
 
 1. Add or edit a panel and select the **TestData** data source.
-1. Choose the **Annotations** scenario from the **Scenario** drop-down.
-1. Set the **Count** field to the number of events you want to generate. Default: `10`.
+1. On the first query, choose a scenario that returns a series, such as **Random Walk**, from the **Scenario** drop-down.
+1. Add a second query, then choose the **Annotations** scenario from its **Scenario** drop-down.
+1. Set the **Count** field on the Annotations query to the number of events you want to generate. Default: `10`.
 1. Click **Run queries**.
+
+Grafana plots the series from the first query and overlays the annotation markers on top. If you run the Annotations scenario by itself, the query returns annotation events but the panel doesn't display a visible series.
 
 For a reference of all TestData scenarios, refer to the [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/).
 
@@ -67,7 +70,7 @@ This example creates a time series panel with simulated data, then adds a TestDa
 1. Select the **Annotations** tab.
 1. Click **Add annotation query**.
 1. Enter a name for the annotation, for example `Test events`.
-1. Select the **TestData** data source.
+1. From the **Data source** drop-down, select **TestData**.
 1. Set the **Count** field to `5`.
 1. Click **Save dashboard**.
 
