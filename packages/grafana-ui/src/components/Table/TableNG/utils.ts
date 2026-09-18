@@ -2129,14 +2129,9 @@ export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => 
 /**
  * Builds a `rowClass` that stripes every other row of data.
  *
- * The parity is counted over the rows themselves rather than taken from react-data-grid's own
- * `rdg-row-odd`, which counts every row it renders: a nested table interleaves a container row
- * after each parent that has nested data, so that parity landed on the containers and never on a
- * parent row. Counting only `__depth === 0` rows also keeps the rhythm steady as rows are expanded
- * and collapsed, and when only some parents have anything to expand.
- *
- * Containers are marked rather than striped, because the hover overlay has to skip them: hovering
- * a row of an inner table also hovers the container that table sits in.
+ * react-data-grid's `rdg-row-odd` counts nested container rows, making parent-row parity depend on
+ * which rows have nested data. Count only depth-0 data rows to keep the stripe pattern stable.
+ * Containers get a separate class so hover styles can exclude them.
  */
 export function makeStripedRowClass(rows: TableRow[]): (row: TableRow) => string | undefined {
   const striped = new WeakSet<TableRow>();
