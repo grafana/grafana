@@ -78,7 +78,10 @@ func extractPath(obj map[string]any, path string) (any, error) {
 		}
 		sub, err := extractDotPath(elemMap, post)
 		if err != nil {
-			return nil, fmt.Errorf("path %q: %w", path, err)
+			// Union-shaped elements may not have this path, such as a legacy
+			// string datasource reference beside a structured reference.
+			out = append(out, nil)
+			continue
 		}
 		out = append(out, sub)
 	}
