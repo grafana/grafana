@@ -36,18 +36,25 @@ jobs:
           SEMGREP_SEND_METRICS: 'off'
         shell: bash
         run: |
-          files=()
-          while IFS= read -r -d '' file; do
-            files+=("$file")
-          done < <(git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest' -- '*.go' \
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          targets_file=$(mktemp)
+          git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest' -- '*.go' \
             ':(exclude)**/*_test.go' \
             ':(exclude)pkg/storage/unified/resourcepb/**' \
             ':(exclude)pkg/storage/unified/testing/**' \
-            ':(exclude)pkg/storage/unified/semgrep/**')
+            ':(exclude)pkg/storage/unified/semgrep/**' > "$targets_file"
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$targets_file"
 
           if (( ${#files[@]} == 0 )); then
-            exit 0
+            echo "::error::No direct Go ResourceSearchRequest constructions found"
+            exit 1
           fi
+          echo "Scanning ${#files[@]} files containing direct Go ResourceSearchRequest constructions"
 
           semgrep scan --strict --error \
             --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
