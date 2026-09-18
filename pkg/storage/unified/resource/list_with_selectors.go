@@ -253,13 +253,19 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*B
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other
 // list path. The two encode a position differently, sort values against the index
-// and a name against the store, so continuing with the wrong one would silently
-// restart from the first result.
+// and a name or a row offset against the store, so continuing with the wrong one
+// would silently restart from the first result.
+//
+// Only the search path records sort values, and every search page has at least one
+// sort field, so a token without them came from a store scan. Checking it this way
+// round also covers the SQL backend, whose token records an offset this type does
+// not even decode.
 func tokenFromOtherListPath(token *ContinueToken, searchPath bool) bool {
+	fromSearch := len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
 	if searchPath {
-		return token.Name != "" || token.Namespace != ""
+		return !fromSearch
 	}
-	return len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
+	return fromSearch
 }
 
 // filterSelectors drops the requirements the index cannot answer, so a request
@@ -331,6 +337,25 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 
 	if req.ResourceVersion > 0 || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
 		return false
+	}
+
+	// A client that started paging on the store scan has to finish there, even if
+	// this gate would now pick search: its token records a position in the store,
+	// which search cannot resume from. Without this, a client paging while the gate
+	// changes would get its next page rejected.
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, true) {
+			return false
+		}
+	}
+
+	// Labels are indexed for every kind, so a list filtered only by labels does not
+	// need to know the kind. Selectable fields are different: they are mapped into
+	// the index from the manifests compiled into this binary, so a field selector on
+	// any other group would ask the index for a field it never indexed and get
+	// nothing back.
+	if len(req.Options.Fields) == 0 {
+		return true
 	}
 
 	// TODO have a way of including enterprise manifests
