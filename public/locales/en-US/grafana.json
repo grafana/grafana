@@ -2662,6 +2662,9 @@
         "text-provisioned": "Provisioned"
       }
     },
+    "proxied-alerting-route": {
+      "text-redirecting": "Redirecting…"
+    },
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
@@ -5793,16 +5796,24 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
+      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-visualization-heading": "Add a visualization",
+      "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "build-assistant": "Build your dashboard with Assistant",
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
+      "grid-auto": "Auto",
+      "grid-custom": "Custom",
+      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
@@ -6788,7 +6799,7 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "description-as-subtitle": "as subtitle"
+        "description-as-subtitle": "Use as subtitle"
       }
     }
   },
@@ -8954,6 +8965,7 @@
     },
     "rich-history-notification": {
       "query-copied": "Query copied to clipboard",
+      "query-copy-failed": "Could not copy query to clipboard",
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
@@ -9198,6 +9210,7 @@
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
+      "link-copy-failed": "Could not copy link to clipboard",
       "overview": "Overview",
       "path": "Path",
       "route": "Route",
@@ -15136,7 +15149,7 @@
     },
     "public-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
       "public-ack": "I understand that this entire dashboard will be public.*",

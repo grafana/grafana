@@ -1,8 +1,12 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
+import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
@@ -47,9 +51,18 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   })),
 }));
 
+jest.mock('app/features/dashboard-prompt/useDashboardGenerationAvailable', () => ({
+  useDashboardGenerationAvailable: jest.fn(() => ({ isAvailable: false, isLoading: false })),
+}));
+
+jest.mock('app/features/dashboard-prompt/DashboardLandingPrompt', () => ({
+  DashboardLandingPrompt: () => <div data-testid="dashboard-landing-prompt" />,
+}));
+
 const mockUseGetResourceRepositoryView = jest.mocked(
   require('app/features/provisioning/hooks/useGetResourceRepositoryView').useGetResourceRepositoryView
 );
+const mockUseDashboardGenerationAvailable = jest.mocked(useDashboardGenerationAvailable);
 
 const mockSearchParams = new URLSearchParams();
 jest.spyOn(require('react-router-dom-v5-compat'), 'useSearchParams').mockReturnValue([mockSearchParams]);
@@ -163,4 +176,64 @@ it('renders with buttons disabled when repository is read-only', () => {
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
+});
+
+describe('new layouts empty state', () => {
+  const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+
+  afterEach(() => {
+    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
+  });
+
+  function setupScene(args: Partial<DashboardSceneState> = {}) {
+    config.featureToggles.dashboardNewLayouts = true;
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      body: AutoGridLayoutManager.createEmpty(),
+      ...args,
+    });
+    render(<DashboardEmpty dashboard={dashboard} canCreate />);
+    return dashboard;
+  }
+
+  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', () => {
+    const dashboard = setupScene();
+
+    expect(screen.getByText('Select layout')).toBeInTheDocument();
+    expect(screen.queryByText('Or build it yourself')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add');
+  });
+
+  it('shows a loading indicator and leaves the add pane closed while planning is resolving', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: true });
+
+    const dashboard = setupScene();
+
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dashboard-landing-prompt')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('shows the assistant landing without opening the add pane when planning is available', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
+
+    const dashboard = setupScene();
+
+    expect(screen.getByTestId('dashboard-landing-prompt')).toBeInTheDocument();
+    expect(screen.getByText('Or build it yourself')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('does not show the assistant landing when planning is available but the dashboard is not new', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
+
+    setupScene({ uid: 'existing-uid' });
+
+    expect(screen.queryByTestId('dashboard-landing-prompt')).not.toBeInTheDocument();
+    expect(screen.getByText('Select layout')).toBeInTheDocument();
+  });
 });
