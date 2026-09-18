@@ -183,7 +183,7 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 
 // validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
 func validateManagedRouteName(name string) error {
-	if name = strings.TrimSpace(name); name == "" {
+	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("route name is required")
 	}
 	// Colon in names confuses RBAC. Make sure we do not allow that.
@@ -262,7 +262,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
 		var defaultRcv *v1.PostableApiReceiver
-		for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
+		for _, rcv := range defaultCfg.Receivers {
 			if rcv.Name == defaultCfg.AlertmanagerConfig.Route.Receiver {
 				defaultRcv = rcv
 				break
@@ -271,7 +271,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 		if defaultRcv == nil {
 			return nil, fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
 		}
-		rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, defaultRcv)
+		rev.Config.Receivers = append(rev.Config.Receivers, defaultRcv)
 	}
 
 	return rev.UpdateNamedRoute(models.DefaultRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
@@ -296,18 +296,13 @@ func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {
 }
 
 func (rev *ConfigRevision) validateReceiverReferences(route v1.Route) error {
-	receivers := rev.GetReceiversNames()
-	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	return route.ValidateReceivers(receivers)
+	return route.ValidateReceivers(rev.GetReceiversNames())
 }
 
 func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error {
 	timeIntervals := map[string]struct{}{}
-	for _, mt := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
-	for _, mt := range rev.Config.AlertmanagerConfig.TimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
+	for _, ti := range rev.Config.TimeIntervals {
+		timeIntervals[ti.Title] = struct{}{}
 	}
 	return route.ValidateTimeIntervals(timeIntervals)
 }
@@ -339,6 +334,38 @@ func renameReceiverInRoute(oldName, newName string, routes ...*v1.Route) int {
 		updated += renameReceiverInRoute(oldName, newName, route.Routes...)
 	}
 	return updated
+}
+
+// TimeIntervalUsedByRoutes checks if a time interval is used in any routes.
+func (rev *ConfigRevision) TimeIntervalUsedByRoutes(name string) bool {
+	if isTimeIntervalInUse(name, []*v1.Route{rev.Config.AlertmanagerConfig.Route}) {
+		return true
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		if isTimeIntervalInUse(name, []*v1.Route{r}) {
+			return true
+		}
+	}
+	return false
+}
+
+// isTimeIntervalInUse checks if a time interval is used in a route or any of its sub-routes.
+func isTimeIntervalInUse(name string, routes []*v1.Route) bool {
+	for _, route := range routes {
+		if route == nil {
+			continue
+		}
+		if slices.Contains(route.MuteTimeIntervals, name) {
+			return true
+		}
+		if slices.Contains(route.ActiveTimeIntervals, name) {
+			return true
+		}
+		if isTimeIntervalInUse(name, route.Routes) {
+			return true
+		}
+	}
+	return false
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated

@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -92,8 +93,14 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if len(partial.Items) > 0 {
+			item := partial.Items[0]
+
+			if req, ok := authInfo.(identity.Requester); ok {
+				item.Role = string(req.GetOrgRole())
+			}
+
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(partial.Items[0])
+			_ = json.NewEncoder(w).Encode(item)
 			return
 		}
 	}

@@ -5,7 +5,7 @@
  * and a trimmed elements map (title, description, vizConfig.group only).
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -22,7 +22,7 @@ interface TrimmedPanelKind {
   kind: 'Panel';
   spec: {
     title: string;
-    description: string;
+    description?: string;
     vizConfig: {
       kind: 'VizConfig';
       group: string;

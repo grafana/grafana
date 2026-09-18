@@ -14,7 +14,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -43,15 +42,17 @@ const (
 // that would otherwise be built from cfg.IndexSnapshotBucketURL. Used by
 // the SQL wiring layer to inject a KV-backed store.
 func NewSearchOptions(
-	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	var embeddingConfig *resource.EmbeddingConfigRegistry
+	if cfg.EnableSearch || cfg.VectorIndexingEnabled {
+		embeddingConfig = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+	}
+	if cfg.EnableSearch {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -86,10 +87,9 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// MergeManifestsByKind is the single point a future live-manifest source will
-		// be added to; the built-in manifests are the only source today.
+		// Search-field ownership is independent of embedding declarations.
 		manifests := resource.MergeManifestsByKind(resource.AppManifests())
-		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
@@ -118,10 +118,22 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
+			IndexDeletedDocuments:          cfg.IndexDeletedDocuments,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+			},
+			// From the garbage collection settings, so trash and storage cannot
+			// disagree about what is expired.
+			TrashRetention: TrashRetentionConfig{
+				// Dry run counts what it would remove and deletes nothing, so trash
+				// stays restorable and this stays off.
+				Enabled:          cfg.EnableGarbageCollection && !cfg.GarbageCollectionDryRun,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 		}, indexMetrics)
 
@@ -142,6 +154,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
+			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,
@@ -153,9 +166,11 @@ func NewSearchOptions(
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 			SearchFields:                    searchFields,
+			EmbeddingConfig:                 embeddingConfig,
 		}, nil
 	}
 	return resource.SearchOptions{
+		EmbeddingConfig: embeddingConfig,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

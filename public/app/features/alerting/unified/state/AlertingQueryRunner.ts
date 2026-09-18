@@ -1,6 +1,6 @@
 import { reject } from 'lodash';
 import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscribable, of } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
+import { catchError, finalize, map, share } from 'rxjs/operators';
 
 import {
   type DataFrameJSON,
@@ -15,7 +15,8 @@ import {
   withLoadingIndicator,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataSourceWithBackend, type FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { DataSourceWithBackend, type FetchResponse, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
@@ -39,10 +40,7 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor(
-    private backendSrv = getBackendSrv(),
-    private dataSourceSrv = getDataSourceSrv()
-  ) {
+  constructor(private backendSrv = getBackendSrv()) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -51,50 +49,49 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  async run(queries: AlertQuery[], condition: string) {
+  async run(queries: AlertQuery[], condition: string): Promise<void> {
     const queriesToRun = await this.prepareQueries(queries);
 
-    // if we don't have any queries to run we just bail
     if (queriesToRun.length === 0) {
       return;
     }
 
-    // if the condition isn't part of the queries to run, try to run the alert rule without it.
-    // It indicates that the "condition" node points to a non-existent node. We still want to be able to evaluate the other nodes.
+    // the condition can point to a node that doesn't exist or was excluded, evaluate the rest anyway
     const isConditionAvailable = queriesToRun.some((query) => query.refId === condition);
     const ruleCondition = isConditionAvailable ? condition : '';
 
-    this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition).subscribe({
-      next: (dataPerQuery) => {
-        const nextResult = applyChange(dataPerQuery, (refId, data) => {
-          const previous = this.lastResult[refId];
-          const preProcessed = preProcessPanelData(data, previous);
-          return setStructureRevision(preProcessed, previous);
+    return new Promise<void>((resolve) => {
+      this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition)
+        .pipe(finalize(resolve))
+        .subscribe({
+          next: (dataPerQuery) => {
+            const nextResult = applyChange(dataPerQuery, (refId, data) => {
+              const previous = this.lastResult[refId];
+              const preProcessed = preProcessPanelData(data, previous);
+              return setStructureRevision(preProcessed, previous);
+            });
+
+            const [_, linkErrors] = createDAGFromQueriesSafe(queries);
+            linkErrors.forEach((linkError) => {
+              nextResult[linkError.source] = createLinkErrorPanelData(linkError);
+            });
+
+            this.lastResult = nextResult;
+            this.subject.next(this.lastResult);
+          },
+
+          error: (error: Error) => {
+            this.lastResult = mapErrorToPanelData(this.lastResult, error);
+            this.subject.next(this.lastResult);
+          },
         });
-
-        // add link errors to the panelData and mark them as errors
-        const [_, linkErrors] = createDAGFromQueriesSafe(queries);
-        linkErrors.forEach((linkError) => {
-          nextResult[linkError.source] = createLinkErrorPanelData(linkError);
-        });
-
-        this.lastResult = nextResult;
-        this.subject.next(this.lastResult);
-      },
-
-      error: (error: Error) => {
-        this.lastResult = mapErrorToPanelData(this.lastResult, error);
-        this.subject.next(this.lastResult);
-      },
     });
   }
 
-  // this function will omit any invalid queries and all of its descendants from the list of queries
-  // to do this we will convert the list of queries into a DAG and walk the invalid node's output edges recursively
+  // omits invalid queries and, by walking the DAG, everything that depends on them
   async prepareQueries(queries: AlertQuery[]): Promise<AlertQuery[]> {
     const queriesToExclude: string[] = [];
 
-    // find all invalid nodes and omit those
     for (const query of queries) {
       const refId = query.model.refId;
 
@@ -103,7 +100,7 @@ export class AlertingQueryRunner {
         continue;
       }
 
-      const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
+      const dataSourceInstance = await getDataSourceInstance(query.datasourceUid);
       const skipRunningQuery =
         dataSourceInstance instanceof DataSourceWithBackend &&
         dataSourceInstance.filterQuery &&
@@ -114,18 +111,16 @@ export class AlertingQueryRunner {
       }
     }
 
-    // exclude nodes that failed to link and their child nodes from the final queries array by trying to parse the graph
-    // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
+    // ⚠️ dependent nodes have to be omitted too, otherwise we evaluate a graph with missing references
     const [cleanGraph] = createDAGFromQueriesSafe(queries);
     const cleanNodes = Object.keys(cleanGraph.nodes);
 
-    // find descendant nodes of data queries that have been excluded
     queriesToExclude.forEach((refId) => {
       const descendants = getDescendants(refId, cleanGraph);
       queriesToExclude.push(...descendants);
     });
 
-    // also exclude all nodes that aren't in cleanGraph, this means they point to other broken nodes
+    // nodes missing from cleanGraph point at broken nodes
     const nodesNotInGraph = queries.filter((query) => !cleanNodes.includes(query.refId));
     nodesNotInGraph.forEach((node) => {
       queriesToExclude.push(node.refId);
@@ -227,7 +222,6 @@ const mapToPanelData = (
     for (const [refId, result] of Object.entries(data.results)) {
       const { error, status, frames = [] } = result;
 
-      // extract errors from the /eval results
       const errors = error ? [{ message: error, refId, status }] : [];
 
       results[refId] = {

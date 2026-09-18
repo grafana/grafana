@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -8,7 +10,7 @@ import { type DashboardQueryResult, type LocationInfo } from 'app/features/searc
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { emptyCtaClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { DashboardTabError } from './DashboardTabError';
 import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
@@ -24,7 +26,8 @@ interface Props {
 }
 
 export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange, density }: Props) {
-  const styles = useStyles2(getStyles);
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const styles = useStyles2(getStyles, redesignEnabled);
 
   if (loading) {
     return <PageLoader text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />;
@@ -53,7 +56,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               <LinkButton
                 icon="plus"
                 href="/dashboard/new"
-                onClick={() => emptyCtaClicked({ cta_type: 'create_dashboard' })}
+                onClick={() =>
+                  ctaClicked({ surface: 'recent_tab', action: 'create_dashboard', placement: 'empty_state' })
+                }
               >
                 <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
               </LinkButton>
@@ -62,7 +67,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
                 icon="apps"
                 href="/dashboards"
                 variant="secondary"
-                onClick={() => emptyCtaClicked({ cta_type: 'browse_dashboards' })}
+                onClick={() =>
+                  ctaClicked({ surface: 'recent_tab', action: 'browse_dashboards', placement: 'empty_state' })
+                }
               >
                 <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
               </LinkButton>
@@ -102,10 +109,10 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
   list: css({
     listStyle: 'none',
-    padding: 0,
+    padding: theme.spacing(0, redesign ? 0 : 0.5),
     margin: 0,
   }),
 });

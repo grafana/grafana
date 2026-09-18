@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -77,6 +78,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id := &authn.Identity{
 		AuthenticatedBy: login.JWTModule,
 		AuthID:          sub,
+		OrgID:           r.OrgID,
 		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
@@ -128,11 +130,14 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 		externalOrgs, err := s.extractOrgs(claims)
 		if err != nil {
-			s.log.Warn("Failed to extract orgs", "err", err)
+			s.log.FromContext(ctx).Warn("Failed to extract orgs", "err", err)
 			return nil, err
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
+		id.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, externalOrgs, role)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
@@ -147,7 +152,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	return id, nil
 }
 
-func (s *JWT) IsEnabled() bool {
+func (s *JWT) IsEnabled(context.Context) bool {
 	return s.cfg.JWTAuth.Enabled
 }
 

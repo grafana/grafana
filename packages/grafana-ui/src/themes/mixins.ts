@@ -65,12 +65,13 @@ export function getFocusStyles(theme: GrafanaTheme2) {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const boxShadowPlacement = visualRefreshEnabled ? 3 : 4;
   return {
+    // transparent dotted outline is set to show focus when forced-colors are active
     outline: '2px dotted transparent',
     outlineOffset: '2px',
     boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px ${boxShadowPlacement}px ${theme.colors.accent.main}`,
     transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
     transitionDuration: '0.2s',
-    transitionProperty: 'outline, outline-offset, box-shadow',
+    transitionProperty: 'box-shadow',
   };
 }
 
@@ -88,7 +89,7 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   boxShadow: theme.shadows.z2,
   maxWidth: '800px',
   padding: theme.spacing(1),
-  borderRadius: theme.shape.radius.default,
+  borderRadius: theme.shape.radius.lg,
   zIndex: theme.zIndex.tooltip,
 });
 

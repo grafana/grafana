@@ -18,8 +18,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-func strPtr(s string) *string { return &s }
-
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
@@ -65,7 +63,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 			operation:       admission.Create,
 			minSyncInterval: 60 * time.Second,
-			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, CleanFinalizer},
+			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer, CleanFinalizer},
 			wantInterval:    60,
 			wantWorkflows:   []provisioning.Workflow{},
 			wantErr:         false,
@@ -227,7 +225,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -240,7 +238,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -253,7 +251,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -276,7 +274,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			// Only set up mock if we expect it to be called
 			if tt.obj != nil {
 				if _, ok := tt.obj.(*provisioning.Repository); ok {
-					factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
+					factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
 				}
 			}
 
@@ -319,6 +317,28 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
+	factory := NewMockFactory(t)
+
+	oldRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{IntervalSeconds: 30},
+		},
+	}
+	newRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+		Spec:       provisioning.RepositorySpec{},
+	}
+
+	factory.EXPECT().Mutate(mock.Anything, mock.Anything, oldRepo).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
 }
 
 func TestCopySecureValues(t *testing.T) {

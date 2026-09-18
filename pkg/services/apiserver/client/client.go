@@ -154,6 +154,10 @@ func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.Res
 
 // GetUsersFromMeta takes what meta accessor gives you from `GetCreatedBy` or `GetUpdatedBy` and returns the user(s), with the meta as the key
 func (h *k8sHandler) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
+	return GetUsersFromMeta(ctx, h.userService, usersMeta)
+}
+
+func GetUsersFromMeta(ctx context.Context, userService user.Service, usersMeta []string) (map[string]*user.User, error) {
 	uids := []string{}
 	ids := []int64{}
 	metaToId := make(map[string]int64)
@@ -177,7 +181,7 @@ func (h *k8sHandler) GetUsersFromMeta(ctx context.Context, usersMeta []string) (
 		}
 	}
 
-	users, err := h.userService.ListByIdOrUID(ctx, uids, ids)
+	users, err := userService.ListByIdOrUID(ctx, uids, ids)
 	if err != nil {
 		return userMap, nil
 	}

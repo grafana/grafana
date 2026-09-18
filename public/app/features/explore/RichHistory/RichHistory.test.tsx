@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -47,7 +47,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
-    loadRichHistory: jest.fn(),
+    loadRichHistory: jest.fn().mockResolvedValue(undefined),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     onClose: jest.fn(),
@@ -120,5 +120,48 @@ describe('RichHistory', () => {
     expect(updateHistorySearchFilters).toHaveBeenLastCalledWith(
       expect.objectContaining({ datasourceFilters: [], starred: true })
     );
+  });
+
+  it('clears loading and shows an error when the history fetch rejects', async () => {
+    const loadRichHistory = jest.fn().mockRejectedValue(new Error('boom'));
+    setup({ loadRichHistory });
+
+    // The debounced load fires ~300ms after mount; findBy polls until the rejection settles.
+    expect(await screen.findByRole('alert', {}, { timeout: 2000 })).toBeInTheDocument();
+    expect(screen.queryByText('Loading results...')).not.toBeInTheDocument();
+  });
+
+  it('does not surface an error when a superseded request rejects after a newer request succeeds', async () => {
+    jest.useFakeTimers();
+    try {
+      const deferreds: Array<{ resolve: () => void; reject: (reason?: unknown) => void }> = [];
+      const loadRichHistory = jest.fn(
+        () => new Promise<void>((resolve, reject) => deferreds.push({ resolve, reject }))
+      );
+      setup({ loadRichHistory });
+
+      // Mount seeds the filters, scheduling the first debounced load. Fire it (request #1).
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(loadRichHistory).toHaveBeenCalledTimes(1);
+
+      // A newer filter change schedules a second load (request #2, now the latest).
+      fireEvent.change(screen.getByPlaceholderText(/search queries/i), { target: { value: 'foo' } });
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(loadRichHistory).toHaveBeenCalledTimes(2);
+
+      // The newer request settles first; the stale older one rejects afterwards and must be ignored.
+      await act(async () => {
+        deferreds[1].resolve();
+        deferreds[0].reject(new Error('stale'));
+      });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

@@ -1,9 +1,9 @@
 import { isEqual } from 'lodash';
 
 import { CoreApp, type DataSourceApi, type ExploreUrlState, isTruthy } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { getLastUsedDatasourceUID } from 'app/core/utils/explore';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DEFAULT_RANGE } from '../../state/constants';
@@ -59,7 +59,7 @@ export async function getPaneDatasource(
   // If there's a root datasource, use it unless it's unavailable
   if (rootDatasource) {
     try {
-      return await getDatasourceSrv().get(rootDatasource);
+      return await getDataSourceInstance(rootDatasource);
     } catch (_) {}
   }
 
@@ -75,28 +75,27 @@ export async function getPaneDatasource(
 
   try {
     if (queriesDatasources.length >= 1) {
-      const datasources = (await Promise.allSettled(queriesDatasources.map((ds) => getDatasourceSrv().get(ds)))).filter(
+      const datasources = (await Promise.allSettled(queriesDatasources.map((ds) => getDataSourceInstance(ds)))).filter(
         isFulfilled
       );
 
       // if queries have multiple (valid) datasources, we return the mixed datasource
       if (datasources.length > 1) {
-        return await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
+        return await getDataSourceInstance(MIXED_DATASOURCE_NAME);
       }
 
       // otherwise we return the first datasource.
       if (datasources.length === 1) {
-        return await getDatasourceSrv().get(queriesDatasources[0]);
+        return await getDataSourceInstance(queriesDatasources[0]);
       }
     }
   } catch (_) {}
 
   // If none of the queries specify a valid datasource, we use the last used one
   return (
-    getDatasourceSrv()
-      .get(getLastUsedDatasourceUID(orgId))
+    getDataSourceInstance(getLastUsedDatasourceUID(orgId))
       // Or the default one
-      .catch(() => getDatasourceSrv().get())
+      .catch(() => getDataSourceInstance())
       .catch(() => undefined)
   );
 }
@@ -133,12 +132,10 @@ export function getQueryFilter(datasource?: DataSourceApi) {
 export async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
   const results = await Promise.allSettled(
     queries.map((query) => {
-      return getDatasourceSrv()
-        .get(query.datasource)
-        .then((ds) => ({
-          query,
-          ds,
-        }));
+      return getDataSourceInstance(query.datasource).then((ds) => ({
+        query,
+        ds,
+      }));
     })
   );
 

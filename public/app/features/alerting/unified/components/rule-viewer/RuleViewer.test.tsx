@@ -3,7 +3,7 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -279,11 +279,16 @@ describe('RuleViewer', () => {
 
         expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
 
+        // findBy* resolves as soon as the button exists — it does not retry the enabled/disabled
+        // assertion — so the state check has to be wrapped in waitFor to survive a loaded CI runner.
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
+        await waitFor(() => expect(compareButton).toBeEnabled());
+
         await user.click(screen.getByLabelText('1'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+        await waitFor(() => expect(compareButton).toBeDisabled());
       });
       it('shows version history with special case `updated_by` values', async () => {
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
@@ -406,6 +411,15 @@ describe('RuleViewer', () => {
       ]);
     });
 
+    /**
+     * The badge only appears once the Alertmanager query resolves, so checking for its absence
+     * straight after render could pass before the response is even delivered. Waiting out the
+     * findBy timeout gives the badge every chance to show up first.
+     */
+    const expectNoInhibitedBadge = async () => {
+      await expect(screen.findByText('Inhibited')).rejects.toThrow();
+    };
+
     it('should show "Inhibited" state in the title when the rule has inhibited instances', async () => {
       setAlertmanagerAlertsHandler([
         mockAlertmanagerAlert({
@@ -424,9 +438,7 @@ describe('RuleViewer', () => {
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
-      // wait for the page to settle
-      await screen.findByText('Test alert');
-      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      await expectNoInhibitedBadge();
     });
 
     it('should not show "Inhibited" when inhibited alerts belong to a different rule', async () => {
@@ -439,8 +451,20 @@ describe('RuleViewer', () => {
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
-      await screen.findByText('Test alert');
-      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      await expectNoInhibitedBadge();
+    });
+
+    it('should not show "Inhibited" for unprocessed instances of the rule', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Unprocessed, silencedBy: [], inhibitedBy: [] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      await expectNoInhibitedBadge();
     });
 
     it('should not show a stale "Inhibited" badge while re-fetching after the rule is no longer inhibited', async () => {
@@ -586,6 +610,45 @@ describe('RuleViewer', () => {
     });
   });
 
+  describe('History tab', () => {
+    const mockRule = getGrafanaRule(
+      { name: 'Test alert', uid: 'test-rule-uid' },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+    const originalStateHistory = config.unifiedAlerting.stateHistory;
+    const originalDeprecatedBackend = config.unifiedAlerting.alertStateHistoryBackend;
+
+    beforeEach(() => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.stateHistory = originalStateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = originalDeprecatedBackend;
+    });
+
+    it('shows the history tab when a backend records state history', async () => {
+      config.unifiedAlerting.stateHistory = { backend: 'annotations' };
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.getByText('History')).toBeInTheDocument();
+    });
+
+    it.each([
+      { name: 'the prometheus backend cannot answer history queries', stateHistory: { backend: 'prometheus' } },
+      { name: 'state history is turned off', stateHistory: undefined },
+    ])('hides the history tab when $name', async ({ stateHistory }) => {
+      config.unifiedAlerting.stateHistory = stateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = undefined;
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.queryByText('History')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Enrichment tab', () => {
     const mockRule = getGrafanaRule(
       {
@@ -632,7 +695,7 @@ describe('RuleViewer', () => {
         expect.objectContaining({
           ruleUid: 'test-rule-uid',
         }),
-        expect.any(Object)
+        undefined
       );
       expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });
@@ -653,7 +716,7 @@ describe('RuleViewer', () => {
         expect.objectContaining({
           ruleUid: 'test-rule-uid',
         }),
-        expect.any(Object)
+        undefined
       );
       expect(screen.getByTestId('enrichment-section')).toBeInTheDocument();
     });

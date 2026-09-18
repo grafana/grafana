@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
   EmptyState,
   LinkButton,
@@ -102,9 +104,9 @@ const ContactPointsTab = () => {
   }
 
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={2}>
       {/* TODO we can add some additional info here with a ToggleTip */}
-      <Stack direction="row" alignItems="end" justifyContent="space-between">
+      <Box display="flex" direction="row" alignItems="end" justifyContent="space-between" paddingBottom={2}>
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
@@ -115,6 +117,7 @@ const ContactPointsTab = () => {
               variant="primary"
               href="/alerting/notifications/receivers/new"
               disabled={!addContactPointAbility.granted}
+              data-testid={selectors.pages.Alerting.ContactPoints.addContactPointLink}
             >
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
@@ -131,7 +134,7 @@ const ContactPointsTab = () => {
             </Button>
           )}
         </Stack>
-      </Stack>
+      </Box>
       {error ? (
         <Alert
           title={t(

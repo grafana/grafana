@@ -86,11 +86,15 @@ export function useDetailState(frame: DataFrame) {
       (spanID: string) => makeDetailSubsectionToggle('tags', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
+    detailSummaryAttributesToggle: useCallback(
+      (spanID: string) => makeDetailSubsectionToggle('summaryAttributes', detailStates, setDetailStates)(spanID),
+      [detailStates]
+    ),
   };
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
+  subSection: 'tags' | 'process' | 'summaryAttributes' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -104,14 +108,20 @@ function makeDetailSubsectionToggle(
       detailState = old.toggleTags();
     } else if (subSection === 'process') {
       detailState = old.toggleProcess();
+    } else if (subSection === 'summaryAttributes') {
+      detailState = old.toggleSummaryAttributes();
     } else if (subSection === 'warnings') {
       detailState = old.toggleWarnings();
     } else if (subSection === 'references') {
       detailState = old.toggleReferences();
     } else if (subSection === 'stackTraces') {
       detailState = old.toggleStackTraces();
-    } else {
+    } else if (subSection === 'logs') {
       detailState = old.toggleLogs();
+    } else {
+      // Exhaustive: every subsection is handled above. Bail rather than fall through to a
+      // default toggle if a new subsection is added without its own branch.
+      return;
     }
     const newDetailStates = new Map(detailStates);
     newDetailStates.set(spanID, detailState);

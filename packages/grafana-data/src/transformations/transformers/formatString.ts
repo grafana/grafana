@@ -42,6 +42,11 @@ const splitToCapitalWords = (input: string) => {
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
   return (field: Field) =>
     field.values.map((value: string) => {
+      // String fields can hold null/undefined; calling string methods on them throws and blanks the whole panel.
+      if (value == null) {
+        return value;
+      }
+
       switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();

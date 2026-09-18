@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
@@ -297,6 +297,11 @@ export const Examples = () => {
                 aria-label="Select option"
               />
             ),
+          })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
           })}
         </Stack>
       </div>

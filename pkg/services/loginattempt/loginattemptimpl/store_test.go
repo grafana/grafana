@@ -54,7 +54,7 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 	} {
 		mockTime := beginningOfTime
 		s := &xormStore{
-			db:  db.InitTestDB(t),
+			db:  db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			now: func() time.Time { return mockTime },
 		}
 
@@ -118,7 +118,7 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 	} {
 		mockTime := beginningOfTime
 		s := &xormStore{
-			db:  db.InitTestDB(t),
+			db:  db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			now: func() time.Time { return mockTime },
 		}
 

@@ -1,1 +1,0 @@
-{"results":[{"series":[{"name":"cpu","columns":["time","mean"],"values":[[100,50],[101,"hello"],[102,52]]}]}]}

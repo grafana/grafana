@@ -90,7 +90,7 @@ export function getRepeatVariableValueSet(
 
 /**
  * Deep-clone a section-scoped variable set so duplicated rows/tabs get unique scene keys.
- * Without new keys, edit-pane selection resolves to the first variable with a matching key.
+ * Without new keys, sidebar selection resolves to the first variable with a matching key.
  */
 export function cloneSectionVariableSet(variableSet: SceneVariables | undefined): SceneVariableSet | undefined {
   if (!(variableSet instanceof SceneVariableSet)) {

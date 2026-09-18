@@ -91,7 +91,7 @@ describe('VizLegendTable', () => {
     expect(screen.queryByText(/show all/)).not.toBeInTheDocument();
   });
 
-  it('renders filterAction in the Name column header', () => {
+  it('renders filterAction in the first column header', () => {
     render(
       <VizLegendTable
         placement="bottom"
@@ -100,7 +100,9 @@ describe('VizLegendTable', () => {
         isSortable
       />
     );
-    expect(within(screen.getByText('Name').closest('th')!).getByTestId('filter')).toBeInTheDocument();
+    const [iconHeader, nameHeader] = screen.getAllByRole('columnheader');
+    expect(within(iconHeader).getByTestId('filter')).toBeInTheDocument();
+    expect(within(nameHeader).queryByTestId('filter')).not.toBeInTheDocument();
   });
 
   it('applies sr-only to headers when not sortable', () => {

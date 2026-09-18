@@ -58,18 +58,17 @@ test.describe('Canvas Panel - Scene Tests', () => {
     // Verify canvas element is visible after pan/zoom operations
     expect(await isOutsideViewport(canvasElement, canvasSceneWrapper)).toBe(false);
 
-    // Test zoom functionality
+    // Test zoom functionality: zooming in scales the element up
+    const widthBeforeZoom = (await canvasElement.boundingBox())!.width;
     await page.mouse.move(startX, startY);
     await page.keyboard.down('Control');
     await page.mouse.wheel(0, -400); // Zoom in
     await page.keyboard.up('Control');
-    // Check if canvas element is not visible after zoom operations
-    expect(await isOutsideViewport(canvasElement, canvasSceneWrapper)).toBe(true);
+    expect((await canvasElement.boundingBox())!.width).toBeGreaterThan(widthBeforeZoom);
 
-    // Test zoom reset with double-click
+    // Test zoom reset with double-click restores the original scale
     await page.mouse.dblclick(startX, startY);
-    // Verify canvas element is visible after pan/zoom operations
-    expect(await isOutsideViewport(canvasElement, canvasSceneWrapper)).toBe(false);
+    expect((await canvasElement.boundingBox())!.width).toBeCloseTo(widthBeforeZoom, -1);
   });
 });
 

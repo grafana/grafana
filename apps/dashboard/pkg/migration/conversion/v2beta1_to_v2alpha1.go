@@ -369,8 +369,9 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 		for i, step := range in.Thresholds.Steps {
 			// Preserve null values from v2beta1
 			out.Thresholds.Steps[i] = dashv2alpha1.DashboardThreshold{
-				Value: step.Value,
-				Color: step.Color,
+				Value:     step.Value,
+				ValueExpr: step.ValueExpr,
+				Color:     step.Color,
 			}
 		}
 	}

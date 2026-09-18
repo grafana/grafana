@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
@@ -21,22 +22,15 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-// Stable identity: a fresh array per render would re-trigger the component's
-// useAsync (which depends on the datasource list) on every render.
-const mockDataSourceItems = [{ name: 'active-ds', uid: 'active-ds-uid' }];
-
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceList: () => ({
-    isLoading: false,
-    items: mockDataSourceItems,
-  }),
 }));
 
 const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
   const props: RichHistoryStarredTabProps = {
     queries: [],
     loading: false,
+    loadError: false,
     totalQueries: 0,
     updateFilters: jest.fn(),
     loadMoreRichHistory: jest.fn(),
@@ -55,6 +49,10 @@ const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
       to: 7,
       starred: false,
     },
+    activeDatasources: ['active-ds'],
+    listOfDatasources: [{ name: 'active-ds', uid: 'active-ds-uid' }],
+    isLoadingDatasources: false,
+    dsListError: false,
   };
 
   Object.assign(props, propOverrides);
@@ -102,6 +100,28 @@ describe('RichHistoryStarredTab', () => {
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
+  });
+
+  it('updates the sort order filter when a new sort option is picked', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const sortSelect = within(await screen.findByLabelText('Sort queries')).getByRole('combobox');
+    await selectOptionInTest(sortSelect, 'Newest first');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ sortOrder: SortOrder.Descending }));
+  });
+
+  it('updates the datasource filter when a datasource is selected', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    updateFiltersSpy.mockClear(); // ignore the mount seed
+
+    const dsSelect = await screen.findByLabelText('Filter queries for data sources(s)');
+    await selectOptionInTest(dsSelect, 'active-ds');
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ datasourceFilters: ['active-ds'] }));
   });
 
   it('should show the loading message instead of cards while datasource instances are loading', async () => {
@@ -170,5 +190,38 @@ describe('RichHistoryStarredTab', () => {
     expect(updateFiltersSpy).toHaveBeenCalledWith(
       expect.objectContaining({ datasourceFilters: ['active-ds'], starred: true })
     );
+  });
+
+  it('shows a datasource-list error instead of results when the list fails in active-only mode', async () => {
+    setup({
+      dsListError: true,
+      richHistorySettings: {
+        retentionPeriod: 7,
+        starredTabAsFirstTab: false,
+        activeDatasourcesOnly: true,
+        lastUsedDatasourceFilters: [],
+      },
+    });
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+
+  it('hides the partial-results "Load more" footer when loadError is true, even with stale partial results', async () => {
+    setup({
+      loadError: true,
+      queries: [
+        {
+          id: '1',
+          createdAt: 1,
+          datasourceUid: 'active-ds-uid',
+          datasourceName: 'active-ds',
+          starred: true,
+          comment: 'starred query comment',
+          queries: [],
+        },
+      ],
+      totalQueries: 2,
+    });
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument();
   });
 });

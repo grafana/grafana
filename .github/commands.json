@@ -93,14 +93,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/Prometheus",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/InfluxDB",
     "action": "addToProject",
     "addToProject": {
@@ -117,26 +109,10 @@
   },
   {
     "type": "label",
-    "name": "datasource/Loki",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Jaeger",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -301,14 +277,6 @@
   },
   {
     "type": "label",
-    "name": "area/panel/graph",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/heatmap",
     "action": "addToProject",
     "addToProject": {
@@ -432,7 +400,7 @@
     "name": "type/build-packaging",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/632"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -633,14 +601,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/660"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Jaeger",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -1053,14 +1013,6 @@
   },
   {
     "type": "label",
-    "name": "area/panel/singlestat",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/annotation-list",
     "action": "addToProject",
     "addToProject": {
@@ -1094,6 +1046,14 @@
   {
     "type": "label",
     "name": "datasource/Timestream",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/97"
+    }
+  },
+  {
+    "type": "label",
+    "name": "datasource/athena",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/97"

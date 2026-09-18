@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -45,12 +46,20 @@ describe('NestedFolderPicker', () => {
   const useStarredItemsMock = useStarredItems as jest.Mock;
   const resolveStarredFoldersMock = resolveStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
+  let originalProvisioningEnabled: boolean;
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
   });
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+    // These tests were written against the legacy folder tree, so pin the flag off by default.
+    // The describes below that need the app-platform tree opt in explicitly.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
+
     const { useFoldersQuery: realUseFoldersQuery } = jest.requireActual('./useFoldersQuery');
     useFoldersQueryMock.mockImplementation(realUseFoldersQuery);
 
@@ -77,7 +86,11 @@ describe('NestedFolderPicker', () => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    config.provisioningEnabled = originalProvisioningEnabled;
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.resetAllMocks();
   });
 
@@ -122,6 +135,39 @@ describe('NestedFolderPicker', () => {
 
     await user.click(screen.getByLabelText(folderA.item.title));
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
+  });
+
+  it('shows the repository badge on nested folder search results', async () => {
+    config.provisioningEnabled = false;
+    server.use(
+      getCustomSearchHandler([
+        {
+          resource: 'folders',
+          name: 'repo-root',
+          title: 'Repo root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        {
+          resource: 'folders',
+          name: 'git-sync-child',
+          title: 'Git Sync child',
+          folder: 'repo-root',
+          managedBy: { kind: 'repo', id: 'repo-1' },
+        },
+        { resource: 'folders', name: 'local-folder', title: 'Local folder' },
+      ])
+    );
+
+    const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+    await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+    fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'folder' } });
+
+    const managedRow = await screen.findByRole('treeitem', { name: 'Git Sync child' });
+    const unmanagedRow = await screen.findByRole('treeitem', { name: 'Local folder' });
+
+    expect(within(managedRow).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(within(managedRow).getByText('/Repo root')).toBeInTheDocument();
+    expect(within(unmanagedRow).queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('can clear a selection if clearable is specified', async () => {
@@ -311,8 +357,14 @@ describe('NestedFolderPicker', () => {
       expect(teamFolders.getAttribute('aria-level')).toBe(topLevelFolder.getAttribute('aria-level'));
     });
 
-    it('does auto-select a team folder when root is selected', () => {
+    it('does not auto-select a team folder when root is selected and shown', () => {
       render(<NestedFolderPicker value="" onChange={mockOnChange} />);
+
+      expect(mockOnChange).not.toHaveBeenCalled();
+    });
+
+    it('does auto-select a team folder when root is selected but hidden', () => {
+      render(<NestedFolderPicker value="" showRootFolder={false} onChange={mockOnChange} />);
 
       expect(mockOnChange).toHaveBeenCalled();
     });
@@ -333,14 +385,14 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('shows the starred folders virtual root with its selectable children', async () => {
@@ -382,37 +434,15 @@ describe('NestedFolderPicker', () => {
     });
   });
 
-  describe('when starredFolders is enabled but starsFromAPIServer is disabled', () => {
-    testWithFeatureToggles({ disable: ['starsFromAPIServer'] });
-
-    beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    it('does not render starred folders (hard gate on the stars API)', async () => {
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
-
-      // Anchor on a real folder to confirm the tree rendered before asserting starred absence.
-      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
-      expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Starred Folder One')).not.toBeInTheDocument();
-    });
-  });
-
   describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer'], disable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: false });
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('does not render starred folders (hard gate on the app-platform folder API)', async () => {

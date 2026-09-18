@@ -47,7 +47,7 @@ describe('addPanelsOnLoadBehavior', () => {
   describe('when there is no data in localStorage', () => {
     it('does not call scene.addPanel and does not throw', () => {
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
       const addPanelSpy = jest.spyOn(scene, 'addPanel');
 
       addPanelsOnLoadBehavior(scene);
@@ -61,7 +61,7 @@ describe('addPanelsOnLoadBehavior', () => {
     it('always clears the LS key', () => {
       store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
 
       addPanelsOnLoadBehavior(scene);
       expect(store.exists(DASHBOARD_FROM_LS_KEY)).toBe(false);
@@ -70,7 +70,7 @@ describe('addPanelsOnLoadBehavior', () => {
     it('adds each panel to the scene via scene.addPanel', () => {
       store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
       const addPanelSpy = jest.spyOn(scene, 'addPanel');
 
       addPanelsOnLoadBehavior(scene);
@@ -90,7 +90,7 @@ describe('addPanelsOnLoadBehavior', () => {
         })
       );
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
       const addPanelSpy = jest.spyOn(scene, 'addPanel');
 
       addPanelsOnLoadBehavior(scene);
@@ -99,7 +99,7 @@ describe('addPanelsOnLoadBehavior', () => {
     });
   });
 
-  it('defers panel addition until editPane activates when it is not yet active', () => {
+  it('defers panel addition until sidebar activates when it is not yet active', () => {
     store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
     const scene = buildTestScene();
     const addPanelSpy = jest.spyOn(scene, 'addPanel');
@@ -108,7 +108,7 @@ describe('addPanelsOnLoadBehavior', () => {
 
     expect(addPanelSpy).not.toHaveBeenCalled();
 
-    scene.state.editPane.activate();
+    scene.state.sidebar.activate();
 
     expect(addPanelSpy).toHaveBeenCalledTimes(1);
     expect(addPanelSpy).toHaveBeenCalledWith(expect.any(VizPanel));
@@ -119,7 +119,7 @@ describe('addPanelsOnLoadBehavior', () => {
       const dto = buildTestDTO({ time: { from: 'now-6h', to: 'now' } });
       store.setObject(DASHBOARD_FROM_LS_KEY, dto);
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
 
       addPanelsOnLoadBehavior(scene);
 
@@ -130,7 +130,7 @@ describe('addPanelsOnLoadBehavior', () => {
     it('does not modify the scene time range when the DTO has no time', () => {
       store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
       const scene = buildTestScene();
-      scene.state.editPane.activate();
+      scene.state.sidebar.activate();
       const originalFrom = scene.state.$timeRange?.state.from;
       const originalTo = scene.state.$timeRange?.state.to;
 

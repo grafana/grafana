@@ -1,12 +1,16 @@
+import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAsync } from 'react-use';
 import { render, screen } from 'test/test-utils';
 
 import { EventBusSrv, store } from '@grafana/data';
 import { setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItem } from './ExtensionToolbarItem';
+
+const FULLSCREEN_WORKSPACE_FLAG = 'assistant.fullscreenWorkspace';
 
 // Mock store
 jest.mock('@grafana/data', () => ({
@@ -78,8 +82,13 @@ describe('ExtensionToolbarItem', () => {
     setAppEvents(new EventBusSrv());
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks();
+    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
+    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('should not render when no components are available', () => {
@@ -257,5 +266,59 @@ describe('ExtensionToolbarItem', () => {
     // Each button should have the correct title
     expect(buttons[0]).toHaveAttribute('aria-label', 'Open Assistant');
     expect(buttons[1]).toHaveAttribute('aria-label', 'Open Dash');
+  });
+
+  it('should not render anything when the assistant is the only plugin and fullscreen workspace is enabled', async () => {
+    // Earlier tests in this suite override `usePluginLinks`'s mock return value and never reset
+    // it, so this must set it back explicitly rather than relying on the top-level factory mock —
+    // otherwise this test silently exercises the stale links from whichever test ran before it.
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [{ pluginId: mockPluginMeta.pluginId, title: mockComponent.title }],
+      isLoading: false,
+    });
+
+    await act(async () => {
+      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
+    });
+
+    setup();
+
+    // Fullscreen workspace renders its own Chat/Workspace buttons elsewhere (`AssistantToolbarButtons`
+    // in `SingleTopBar`), so with no other plugin available there's nothing left for this component
+    // to render — including no stray separator (see the "duplicated divider" regression this guards).
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('should still render other plugins when fullscreen workspace hides the assistant plugin', async () => {
+    const dashMeta = {
+      pluginId: 'grafana-dash-app',
+      addedComponents: [{ ...mockComponent, title: 'Dash' }],
+    };
+
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [
+        { pluginId: mockPluginMeta.pluginId, title: mockComponent.title },
+        { pluginId: dashMeta.pluginId, title: dashMeta.addedComponents[0].title },
+      ],
+      isLoading: false,
+    });
+
+    useAsyncMock.mockReturnValue({
+      loading: false,
+      value: new Map([
+        [mockPluginMeta.pluginId, mockPluginMeta],
+        [dashMeta.pluginId, dashMeta],
+      ]),
+    });
+
+    await act(async () => {
+      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
+    });
+
+    setup();
+
+    const buttons = screen.getAllByTestId(/extension-toolbar-button-open/);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveAttribute('aria-label', 'Open Dash');
   });
 });

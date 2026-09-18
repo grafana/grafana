@@ -1,9 +1,7 @@
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, getQueryFieldConfig } from '@grafana/ui/unstable';
+import { QueryInput } from '@grafana/ui';
 
 import { actions } from '../state/actions';
 import { useDispatch } from '../state/context';
@@ -14,7 +12,6 @@ type Props = {
 
 export function GraphiteTextEditor({ rawQuery }: Props) {
   const dispatch = useDispatch();
-  const theme = useTheme2();
 
   // The last value we propagated upstream, used to tell our own change echoing
   // back through `rawQuery` apart from a genuinely external replacement.
@@ -55,19 +52,14 @@ export function GraphiteTextEditor({ rawQuery }: Props) {
     dispatch(actions.runQuery());
   }, [updateQuery, dispatch]);
 
-  const config = useMemo(
-    () =>
-      getQueryFieldConfig(theme, {
-        placeholder: 'Enter a Graphite query (run with Shift+Enter)',
-        onRunQuery: runQuery,
-        onBlur: runQuery,
-      }),
-    [theme, runQuery]
-  );
-
   return (
-    <div data-testid={selectors.components.QueryField.container}>
-      <CodeMirrorEditor value={rawQuery} onChange={updateQuery} height="auto" indentWithTab={false} {...config} />
-    </div>
+    <QueryInput
+      value={rawQuery}
+      onChange={updateQuery}
+      aria-label="Graphite query"
+      placeholder="Enter a Graphite query (run with Shift+Enter)"
+      onRunQuery={runQuery}
+      onBlur={runQuery}
+    />
   );
 }

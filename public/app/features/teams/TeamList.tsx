@@ -12,7 +12,7 @@ import {
   type Column,
   EmptyState,
   FilterInput,
-  IconButton,
+  Button,
   InlineField,
   InteractiveTable,
   LinkButton,
@@ -255,7 +255,7 @@ const TeamList = () => {
                 props: {
                   onConfirm: async () => {
                     reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
-                    await deleteTeam({ uid: original.uid });
+                    await deleteTeam({ uid: original.uid }).unwrap();
                   },
                   teamName: original.name,
                   ownedFolder: ownedFolders && ownedFolders.length > 0,
@@ -267,9 +267,9 @@ const TeamList = () => {
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <a href={`org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
-                  <IconButton
-                    name="pen"
-                    size="md"
+                  <Button
+                    icon="pen"
+                    size="sm"
                     variant="secondary"
                     aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
                       teamName: original.name,
@@ -278,12 +278,12 @@ const TeamList = () => {
                   />
                 </a>
               )}
-              <IconButton
+              <Button
                 onClick={showDeleteModal}
-                variant="destructive"
+                variant="secondary"
                 disabled={!canDelete}
-                name="times"
-                size="md"
+                icon="trash-alt"
+                size="sm"
                 tooltip={t('teams.team-list.columns.tooltip-delete-button', 'Delete {{teamName}}', {
                   teamName: original.name,
                 })}

@@ -13,6 +13,30 @@
         }
       ]
     },
+    "start:rspack": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
+    "start:rspack:noHmr": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
     "build": {
       "dependsOn": [
         "themes-generate",
@@ -21,7 +45,7 @@
           "target": "build"
         }
       ],
-      "outputs": ["{workspaceRoot}/public/build"],
+      "outputs": ["{workspaceRoot}/public/build", "{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
     "dev": {
@@ -34,6 +58,29 @@
       ],
       "outputs": ["{workspaceRoot}/public/build"],
       "cache": true
+    },
+    "dev:rspack": {
+      "dependsOn": [
+        "build:rspack:boot:dev",
+        "themes-generate",
+        "build:swagger",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
+    "build:rspack:boot:dev": {
+      "cache": false
+    },
+    "build:swagger": {
+      "dependsOn": ["themes-generate"],
+      "outputs": ["{workspaceRoot}/public/build-swagger"],
+      "cache": true
+    },
+    "start:swagger": {
+      "dependsOn": ["themes-generate"]
     },
     "themes-generate": {
       "inputs": [

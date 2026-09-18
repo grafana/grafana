@@ -31,8 +31,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -68,14 +67,13 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
 		start := clockMock.Now()
 
-		for counter := 0; counter < 25; counter++ {
+		for range 25 {
 			_ = group.Add("key1")
 			clockMock.Add(time.Millisecond * 40)
 			if processed["key1"] == 1 {
@@ -117,8 +115,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -153,8 +150,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -193,8 +189,7 @@ func TestDebouncer(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start the group with a context
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 

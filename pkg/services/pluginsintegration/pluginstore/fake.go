@@ -2,6 +2,7 @@ package pluginstore
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -17,8 +18,16 @@ func NewFakePluginStore(ps ...Plugin) *FakePluginStore {
 }
 
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, bool) {
+	// IDs before aliases, like the real registry: a plugin installed under an ID another plugin
+	// claims as an alias wins.
 	for _, v := range pr.PluginList {
 		if v.ID == pluginID {
+			return v, true
+		}
+	}
+
+	for _, v := range pr.PluginList {
+		if slices.Contains(v.AliasIDs, pluginID) {
 			return v, true
 		}
 	}

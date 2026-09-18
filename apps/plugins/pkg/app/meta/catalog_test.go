@@ -48,8 +48,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{
-						"module.js":                   "hash123",
-						"test-child-plugin/module.js": "child-hash123",
+						"module.js":                   "deadbeef",
+						"test-child-plugin/module.js": "beefcafe",
 					},
 				},
 				Children: []grafanaComChildPluginVersion{
@@ -80,7 +80,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana, *result.Meta.Signature.Type)
 		assert.Equal(t, "grafana", *result.Meta.Signature.Org)
 		assert.Equal(t, result.Meta.Module.Path, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/module.js")
-		assert.Equal(t, "hash123", *result.Meta.Module.Hash)
+		// The manifest stores a raw hex hash; the meta exposes it in SRI format.
+		assert.Equal(t, "sha256-3q2+7w==", *result.Meta.Module.Hash)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript, result.Meta.Module.LoadingStrategy)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", result.Meta.BaseURL)
 		assert.Equal(t, []string{"test-child-plugin"}, result.Meta.Children)
@@ -110,7 +111,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 			// Child has its own module path based on child path
 			assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/test-child-plugin/module.js", childResult.Meta.Module.Path)
-			assert.Equal(t, "child-hash123", *childResult.Meta.Module.Hash)
+			assert.Equal(t, "sha256-vu/K/g==", *childResult.Meta.Module.Hash)
 
 			// BaseURL should be constructed from parent CDNURL + child path
 			assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0/test-child-plugin", childResult.Meta.BaseURL)
@@ -140,7 +141,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				CreatePluginVersion: "4.15.0",
 				Manifest: grafanaComPluginManifest{
 					Files: map[string]string{
-						"module.js": "hash123",
+						"module.js": "deadbeef",
 					},
 				},
 			}
@@ -157,6 +158,23 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		require.NotNil(t, result)
 		assert.Equal(t, "grafana-postgresql-datasource", result.Meta.PluginJson.Id)
 		assert.Equal(t, []string{"postgres"}, result.Meta.AliasIds)
+	})
+
+	t.Run("returns error for empty version without making a request", func(t *testing.T) {
+		called := false
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: ""})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "version is required")
+		assert.Nil(t, result)
+		assert.False(t, called, "should not call grafana.com when version is empty")
 	})
 
 	t.Run("returns ErrMetaNotFound for 404 status", func(t *testing.T) {
@@ -199,7 +217,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to decode response")
+		assert.Contains(t, err.Error(), "failed to decode plugin version API response")
 		assert.Nil(t, result)
 	})
 
@@ -349,7 +367,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 						CreatePluginVersion: tc.createPluginVersion,
 						Manifest: grafanaComPluginManifest{
 							Files: map[string]string{
-								"module.js": "hash123",
+								"module.js": "deadbeef",
 							},
 						},
 					}

@@ -62,6 +62,12 @@ This applies to the default Loki and Prometheus Grafana Cloud data sources manag
 Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+The standalone Alertmanager UI in Grafana Cloud (for example, `https://alertmanager-<REGION>.grafana.net/alertmanager/`) is deprecated and no longer available.
+
+All Alertmanager functionality, including silences, notification policies, contact points, and mute timings, is now available in the Grafana Alerting UI. Use the `Choose Alertmanager` dropdown to select the Alertmanager you want to manage. To manage silences, go to **Alerts & IRM** > **Alerting** > **Silences**.
+{{< /admonition >}}
+
 # Configure Alertmanagers
 
 Grafana Alerting is based on the architecture of the Prometheus alerting system. Grafana sends firing and resolved alerts to an Alertmanager, which is responsible for [handling notifications](ref:notifications). This architecture decouples alert rule evaluation from notification handling, improving scalability.

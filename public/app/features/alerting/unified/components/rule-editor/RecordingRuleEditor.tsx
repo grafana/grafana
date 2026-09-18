@@ -10,9 +10,9 @@ import { useStyles2 } from '@grafana/ui';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
-import { LokiQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { LokiQueryType } from '../../../../loki-helpers/types';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
 
 import { VizWrapper } from './VizWrapper';

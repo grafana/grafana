@@ -425,14 +425,7 @@ func ValidateIntegration(ctx context.Context, integration models.IntegrationConf
 	if integration.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-
-	_, err := alertingNotify.BuildReceiverConfiguration(ctx, models.ReceiverConfig{
-		Integrations: []*models.IntegrationConfig{&integration},
-	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return alertingNotify.ValidateIntegrationConfig(ctx, &integration, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 }
 
 type EncryptFn = func(string) (string, error)

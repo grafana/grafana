@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   CoreApp,
   type GrafanaConfig,
@@ -25,9 +27,10 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -87,6 +90,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: true,
@@ -100,6 +108,16 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     next: jest.fn(),
     prev: jest.fn(),
     stop: jest.fn(),
+  },
+}));
+
+const mockFetchPredefinedVariables = jest.fn();
+jest.mock('../utils/predefinedVariables', () => ({
+  ...jest.requireActual('../utils/predefinedVariables'),
+  fetchPredefinedVariables: (...args: unknown[]) => {
+    const result = mockFetchPredefinedVariables(...args);
+    // Preserve null (fetch failure); only default when the mock is unset.
+    return result === undefined ? Promise.resolve([]) : result;
   },
 }));
 
@@ -260,7 +278,7 @@ describe('DashboardScene', () => {
         // Restored state from when edit mode started
         expect(scene.state.title).toBe('hello');
 
-        // Clears edit-panel related state
+        // Clears sidebar related state
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.state.overlay).toBeUndefined();
 
@@ -269,47 +287,47 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
-      it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
-        const editPane = scene.state.editPane;
-        expect(editPane.isActive).toBe(false);
+      it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
+        const sidebar = scene.state.sidebar;
+        expect(sidebar.isActive).toBe(false);
 
-        scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+        scene.activateSidebar();
+        expect(sidebar.isActive).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(editPane.isActive).toBe(false);
+        expect(sidebar.isActive).toBe(false);
       });
 
-      it('activateEditPane is a no-op when the edit pane is already active', () => {
-        const editPane = scene.state.editPane;
-        const activateSpy = jest.spyOn(editPane, 'activate');
-        editPane.activate();
+      it('activateSidebar is a no-op when the sidebar is already active', () => {
+        const sidebar = scene.state.sidebar;
+        const activateSpy = jest.spyOn(sidebar, 'activate');
+        sidebar.activate();
 
-        scene.activateEditPane();
+        scene.activateSidebar();
 
         expect(activateSpy).toHaveBeenCalledTimes(1);
       });
 
-      it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
-        const editPane = scene.state.editPane;
-        scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+      it('re-activates the swapped-in sidebar when discarding and keeping edit', () => {
+        const sidebar = scene.state.sidebar;
+        scene.activateSidebar();
+        expect(sidebar.isActive).toBe(true);
 
         scene.discardChangesAndKeepEditing();
 
         // The original pane is released, but a fresh clone is swapped in and re-activated so
         // programmatic mutations keep working while we stay in edit mode.
-        expect(editPane.isActive).toBe(false);
-        const newEditPane = scene.state.editPane;
-        expect(newEditPane).not.toBe(editPane);
-        expect(newEditPane.isActive).toBe(true);
+        expect(sidebar.isActive).toBe(false);
+        const newSidebar = scene.state.sidebar;
+        expect(newSidebar).not.toBe(sidebar);
+        expect(newSidebar.isActive).toBe(true);
       });
 
-      it('Exiting already saved dashboard should not restore initial state', () => {
+      it('Exiting already saved dashboard should not restore initial state', async () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted({} as Dashboard, {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -323,7 +341,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
@@ -332,29 +350,31 @@ describe('DashboardScene', () => {
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
-        scene.setState({ title: 'Updated title' });
-        expect(scene.state.isDirty).toBe(true);
-        scene.exitEditMode({ skipConfirm: false });
+        try {
+          scene.setState({ title: 'Updated title' });
+          expect(scene.state.isDirty).toBe(true);
+          scene.exitEditMode({ skipConfirm: false });
 
-        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
-        expect(modalCall).toBeDefined();
+          const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+          expect(modalCall).toBeDefined();
 
-        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
-        expect(modalEvent.payload.altActionText).toBeDefined();
+          const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+          expect(modalEvent.payload.altActionText).toBeDefined();
 
-        modalEvent.payload.onAltAction?.();
+          modalEvent.payload.onAltAction?.();
 
-        expect(scene.state.overlay).toBeDefined();
+          await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
 
-        const overlay = scene.state.overlay as SaveDashboardDrawer;
-        expect(overlay.state.onSaveSuccess).toBeDefined();
+          const overlay = scene.state.overlay as SaveDashboardDrawer;
+          expect(overlay.state.onSaveSuccess).toBeDefined();
 
-        overlay.state.onSaveSuccess!();
-        expect(scene.state.isEditing).toBe(false);
-
-        publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          overlay.state.onSaveSuccess!();
+          expect(scene.state.isEditing).toBe(false);
+        } finally {
+          publishSpy.mockRestore();
+          hasActualSaveChangesSpy.mockRestore();
+          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
@@ -462,6 +482,30 @@ describe('DashboardScene', () => {
             ...prevMeta,
             folderUid: 'new-folder-uid',
             folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
+
+      it('A change to cross-dashboard variables selection should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
+
+        const annotation = '{"global":"all","folder":"all"}';
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            k8s: {
+              ...prevMeta.k8s,
+              annotations: {
+                ...prevMeta.k8s?.annotations,
+                [AnnoKeyUseCrossDashboardVariables]: annotation,
+              },
+            },
           },
         });
 
@@ -672,11 +716,11 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBeFalsy();
       });
 
-      it('Should create and add a new panel to the dashboard', () => {
+      it('Should create and add a new panel to the dashboard', async () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        const panel = scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
@@ -684,10 +728,10 @@ describe('DashboardScene', () => {
       });
 
       it('Should select new row', () => {
-        scene.state.editPane.activate();
+        scene.state.sidebar.activate();
 
         const row = scene.onCreateNewRow();
-        expect(scene.state.editPane.getSelectedObject()).toBe(row);
+        expect(scene.state.sidebar.getSelectedObject()).toBe(row);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -1884,7 +1928,7 @@ describe('DashboardScene', () => {
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
-      jest
+      const getDashboardSrvSpy = jest
         .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
         .mockReturnValue({ getCurrent: () => dash });
 
@@ -1901,6 +1945,7 @@ describe('DashboardScene', () => {
 
       expect(reloadSpy).toHaveBeenCalled();
       reloadSpy.mockRestore();
+      getDashboardSrvSpy.mockRestore();
     });
 
     it('should return early if API does not return a valid version number', () => {
@@ -1940,11 +1985,11 @@ describe('DashboardScene', () => {
   });
 
   describe('openSaveDrawer with template flags', () => {
-    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1952,11 +1997,11 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
     });
 
-    it('opens the drawer in saveDashboardTemplate mode', () => {
+    it('opens the drawer in saveDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1964,21 +2009,21 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
     });
 
-    it('does nothing when the scene is not in edit mode', () => {
+    it('does nothing when the scene is not in edit mode', async () => {
       const scene = buildTestScene();
       // Not entering edit mode
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
       expect(scene.state.overlay).toBeUndefined();
     });
   });
 
   describe('When checking dashboard managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('should return true if the dashboard is managed', () => {
@@ -2654,6 +2699,225 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('refreshPredefinedVariables', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
+      mockFetchPredefinedVariables.mockReset();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should ignore stale fetch results when a newer refresh has started', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockResolvedValueOnce([globalVar]);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
+            },
+          },
+        },
+      });
+
+      // First refresh: inject all. Fetch stays pending.
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Second refresh: inject none — applies immediately and invalidates the in-flight fetch.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {},
+          },
+        },
+      });
+      await scene.refreshPredefinedVariables();
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale fetch completes after the newer selection; must not re-inject variables.
+      resolveFirstFetch([globalVar]);
+      await staleRefresh;
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+    });
+
+    it('should apply the latest denylist when overlapping fetches finish out of order', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+      const folderVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'folderVar',
+          current: { text: 'x', value: 'x' },
+          query: 'x,y',
+          origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      let resolveSecondFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      const secondFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveSecondFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockReturnValueOnce(secondFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
+            },
+          },
+        },
+      });
+
+      // First: All
+      const firstRefresh = scene.refreshPredefinedVariables();
+
+      // Second: Folder only — starts while first fetch is still pending.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":"all"}',
+            },
+          },
+        },
+      });
+      const secondRefresh = scene.refreshPredefinedVariables();
+
+      // Newer fetch finishes first with the folder-only denylist applied.
+      resolveSecondFetch([globalVar, folderVar]);
+      await secondRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+
+      // Older fetch finishes later; must not overwrite with the stale "all" resolution.
+      resolveFirstFetch([globalVar, folderVar]);
+      await firstRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+    });
+
+    it('should keep existing predefined variables when the fetch fails', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      mockFetchPredefinedVariables.mockResolvedValueOnce([globalVar]).mockResolvedValueOnce(null);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
+            },
+          },
+        },
+      });
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
+    });
+
+    it('should ignore in-flight refresh results after discard restores the selection', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFetch!: (value: VariableKind[]) => void;
+      const pendingFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(pendingFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          // Baseline: not opted in (annotation absent).
+          k8s: {
+            annotations: {},
+          },
+        },
+      });
+      // Skip activate(): this path only needs edit/discard, and activation calls
+      // getDashboardSrv().setCurrent which earlier suite spies may leave incomplete.
+      scene.onEnterEditMode();
+
+      // User opts into All — refresh starts but stays in flight.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
+            },
+          },
+        },
+      });
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Discard restores the not-opted-in baseline (and serializer annotations).
+      scene.exitEditMode({ skipConfirm: true });
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale All fetch must not re-inject after discard.
+      resolveFetch([globalVar]);
+      await staleRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+    });
+  });
+
   describe('setPredefinedVariables', () => {
     it('should replace previous predefined variables on subsequent calls', () => {
       const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
@@ -2999,6 +3263,40 @@ describe('DashboardScene', () => {
 
       expect(pageNav.text).toBe('Edit panel');
       expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+  });
+
+  describe('getDefaultLayout', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('returns a clone of the persisted layout preference regardless of the auto grid flag', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const defaultLayoutTemplate = DefaultGridLayoutManager.createEmpty();
+      const scene = buildTestScene({ preferences: { defaultLayoutTemplate } });
+
+      const layout = scene.getDefaultLayout();
+
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(layout).not.toBe(defaultLayoutTemplate);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to auto grid when no preference is persisted and the auto grid flag is enabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(AutoGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to custom grid when no preference is persisted and the auto grid flag is disabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
     });
   });
 });

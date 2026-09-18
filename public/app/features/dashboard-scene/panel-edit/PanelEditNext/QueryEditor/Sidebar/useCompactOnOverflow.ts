@@ -1,9 +1,9 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 interface CompactOnOverflow {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   /** Must not shrink below its content (keep the flex default min-width: auto), or measurement breaks. */
-  contentRef: React.RefObject<HTMLDivElement>;
+  contentRef: React.RefObject<HTMLDivElement | null>;
   compact: boolean;
 }
 
@@ -17,8 +17,8 @@ interface CompactOnOverflow {
  * remembered width.
  */
 export function useCompactOnOverflow(contentKey: string): CompactOnOverflow {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [compact, setCompact] = useState(false);
   // Width the full content needs, captured on collapse. `null` = full content rendered.
   const requiredFullWidthRef = useRef<number | null>(null);

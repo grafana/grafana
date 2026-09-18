@@ -38,6 +38,7 @@ const makeProps = (): RichHistoryQueriesTabProps => ({
   queries: [query],
   totalQueries: 1,
   loading: false,
+  loadError: false,
   updateFilters: jest.fn(),
   clearRichHistoryResults: jest.fn(),
   loadMoreRichHistory: jest.fn(),
@@ -48,6 +49,7 @@ const makeProps = (): RichHistoryQueriesTabProps => ({
     { name: 'bad', uid: 'bad-456' },
   ],
   isLoadingDatasources: false,
+  dsListError: false,
   richHistorySearchFilters: {
     search: '',
     sortOrder: SortOrder.Descending,

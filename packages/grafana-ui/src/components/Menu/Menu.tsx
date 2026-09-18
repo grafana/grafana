@@ -4,8 +4,8 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { Box } from '../Layout/Box/Box';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { Box, type BoxProps } from '../Layout/Box/Box';
 
 import { MenuDivider } from './MenuDivider';
 import { MenuGroup } from './MenuGroup';
@@ -28,12 +28,19 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
   ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
+    const theme = useTheme2();
+    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     const componentTokens = useComponentTokens();
 
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
 
     const [handleKeys] = useMenuFocus({ isMenuOpen: true, localRef, onOpen, onClose, onKeyDown });
+    const visualRefreshProps: Partial<BoxProps> = {
+      borderColor: 'weak',
+      borderStyle: 'solid',
+      boxShadow: 'z2',
+    };
 
     return (
       <Box
@@ -48,6 +55,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
         ref={localRef}
         role="menu"
         tabIndex={-1}
+        {...(visualRefreshEnabled && visualRefreshProps)}
       >
         {header && (
           <div

@@ -386,7 +386,7 @@ Content-Length: 28
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -428,7 +428,7 @@ Content-Length: 39
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **404** - Not found (report with this ID does not exist).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
@@ -482,7 +482,7 @@ Content-Length: 29
 
 - **200** – Report was sent.
 - **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **404** - Report not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -534,7 +534,7 @@ Content-Length: 181
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Save reports branding settings
@@ -596,7 +596,7 @@ Content-Length: 35
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Send a test email
@@ -679,6 +679,6 @@ Content-Length: 29
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developer-resources/api-reference/http-api/authentication/).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details

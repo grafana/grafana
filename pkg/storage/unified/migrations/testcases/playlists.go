@@ -11,6 +11,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/obsolete"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,8 +52,10 @@ func (tc *playlistsTestCase) Resources() []schema.GroupVersionResource {
 }
 
 func (tc *playlistsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
-	addPlaylistMigrations(mg)
-	addPlaylistUIDMigration(mg)
+	old := obsolete.PlaylistMigrations()
+	for _, m := range old.Migrations {
+		mg.AddMigration(m.Id(), m)
+	}
 }
 
 func (tc *playlistsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {

@@ -52,7 +52,7 @@ func (b *localLockBackend) Update(ctx context.Context, key string, info lockInfo
 		return errLockNotFound
 	}
 	if existing.Owner != info.Owner {
-		return errLockHeld
+		return errLockNotOwned
 	}
 	if !b.now().Before(existing.Heartbeat.Add(existing.TTL)) {
 		return errLeaseExpired
@@ -75,7 +75,7 @@ func (b *localLockBackend) Delete(ctx context.Context, key string, owner string)
 		return errLockNotFound
 	}
 	if existing.Owner != owner {
-		return errLockHeld
+		return errLockNotOwned
 	}
 
 	delete(b.locks, key)

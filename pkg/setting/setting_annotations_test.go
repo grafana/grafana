@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,6 +42,43 @@ func TestLoadAnnotationAppPlatformSettings(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMaxScopeCount, settings.MaxScopeCount)
+			})
+		}
+	})
+
+	t.Run("RetentionTTL", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			iniValue    *string
+			expectedTTL time.Duration
+			expectErr   bool
+		}{
+			{name: "default when key absent is disabled", expectedTTL: 0},
+			{name: "empty value is disabled", iniValue: new(""), expectedTTL: 0},
+			{name: "zero is disabled", iniValue: new("0"), expectedTTL: 0},
+			{name: "explicit positive", iniValue: new("2160h"), expectedTTL: 2160 * time.Hour},
+			{name: "negative is rejected", iniValue: new("-1h"), expectErr: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				iniFile := ini.Empty()
+				if tc.iniValue != nil {
+					section, err := iniFile.NewSection("annotations.app_platform")
+					require.NoError(t, err)
+
+					_, err = section.NewKey("retention_ttl", *tc.iniValue)
+					require.NoError(t, err)
+				}
+
+				settings, err := loadAnnotationAppPlatformSettings(&Cfg{Raw: iniFile})
+				if tc.expectErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTTL, settings.RetentionTTL)
 			})
 		}
 	})

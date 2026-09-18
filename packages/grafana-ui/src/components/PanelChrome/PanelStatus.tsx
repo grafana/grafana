@@ -68,6 +68,7 @@ interface PanelStatusPopoverProps {
 function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
+  const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
     <div className={styles.popover}>
@@ -75,14 +76,9 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         <span className={styles.popoverTitle}>
           {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
         </span>
-        {onInspect && (
-          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
-          </Button>
-        )}
       </div>
       <Stack direction="column" gap={1}>
-        {items.map((item, index) => (
+        {sortedItems.map((item, index) => (
           <div key={`${item.severity}-${index}`} className={styles.item}>
             <span className={styles.itemIcon}>
               <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
@@ -103,6 +99,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         size="sm"
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
+        onClick={onInspect}
       />
     </Tooltip>
   );

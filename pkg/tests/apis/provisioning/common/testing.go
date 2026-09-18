@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -1511,9 +1512,34 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+func WithConnectionTypes(types []string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningConnectionTypes = types
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
+	}
+}
+
+// WithProvisioningWebhookRateLimitRPS sets [provisioning] webhook_rate_limit_rps,
+// enabling the per-client webhook rate limiter at the given sustained rate. The
+// limiter's burst is twice the rate. A value <= 0 leaves the limiter disabled.
+// With no trusted IP header configured the limiter keys on the TCP peer.
+func WithProvisioningWebhookRateLimitRPS(rps int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningWebhookRateLimitRPS = rps
+	}
+}
+
+// WithProvisioningWebhookTrustedIPHeader sets [provisioning]
+// webhook_trusted_ip_header, naming the header whose value the rate limiter keys
+// on. When unset, the limiter keys on the real TCP peer instead.
+func WithProvisioningWebhookTrustedIPHeader(header string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningWebhookTrustedIPHeader = header
 	}
 }
 
@@ -1552,11 +1578,11 @@ func WithNATS() GrafanaOption {
 		opts.NATSListenAddress = "127.0.0.1"
 		opts.NATSClientPort = natsserver.RANDOM_PORT
 		opts.NATSClusterPort = natsserver.RANDOM_PORT
-		// Push the informer re-list and the job driver's fallback poll far out so
-		// any reconcile/job pickup observed within a test's wait budget can only
-		// have come from a live NATS notification, not the periodic LIST/poll.
-		// Tests that specifically exercise the re-list path (e.g. historic-job
-		// cleanup) override the relevant interval.
+		// Push the informer re-lists (repo/connection and jobs) far out so any
+		// reconcile/job pickup observed within a test's wait budget can only have
+		// come from a live NATS notification, not the periodic LIST. Tests that
+		// specifically exercise the re-list path (e.g. historic-job cleanup)
+		// override the relevant interval.
 		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
 		opts.ProvisioningJobPollInterval = 10 * time.Minute
 	}
@@ -1578,8 +1604,10 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 		opts.NATSClusterPort = natsserver.RANDOM_PORT
 		// EnableSQLKVBackend stays false: only the KV backend publishes watch
 		// notifications, so leaving it off means the informers never receive a
-		// live event and the re-list is the sole reconcile driver.
+		// live event and the re-list is the sole reconcile driver. The jobs
+		// informer resyncs on its own interval, so pin both to resync.
 		opts.ProvisioningControllerResyncInterval = resync
+		opts.ProvisioningJobPollInterval = resync
 	}
 }
 
@@ -1607,7 +1635,6 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
 			featuremgmt.FlagProvisioningUserAttribution,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
@@ -3157,7 +3184,16 @@ func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOption) *GitTestHel
 func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*GitTestHelper, func()) {
 	t.Helper()
 
-	gitServer, err := gittest.NewServer(t.Context(), gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
+	// Bind the container lifecycle to a non-cancellable context: the shared server
+	// must outlive the single test that happens to trigger init via sync.Once. If
+	// it inherited that test's cancellation, the context would cancel when that
+	// test finished, dropping the testcontainers reaper connection and letting Ryuk
+	// tear down the Gitea container while later tests still need it (surfacing as
+	// "No such container" on CreateUser). WithoutCancel keeps t.Context()'s values
+	// (deadline aside) while stripping cancellation. Teardown is handled by
+	// shutdown() below.
+	ctx := context.WithoutCancel(t.Context())
+	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
 	require.NoError(t, err, "failed to start git server")
 
 	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
@@ -3302,6 +3338,25 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 	})
 }
 
+// CreateGithubRepoWithoutWaitingForReady is like CreateGithubRepo but does not
+// wait for the Ready condition — for tests where the repository is expected to
+// end up unhealthy (e.g. a webhook creation failure), so the caller can drive
+// its own wait against the specific status it expects instead of timing out on
+// a Ready condition that will never turn true.
+func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady:      false,
+		initialFiles:      initialFiles,
+		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
+		workflows:         workflows,
+	})
+}
+
 func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
 		waitForReady: true,
@@ -3398,9 +3453,7 @@ func (h *GitTestHelper) createRepo(
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
 	}
-	for k, v := range opts.templateVariables {
-		templateValues[k] = v
-	}
+	maps.Copy(templateValues, opts.templateVariables)
 
 	tmpl := TestdataPath(repoType + ".json.tmpl")
 	repoObj := h.RenderObject(t, tmpl, templateValues)

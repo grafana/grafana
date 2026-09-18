@@ -22,19 +22,21 @@ import { SparklineCell } from './SparklineCell';
 const width = 300;
 const height = 25;
 
-const tsFrame = toDataFrame({
-  fields: [
-    { name: 'time', type: FieldType.time, values: [1000, 2000] },
-    { name: 'v', type: FieldType.number, values: [1, 99] },
-  ],
-});
+const getTsFrame = () =>
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000] },
+      { name: 'v', type: FieldType.number, values: [1, 99] },
+    ],
+  });
 
-function sparklineField(config: Field['config']): Field {
+function sparklineField(config: Field['config'], type: FieldType = FieldType.frame): Field {
+  const tsFrame = getTsFrame();
   const raw = toDataFrame({
     fields: [
       {
         name: 'trend',
-        type: FieldType.frame,
+        type,
         values: [tsFrame],
         config,
       },
@@ -50,7 +52,7 @@ function sparklineField(config: Field['config']): Field {
 }
 
 function renderSparklineCell(field: Field) {
-  return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={tsFrame} width={width} />);
+  return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={field.values[0]} width={width} />);
 }
 
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
@@ -63,7 +65,7 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   let prepareConfigSpy: jest.SpyInstance;
 
   const assertCanvasOutput = async () => {
-    await waitFor(() => uPlotInstance?.status === 1);
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
     await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
     expect(removeCanvasTransforms(uPlotInstance!.ctx.__getEvents())).toMatchCanvasSnapshot([], { width, height });
   };
@@ -105,11 +107,43 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     await assertCanvasOutput();
   });
 
+  // Reduce allValues types the column as FieldType.other, so nested frames never inherit
+  // parent thresholds — SparklineCell must forward them for Scheme gradients.
+  it('renders scheme gradient for reduce/allValues FieldType.other sparklines', async () => {
+    expect(() =>
+      renderSparklineCell(
+        sparklineField(
+          {
+            custom: {
+              cellOptions: { type: TableCellDisplayMode.Sparkline, gradientMode: GraphGradientMode.Scheme },
+            },
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { value: -Infinity, color: 'green' },
+                { value: 80, color: 'red' },
+              ],
+            },
+          },
+          FieldType.other
+        )
+      )
+    ).not.toThrow();
+
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+    await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
+  });
+
   it.each(Object.values(GraphGradientMode))('renders %s gradient w/ continuous color mode', async (gradientMode) => {
     renderSparklineCell(
       sparklineField({
         custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, gradientMode } },
         color: { mode: FieldColorModeId.ContinuousViridis },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [{ value: -Infinity, color: 'green' }],
+        },
       })
     );
 

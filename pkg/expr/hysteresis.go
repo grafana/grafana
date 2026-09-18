@@ -102,10 +102,10 @@ func NewHysteresisCommand(refID string, referenceVar string, loadCondition Thres
 	}, nil
 }
 
-// FingerprintsFromFrame converts data.Frame to Fingerprints.
+// fingerprintsFromFrame converts data.Frame to Fingerprints.
 // The input data frame must have a single field of uint64 type.
 // Returns error if the input data frame has invalid format
-func FingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
+func fingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 	frameType, frameVersion := frame.TypeInfo("")
 	if frameType != "fingerprints" {
 		return nil, fmt.Errorf("invalid format of loaded dimensions frame: expected frame type 'fingerprints'")
@@ -136,8 +136,8 @@ func FingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 	return result, nil
 }
 
-// FingerprintsToFrame converts Fingerprints to data.Frame.
-func FingerprintsToFrame(fingerprints Fingerprints) *data.Frame {
+// fingerprintsToFrame converts Fingerprints to data.Frame.
+func fingerprintsToFrame(fingerprints Fingerprints) *data.Frame {
 	fp := make([]uint64, 0, len(fingerprints))
 	for fingerprint := range fingerprints {
 		fp = append(fp, uint64(fingerprint))

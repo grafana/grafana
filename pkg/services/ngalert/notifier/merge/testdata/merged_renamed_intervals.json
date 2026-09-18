@@ -65,6 +65,10 @@
         ]
       },
       {
+        "name": "mti-1_mimir-12345",
+        "time_intervals": null
+      },
+      {
         "name": "ti-1",
         "time_intervals": [
           {
@@ -76,7 +80,7 @@
         ]
       },
       {
-        "name": "ti-1mimir-12345",
+        "name": "ti-1_mimir-12345",
         "time_intervals": null
       },
       {
@@ -92,10 +96,6 @@
             ]
           }
         ]
-      },
-      {
-        "name": "mti-1mimir-12345",
-        "time_intervals": null
       }
     ],
     "receivers": [
@@ -208,10 +208,10 @@
             "label=\"test\""
           ],
           "mute_time_intervals": [
-            "ti-1mimir-12345"
+            "ti-1_mimir-12345"
           ],
           "active_time_intervals": [
-            "mti-1mimir-12345"
+            "mti-1_mimir-12345"
           ]
         }
       ],

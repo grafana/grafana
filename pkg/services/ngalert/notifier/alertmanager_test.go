@@ -48,7 +48,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	l := log.New("alertmanager-test")
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval:                  10 * time.Second,
@@ -91,10 +91,10 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Receiver: definitions.Receiver{Name: "default-receiver"},
-				},
+		},
+		Receivers: []*v1.PostableApiReceiver{
+			{
+				Name: "default-receiver",
 			},
 		},
 	}
@@ -158,12 +158,12 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Receiver: definitions.Receiver{
-						Name: "default-receiver",
-					},
-				},
+		}
+	}
+	basicReceivers := func() []*v1.PostableApiReceiver {
+		return []*v1.PostableApiReceiver{
+			{
+				Name: "default-receiver",
 			},
 		}
 	}
@@ -181,6 +181,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -192,6 +193,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -222,6 +224,7 @@ receivers:
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				ExtraConfigs: []v1.ExtraConfiguration{
 					{
 						Identifier: "", // invalid: empty identifier
@@ -263,7 +266,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		postableReceivers := make([]*v1.PostableApiReceiver, 0, len(receivers))
 		for _, r := range receivers {
 			postableReceivers = append(postableReceivers, &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{Name: r},
+				Name: r,
 			})
 		}
 		return &v1.AMConfigV1{
@@ -275,8 +278,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: receivers[0]},
 				},
-				Receivers: postableReceivers,
 			},
+			Receivers: postableReceivers,
 		}
 	}
 
@@ -331,8 +334,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-					Receiver: definitions.Receiver{Name: "new-receiver"},
+				cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
+					Name: "new-receiver",
 				})
 			},
 		},
@@ -477,7 +480,7 @@ receivers:
 
 			firstHash := am.(*alertmanager).appliedHash
 			firstApplied := base.AppliedConfig()
-			for i := 0; i < 20; i++ {
+			for i := range 20 {
 				changed, err = moa.ApplyConfig(ctx, 1, toDBConfig(t, tc.initialConfig()))
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))

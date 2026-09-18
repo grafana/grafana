@@ -1,9 +1,8 @@
 import { Node, SyntaxKind, type SourceFile } from 'ts-morph';
 
-import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
-
 import { parseEventsFromFile } from './eventParser.mts';
 import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
+import type { EventData, EventNamespace, EventPropertySchema } from './types.mts';
 
 export const findAllEvents = (files: SourceFile[], defineFeatureEventsPath: string): EventData[] => {
   const eventMap = new Map<string, EventData>();

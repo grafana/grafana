@@ -5,6 +5,7 @@ import { type JSX, useEffect, useMemo } from 'react';
 import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
@@ -64,7 +65,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
-  const { control, watch, register, trigger, formState, setValue, getValues } =
+  const { control, watch, register, trigger, formState, setValue, getValues, unregister } =
     useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
   const channelFieldPath = `items.${integrationIndex}` as const;
@@ -173,7 +174,9 @@ export function ChannelSubForm<R extends ChannelValues>({
     const fieldPath = settingsPath.startsWith(`${channelFieldPath}.settings.`)
       ? settingsPath.slice(`${channelFieldPath}.settings.`.length)
       : settingsPath;
-    setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
+    const fullPath = `${settingsFieldPath}.${fieldPath}` as const;
+    unregister(fullPath);
+    setValue(fullPath, undefined);
   };
 
   const typeOptions = useMemo((): SelectableValue[] => {
@@ -246,7 +249,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           <Field
             label={t('alerting.channel-sub-form.label-integration', 'Integration')}
             htmlFor={contactPointTypeInputId}
-            data-testid={`${pathPrefix}type`}
+            data-testid={selectors.pages.Alerting.ContactPointForm.integrationTypeField(pathPrefix)}
             noMargin
           >
             <Stack direction="row" alignItems="center" gap={1}>

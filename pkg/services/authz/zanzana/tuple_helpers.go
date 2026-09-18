@@ -469,32 +469,65 @@ func GetRoleBindingTuple(subjectKind string, subjectName string, roleName string
 	return tuple, nil
 }
 
-func GetResourcePermissionWriteTuple(req *authzextv1.CreatePermissionOperation) (*openfgav1.TupleKey, error) {
-	resource := req.GetResource()
-	permission := req.GetPermission()
-	object := NewObjectEntry(toZanzanaType(resource.GetGroup()), resource.GetGroup(), resource.GetResource(), "", resource.GetName())
-	tuple, err := NewResourceTuple(object, resource, permission)
-	if err != nil {
-		return nil, err
-	}
-
-	return tuple, nil
+func GetResourcePermissionWriteTuples(req *authzextv1.CreatePermissionOperation) ([]*openfgav1.TupleKey, error) {
+	return resourcePermissionToTuples(req.GetResource(), req.GetPermission())
 }
 
-func GetResourcePermissionDeleteTuple(req *authzextv1.DeletePermissionOperation) (*openfgav1.TupleKeyWithoutCondition, error) {
-	resource := req.GetResource()
-	permission := req.GetPermission()
-	object := NewObjectEntry(toZanzanaType(resource.GetGroup()), resource.GetGroup(), resource.GetResource(), "", resource.GetName())
-	tuple, err := NewResourceTuple(object, resource, permission)
+func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	tuples, err := resourcePermissionToTuples(req.GetResource(), req.GetPermission())
 	if err != nil {
 		return nil, err
 	}
 
-	return &openfgav1.TupleKeyWithoutCondition{
-		User:     tuple.GetUser(),
-		Relation: tuple.GetRelation(),
-		Object:   tuple.GetObject(),
+	deleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(tuples))
+	for _, tuple := range tuples {
+		deleteTuples = append(deleteTuples, &openfgav1.TupleKeyWithoutCondition{
+			User:     tuple.GetUser(),
+			Relation: tuple.GetRelation(),
+			Object:   tuple.GetObject(),
+		})
+	}
+	return deleteTuples, nil
+}
+
+func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
+	subject, err := toZanzanaSubject(permission.GetKind(), permission.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	relation := strings.ToLower(permission.GetVerb())
+	if isDatasourcePermission(resource) {
+		return datasourcePermissionToTuples(subject, relation, resource), nil
+	}
+
+	return []*openfgav1.TupleKey{
+		newResourcePermissionTuple(subject, relation, resource, ""),
 	}, nil
+}
+
+func datasourcePermissionToTuples(subject, relation string, resource *authzextv1.Resource) []*openfgav1.TupleKey {
+	switch relation {
+	case "query":
+		// Query is represented as view on the datasource.
+		relation = RelationSetView
+	case RelationSetEdit, RelationSetAdmin:
+	default:
+		// Preserve granular relations without granting query access.
+		return []*openfgav1.TupleKey{
+			newResourcePermissionTuple(subject, relation, resource, ""),
+		}
+	}
+
+	// Action Sets also grant query access.
+	return []*openfgav1.TupleKey{
+		newResourcePermissionTuple(subject, relation, resource, ""),
+		newResourcePermissionTuple(subject, RelationCreate, resource, "query"),
+	}
+}
+
+func isDatasourcePermission(resource *authzextv1.Resource) bool {
+	return resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), ".datasource.grafana.app")
 }
 
 func toZanzanaType(apiGroup string) string {
@@ -504,41 +537,46 @@ func toZanzanaType(apiGroup string) string {
 	return TypeResource
 }
 
-func NewResourceTuple(object string, resource *authzextv1.Resource, perm *authzextv1.Permission) (*openfgav1.TupleKey, error) {
-	// Typ is "folder" or "resource"
-	typ := toZanzanaType(resource.Group)
-
-	// subject
-	subject, err := toZanzanaSubject(perm.GetKind(), perm.GetName())
-	if err != nil {
-		return nil, err
-	}
+func newResourcePermissionTuple(subject, relation string, resource *authzextv1.Resource, subresource string) *openfgav1.TupleKey {
+	typ := toZanzanaType(resource.GetGroup())
 
 	key := &openfgav1.TupleKey{
-		// e.g. "user:{uid}", "serviceaccount:{uid}", "team:{uid}", "basicrole:{viewer|editor|admin}"
+		// e.g. "user:{uid}", "service-account:{uid}", "team:{uid}", "role:basic_{viewer|editor|admin}#assignee"
 		User: subject,
 		// "view", "edit", "admin"
-		Relation: strings.ToLower(perm.Verb),
+		Relation: relation,
 		// e.g. "folder:{name}" or "resource:{apiGroup}/{resource}/{name}"
-		Object: object,
+		// e.g. "resource:{apiGroup}/{resource}/{subresource}/{name}"
+		Object: NewObjectEntry(
+			typ,
+			resource.GetGroup(),
+			resource.GetResource(),
+			subresource,
+			resource.GetName(),
+		),
 	}
 
-	// For resources we add a condition to filter by apiGroup/resource
+	// For generic resources we add a condition to filter by apiGroup/resource[/subresource]
 	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
+	// e.g "group_filter": {"group_resource": "loki.datasource.grafana.app/datasources/query"}
 	if typ == TypeResource {
+		groupResource := resource.GetResource()
+		if subresource != "" {
+			groupResource += "/" + subresource
+		}
 		key.Condition = &openfgav1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resource": structpb.NewStringValue(
-						resource.GetGroup() + "/" + resource.GetResource(),
+						resource.GetGroup() + "/" + groupResource,
 					),
 				},
 			},
 		}
 	}
 
-	return key, nil
+	return key
 }
 
 func toZanzanaSubject(kind string, name string) (string, error) {

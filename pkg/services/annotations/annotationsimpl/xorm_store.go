@@ -263,7 +263,7 @@ func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64,
 		}
 
 		if len(tagsDelete) != 0 {
-			if _, err := sess.MustCols("annotation_id", "tag_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
+			if _, err := sess.MustCols("annotation_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
 				return err
 			}
 		}
@@ -600,6 +600,13 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 
 		sql.WriteString(`WHERE annotation.org_id = ?`)
 		params = append(params, query.OrgID)
+
+		switch query.Type {
+		case "alert":
+			sql.WriteString(` AND annotation.alert_id > 0`)
+		case "annotation":
+			sql.WriteString(` AND annotation.alert_id = 0`)
+		}
 
 		sql.WriteString(` AND (`)
 		s, p := r.db.GetDialect().LikeOperator(tagKey, true, query.Tag, true)

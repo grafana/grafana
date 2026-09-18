@@ -20,6 +20,6 @@ var TeamBindingSearchFields = iamProvider.Fields(
 	iamv0.TeamBindingResourceInfo.GroupVersionResource(),
 )
 
-func GetTeamBindingBuilder() (resource.DocumentBuilderInfo, error) {
-	return iamBuilder(iamv0.TeamBindingResourceInfo, TeamBindingSearchFields)
+func GetTeamBindingBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+	return iamBuilder(registry, iamv0.TeamBindingResourceInfo)
 }

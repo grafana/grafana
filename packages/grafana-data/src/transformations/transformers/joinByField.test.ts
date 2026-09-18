@@ -877,7 +877,10 @@ describe('JOIN Transformer', () => {
       });
     });
 
-    it('joins if fields are missing', async () => {
+    // A frame that has no fields contributes no join values, so there is nothing for the other
+    // frames to match against and an inner join must produce no rows. The outer join equivalent of
+    // this test drops the empty frame and joins the rest instead.
+    it('does not join if fields are missing', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
@@ -910,6 +913,7 @@ describe('JOIN Transformer', () => {
       await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
+        expect(filtered.length).toBe(0);
         expect(filtered.fields).toMatchInlineSnapshot(`
           [
             {
@@ -917,11 +921,7 @@ describe('JOIN Transformer', () => {
               "name": "time",
               "state": {},
               "type": "time",
-              "values": [
-                1,
-                2,
-                3,
-              ],
+              "values": [],
             },
             {
               "config": {},
@@ -931,11 +931,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
-                10,
-                11,
-                12,
-              ],
+              "values": [],
             },
             {
               "config": {},
@@ -945,11 +941,7 @@ describe('JOIN Transformer', () => {
               "name": "temperature",
               "state": {},
               "type": "number",
-              "values": [
-                20,
-                22,
-                24,
-              ],
+              "values": [],
             },
           ]
         `);

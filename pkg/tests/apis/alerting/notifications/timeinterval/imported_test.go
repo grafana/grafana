@@ -126,12 +126,13 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 		require.Nil(t, err)
 		require.GreaterOrEqual(t, len(timeIntervals.Items), 3, "should have at least 3 time intervals after creating duplicate name")
 
+		renamedName := "business-hours_" + identifier
 		var foundRenamed bool
 		for _, ti := range timeIntervals.Items {
-			if ti.Spec.Name == "business-hours"+identifier && ti.GetProvenanceStatus() == string(models.ProvenanceConvertedPrometheus) {
+			if ti.Spec.Name == renamedName && ti.GetProvenanceStatus() == string(models.ProvenanceConvertedPrometheus) {
 				foundRenamed = true
 			}
 		}
-		require.True(t, foundRenamed, fmt.Sprintf("expected to find renamed imported time interval with name %q", "business-hours"+identifier))
+		require.True(t, foundRenamed, fmt.Sprintf("expected to find renamed imported time interval with name %q", renamedName))
 	})
 }

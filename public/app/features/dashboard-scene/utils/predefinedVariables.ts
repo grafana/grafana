@@ -1,5 +1,6 @@
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type ControlSourceRef, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
@@ -74,11 +75,11 @@ export function clearPredefinedVariablesCache() {
  * Fetches the predefined (global + folder-scoped) variables applicable to a dashboard,
  * tagged with their origin and with folder-over-global name precedence applied.
  *
- * Fails open: any fetch error resolves to an empty list so the dashboard still loads
- * with its local variables only.
+ * Returns `null` on fetch failure so callers can choose fail-open (initial load) vs
+ * keep-current (refresh). An empty array means a successful fetch with no variables.
  */
-export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[]> {
-  if (!config.featureToggles.globalDashboardVariables) {
+export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[] | null> {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
     return [];
   }
 
@@ -99,7 +100,7 @@ export async function fetchPredefinedVariables(folderUid?: string): Promise<Vari
     return variables;
   } catch (err) {
     console.warn('Failed to load predefined dashboard variables', err);
-    return [];
+    return null;
   }
 }
 

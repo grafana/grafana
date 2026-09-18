@@ -9,6 +9,26 @@ import (
 func TestV17(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "panel with minSpan greater than the grid width gets minSpan removed without setting maxPerRow",
+			input: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":      1,
+						"minSpan": 25,
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 17,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+					},
+				},
+			},
+		},
+		{
 			name: "panel with minSpan 8 gets converted to maxPerRow 3",
 			input: map[string]interface{}{
 				"title":         "V17 MinSpan to MaxPerRow Migration Test Dashboard",
@@ -288,6 +308,45 @@ func TestV17(t *testing.T) {
 				"title":         "V17 Empty Panels Test",
 				"schemaVersion": 17,
 				"panels":        []interface{}{},
+			},
+		},
+		{
+			name: "migrates minSpan for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V17 MinSpan to MaxPerRow Migration Test Dashboard",
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":      1,
+								"type":    "graph",
+								"title":   "Test Panel",
+								"minSpan": 8,
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V17 MinSpan to MaxPerRow Migration Test Dashboard",
+				"schemaVersion": 17,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":        1,
+								"type":      "graph",
+								"title":     "Test Panel",
+								"maxPerRow": 3,
+							},
+						},
+					},
+				},
 			},
 		},
 	}

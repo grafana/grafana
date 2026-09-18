@@ -1,20 +1,12 @@
-import { type DashboardLoadedEvent } from '@grafana/data';
-let handler: (e: DashboardLoadedEvent<CloudWatchQuery>) => {};
 import { config, reportInteraction } from '@grafana/runtime';
 
-import './module';
 import { CloudWatchDashboardLoadedEvent } from './mocks/dashboardOnLoadedEvent';
-import { type CloudWatchQuery } from './types';
+import { onDashboardLoadedHandler } from './tracking';
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-    getAppEvents: () => ({
-      subscribe: jest.fn((e, h) => {
-        handler = h;
-      }),
-    }),
   };
 });
 
@@ -22,7 +14,7 @@ const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQ
 describe('onDashboardLoadedHandler', () => {
   it('should report a `grafana_ds_cloudwatch_dashboard_loaded` interaction ', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    handler(CloudWatchDashboardLoadedEvent);
+    onDashboardLoadedHandler(CloudWatchDashboardLoadedEvent);
     expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_cloudwatch_dashboard_loaded', {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',

@@ -4,15 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import {
-  useGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { setBookmark } from 'app/core/reducers/navBarTree';
@@ -39,19 +34,12 @@ import {
 } from './utils';
 
 export const usePinnedItems = () => {
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
   const k8sPreferences = useListPreferencesQuery(
-    contextSrv.user.isSignedIn && newPrefsEnabled
-      ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` }
-      : skipToken
-  );
-  // TODO remove the legacy query once newPrefsEnabled is fully rolled out
-  const legacyPreferences = useGetUserPreferencesQuery(
-    contextSrv.user.isSignedIn && !newPrefsEnabled ? undefined : skipToken
+    contextSrv.user.isSignedIn ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` } : skipToken
   );
 
-  const preferences = newPrefsEnabled ? k8sPreferences.data?.items[0]?.spec : legacyPreferences.data;
-  const isLoading = newPrefsEnabled ? k8sPreferences.isLoading : legacyPreferences.isLoading;
+  const preferences = k8sPreferences.data?.items[0]?.spec;
+  const isLoading = k8sPreferences.isLoading;
   const pinnedItems = useMemo(() => preferences?.navbar?.bookmarkUrls || [], [preferences]);
 
   return { pinnedItems, isLoading };
@@ -112,8 +100,6 @@ const usePinning = ({
 } => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const [patchPreferences] = usePatchUserPreferencesMutation();
   const [patchPreferencesK8s] = useUpdatePreferencesMutation();
   const { pinnedItems, isLoading } = usePinnedItems();
 
@@ -130,14 +116,12 @@ const usePinning = ({
         onSuccess?.();
         return true;
       };
-      return newPrefsEnabled
-        ? patchPreferencesK8s({
-            name: `user-${contextSrv.user.uid}`,
-            patch: { spec: { navbar: { bookmarkUrls } } },
-          }).then(onResult)
-        : patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
+      return patchPreferencesK8s({
+        name: `user-${contextSrv.user.uid}`,
+        patch: { spec: { navbar: { bookmarkUrls } } },
+      }).then(onResult);
     },
-    [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
+    [patchPreferencesK8s, notifyApp]
   );
 
   // Local copy of the pinned urls so pin/unpin updates the menu immediately (the patch mutation
@@ -197,7 +181,7 @@ const usePinning = ({
   // Reorder the pinned entries (staged; persisted on save). Each entry is one pinned url, so this is
   // a plain move within the stored url list.
   const onReorderPinned = useCallback((fromIndex: number, toIndex: number) => {
-    reportInteraction('grafana_nav_pinned_reordered');
+    reportInteraction('grafana_nav_pinned_reordered', { ...getNavExperimentPayload() });
     setDraftPinnedUrls((current) => moveItem(current, fromIndex, toIndex));
   }, []);
 
@@ -244,6 +228,11 @@ const useHiddenSections = ({
   const onToggleHidden = useCallback(
     (item: NavModelItem, effectivelyHidden: boolean) => {
       const key = hiddenKey(item);
+      // effectivelyHidden means the item is currently hidden, so this toggle reveals it; otherwise it hides it.
+      reportInteraction(effectivelyHidden ? 'grafana_nav_item_shown' : 'grafana_nav_item_hidden', {
+        path: item.url ?? item.id,
+        ...getNavExperimentPayload(),
+      });
       setDraftHiddenIds((current) =>
         effectivelyHidden ? revealItem(current, baseItems, key) : hideItem(current, baseItems, key)
       );
@@ -278,7 +267,7 @@ const useSectionOrdering = ({
 
   const onReorderSection = useCallback(
     (fromIndex: number, toIndex: number) => {
-      reportInteraction('grafana_nav_section_reordered');
+      reportInteraction('grafana_nav_section_reordered', { ...getNavExperimentPayload() });
       setDraftSectionOrder((current) => reorderSections(baseItems, current, fromIndex, toIndex));
     },
     [baseItems]
@@ -446,6 +435,7 @@ export const useNavCustomization = () => {
     reportInteraction('grafana_nav_customise_saved', {
       hiddenCount: draftHiddenIds.length,
       pinnedCount: draftPinnedUrls.length,
+      ...getNavExperimentPayload(),
     });
     setEditMode(false);
   }, [commitPinning, commitHiding, commitOrdering, draftHiddenIds, draftPinnedUrls]);
@@ -455,7 +445,7 @@ export const useNavCustomization = () => {
 
   // Stage the reset (cleared on save, discarded on cancel) rather than persisting immediately.
   const onResetToDefault = useCallback(() => {
-    reportInteraction('grafana_nav_customise_reset');
+    reportInteraction('grafana_nav_customise_reset', { ...getNavExperimentPayload() });
     resetPinning();
     resetHiding();
     resetOrdering();
