@@ -32,10 +32,12 @@ func testBuilder(t *testing.T, manifest *app.ManifestData) *AppPluginAPIBuilder 
 		Manifest: manifest,
 	}
 	return &AppPluginAPIBuilder{
-		group:      apiGroupForPlugin(plugin),
-		manifest:   manifest,
-		pluginJSON: plugin.JSONData,
-		clientV3:   &fakeRouteClient{},
+		group:           apiGroupForPlugin(plugin),
+		manifest:        manifest,
+		pluginJSON:      plugin.JSONData,
+		client:          struct{ PluginClient }{},
+		contextProvider: struct{ PluginContextWrapper }{},
+		clientV3:        &fakeRouteClient{},
 	}
 }
 

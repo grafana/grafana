@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/alerting/definition"
@@ -25,10 +26,23 @@ type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule
 	TimeIntervals   map[ResourceUID]TimeInterval
+	Receivers       map[ResourceUID]PostableApiReceiver
 
 	AlertmanagerConfig PostableApiAlertingConfig
 	ExtraConfigs       []ExtraConfiguration
 	ManagedRoutes      ManagedRoutes
+}
+
+// GetReceivers returns the receivers sorted by name, for deterministic iteration and serialization.
+func (c *AMConfigV1) GetReceivers() []*PostableApiReceiver {
+	res := make([]*PostableApiReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		res = append(res, &r)
+	}
+	slices.SortFunc(res, func(a, b *PostableApiReceiver) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return res
 }
 
 // SortedTemplates returns templates ordered by kind and title.
@@ -49,7 +63,7 @@ func (c *AMConfigV1) SortedTemplates() []TemplateGroup {
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *AMConfigV1) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
-	for _, r := range c.AlertmanagerConfig.Receivers {
+	for _, r := range c.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			UIDs[gr.UID] = gr
 		}
@@ -83,7 +97,15 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
-	return c.AlertmanagerConfig.Validate()
+	if err := c.AlertmanagerConfig.Validate(); err != nil {
+		return err
+	}
+
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	return c.AlertmanagerConfig.Route.ValidateReceivers(receivers)
 }
 
 type ManagedRoutes map[string]*Route
@@ -280,25 +302,14 @@ func (c ExtraConfiguration) Validate() error {
 
 type PostableApiAlertingConfig struct {
 	Config
-	Receivers []*PostableApiReceiver
-}
-
-func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
-	return c.Receivers
 }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
 }
 
-// Validate ensures that the two routing trees use the correct receiver types.
+// Validate ensures the root route is well-formed.
 func (c *PostableApiAlertingConfig) Validate() error {
-	receivers := make(map[string]struct{}, len(c.Receivers))
-
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-
 	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
 	// Check if we have a root route. We cannot check for it in the
 	// UnmarshalYAML method because it won't be called if the input is empty
@@ -310,10 +321,6 @@ func (c *PostableApiAlertingConfig) Validate() error {
 	// Check if continue in root route.
 	if c.Route.Continue {
 		return fmt.Errorf("cannot have continue in root route")
-	}
-
-	if err := c.Route.ValidateReceivers(receivers); err != nil {
-		return err
 	}
 
 	return nil

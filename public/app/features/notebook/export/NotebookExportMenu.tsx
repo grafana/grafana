@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { Menu } from '@grafana/ui';
+import { Menu, copyTextToClipboard } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -7,7 +7,6 @@ import { NOTEBOOK_EXPORT_DESTINATION, type NotebookExportSource } from '../analy
 import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
 
-import { copyToClipboard } from './copyToClipboard';
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
 
@@ -43,16 +42,16 @@ export function NotebookExportMenu({ uid, getSpec, source }: Props) {
 
   const onCopy = async () => {
     // Deliberately not awaited here. The clipboard write has to be issued inside the click, so the
-    // pending markdown is what gets handed to copyToClipboard — see the note there.
+    // pending markdown is what gets handed to copyTextToClipboard — see the note there.
     const markdown = loadSpec().then((spec) => notebookToMarkdown(spec, { url: notebookShareUrl(uid) }));
-    // A second handle, so a rejection always has a listener. copyToClipboard hands the pending
+    // A second handle, so a rejection always has a listener. copyTextToClipboard hands the pending
     // promise to ClipboardItem, which never consumes it if the clipboard write rejects first for its
     // own reason — leaving the original handle to surface as an unhandled rejection in the console.
-    // The error still reaches the catch below, because that awaits copyToClipboard rather than this.
+    // The error still reaches the catch below, because that awaits copyTextToClipboard rather than this.
     markdown.catch(() => {});
 
     try {
-      await copyToClipboard(markdown);
+      await copyTextToClipboard(markdown);
       NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.CLIPBOARD, source);
       notifyApp.success(t('notebooks.export.copied', 'Notebook copied as Markdown'));
     } catch (error) {

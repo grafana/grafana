@@ -24,7 +24,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
-  extractLabels,
+  EXTRACT_FIELDS_FIXTURE,
   frameWithLabels,
   mockSystemTransformationPlugins,
   registerPlugin,
@@ -1223,7 +1223,7 @@ describe('Panel mutation commands', () => {
       });
 
       it('keeps the plugin transformations installed when the command sets the user ones', async () => {
-        registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => [extractLabels]));
+        registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => [EXTRACT_FIELDS_FIXTURE]));
 
         const { scene, transformer } = buildTransformingPanelScene('logs-table');
         activateFullSceneTree(scene.state.body);
