@@ -1,11 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
 
 import { type NotebookRow } from '../list/useNotebooksList';
-import { getNeutralTagListStyle } from '../tagColors';
 
 interface Props {
   notebook: NotebookRow;
@@ -58,9 +57,9 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // The same neutral grey the list table and the document header use, rather than TagList's own
-  // per-tag colours: a tag is context here, not something to pick out of the card.
-  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
+  // TagList right-aligns by default, and this row spans the card, so the tags would otherwise sit
+  // at the far edge instead of under the meta line they belong to.
+  tagList: css({ justifyContent: 'flex-start' }),
   // What CardContainer draws for `isSelected`, so the picker still looks like every selectable card.
   selected: css({
     outline: `solid 1px ${theme.colors.accent.border}`,

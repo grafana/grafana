@@ -183,7 +183,7 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 
 // validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
 func validateManagedRouteName(name string) error {
-	if name = strings.TrimSpace(name); name == "" {
+	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("route name is required")
 	}
 	// Colon in names confuses RBAC. Make sure we do not allow that.
@@ -262,7 +262,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
 		var defaultRcv *v1.PostableApiReceiver
-		for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
+		for _, rcv := range defaultCfg.Receivers {
 			if rcv.Name == defaultCfg.AlertmanagerConfig.Route.Receiver {
 				defaultRcv = rcv
 				break
@@ -271,7 +271,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 		if defaultRcv == nil {
 			return nil, fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
 		}
-		rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, defaultRcv)
+		rev.Config.Receivers = append(rev.Config.Receivers, defaultRcv)
 	}
 
 	return rev.UpdateNamedRoute(models.DefaultRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)

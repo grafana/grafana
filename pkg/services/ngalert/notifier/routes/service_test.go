@@ -73,9 +73,9 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{Name: "grafana-default"},
-				},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{Name: "grafana-default"},
 			},
 			ExtraConfigs: []v1.ExtraConfiguration{
 				{
@@ -95,10 +95,10 @@ func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{Name: "grafana-default"},
-					{Name: "empty"},
-				},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{Name: "grafana-default"},
+				{Name: "empty"},
 			},
 			ManagedRoutes: v1.ManagedRoutes{
 				"route-a": &v1.Route{Receiver: "grafana-default"},
@@ -227,8 +227,7 @@ func TestGetManagedRoute(t *testing.T) {
 			},
 		}
 		provStore := fakes.NewFakeProvisioningStore()
-		// Import is not enabled, so the fallback to imported route is not triggered.
-		features := featuremgmt.WithFeatures()
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 

@@ -98,8 +98,27 @@
       minimumReleaseAge: "7 days",
     },
     {
-      "matchDepTypes": ["devDependencies"],
-      "prPriority": -1
+      description: "Run Meticulous for production dependencies used by the Grafana UI",
+      matchManagers: ["npm"],
+      matchDepTypes: ["dependencies"],
+      matchFileNames: [
+        "package.json",
+        "packages/grafana-alerting/package.json",
+        "packages/grafana-api-clients/package.json",
+        "packages/grafana-data/package.json",
+        "packages/grafana-flamegraph/package.json",
+        "packages/grafana-i18n/package.json",
+        "packages/grafana-o11y-ds-frontend/package.json",
+        "packages/grafana-runtime/package.json",
+        "packages/grafana-sql/package.json",
+        "packages/grafana-ui/package.json",
+        "public/app/plugins/**/package.json",
+      ],
+      addLabels: ["ci/meticulous"],
+    },
+    {
+      matchDepTypes: ["devDependencies"],
+      prPriority: -1,
     },
   ],
   pin: {

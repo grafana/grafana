@@ -216,6 +216,9 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp 
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, UID string) response.Response {
 	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, UID)
+	if errors.Is(err, provisioning.ErrNotFound) {
+		return ErrResp(http.StatusNotFound, err, "")
+	}
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete contact point", err)
 	}

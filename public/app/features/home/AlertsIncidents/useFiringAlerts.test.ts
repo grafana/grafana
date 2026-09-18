@@ -61,6 +61,7 @@ beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
+  jest.replaceProperty(contextSrv, 'isSignedIn', true);
   mockTeams([]);
   mockAlerts([]);
 });
@@ -82,6 +83,25 @@ describe('canViewFiringAlerts', () => {
 });
 
 describe('useFiringAlerts', () => {
+  it('does not request user teams for anonymous users', async () => {
+    jest.replaceProperty(contextSrv, 'isSignedIn', false);
+
+    const requests: string[] = [];
+
+    server.use(
+      http.get('/api/user/teams', ({ request }) => {
+        requests.push(request.url);
+        return HttpResponse.json([]);
+      })
+    );
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(requests).toEqual([]);
+  });
+
   it('derives counts and severity totals from the fetched alerts', async () => {
     mockAlerts([
       makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } }),
@@ -153,7 +173,7 @@ describe('useFiringAlerts', () => {
       const { result } = renderHook(() => useFiringAlerts('team.one'), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      // escapeRegExp adds '\.', quoteWithEscape doubles the backslash on the wire.
+      // escapeRegExp adds '\\.', quoteWithEscape doubles the backslash on the wire.
       expect(requests).toEqual([['team=~"team\\\\.one"']]);
     });
   });

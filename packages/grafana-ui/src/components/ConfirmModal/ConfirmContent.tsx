@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
-import * as React from 'react';
+import { type FormEvent, type ReactNode, type RefObject, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -17,15 +16,17 @@ import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 
 export interface ConfirmContentProps {
   /** Modal content */
-  body: React.ReactNode;
+  body: ReactNode;
   /** Modal description */
-  description?: React.ReactNode;
+  description?: ReactNode;
   /** Text for confirm button */
   confirmButtonLabel: string;
+  confirmButtonRef?: RefObject<HTMLButtonElement | null>;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
   /** Text user needs to fill in before confirming */
   confirmPromptText?: string;
+  confirmPromptRef?: RefObject<HTMLInputElement | null>;
   /** Text for dismiss button */
   dismissButtonLabel?: string;
   /** Variant for dismiss button */
@@ -51,7 +52,9 @@ const promptCollator = new Intl.Collator();
 export const ConfirmContent = ({
   body,
   confirmPromptText,
+  confirmPromptRef,
   confirmButtonLabel,
+  confirmButtonRef,
   confirmButtonVariant,
   dismissButtonVariant,
   dismissButtonLabel,
@@ -65,25 +68,13 @@ export const ConfirmContent = ({
 }: ConfirmContentProps) => {
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
+  const onConfirmationTextChange = (event: FormEvent<HTMLInputElement>) => {
     setIsDisabled(
       confirmPromptText === undefined ||
         promptCollator.compare(confirmPromptText.toLowerCase(), event.currentTarget.value.toLowerCase()) !== 0
     );
   };
-
-  useEffect(() => {
-    // With a type-to-confirm prompt the confirm button starts disabled, so land focus
-    // on the input the user must type into rather than the unusable button.
-    if (confirmPromptText && !disabled) {
-      inputRef.current?.focus();
-    } else {
-      buttonRef.current?.focus();
-    }
-  }, [confirmPromptText, disabled]);
 
   useEffect(() => {
     setIsDisabled(disabled ? true : Boolean(confirmPromptText));
@@ -103,8 +94,8 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const stopPropagation = (callback: (event: React.FormEvent) => void) => {
-    return (event: React.FormEvent) => {
+  const stopPropagation = (callback: (event: FormEvent) => void) => {
+    return (event: FormEvent) => {
       event.stopPropagation();
       callback(event);
     };
@@ -123,7 +114,7 @@ export const ConfirmContent = ({
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
                 <Input
-                  ref={inputRef}
+                  ref={confirmPromptRef}
                   placeholder={placeholder}
                   onChange={onConfirmationTextChange}
                   data-testid={selectors.pages.ConfirmModal.input}
@@ -142,7 +133,7 @@ export const ConfirmContent = ({
             type="submit"
             variant={confirmButtonVariant}
             disabled={isDisabled}
-            ref={buttonRef}
+            ref={confirmButtonRef}
             data-testid={selectors.pages.ConfirmModal.delete}
           >
             {confirmButtonLabel}

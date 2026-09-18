@@ -9,7 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
+import { customFolderCountsHandler, setTestFlags } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
@@ -114,11 +114,16 @@ describe('browseDashboardsAPI', () => {
     config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
+    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy endpoints.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioningEnabled;
+    setTestFlags({});
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>

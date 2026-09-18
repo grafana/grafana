@@ -14,6 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -200,6 +202,16 @@ func newRequiredFieldError(
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if err == nil {
 		return nil
+	}
+
+	// Without this a namespace mismatch falls through
+	// to the generic 500 below, which is incorrect as it raises error budgets.
+	if errors.Is(err, claims.ErrNamespaceMismatch) {
+		return &resourcepb.ErrorResult{
+			Message: claims.ErrNamespaceMismatch.Error(),
+			Reason:  string(metav1.StatusReasonForbidden),
+			Code:    http.StatusForbidden,
+		}
 	}
 
 	// Structured results attached to a gRPC error keep their reason/code across

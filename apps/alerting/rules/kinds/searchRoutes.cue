@@ -2,14 +2,11 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1/search"
 )
 
-// searchRules is a cross-resource endpoint: one call searches both AlertRule and
-// RecordingRule. It is not the generic per-resource search API
-// (search.grafana.app), which mounts under {resource}/search and carries its own
-// envelope. The request shape here is modelled on that design for familiarity,
-// but it is a separate contract: its own TypeMeta, a string labelSelector,
-// string sort fields, and offset paging rather than search-after tokens.
+// Per-kind /searchRules routes reserve /search for generic search.
+// The cross-kind /searchRules contract remains until clients migrate.
 
 // #SearchTextLeaf is a free-text search across one or more text-capable
 // fields. When fields is omitted, the kind's default text field set is used.
@@ -56,9 +53,35 @@ import (
 
 searchRoutes: {
 	namespaced: {
-		// One endpoint covering both rule kinds. The query is a POST body
-		// (not query params) so the typed #SearchQuery tree survives the
-		// transport.
+		"/alertrules/searchRules": {
+			POST: {
+				// These search routes are experimental and subject to change without deprecation until stabilized
+				// Codegen requires a Kubernetes verb prefix; search is a read.
+				name: "listAlertRuleSearchRulesV0alpha1"
+				request: {
+					body: search.#SearchQuery
+				}
+				// SearchResults supplies its own metadata; omit listMeta.
+				response: search.#SearchResults
+				responseMetadata: {
+					typeMeta: true
+				}
+			}
+		}
+		"/recordingrules/searchRules": {
+			POST: {
+				// These search routes are experimental and subject to change without deprecation until stabilized
+				name: "listRecordingRuleSearchRulesV0alpha1"
+				request: {
+					body: search.#SearchQuery
+				}
+				response: search.#SearchResults
+				responseMetadata: {
+					typeMeta: true
+				}
+			}
+		}
+
 		"/searchRules": {
 			POST: {
 				// These search routes are experimental and subject to change without deprecation until stabilized

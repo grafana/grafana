@@ -41,6 +41,7 @@ import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
+import { QueryEditorRowExtensionActions } from './QueryEditorRowExtensionActions';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
@@ -470,6 +471,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
     extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
+    extraActions.push(
+      <QueryEditorRowExtensionActions
+        key="query-editor-row-extension-actions"
+        query={query}
+        queries={queries}
+        dataSource={dataSource}
+        app={app}
+        timeRange={data.timeRange}
+      />
+    );
 
     return extraActions;
   };

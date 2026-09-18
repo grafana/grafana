@@ -1154,7 +1154,7 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderFilter(c *contextmodel.ReqCo
 	}
 
 	folderUIDs := make([]string, 0)
-	for _, filter := range strings.Split(query.FolderFilter, ",") { // nolint:staticcheck
+	for filter := range strings.SplitSeq(query.FolderFilter, ",") { // nolint:staticcheck
 		folderID, err := strconv.ParseInt(filter, 10, 64)
 		if err != nil {
 			c.JsonApiErr(http.StatusBadRequest, "invalid folderFilter", err)

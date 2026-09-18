@@ -7,6 +7,7 @@
   },
   "name": "bbb",
   "rv": 1234,
+  "_rv": "1234",
   "title": "test-bbb",
   "title_ngram": "test-bbb",
   "title_phrase": "test-bbb",

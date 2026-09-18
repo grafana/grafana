@@ -1,4 +1,5 @@
 import { type BootData } from '@grafana/data';
+import { type LegacyFeatureToggleMode } from '@grafana/runtime/internal';
 export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;
@@ -24,6 +25,15 @@ export declare global {
      * - `block`: requests are rejected before they are sent
      */
     __grafanaLegacyAPIMode?: string;
+
+    /**
+     * How the frontend handles reads of the legacy `config.featureToggles` map.
+     * Controlled by the `grafana.frontendLegacyFeatureToggleHandling` feature flag.
+     * - `off`: reads are left untouched
+     * - `log`: reads resolve normally but each toggle is reported once
+     * - `block`: reads resolve to undefined, and each toggle is reported once
+     */
+    __grafanaLegacyFeatureToggleMode?: LegacyFeatureToggleMode;
 
     /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.

@@ -44,6 +44,7 @@ export const SummaryCell = ({
   const defaultFooterCellStyles = getDefaultCellStyles(theme, {
     textAlign: 'left', // alignment is set in footerItem
     shouldOverflow: true,
+    hoverOverflow: true,
     textWrap: false,
   });
   const displayName = getDisplayName(field);

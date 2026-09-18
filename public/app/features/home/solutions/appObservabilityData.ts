@@ -40,8 +40,8 @@ const STATS_QUERIES: Record<string, string> = {
 };
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
-async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem): Promise<boolean> {
-  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, PROBE_TIMEOUT_MS);
+async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem, signal?: AbortSignal): Promise<boolean> {
+  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
   return (readScalar(frames, 'probe') ?? 0) > 0;
 }
 
@@ -55,7 +55,7 @@ export async function fetchAppObservabilityStats(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<AppObservabilityStats> {
   // partial: readers are null-safe; one failed query keeps the rest.
-  const frames = await runInstantQueries(STATS_QUERIES, ds, undefined, true);
+  const frames = await runInstantQueries(STATS_QUERIES, ds, { partial: true });
   return {
     services: readScalar(frames, 'services'),
     errorRatio: readScalar(frames, 'errorRatio'),

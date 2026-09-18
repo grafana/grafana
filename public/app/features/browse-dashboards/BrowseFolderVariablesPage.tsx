@@ -6,6 +6,8 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Stack, Text } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { useListAllVariablesQuery } from '../variables-management/api';
 import { VariablesTable } from '../variables-management/components/VariablesTable';
@@ -51,6 +53,8 @@ export function BrowseFolderVariablesPage() {
     : undefined;
 
   const isLoading = isFolderLoading || isVariablesLoading;
+  const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
+  const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
 
   return (
     <Page
@@ -72,14 +76,15 @@ export function BrowseFolderVariablesPage() {
                 <Text element="h3">
                   <Trans i18nKey="browse-dashboards.folder-variables.list-heading">Folder variables</Trans>
                 </Text>
-                <Button
-                  disabled={!folderDTO.canEdit}
-                  onClick={() =>
-                    navigate(locationUtil.assureBaseUrl(`/dashboards/variables/new?folderUid=${folderUID}`))
-                  }
-                >
-                  <Trans i18nKey="browse-dashboards.folder-variables.new">New folder variable</Trans>
-                </Button>
+                {canCreate && folderDTO.canEdit && (
+                  <Button
+                    onClick={() =>
+                      navigate(locationUtil.assureBaseUrl(`/dashboards/variables/new?folderUid=${folderUID}`))
+                    }
+                  >
+                    <Trans i18nKey="browse-dashboards.folder-variables.new">New folder variable</Trans>
+                  </Button>
+                )}
               </Stack>
               {folderVariables.length === 0 ? (
                 <Text color="secondary">
@@ -94,12 +99,17 @@ export function BrowseFolderVariablesPage() {
                   selected={new Set()}
                   onToggleFolder={() => {}}
                   onSetSelected={() => {}}
-                  onEdit={(variable) => {
-                    const name = variable.metadata.name;
-                    if (name) {
-                      navigate(locationUtil.assureBaseUrl(`/dashboards/variables/edit/${name}`));
-                    }
-                  }}
+                  selectable={false}
+                  onEdit={
+                    canWrite
+                      ? (variable) => {
+                          const name = variable.metadata.name;
+                          if (name) {
+                            navigate(locationUtil.assureBaseUrl(`/dashboards/variables/edit/${name}`));
+                          }
+                        }
+                      : undefined
+                  }
                 />
               )}
             </div>

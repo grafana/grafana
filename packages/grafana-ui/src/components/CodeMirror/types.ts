@@ -119,6 +119,16 @@ export interface CodeMirrorEditorProps {
    */
   onChange: (value: string) => void;
   /**
+   * Called with the current editor contents when the editor loses focus.
+   */
+  onBlur?: (value: string) => void;
+  /**
+   * Called with the current editor contents when Ctrl/Cmd+S is pressed while
+   * focused. Providing this callback handles the shortcut and prevents the
+   * browser's default save action. The caller is responsible for persistence.
+   */
+  onSave?: (value: string) => void;
+  /**
    * Accessible label applied to the editor input.
    */
   'aria-label'?: string;
@@ -136,6 +146,17 @@ export interface CodeMirrorEditorProps {
    * - `'override'` — replace any language-default completions with just these sources.
    */
   completionMode?: CodeMirrorCompletionMode;
+  /**
+   * When `true`, a typed space opens the completion popup as an explicit
+   * request. Suits a language where a space starts a new clause and the
+   * suggestions are keywords or identifiers, as after `SELECT ` in SQL.
+   *
+   * Leave it off (the default) for prose. A source is free to answer an explicit
+   * request with its whole list — the variable source does, so that Ctrl+Space
+   * offers every variable — and binding that to the space bar would open the
+   * popup on every word.
+   */
+  completeOnSpace?: boolean;
   /**
    * Additional CodeMirror extensions to layer on top of the defaults.
    * Use this for linting, custom keymaps, themes, etc.

@@ -507,8 +507,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Connection{}.OpenAPIModelName()),
+										Ref: ref(Connection{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -688,8 +687,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ErrorDetails{}.OpenAPIModelName()),
+										Ref: ref(ErrorDetails{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -712,8 +710,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -781,9 +778,8 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -796,8 +792,7 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+										Ref: ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -900,8 +895,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+										Ref: ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -996,8 +990,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ExternalRepository{}.OpenAPIModelName()),
+										Ref: ref(ExternalRepository{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1094,8 +1087,7 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FileItem{}.OpenAPIModelName()),
+										Ref: ref(FileItem{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1427,9 +1419,8 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1521,8 +1512,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(HistoricJob{}.OpenAPIModelName()),
+										Ref: ref(HistoricJob{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1567,8 +1557,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Author{}.OpenAPIModelName()),
+										Ref: ref(Author{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1628,8 +1617,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(HistoryItem{}.OpenAPIModelName()),
+										Ref: ref(HistoryItem{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1723,8 +1711,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Job{}.OpenAPIModelName()),
+										Ref: ref(Job{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1822,9 +1809,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1836,9 +1822,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1975,9 +1960,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1989,9 +1973,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -2083,8 +2066,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceCount{}.OpenAPIModelName()),
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2126,8 +2108,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+										Ref: ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2175,9 +2156,8 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -2197,8 +2177,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceRef{}.OpenAPIModelName()),
+										Ref: ref(ResourceRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2246,6 +2225,20 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 							Format:      "",
 						},
 					},
+					"isFork": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"forkURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL of the head repository for a pull request from a fork, when available.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -2289,7 +2282,7 @@ func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+				Description: "QuotaStatus represents the quota limits configured for this repository.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"maxRepositories": {
@@ -2302,6 +2295,13 @@ func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallb
 					"maxResourcesPerRepository": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"updatedAt": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -2391,8 +2391,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RefList(ref common.ReferenceCallback)
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RefItem{}.OpenAPIModelName()),
+										Ref: ref(RefItem{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2497,8 +2496,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Repository{}.OpenAPIModelName()),
+										Ref: ref(Repository{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2559,10 +2557,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"branch", "write"},
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"branch", "write"},
 									},
 								},
 							},
@@ -2668,8 +2665,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ErrorDetails{}.OpenAPIModelName()),
+										Ref: ref(ErrorDetails{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2692,8 +2688,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
+										Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Condition"),
 									},
 								},
 							},
@@ -2725,8 +2720,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceCount{}.OpenAPIModelName()),
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2876,10 +2870,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"branch", "write"},
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"branch", "write"},
 									},
 								},
 							},
@@ -2940,10 +2933,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"folder", "folderless", "instance"},
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"folder", "folderless", "instance"},
 									},
 								},
 							},
@@ -2972,10 +2964,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
 									},
 								},
 							},
@@ -2988,10 +2979,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+										Type:   []string{"string"},
+										Format: "",
+										Enum:   []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
 									},
 								},
 							},
@@ -3004,8 +2994,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SupportedResource{}.OpenAPIModelName()),
+										Ref: ref(SupportedResource{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3022,8 +3011,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(RepositoryView{}.OpenAPIModelName()),
+										Ref: ref(RepositoryView{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3110,8 +3098,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref common.ReferenceCall
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceListItem{}.OpenAPIModelName()),
+										Ref: ref(ResourceListItem{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3365,8 +3352,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceCount{}.OpenAPIModelName()),
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3384,8 +3370,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceCount{}.OpenAPIModelName()),
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3403,8 +3388,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ManagerStats{}.OpenAPIModelName()),
+										Ref: ref(ManagerStats{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3542,9 +3526,8 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -3744,9 +3727,8 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -3845,8 +3827,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ErrorDetails{}.OpenAPIModelName()),
+										Ref: ref(ErrorDetails{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3989,9 +3970,8 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},

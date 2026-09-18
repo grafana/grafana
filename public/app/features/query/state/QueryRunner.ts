@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { from, type Observable, ReplaySubject, type Unsubscribable } from 'rxjs';
+import { from, type Observable, ReplaySubject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
@@ -24,7 +24,7 @@ import { runRequest } from './runRequest';
 
 export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;
-  private subscription?: Unsubscribable;
+  private subscription?: Subscription;
   private lastResult?: PanelData;
 
   constructor() {
@@ -56,6 +56,12 @@ export class QueryRunner implements QueryRunnerSrv {
       this.subscription.unsubscribe();
     }
 
+    // One teardown for the datasource lookup and the request it starts: cancel()/destroy()/run()
+    // during the lookup must prevent the query from ever being issued. getDataSource() itself is an
+    // ordinary promise and keeps resolving; unsubscribing only discards its result.
+    const subscription = new Subscription();
+    this.subscription = subscription;
+
     const request: DataQueryRequest = {
       app: app ?? CoreApp.Unknown,
       requestId: getNextRequestId(),
@@ -77,44 +83,48 @@ export class QueryRunner implements QueryRunnerSrv {
     // Add deprecated property
     request.rangeRaw = timeRange.raw;
 
-    from(getDataSource(datasource, request.scopedVars))
-      .pipe(first())
-      .subscribe({
-        next: (ds) => {
-          // Attach the datasource name to each query
-          request.targets = request.targets.map((query) => {
-            if (!query.datasource) {
-              query.datasource = ds.getRef();
-            }
-            return query;
-          });
+    subscription.add(
+      from(getDataSource(datasource, request.scopedVars))
+        .pipe(first())
+        .subscribe({
+          next: (ds) => {
+            // Attach the datasource name to each query
+            request.targets = request.targets.map((query) => {
+              if (!query.datasource) {
+                query.datasource = ds.getRef();
+              }
+              return query;
+            });
 
-          const lowerIntervalLimit = minInterval
-            ? getTemplateSrv().replace(minInterval, request.scopedVars)
-            : ds.interval;
-          const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
+            const lowerIntervalLimit = minInterval
+              ? getTemplateSrv().replace(minInterval, request.scopedVars)
+              : ds.interval;
+            const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
-          // make shallow copy of scoped vars,
-          // and add built in variables interval and interval_ms
-          request.scopedVars = Object.assign({}, request.scopedVars, {
-            __interval: { text: norm.interval, value: norm.interval },
-            __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
-          });
+            // make shallow copy of scoped vars,
+            // and add built in variables interval and interval_ms
+            request.scopedVars = Object.assign({}, request.scopedVars, {
+              __interval: { text: norm.interval, value: norm.interval },
+              __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
+            });
 
-          request.interval = norm.interval;
-          request.intervalMs = norm.intervalMs;
+            request.interval = norm.interval;
+            request.intervalMs = norm.intervalMs;
 
-          this.subscription = runRequest(ds, request).subscribe({
-            next: (data) => {
-              const results = preProcessPanelData(data, this.lastResult);
-              this.lastResult = setStructureRevision(results, this.lastResult);
-              // Store preprocessed query results for applying overrides later on in the pipeline
-              this.subject.next(this.lastResult);
-            },
-          });
-        },
-        error: (error) => console.error('PanelQueryRunner Error', error),
-      });
+            subscription.add(
+              runRequest(ds, request).subscribe({
+                next: (data) => {
+                  const results = preProcessPanelData(data, this.lastResult);
+                  this.lastResult = setStructureRevision(results, this.lastResult);
+                  // Store preprocessed query results for applying overrides later on in the pipeline
+                  this.subject.next(this.lastResult);
+                },
+              })
+            );
+          },
+          error: (error) => console.error('PanelQueryRunner Error', error),
+        })
+    );
   }
 
   cancel(): void {

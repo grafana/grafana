@@ -27,6 +27,7 @@ import {
 } from 'app/features/table/hooks';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
@@ -56,6 +57,7 @@ export function TableNGWrap({
 }: Props) {
   useCacheFieldDisplayNames(data.series);
 
+  const { setDisplayedRowIndices } = useLogDetailsContext();
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
@@ -115,12 +117,17 @@ export function TableNGWrap({
 
       <TableNG
         {...commonTableProps}
+        // `useCommonTableProps` reports the `table.refresh` flag, but the refreshed header hasn't
+        // been designed against the Logs Table's own header controls yet, so this panel opts out
+        // until that work happens.
+        tableRefreshEnabled={false}
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}
         timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
+        onDisplayedRowIndicesChange={setDisplayedRowIndices}
         onSortByChange={(sortBy) => onSortByChange(sortBy, { onOptionsChange, options })}
         onColumnResize={(displayName, resizedWidth, fieldScope) =>
           onColumnResize(displayName, resizedWidth, fieldScope, { fieldConfig, onFieldConfigChange })

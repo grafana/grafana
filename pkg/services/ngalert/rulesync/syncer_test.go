@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -127,7 +128,21 @@ func (f *recordingFolderPermissions) SetPermissions(_ context.Context, _ int64, 
 	return nil, nil
 }
 
+// newTestSyncer wires a fresh, empty fakeConfigClient as the client generator
+// and namespace mapper: production always passes real ones (see
+// NewExternalRulerSyncer), so a test that only exercises the ini path gets a
+// harmless stand-in rather than the syncer special-casing an absent one. A
+// test that needs to inspect what got written to the Config resource should
+// use newTestSyncerWithConfigClient instead, which exposes the fake.
 func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
+	t.Helper()
+	return newTestSyncerWithConfigClient(t, newFakeConfigClient(), fetch, rs)
+}
+
+// newTestSyncerWithConfigClient is newTestSyncer plus a caller-supplied
+// fakeConfigClient, for tests that need to seed or inspect the Config
+// resource's spec/status.
+func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
 	t.Helper()
 	return &ExternalRulerSyncer{
 		settings:          &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute},
@@ -139,6 +154,7 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
+		cfgStore:          newCfgStore(cs, cs.nsMapper),
 	}
 }
 
@@ -209,6 +225,22 @@ func TestSyncOrg_NotARuler(t *testing.T) {
 	assert.Nil(t, rs.replaced, "nothing synced when the datasource is not a ruler")
 }
 
+func TestSyncOrg_UnsupportedDatasourceType(t *testing.T) {
+	// IsRulerCandidate's cheap static check must reject the datasource before
+	// a fetch is even attempted: the operator-set ini UID skips the
+	// admission-time checker entirely, so this is its only gate.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	s.settings.ExternalRulerUID = "ds1"
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_LOKI}}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing synced for an unsupported datasource type")
+	assert.Equal(t, 0, fetch.calls, "must not attempt to fetch from a datasource that already failed the static check")
+}
+
 func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
 	rs := &fakeRuleService{
 		existing: []models.AlertRuleGroupWithFolderFullpath{
@@ -256,11 +288,20 @@ func TestSyncOrg_SkipsUnconvertibleGroup(t *testing.T) {
 }
 
 func TestSyncOrg_RecoversPanic(t *testing.T) {
-	s := newTestSyncer(t, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
+	cs := newFakeConfigClient()
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
 	s.settings.ExternalRulerUID = "ds1"
 
 	// A panic in a tick must be recovered so the background goroutine survives.
 	require.NotPanics(t, func() { s.SyncOrg(context.Background(), 1) })
+
+	// It must also be recorded like any other failure, not leave status frozen
+	// at whatever an earlier, healthy tick last wrote.
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, st.Conditions[0].Status)
+	assert.Equal(t, "Panicked", st.Conditions[0].Reason)
 }
 
 func TestIsManagedFolder(t *testing.T) {
@@ -269,10 +310,12 @@ func TestIsManagedFolder(t *testing.T) {
 	child := &folder.FolderReference{UID: "child-uid", Title: "ns1", ParentUID: "root-uid"}
 
 	newSyncer := func(ns fakeNamespaceStore, uid string) *ExternalRulerSyncer {
+		cs := newFakeConfigClient()
 		return &ExternalRulerSyncer{
 			settings:       &setting.UnifiedAlertingSettings{ExternalRulerUID: uid},
 			logger:         log.NewNopLogger(),
 			namespaceStore: ns,
+			cfgStore:       newCfgStore(cs, cs.nsMapper),
 		}
 	}
 	rootResolvable := fakeNamespaceStore{
@@ -311,20 +354,40 @@ func TestIsManagedFolder(t *testing.T) {
 	})
 }
 
-func TestRun_NoOpWhenUnconfigured(t *testing.T) {
-	// external_ruler_uid unset is the disable signal: Run must not start the poll
-	// loop (there is no separate feature flag).
+func TestRun_StopsOnContextCancel(t *testing.T) {
+	// Run always starts the poll loop now: sync can be enabled per-org via the
+	// rules Config resource even when external_ruler_uid is unset, and only a
+	// per-org tick (resolveExternalRulerConfig) can tell which. Run itself must
+	// still exit cleanly on cancellation regardless.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
-	s.settings.AdminConfigPollInterval = time.Minute // avoid a ticker panic if the gate regresses
+	s.settings.AdminConfigPollInterval = time.Minute // long enough that ctx.Done() always wins the select first
 
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- s.Run(context.Background()) }()
+	go func() { done <- s.Run(ctx) }()
+	cancel()
 	select {
 	case err := <-done:
 		require.NoError(t, err)
 	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return; missing gate on external_ruler_uid")
+		t.Fatal("Run did not return after context cancellation")
 	}
+}
+
+func TestSyncOrg_NoOpWhenUnconfigured(t *testing.T) {
+	// Neither external_ruler_uid nor the Config resource's datasourceUid is
+	// set (the fake starts empty): SyncOrg must do nothing to rules — no
+	// datasource lookup, no fetch, no rule changes — though it does seed the
+	// singleton's NotConfigured status, since the API path is reachable.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	require.Empty(t, s.settings.ExternalRulerUID)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "fetcher must not be called when sync isn't configured for the org")
+	assert.Nil(t, rs.replaced, "no rule groups should be replaced when sync isn't configured for the org")
 }
 
 func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {

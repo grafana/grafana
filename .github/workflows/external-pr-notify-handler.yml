@@ -22,10 +22,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # community-triage logic version this repo is pinned to (main as of PR #6).
+  # community-triage logic version this repo is pinned to.
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 93bec69e509e711a0b8fceea813c8ac816230373 # trufflehog:ignore
+  TRIAGE_REF: 223e8b1d8f7923f34919d09c32aed0644f3ed9ae # trufflehog:ignore
 
 jobs:
   triage:
@@ -260,6 +260,18 @@ jobs:
             printf '%s\n' "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
+      # Adds ~4 min to this job and to the team's Slack notification.
+      - name: Fetch existing reviews for cross-checking
+        id: existing-reviews
+        if: steps.pr-context.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          EXISTING_REVIEWS_FILE: existing_reviews.txt
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts fetch-existing-reviews
+
       - name: Load team-specific review rules
         id: team-skills
         env:
@@ -357,6 +369,7 @@ jobs:
           cp pr_diff.txt /tmp/oz-context/
           cp pr_description.txt /tmp/oz-context/
           cp team_rules.txt /tmp/oz-context/ 2>/dev/null || true
+          cp existing_reviews.txt /tmp/oz-context/ 2>/dev/null || true
 
           chmod -R a+rX /tmp/repo-clean /tmp/oz-context
           chmod 777 /tmp/oz-output

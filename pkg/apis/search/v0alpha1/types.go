@@ -27,12 +27,12 @@ const (
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
 // the set field names the node's type. Combinators (and/or/not) compose other
-// nodes, leaves (text/filter/range/exists) are terminal predicates.
+// nodes, leaves (text/filter/range/regex/exists) are terminal predicates.
 //
 // All node types are modelled so the schema is future-proof, but v1 only
 // accepts a narrow subset (top-level single leaf or a single and of leaves;
-// text, filter and range leaves; In/NotIn/All filter operators). Everything else is
-// rejected with 422 Unprocessable Entity by the validation layer. exists is
+// text, filter, range and regex leaves; In/NotIn/All filter operators). Everything
+// else is rejected with 422 Unprocessable Entity by the validation layer. exists is
 // sketched for a future version and always rejected today.
 //
 // +k8s:deepcopy-gen=true
@@ -46,6 +46,7 @@ type WhereNode struct {
 	Text   *TextPredicate   `json:"text,omitempty"`
 	Filter *FilterPredicate `json:"filter,omitempty"`
 	Range  *RangePredicate  `json:"range,omitempty"`
+	Regex  *RegexPredicate  `json:"regex,omitempty"`
 	Exists *ExistsPredicate `json:"exists,omitempty"` // future, rejected in v1
 }
 
@@ -95,6 +96,25 @@ type RangePredicate struct {
 	GTE   *float64 `json:"gte,omitempty"`
 	LT    *float64 `json:"lt,omitempty"`
 	LTE   *float64 `json:"lte,omitempty"`
+}
+
+// RegexPredicate matches a single field against a regular expression, one
+// pattern per leaf the way a single Prometheus matcher works. Negate turns the
+// leaf from =~ into !~.
+//
+// Matching is against the whole indexed term and is case-sensitive, so it is
+// restricted to filterable keyword string fields that keep their original case.
+// The pattern is a portable RE2 subset: literals, character classes, grouping,
+// alternation, and greedy repetition. The backend is the source of truth for
+// what the subset admits; it rejects unsupported syntax, fields that do not
+// preserve case, and patterns that expand to too many terms with a 400.
+//
+// +k8s:deepcopy-gen=true
+type RegexPredicate struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	// Negate inverts the match: the field must not match the pattern.
+	Negate bool `json:"negate,omitempty"`
 }
 
 // ExistsPredicate is a future field-existence predicate. Modelled for schema

@@ -464,6 +464,7 @@ type filters struct {
 	names          []string
 	folders        []string
 	datasourceUIDs []string
+	ruleType       string
 	// labelMatchers holds one matcher per labels requirement. A rule must satisfy
 	// all of them: requirements conjoin.
 	labelMatchers []labelMatcher
@@ -494,6 +495,8 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 				f.names = r.Values
 			case fieldFolder:
 				f.folders = r.Values
+			case fieldType:
+				f.ruleType = firstValue(r.Values)
 			case fieldLabels:
 				if len(r.Values) == 1 {
 					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))

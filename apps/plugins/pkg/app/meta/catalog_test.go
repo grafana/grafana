@@ -160,6 +160,23 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		assert.Equal(t, []string{"postgres"}, result.Meta.AliasIds)
 	})
 
+	t.Run("returns error for empty version without making a request", func(t *testing.T) {
+		called := false
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		provider := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: ""})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "version is required")
+		assert.Nil(t, result)
+		assert.False(t, called, "should not call grafana.com when version is empty")
+	})
+
 	t.Run("returns ErrMetaNotFound for 404 status", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
@@ -200,7 +217,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to decode response")
+		assert.Contains(t, err.Error(), "failed to decode plugin version API response")
 		assert.Nil(t, result)
 	})
 

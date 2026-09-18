@@ -141,7 +141,7 @@ export function metricsSolution(): Solution {
     alert,
     stats: async () => {
       const metrics = await activity();
-      if (!metrics) {
+      if (!metrics?.count) {
         return null;
       }
       const secondary =
@@ -157,29 +157,25 @@ export function metricsSolution(): Solution {
               })
             : t('home.solutions.metrics.stats', 'active');
 
-      if (metrics.series != null) {
-        return {
-          primary: t('home.solutions.metrics.series', '', {
-            count: Math.ceil(metrics.series),
-            value: formattedValueToString(formatUsageNumber(Math.ceil(metrics.series))),
-            defaultValue_one: '{{value}} series',
-            defaultValue_other: '{{value}} series',
-          }),
-          secondary,
-        };
-      }
-      if (metrics.names != null) {
-        return {
-          primary: t('home.solutions.metrics.names', '', {
-            count: Math.ceil(metrics.names),
-            value: formattedValueToString(formatUsageNumber(Math.ceil(metrics.names))),
-            defaultValue_one: '{{value}} metric',
-            defaultValue_other: '{{value}} metrics',
-          }),
-          secondary,
-        };
-      }
-      return null;
+      const { kind, value } = metrics.count;
+      const formatted = formattedValueToString(formatUsageNumber(Math.ceil(value)));
+      return {
+        primary:
+          kind === 'series'
+            ? t('home.solutions.metrics.series', '', {
+                count: Math.ceil(value),
+                value: formatted,
+                defaultValue_one: '{{value}} series',
+                defaultValue_other: '{{value}} series',
+              })
+            : t('home.solutions.metrics.names', '', {
+                count: Math.ceil(value),
+                value: formatted,
+                defaultValue_one: '{{value}} metric',
+                defaultValue_other: '{{value}} metrics',
+              }),
+        secondary,
+      };
     },
     sparkline: async () => {
       const metrics = await activity();

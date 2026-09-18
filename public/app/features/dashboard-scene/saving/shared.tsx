@@ -4,7 +4,10 @@ import { isFetchError } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Button } from '@grafana/ui';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { type DashboardMeta } from 'app/types/dashboard';
 
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { type Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
@@ -22,6 +25,14 @@ export interface DashboardChangeInfo {
   hasMigratedToV2?: boolean;
 }
 
+/**
+ * A dashboard that has never been saved: no uid and no k8s name yet. Not the save model's version: a
+ * previewed repo file reports version 0 while it already has a uid, and saving it updates the file
+ */
+export function isNewDashboard({ uid, meta }: Pick<DashboardSceneState, 'uid' | 'meta'>): boolean {
+  return !uid && !meta.k8s?.name;
+}
+
 export function isVersionMismatchError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
 }
@@ -32,6 +43,30 @@ export function isNameExistsError(error?: Error) {
 
 export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
+}
+
+const FOLDER_BOUND_ANNOTATIONS: readonly string[] = [AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath];
+
+/**
+ * Meta after a new save (new dashboard or Save As) picks a folder. The manager and source-path
+ * annotations describe where a previewed or copied file came from; the picked folder now decides the
+ * repository, so they go. Identity fields (name, resourceVersion) and every other annotation stay.
+ */
+export function nextMetaAfterFolderPick(
+  meta: DashboardMeta,
+  folderUid: string | undefined,
+  folderTitle: string | undefined
+): DashboardMeta {
+  const annotations = meta.k8s?.annotations;
+  const k8s = annotations
+    ? {
+        ...meta.k8s,
+        annotations: Object.fromEntries(
+          Object.entries(annotations).filter(([key]) => !FOLDER_BOUND_ANNOTATIONS.includes(key))
+        ),
+      }
+    : meta.k8s;
+  return { ...meta, folderUid, folderTitle, k8s };
 }
 
 export function NameAlreadyExistsError() {
@@ -56,12 +91,14 @@ export interface SaveButtonProps {
   onSave: (overwrite: boolean) => void;
   isLoading: boolean;
   isValid?: boolean;
+  /** Blocks the save for a reason other than validity or an in-flight save; the caller explains it in its own UI */
+  disabled?: boolean;
 }
 
-export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButtonProps) {
+export function SaveButton({ overwrite, isLoading, isValid, onSave, disabled = false }: SaveButtonProps) {
   return (
     <Button
-      disabled={!isValid || isLoading}
+      disabled={disabled || !isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}

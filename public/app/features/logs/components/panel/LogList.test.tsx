@@ -14,6 +14,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -24,16 +25,22 @@ import { LogList, type Props } from './LogList';
 import { type TempoDatasource, createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
 };
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -624,6 +631,7 @@ describe('LogList', () => {
 
   describe('Log details', () => {
     test('Supports showing log details', async () => {
+      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'sidebar';
@@ -667,6 +675,7 @@ describe('LogList', () => {
     });
 
     test('Supports showing inline log details', async () => {
+      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'inline';

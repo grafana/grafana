@@ -204,8 +204,7 @@ type GetSignedInUserQuery struct {
 }
 
 type AnalyticsSettings struct {
-	Identifier         string
-	IntercomIdentifier string
+	Identifier string
 }
 
 func (u *User) NameOrFallback() string {

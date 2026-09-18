@@ -136,8 +136,7 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
 
-		var tokenRotationErr authn.TokenNeedsRotationError
-		if errors.As(err, &tokenRotationErr) {
+		if tokenRotationErr, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
 			userId = tokenRotationErr.UserID
 		}
 	} else {

@@ -119,7 +119,9 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	if route == nil {
 		// Check if this is referring to the imported config.
 		if nps.includeImported() {
-			route = nps.getImportedRoute(ctx, span, rev)
+			if importedRoute := nps.getImportedRoute(ctx, span, rev); importedRoute != nil && importedRoute.Name == name {
+				route = importedRoute
+			}
 		}
 		if route == nil {
 			return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)

@@ -3,10 +3,37 @@ package setting
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestKVLeaseTTLBounds(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured time.Duration
+		expected   time.Duration
+	}{
+		{name: "backend default", configured: 0, expected: 0},
+		{name: "below minimum", configured: 9 * time.Second, expected: 10 * time.Second},
+		{name: "at minimum", configured: 10 * time.Second, expected: 10 * time.Second},
+		{name: "above minimum", configured: 11 * time.Second, expected: 11 * time.Second},
+		{name: "at maximum", configured: 10 * time.Minute, expected: 10 * time.Minute},
+		{name: "above maximum", configured: 11 * time.Minute, expected: 10 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.Raw.Section("unified_storage").Key("kv_lease_ttl").SetValue(tc.configured.String())
+
+			cfg.setUnifiedStorageConfig()
+
+			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
+		})
+	}
+}
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	t.Run("read unified_storage configs", func(t *testing.T) {
@@ -56,6 +83,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
+		cfg.Raw.Section("unified_storage").Key("search_backed_list_resources").SetValue("dashboard.grafana.app/dashboards, folder.grafana.app/folders")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -77,6 +105,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
 	})
 
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {

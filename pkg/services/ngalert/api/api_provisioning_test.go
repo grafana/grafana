@@ -208,14 +208,25 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("are missing, PUT returns 404", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			cp := createInvalidContactPoint()
+		t.Run("are missing", func(t *testing.T) {
+			t.Run("PUT returns 404", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				cp := createInvalidContactPoint()
 
-			response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
+				response := sut.RoutePutContactPoint(&rc, cp, "does not exist")
 
-			require.Equal(t, 404, response.Status())
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("DELETE is idempotent", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteDeleteContactPoint(&rc, "does not exist")
+
+				require.Equal(t, 202, response.Status())
+			})
 		})
 	})
 
@@ -1987,8 +1998,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 						Receiver: postableReceiver.Name,
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{postableReceiver},
 			},
+			Receivers: []*v1.PostableApiReceiver{postableReceiver},
 		}
 
 		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
@@ -2176,7 +2187,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
 	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
 	require.NoError(t, err)
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, postableReceiver)
+	cfg.Receivers = append(cfg.Receivers, postableReceiver)
 
 	// Mute Timings
 	location, err := time.LoadLocation("America/Montreal")
@@ -2288,7 +2299,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	// Encrypt secure settings.
 	c, err := notifier.Load([]byte(testConfig))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)

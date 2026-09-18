@@ -41,7 +41,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	if err != nil {
 		return nil, err
 	}
-	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
+	original := e.rev.Config.GetReceivers()
 	merged, _, _ := merge.Receivers(original, imported, e.identifier)
 
 	capacity := len(uids)
@@ -103,7 +103,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	m := make(map[string]int)
 	receiverUseCounts([]*v1.Route{e.importedConfig.ToGrafanaRoute()}, m)
-	_, renames, _ := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.ReceiverNameStubs(), e.identifier)
+	_, renames, _ := merge.Receivers(e.rev.Config.GetReceivers(), e.importedConfig.ReceiverNameStubs(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)

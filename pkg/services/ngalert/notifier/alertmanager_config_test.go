@@ -327,10 +327,10 @@ receivers:
 						Receiver: "initial-receiver",
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{
-						Name: "initial-receiver",
-					},
+			},
+			Receivers: []*v1.PostableApiReceiver{
+				{
+					Name: "initial-receiver",
 				},
 			},
 		}

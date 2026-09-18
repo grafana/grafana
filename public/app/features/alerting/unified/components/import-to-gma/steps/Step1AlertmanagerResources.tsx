@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
 import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -13,7 +14,6 @@ import {
   Divider,
   Field,
   FileDropzone,
-  FileUpload,
   Icon,
   IconButton,
   InlineField,
@@ -40,9 +40,58 @@ import { type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
 
+const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
+
+// FileDropzone has no prop to suppress its built-in "Accepted file types" caption, shown via Field description instead.
+const hideAcceptedFileTypesCaption = css({
+  small: {
+    display: 'none',
+  },
+});
+
+// FileDropzone's `accept` option buckets extensions by MIME type, so a `.txt` file (MIME
+// text/plain) collides with the `.yml` bucket and passes; re-check the filename directly.
+function validateYamlFileExtension(file: File) {
+  const hasYamlExtension = YAML_FILE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+  if (hasYamlExtension) {
+    return null;
+  }
+  return {
+    code: 'file-invalid-type',
+    message: t('alerting.import-to-gma.step1.yaml-invalid-type', 'File must be a YAML file ({{extensions}})', {
+      extensions: YAML_FILE_EXTENSIONS.join(', '),
+    }),
+  };
+}
+
 /** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
 function isAutoSyncSegmentEnabled(): boolean {
   return Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
+}
+
+/** Explains why the Auto-sync switch is disabled, or the normal hint when it isn't. */
+function getAutoSyncTooltip({
+  isAutoSyncConfigReady,
+  autoSyncNotReadyMessage,
+  isSelectedDatasourceAutoSyncCapable,
+}: {
+  isAutoSyncConfigReady: boolean;
+  autoSyncNotReadyMessage: string | undefined;
+  isSelectedDatasourceAutoSyncCapable: boolean;
+}): string | undefined {
+  if (!isAutoSyncConfigReady) {
+    return autoSyncNotReadyMessage;
+  }
+  if (isSelectedDatasourceAutoSyncCapable) {
+    return t(
+      'alerting.import-to-gma.step1.autosync-tooltip',
+      'Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.'
+    );
+  }
+  return t(
+    'alerting.import-to-gma.step1.autosync-tooltip-unsupported',
+    "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it."
+  );
 }
 
 interface Step1ContentProps {
@@ -101,7 +150,12 @@ export function Step1Content({
 
   // Called unconditionally (even for the YAML source) so the Auto-sync checkbox always knows
   // whether the selected datasource qualifies; its own queries stay skipped for non-admins/toggle-off.
-  const { autoSyncEligibleAlertmanagers, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
+  const {
+    autoSyncEligibleAlertmanagers,
+    isLoading: isLoadingAutoSyncConfig,
+    isReady: isAutoSyncConfigReady,
+    notReadyMessage: autoSyncNotReadyMessage,
+  } = useAutoSyncConfiguration();
   const isSelectedDatasourceAutoSyncCapable =
     !isLoadingAutoSyncConfig && autoSyncEligibleAlertmanagers.some((ds) => ds.uid === notificationsDatasourceUID);
 
@@ -207,26 +261,50 @@ export function Step1Content({
               <Stack direction="column" gap={2}>
                 <Field
                   label={t('alerting.import-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
+                  description={t('alerting.import-to-gma.step1.yaml-desc', 'Accepted file types: {{extensions}}', {
+                    extensions: YAML_FILE_EXTENSIONS.join(', '),
+                  })}
                   invalid={Boolean(errors.notificationsYamlFile)}
                   error={errors.notificationsYamlFile?.message}
                   noMargin
                 >
                   <Controller
-                    render={({ field: { ref, onChange, value, ...field } }) => (
-                      <FileUpload
-                        {...field}
-                        accept=".yaml,.yml"
-                        onFileUpload={(event) => {
-                          const file = event.currentTarget.files?.[0];
-                          if (file) {
-                            onChange(file);
-                          }
-                        }}
-                      >
-                        {notificationsYamlFile
-                          ? notificationsYamlFile.name
-                          : t('alerting.import-to-gma.step1.upload', 'Upload YAML file')}
-                      </FileUpload>
+                    render={({ field: { onChange } }) => (
+                      <Stack direction="column" gap={1}>
+                        <div className={hideAcceptedFileTypesCaption}>
+                          <FileDropzone
+                            options={{
+                              multiple: false,
+                              accept: YAML_FILE_EXTENSIONS,
+                              validator: validateYamlFileExtension,
+                              onDrop: (acceptedFiles) => {
+                                const file = acceptedFiles[0];
+                                if (file) {
+                                  onChange(file);
+                                }
+                              },
+                            }}
+                            fileListRenderer={() => null}
+                          >
+                            <Text color="secondary">
+                              {t('alerting.import-to-gma.step1.upload', 'Drop YAML file here or click to upload')}
+                            </Text>
+                          </FileDropzone>
+                        </div>
+
+                        {notificationsYamlFile && (
+                          <Stack direction="row" alignItems="center" justifyContent="space-between">
+                            <Text>{notificationsYamlFile.name}</Text>
+                            <IconButton
+                              name="trash-alt"
+                              tooltip={t('alerting.import-to-gma.step1.yaml-remove', 'Remove {{name}}', {
+                                name: notificationsYamlFile.name,
+                              })}
+                              onClick={() => onChange(null)}
+                            />
+                          </Stack>
+                        )}
+                      </Stack>
                     )}
                     control={control}
                     name="notificationsYamlFile"
@@ -305,18 +383,12 @@ export function Step1Content({
                     transparent
                     label={t('alerting.import-to-gma.step1.autosync-label', 'Auto-sync')}
                     labelWidth={30}
-                    disabled={!isSelectedDatasourceAutoSyncCapable}
-                    tooltip={
-                      isSelectedDatasourceAutoSyncCapable
-                        ? t(
-                            'alerting.import-to-gma.step1.autosync-tooltip',
-                            'Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.'
-                          )
-                        : t(
-                            'alerting.import-to-gma.step1.autosync-tooltip-unsupported',
-                            "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it."
-                          )
-                    }
+                    disabled={!isAutoSyncConfigReady || !isSelectedDatasourceAutoSyncCapable}
+                    tooltip={getAutoSyncTooltip({
+                      isAutoSyncConfigReady,
+                      autoSyncNotReadyMessage,
+                      isSelectedDatasourceAutoSyncCapable,
+                    })}
                   >
                     <InlineSwitch
                       transparent

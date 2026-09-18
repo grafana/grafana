@@ -2,7 +2,7 @@ import { useState, type ChangeEvent, useEffect } from 'react';
 
 import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { Trans } from '@grafana/i18n';
-import { Button, Icon, Stack, Checkbox, Text, Box, type IconName, Space, Tooltip } from '@grafana/ui';
+import { Button, Icon, Stack, Checkbox, Text, Box, Space, Tooltip } from '@grafana/ui';
 
 import { type ResourceTypeId, buildDependencyMaps, handleSelection, handleDeselection } from './resourceDependency';
 import { iconNameForResource, pluralizeResourceName } from './resourceInfo';
@@ -129,7 +129,7 @@ export function ConfigureSnapshot(props: ConfigureSnapshotProps) {
                 //@ts-ignore
                 label={
                   <Stack gap={1} alignItems="center">
-                    <Icon name={iconNameForResource(type) as IconName} size="xl" />
+                    <Icon name={iconNameForResource(type)} size="xl" />
                     <Text variant="h5">{pluralizeResourceName(type) ?? type}</Text>
                   </Stack>
                 }

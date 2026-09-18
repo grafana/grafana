@@ -311,7 +311,10 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 }
 
 export const copyStringToClipboard = (string: string) => {
-  if (navigator.clipboard && window.isSecureContext) {
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write && window.isSecureContext) {
+    // Start the write inside the user gesture so a following menu close cannot drop activation.
+    navigator.clipboard.write([new ClipboardItem({ 'text/plain': Promise.resolve(string) })]);
+  } else if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(string);
   } else {
     const el = document.createElement('textarea');

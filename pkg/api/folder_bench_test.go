@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	serviceaccountstest "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
@@ -289,7 +290,7 @@ func setupDB(b testing.TB) benchScenario {
 		signedInUser.Permissions[orgID][folder.ActionFoldersRead] = append(signedInUser.Permissions[orgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
-		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
+		for j := range LEVEL0_DASHBOARD_NUM {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
@@ -312,12 +313,12 @@ func setupDB(b testing.TB) benchScenario {
 			})
 		}
 
-		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
+		for j := range LEVEL1_FOLDER_NUM {
 			f1, d1 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
-			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
+			for k := range LEVEL1_DASHBOARD_NUM {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
@@ -340,12 +341,12 @@ func setupDB(b testing.TB) benchScenario {
 				})
 			}
 
-			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
+			for k := range LEVEL2_FOLDER_NUM {
 				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
-				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
+				for l := range LEVEL2_DASHBOARD_NUM {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
@@ -426,8 +427,9 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
+	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
@@ -458,7 +460,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starClient := starapi.NewMockK8sClients(b)

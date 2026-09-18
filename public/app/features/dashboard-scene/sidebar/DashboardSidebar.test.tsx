@@ -42,6 +42,11 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -55,10 +60,10 @@ describe('DashboardSidebar', () => {
       expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
     });
 
-    it('single panel and multi panel selection', () => {
+    it('single panel and multi panel selection', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
-      const panel1 = scene.onCreateNewPanel();
+      const panel1 = await scene.onCreateNewPanel();
 
       expect(sidebar.getSelectedObject()).toBe(panel1);
 
@@ -67,7 +72,7 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
 
-      const panel2 = scene.onCreateNewPanel();
+      const panel2 = await scene.onCreateNewPanel();
       sidebar.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
 
       expect(sidebar.state.selectionContext.selected).toHaveLength(2);
@@ -116,11 +121,11 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.selectionContext.selected).toHaveLength(0);
     });
 
-    it('Clear selection should select dashboard when docked', () => {
+    it('Clear selection should select dashboard when docked', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
       sidebar.clearSelection();
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
@@ -132,12 +137,12 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(scene);
     });
 
-    it('Force selecting should keep selecting if already selected', () => {
+    it('Force selecting should keep selecting if already selected', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
       // This selects panel
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
 
       // Force select
       sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
@@ -152,11 +157,11 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.selectionContext.selected).toHaveLength(1);
     });
 
-    it('Selecting when none element pane is open should not toggle selection', () => {
+    it('Selecting when none element pane is open should not toggle selection', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
 
       sidebar.openPane(new DashboardOutline({}));
 
@@ -186,12 +191,12 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(tab1);
     });
 
-    it('Removing a panel that is not selected', () => {
+    it('Removing a panel that is not selected', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel1 = scene.onCreateNewPanel();
-      const panel2 = scene.onCreateNewPanel();
+      const panel1 = await scene.onCreateNewPanel();
+      const panel2 = await scene.onCreateNewPanel();
 
       scene.removePanel(panel1);
 
@@ -206,11 +211,11 @@ describe('DashboardSidebar', () => {
     });
   });
 
-  it('Handles edit action events that adds objects', () => {
+  it('Handles edit action events that adds objects', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     expect(sidebar.state.undoStack).toHaveLength(1);
 
@@ -225,27 +230,27 @@ describe('DashboardSidebar', () => {
     expect(sidebar.getSelectedObject()).toBeUndefined();
   });
 
-  it('when new action comes in clears redo stack', () => {
+  it('when new action comes in clears redo stack', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     sidebar.undoAction();
 
     expect(sidebar.state.redoStack).toHaveLength(1);
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
-  it('clone should not include undo/redo history', () => {
+  it('clone should not include undo/redo history', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     sidebar.undoAction();
 
@@ -500,51 +505,51 @@ describe('DashboardSidebar', () => {
   });
 
   describe('addNewPanel', () => {
-    it('adds panel to the correct tab layout when target is first tab', () => {
+    it('adds panel to the correct tab layout when target is first tab', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(tab1);
+      await sidebar.addNewPanel(tab1);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the correct tab layout when target is second tab', () => {
+    it('adds panel to the correct tab layout when target is second tab', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(tab2);
+      await sidebar.addNewPanel(tab2);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
     });
 
-    it('adds panel to the correct row layout when target is first row', () => {
+    it('adds panel to the correct row layout when target is first row', async () => {
       const { row1, row2, sidebar } = setupWithTwoRows();
-      sidebar.addNewPanel(row1);
+      await sidebar.addNewPanel(row1);
       expect(row1.getLayout().getVizPanels()).toHaveLength(2);
       expect(row2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the correct row layout when target is second row', () => {
+    it('adds panel to the correct row layout when target is second row', async () => {
       const { row1, row2, sidebar } = setupWithTwoRows();
-      sidebar.addNewPanel(row2);
+      await sidebar.addNewPanel(row2);
       expect(row1.getLayout().getVizPanels()).toHaveLength(1);
       expect(row2.getLayout().getVizPanels()).toHaveLength(1);
     });
 
-    it('adds panel to the first element in the dashboard when target is the dashboard itself', () => {
+    it('adds panel to the first element in the dashboard when target is the dashboard itself', async () => {
       const { dashboard, tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(dashboard);
+      await sidebar.addNewPanel(dashboard);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the first element in the dashboard when target is undefined', () => {
+    it('adds panel to the first element in the dashboard when target is undefined', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(undefined);
+      await sidebar.addNewPanel(undefined);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the dashboard when dashboard is empty', () => {
+    it('adds panel to the dashboard when dashboard is empty', async () => {
       const { dashboard, sidebar } = setupEmptyDashboard();
-      sidebar.addNewPanel(undefined);
+      await sidebar.addNewPanel(undefined);
       expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
     });
   });

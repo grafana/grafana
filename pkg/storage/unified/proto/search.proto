@@ -63,6 +63,16 @@ message ResourceStatsResponse {
 
 // Search within a single resource
 message ResourceSearchRequest {
+  enum ResultFormat {
+    UNSPECIFIED = 0;
+
+    // ResourceSearchResponse.results contains a ResourceTable.
+    RESOURCE_TABLE = 1;
+
+    // ResourceSearchResponse.fields and rows contain field-value results.
+    FIELD_VALUES = 2;
+  }
+
   message Sort {
     string field = 1;
     bool desc = 2; // defaults to ascending
@@ -139,6 +149,11 @@ message ResourceSearchRequest {
 
   // Sort values for SearchBefore pagination.
   repeated string search_before = 15;
+
+  // Selects the desired response representation.
+  // UNSPECIFIED preserves compatibility and requests RESOURCE_TABLE.
+  // Servers that do not know this field ignore it and return RESOURCE_TABLE.
+  ResultFormat result_format = 16;
 }
 
 message ResourceSearchResponse {
@@ -165,7 +180,7 @@ message ResourceSearchResponse {
   // All results exist within this key
   ResourceKey key = 2;
 
-  // Query results
+  // Legacy query results. Populated when result_format is RESOURCE_TABLE.
   ResourceTable results = 3;
 
   // The total hit count
@@ -190,6 +205,59 @@ message ResourceSearchResponse {
 
   // Resource version of the index used for this search.
   int64 resource_version = 8;
+
+  // Reports the representation actually returned.
+  // New servers always set this to RESOURCE_TABLE or FIELD_VALUES.
+  // Clients treat UNSPECIFIED as RESOURCE_TABLE for compatibility with old servers.
+  ResourceSearchRequest.ResultFormat result_format = 10;
+
+  // Populated only when result_format is FIELD_VALUES.
+  repeated ResourceSearchField fields = 11;
+
+  // Populated only when result_format is FIELD_VALUES.
+  repeated ResourceSearchRow rows = 12;
+}
+
+message ResourceSearchField {
+  enum Type {
+    UNSPECIFIED = 0;
+    STRING = 1;
+    INT64 = 2;
+    DOUBLE = 3;
+    BOOLEAN = 4;
+
+    // Encoded in ResourceSearchValue.int64_values as Unix milliseconds.
+    DATE = 5;
+  }
+
+  string name = 1;
+  Type type = 2;
+  bool is_array = 3;
+}
+
+message ResourceSearchValue {
+  // Index into ResourceSearchResponse.fields.
+  uint32 field_index = 1;
+
+  // The field declaration determines which member applies.
+  // A scalar has exactly one value. An array has zero or more values.
+  // A missing field has no ResourceSearchValue entry.
+  repeated string string_values = 2;
+  repeated int64 int64_values = 3;
+  repeated double double_values = 4;
+  repeated bool boolean_values = 5;
+}
+
+message ResourceSearchRow {
+  ResourceKey key = 1;
+  int64 resource_version = 2;
+  repeated ResourceSearchValue values = 3;
+
+  // Passed to search_after or search_before on the next request.
+  repeated string sort_fields = 4;
+
+  // Present only when the search calculated a score.
+  optional double score = 5;
 }
 
 message RebuildIndexesRequest {

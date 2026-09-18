@@ -3,6 +3,8 @@ package resource
 import (
 	"context"
 	"fmt"
+	"iter"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -421,6 +424,97 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	// resource-1 (rv1, -4s) < resource-3 (rv3, -3s) < resource-2 (rv2, -2s)
 	expectedNames := []string{"test-resource-1", "test-resource-3", "test-resource-2"}
 	assert.Equal(t, expectedNames, receivedEvents)
+}
+
+func TestIntegrationNotifier_Watch_EventPages(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, failBatch := range []bool{false, true} {
+		t.Run(fmt.Sprintf("batch failure=%t", failBatch), func(t *testing.T) {
+			test := func(t *testing.T, ctx context.Context, notifier *pollingNotifier, store *eventStore) {
+				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				defer cancel()
+				initial := eventStoreTestEvents(1)[0]
+				initial.ResourceVersion = snowflakeFromTime(time.Now().Add(-time.Minute))
+				require.NoError(t, store.Save(ctx, initial))
+
+				seeded := make(chan struct{})
+				probe := &eventStoreKVProbe{KV: store.kv, t: t}
+				probe.keys = func(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+					return func(yield func(string, error) bool) {
+						if opts.Sort == SortOrderAsc {
+							select {
+							case <-seeded:
+							case <-ctx.Done():
+								yield("", ctx.Err())
+								return
+							}
+						}
+						store.kv.Keys(ctx, section, opts)(yield)
+					}
+				}
+				probe.batch = func(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+					if failBatch && len(probe.batches) == 2 {
+						return func(yield func(kv.KeyValue, error) bool) {
+							yield(kv.KeyValue{}, fmt.Errorf("temporary batch failure"))
+						}
+					}
+					return store.kv.BatchGet(ctx, section, keys)
+				}
+				notifier.eventStore = newEventStore(probe)
+				ch := notifier.Watch(ctx, WatchOptions{
+					SettleDelay: time.Millisecond, BufferSize: 1,
+					MinBackoff: time.Millisecond, MaxBackoff: 10 * time.Millisecond,
+				})
+				defer func() {
+					cancel()
+					for range ch {
+					}
+					probe.assertClosed()
+				}()
+
+				expected := eventStoreTestEvents(623)
+				for i := range expected {
+					expected[i].ResourceVersion += initial.ResourceVersion
+				}
+				for _, event := range slices.Backward(expected) {
+					require.NoError(t, store.Save(ctx, event))
+				}
+				close(seeded)
+				for _, event := range expected {
+					select {
+					case actual, ok := <-ch:
+						require.True(t, ok)
+						require.Equal(t, event, actual)
+					case <-ctx.Done():
+						t.Fatal("timed out waiting for paged events")
+					}
+				}
+
+				// A later event forces another poll through the inclusive lower bound.
+				last := expected[len(expected)-1]
+				last.ResourceVersion++
+				require.NoError(t, store.Save(ctx, last))
+				select {
+				case actual, ok := <-ch:
+					require.True(t, ok)
+					require.Equal(t, last, actual, "polling must not re-emit the previous page")
+				case <-ctx.Done():
+					t.Fatal("timed out waiting for the next poll")
+				}
+				cancel()
+				for event := range ch {
+					t.Errorf("unexpected extra event: %+v", event)
+				}
+				require.Zero(t, probe.gets)
+				require.GreaterOrEqual(t, len(probe.batches), 14)
+				for _, batch := range probe.batches {
+					require.LessOrEqual(t, len(batch), 50)
+				}
+			}
+			runNotifierTestWith(t, "badger", setupTestNotifier, test)
+			runNotifierTestWith(t, "sqlkv", setupTestNotifierSqlKv, test)
+		})
+	}
 }
 
 func TestChannelNotifier(t *testing.T) {

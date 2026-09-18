@@ -8,10 +8,8 @@ import { config } from '@grafana/runtime';
 
 import {
   createTtlCachedPromise,
-  filterHealthyDatasources,
   findDatasourceWithData,
   listProbeCandidates,
-  MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
 } from './probeUtils';
@@ -67,9 +65,7 @@ const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 
 // Priority: the k8s app's stored choice, then — skipping cloud utility datasources — the default, then list order.
 async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
-  // Uncapped: the stored preference must be honored even when it sits past the fan-out cap;
-  // resolveKubernetesPrometheus applies the cap after this reorder.
-  const ordered = await listProbeCandidates('prometheus', Number.POSITIVE_INFINITY);
+  const ordered = await listProbeCandidates('prometheus');
   let promName: string | undefined;
   try {
     // store.getObject absorbs missing/corrupt values; the try guards localStorage access itself throwing.
@@ -83,16 +79,17 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
 }
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
-async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS);
+async function hasKubernetesNamespaces(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  signal?: AbortSignal
+): Promise<boolean> {
+  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
   return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 
-// Health-filtered parallel scan over the ordered candidates; first candidate with data wins.
+// The stored choice is moved to the front before the scan caps the list.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  // Filter after the cap: broken datasources consume cap slots, same as they consumed probe slots.
-  const candidates = await filterHealthyDatasources((await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES));
-  return findDatasourceWithData(candidates, hasKubernetesNamespaces);
+  return findDatasourceWithData(await orderedCandidates(), hasKubernetesNamespaces);
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);

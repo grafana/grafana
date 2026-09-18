@@ -8,14 +8,18 @@ import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unif
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { type TeamSelection, explicitTeam } from './teamFilter';
 
 export type IncidentsData = ReturnType<typeof useIncidents>;
 
 /**
  * All data fetching and derived state for the homepage Active incidents view,
  * shared between the old-layout card and the redesigned tabs.
+ *
+ * When `selectedTeam` is an explicit team pick, incidents are filtered to that
+ * team's custom field value; the default scope fetches every active incident.
  */
-export function useIncidents() {
+export function useIncidents(selectedTeam: TeamSelection = '') {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
   const pluginId = SupportedPlugin.Irm;
 
@@ -26,19 +30,24 @@ export function useIncidents() {
   // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
   const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
 
+  const team = explicitTeam(selectedTeam);
+
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
-  const { data, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
-    pluginLoading || !installed ? skipToken : { pluginId },
+  const skip = pluginLoading || !installed;
+  // currentData is undefined only until the current team's list arrives, so a team switch
+  // shows the skeleton while a homepage revisit (refetchOnMountOrArgChange) shows the cached list.
+  const { currentData, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
+    skip ? skipToken : { pluginId, team },
     {
       refetchOnMountOrArgChange: true,
     }
   );
-  const incidents = useMemo(() => data?.incidents ?? [], [data]);
+  const incidents = useMemo(() => currentData?.incidents ?? [], [currentData]);
   // True when the server truncated the result at the query limit, i.e. the real total exceeds count.
-  const hasMore = data?.hasMore ?? false;
+  const hasMore = currentData?.hasMore ?? false;
 
-  const loading = pluginLoading || isLoading;
+  const loading = pluginLoading || (isFetching && currentData === undefined);
   const count = incidents.length;
   const hasIncidents = count > 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
@@ -63,6 +72,8 @@ export function useIncidents() {
     count,
     hasMore,
     hasIncidents,
+    // Echoed back so the card can scope its empty message to the filtered team.
+    selectedTeam,
     enabled: pluginLoading ? undefined : !!installed,
     loading,
     error: loadError,

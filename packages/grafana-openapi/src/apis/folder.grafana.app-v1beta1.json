@@ -775,12 +775,7 @@
           "counts": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ResourceStats"
-                }
-              ]
+              "$ref": "#/components/schemas/ResourceStats"
             }
           },
           "kind": {
@@ -853,8 +848,7 @@
             "description": "AccessControl is a flat map of folder-domain action strings to bool, reflecting permissions after parent-chain inheritance has been resolved by the authorization system. Mirrors the shape of legacy dtos.Folder.AccessControl so clients can drop their dual call to /api/folders/{uid}?accesscontrol=true. Only keys for actions the user is granted appear here; absent keys mean \"not granted\".",
             "type": "object",
             "additionalProperties": {
-              "type": "boolean",
-              "default": false
+              "type": "boolean"
             }
           },
           "apiVersion": {
@@ -936,12 +930,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/FolderInfo"
-                }
-              ]
+              "$ref": "#/components/schemas/FolderInfo"
             },
             "x-kubernetes-list-map-keys": ["uid"],
             "x-kubernetes-list-type": "map"
@@ -983,12 +972,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Folder"
-                }
-              ]
+              "$ref": "#/components/schemas/Folder"
             }
           },
           "kind": {
@@ -1098,8 +1082,7 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -1128,6 +1111,25 @@
           "lte": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -1215,15 +1217,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -1242,7 +1242,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -1267,7 +1266,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/FacetTerm"
               }
             }
@@ -1275,7 +1273,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -1316,8 +1313,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -1327,14 +1323,13 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -1350,12 +1345,14 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
           "range": {
             "$ref": "#/components/schemas/RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/RegexPredicate"
           },
           "text": {
             "description": "Leaves.",
@@ -1521,7 +1518,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -1530,8 +1526,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -1556,8 +1551,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

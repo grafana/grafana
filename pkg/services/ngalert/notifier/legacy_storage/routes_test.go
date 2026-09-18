@@ -242,7 +242,7 @@ func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
 	})
 
 	t.Run("both names are reserved and cannot be created as managed routes", func(t *testing.T) {
-		subtree := v1.Route{Receiver: testConfig().Config.AlertmanagerConfig.Receivers[0].Name}
+		subtree := v1.Route{Receiver: testConfig().Config.Receivers[0].Name}
 		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
 			t.Run(name, func(t *testing.T) {
 				_, err := testConfig().CreateManagedRoute(name, subtree)
@@ -273,7 +273,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 	origRev := testConfig()
 	subtree := v1.Route{
-		Receiver: origRev.Config.AlertmanagerConfig.Receivers[0].Name,
+		Receiver: origRev.Config.Receivers[0].Name,
 	}
 
 	t.Run("validates name", func(t *testing.T) {
@@ -297,6 +297,8 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 			{name: "underscore", routeName: "my_route", expectErr: true, errContains: "DNS subdomain"},
 			{name: "leading hyphen", routeName: "-myroute", expectErr: true, errContains: "DNS subdomain"},
 			{name: "trailing hyphen", routeName: "myroute-", expectErr: true, errContains: "DNS subdomain"},
+			{name: "leading whitespace", routeName: "  myroute", expectErr: true, errContains: "DNS subdomain"},
+			{name: "trailing whitespace", routeName: "myroute  ", expectErr: true, errContains: "DNS subdomain"},
 			// Valid names.
 			{name: "simple lowercase", routeName: "myroute", expectErr: false},
 			{name: "with hyphens", routeName: "my-route-1", expectErr: false},
@@ -352,7 +354,7 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 	origRev := testConfig()
 	subtree := v1.Route{
-		Receiver: origRev.Config.AlertmanagerConfig.Receivers[0].Name,
+		Receiver: origRev.Config.Receivers[0].Name,
 	}
 
 	t.Run("rejects empty name", func(t *testing.T) {
@@ -401,7 +403,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	rev := testConfig()
 	original := rev.Config.AlertmanagerConfig.Route
 	newRoute := v1.Route{
-		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+		Receiver: rev.Config.Receivers[0].Name,
 	}
 	defaultCfg := v1.AMConfigV1{
 		AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -432,10 +434,10 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 					Receiver: name,
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Name: name,
-				},
+		},
+		Receivers: []*v1.PostableApiReceiver{
+			{
+				Name: name,
 			},
 		},
 	}
@@ -456,7 +458,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 	t.Run("valid route passes validation", func(t *testing.T) {
 		rev := testConfig()
 		validRoute := v1.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 		}
 		err := rev.ValidateRoute(validRoute)
 		require.NoError(t, err)
@@ -489,7 +491,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 		rev := testConfig()
 
 		invalid := v1.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 			Routes: []*v1.Route{
 				{
 					MuteTimeIntervals: []string{"missing-interval"},
@@ -505,7 +507,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 		rev := testConfig()
 
 		invalid := v1.Route{
-			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			Receiver: rev.Config.Receivers[0].Name,
 			Routes: []*v1.Route{
 				{
 					ActiveTimeIntervals: []string{"missing-interval"},

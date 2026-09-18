@@ -48,6 +48,8 @@ composableKinds: PanelCfg: {
 					}
 					// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 					disableKeyboardEvents?: bool
+					// Controls whether cells overflow when hovered. Selected cells always overflow.
+					hoverOverflow?: bool | *true
 				} @cuetsy(kind="interface")
 				FieldConfig: {ui.TableFieldOptions} @cuetsy(kind="interface")
 			}

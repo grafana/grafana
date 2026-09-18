@@ -40,7 +40,8 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { trackAddQuery } from '../PanelEditNext/tracking';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';

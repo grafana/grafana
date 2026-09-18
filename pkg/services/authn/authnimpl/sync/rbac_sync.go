@@ -345,7 +345,7 @@ func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *auth
 	ctx, span := s.tracer.Start(ctx, "rbac.sync.ClearUserPermissionCacheHook")
 	defer span.End()
 
-	if err != nil {
+	if err != nil || ident == nil {
 		return
 	}
 

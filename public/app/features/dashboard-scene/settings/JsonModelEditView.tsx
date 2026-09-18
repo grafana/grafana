@@ -8,12 +8,14 @@ import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/intern
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -165,7 +167,8 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const [editorFormat, setSchemaEditorFormat] = useState<SchemaEditorFormat>('json');
 
   const dashboard = model.getDashboard();
-  const isProvisionedNG = useIsProvisionedNG(dashboard);
+  const { isProvisioned: isProvisionedNG, status: repoStatus } = useDashboardRepositoryView(dashboard);
+  const isResolvingRepo = repoStatus === RepoViewStatus.Loading;
   const saveModel = model.getSaveModel();
   const isV2Dashboard = isDashboardV2Spec(saveModel);
 
@@ -228,6 +231,8 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     }
   };
 
+  const hasBlockingValidationErrors = isV2Dashboard && hasValidationErrors;
+
   const saveTooltip =
     editorFormat === 'yaml'
       ? t(
@@ -237,7 +242,9 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       : t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving');
 
   const saveButton = (overwrite: boolean, disabled = false) => (
-    <Tooltip content={saveTooltip} placement="top" show={disabled ? undefined : false}>
+    // Narrower than `disabled`: the tooltip talks about validation errors, so it must stay hidden
+    // while the button is only disabled by the pending repository lookup
+    <Tooltip content={saveTooltip} placement="top" show={hasBlockingValidationErrors ? undefined : false}>
       <Button
         type="submit"
         onClick={() => {
@@ -332,8 +339,8 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       </>
     );
   }
-  // For v2 dashboards, disable save if there are validation errors
-  const isSaveDisabled = isV2Dashboard && hasValidationErrors;
+  // Saving before repository resolution settles would silently take the database path on a Git target
+  const isSaveDisabled = hasBlockingValidationErrors || isResolvingRepo;
 
   if (isDynamicDashboardsEnabled && isSettingsPageRedesignEnabled) {
     return (
@@ -373,15 +380,16 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
               showFormatToggle={true}
             />
           ) : (
-            <CodeEditor
-              width="100%"
-              value={jsonText}
-              language="json"
-              showLineNumbers={true}
-              showMiniMap={true}
-              containerStyles={styles.codeEditor}
-              onBlur={model.onCodeEditorBlur}
-            />
+            <div className={styles.codeEditor}>
+              <CodeMirrorEditor
+                value={jsonText}
+                language="json"
+                height="100%"
+                aria-label={t('dashboard-settings.json-editor.aria-label', 'Dashboard JSON model')}
+                onChange={() => {}}
+                onBlur={model.onCodeEditorBlur}
+              />
+            </div>
           )}
         </div>
         {resourceError && (

@@ -349,12 +349,10 @@ func isPermanentItemError(err error) bool {
 	}
 	// SQLSTATE class 22 = data exception, e.g. NUL byte in text. Class 23
 	// is excluded: missing partitions surface as 23514 check_violation.
-	var pgxErr *pgconn.PgError
-	if errors.As(err, &pgxErr) {
+	if pgxErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return strings.HasPrefix(pgxErr.Code, "22")
 	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqErr.Code.Class() == "22"
 	}
 	return false
@@ -368,6 +366,8 @@ func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name 
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
+//
+//nolint:gocyclo
 func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
 	defer span.End()
@@ -445,6 +445,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 
 	items, err := builder.Extract(ctx, key, iter.Value(), folderTitle)
+	if errors.Is(err, embed.ErrSkip) {
+		statusLabel = "skipped_extract"
+		return nil
+	}
 	if err != nil {
 		// Extract is deterministic over stored bytes; failures are permanent.
 		b.skipPermanentItem("extract", namespace, group, res, name, err)

@@ -201,6 +201,18 @@ In practice, start by deciding if you want to create explicit alert rules — fo
 
 Then, for each alert rule, choose the error-handling behavior based on whether you already have dedicated connectivity alerts, the stability of the target, and how critical the alert is. Prioritize alerts based on symptom severity rather than just infrastructure signals that might not impact users.
 
+### Build a dedicated data source health alert
+
+Any alert rule query can fail to reach its data source, including one built specifically to check reachability. Prometheus-style data sources expose metrics such as `up` and `probe_success` for target-level availability, but those are still queries, and they fail the same way if the data source itself becomes unreachable. In any case, detecting that the data source itself is unreachable uses a different mechanism: the execution-error handling built into Grafana Alerting.
+
+Create a separate alert rule dedicated to detecting when the data source itself is unreachable, distinct from any application-specific rules that happen to query it:
+
+1. Reuse a query you already know returns data reliably when the data source is healthy. Any small, cheap query works, since the result doesn't matter—only whether the query executes.
+1. In [Configure no data and error handling](ref:configure-nodata-and-error-handling), set **Alert state if execution error or timeout** to **Alerting**.
+1. Add a [pending period](ref:pending-period), for example `5m`, so the rule fires only once the data source has stayed unreachable for a sustained period, not for a single blip.
+
+Set the same option to **Normal** or **Keep Last State** on your application-specific rules instead, so a transient error from the data source doesn't also fire a `DatasourceError` alert alongside the condition you're actually trying to detect. Which value to use isn't a one-time default—decide it per rule, based on whether that rule already has a dedicated connectivity alert covering it.
+
 ### Reduce redundant error notifications
 
 A single data source error can lead to multiple alerts firing simultaneously, sometimes bombarding you with many alerts and generating too much noise.

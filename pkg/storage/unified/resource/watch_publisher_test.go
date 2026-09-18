@@ -17,10 +17,11 @@ import (
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.
 type fakeEventPublisher struct {
-	enabled  bool
-	err      error
-	subjects []string
-	payloads [][]byte
+	enabled   bool
+	err       error
+	subjects  []string
+	payloads  [][]byte
+	onPublish func(subject string, data []byte)
 }
 
 func (f *fakeEventPublisher) Enabled() bool { return f.enabled }
@@ -28,6 +29,9 @@ func (f *fakeEventPublisher) Enabled() bool { return f.enabled }
 func (f *fakeEventPublisher) Publish(_ context.Context, subject string, data []byte) error {
 	f.subjects = append(f.subjects, subject)
 	f.payloads = append(f.payloads, data)
+	if f.err == nil && f.onPublish != nil {
+		f.onPublish(subject, data)
+	}
 	return f.err
 }
 
@@ -49,6 +53,8 @@ func TestPublishWatchNotification(t *testing.T) {
 		Action:          DataActionUpdated,
 		Folder:          "folder-1",
 		PreviousRV:      41,
+		PreviousAction:  DataActionCreated,
+		PreviousFolder:  "old-folder",
 	}
 
 	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
@@ -70,6 +76,8 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
 		assert.Equal(t, event.Folder, got.GetFolder())
 		assert.Equal(t, event.PreviousRV, got.GetPreviousResourceVersion())
+		assert.Equal(t, resourcepb.WatchNotification_ADDED, got.GetPreviousType())
+		assert.Equal(t, event.PreviousFolder, got.GetPreviousFolder())
 	})
 
 	t.Run("counts a successful publish", func(t *testing.T) {

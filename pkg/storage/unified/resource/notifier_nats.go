@@ -223,6 +223,8 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		n.drop(dropReasonUnknownType, "dropped watch notification with unknown type", "subject", subject)
 		return Event{}, false
 	}
+	// Older publishers omit previous metadata; keep those live events deliverable.
+	previousAction, _ := watchNotificationTypeToAction(notification.PreviousType)
 	return Event{
 		Namespace:       notification.Namespace,
 		Group:           notification.Group,
@@ -232,6 +234,8 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		Action:          action,
 		Folder:          notification.Folder,
 		PreviousRV:      notification.PreviousResourceVersion,
+		PreviousAction:  previousAction,
+		PreviousFolder:  notification.PreviousFolder,
 	}, true
 }
 

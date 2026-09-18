@@ -1,9 +1,9 @@
 import { Controller, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form';
 
 import { t, Trans } from '@grafana/i18n';
-import { Field, Input, MultiCombobox, Stack, TextArea } from '@grafana/ui';
+import { Field, Input, Stack, TextArea } from '@grafana/ui';
 
-import { useNotebookTagOptions } from '../scene/layout-notebook/useNotebookTagOptions';
+import { NotebookTagsField } from '../NotebookTagsField';
 
 import { type AddPanelFormValues } from './addPanelForm';
 
@@ -91,47 +91,17 @@ export function CreateNotebookFields({ control, register, errors, existingTitles
           control={control}
           name="tags"
           render={({ field: { value, onChange } }) => (
-            <NotebookTagsField value={value} onChange={onChange} disabled={disabled} />
+            <NotebookTagsField
+              inputId="notebook-tags"
+              value={value}
+              onChange={onChange}
+              disabled={disabled}
+              allowCustomValue
+              placeholder={t('notebooks.add-panel.create-tags-placeholder', 'Add a tag')}
+            />
           )}
         />
       </Field>
     </Stack>
-  );
-}
-
-/**
- * The same picker the document header offers, so a tag is chosen from the ones already in use rather
- * than retyped from memory.
- *
- * The options hook is reused rather than `NotebookTagPicker` itself: that component strips its own
- * border, background and focus ring to sit inline on the page, which inside a `Field` would read as a
- * broken input.
- */
-function NotebookTagsField({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: string[];
-  onChange: (tags: string[]) => void;
-  disabled: boolean;
-}) {
-  const options = useNotebookTagOptions(value);
-
-  return (
-    <MultiCombobox
-      id="notebook-tags"
-      disabled={disabled}
-      options={options}
-      value={value}
-      // Deduped, trimmed and sorted so two spellings of the same tag cannot both end up on the
-      // notebook. A custom value arrives as the raw string typed, spaces and all.
-      onChange={(selected) =>
-        onChange(Array.from(new Set(selected.map((option) => option.value.trim()).filter(Boolean))).sort())
-      }
-      createCustomValue
-      customValueDescription={t('notebooks.add-panel.create-tags-custom-value', 'Add as a new tag')}
-      placeholder={t('notebooks.add-panel.create-tags-placeholder', 'Add a tag')}
-    />
   );
 }

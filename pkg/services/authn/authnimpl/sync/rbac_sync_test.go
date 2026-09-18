@@ -632,6 +632,24 @@ func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
 	}
 }
 
+func TestRBACSync_ClearUserPermissionCacheHook_NilIdentity(t *testing.T) {
+	var called bool
+	s := &RBACSync{
+		ac: &acmock.Mock{
+			ClearUserPermissionCacheFunc: func(_ identity.Requester) {
+				called = true
+			},
+		},
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	require.NotPanics(t, func() {
+		s.ClearUserPermissionCacheHook(context.Background(), nil, &authn.Request{}, nil)
+	})
+	assert.False(t, called)
+}
+
 func TestRBACSync_translateK8sPermissions(t *testing.T) {
 	type testCase struct {
 		name          string

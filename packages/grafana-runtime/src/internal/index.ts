@@ -15,6 +15,7 @@ export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
+export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 

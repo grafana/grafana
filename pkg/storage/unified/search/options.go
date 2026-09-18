@@ -48,6 +48,10 @@ func NewSearchOptions(
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
+	var embeddingConfig *resource.EmbeddingConfigRegistry
+	if cfg.EnableSearch || cfg.VectorIndexingEnabled {
+		embeddingConfig = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+	}
 	if cfg.EnableSearch {
 		root := cfg.IndexPath
 		if root == "" {
@@ -83,8 +87,7 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// MergeManifestsByKind is the single point a future live-manifest source will
-		// be added to; the built-in manifests are the only source today.
+		// Search-field ownership is independent of embedding declarations.
 		manifests := resource.MergeManifestsByKind(resource.AppManifests())
 		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
 		if err != nil {
@@ -163,9 +166,11 @@ func NewSearchOptions(
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 			SearchFields:                    searchFields,
+			EmbeddingConfig:                 embeddingConfig,
 		}, nil
 	}
 	return resource.SearchOptions{
+		EmbeddingConfig: embeddingConfig,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

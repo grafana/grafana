@@ -17,17 +17,16 @@ const CodeCell = lazy(() =>
 // real Panel element instead (see NotebookLayoutManager's buildCellFor), rendered through the `body`
 // branch in NotebookCellRenderer rather than through this registry.
 export interface CellTypeRegistryItem extends RegistryItem {
-  // id matches CellContentKind['kind']; each renderer narrows the content by that kind. `isEditing`,
-  // `autoFocus` and `onChange` are offered to every cell type; a renderer with nothing to use one
-  // simply does not accept it. `cell` is the scene object this content belongs to — a real node in the
-  // scene graph, parented under the notebook's own `$timeRange` — available to a renderer that needs
-  // the shared time range, without it being threaded down as a prop by ones that don't care about it.
   render: ComponentType<{
     content: CellContentKind;
     isEditing: boolean;
     autoFocus?: boolean;
+    focusRequestId?: number;
+    caretOffset?: number;
+    scrollAlign?: ScrollLogicalPosition;
     cell: NotebookCellItem;
     onChange: (content: CellContentKind) => void;
+    onNavigate?: (direction: 'up' | 'down') => void;
   }>;
 }
 

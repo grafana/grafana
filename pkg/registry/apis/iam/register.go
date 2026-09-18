@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -57,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -97,6 +99,7 @@ func RegisterAPIService(
 	teamService teamservice.Service,
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
+	authInfoStore login.Store,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -152,6 +155,7 @@ func RegisterAPIService(
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
+		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
@@ -188,6 +192,7 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
+		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		ofClient:        openfeature.NewDefaultClient(),
 	}
@@ -408,6 +413,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableAuthInfoApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthInfoApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -455,6 +461,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
+	if enableAuthInfoApi {
+		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
+			return err
+		}
+	}
+
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
@@ -462,7 +474,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		// reads/writes); without it (on-prem) the legacy store serves alone.
 		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
 			writer, _ := b.ssoSettingsClient.(settingsvc.Writer)
-			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
+			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer, b.sso)
 			dw, err := opts.DualWriteBuilder(ssoResource.GroupResource(), b.ssoLegacyStore, mtStore)
 			if err != nil {
 				return err
@@ -669,6 +681,32 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamBindingsAPIGroup(opts bui
 		storewrapper.WithObserver(storageObserver{}),
 	)
 	storage[teamBindingResource.StoragePath()] = authzWrapper
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage) error {
+	authInfoResource := iamv0.AuthInfoResourceInfo
+
+	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
+		GetAttrs: fieldselectors.BuildGetAttrsFn(iamv0.AuthInfoKind()),
+	}
+	authInfoUniStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme,
+		authInfoResource, opts.OptsGetter, selectableFieldsOpts)
+	if err != nil {
+		return err
+	}
+
+	authInfoStore := rest.Storage(authInfoUniStore)
+
+	if b.authInfoLegacyStore != nil {
+		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, authInfoUniStore)
+		if err != nil {
+			return err
+		}
+		authInfoStore = dw
+	}
+
+	storage[authInfoResource.StoragePath()] = authInfoStore
 	return nil
 }
 
@@ -1027,6 +1065,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 	enableUserPermissionsApi := client.Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx))
+	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1049,6 +1088,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	routes = append(routes, b.display.GetAPIRoutes(defs))
 	if enableUserPermissionsApi && b.userPermissions != nil {
 		routes = append(routes, b.userPermissions.GetAPIRoutes(defs))
+	}
+	if enableSsoSettingsApi && b.ssoLoginConfig != nil {
+		routes = append(routes, b.ssoLoginConfig.GetAPIRoutes(defs))
 	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)

@@ -36,7 +36,6 @@ const listItem: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
   isDefault: true,
 };
 
@@ -50,7 +49,9 @@ beforeEach(() => {
   runInstantQueriesMock.mockReset();
   runRangeQueryMock.mockReset();
   probeFoundMock.mockReset();
-  probeFoundMock.mockImplementation(async (_type, hasData) => ((await hasData(listItem)) ? listItem : null));
+  probeFoundMock.mockImplementation(async (_type, hasData) =>
+    (await hasData(listItem, new AbortController().signal)) ? listItem : null
+  );
 });
 
 describe('probeSpanMetrics', () => {
@@ -64,7 +65,7 @@ describe('probeSpanMetrics', () => {
           'count(last_over_time(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])) or count(last_over_time(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])) or count(last_over_time(calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]))',
       },
       listItem,
-      expect.any(Number)
+      { timeoutMs: expect.any(Number), signal: expect.any(AbortSignal) }
     );
   });
 
@@ -86,12 +87,10 @@ describe('fetchAppObservabilityStats', () => {
     runInstantQueriesMock.mockResolvedValue([]);
 
     await fetchAppObservabilityStats(datasource);
-
     expect(runInstantQueriesMock).toHaveBeenCalledWith(
       { services: SERVICES_QUERY, errorRatio: ERROR_RATIO_QUERY },
       datasource,
-      undefined,
-      true
+      { partial: true }
     );
   });
 

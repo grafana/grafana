@@ -116,8 +116,7 @@ func (r *NormalResponse) writeLogLine(c *contextmodel.ReqContext) {
 	}
 
 	logger := c.Logger.Error
-	var gfErr errutil.Error
-	if errors.As(r.err, &gfErr) {
+	if gfErr, ok := errors.AsType[errutil.Error](r.err); ok {
 		logger = gfErr.LogLevel.LogFunc(c.Logger)
 	}
 	logger(r.errMessage, "error", r.err, "remote_addr", c.RemoteAddr(), "traceID", traceID)

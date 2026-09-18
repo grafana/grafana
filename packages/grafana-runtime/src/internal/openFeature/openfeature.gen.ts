@@ -7,6 +7,7 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
@@ -43,6 +44,10 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway guardrails */
+  DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
+  /** Data source query service, use the new name */
+  DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
@@ -57,8 +62,8 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
-  /** Enables the new Flame Graph UI containing the Call Tree view */
-  FlameGraphWithCallTree: "flameGraphWithCallTree",
+  /** Enables use of app platform API for folders */
+  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -87,10 +92,16 @@ export const FlagKeys = {
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
+  /** Deprecated: Toggle displayed fields from Log Details */
+  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables multi-tenant fallback behavior */
+  GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
+  /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
+  GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
@@ -101,6 +112,10 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Pass React elements in plugin extension props by reference */
+  GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
+  /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
+  GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -173,6 +188,10 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Enables the configurable footer settings for PDF reports */
+  ReportingFooterSettings: "reportingFooterSettings",
+  /** Enables configuration of PDF report settings */
+  ReportingHeaderSettings: "reportingHeaderSettings",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -193,6 +212,8 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
   TableRefresh: "table.refresh",
+  /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
+  TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
@@ -365,6 +386,28 @@ export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: Rea
 };
 
 /**
+ * Data source query gateway guardrails
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayGuardrails`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayGuardrails", false, options).value;
+};
+
+/**
+ * Data source query service, use the new name
+ *
+ * **Details:**
+ * - flag key: `datasources.querier.newName`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.querier.newName", false, options).value;
+};
+
+/**
  * Data source query gateway
  *
  * **Details:**
@@ -442,14 +485,14 @@ export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
- * Enables the new Flame Graph UI containing the Call Tree view
+ * Enables use of app platform API for folders
  *
  * **Details:**
- * - flag key: `flameGraphWithCallTree`
- * - default value: `false`
+ * - flag key: `foldersAppPlatformAPI`
+ * - default value: `true`
  */
-export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("flameGraphWithCallTree", false, options).value;
+export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("foldersAppPlatformAPI", true, options).value;
 };
 
 /**
@@ -607,6 +650,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
 };
 
 /**
+ * Deprecated: Toggle displayed fields from Log Details
+ *
+ * **Details:**
+ * - flag key: `grafana.logDetailsDisplayedFieldControls`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
+};
+
+/**
  * Enables log level inference from log line contents when level is not defined as a field or a label
  *
  * **Details:**
@@ -618,6 +672,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables multi-tenant fallback behavior
+ *
+ * **Details:**
+ * - flag key: `grafana.mtFallback`
+ * - default value: `{}`
+ */
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
+};
+
+/**
  * Builds the navigation tree client-side instead of reading it from /bootdata
  *
  * **Details:**
@@ -626,6 +691,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantNavTree", false, options).value;
+};
+
+/**
+ * Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantUserPermissions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantUserPermissions", false, options).value;
 };
 
 /**
@@ -681,6 +757,28 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Pass React elements in plugin extension props by reference
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginExtensionReactElementProps`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginExtensionReactElementProps = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginExtensionReactElementProps", false, options).value;
+};
+
+/**
+ * Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginPathNesting`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginPathNesting", false, options).value;
 };
 
 /**
@@ -842,10 +940,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
@@ -1080,6 +1178,28 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables the configurable footer settings for PDF reports
+ *
+ * **Details:**
+ * - flag key: `reportingFooterSettings`
+ * - default value: `false`
+ */
+export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reportingFooterSettings", false, options).value;
+};
+
+/**
+ * Enables configuration of PDF report settings
+ *
+ * **Details:**
+ * - flag key: `reportingHeaderSettings`
+ * - default value: `false`
+ */
+export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
  * Routes snapshot requests from /api to the /apis endpoint
  *
  * **Details:**
@@ -1187,6 +1307,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refresh", false, options).value;
+};
+
+/**
+ * Catch-all toggle for new features developed as part of the Q3 table panel refresh
+ *
+ * **Details:**
+ * - flag key: `table.refreshNewFeatures`
+ * - default value: `false`
+ */
+export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refreshNewFeatures", false, options).value;
 };
 
 /**

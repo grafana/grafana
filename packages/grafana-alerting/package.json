@@ -93,7 +93,7 @@
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",
-    "@faker-js/faker": "^9.8.0",
+    "@faker-js/faker": "^10.6.0",
     "@grafana/api-clients": "13.3.0-pre",
     "@grafana/i18n": "13.3.0-pre",
     "@reduxjs/toolkit": "^2.10.1",

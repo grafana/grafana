@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -45,17 +45,25 @@ describe('ActionsInlineEditor', () => {
     mockOnChange.mockClear();
   });
 
-  it('renders the add-action button with no actions', () => {
-    render(<ActionsInlineEditor {...defaultProps} />);
+  it('renders the add-action button with no actions', async () => {
+    const { container } = render(<ActionsInlineEditor {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+    });
 
     expect(screen.getByRole('button', { name: /Add action/i })).toBeInTheDocument();
     expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
   });
 
-  it('renders existing actions', () => {
+  it('renders existing actions', async () => {
     const actions = [buildFetchAction({ title: 'First action' }), buildFetchAction({ title: 'Second action' })];
 
-    render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
+    const { container } = render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('First action')).toBeInTheDocument();
     expect(screen.getByText('Second action')).toBeInTheDocument();

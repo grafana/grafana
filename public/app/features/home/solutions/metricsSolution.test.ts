@@ -34,13 +34,7 @@ const mockFetchActivity = jest.mocked(fetchMetricsActivity);
 const mockFetchDiskHoursToFull = jest.mocked(fetchMetricsDiskHoursToFull);
 const mockFetchDiskPressure = jest.mocked(fetchMetricsDiskPressure);
 
-const emptyActivity: MetricsActivity = {
-  series: null,
-  dataPointsPerMinute: null,
-  names: null,
-  hosts: null,
-  seriesSparkline: null,
-};
+const emptyActivity: MetricsActivity = { count: null, dataPointsPerMinute: null, hosts: null, seriesSparkline: null };
 
 function datasource(uid = 'prom-uid'): DataSourceInstanceListItem {
   return { uid, name: uid, type: 'prometheus' } as DataSourceInstanceListItem;
@@ -115,7 +109,7 @@ describe('metricsSolution', () => {
     mockDetectSignal
       .mockResolvedValueOnce({ status: 'inactive', datasource: null })
       .mockResolvedValueOnce({ status: 'active', datasource: kubernetesDatasource });
-    mockFetchActivity.mockResolvedValue({ ...emptyActivity, series: 12 });
+    mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'series', value: 12 } });
     const solution = metricsSolution();
 
     await expect(solution.signal()).resolves.toBe('active');
@@ -141,7 +135,11 @@ describe('metricsSolution', () => {
 
   describe('stats', () => {
     it('leads with the series count and ingest rate', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, series: 4_200_000, dataPointsPerMinute: 5_160_000 });
+      mockFetchActivity.mockResolvedValue({
+        ...emptyActivity,
+        count: { kind: 'series', value: 4_200_000 },
+        dataPointsPerMinute: 5_160_000,
+      });
 
       await expect(metricsSolution().stats()).resolves.toEqual({
         primary: '4.20 Mil series',
@@ -150,7 +148,7 @@ describe('metricsSolution', () => {
     });
 
     it('falls back to the metric-name count and host count', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, names: 1_200, hosts: 12 });
+      mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'names', value: 1_200 }, hosts: 12 });
 
       await expect(metricsSolution().stats()).resolves.toEqual({
         primary: '1.20 K metrics',
@@ -159,7 +157,7 @@ describe('metricsSolution', () => {
     });
 
     it('uses the bare activity qualifier when no secondary count resolved', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, names: 7 });
+      mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'names', value: 7 } });
 
       await expect(metricsSolution().stats()).resolves.toEqual({ primary: '7 metrics', secondary: 'active' });
     });

@@ -13,6 +13,8 @@ import (
 
 const maxErrorLength = 256
 
+const unsupportedForkMessage = "Grafana doesn't currently support previews for pull requests from forks."
+
 // maxDisplayedChanges caps how many rows the comment table renders. PR jobs now
 // process every changed file, but a very large PR would otherwise produce an
 // unreadably long comment.
@@ -26,10 +28,12 @@ type commenter struct {
 	templateValidationErrors *template.Template
 	templateMetadataNotice   *template.Template
 	templateUnprocessedFiles *template.Template
+	templateUnsupportedFork  *template.Template
 	showImageRendererNote    bool
+	urls                     URLProvider
 }
 
-func NewCommenter(showImageRendererNote bool) Commenter {
+func NewCommenter(showImageRendererNote bool, urls URLProvider) Commenter {
 	return &commenter{
 		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
 		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
@@ -38,11 +42,22 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 		templateValidationErrors: template.Must(template.New("errors").Parse(commentTemplateValidationErrors)),
 		templateMetadataNotice:   template.Must(template.New("metadata").Parse(commentTemplateMetadataNotice)),
 		templateUnprocessedFiles: template.Must(template.New("unprocessed").Parse(commentTemplateUnprocessedFiles)),
+		templateUnsupportedFork:  template.Must(template.New("unsupported-fork").Parse(commentTemplateUnsupportedFork)),
 		showImageRendererNote:    showImageRendererNote,
+		urls:                     urls,
 	}
 }
 
 func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRepo, pr int, info changeInfo) error {
+	if info.UnsupportedFork {
+		// Fork jobs skip evaluation, which normally supplies the comment's attribution.
+		cfg := prRepo.Config()
+		info.GrafanaBaseURL = c.urls.Internal(ctx, cfg.Namespace)
+		info.RepositoryName = cfg.Name
+		info.RepositoryTitle = cfg.Spec.Title
+		info.RepositoryAdminURL = repositoryAdminURL(info.GrafanaBaseURL, cfg.Name, orgIDForLinks(cfg.Namespace))
+	}
+
 	comment, err := c.generateComment(ctx, info)
 	if err != nil {
 		return fmt.Errorf("unable to generate comment text: %w", err)
@@ -59,6 +74,10 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	var buf bytes.Buffer
 
 	switch {
+	case info.UnsupportedFork:
+		if err := c.templateUnsupportedFork.Execute(&buf, info); err != nil {
+			return "", fmt.Errorf("unable to execute unsupported fork template: %w", err)
+		}
 	case len(info.Changes) == 0 && info.UnprocessedFiles > 0:
 
 		buf.WriteString(fmt.Sprintf("This pull request was interrupted. %d / %d files were not processed.", info.UnprocessedFiles, info.TotalFilesInDiff()))
@@ -110,6 +129,8 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	}
 	return result, nil
 }
+
+const commentTemplateUnsupportedFork = "ℹ️ **Pull request preview skipped**\n\n" + unsupportedForkMessage
 
 const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.SafeTitle}}**]({{.SourceURL}}){{else}}**{{.SafeTitle}}**{{end}}{{end -}}
 📊 Grafana detected dashboard changes in this pull request.

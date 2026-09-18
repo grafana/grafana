@@ -197,8 +197,6 @@ Use **Default** to create basic query conditions and route alerts directly to a 
 
 You can switch between options at any time. After you create an alert rule, Grafana remembers your last selection and uses it as the default for the next rule.
 
-If you prefer to always use advanced configuration, you can disable the **Default** modes by disabling the `alertingQueryAndExpressionsStepMode` and `alertingNotificationsStepMode` feature toggles.
-
 ## Set alert rule name
 
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}

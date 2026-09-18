@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject, isString } from 'lodash';
+import { cloneDeepWith, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -17,7 +17,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
-import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { FlagKeys, getAppPluginMetas, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -230,7 +230,7 @@ const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
  * @returns A new read only object, does not modify the original object
  */
 export function getReadOnlyProxy<T extends object>(obj: T): T {
-  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
+  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj) || shouldPassReactElementByReference(obj)) {
     return obj;
   }
 
@@ -255,6 +255,10 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
         return dateTime(value);
       }
 
+      if (shouldPassReactElementByReference(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getReadOnlyProxy(value));
@@ -275,6 +279,14 @@ interface ProxyOptions {
   pluginVersion?: string;
 }
 
+// Component types from memo, lazy, and forwardRef are not elements, so they keep the existing proxy behavior.
+function shouldPassReactElementByReference(value: unknown): boolean {
+  return (
+    React.isValidElement(value) &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPluginExtensionReactElementProps, false)
+  );
+}
+
 /**
  * Returns a proxy that logs any attempted mutation to the original object.
  *
@@ -287,7 +299,7 @@ interface ProxyOptions {
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
-  if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj)) {
+  if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj) || shouldPassReactElementByReference(obj)) {
     return obj;
   }
 
@@ -348,6 +360,11 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
         return dateTime(value);
       }
 
+      // React elements must keep their identity across the plugin boundary.
+      if (shouldPassReactElementByReference(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
@@ -377,10 +394,18 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
     return value;
   }
 
+  // React elements must keep their identity across the plugin boundary.
+  if (shouldPassReactElementByReference(value)) {
+    return value;
+  }
+
   const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
-  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
+  // Default: return a proxy of a deep clone, which logs warnings when mutation is attempted.
+  return getMutationObserverProxy(
+    cloneDeepWith(value, (v) => (shouldPassReactElementByReference(v) ? v : undefined)),
+    { log, pluginId, pluginVersion, source }
+  );
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {

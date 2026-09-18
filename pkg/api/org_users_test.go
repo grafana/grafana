@@ -789,6 +789,16 @@ func searchHits(n int, startID int64) []*user.UserSearchHitDTO {
 	return out
 }
 
+// searchHitsWithModules builds n hits, assigning auth modules round-robin so
+// each module appears across the whole range (and across pages).
+func searchHitsWithModules(n int, startID int64, modules ...string) []*user.UserSearchHitDTO {
+	out := searchHits(n, startID)
+	for i, h := range out {
+		h.AuthModule = user.AuthModuleConversion{modules[i%len(modules)]}
+	}
+	return out
+}
+
 func TestSearchOrgUsersUsingK8s(t *testing.T) {
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
@@ -917,6 +927,80 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.Equal(t, 1, svc.calls, "explicit limit must fetch exactly one page")
 		require.Len(t, res.OrgUsers, 50)
 	})
+}
+
+// The externally-synced check depends only on the auth module, so it is
+// resolved once per module per request, not once per user or per page.
+func TestSearchOrgUsersUsingK8s_ResolvesExternallySyncedPerModule(t *testing.T) {
+	githubModule := login.GithubAuthModule
+	gitlabModule := login.GitLabAuthModule
+
+	svc := &countingAuthnService{
+		FakeService: &authntest.FakeService{ExpectedClientConfig: &authntest.FakeSSOClientConfig{}},
+	}
+	// Two pages force the resolver to span more than one page; both modules
+	// appear on each page.
+	userSvc := &pagedUserService{
+		FakeUserService: &usertest.FakeUserService{},
+		pages: []user.SearchUserQueryResult{
+			{Users: searchHitsWithModules(1000, 1, githubModule, gitlabModule), TotalCount: 1500, Page: 1, PerPage: 1000},
+			{Users: searchHitsWithModules(500, 1001, githubModule, gitlabModule), TotalCount: 1500, Page: 2, PerPage: 1000},
+		},
+	}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), authnService: svc, userService: userSvc}
+	reqCtx := &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+
+	res, err := hs.searchOrgUsersUsingK8s(reqCtx, &org.SearchOrgUsersQuery{OrgID: 1})
+	require.NoError(t, err)
+	require.Equal(t, 2, userSvc.calls, "both pages must be fetched")
+	require.Len(t, res.OrgUsers, 1500)
+	for _, u := range res.OrgUsers {
+		assert.True(t, u.IsExternallySynced)
+	}
+
+	// Each module is resolved exactly once, regardless of user or page count.
+	want := map[string]int{authn.ClientWithPrefix("github"): 1, authn.ClientWithPrefix("gitlab"): 1}
+	assert.Equal(t, want, svc.enabledCalls)
+	assert.Equal(t, want, svc.configCalls)
+}
+
+// Same invariant as the K8s path, for the legacy searchOrgUsersHelper loop.
+func TestSearchOrgUsersHelper_ResolvesExternallySyncedPerModule(t *testing.T) {
+	const userCount = 50
+	modules := []string{login.GithubAuthModule, login.GitLabAuthModule}
+
+	users := make([]*org.OrgUserDTO, userCount)
+	labels := make(map[int64]string, userCount)
+	for i := range users {
+		id := int64(i + 1)
+		users[i] = &org.OrgUserDTO{UserID: id, Login: fmt.Sprintf("user-%d", id)}
+		labels[id] = modules[i%len(modules)]
+	}
+
+	svc := &countingAuthnService{
+		FakeService: &authntest.FakeService{ExpectedClientConfig: &authntest.FakeSSOClientConfig{}},
+	}
+	hs := &HTTPServer{
+		Cfg:          setting.NewCfg(),
+		authnService: svc,
+		orgService: &orgtest.FakeOrgService{
+			ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: users, TotalCount: userCount},
+		},
+		authInfoService: &authinfotest.FakeService{ExpectedRecentlyUsedLabel: labels},
+	}
+	reqCtx := &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+
+	res, err := hs.searchOrgUsersHelper(reqCtx, &org.SearchOrgUsersQuery{OrgID: 1})
+	require.NoError(t, err)
+	require.Len(t, res.OrgUsers, userCount)
+	for _, u := range res.OrgUsers {
+		assert.True(t, u.IsExternallySynced)
+	}
+
+	// Each module is resolved exactly once, regardless of user count.
+	want := map[string]int{authn.ClientWithPrefix("github"): 1, authn.ClientWithPrefix("gitlab"): 1}
+	assert.Equal(t, want, svc.enabledCalls)
+	assert.Equal(t, want, svc.configCalls)
 }
 
 func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {

@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -81,9 +81,13 @@ afterEach(() => {
 });
 
 describe('<DashboardLinksList />', () => {
-  test('renders 2 sections (one per link display type)', () => {
+  test('renders 2 sections (one per link display type)', async () => {
     const { visibleLink1, visibleLink2, controlsMenuLink1 } = buildLinks();
-    const { getByRole, elements } = renderLinksList([controlsMenuLink1, visibleLink2, visibleLink1]);
+    const { container, getByRole, elements } = renderLinksList([controlsMenuLink1, visibleLink2, visibleLink1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(3);
+    });
 
     [/above dashboard/i, /controls menu/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -96,9 +100,13 @@ describe('<DashboardLinksList />', () => {
     expect(controlsMenuNames).toEqual(['controlsMenuLink1']);
   });
 
-  test('always renders the 2 section titles even if one is empty', () => {
+  test('always renders the 2 section titles even if one is empty', async () => {
     const { controlsMenuLink1 } = buildLinks();
-    const { getByRole } = renderLinksList([controlsMenuLink1]);
+    const { container, getByRole } = renderLinksList([controlsMenuLink1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -150,6 +158,9 @@ describe('<DashboardLinksList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();

@@ -61,6 +61,17 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	})
 }
 
+func TestGetNamespaceByUID(t *testing.T) {
+	store := DBstore{FolderService: foldertest.NewFakeService()}
+
+	for _, uid := range []string{folder.LegacyRootFolderUID, folder.GeneralFolderUID} { //nolint:staticcheck
+		t.Run("rejects root folder UID "+uid, func(t *testing.T) {
+			_, err := store.GetNamespaceByUID(context.Background(), uid, 1, nil)
+			require.ErrorIs(t, err, folder.ErrInvalidUID)
+		})
+	}
+}
+
 func TestGetNamespaceByTitle(t *testing.T) {
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedError = dashboards.ErrFolderNotFound

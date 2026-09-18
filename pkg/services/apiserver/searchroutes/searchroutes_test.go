@@ -81,8 +81,8 @@ func TestBuild_SearchAndTrashAreIndependent(t *testing.T) {
 	})
 }
 
-// Search fields are the enrolment signal, so a kind without them gets nothing.
-func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
+// Search works on the fields every resource has, so declaring none is fine.
+func TestBuild_MountsKindsWithoutSearchFields(t *testing.T) {
 	gv := schema.GroupVersion{Group: "playlist.grafana.app", Version: "v0alpha1"}
 	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
 
@@ -102,11 +102,12 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 		}}
 	}
 
-	t.Run("no fields, not enrolled", func(t *testing.T) {
-		assert.Empty(t, paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
+	// No trash in either case: playlists are not in trashAllowlist.
+	t.Run("no fields, gets the search endpoint", func(t *testing.T) {
+		got := paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil))
+		assert.Equal(t, []string{"playlists/search"}, got[gv.String()])
 	})
 
-	// Fields alone do not grant trash: playlists are not in trashAllowlist.
 	t.Run("one field, gets the search endpoint", func(t *testing.T) {
 		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
 		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
@@ -137,26 +138,35 @@ func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
 }
 
-// Serving a group must not enrol the kinds in it that declare no fields.
-func TestBuild_EnrolmentIsPerKindNotPerGroup(t *testing.T) {
+// Every namespaced kind in a served group gets the endpoint, whether or not it
+// declares search fields. Cluster-scoped kinds still get nothing: IAM serves
+// GlobalRole next to the namespaced kinds below.
+func TestBuild_MountsEveryNamespacedKindInAServedGroup(t *testing.T) {
 	gvs := []schema.GroupVersion{
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
-		{Group: "secret.grafana.app", Version: "v1beta1"},
 		{Group: "playlist.grafana.app", Version: "v0alpha1"},
 	}
 
 	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{&fakeBuilder{gvs: gvs}}, nil))
 
 	assert.ElementsMatch(t, []string{
+		// Declare search fields.
 		"users/search",
 		"teams/search",
 		"teambindings/search",
 		"externalgroupmappings/search",
 		"authinfos/search",
-	}, got["iam.grafana.app/v0alpha1"], "only the IAM kinds declaring search fields")
+		// Declare none.
+		"globalrolebindings/search",
+		"resourcepermissions/search",
+		"rolebindings/search",
+		"roles/search",
+		"serviceaccounts/search",
+		"teamlbacrules/search",
+	}, got["iam.grafana.app/v0alpha1"])
+	assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "globalroles/search", "GlobalRole is cluster scoped")
 
-	assert.Empty(t, got["secret.grafana.app/v1beta1"])
-	assert.Empty(t, got["playlist.grafana.app/v0alpha1"])
+	assert.Equal(t, []string{"playlists/search"}, got["playlist.grafana.app/v0alpha1"])
 }
 
 // Every served version of an allowed kind gets the endpoint, so a client can use
@@ -236,7 +246,10 @@ func allServedGroupVersions(t *testing.T) []schema.GroupVersion {
 
 // A kind can gain two public endpoints without anyone editing this package.
 // Listing the set makes that a failing test rather than a silent change.
-func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
+//
+// Kinds that opt out in their own manifest are absent: secure values, keepers,
+// channels, plugins, plugin metas, checks and check types.
+func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 	got := paths(Build(true, true, nil, fakeClient{},
 		[]builder.APIGroupBuilder{&fakeBuilder{gvs: allServedGroupVersions(t)}}, nil))
 
@@ -252,18 +265,43 @@ func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, []string{
-		// Declare search fields.
 		"alertrules",
-		"dashboards",
-		"externalgroupmappings",
-		"recordingrules",
-		"teambindings",
-		"teams",
-		"users",
+		"annotations",
 		"authinfos",
-		// Served before enrolment asked for search fields.
+		"configs",
+		"correlations",
+		"dashboardcompatibilityscores",
+		"dashboards",
+		"dummys",
+		"externalgroupmappings",
 		"folders",
+		"globalrolebindings",
+		"inhibitionrules",
+		"logsdrilldowndefaultcolumns",
+		"logsdrilldowndefaultlabels",
+		"logsdrilldowndefaults",
+		"logsdrilldowns",
 		"notebooks",
+		"playlists",
+		"preferences",
+		"receivers",
+		"recordingrules",
+		"resourcepermissions",
+		"rolebindings",
+		"roles",
+		"routingtrees",
+		"rulesequences",
+		"serviceaccounts",
+		"shorturls",
+		"snapshots",
+		"stars",
+		"teambindings",
+		"teamlbacrules",
+		"teams",
+		"templategroups",
+		"timeintervals",
+		"users",
+		"variables",
 	}, names)
 }
 
@@ -289,7 +327,7 @@ func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
 	assert.ElementsMatch(t, []string{"dashboards"}, names)
 }
 
-// Folders are enrolled for search but are not in trashAllowlist.
+// Folders get search but are not in trashAllowlist.
 func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "folder.grafana.app", Version: "v1"}}}
 
@@ -351,7 +389,7 @@ func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {
 	fromBuilder := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
 	b := &fakeBuilder{gvs: []schema.GroupVersion{fromBuilder}}
 
-	served := servedGroupVersions([]builder.APIGroupBuilder{b}, nil)
+	served := builder.ServedGroupVersions([]builder.APIGroupBuilder{b}, nil)
 	assert.True(t, served[fromBuilder])
 	assert.False(t, served[schema.GroupVersion{Group: "other.grafana.app", Version: "v1"}])
 }

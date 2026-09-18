@@ -2,11 +2,12 @@ import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_EXPORT_DESTINATION, type NotebookExportSource } from '../analytics/types';
 import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
 
 import { copyToClipboard } from './copyToClipboard';
-import { openCursorPromptDeeplink } from './cursor';
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
 
@@ -18,10 +19,12 @@ interface Props {
    * a list row fetches — and a list of fifty notebooks must not fetch fifty specs to render.
    */
   getSpec: () => Promise<NotebookSpec | undefined>;
+  /** Which surface holds this menu, for the exported event. */
+  source: NotebookExportSource;
 }
 
 /** The export actions, shared by the notebook page toolbar and the list page's row menu. */
-export function NotebookExportMenu({ uid, getSpec }: Props) {
+export function NotebookExportMenu({ uid, getSpec, source }: Props) {
   const notifyApp = useAppNotification();
 
   // Throws rather than reporting, so each action owns its own outcome: the copy cannot know whether
@@ -50,6 +53,7 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
 
     try {
       await copyToClipboard(markdown);
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.CLIPBOARD, source);
       notifyApp.success(t('notebooks.export.copied', 'Notebook copied as Markdown'));
     } catch (error) {
       reportFailure();
@@ -61,21 +65,7 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
       const spec = await loadSpec();
       // Title from the spec, so the filename always matches the document that was exported.
       downloadMarkdown(notebookToMarkdown(spec, { url: notebookShareUrl(uid) }), spec.title);
-    } catch (error) {
-      reportFailure();
-    }
-  };
-
-  const onOpenInCursor = async () => {
-    try {
-      const spec = await loadSpec();
-      // Unconditional, and deliberately not a success message. A deep link into an app that is not
-      // installed is ignored by the browser with no error and no way to detect it, so the honest
-      // report is that the handoff was attempted — otherwise the click does nothing observable at all.
-      notifyApp.info(t('notebooks.export.opening-in-cursor', 'Opening in Cursor'));
-      // Serialized without the link: Cursor's deep link handler mis-parses embedded URLs, and
-      // leaving it out beats generating it and stripping it back out.
-      openCursorPromptDeeplink(notebookToMarkdown(spec, {}));
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.DOWNLOAD, source);
     } catch (error) {
       reportFailure();
     }
@@ -88,11 +78,6 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
         label={t('notebooks.export.download-markdown', 'Download as .md')}
         icon="download-alt"
         onClick={onDownload}
-      />
-      <Menu.Item
-        label={t('notebooks.export.open-in-cursor', 'Open in Cursor')}
-        icon="external-link-alt"
-        onClick={onOpenInCursor}
       />
     </>
   );

@@ -195,6 +195,42 @@ func TestMapperRegistry_Variables(t *testing.T) {
 	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbDelete))
 }
 
+// TestMapperRegistry_LibraryPanels verifies library panels map to library.panels:*
+// and flow through the folder action sets. Library panels have no action sets of
+// their own, so without the folder mapping a user granted folder Edit through a
+// managed role would not be seen to hold them.
+func TestMapperRegistry_LibraryPanels(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "librarypanels", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+	assert.Equal(t, "library.panels:uid:", mapping.Prefix())
+	assert.True(t, mapping.HasFolderSupport())
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+
+	tests := []struct {
+		verb       string
+		action     string
+		actionSets []string
+	}{
+		{utils.VerbGet, "library.panels:read", readActionSets},
+		{utils.VerbList, "library.panels:read", readActionSets},
+		{utils.VerbCreate, "library.panels:create", writeActionSets},
+		{utils.VerbUpdate, "library.panels:write", writeActionSets},
+		{utils.VerbDelete, "library.panels:delete", writeActionSets},
+	}
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			action, ok := mapping.Action(tt.verb)
+			require.True(t, ok, "verb %q should map to an action", tt.verb)
+			assert.Equal(t, tt.action, action)
+			assert.ElementsMatch(t, tt.actionSets, mapping.ActionSets(tt.verb))
+		})
+	}
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{
@@ -398,6 +434,50 @@ func TestMapperRegistry_AlertRules(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_Silences verifies silences map to the alert.silences:*
+// actions, support folder inheritance, and use a silences-specific direct-scope
+// prefix so the per-object check never spuriously matches a folder grant. There
+// is no silence kind served on this group yet; the translation exists so
+// folder-scoped silence capability checks resolve.
+func TestMapperRegistry_Silences(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("notifications.alerting.grafana.app", "silences", "")
+	require.True(t, ok, "silences should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	assert.True(t, mapping.HasFolderSupport(), "silence permissions are folder-scoped")
+	assert.Equal(t, "alert.silences:uid:", mapping.Prefix())
+	assert.Equal(t, "alert.silences:uid:abc", mapping.Scope("abc"))
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+
+	tests := []struct {
+		verb       string
+		action     string
+		actionSets []string
+	}{
+		{utils.VerbGet, "alert.silences:read", readActionSets},
+		{utils.VerbList, "alert.silences:read", readActionSets},
+		{utils.VerbWatch, "alert.silences:read", readActionSets},
+		{utils.VerbCreate, "alert.silences:create", writeActionSets},
+		// There is no alert.silences:delete action; expiring a silence is a write.
+		{utils.VerbUpdate, "alert.silences:write", writeActionSets},
+		{utils.VerbPatch, "alert.silences:write", writeActionSets},
+		{utils.VerbDelete, "alert.silences:write", writeActionSets},
+		{utils.VerbDeleteCollection, "alert.silences:write", writeActionSets},
+	}
+	for _, tt := range tests {
+		t.Run(tt.verb, func(t *testing.T) {
+			action, ok := mapping.Action(tt.verb)
+			assert.True(t, ok, "verb %q should map to an action", tt.verb)
+			assert.Equal(t, tt.action, action)
+			assert.ElementsMatch(t, tt.actionSets, mapping.ActionSets(tt.verb))
+		})
+	}
+}
+
 // TestMapperRegistry_AssistantAlertRules verifies the assistant's external collection authorizes like the native rule kinds.
 func TestMapperRegistry_AssistantAlertRules(t *testing.T) {
 	reg := NewMapperRegistry()
@@ -569,7 +649,7 @@ func TestGetAPIResourceName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Repeat to defeat Go's per-range map iteration randomization: a
 			// non-deterministic implementation would eventually return a different key.
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				name, ok := tt.reg.GetAPIResourceName(tt.group, tt.resource)
 				assert.Equal(t, tt.wantOK, ok)
 				assert.Equal(t, tt.wantName, name)

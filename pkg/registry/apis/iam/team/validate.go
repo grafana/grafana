@@ -130,9 +130,10 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 				},
 			},
 		},
-		Fields: []string{resource.SEARCH_FIELD_TITLE},
-		Limit:  2,
-		Page:   1,
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Limit:        2,
+		Page:         1,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	resp, err := searchClient.Search(ctx, req)
@@ -140,16 +141,38 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 		return err
 	}
 
+	resultNames, err := teamSearchResultNames(resp)
+	if err != nil {
+		return err
+	}
+
 	// A hit on the team itself isn't a conflict: on update the search can match
 	// the team's own indexed title (e.g. a case-only rename). Any hit on a
 	// different team means the title is taken.
-	for _, row := range resp.GetResults().GetRows() {
-		if row.Key.GetName() != name {
+	for _, resultName := range resultNames {
+		if resultName != name {
 			return apierrors.NewConflict(gr, name, fmt.Errorf("team name '%s' is already taken", title))
 		}
 	}
 
 	return nil
+}
+
+func teamSearchResultNames(resp *resourcepb.ResourceSearchResponse) ([]string, error) {
+	var names []string
+	switch resp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		for _, row := range resp.GetResults().GetRows() {
+			names = append(names, row.GetKey().GetName())
+		}
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		for _, row := range resp.GetRows() {
+			names = append(names, row.GetKey().GetName())
+		}
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
+	}
+	return names, nil
 }
 
 func ValidateOnDelete(ctx context.Context, searcher resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team) error {
