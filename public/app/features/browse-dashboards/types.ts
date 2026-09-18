@@ -1,5 +1,4 @@
-import { type CellContext, type HeaderContext } from '@tanstack/react-table';
-import { type ReactNode } from 'react';
+import { type CellContext, type ColumnDef, type HeaderContext } from '@tanstack/react-table';
 
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
@@ -60,12 +59,10 @@ interface RendererUserProps {
   permissions?: BrowseDashboardsPermissions;
 }
 
-export interface DashboardsTreeColumn {
-  id: string;
-  width: number;
-  Header: ReactNode | ((props: DashboardTreeHeaderProps) => ReactNode);
-  Cell: (props: DashboardsTreeCellProps) => ReactNode;
-}
+export type DashboardsTreeColumn = ColumnDef<DashboardsTreeItem> & {
+  /** Flex grow factor of the column, see `getColumnFlexStyle` */
+  size: number;
+};
 export type DashboardsTreeCellProps = CellContext<DashboardsTreeItem, unknown> & RendererUserProps;
 export type DashboardTreeHeaderProps = HeaderContext<DashboardsTreeItem, unknown> & RendererUserProps;
 
