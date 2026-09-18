@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 type fakeSyncerStore struct {
@@ -146,9 +146,13 @@ func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.L
 
 // newTestService builds a Service with the folder client already injected, bypassing the lazy
 // generator that needs a live apiserver.
-func newTestService(store syncerStore, folders folderPatcher) *Service {
+func newTestService(store interface {
+	syncerStore
+	syncerOrgStore
+}, folders folderPatcher) *Service {
 	return &Service{
 		store: store,
+		orgs:  store,
 		// One namespace per org, so tests can target a single org's folder calls (see
 		// fakeFolderClient.failNamespaces).
 		namespacer: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
@@ -230,7 +234,7 @@ func TestHandleRuleChange(t *testing.T) {
 	t.Run("ignores events with no folder keys", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
 			RuleKeys: []models.AlertRuleKey{{OrgID: 1, UID: "rule"}},
 		}))
 		require.Empty(t, s.take())
@@ -239,7 +243,7 @@ func TestHandleRuleChange(t *testing.T) {
 	t.Run("queues the event's folder keys", func(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
 		}))
 		require.Len(t, s.take(), 2)
@@ -249,7 +253,7 @@ func TestHandleRuleChange(t *testing.T) {
 		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 		s.disabledOrgs = map[int64]struct{}{1: {}}
 
-		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
+		require.NoError(t, s.handleRuleChange(context.Background(), &rulestore.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}},
 		}))
 		require.Empty(t, s.take())
@@ -524,7 +528,7 @@ func TestDrainRetries(t *testing.T) {
 
 func TestFailureMetrics(t *testing.T) {
 	// A real registry, so the assertions cover the metric names and labels actually exported.
-	newMetered := func(store syncerStore, folders folderPatcher) (*Service, prometheus.Gatherer) {
+	newMetered := func(store *fakeSyncerStore, folders folderPatcher) (*Service, prometheus.Gatherer) {
 		reg := prometheus.NewPedanticRegistry()
 		s := newTestService(store, folders)
 		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
@@ -534,7 +538,7 @@ func TestFailureMetrics(t *testing.T) {
 	t.Run("partial sync failures are counted", func(t *testing.T) {
 		for _, tc := range []struct {
 			name   string
-			store  syncerStore
+			store  *fakeSyncerStore
 			folder folderPatcher
 		}{
 			{
