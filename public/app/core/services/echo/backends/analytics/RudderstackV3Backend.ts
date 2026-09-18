@@ -56,6 +56,7 @@ export interface RudderstackBackendOptions {
   sdkUrl?: string;
   configUrl?: string;
   integrationsUrl?: string;
+  batchInterval?: number;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
@@ -117,8 +118,8 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       queueOptions: {
         maxAttempts: 3,
         batch: {
-          enabled: true,
-          flushInterval: 5000,
+          enabled: (options.batchInterval ?? 0) > 0,
+          flushInterval: options.batchInterval ?? 0,
         },
       },
     });

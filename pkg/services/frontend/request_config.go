@@ -68,6 +68,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		RudderstackSdkUrl:                    cfg.RudderstackSDKURL,
 		RudderstackV3SdkUrl:                  cfg.RudderstackV3SDKURL,
 		RudderstackWriteKey:                  cfg.RudderstackWriteKey,
+		RudderstackBatchInterval:             cfg.RudderstackBatchInterval,
 		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,
 		BuildInfo:                            getBuildInfo(license, cfg),
@@ -180,6 +181,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.FullFrontendSettings.RudderstackV3SdkUrl, logger)
 		applyString(settings, "analytics", "rudderstack_config_url", &c.FullFrontendSettings.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.FullFrontendSettings.RudderstackIntegrationsUrl, logger)
+		applyInt(settings, "analytics", "rudderstack_batch_interval", &c.FullFrontendSettings.RudderstackBatchInterval, logger)
 	} else {
 		applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
 		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
@@ -187,6 +189,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
 		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+		applyInt(settings, "analytics", "rudderstack_batch_interval", &c.RudderstackBatchInterval, logger)
 	}
 }
 
@@ -206,6 +209,17 @@ func getValue(settings *ini.File, section, key string) *ini.Key {
 func applyString(settings *ini.File, sectionName, keyName string, target *string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
 		*target = key.String()
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+func applyInt(settings *ini.File, sectionName, keyName string, target *int, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.MustInt(0)
 
 		logger.Debug("applying request config override",
 			"section", sectionName,

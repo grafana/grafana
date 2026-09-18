@@ -79,12 +79,14 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+		_, _ = analyticsSection.NewKey("rudderstack_batch_interval", "5000")
 		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
+		assert.Equal(t, 5000, config.RudderstackBatchInterval)
 	})
 
 	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
