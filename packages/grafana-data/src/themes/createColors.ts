@@ -348,7 +348,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
 
     if (!color.background) {
-      color.background = alpha(color.main, 0.15);
+      color.background = color.main;
     }
     if (!color.backgroundEmphasis) {
       color.backgroundEmphasis = emphasize(color.background, tonalOffset);
