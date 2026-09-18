@@ -362,6 +362,8 @@ func TestStore_SetAuthInfo(t *testing.T) {
 					assert.Equal(t, "github-42", obj.Spec.AuthID)
 					require.NotNil(t, obj.Spec.ExternalUID)
 					assert.Equal(t, "external-42", *obj.Spec.ExternalUID)
+					require.NotNil(t, obj.Spec.Created)
+					assert.WithinDuration(t, time.Now(), time.UnixMilli(*obj.Spec.Created), 10*time.Second)
 					writeJSON(t, w, obj)
 				default:
 					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
