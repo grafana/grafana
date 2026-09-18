@@ -2,23 +2,14 @@ import { type PluginMeta } from '@grafana/data';
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { getPluginSettings, updateAppPluginSettings } from './apps';
+import { getMockedBackendSrv } from './utils/mocks';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   getPluginSettings: undefined,
   updateAppPluginSettings: undefined,
 }));
 
-const mockBackendSrv: BackendSrv = {
-  chunked: jest.fn(),
-  delete: jest.fn(),
-  fetch: jest.fn(),
-  get: jest.fn(),
-  patch: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  datasourceRequest: jest.fn(),
-  request: jest.fn(),
-};
+const mockBackendSrv = getMockedBackendSrv();
 
 const mockData: Partial<PluginMeta> = { enabled: true, pinned: true };
 
@@ -57,6 +48,12 @@ describe('getPluginSettings', () => {
       }
     );
   });
+
+  it('should reject when getBackendSrv is not setup', async () => {
+    setBackendSrv(undefined as unknown as BackendSrv);
+
+    await expect(getPluginSettings('grafana-exploretraces-app')).rejects.toThrow();
+  });
 });
 
 describe('updateAppPluginSettings', () => {
@@ -82,5 +79,11 @@ describe('updateAppPluginSettings', () => {
     const result = await updateAppPluginSettings('grafana-exploretraces-app', mockData);
 
     expect(result).toStrictEqual(mockData);
+  });
+
+  it('should reject when getBackendSrv is not setup', async () => {
+    setBackendSrv(undefined as unknown as BackendSrv);
+
+    await expect(updateAppPluginSettings('grafana-exploretraces-app', mockData)).rejects.toThrow();
   });
 });
