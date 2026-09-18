@@ -7,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
 import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_NOTIFICATION_POLICIES,
@@ -36,7 +37,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList')
       ),
     },
-    {
+    proxied({
       path: '/alerting/routes',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
@@ -51,8 +52,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "NotificationPoliciesPage" */ 'app/features/alerting/unified/NotificationPoliciesPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       // Standalone Time Intervals page for V2 navigation
       path: '/alerting/routes/mute-timing',
       roles: evaluateAccess([
@@ -66,8 +67,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "TimeIntervalsPage" */ 'app/features/alerting/unified/components/mute-timings/TimeIntervalsPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/routes/mute-timing/new',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -80,8 +81,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/NewMuteTiming'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/routes/mute-timing/edit',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -95,8 +96,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/routes/policy/:name/edit',
       roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
       component: importAlertingComponent(
@@ -105,8 +106,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/silences',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
@@ -119,8 +120,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "SilencesTablePage" */ 'app/features/alerting/unified/components/silences/SilencesTable'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/silence/new',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceCreate,
@@ -131,8 +132,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NewSilencePage" */ 'app/features/alerting/unified/NewSilencePage')
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/silence/:id/edit',
       component: importAlertingComponent(
         () =>
@@ -140,8 +141,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "ExistingSilenceEditorPage" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/silence/:id/view',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
@@ -154,8 +155,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "SilenceViewPage" */ 'app/features/alerting/unified/components/silences/SilenceViewPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/notifications',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
@@ -169,8 +170,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "ContactPoints" */ 'app/features/alerting/unified/components/contact-points/ContactPoints'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/notifications/receivers/new',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
@@ -183,8 +184,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "NewReceiverView" */ 'app/features/alerting/unified/components/receivers/NewReceiverView'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/notifications/receivers/:name/edit',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -202,8 +203,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "EditContactPoint" */ 'app/features/alerting/unified/components/contact-points/EditContactPoint'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       // Standalone Templates page for V2 navigation (index route)
       path: '/alerting/notifications/templates',
       roles: evaluateAccess([
@@ -217,8 +218,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "TemplatesPage" */ 'app/features/alerting/unified/components/contact-points/TemplatesPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       // Templates sub-routes (new, edit, duplicate)
       path: '/alerting/notifications/templates/*',
       roles: evaluateAccess([
@@ -229,8 +230,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "Templates" */ 'app/features/alerting/unified/Templates')
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/notifications/global-config',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -242,8 +243,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "GlobalConfig" */ 'app/features/alerting/unified/components/contact-points/components/GlobalConfig'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/groups/',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
@@ -252,7 +253,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
       ),
-    },
+    }),
     {
       path: '/alerting/history/',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
@@ -320,22 +321,22 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
         : () => <Navigate replace to="/alerting/list" />,
     },
-    {
+    proxied({
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/rule-editor/RuleEditor')
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/:id/edit',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/rule-editor/RuleEditor')
       ),
-    },
+    }),
     {
       path: '/alerting/:id/modify-export',
       pageClass: 'page-alerting',
@@ -358,15 +359,15 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
       ),
     },
-    {
+    proxied({
       path: '/alerting/:sourceName/:id/view',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingRule"*/ 'app/features/alerting/unified/RuleViewer')
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/:sourceName/:name/find',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
@@ -374,8 +375,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/view',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
@@ -385,8 +386,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "AlertingGroupDetails" */ 'app/features/alerting/unified/group-details/GroupDetailsPage'
           )
       ),
-    },
-    {
+    }),
+    proxied({
       path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite]),
@@ -396,7 +397,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
             /* webpackChunkName: "AlertingGroupEdit" */ 'app/features/alerting/unified/group-details/GroupEditPage'
           )
       ),
-    },
+    }),
     {
       // This route is for backward compatibility
       // Previously we had a single admin page containing only the alertmanager settings
