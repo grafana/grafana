@@ -264,6 +264,81 @@ func TestTokenFromOtherListPath(t *testing.T) {
 	require.False(t, tokenFromOtherListPath(scanToken, false))
 }
 
+func TestDecodeListSearchRows(t *testing.T) {
+	const resourceVersion = int64(1958241239561142273)
+	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}
+	want := []listSearchRow{{key: key, resourceVersion: resourceVersion, sortFields: []string{"title", "a"}}}
+
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "unspecified resource table",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Rows: []*resourcepb.ResourceTableRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}},
+			}},
+		},
+		{
+			name: "explicit resource table",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}}},
+			},
+		},
+		{
+			name: "field values",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			rows, err := decodeListSearchRows(test.response)
+			require.NoError(t, err)
+			require.Equal(t, want, rows)
+		})
+	}
+}
+
+func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{name: "nil response"},
+		{
+			name:     "unsupported format",
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)},
+		},
+		{
+			name: "table row without key",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Rows: []*resourcepb.ResourceTableRow{{}},
+			}},
+		},
+		{
+			name: "field-value row without key",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{{}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := decodeListSearchRows(test.response)
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestListWithSelectors(t *testing.T) {
 	searchServerRv := int64(100)
 
@@ -286,6 +361,8 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
+		require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
 	t.Run("returns an embedded search error", func(t *testing.T) {
@@ -374,18 +451,18 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
 
-	t.Run("a single page result will have index rv and no next page token", func(t *testing.T) {
+	t.Run("a single field-value result preserves exact index rv and has no next page token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		const exactResourceVersion = int64(1958241239561142273)
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: exactResourceVersion,
+						SortFields:      []string{"s1"},
 					},
 				},
 			},
@@ -403,6 +480,7 @@ func TestListWithSelectors(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Items, 1)
+		require.Equal(t, exactResourceVersion, resp.Items[0].ResourceVersion)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 		require.Empty(t, resp.NextPageToken)
 	})
@@ -452,23 +530,22 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
 
-	t.Run("first page of paginated result will have next page token set and correct number of results", func(t *testing.T) {
+	t.Run("first field-value page uses sort fields for the next page token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s2"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: 1,
+						SortFields:      []string{"s1"},
+					},
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s2"},
 					},
 				},
 			},
