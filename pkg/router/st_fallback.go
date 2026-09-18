@@ -158,12 +158,13 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 			http.NotFound(w, req)
 			return
 		}
-		st.forward(host, w, req)
+		st.forward(host, parts[1], w, req)
 		return
 	}
 	// The discovery host supplies metadata, never tenant resources or mutations.
 	if st.discoveryHost != nil && (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
-		st.forward(st.discoveryHost, w, req)
+		// Namespaced requests require a nonempty group, so discovery cannot collide with them.
+		st.forward(st.discoveryHost, "", w, req)
 		return
 	}
 	http.NotFound(w, req)
@@ -182,7 +183,7 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	return ok
 }
 
-func (st *singleTenantFallback) forward(host *url.URL, w http.ResponseWriter, req *http.Request) {
+func (st *singleTenantFallback) forward(host *url.URL, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(host)
@@ -190,14 +191,14 @@ func (st *singleTenantFallback) forward(host *url.URL, w http.ResponseWriter, re
 		Transport:      st.transport,
 		ModifyResponse: rejectBackendRedirects,
 	}
-	serveThroughBreaker(st.breakerForHost(host), proxy, w, req)
+	serveThroughBreaker(st.breakerForDestination(host, group), proxy, w, req)
 }
 
-// ST groups span multiple hosts, so their handler owns circuit breaking by destination.
+// ST groups span multiple hosts, so their handler isolates breakers by destination and group.
 func (*singleTenantFallback) managesCircuitBreaking() {}
 
-func (st *singleTenantFallback) breakerForHost(host *url.URL) *gobreaker.CircuitBreaker[struct{}] {
-	key := host.Scheme + "://" + host.Host
+func (st *singleTenantFallback) breakerForDestination(host *url.URL, group string) *gobreaker.CircuitBreaker[struct{}] {
+	key := host.Scheme + "://" + host.Host + "#" + group
 	st.breakerMu.Lock()
 	defer st.breakerMu.Unlock()
 	if breaker, ok := st.breakers.Get(key); ok {
