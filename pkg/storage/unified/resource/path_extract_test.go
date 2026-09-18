@@ -109,6 +109,26 @@ func TestCoerceToFieldShape_String(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestExtractPath_ArrayProjectionWithMixedNestedShapes(t *testing.T) {
+	obj := map[string]any{
+		"spec": map[string]any{
+			"targets": []any{
+				map[string]any{"properties": map[string]any{"datasource": map[string]any{"type": "prometheus"}}},
+				map[string]any{"properties": map[string]any{"datasource": "legacy-uid"}},
+				map[string]any{"properties": map[string]any{"datasource": nil}},
+				map[string]any{"properties": map[string]any{}},
+				map[string]any{"properties": map[string]any{"datasource": map[string]any{"type": "loki"}}},
+			},
+		},
+	}
+	value, err := extractPath(obj, "spec.targets[*].properties.datasource.type")
+	require.NoError(t, err)
+	require.Equal(t, []any{"prometheus", nil, nil, nil, "loki"}, value)
+	coerced, ok := coerceToFieldShape(value, SearchFieldTypeString, true)
+	require.True(t, ok)
+	require.Equal(t, []any{"prometheus", "loki"}, coerced)
+}
+
 func TestCoerceToFieldShape_Boolean(t *testing.T) {
 	v, ok := coerceToFieldShape(true, SearchFieldTypeBoolean, false)
 	require.True(t, ok)
