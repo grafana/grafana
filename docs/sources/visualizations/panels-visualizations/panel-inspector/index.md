@@ -33,7 +33,7 @@ The panel inspector consists of the following options:
 
 5. **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
 
-6. **Error tab -** Shows the error. Only visible when query returns error.
+6. **Error and notices tab -** Shows the error. Only visible when query returns error.
 
 ## Download raw query results
 
@@ -74,3 +74,12 @@ Inspect query request and response data when you want to troubleshoot a query th
 
 1. Make adjustments, as necessary and re-run the query.
 1. To download the query request and response data, click the **Copy to clipboard** icon and paste the results into another application.
+
+## Inspect errors and notices
+
+The icon is dynamic, reflecting the highest severity notice on a panel.
+When you hover your cursor over the icon, the tooltip shows all the panel errors, sorted by severity:
+
+![Errors and notices tooltip displayed on a panel](./screenshot-errors-notices-tooltip-v13.3.png)
+
+Click the icon to open the drawer where you can see the full text of errors and notices.
