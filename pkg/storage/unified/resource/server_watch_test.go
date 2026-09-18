@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -265,6 +266,47 @@ func TestWatchStopWaitsForCapture(t *testing.T) {
 		close(release)
 		require.NoError(t, <-stopped)
 	})
+}
+
+type recoverableWatchBackend struct {
+	UnimplementedStorageBackend
+	attempts atomic.Int32
+	err      error
+	events   chan *WrittenEvent
+}
+
+func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context) (watchSeed, <-chan *WrittenEvent, error) {
+	if b.attempts.Add(1) == 1 {
+		return watchSeed{}, nil, b.err
+	}
+	context.AfterFunc(ctx, func() { close(b.events) })
+	return watchSeed{initialCacheFloor: 100, highestRV: 100}, b.events, nil
+}
+
+func TestWatchStartupFailureRecoversOnNextWatch(t *testing.T) {
+	startupErr := errors.New("database unavailable")
+	backend := &recoverableWatchBackend{err: startupErr, events: make(chan *WrittenEvent)}
+	srv := initWatchServer(t, backend)
+	require.ErrorIs(t, srv.watchStartup.broadcaster.waitReady(t.Context()), startupErr)
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	defer cancel()
+	stream := newMockWatchServer(ctx)
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(bookmarkWatchRequest(), stream) }()
+	requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
+	require.Equal(t, int32(2), backend.attempts.Load())
+
+	backend.events <- bookmarkWrittenEvent(101)
+	select {
+	case event := <-stream.events:
+		require.Equal(t, resourcepb.WatchEvent_ADDED, event.Type)
+		require.Equal(t, int64(101), event.Resource.Version)
+	case <-time.After(time.Second):
+		t.Fatal("watch did not recover after reinitialization")
+	}
+	cancel()
+	require.NoError(t, <-done)
 }
 
 func TestWatchStartupFailureAndCancellation(t *testing.T) {

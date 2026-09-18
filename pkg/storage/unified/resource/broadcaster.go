@@ -72,6 +72,8 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 	b := &broadcaster[T]{
 		ctx:             ctx,
 		ready:           make(chan struct{}),
+		initialize:      initialize,
+		initializeNext:  make(chan struct{}, 1),
 		cache:           newRingBuffer[T](defaultCacheSize),
 		subscribe:       make(chan *subscription[T], internalChanSize),
 		unsubscribe:     make(chan (<-chan T), internalChanSize),
@@ -82,8 +84,15 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
+	if initialize == nil {
+		b.initialized = true
+		close(b.ready)
+	} else {
+		b.initializing = true
+		b.initAttempt = &initializationAttempt{done: make(chan struct{})}
+	}
 
-	go b.stream(input, initialize)
+	go b.stream(input)
 
 	return b
 }
@@ -111,13 +120,24 @@ type cacheSeed[T any] struct {
 	identity          func(T) (GroupResource, int64)
 }
 
+type initializationAttempt struct {
+	done chan struct{}
+	err  error
+}
+
 type broadcaster[T any] struct {
 	// lifecycle management
 
-	ctx        context.Context
-	ready      chan struct{}
-	initErr    error // published by closing ready
-	terminated chan struct{}
+	ctx            context.Context
+	ready          chan struct{}
+	terminated     chan struct{}
+	initialize     cacheInitializer[T]
+	initializeNext chan struct{}
+	initMu         sync.Mutex
+	initialized    bool
+	initializing   bool
+	initAttempt    *initializationAttempt
+	fatalInitErr   error
 
 	// subscription management
 
@@ -218,7 +238,7 @@ func (b *broadcaster[T]) submit(ctx context.Context, sub *subscription[T]) error
 // subscribeWatch acknowledges replay capture and live registration in the same
 // operation as floor validation. Generic subscribers retain their existing API.
 func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource string, resume *watchResume) (<-chan T, error) {
-	if err := b.waitReady(ctx); err != nil {
+	if err := b.ensureReady(ctx); err != nil {
 		return nil, err
 	}
 	if resume != nil && b.eventIdentity == nil {
@@ -249,15 +269,98 @@ func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource stri
 	}
 }
 
+// waitReady waits for the current initialization attempt. It is used by
+// startup callers that must observe the result of the attempt already in
+// progress; unlike ensureReady, it never starts another attempt.
 func (b *broadcaster[T]) waitReady(ctx context.Context) error {
+	b.initMu.Lock()
+	if b.initialized {
+		b.initMu.Unlock()
+		return nil
+	}
+	if b.fatalInitErr != nil {
+		err := b.fatalInitErr
+		b.initMu.Unlock()
+		return err
+	}
+	attempt := b.initAttempt
+	b.initMu.Unlock()
+	if attempt == nil {
+		return fmt.Errorf("watch cache initialization has not started")
+	}
+	return b.waitForInitialization(ctx, attempt)
+}
+
+// ensureReady starts a new initialization attempt after a retryable failure.
+// Concurrent callers share the same attempt, and canceling one caller does not
+// cancel initialization for the others.
+func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
+	b.initMu.Lock()
+	if b.initialized {
+		b.initMu.Unlock()
+		return nil
+	}
+	if b.fatalInitErr != nil {
+		err := b.fatalInitErr
+		b.initMu.Unlock()
+		return err
+	}
+	if err := b.ctx.Err(); err != nil {
+		b.initMu.Unlock()
+		return err
+	}
+
+	attempt := b.initAttempt
+	start := !b.initializing
+	if start {
+		attempt = &initializationAttempt{done: make(chan struct{})}
+		b.initAttempt = attempt
+		b.initializing = true
+	}
+	b.initMu.Unlock()
+
+	if start {
+		select {
+		case b.initializeNext <- struct{}{}:
+		case <-b.terminated:
+			return io.EOF
+		}
+	}
+	return b.waitForInitialization(ctx, attempt)
+}
+
+func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-b.ctx.Done():
-		return b.ctx.Err()
-	case <-b.ready:
-		return b.initErr
+	case <-b.terminated:
+		b.initMu.Lock()
+		err := attempt.err
+		b.initMu.Unlock()
+		if err != nil {
+			return err
+		}
+		return io.EOF
+	case <-attempt.done:
+		b.initMu.Lock()
+		err := attempt.err
+		b.initMu.Unlock()
+		return err
 	}
+}
+
+func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, err error, fatal bool) {
+	b.initMu.Lock()
+	attempt.err = err
+	b.initializing = false
+	if err == nil {
+		b.initialized = true
+		close(b.ready)
+	} else if fatal {
+		b.fatalInitErr = err
+	}
+	close(attempt.done)
+	b.initMu.Unlock()
 }
 
 func (b *broadcaster[T]) installSeed(seed cacheSeed[T]) error {
@@ -312,7 +415,7 @@ func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
 // watchers and closing their channels. The responsibility of closing `input`
 // (as with any other channel) will always be of the sending side. Hence, the
 // watch implementation should do it.
-func (b *broadcaster[T]) stream(input <-chan T, initialize cacheInitializer[T]) {
+func (b *broadcaster[T]) stream(input <-chan T) {
 	// make sure we unconditionally cleanup upon return
 	defer func() {
 		// prevent new subscriptions and make sure to discard unsubscriptions
@@ -332,21 +435,34 @@ func (b *broadcaster[T]) stream(input <-chan T, initialize cacheInitializer[T]) 
 		}
 	}()
 
-	if initialize != nil {
+	if b.initialize != nil {
 		ctx, cancel := context.WithCancel(b.ctx)
 		defer cancel()
-		seed, err := initialize(ctx)
-		if err == nil {
-			err = b.installSeed(seed)
+		attempt := b.initAttempt
+		for {
+			seed, err := b.initialize(ctx)
+			fatal := false
+			if err == nil {
+				err = b.installSeed(seed)
+				fatal = err != nil
+			}
+			b.finishInitialization(attempt, err, fatal)
+			if err == nil {
+				break
+			}
+			if fatal {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-b.initializeNext:
+				b.initMu.Lock()
+				attempt = b.initAttempt
+				b.initMu.Unlock()
+			}
 		}
-		b.initErr = err
-	}
-	if b.initErr == nil {
-		b.initErr = b.ctx.Err()
-	}
-	close(b.ready)
-	if b.initErr != nil {
-		return
 	}
 
 	drainTicker := time.NewTicker(drainInterval)

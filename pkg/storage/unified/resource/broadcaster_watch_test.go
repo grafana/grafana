@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 
@@ -204,69 +205,109 @@ func TestWatchSeedReadinessAndGenericSubscribers(t *testing.T) {
 	})
 }
 
-func TestBroadcasterInitializationFailureClosesQueuedSubscribers(t *testing.T) {
-	for _, failure := range []string{"load", "install", "cancel"} {
-		t.Run(failure, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				ctx, cancel := context.WithCancel(t.Context())
-				defer cancel()
-				release := make(chan struct{})
-				loadErr := errors.New("seed load failed")
-				captureStopped := make(chan struct{})
-				b := newBroadcasterWithSizes(ctx, make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
-					func(ctx context.Context) (cacheSeed[int], error) {
-						context.AfterFunc(ctx, func() { close(captureStopped) })
-						select {
-						case <-ctx.Done():
-							return cacheSeed[int]{}, ctx.Err()
-						case <-release:
-							if failure == "load" {
-								return cacheSeed[int]{}, loadErr
-							}
-							return cacheSeed[int]{items: make([]int, defaultCacheSize+1)}, nil
-						}
-					})
-				streams := make([]<-chan int, internalChanSize)
-				for i := range streams {
-					var err error
-					streams[i], err = b.Subscribe(t.Context(), "internal", "r")
-					require.NoError(t, err)
-				}
-				blocked := make(chan error, 1)
-				go func() {
-					_, err := b.Subscribe(t.Context(), "blocked", "r")
-					blocked <- err
-				}()
-				synctest.Wait()
-				require.Empty(t, blocked)
-				if failure == "cancel" {
-					cancel()
-				} else {
-					close(release)
-				}
-				err := b.waitReady(t.Context())
-				switch failure {
-				case "load":
-					require.ErrorIs(t, err, loadErr)
-				case "install":
-					require.ErrorContains(t, err, "cache capacity")
-				case "cancel":
-					require.ErrorIs(t, err, context.Canceled)
-				}
-				<-captureStopped
-				require.ErrorIs(t, <-blocked, io.EOF)
-				for _, stream := range streams {
-					_, ok := <-stream
-					require.False(t, ok)
-				}
-				for range 10 {
-					stream, err := b.Subscribe(t.Context(), "after failure", "r")
-					require.ErrorIs(t, err, io.EOF)
-					require.Nil(t, stream)
+func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		input := make(chan int)
+		firstRelease := make(chan struct{})
+		secondRelease := make(chan struct{})
+		loadErr := errors.New("seed load failed")
+		var attempts atomic.Int32
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			func(ctx context.Context) (cacheSeed[int], error) {
+				switch attempts.Add(1) {
+				case 1:
+					select {
+					case <-ctx.Done():
+						return cacheSeed[int]{}, ctx.Err()
+					case <-firstRelease:
+						return cacheSeed[int]{}, loadErr
+					}
+				default:
+					select {
+					case <-ctx.Done():
+						return cacheSeed[int]{}, ctx.Err()
+					case <-secondRelease:
+						return cacheSeed[int]{items: []int{50}}, nil
+					}
 				}
 			})
-		})
-	}
+
+		generic, err := b.Subscribe(t.Context(), "internal", "r")
+		require.NoError(t, err)
+		first := make(chan error, 1)
+		go func() {
+			_, err := b.subscribeWatch(t.Context(), "first", "r", nil)
+			first <- err
+		}()
+		synctest.Wait()
+		close(firstRelease)
+		require.ErrorIs(t, <-first, loadErr)
+		require.Equal(t, int32(1), attempts.Load())
+		select {
+		case _, ok := <-generic:
+			require.True(t, ok, "retryable failure must not close generic subscribers")
+		default:
+		}
+
+		type result struct {
+			stream <-chan int
+			err    error
+		}
+		const watcherCount = 10
+		second := make(chan result, watcherCount)
+		for range watcherCount {
+			go func() {
+				stream, err := b.subscribeWatch(t.Context(), "second", "r", nil)
+				second <- result{stream: stream, err: err}
+			}()
+		}
+		synctest.Wait()
+		require.Equal(t, int32(2), attempts.Load(), "concurrent watches must share one retry")
+		close(secondRelease)
+		streams := make([]<-chan int, 0, watcherCount)
+		for range watcherCount {
+			res := <-second
+			require.NoError(t, res.err)
+			require.Equal(t, 50, <-res.stream)
+			streams = append(streams, res.stream)
+		}
+		require.Equal(t, 50, <-generic)
+
+		input <- 51
+		require.Equal(t, 51, <-generic)
+		for _, stream := range streams {
+			require.Equal(t, 51, <-stream)
+			b.Unsubscribe(stream)
+		}
+		b.Unsubscribe(generic)
+	})
+}
+
+func TestBroadcasterFatalInitializationFailureClosesQueuedSubscribers(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		b := newBroadcasterWithSizes(t.Context(), make(chan int), watchChanSize, defaultOverflowCap, newBroadcasterMetrics(prometheus.NewRegistry()), nil,
+			func(ctx context.Context) (cacheSeed[int], error) {
+				select {
+				case <-ctx.Done():
+					return cacheSeed[int]{}, ctx.Err()
+				case <-release:
+					return cacheSeed[int]{items: make([]int, defaultCacheSize+1)}, nil
+				}
+			})
+		stream, err := b.Subscribe(t.Context(), "internal", "r")
+		require.NoError(t, err)
+		close(release)
+		require.ErrorContains(t, b.waitReady(t.Context()), "cache capacity")
+		<-b.terminated
+		_, ok := <-stream
+		require.False(t, ok)
+		stream, err = b.Subscribe(t.Context(), "after failure", "r")
+		require.ErrorIs(t, err, io.EOF)
+		require.Nil(t, stream)
+	})
 }
 
 func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
