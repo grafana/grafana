@@ -243,14 +243,11 @@ function legacyCreateSpanLinkFactory(
               })) ||
             link;
 
-          if (Array.isArray(query)) {
-            link.interpolatedParams = {
-              ...link.interpolatedParams,
-              alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
-                ...query,
-                datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
-              })),
-            };
+          if (Array.isArray(query) && link.interpolatedParams) {
+            link.interpolatedParams.alternativeQueries = interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
+              ...query,
+              datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
+            }));
           }
 
           links.push({

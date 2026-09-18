@@ -628,10 +628,11 @@ describe('LogsLinkButton', () => {
       datasource: { uid: 'logs-ds-uid', type: 'loki' },
       expr: '{job="api"} |= "trace1"',
     };
+    const interpolatedParams = { query: interpolatedQuery };
 
     render(
       <LogsLinkButton
-        linkModel={createProbingLinkModel(interpolatedQuery, { target: '_self', onClick })}
+        linkModel={createLinkModel({ interpolatedParams, target: '_self', onClick })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -639,6 +640,11 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
     expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
     expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
+    expect(interpolatedParams.query).toEqual({
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    });
 
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalledTimes(1);

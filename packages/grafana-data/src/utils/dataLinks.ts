@@ -78,12 +78,15 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             event.preventDefault();
           }
 
+          // Read query/datasource from interpolatedParams at click time so consumers
+          // can rewrite that object in place (e.g. trace-to-logs after a matching probe).
+          const query = interpolatedParams?.query ?? interpolatedQuery;
           onClickFn({
-            datasourceUid: internalLink.datasourceUid,
-            queries: [interpolatedQuery],
+            datasourceUid: query?.datasource?.uid ?? internalLink.datasourceUid,
+            queries: query ? [query] : [],
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
-            range,
+            range: interpolatedParams?.timeRange ?? range,
           });
         }
       : undefined,

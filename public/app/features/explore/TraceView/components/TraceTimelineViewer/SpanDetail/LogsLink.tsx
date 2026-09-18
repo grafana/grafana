@@ -432,19 +432,16 @@ function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilld
     ? locationUtil.assureBaseUrl(drilldownPath)
     : rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
 
+  // Mutate the original interpolatedParams object so Explore split onClick
+  // (closed over that reference) uses the matched query and datasource.
+  if (linkModel.interpolatedParams) {
+    linkModel.interpolatedParams.query = matchedQueries[0];
+  }
+
   return {
     ...linkModel,
     href,
     target: '_blank',
-    interpolatedParams: {
-      ...linkModel.interpolatedParams,
-      query: matchedQueries[0],
-    },
-    onClick: linkModel.onClick
-      ? (event) => {
-          linkModel.onClick?.(event);
-        }
-      : undefined,
   };
 }
 
