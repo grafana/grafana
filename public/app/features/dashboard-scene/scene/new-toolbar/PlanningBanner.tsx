@@ -35,9 +35,6 @@ export function PlanningBanner({ planning }: { planning: DashboardPlanningState 
             {'{{count}}'} panels
           </Trans>
         </span>
-        <span className={styles.stake}>
-          <Trans i18nKey="dashboard.planning-banner.nothing-saved">Nothing saved yet</Trans>
-        </span>
       </div>
       <ToolbarButtonRow alignment="right">
         <Button
@@ -101,14 +98,6 @@ function getStyles(theme: GrafanaTheme2) {
     panelCount: css({
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
-    }),
-    stake: css({
-      color: theme.colors.text.secondary,
-      whiteSpace: 'nowrap',
-      '&::before': {
-        content: '"\\00b7"',
-        margin: theme.spacing(0, 1),
-      },
     }),
   };
 }

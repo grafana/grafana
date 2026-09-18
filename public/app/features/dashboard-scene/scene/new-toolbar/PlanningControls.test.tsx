@@ -12,13 +12,12 @@ import { PlanningControls } from './PlanningControls';
 const { editDashboard } = selectors.components.NavToolbar;
 
 describe('PlanningControls', () => {
-  it('shows the plan, the stake and the two actions', () => {
+  it('shows the plan title, panel count and the two actions', () => {
     setup();
 
     expect(screen.getByText('Plan')).toBeInTheDocument();
     expect(screen.getByText('Prometheus overview')).toBeInTheDocument();
     expect(screen.getByText('3 panels')).toBeInTheDocument();
-    expect(screen.getByText('Nothing saved yet')).toBeInTheDocument();
     expect(screen.getByTestId(editDashboard.planningDismissButton)).toBeInTheDocument();
     expect(screen.getByTestId(editDashboard.planningBuildButton)).toBeInTheDocument();
   });
