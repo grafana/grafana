@@ -161,6 +161,7 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 	return result, nil
 }
 
+// TEST-ONLY: declared in api.RuleStore and implemented by the fake, but no production caller.
 // IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace. Returns all rules that belong to the namespaces
 func (st RuleStore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var keys []ngmodels.AlertRuleKeyWithVersion
@@ -397,6 +398,8 @@ func (st RuleStore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRule
 	return result, err
 }
 
+// TEST-ONLY: declared in api.RuleStore and provisioning.RuleStore and implemented by the fake, but
+// no production caller.
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
 func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -2002,7 +2005,7 @@ func (st RuleStore) RenameReceiverInNotificationSettings(ctx context.Context, or
 		return nil, nil, nil
 	}
 
-	provenances, err := st.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	provenances, err := st.Provenance.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2080,7 +2083,7 @@ func (st RuleStore) RenameTimeIntervalInNotificationSettings(
 		return nil, nil, nil
 	}
 
-	provenances, err := st.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	provenances, err := st.Provenance.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return nil, nil, err
 	}
