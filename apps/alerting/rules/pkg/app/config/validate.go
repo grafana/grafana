@@ -15,7 +15,7 @@ import (
 // externalRulerSync.pollInterval to a reasonable range.
 const (
 	minRulerSyncPollInterval = time.Minute
-	maxRulerSyncPollInterval = time.Hour
+	maxRulerSyncPollInterval = 24 * time.Hour
 )
 
 // conditionTypeExternalRulerSynced and promotionCommittedReason mirror the

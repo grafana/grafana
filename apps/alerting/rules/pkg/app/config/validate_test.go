@@ -137,7 +137,7 @@ func TestValidateConfigWrite(t *testing.T) {
 	t.Run("rejects a pollInterval above the maximum", func(t *testing.T) {
 		fn := ValidateConfigWrite(RuntimeConfig{})
 		err := fn(ctx, validation.Request[*v0alpha1.Config]{
-			Object: configWithPollInterval("2h"),
+			Object: configWithPollInterval("2d"),
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "externalRulerSync.pollInterval")
@@ -154,7 +154,7 @@ func TestValidateConfigWrite(t *testing.T) {
 	t.Run("allows the maximum pollInterval", func(t *testing.T) {
 		fn := ValidateConfigWrite(RuntimeConfig{})
 		err := fn(ctx, validation.Request[*v0alpha1.Config]{
-			Object: configWithPollInterval("1h"),
+			Object: configWithPollInterval("24h"),
 		})
 		require.NoError(t, err)
 	})

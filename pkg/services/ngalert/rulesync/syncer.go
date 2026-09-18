@@ -91,6 +91,15 @@ type orgStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
+// orgSyncState is one org's in-memory sync cache: dedupKey is the last
+// applied dedup key (see SyncOrg), lastAttemptAt/pollInterval are
+// dueForSync's due-check bookkeeping.
+type orgSyncState struct {
+	dedupKey      string
+	lastAttemptAt time.Time
+	pollInterval  time.Duration
+}
+
 // ExternalRulerSyncer mirrors alert rules from a configured external Mimir
 // ruler datasource into Grafana as converted-Prometheus rules. It is the rule
 // analogue of ExternalAMSyncer. The loop driver (Run) is intentionally thin so
@@ -108,19 +117,14 @@ type ExternalRulerSyncer struct {
 	// folderPermissions restricts the sync folder to admin-only modification.
 	folderPermissions accesscontrol.FolderPermissionsService
 
-	// lastSyncKey caches the last-applied dedup key per org (hash combined
-	// with uid): the in-memory fast path and fallback for persistedHash. See
-	// SyncOrg's dedupKey.
-	lastSyncKeyMu sync.RWMutex
-	lastSyncKey   map[int64]string
-
-	// lastAttemptMu guards dueForSync's per-org due-check cache: lastAttemptAt
-	// is when an org last actually ran, lastPollInterval its resolved cadence.
-	// No entry yet means always due, so a new org isn't stuck waiting out
+	// stateMu guards state, the syncer's only per-org in-memory cache: the
+	// last-applied dedup key (fast path and fallback for persistedHash, see
+	// SyncOrg's dedupKey) plus dueForSync's due-check bookkeeping (last
+	// attempt time and resolved poll interval). No entry yet means an org is
+	// always due, so a new org isn't stuck waiting out
 	// defaultRulerSyncPollInterval before its first sync.
-	lastAttemptMu    sync.RWMutex
-	lastAttemptAt    map[int64]time.Time
-	lastPollInterval map[int64]time.Duration
+	stateMu sync.RWMutex
+	state   map[int64]*orgSyncState
 
 	// cfgStore is required; NewExternalRulerSyncer's callers always pass a
 	// real one. See cfgStore for why its client is built lazily rather than
@@ -158,9 +162,7 @@ func NewExternalRulerSyncer(
 		namespaceStore:    namespaceStore,
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
-		lastSyncKey:       make(map[int64]string),
-		lastAttemptAt:     make(map[int64]time.Time),
-		lastPollInterval:  make(map[int64]time.Duration),
+		state:             make(map[int64]*orgSyncState),
 		cfgStore:          newCfgStore(clientGenerator, namespaceMapper, logger),
 	}
 }
@@ -174,9 +176,9 @@ type resolvedRulerSync struct {
 	origin  externalSyncOrigin // where uid came from
 	// persistedHash is the last-applied dedup key from Config status (see
 	// SyncOrg's dedupKey), read back on the API path only — the ini path has
-	// no Config resource and relies on lastSyncKey alone. SyncOrg checks this
-	// before lastSyncKey: it survives restarts and multiple replicas, where
-	// lastSyncKey is the fast path and fallback.
+	// no Config resource and relies on state alone. SyncOrg checks this
+	// before state: it survives restarts and multiple replicas, where state
+	// is the fast path and fallback.
 	persistedHash string
 	// pollInterval is this org's effective sync cadence: spec.pollInterval when
 	// set on the API path, defaultRulerSyncPollInterval otherwise (including
@@ -378,27 +380,39 @@ func (s *ExternalRulerSyncer) rootFolderMissing(ctx context.Context, orgID int64
 // within [0, baselineCheckInterval) of it. Revisit if per-org precision ever
 // matters more than avoiding a timer per org.
 func (s *ExternalRulerSyncer) dueForSync(orgID int64) bool {
-	s.lastAttemptMu.RLock()
-	defer s.lastAttemptMu.RUnlock()
-	last, ok := s.lastAttemptAt[orgID]
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+	st, ok := s.state[orgID]
 	if !ok {
 		return true
 	}
-	interval := s.lastPollInterval[orgID]
+	interval := st.pollInterval
 	if interval <= 0 {
 		interval = defaultRulerSyncPollInterval
 	}
-	return time.Since(last) >= interval
+	return time.Since(st.lastAttemptAt) >= interval
 }
 
 // recordAttempt caches orgID's last-attempt time and interval for dueForSync.
 // Called after a successful resolve only, so a transient apiserver hiccup is
 // retried on the next tick rather than throttled by a stale interval.
 func (s *ExternalRulerSyncer) recordAttempt(orgID int64, interval time.Duration) {
-	s.lastAttemptMu.Lock()
-	s.lastAttemptAt[orgID] = time.Now()
-	s.lastPollInterval[orgID] = interval
-	s.lastAttemptMu.Unlock()
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	st := s.orgState(orgID)
+	st.lastAttemptAt = time.Now()
+	st.pollInterval = interval
+}
+
+// orgState returns orgID's state entry, creating it if absent. Callers must
+// hold stateMu (for writing; orgState itself doesn't lock).
+func (s *ExternalRulerSyncer) orgState(orgID int64) *orgSyncState {
+	st, ok := s.state[orgID]
+	if !ok {
+		st = &orgSyncState{}
+		s.state[orgID] = st
+	}
+	return st
 }
 
 // SyncOrg runs one sync tick for a single org. It never returns an error;
@@ -523,10 +537,10 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 			s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, dedupKey)
 			return
 		}
-		s.lastSyncKeyMu.RLock()
-		prev, has := s.lastSyncKey[orgID]
-		s.lastSyncKeyMu.RUnlock()
-		if has && prev == dedupKey {
+		s.stateMu.RLock()
+		st, has := s.state[orgID]
+		s.stateMu.RUnlock()
+		if has && st.dedupKey == dedupKey {
 			s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
 			s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, dedupKey)
 			return
@@ -538,9 +552,9 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	s.lastSyncKeyMu.Lock()
-	s.lastSyncKey[orgID] = dedupKey
-	s.lastSyncKeyMu.Unlock()
+	s.stateMu.Lock()
+	s.orgState(orgID).dedupKey = dedupKey
+	s.stateMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
 	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, dedupKey)

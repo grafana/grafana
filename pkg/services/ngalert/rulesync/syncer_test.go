@@ -194,9 +194,7 @@ func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fa
 		ruleService:       rs,
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
-		lastSyncKey:       make(map[int64]string),
-		lastAttemptAt:     make(map[int64]time.Time),
-		lastPollInterval:  make(map[int64]time.Duration),
+		state:             make(map[int64]*orgSyncState),
 		cfgStore:          newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 	}
 }
@@ -440,15 +438,15 @@ func TestDueForSync(t *testing.T) {
 	s.recordAttempt(1, time.Hour)
 	assert.False(t, s.dueForSync(1), "an org attempted within its own interval is not due yet")
 
-	s.lastAttemptAt[1] = time.Now().Add(-2 * time.Hour)
+	s.state[1].lastAttemptAt = time.Now().Add(-2 * time.Hour)
 	assert.True(t, s.dueForSync(1), "an org past its own interval is due again")
 
 	// An invalid/zero cached interval falls back to defaultRulerSyncPollInterval
 	// rather than treating the org as permanently due or never due.
 	s.recordAttempt(2, 0)
-	s.lastAttemptAt[2] = time.Now().Add(-2 * time.Minute)
+	s.state[2].lastAttemptAt = time.Now().Add(-2 * time.Minute)
 	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (5m), not yet elapsed")
-	s.lastAttemptAt[2] = time.Now().Add(-6 * time.Minute)
+	s.state[2].lastAttemptAt = time.Now().Add(-6 * time.Minute)
 	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (5m), which has now elapsed")
 }
 
@@ -757,7 +755,7 @@ func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
 	fetch2 := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
 	s2 := newTestSyncerWithConfigClient(t, cs, fetch2, rs2)
 	s2.namespaceStore = rootFolder
-	require.Empty(t, s2.lastSyncKey, "fresh syncer has no in-memory cache")
+	require.Empty(t, s2.state, "fresh syncer has no in-memory cache")
 
 	s2.SyncOrg(context.Background(), 1)
 
