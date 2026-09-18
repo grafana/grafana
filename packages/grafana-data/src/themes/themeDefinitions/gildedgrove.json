@@ -69,5 +69,14 @@
     "contrastThreshold": 3,
     "hoverFactor": 0.03,
     "tonalOffset": 0.15
+  },
+  "components": {
+    "table": {
+      "headerBackground": "#3A2E1B",
+      "border": "#38443F",
+      "rowStripedBackground": "#25302C",
+      "rowHoverBackground": "#3B3527",
+      "rowSelectedBackground": "#4A3216"
+    }
   }
 }
