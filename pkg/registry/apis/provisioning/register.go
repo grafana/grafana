@@ -1239,7 +1239,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.keysOnlyReList {
 				connKeys = informer.NewGRPCConnectionKeysLister(b.unified)
 			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, b.registry)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,

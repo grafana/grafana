@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -32,11 +33,13 @@ type ConnectionGetter interface {
 // otherwise it reads the informer's cache lister.
 //
 // A non-nil keys makes the NATS re-list keys-only (identity, no bodies); nil
-// keeps the full-object list. In-process that follows [provisioning]
-// keys_only_relist; the operator passes nil.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys KeysLister, resync time.Duration) (DeltaSource, ConnectionGetter) {
+// keeps the full-object list. Both callers follow [provisioning]
+// keys_only_relist, in process over storage and in the operator over HTTP.
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys KeysLister, resync time.Duration, reg prometheus.Registerer) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
-		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys)
+		resourceName := provisioningapis.ConnectionResourceInfo.GroupVersionResource().Resource
+		onProjection := newRelistProjectionRecorder(reg, resourceName)
+		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, onProjection)
 		// Same as the repository informer: the controller's only feed, with
 		// connection health checks driven by the re-list, so it must keep
 		// operating at the re-list cadence while NATS is unavailable rather
@@ -62,22 +65,28 @@ func NewHTTPConnectionKeysLister(client rest.Interface) KeysLister {
 
 // NewConnectionInformer builds an Informer for connections. When keys is
 // non-nil the periodic re-list is keys-only; otherwise it lists full objects.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys KeysLister) *usinformer.Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys KeysLister, onProjection func(keysOnly bool)) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, connectionList(c, namespace, keys))
+	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, connectionList(c, namespace, keys, onProjection))
 }
 
 // connectionList builds the informer's re-list. With a keys lister it asks
 // storage for identities only; without one, or against storage too old to honour
 // the projection, it lists full objects.
-func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys KeysLister) func(context.Context) ([]runtime.Object, int64, error) {
+func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys KeysLister, onProjection func(keysOnly bool)) func(context.Context) ([]runtime.Object, int64, error) {
+	observe := func(keysOnly bool) {
+		if onProjection != nil {
+			onProjection(keysOnly)
+		}
+	}
 	return func(ctx context.Context) ([]runtime.Object, int64, error) {
 		if keys != nil {
 			objs, listRV, err := listConnectionKeys(ctx, keys)
 			if err == nil {
+				observe(true)
 				return objs, listRV, nil
 			}
 			if !errors.Is(err, ErrKeysOnlyUnsupported) {
@@ -87,9 +96,13 @@ func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 			// failing the tick would stop reconciling altogether.
 			logging.FromContext(ctx).Warn("storage did not honour keys_only, re-listing full objects")
 		}
-		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		objs, listRV, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Connections(namespace).List(ctx, opts)
 		})
+		if err == nil {
+			observe(false)
+		}
+		return objs, listRV, err
 	}
 }
 

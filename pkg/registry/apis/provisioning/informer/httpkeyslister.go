@@ -28,6 +28,11 @@ type httpKeysLister struct {
 
 // NewHTTPKeysLister returns a KeysLister backed by POST
 // {group}/{version}/{resource}/list-keys on the apiserver the client points at.
+//
+// Authentication comes with the client: the operator derives it from the config
+// its clientset already uses, so the same exchanged access token is sent here.
+// The cluster-wide read needs that token to be an access policy scoped to every
+// namespace, which is what the operator's token exchange asks for.
 func NewHTTPKeysLister(client rest.Interface, gvr schema.GroupVersionResource) KeysLister {
 	return httpKeysLister{client: client, gvr: gvr}
 }
@@ -80,7 +85,11 @@ func (l httpKeysLister) ListKeys(ctx context.Context) (int64, iter.Seq2[Key, err
 	}
 
 	return listRV, func(yield func(Key, error) bool) {
-		for page := first; ; {
+		for page, err := range l.pages(ctx, first) {
+			if err != nil {
+				yield(Key{}, err)
+				return
+			}
 			for _, item := range page.Items {
 				if item.Name == "" {
 					yield(Key{}, ErrKeysOnlyUnsupported)
@@ -96,12 +105,24 @@ func (l httpKeysLister) ListKeys(ctx context.Context) (int64, iter.Seq2[Key, err
 					return
 				}
 			}
+		}
+	}
+}
+
+// pages yields successive list pages, starting from first, until the continue
+// token is empty.
+func (l httpKeysLister) pages(ctx context.Context, first *metav1.PartialObjectMetadataList) iter.Seq2[*metav1.PartialObjectMetadataList, error] {
+	return func(yield func(*metav1.PartialObjectMetadataList, error) bool) {
+		for page := first; ; {
+			if !yield(page, nil) {
+				return
+			}
 			if page.Continue == "" {
 				return
 			}
 			next, err := l.page(ctx, page.Continue)
 			if err != nil {
-				yield(Key{}, err)
+				yield(nil, err)
 				return
 			}
 			page = next
