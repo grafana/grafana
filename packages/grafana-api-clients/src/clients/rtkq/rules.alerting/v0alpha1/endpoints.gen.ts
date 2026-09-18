@@ -1778,6 +1778,14 @@ export type ConfigSpec = {
         org. The operator ini setting `unified_alerting.external_ruler_uid`
         overrides this when set; see status.externalRulerSync.origin. */
     datasourceUid?: string;
+    /** pollInterval sets how often this org's rules are re-synced from
+        datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The
+        worker checks orgs against a short internal baseline and only does
+        real work for an org once its own pollInterval has elapsed, so this
+        is a lower bound, not a guarantee — an org's actual sync can lag
+        slightly past its configured interval. Has no effect on the operator
+        ini path, which always uses the 5m default. */
+    pollInterval?: string;
   };
 };
 export type ConfigCondition = {
@@ -1816,6 +1824,12 @@ export type ConfigStatus = {
     /** datasourceUid is the UID actually used on the last sync attempt; may lag
         spec until the next tick. When origin=ini, this is the ini override value. */
     datasourceUid?: string;
+    /** lastAppliedHash is the upstream config hash from the last successful
+        sync via this resource. The worker reads it back (API path only) to
+        skip an unchanged re-apply across restarts and replicas, where an
+        in-memory-only dedup cache would otherwise start empty. Internal
+        bookkeeping; not user-facing. */
+    lastAppliedHash?: string;
     /** origin records which source supplied datasourceUid on the last run. "ini"
         (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
         (spec.externalRulerSync.datasourceUid). */

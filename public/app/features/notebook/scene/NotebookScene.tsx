@@ -250,7 +250,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   /**
    * Permission is checked here rather than only where the toggle renders, so no caller — including
-   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   * a hand-typed `?edit=true` — can force edit mode for a user without `notebooks:write`.
    */
   public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
