@@ -158,7 +158,7 @@ describe('NotebookToolbar', () => {
   it('copies markdown built from the scene, panel and all', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Export/ }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Copy as Markdown' }));
 
     const markdown = await navigator.clipboard.readText();
@@ -168,10 +168,12 @@ describe('NotebookToolbar', () => {
     expect(mockExported).toHaveBeenCalledWith('nb1', 'clipboard', 'notebook_toolbar');
   });
 
-  it('offers the export actions from a dropdown', async () => {
+  // Export's actions are flattened directly into the kebab rather than nested under their own
+  // "Export" submenu, so they read as top-level menu items.
+  it('offers the export actions from the more actions menu', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Export/ }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
@@ -264,8 +266,12 @@ describe('NotebookToolbar', () => {
       const { user, scene } = setupWithScene();
       // Activated and editing, so autosave is actually watching for changes — a scene the toolbar
       // merely renders has never started its subscription and would look untouched either way.
-      const deactivate = scene.activate();
-      scene.onEnterEditMode();
+      // Wrapped in act: the toolbar now renders the edit toggle, which subscribes to this state.
+      let deactivate: () => void = () => {};
+      act(() => {
+        deactivate = scene.activate();
+        scene.onEnterEditMode();
+      });
 
       await confirmDelete(user);
       await waitFor(() => expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument());
@@ -276,7 +282,7 @@ describe('NotebookToolbar', () => {
       act(() => scene.setState({ title: 'Edited after the failed delete' }));
       await waitFor(() => expect(scene.autosave.state.status).toBe('pending'));
 
-      deactivate();
+      act(() => deactivate());
     });
 
     // The state manager caches scenes by uid, so a stale entry would rebuild the deleted notebook
@@ -306,16 +312,17 @@ describe('NotebookToolbar', () => {
       expect(history.getLocation().pathname).toBe('/notebooks/nb1');
     });
 
-    // With no IRM either, the menu would hold nothing.
-    it('offers no delete at all to a user who cannot delete dashboards', () => {
+    // The kebab still holds Export regardless, so it never disappears on its own.
+    it('offers no delete at all to a user who cannot delete dashboards', async () => {
       setupDelete();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-      setupWithScene();
+      const { user } = setupWithScene();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
 
-      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
-      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
@@ -357,15 +364,18 @@ describe('NotebookToolbar', () => {
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
-    // The case the old attach-only test was really protecting: nothing to show, so no trigger.
-    it('offers no overflow menu at all without IRM and without delete permission', () => {
+    // The case the old attach-only test was really protecting: with neither IRM nor delete, the
+    // kebab still has Export to show, so the trigger stays put rather than disappearing.
+    it('offers only export in the overflow menu without IRM and without delete permission', async () => {
       setIrmAvailable(false);
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-      setup();
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
 
-      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
@@ -384,7 +394,7 @@ describe('NotebookToolbar', () => {
       setupUnsaved();
 
       expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument();
     });
 
     // aria-disabled rather than the disabled attribute: Grafana's Button switches to it when there is
@@ -393,13 +403,13 @@ describe('NotebookToolbar', () => {
       setupUnsaved();
 
       expect(screen.getByRole('button', { name: 'Copy link' })).toHaveAttribute('aria-disabled', 'true');
-      expect(screen.getByRole('button', { name: /Export/ })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByRole('button', { name: 'More actions' })).toHaveAttribute('aria-disabled', 'true');
     });
 
-    it('opens no export menu, since there is nothing to export', async () => {
+    it('opens no menu, since there is nothing to act on yet', async () => {
       const { user } = setupUnsaved();
 
-      await user.click(screen.getByRole('button', { name: /Export/ }));
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
 
       expect(screen.queryByRole('menuitem', { name: 'Copy as Markdown' })).not.toBeInTheDocument();
     });

@@ -13255,8 +13255,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",

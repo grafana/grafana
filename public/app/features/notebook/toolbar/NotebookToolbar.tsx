@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
@@ -14,35 +12,29 @@ import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
 import { IrmMenuItem } from '../incidents/IrmMenuItem';
-import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
+import { NotebookEditToggle } from '../scene/NotebookEditToggle';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 
 /**
- * The notebook view's header bar.
+ * The notebook view's action cluster: copy link, the edit toggle, and the "more actions" kebab
+ * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`)
+ * rather than owning a row of its own, so it shares that row's sticky/background chrome.
  *
  * Rendered for a notebook that does not exist yet as well, so that creating one by typing does not
- * push the document down by the height of this bar while somebody is writing in it. Both actions need
- * a notebook that exists, so until there is one they are disabled and say why.
+ * push the document down once a uid shows up. Copy link and the kebab need a notebook that exists,
+ * so until there is one they are disabled and say why; the edit toggle works either way.
  */
 export function NotebookToolbar({ uid, scene }: { uid?: string; scene: NotebookScene }) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div className={styles.toolbar}>{uid ? <NotebookActions uid={uid} scene={scene} /> : <UnavailableActions />}</div>
-  );
+  return uid ? <NotebookActions uid={uid} scene={scene} /> : <UnavailableActions scene={scene} />;
 }
 
 function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) {
-  const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
-  // Both incident actions live in this menu, so either is reason enough to open it.
-  const { available: hasIncidents } = useNotebookIncidents();
-  const hasMoreActions = hasIncidents || canDeleteNotebooks();
   // Owned here, not by the menu items: those are inside the Dropdown overlay, which unmounts as the
   // menu closes.
   const [isDeclaring, setIsDeclaring] = useState(false);
@@ -70,27 +62,26 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   };
 
   // Serialized from the scene rather than refetched: the page already holds the notebook, and this
-  // way an export reflects what is on screen.
-  const exportMenu = () => (
+  // way an export reflects what is on screen. Export's actions are flattened directly into this menu
+  // rather than nested under their own "Export" submenu.
+  const moreMenu = () => (
     <Menu>
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
       />
-    </Menu>
-  );
-
-  const moreMenu = () => (
-    <Menu>
       <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
       {canDeleteNotebooks() && (
-        <Menu.Item
-          destructive
-          label={t('notebooks.delete.confirm', 'Delete')}
-          icon="trash-alt"
-          onClick={() => setIsConfirmingDelete(true)}
-        />
+        <>
+          <Menu.Divider />
+          <Menu.Item
+            destructive
+            label={t('notebooks.delete.confirm', 'Delete')}
+            icon="trash-alt"
+            onClick={() => setIsConfirmingDelete(true)}
+          />
+        </>
       )}
     </Menu>
   );
@@ -99,34 +90,27 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
     <>
       <ClipboardButton
         variant="secondary"
+        fill="text"
         size="sm"
         icon="link"
+        aria-label={t('notebooks.view.copy-link', 'Copy link')}
+        tooltip={t('notebooks.view.copy-link', 'Copy link')}
         getText={() => notebookShareUrl(uid)}
         onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_TOOLBAR)}
-      >
-        {t('notebooks.view.copy-link', 'Copy link')}
-      </ClipboardButton>
-      <Dropdown overlay={exportMenu} placement="bottom-end" onVisibleChange={setIsExportOpen}>
-        <Button size="sm" variant="secondary" icon="download-alt" aria-haspopup="menu" aria-expanded={isExportOpen}>
-          <Trans i18nKey="notebooks.export.label">Export</Trans>
-          &nbsp;
-          <Icon name={isExportOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
-        </Button>
+      />
+      <NotebookEditToggle notebook={scene} />
+      <Dropdown overlay={moreMenu} placement="bottom-end">
+        <IconButton
+          name="ellipsis-v"
+          variant="secondary"
+          size="sm"
+          // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
+          // announces as a plain button and gives no hint that it opens a menu.
+          aria-haspopup="menu"
+          // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
+          tooltip={t('notebooks.view.more-actions', 'More actions')}
+        />
       </Dropdown>
-      {hasMoreActions && (
-        <Dropdown overlay={moreMenu} placement="bottom-end">
-          <IconButton
-            name="ellipsis-v"
-            variant="secondary"
-            size="sm"
-            // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
-            // announces as a plain button and gives no hint that it opens a menu.
-            aria-haspopup="menu"
-            // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
-            tooltip={t('notebooks.view.more-actions', 'More actions')}
-          />
-        </Dropdown>
-      )}
       {isDeclaring && (
         <DeclareIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsDeclaring(false)} />
       )}
@@ -146,38 +130,37 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 }
 
 /**
- * The same two buttons, disabled: there is no notebook to link to or export yet. They keep the
- * chevron and the sizing of the real ones so that nothing moves when the notebook is created.
+ * Copy link and the kebab, disabled: there is no notebook to link to, export or delete yet. They keep
+ * the sizing of the real ones so that nothing moves when the notebook is created. The edit toggle is
+ * the real one throughout — entering edit mode does not require a uid.
  *
- * Grafana's Button swaps the native disabled attribute for aria-disabled when it has a tooltip, so
- * the reason stays reachable instead of being on an element that ignores the pointer.
+ * Both are plain Buttons rather than IconButtons: Grafana's Button swaps the native disabled attribute
+ * for aria-disabled when it has a tooltip, so the reason stays reachable instead of being on an
+ * element that ignores the pointer — IconButton has no such fallback.
  */
-function UnavailableActions() {
+function UnavailableActions({ scene }: { scene: NotebookScene }) {
   const reason = t('notebooks.view.available-once-created', 'Available once you write something');
 
   return (
     <>
-      <Button variant="secondary" size="sm" icon="link" disabled tooltip={reason}>
-        {t('notebooks.view.copy-link', 'Copy link')}
-      </Button>
-      <Button variant="secondary" size="sm" icon="download-alt" disabled tooltip={reason}>
-        <Trans i18nKey="notebooks.export.label">Export</Trans>
-        &nbsp;
-        <Icon name="angle-down" size="sm" aria-hidden="true" />
-      </Button>
+      <Button
+        variant="secondary"
+        fill="text"
+        size="sm"
+        icon="link"
+        disabled
+        tooltip={reason}
+        aria-label={t('notebooks.view.copy-link', 'Copy link')}
+      />
+      <NotebookEditToggle notebook={scene} />
+      <Button
+        variant="secondary"
+        size="sm"
+        icon="ellipsis-v"
+        disabled
+        tooltip={reason}
+        aria-label={t('notebooks.view.more-actions', 'More actions')}
+      />
     </>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  toolbar: css({
-    display: 'flex',
-    alignItems: 'center',
-    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
-    justifyContent: 'safe flex-end',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-});
