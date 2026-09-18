@@ -35,11 +35,11 @@ const getInstanceMock = jest.mocked(getDataSourceInstance);
 const SPAN_METRICS_SELECTOR =
   '{__name__=~"traces_spanmetrics_calls_total|traces_span_metrics_calls_total|calls_total",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}';
 const SERVICES_QUERY =
-  'count(count by (job) ({__name__=~"traces_spanmetrics_calls_total|traces_span_metrics_calls_total|calls_total",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)",job=~".+"}))';
+  'count(count by (job) (last_over_time(traces_target_info{job=~".+"}[30m])) or count by (job) (last_over_time(target_info{job=~".+"}[30m])))';
 const ERROR_RATIO_QUERY =
   '(sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[1h]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[1h]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[1h]), "__family__", "2", "", "")) or vector(0)) / sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[1h]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[1h]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[1h]), "__family__", "2", "", ""))';
 const REQUEST_RATE_QUERY =
-  'sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "2", "", ""))';
+  'sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[$__rate_interval]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[$__rate_interval]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[$__rate_interval]), "__family__", "2", "", ""))';
 
 const listItem: DataSourceInstanceListItem = {
   uid: 'prometheus',

@@ -39,7 +39,7 @@ const datasource = { uid: 'prom-uid', name: 'grafanacloud-prom', type: 'promethe
 
 beforeEach(() => {
   mockFetchStats.mockReset();
-  mockFetchStats.mockResolvedValue({ services: 12, errorRatio: 0.004 });
+  mockFetchStats.mockResolvedValue({ services: 12, errorRatio: 0.000176 });
   mockFetchSeries.mockReset();
   mockFetchSeries.mockResolvedValue(null);
   mockProbe.mockReset();
@@ -120,10 +120,10 @@ describe('appObservabilitySolution', () => {
 });
 
 describe('appObservabilitySolution stats and sparkline', () => {
-  it('formats the service count with the error-ratio secondary', async () => {
+  it('formats the service count with a sub-percent error ratio kept visible', async () => {
     await expect(appObservabilitySolution().stats()).resolves.toEqual({
       primary: '12 services',
-      secondary: '0.4% errors · 1h',
+      secondary: '0.0176% errors · 1h',
     });
     expect(mockFetchStats).toHaveBeenCalledWith(datasource);
   });

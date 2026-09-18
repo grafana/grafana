@@ -69,7 +69,7 @@ export function appObservabilitySolution(): Solution {
             defaultValue_one: '{{value}} service',
             defaultValue_other: '{{value}} services',
           }),
-        (percent) => t('home.solutions.app-observability.stats', '{{percent}}% errors · 1h', { percent })
+        (percent) => t('home.solutions.app-observability.stats', '{{percent}} errors · 1h', { percent })
       );
     },
     refinedStats: async () => null,

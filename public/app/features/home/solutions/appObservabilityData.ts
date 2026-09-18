@@ -5,6 +5,7 @@ import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './prom
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, DATA_LOOKBACK_HOURS, probeFound } from './solutionDataProbes';
 
 export interface AppObservabilityStats {
+  /** Jobs in the plugin's service inventory: resource metadata seen over its default 30m range. */
   services: number | null;
   /** Fleet error ratio over server-side spans in the last hour. */
   errorRatio: number | null;
@@ -26,6 +27,11 @@ const APP_SPAN_KINDS = 'span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"
 // selectors, the series index); rate() drops it and would collide the families.
 const ANY_SPAN_METRIC = `__name__=~"${SPAN_METRICS_CALL_NAMES.join('|')}",${APP_SPAN_KINDS}`;
 
+// The plugin's inventory is keyed off resource metadata, not span metrics: `traces_target_info`
+// from Tempo's metrics-generator, `target_info` from an OTel pipeline. Its default range is 30m.
+const TARGET_INFO_NAMES: readonly string[] = ['traces_target_info', 'target_info'];
+const INVENTORY_WINDOW = '30m';
+
 // The app's "server-side" definition: SERVER plus CONSUMER, so message-queue consumers count
 // as request handlers.
 const SERVER_SIDE = 'span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"';
@@ -41,12 +47,12 @@ const ERROR_RATIO_WINDOW = '1h';
 const overCallFamilies = (expr: (metric: string) => string) =>
   SPAN_METRICS_CALL_NAMES.map((m, i) => `label_replace(${expr(m)}, "__family__", "${i}", "", "")`).join(' or ');
 
-// services: jobs currently emitting span metrics, keyed by `job` like the app's inventory. The
-// instant selector reads one fresh sample per series; job=~".+" excludes jobless series that
-// would otherwise read as one phantom service.
+// services: the plugin's inventory. Span metrics only classify those jobs there, so counting them
+// instead would drop idle and metrics-only services. job=~".+" excludes jobless series that would
+// otherwise read as one phantom service.
 // errorRatio: `or vector(0)` keeps an error-free fleet at 0% while a failed query reads null.
 const STATS_QUERIES: Record<string, string> = {
-  services: `count(count by (job) ({${ANY_SPAN_METRIC},job=~".+"}))`,
+  services: `count(${TARGET_INFO_NAMES.map((m) => `count by (job) (last_over_time(${m}{job=~".+"}[${INVENTORY_WINDOW}]))`).join(' or ')})`,
   errorRatio: `(sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE},status_code="STATUS_CODE_ERROR"}[${ERROR_RATIO_WINDOW}])`)}) or vector(0)) / sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[${ERROR_RATIO_WINDOW}])`)})`,
 };
 
@@ -76,7 +82,7 @@ export function probeSpanMetrics(): Promise<DataSourceInstanceListItem | null> {
   return probeFound('prometheus', prometheusHasSpanMetrics, CLOUD_UTILITY_PROM_DATASOURCE_UIDS);
 }
 
-/** Instrumented service count and last-hour fleet error ratio. */
+/** Inventory service count and last-hour fleet error ratio. */
 export async function fetchAppObservabilityStats(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<AppObservabilityStats> {
@@ -94,8 +100,9 @@ export async function fetchAppObservabilityRequestSeries(
 ): Promise<FieldSparkline | null> {
   const frames = await runRangeQuery(
     'requests',
-    // [5m] rate window: span metrics arrive at scrape cadence, so no wide window is needed.
-    `sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[5m])`)})`,
+    // $__rate_interval (at least four scrape intervals and one step): each point averages its whole
+    // step, as the plugin's RED panels do.
+    `sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[$__rate_interval])`)})`,
     24,
     ds
   );

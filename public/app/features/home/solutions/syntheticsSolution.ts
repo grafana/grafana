@@ -103,7 +103,7 @@ export function syntheticsSolution(): Solution {
             defaultValue_one: '{{value}} check',
             defaultValue_other: '{{value}} checks',
           }),
-        (percent) => t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', { percent })
+        (percent) => t('home.solutions.synthetics.stats', '{{percent}} success · 24h', { percent })
       );
     },
     sparkline: async () => {
