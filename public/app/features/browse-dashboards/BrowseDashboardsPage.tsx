@@ -28,6 +28,7 @@ import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { DeletingFolderBadge } from './components/DeletingFolderBadge';
 import { FolderCascadeStatusBanner } from './components/FolderCascadeStatusBanner';
 import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
@@ -159,6 +160,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     return (
       <Stack alignItems={'center'} gap={2}>
         <Text element={'h1'}>{title}</Text>
+        {isFolderDeleting && folderDTO && <DeletingFolderBadge folderUID={folderDTO.uid} />}
         {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && !isFolderDeleting && (
           <IconButton
             name="pen"
