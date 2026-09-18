@@ -33,21 +33,21 @@ async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): 
 
 function buildHealthRows(health: KubernetesHealth): string[] {
   const rows: string[] = [];
-  if (health.unhealthyPods !== null && health.unhealthyPods > 0) {
+  if (health.pendingPods !== null && health.pendingPods > 0) {
     rows.push(
-      t('home.solutions.kubernetes.health-pods', '', {
-        count: Math.ceil(health.unhealthyPods),
-        defaultValue_one: '{{count}} pod pending or failed',
-        defaultValue_other: '{{count}} pods pending or failed',
+      t('home.solutions.kubernetes.health-pending', '', {
+        count: Math.ceil(health.pendingPods),
+        defaultValue_one: '{{count}} pod stuck pending',
+        defaultValue_other: '{{count}} pods stuck pending',
       })
     );
   }
-  if (health.restarts1h !== null && health.restarts1h > 0) {
+  if (health.crashLoopingPods !== null && health.crashLoopingPods > 0) {
     rows.push(
-      t('home.solutions.kubernetes.health-restarts', '', {
-        count: Math.ceil(health.restarts1h),
-        defaultValue_one: '{{count}} restart in the last hour',
-        defaultValue_other: '{{count}} restarts in the last hour',
+      t('home.solutions.kubernetes.health-crashloop', '', {
+        count: Math.ceil(health.crashLoopingPods),
+        defaultValue_one: '{{count}} pod crash looping',
+        defaultValue_other: '{{count}} pods crash looping',
       })
     );
   }
@@ -141,11 +141,10 @@ export function kubernetesSolution(loadFilters: () => Promise<KubernetesHomeFilt
       if (!counts) {
         return null;
       }
+      // Zero is an answer: nothing matched the user's scope (or the cluster went quiet), which
+      // reads clearer than an empty card.
       const clusterCount = Math.ceil(counts.clusters);
       const podCount = Math.ceil(counts.pods);
-      if (clusterCount <= 0 && podCount <= 0) {
-        return null;
-      }
       return {
         primary: t('home.solutions.kubernetes.clusters', '', {
           count: clusterCount,

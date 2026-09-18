@@ -26,15 +26,27 @@ export interface KubernetesInventory {
   pods: number;
 }
 
+// A count of matching entities is empty (null) when nothing matches, the same as when the metric
+// is absent: the card shows a row only for a positive count, so the two need no telling apart.
 export interface KubernetesHealth {
   alertsFiring: number | null; // null = no firing alerts or Prometheus evaluates no rules (hide the count)
-  unhealthyPods: number | null; // null = metric absent (hide the row); 0 = all healthy
-  restarts1h: number | null; // null = metric absent (hide the row)
-  notReadyNodes: number | null; // null = metric absent (hide the row); 0 = all Ready
+  pendingPods: number | null; // pods Pending now and PENDING_CONSISTENCY_OFFSET ago
+  crashLoopingPods: number | null; // pods with a container waiting in CrashLoopBackOff
+  notReadyNodes: number | null; // nodes whose Ready condition is false or unknown
 }
 
-// Lookback for the inventory queries and the namespace probe: "seen recently", tolerating scrape gaps.
+// Lookback for the datasource probe only: "seen recently", tolerating scrape gaps.
 const KUBE_STATE_LOOKBACK = '24h';
+
+// A pod counts as pending only when it was already Pending this long ago, so transient scheduling
+// never surfaces. Same window as the Kubernetes Monitoring app.
+const PENDING_CONSISTENCY_OFFSET = '10m';
+
+// Entities are collapsed to one series each before counting, so HA kube-state-metrics replicas
+// (two series per node or pod) never double count. Mirrors the Kubernetes Monitoring app's queries.
+const PER_POD = 'cluster, namespace, pod';
+const PER_NODE = 'cluster, node';
+const present = (by: string, expr: string): string => `max by (${by}) (${expr}) == 1`;
 
 // PromQL string-literal escaping for label matcher values (custom user input; control chars would break the literal).
 const escapeLabelValue = (value: string) =>
@@ -58,55 +70,60 @@ const selector = (...matchers: Array<string | null>): string => {
   return active.length ? `{${active.join(',')}}` : '';
 };
 
-// Pod-health metrics (kube_pod_status_phase, restart counters) carry no node label: attribute
-// pods to nodes by joining kube_pod_info. max by () collapses duplicate info series.
+// Pod-state metrics carry no node label: keep only pods whose kube_pod_info sits on a selected node.
 const podNodeScope = (f: KubernetesHomeFilters): string =>
   f.nodes?.length
-    ? ` * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info${selector(clusterMatcher(f), nodeMatcher(f))})`
+    ? ` and on (${PER_POD}) group by (${PER_POD}) (kube_pod_info${selector(clusterMatcher(f), nodeMatcher(f))})`
     : '';
 
 // Node readiness is namespace-blind; when namespaces are selected, count only nodes hosting
 // their pods so a healthy selection reads healthy even while unrelated nodes are down.
 const nodeNamespaceScope = (f: KubernetesHomeFilters): string =>
   f.namespaces?.length
-    ? ` * on (cluster, node) group_left () group by (cluster, node) (kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))})`
+    ? ` and on (${PER_NODE}) group by (${PER_NODE}) (kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))})`
     : '';
 
-// refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
+// refId -> portable kube-state-metrics PromQL, all instant. Clusters are those with node inventory
+// right now and pods the Running|Pending ones: the same populations the Kubernetes Monitoring app
+// counts, so the card and the app agree.
 const inventoryQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
-  clusters: `count(group by (cluster) (last_over_time(kube_node_info${selector(clusterMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
-  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
+  clusters: `count(group by (cluster) (kube_node_info${selector('cluster!=""', clusterMatcher(f), nodeMatcher(f))}))`,
+  pods: `count(${present(PER_POD, `kube_pod_status_phase${selector('cluster!=""', 'phase=~"Running|Pending"', clusterMatcher(f), namespaceMatcher(f))}`)}${podNodeScope(f)})`,
 });
 
 // Every health signal is strictly scoped to the selection: a quiet selection must read healthy,
 // which flips the card out of its needs-attention state.
-const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
-  unhealthyPods: `sum(kube_pod_status_phase${selector('phase=~"Pending|Failed|Unknown"', clusterMatcher(f), namespaceMatcher(f))}${podNodeScope(f)})`,
-  restarts1h: `sum(increase(kube_pod_container_status_restarts_total${selector(clusterMatcher(f), namespaceMatcher(f))}[1h])${podNodeScope(f)})`,
-  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))}${nodeNamespaceScope(f)})`,
-});
+const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => {
+  const pending = `kube_pod_status_phase${selector('phase="Pending"', clusterMatcher(f), namespaceMatcher(f))}`;
+  return {
+    pendingPods: `count(${present(PER_POD, pending)} and ${present(PER_POD, `${pending} offset ${PENDING_CONSISTENCY_OFFSET}`)}${podNodeScope(f)})`,
+    crashLoopingPods: `count(${present(PER_POD, `kube_pod_container_status_waiting_reason${selector('reason="CrashLoopBackOff"', clusterMatcher(f), namespaceMatcher(f))}`)}${podNodeScope(f)})`,
+    notReadyNodes: `count(${present(PER_NODE, `kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))}`)}${nodeNamespaceScope(f)})`,
+  };
+};
 
-// Firing alert instances scoped to Kubernetes workloads; heartbeats excluded. Strict label
-// matching: alerts without a selected namespace/node label are dropped, so a quiet selection
-// shows zero alerts even while the wider fleet is firing.
+// Firing Kubernetes alert instances: the same alert-name allowlist as the Kubernetes Monitoring
+// app, so the count matches its alerts page. Strict label matching: alerts without a selected
+// namespace/node label are dropped, so a quiet selection shows zero alerts even while the wider
+// fleet is firing.
 const alertsMatcher = (f: KubernetesHomeFilters): string =>
   selector(
-    'alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""',
+    'alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""',
     clusterMatcher(f),
     namespaceMatcher(f),
     nodeMatcher(f)
   );
 
-// Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.
-const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
+// The Kubernetes Monitoring app gates on node inventory, and so does the cluster count above, so a
+// datasource is detected and counted from the same metric. The lookback tolerates scrape gaps.
+const NODE_PROBE = `count(last_over_time(kube_node_info{cluster!=""}[${KUBE_STATE_LOOKBACK}]))`;
 
-/** True when health signals show a problem, false when all clear, null when none are available. @lintignore */
+/** True when any health signal counts something, false when all are clear, null when none answered. @lintignore */
 export function hasHealthProblems(h: KubernetesHealth): boolean | null {
-  if (h.alertsFiring === null && h.unhealthyPods === null && h.notReadyNodes === null && h.restarts1h === null) {
+  if (h.alertsFiring === null && h.pendingPods === null && h.notReadyNodes === null && h.crashLoopingPods === null) {
     return null;
   }
-  // null counts as 0 so a partial metric set still verdicts.
-  return (h.unhealthyPods ?? 0) + (h.notReadyNodes ?? 0) + (h.restarts1h ?? 0) + (h.alertsFiring ?? 0) > 0;
+  return (h.pendingPods ?? 0) + (h.notReadyNodes ?? 0) + (h.crashLoopingPods ?? 0) + (h.alertsFiring ?? 0) > 0;
 }
 
 // localStorage key where the k8s app's PrometheusPicker persists the user's datasource choice.
@@ -128,17 +145,17 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
 }
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
-async function hasKubernetesNamespaces(
+async function hasKubernetesNodes(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   signal?: AbortSignal
 ): Promise<boolean> {
-  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
-  return (readScalar(frames, 'namespaces') ?? 0) > 0;
+  const frames = await runInstantQueries({ probe: NODE_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
+  return (readScalar(frames, 'probe') ?? 0) > 0;
 }
 
 // The stored choice is moved to the front before the scan caps the list.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  return findDatasourceWithData(await orderedCandidates(), hasKubernetesNamespaces);
+  return findDatasourceWithData(await orderedCandidates(), hasKubernetesNodes);
 }
 
 const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, PROBE_TTL_MS);
@@ -189,15 +206,13 @@ export async function fetchKubernetesHealth(
   ]);
 
   const dsAlertsFiring = readScalar(frames, 'alertsFiring');
-  const restarts1h = readScalar(frames, 'restarts1h');
   return {
     alertsFiring:
       dsAlertsFiring === null && grafanaAlertsFiring === null
         ? null
         : (dsAlertsFiring ?? 0) + (grafanaAlertsFiring ?? 0),
-    unhealthyPods: readScalar(frames, 'unhealthyPods'),
-    // increase() extrapolates to fractionals with zero real restarts; round so noise never renders as "1 restart".
-    restarts1h: restarts1h === null ? null : Math.round(restarts1h),
+    pendingPods: readScalar(frames, 'pendingPods'),
+    crashLoopingPods: readScalar(frames, 'crashLoopingPods'),
     notReadyNodes: readScalar(frames, 'notReadyNodes'),
   };
 }
@@ -237,7 +252,8 @@ export interface KubernetesFilterOptions {
 }
 
 /**
- * Label values feeding the filter pickers. The discovery queries run separately —
+ * Label values feeding the filter pickers, from entities present right now so a picked value
+ * always matches the instant inventory. The discovery queries run separately —
  * `runInstantQueries` with `partial` silently drops failed refIds, and a per-picker failure
  * must stay visible to the modal.
  */
@@ -249,13 +265,9 @@ export async function fetchKubernetesFilterOptions(
     return readLabelValues(frames, refId, label);
   };
   const [clusters, namespaces, nodes] = await Promise.allSettled([
-    read('clusters', `group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'cluster'),
-    read(
-      'namespaces',
-      `group by (namespace) (last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`,
-      'namespace'
-    ),
-    read('nodes', `group by (node) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'node'),
+    read('clusters', 'group by (cluster) (kube_node_info{cluster!=""})', 'cluster'),
+    read('namespaces', 'group by (namespace) (kube_namespace_status_phase{cluster!=""})', 'namespace'),
+    read('nodes', 'group by (node) (kube_node_info{cluster!=""})', 'node'),
   ]);
   return {
     clusters: clusters.status === 'fulfilled' ? clusters.value : null,

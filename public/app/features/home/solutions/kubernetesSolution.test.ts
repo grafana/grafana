@@ -38,7 +38,13 @@ const mockSetupGuideEnabled = jest.mocked(setupGuideEnabled);
 const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
-const healthy: KubernetesHealth = { alertsFiring: null, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 };
+// Entity counts are empty when nothing matches, so an all-clear cluster answers null everywhere.
+const healthy: KubernetesHealth = {
+  alertsFiring: null,
+  pendingPods: null,
+  crashLoopingPods: null,
+  notReadyNodes: null,
+};
 
 beforeEach(() => {
   mockFetchCpu.mockReset();
@@ -138,14 +144,14 @@ describe('kubernetesSolution alert', () => {
   });
 
   it('leads with firing alerts', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: null, notReadyNodes: null });
 
     const solution = kubernetesSolution();
     await expect(solution.needsAttention()).resolves.toBe(true);
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     await expect(solution.alert()).resolves.toEqual({
       primary: '3 alerts firing',
-      details: ['1 pod pending or failed'],
+      details: ['1 pod stuck pending'],
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
@@ -153,11 +159,11 @@ describe('kubernetesSolution alert', () => {
   });
 
   it('leads with the first health row when nothing is firing', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: null, unhealthyPods: 2, restarts1h: 5, notReadyNodes: 1 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: null, pendingPods: 2, crashLoopingPods: 5, notReadyNodes: 1 });
 
     await expect(kubernetesSolution().alert()).resolves.toMatchObject({
-      primary: '2 pods pending or failed',
-      details: ['5 restarts in the last hour', '1 node not ready'],
+      primary: '2 pods stuck pending',
+      details: ['5 pods crash looping', '1 node not ready'],
     });
   });
 });
@@ -171,10 +177,13 @@ describe('kubernetesSolution stats and sparkline', () => {
     expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
   });
 
-  it('omits empty inventory', async () => {
+  it('shows zero inventory for an empty scope', async () => {
     mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
 
-    await expect(kubernetesSolution().stats()).resolves.toBeNull();
+    await expect(kubernetesSolution().stats()).resolves.toEqual({
+      primary: '0 clusters',
+      secondary: '0 pods',
+    });
   });
 
   it('returns the CPU trend with its 24-hour caption', async () => {
@@ -224,7 +233,7 @@ describe('kubernetesSolution stats and sparkline', () => {
 
 describe('kubernetesSolution CTA and offer', () => {
   it('opens the alerts page when the solution needs attention', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: null, notReadyNodes: null });
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({
       label: 'View alerts in Kubernetes Monitoring',
@@ -235,7 +244,12 @@ describe('kubernetesSolution CTA and offer', () => {
   });
 
   it('falls back to the solution page when the alerts page is inaccessible', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({
+      alertsFiring: 1,
+      pendingPods: null,
+      crashLoopingPods: null,
+      notReadyNodes: null,
+    });
     mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/alerts' ? null : `/a/${appId}${path}`));
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({
