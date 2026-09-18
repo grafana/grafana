@@ -13,6 +13,7 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { type JustifyContent } from '../Layout/types';
 import { type ResponsiveProp } from '../Layout/utils/responsiveness';
+import { Modal } from '../Modal/Modal';
 
 export interface ConfirmContentProps {
   /** Modal content */
@@ -124,7 +125,7 @@ export const ConfirmContent = ({
           </div>
         ) : null}
       </div>
-      <div className={styles.buttonsContainer}>
+      <Modal.ButtonRow>
         <Stack justifyContent={justifyButtons} gap={2} wrap="wrap">
           <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
             {dismissButtonLabel}
@@ -144,7 +145,7 @@ export const ConfirmContent = ({
             </Button>
           ) : null}
         </Stack>
-      </div>
+      </Modal.ButtonRow>
     </form>
   );
 };
@@ -159,8 +160,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   confirmationInput: css({
     paddingTop: theme.spacing(1),
-  }),
-  buttonsContainer: css({
-    paddingTop: theme.spacing(3),
   }),
 });
