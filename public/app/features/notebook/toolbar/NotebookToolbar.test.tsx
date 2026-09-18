@@ -1,11 +1,13 @@
 import { createMemoryHistory } from 'history';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { act, getWrapper, render, screen, waitFor } from 'test/test-utils';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
+import { KioskMode } from 'app/types/dashboard';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
@@ -151,6 +153,19 @@ describe('NotebookToolbar', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
+  });
+
+  // A PDF export renders the notebook headlessly with kiosk mode on. Unlike the dashboard toolbar,
+  // this one is not portaled into the app-chrome header, so it needs its own check to disappear.
+  it('hides entirely when kiosk mode is full, for a clean PDF render', () => {
+    const context = getGrafanaContextMock();
+    context.chrome.update({ kioskMode: KioskMode.Full });
+    const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: context });
+
+    render(<NotebookToolbar uid="nb1" scene={buildScene()} />, { wrapper });
+
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Export/ })).not.toBeInTheDocument();
   });
 
   describe('Delete', () => {

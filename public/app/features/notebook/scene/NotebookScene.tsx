@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,11 +21,13 @@ import {
   ScopesVariable,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
+import { KioskMode } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookEditSession } from '../analytics/editSession';
@@ -35,7 +38,7 @@ import {
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
-import { NOTEBOOK_EDIT_PARAM } from '../urls';
+import { NOTEBOOK_EDIT_PARAM, isNotebookPdfLayoutUrl } from '../urls';
 
 import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
@@ -44,7 +47,8 @@ import { NotebookEditToggle } from './NotebookEditToggle';
 import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
-import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { NOTEBOOK_DOCUMENT_CLASS, type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { NOTEBOOK_CELL_CONTENT_CLASS } from './layout-notebook/edit/NotebookCellFrame';
 
 export interface NotebookSceneState extends SceneObjectState {
   title: string;
@@ -79,6 +83,22 @@ export interface NotebookSceneState extends SceneObjectState {
    */
   isDraft?: boolean;
 }
+
+// A4 portrait — the page-shape override a PDF export applies (see isNotebookPdfLayoutUrl below).
+// In millimetres because the target is a physical sheet, which keeps the sizing honest instead of
+// routing it through a dpi assumption. The inset is applied as the document's own padding rather
+// than a page margin, so it is deducted from this width by `box-sizing` rather than added outside
+// it — see the `Global` styles for why a real page margin is not usable here.
+const PDF_PAGE_WIDTH_MM = 210;
+const PDF_PAGE_HEIGHT_MM = 297;
+const PDF_PAGE_MARGIN_MM = 12;
+/**
+ * Leading space on each cell, which doubles as the top inset for whichever cell a page break
+ * happens to land in front of. Leading only, not symmetric: between two cells the gap is one
+ * cell's worth rather than two, which keeps the document's rhythm tight while still giving a cell
+ * that begins a page something to stand off from.
+ */
+const PDF_CELL_INSET_MM = 4;
 
 /**
  * Notebooks currently holding the global scene context, most recently activated last, and whatever
@@ -402,26 +422,116 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
   // there is no app header for it to describe.
   const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
+  const theme = useTheme2();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
+  // A PDF export's headless render passes kiosk mode; save status, undo history and the edit toggle
+  // are all editing affordances with nothing to say about a document being captured for one.
+  const isKioskFull = kioskMode === KioskMode.Full;
+  const isPdfRender = isNotebookPdfLayoutUrl();
 
   return (
-    <div className={styles.container}>
-      <NotebookHiddenVariables model={model} />
-      <div className={styles.controls}>
-        {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
-            be visible and retryable there too. This renders nothing until there is something to say. */}
-        <NotebookSaveStatus autosave={model.autosave} />
-        {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        <NotebookEditToggle notebook={model} />
-        {!hideTimeControls && (
-          <>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </>
+    <>
+      {isPdfRender && (
+        <Global
+          styles={{
+            // A plain `@media print` rule is not enough: the renderer captures the page as it
+            // already sits, not through a print-emulated pass, so the document's actual width has
+            // to shrink for real. Sized on `html`/`body` rather than this component's own container,
+            // because centering a narrower child inside an unconstrained parent leaves the parent —
+            // and whatever the renderer measures — exactly as wide as before. Narrower than the page
+            // itself, by exactly the margin the `@page` rule below claims: content sized to the full
+            // page width would overflow into that margin and get clipped at the page's edge.
+            //
+            // Full page width with the inset as padding rather than an `@page` margin, because
+            // Chromium paints nothing into a page's margin area and does not support a background
+            // there — a margin would leave a bare-paper band around a document whose own canvas is
+            // deliberately not white. Padding keeps the canvas edge to edge, so the notebook's grey
+            // still does the job it does on screen: giving the white panels something to sit on.
+            //
+            // Left and right insets repeat on every page (they belong to a block that spans all of
+            // them); top and bottom apply once, at the start and end of the flow.
+            //
+            // The padding comes out of this width rather than adding to it, because @grafana/ui's
+            // base styles already put `box-sizing: border-box` on `html` and have everything inherit
+            // it (GlobalStyles/elements.ts).
+            'html, body': {
+              maxWidth: `${PDF_PAGE_WIDTH_MM}mm !important`,
+              margin: '0 auto !important',
+              padding: `${PDF_PAGE_MARGIN_MM}mm !important`,
+              background: `${visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas} !important`,
+            },
+            // Page wraps its children in a rounded, bordered card — reasonable chrome on screen,
+            // but in a document its edge reads as a stray rule and its fill as yet another shade.
+            // Flattened for the capture. Matched on the emotion label, the same way other pages
+            // already reach into Page's internals (see Browse.tsx, AddNewConnectionPage.tsx).
+            '[class*="page-wrapper"]': {
+              background: 'transparent !important',
+              border: 'none !important',
+              borderRadius: '0 !important',
+              margin: '0 !important',
+            },
+            // The body's padding above insets the top of page one and the bottom of the last page,
+            // but not the pages in between — a block's vertical padding is spent at the start and
+            // end of its whole flow, not per fragment. Padding on the cells covers the gap: unlike
+            // a margin, which fragmentation drops at a break, padding on a box that begins a page
+            // is drawn there, so whichever cell follows a break gets its own inset.
+            [`.${NOTEBOOK_CELL_CONTENT_CLASS}`]: {
+              paddingTop: `${PDF_CELL_INSET_MM}mm`,
+            },
+            // The column's own inset, dropped on every side so the page margin above is the single
+            // thing holding the document off the paper. Its reading-width padding exists to stop
+            // prose running the full width of a wide screen, which the margin already does here —
+            // left in place the two stack, costing ~110px of a 794px sheet across and putting the
+            // first heading a good 20mm down the page.
+            [`.${NOTEBOOK_DOCUMENT_CLASS}`]: {
+              maxWidth: 'none !important',
+              padding: '0 !important',
+            },
+            // The actual lever a headless-Chrome PDF engine consults for physical page shape, per
+            // the CSS Paged Media spec — @grafana/ui's own base styles already touch this property
+            // (GlobalStyles/elements.ts sets `size: auto`), just never to a fixed orientation. Comes
+            // after that base rule in source order, so it wins the cascade for `size` without
+            // needing `!important`, which `@page` descriptors do not reliably support anyway.
+            // Margin stays zero: the inset lives in the body's padding above instead, so the
+            // notebook's canvas colour reaches the paper's edge rather than stopping short of it.
+            '@page': {
+              size: `${PDF_PAGE_WIDTH_MM}mm ${PDF_PAGE_HEIGHT_MM}mm`,
+              margin: 0,
+            },
+          }}
+        />
+      )}
+      <div className={styles.container}>
+        <NotebookHiddenVariables model={model} />
+        {/* Dropped wholesale for a PDF, rather than emptied: everything it holds is either an
+            editing affordance or a time control, none of which mean anything in a printed
+            document — and an empty row still spends its own padding, pushing the first heading
+            further down the page. */}
+        {!isPdfRender && (
+          <div className={styles.controls}>
+            {!isKioskFull && (
+              <>
+                {/* Not gated on edit mode: the assistant writes without entering it, and a failed
+                    save has to be visible and retryable there too. This renders nothing until there
+                    is something to say. */}
+                <NotebookSaveStatus autosave={model.autosave} />
+                {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
+                <NotebookEditToggle notebook={model} />
+              </>
+            )}
+            {!hideTimeControls && (
+              <>
+                <timePicker.Component model={timePicker} />
+                <refreshPicker.Component model={refreshPicker} />
+              </>
+            )}
+          </div>
         )}
+        <body.Component model={body} />
+        {overlay && <overlay.Component model={overlay} />}
       </div>
-      <body.Component model={body} />
-      {overlay && <overlay.Component model={overlay} />}
-    </div>
+    </>
   );
 }
 
@@ -455,6 +565,13 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
+    // For a person printing this page directly from their own browser — not the PDF export's
+    // headless render, which never triggers print media and gets its own fixed-width override
+    // (see the `Global` styles above, keyed off `isNotebookPdfLayoutUrl`).
+    '@media print': {
+      maxWidth: '794px',
+      margin: '0 auto',
+    },
   }),
   controls: css({
     display: 'flex',

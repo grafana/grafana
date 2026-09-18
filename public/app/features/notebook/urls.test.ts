@@ -4,6 +4,7 @@ import { HistoryWrapper, config, locationService, setLocationService } from '@gr
 
 import {
   isNotebookEditUrl,
+  isNotebookPdfLayoutUrl,
   notebookEditHref,
   notebookEditUrl,
   notebookShareUrl,
@@ -78,6 +79,25 @@ describe('notebook urls', () => {
     locationService.push(`/notebooks/nb1${search}`);
 
     expect(isNotebookEditUrl()).toBe(expected);
+  });
+
+  // `encoding=pdf` is the render pipeline's own param, not one this route defines — it reaches the
+  // page verbatim because Grafana builds the headless browser's target url from the whole
+  // `/render/...` request's raw query string, the same way `kiosk`/`hideNav` do.
+  // Exactly 'true', on the same terms as the edit param. `encoding=pdf` deliberately does not count:
+  // that one belongs to the render transport, and the page owning its own layout signal is the whole
+  // point of this param existing.
+  it.each([
+    ['?pdfLayout=true', true],
+    ['?pdfLayout=false', false],
+    ['?pdfLayout=1', false],
+    ['?encoding=pdf', false],
+    ['', false],
+  ])('reads "%s" as a PDF layout %s', (search, expected) => {
+    setHistory(1);
+    locationService.push(`/notebooks/nb1${search}`);
+
+    expect(isNotebookPdfLayoutUrl()).toBe(expected);
   });
 
   it('builds an absolute share url', () => {

@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { KioskMode } from 'app/types/dashboard';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
@@ -26,6 +28,15 @@ import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
  */
 export function NotebookToolbar({ uid, scene }: { uid?: string; scene: NotebookScene }) {
   const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
+
+  // Unlike the dashboard toolbar, this one is a plain sibling of the scene rather than something
+  // portaled into the app-chrome header, so it needs its own check to disappear from a PDF export's
+  // headless render — kiosk mode there suppresses the app-chrome nav for free, but not this.
+  if (kioskMode === KioskMode.Full) {
+    return null;
+  }
 
   return (
     <div className={styles.toolbar}>{uid ? <NotebookActions uid={uid} scene={scene} /> : <UnavailableActions />}</div>
