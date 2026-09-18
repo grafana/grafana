@@ -569,11 +569,28 @@ export function useMoveFolderMutationFacade() {
  * actually returns the object), so re-fetch instead. If cascade delete is in progress, track the
  * UID so folder rows in the browse tree can show a "Deleting" indicator (see
  * DeletingFolderBadge.tsx) until it's confirmed gone.
+ *
+ * The backend doesn't necessarily have deletionTimestamp persisted and visible to a read by the
+ * moment the delete call itself resolves, so a single immediate check can race and wrongly
+ * conclude no cascade ever started -- retry a few times, with a short delay in between, before
+ * giving up. Callers await this, so the delete flow (e.g. DeleteModal's confirm button) stays in
+ * its "Deleting..." state for the (short, bounded) duration of these retries too.
  */
+const TRACK_CASCADE_DELETE_MAX_ATTEMPTS = 5;
+const TRACK_CASCADE_DELETE_RETRY_DELAY_MS = 400;
+
 async function trackCascadeDeleteIfStarted(folderUID: string) {
-  const check = await dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: folderUID }));
-  if (check?.data?.metadata?.deletionTimestamp) {
-    dispatch(itemCascadeDeleteStarted(folderUID));
+  for (let attempt = 0; attempt < TRACK_CASCADE_DELETE_MAX_ATTEMPTS; attempt++) {
+    const check = await dispatch(
+      folderAPIv1beta1.endpoints.getFolder.initiate({ name: folderUID }, { forceRefetch: true })
+    );
+    if (check?.data?.metadata?.deletionTimestamp) {
+      dispatch(itemCascadeDeleteStarted(folderUID));
+      return;
+    }
+    if (attempt < TRACK_CASCADE_DELETE_MAX_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, TRACK_CASCADE_DELETE_RETRY_DELAY_MS));
+    }
   }
 }
 

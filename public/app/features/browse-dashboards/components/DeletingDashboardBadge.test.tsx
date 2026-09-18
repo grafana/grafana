@@ -23,10 +23,11 @@ jest.mock('../state/actions', () => {
   };
 });
 
-const mockGetDashboardDTO = jest.fn();
+const mockGet = jest.fn();
 
-jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => Promise.resolve({ getDashboardDTO: mockGetDashboardDTO }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ get: mockGet }),
 }));
 
 describe('DeletingDashboardBadge', () => {
@@ -34,10 +35,8 @@ describe('DeletingDashboardBadge', () => {
     jest.clearAllMocks();
   });
 
-  it('renders a Deleting badge while the dashboard still has a deletionTimestamp', async () => {
-    mockGetDashboardDTO.mockResolvedValue({
-      meta: { k8s: { deletionTimestamp: '2024-01-01T00:00:00Z' } },
-    });
+  it('shows a Deleting badge as long as the dashboard can still be read', async () => {
+    mockGet.mockResolvedValue({ metadata: {} });
 
     render(<DeletingDashboardBadge dashboardUID="dash-1" />);
 
@@ -45,18 +44,42 @@ describe('DeletingDashboardBadge', () => {
   });
 
   it('renders nothing once the dashboard is confirmed gone (404)', async () => {
-    mockGetDashboardDTO.mockRejectedValue({ status: 404, data: {} });
+    mockGet.mockRejectedValue({ status: 404, data: {} });
 
     render(<DeletingDashboardBadge dashboardUID="dash-1" />);
 
     await waitFor(() => expect(screen.queryByText('Deleting')).not.toBeInTheDocument());
   });
 
-  it('renders nothing once the dashboard no longer has a deletionTimestamp', async () => {
-    mockGetDashboardDTO.mockResolvedValue({ meta: { k8s: {} } });
+  it('suppresses the global error alert for the polling request', async () => {
+    // A 404 here is the *expected* outcome once the dashboard is actually gone -- it shouldn't
+    // pop a "not found" toast for every dashboard a cascade delete finishes with.
+    mockGet.mockResolvedValue({ metadata: {} });
 
     render(<DeletingDashboardBadge dashboardUID="dash-1" />);
 
-    await waitFor(() => expect(screen.queryByText('Deleting')).not.toBeInTheDocument());
+    await waitFor(() => expect(mockGet).toHaveBeenCalled());
+    expect(mockGet).toHaveBeenCalledWith(expect.any(String), undefined, undefined, { showErrorAlert: false });
+  });
+
+  it("shows the stuck badge using an ancestor's propagated error", async () => {
+    // Dashboards have no status of their own -- the error only exists on whichever ancestor
+    // folder's cascade blamed this dashboard by name (see usePropagateCascadeDeleteToChildren).
+    mockGet.mockResolvedValue({ metadata: {} });
+
+    render(<DeletingDashboardBadge dashboardUID="dash-1" />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: undefined,
+          childrenByParentUID: {},
+          openFolders: {},
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: { 'dash-1': ['delete dashboard dash-1: locked'] },
+        },
+      },
+    });
+
+    expect(await screen.findByText('Deletion stuck')).toBeInTheDocument();
   });
 });

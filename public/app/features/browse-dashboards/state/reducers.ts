@@ -216,6 +216,14 @@ export function itemCascadeDeleteStarted(state: BrowseDashboardsState, action: P
 
 export function itemCascadeDeleteFinished(state: BrowseDashboardsState, action: PayloadAction<string>) {
   delete state.cascadeDeletingUIDs[action.payload];
+  delete state.cascadeDeleteErrors[action.payload];
+}
+
+export function itemCascadeDeleteErrored(
+  state: BrowseDashboardsState,
+  action: PayloadAction<{ uid: string; errors: string[] }>
+) {
+  state.cascadeDeleteErrors[action.payload.uid] = action.payload.errors;
 }
 
 export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<Array<string | undefined>>) {

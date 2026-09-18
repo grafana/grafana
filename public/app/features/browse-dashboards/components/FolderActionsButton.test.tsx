@@ -69,6 +69,11 @@ describe('browse-dashboards FolderActionsButton', () => {
     expect(screen.getByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
   });
 
+  it('disables the button while the folder is being cascade-deleted', () => {
+    render(<FolderActionsButton folder={mockFolder} isFolderDeleting />);
+    expect(screen.getByRole('button', { name: 'Folder actions' })).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('renders all the options if the user has full permissions', async () => {
     const { user } = render(<FolderActionsButton folder={mockFolder} />);
 

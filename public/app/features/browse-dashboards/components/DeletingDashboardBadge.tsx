@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { isFetchError } from '@grafana/runtime';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { useDispatch } from 'app/types/store';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getAPINamespace } from 'app/api/utils';
+import { type ObjectMeta } from 'app/features/apiserver/types';
+import {
+  DASHBOARD_API_GROUP,
+  dashboardAPIVersionResolver,
+} from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
 import { refetchChildren } from '../state/actions';
@@ -11,8 +16,9 @@ import { itemCascadeDeleteFinished } from '../state/slice';
 import { CascadeDeleteIndicator } from './CascadeDeleteIndicator';
 
 // Dashboards have no RTK Query endpoint exposing a single item's raw metadata with built-in
-// polling support (unlike folders' useGetFolderQuery), so this PoC polls the same promise-based
-// DashboardAPI the delete flow itself already uses (getDashboardDTO's `meta.k8s`).
+// polling support (unlike folders' useGetFolderQuery), so this polls the raw k8s resource
+// directly instead -- showErrorAlert: false is essential here: a 404 is the *expected* outcome
+// once the dashboard is actually gone, not a real error worth popping a toast over.
 const POLL_INTERVAL_MS = 3000;
 
 interface Props {
@@ -33,20 +39,23 @@ interface Props {
 export function DeletingDashboardBadge({ dashboardUID, parentUID }: Props) {
   const dispatch = useDispatch();
   const [isStillDeleting, setIsStillDeleting] = useState(true);
+  // Dashboards have no status of their own to report a stuck delete -- the error lives on
+  // whichever ancestor folder's reconcile pass actually tried and failed to delete this one (see
+  // usePropagateCascadeDeleteToChildren).
+  const errors = useSelector((state) => state.browseDashboards.cascadeDeleteErrors[dashboardUID]);
 
   useEffect(() => {
     let cancelled = false;
+    const url = `/apis/${DASHBOARD_API_GROUP}/${dashboardAPIVersionResolver.getV1()}/namespaces/${getAPINamespace()}/dashboards/${dashboardUID}`;
 
     async function poll() {
       try {
-        // Use the v1 API explicitly: the unified DashboardAPI's getDashboardDTO return type is a
-        // v1/v2 union without a common `.meta`, but the v1 `dto` subresource reads through
-        // regardless of the dashboard's actual stored version.
-        const api = await getDashboardAPI('v1');
-        const dto = await api.getDashboardDTO(dashboardUID);
-        if (!cancelled && !dto.meta.k8s?.deletionTimestamp) {
-          setIsStillDeleting(false);
-        }
+        // Deliberately not clearing isStillDeleting here even if no deletionTimestamp is set yet:
+        // this dashboard is only tracked because a cascade delete affecting it is underway (see
+        // usePropagateCascadeDeleteToChildren), and the backend may not have reached it yet --
+        // there's no reliable "definitely not going to be deleted after all" signal to bail out on
+        // early, so keep showing "Deleting" until it's actually gone (the catch block's 404).
+        await getBackendSrv().get<{ metadata: ObjectMeta }>(url, undefined, undefined, { showErrorAlert: false });
       } catch (error) {
         if (cancelled) {
           return;
@@ -80,5 +89,5 @@ export function DeletingDashboardBadge({ dashboardUID, parentUID }: Props) {
     return null;
   }
 
-  return <CascadeDeleteIndicator />;
+  return <CascadeDeleteIndicator errors={errors} />;
 }

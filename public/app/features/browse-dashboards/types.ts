@@ -39,6 +39,13 @@ export interface BrowseDashboardsState {
   // api/browseDashboardsAPI.ts); cleared once the item is confirmed gone. PoC for
   // kubernetesFolderCascadeDeleteAsync.
   cascadeDeletingUIDs: Record<string, boolean>;
+
+  // Errors from an ancestor's cascade delete that specifically named this UID (see
+  // usePropagateCascadeDeleteToChildren) -- a child folder or dashboard has no status of its own
+  // to poll for this (the error lives on whichever ancestor's reconcile pass tried and failed to
+  // delete it), so this is how its row finds out it's the one actually stuck, rather than showing
+  // a plain "Deleting" spinner forever. Cleared alongside cascadeDeletingUIDs.
+  cascadeDeleteErrors: Record<string, string[]>;
 }
 
 export interface UIDashboardViewItem {

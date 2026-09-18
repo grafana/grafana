@@ -6,12 +6,6 @@ import { useStyles2 } from '@grafana/ui';
 interface Props {
   /** 0-100. Renders an indeterminate sliding animation instead when omitted. */
   percent?: number;
-  /**
-   * Which theme color to fill the bar with. Defaults to 'error' to match the red "Deleting"
-   * badge used in the browse tree; pass 'info' when pairing this with an info-severity Alert
-   * (e.g. FolderCascadeStatusBanner's working state) so the bar doesn't read as an error there.
-   */
-  color?: 'error' | 'info';
 }
 
 /**
@@ -19,10 +13,11 @@ interface Props {
  * useCascadeDeleteProgress). @grafana/ui's LoadingBar is indeterminate-only, and this needs to
  * visibly fill up as the count drops rather than just slide back and forth forever, so the tree
  * badge and the folder-page banner both read as an operation that's actually progressing instead
- * of one that might be stuck.
+ * of one that might be stuck. Always info-colored: cascade delete is an expected, non-alarming
+ * background operation, not an error, so it shouldn't read as one.
  */
-export function CascadeDeleteProgressBar({ percent, color = 'error' }: Props) {
-  const styles = useStyles2(getStyles, color);
+export function CascadeDeleteProgressBar({ percent }: Props) {
+  const styles = useStyles2(getStyles);
 
   if (percent === undefined) {
     return (
@@ -39,12 +34,12 @@ export function CascadeDeleteProgressBar({ percent, color = 'error' }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: 'error' | 'info') => {
+const getStyles = (theme: GrafanaTheme2) => {
   const slide = keyframes({
     '0%': { left: '-40%' },
     '100%': { left: '100%' },
   });
-  const fillColor = theme.colors[color].main;
+  const fillColor = theme.colors.info.main;
 
   return {
     track: css({

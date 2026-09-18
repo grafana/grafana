@@ -36,6 +36,7 @@ import { SearchView } from './components/SearchView';
 import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
+import { useIsFolderCascadeDeleting } from './utils/useIsFolderCascadeDeleting';
 
 // New Browse/Manage/Search Dashboards views for nested folders
 const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
@@ -114,6 +115,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
+  const isFolderDeleting = useIsFolderCascadeDeleting(folderDTO?.uid);
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
@@ -157,7 +159,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     return (
       <Stack alignItems={'center'} gap={2}>
         <Text element={'h1'}>{title}</Text>
-        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
+        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && !isFolderDeleting && (
           <IconButton
             name="pen"
             size="lg"
@@ -179,9 +181,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId={isStarredView ? 'starred' : 'dashboards/browse'}
       pageNav={navModel}
-      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder && !isFolderDeleting ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} isFolderDeleting={isFolderDeleting} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -46,6 +47,25 @@ const cascadeDeleteControllerSimulatedChildDelay = 2 * time.Second
 // finalizer, deletes, sleeps, then removes the finalizer itself, all inline, rather than relying on
 // a watch-driven follow-up reconcile.
 const cascadeDeleteDashboardFinalizer = "cascade-delete"
+
+// cascadeDeleteControllerSimulatedFailureMarker is a PoC-only demo hack: a direct child folder or
+// dashboard whose resource name (metadata.name, not its title) contains this substring has its
+// delete deliberately fail every pass instead of actually being attempted, so a demo tree can
+// include a guaranteed-stuck child -- exercising status.cascadeDelete's error state and the
+// frontend's stuck-cascade UI (CascadeDeleteIndicator's error badge, FolderCascadeStatusBanner's
+// warning, the "move this folder instead" recovery) on demand, without waiting for an organic
+// failure (e.g. the pre-existing-finalizer backfill gap documented above). Give such a resource an
+// explicit metadata.name (generateName won't do, since the suffix is random) containing this
+// string. Remove entirely before this is anything more than a demo.
+const cascadeDeleteControllerSimulatedFailureMarker = "cascade-delete-demo-fail"
+
+// simulatedDeleteFailure implements cascadeDeleteControllerSimulatedFailureMarker.
+func simulatedDeleteFailure(name string) error {
+	if strings.Contains(name, cascadeDeleteControllerSimulatedFailureMarker) {
+		return fmt.Errorf("simulated failure for demo purposes (name contains %q)", cascadeDeleteControllerSimulatedFailureMarker)
+	}
+	return nil
+}
 
 // CascadeDeleteController is a PoC, finalizer-driven controller that asynchronously deletes a
 // folder's direct children (subfolders and dashboards) once the folder both carries
@@ -232,13 +252,6 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 	if started == 0 {
 		started = time.Now().UnixMilli()
 	}
-	if err := c.writeStatus(ctx, obj, foldersv1.CascadeDeleteStatus{
-		State:     foldersv1.CascadeDeleteStateWorking,
-		Remaining: int64(remaining),
-		Started:   started,
-	}); err != nil {
-		c.logger.Warn("failed to write cascade delete status", "namespace", namespace, "name", name, "error", err)
-	}
 
 	var errs []string
 	deleted := 0
@@ -264,18 +277,25 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 		deleted++
 	}
 
+	// Written once, after the batch, reflecting its actual outcome -- not before attempting it --
+	// so an already-failing pass doesn't flip the status back to "working" for the whole batch's
+	// duration before flipping to "error" again moments later, only for the *next* pass to repeat
+	// the same flip-flop. A folder wedged on a persistently failing child (e.g. a non-empty
+	// subfolder, see the type doc) now settles on a stable "error" status instead of flickering.
+	//
+	// PoC: the error list is overwritten each pass rather than accumulated, and a child that keeps
+	// failing has no max-attempts/backoff policy beyond the workqueue's own rate limiting.
+	status := foldersv1.CascadeDeleteStatus{
+		State:     foldersv1.CascadeDeleteStateWorking,
+		Remaining: int64(remaining - deleted),
+		Started:   started,
+	}
 	if len(errs) > 0 {
-		// PoC: the error list is overwritten each pass rather than accumulated, and a child that
-		// keeps failing (e.g. a non-empty subfolder, see the type doc) has no max-attempts/backoff
-		// policy beyond the workqueue's own rate limiting on the parent key.
-		if err := c.writeStatus(ctx, obj, foldersv1.CascadeDeleteStatus{
-			State:     foldersv1.CascadeDeleteStateError,
-			Remaining: int64(remaining - deleted),
-			Started:   started,
-			Errors:    errs,
-		}); err != nil {
-			c.logger.Warn("failed to write cascade delete error status", "namespace", namespace, "name", name, "error", err)
-		}
+		status.State = foldersv1.CascadeDeleteStateError
+		status.Errors = errs
+	}
+	if err := c.writeStatus(ctx, obj, status); err != nil {
+		c.logger.Warn("failed to write cascade delete status", "namespace", namespace, "name", name, "error", err)
 	}
 
 	// Requeue immediately for the next batch instead of waiting for the next informer event or the
@@ -289,6 +309,9 @@ func (c *CascadeDeleteController) reconcile(ctx context.Context, key string) err
 // latter only sets deletionTimestamp -- see the CascadeDeleteController doc comment); a non-empty
 // child that lacks the finalizer is rejected by the existing admission validation.
 func (c *CascadeDeleteController) deleteChildFolder(ctx context.Context, namespace, name string) error {
+	if err := simulatedDeleteFailure(name); err != nil {
+		return err
+	}
 	err := c.folders.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil
@@ -305,6 +328,9 @@ func (c *CascadeDeleteController) deleteChildFolder(ctx context.Context, namespa
 // apiserver actually finish deleting it. A real implementation would just delete the dashboard
 // directly, the same as this did before the simulated-latency demo was added.
 func (c *CascadeDeleteController) deleteDashboard(ctx context.Context, namespace, name string) error {
+	if err := simulatedDeleteFailure(name); err != nil {
+		return err
+	}
 	client, err := c.dashboardClient(ctx)
 	if err != nil {
 		return fmt.Errorf("get dashboard client: %w", err)

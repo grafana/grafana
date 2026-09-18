@@ -4,7 +4,6 @@ import { locationService } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
-import { useOfferFolderMove } from '../utils/useOfferFolderMove';
 
 import { FolderCascadeStatusBanner } from './FolderCascadeStatusBanner';
 
@@ -13,12 +12,7 @@ jest.mock('app/api/clients/folder/v1beta1', () => ({
   useGetFolderQuery: jest.fn(),
 }));
 
-jest.mock('../utils/useOfferFolderMove', () => ({
-  useOfferFolderMove: jest.fn(),
-}));
-
 const mockUseGetFolderQuery = useGetFolderQuery as jest.MockedFunction<typeof useGetFolderQuery>;
-const mockUseOfferFolderMove = useOfferFolderMove as jest.MockedFunction<typeof useOfferFolderMove>;
 
 function makeFolder(overrides: Partial<Folder['metadata']> = {}, status?: Folder['status']): Folder {
   return {
@@ -53,7 +47,6 @@ describe('FolderCascadeStatusBanner', () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 3 } }) })
     );
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
     render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
@@ -66,12 +59,11 @@ describe('FolderCascadeStatusBanner', () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 0 } }) })
     );
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
     render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText(/deleting its contents in the background/i)).toBeInTheDocument();
+    expect(screen.getByText(/deleting in the background/i)).toBeInTheDocument();
   });
 
   it('renders nothing once the folder no longer has a deletionTimestamp', () => {
@@ -83,57 +75,58 @@ describe('FolderCascadeStatusBanner', () => {
         ),
       })
     );
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
     render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('surfaces the reported errors when the cascade is stuck', () => {
+  it('surfaces the reported errors when the cascade is stuck, without offering any action', () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({
         data: makeFolder({}, { cascadeDelete: { state: 'error', errors: ['dashboard X is locked'], remaining: 0 } }),
       })
     );
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
     render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('dashboard X is locked')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('offers to move the folder elsewhere', async () => {
-    const offerFolderMove = jest.fn();
+  it('shows the "folder deleted" modal once the folder is confirmed gone, after having seen it deleting', async () => {
     mockUseGetFolderQuery.mockReturnValue(
-      mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'error', errors: ['boom'], remaining: 0 } }) })
+      mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 1 } }) })
     );
-    mockUseOfferFolderMove.mockReturnValue(offerFolderMove);
 
-    const { user } = render(<FolderCascadeStatusBanner folderUID="folder-1" />);
-    await user.click(screen.getByRole('button', { name: /move this folder instead/i }));
-
-    expect(offerFolderMove).toHaveBeenCalledWith('folder-1');
-  });
-
-  it('navigates to the Dashboards page once the folder is confirmed gone', () => {
+    const { rerender, user } = render(<FolderCascadeStatusBanner folderUID="folder-1" />);
     mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ error: { status: 404, data: {} } }));
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
+    rerender(<FolderCascadeStatusBanner folderUID="folder-1" />);
+
+    expect(screen.getByRole('dialog', { name: 'Folder deleted' })).toBeInTheDocument();
 
     // test-utils' render() installs its own fresh locationService for the test, so the
-    // component's effect ends up pushing through that instance -- assert on the resulting
-    // location rather than spying on the (by-then-replaced) module-level one.
+    // button's click ends up pushing through that instance -- assert on the resulting location
+    // rather than spying on the (by-then-replaced) module-level one.
+    await user.click(screen.getByRole('button', { name: /go to dashboards/i }));
+    expect(locationService.getLocation().pathname).toBe('/dashboards');
+  });
+
+  it('does not show the "folder deleted" modal on a 404 before ever having confirmed the folder was actually deleting', () => {
+    // Guards against a request race right after the page loads (e.g. a transient 404 before this
+    // folder's real state has ever been observed) triggering a premature "it's deleted" modal.
+    mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ error: { status: 404, data: {} } }));
+
     render(<FolderCascadeStatusBanner folderUID="folder-1" />);
 
-    expect(locationService.getLocation().pathname).toBe('/dashboards');
+    expect(screen.queryByRole('dialog', { name: 'Folder deleted' })).not.toBeInTheDocument();
   });
 
   it("marks this folder's already-loaded children as cascade-deleting too, for visual effect", () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 2 } }) })
     );
-    mockUseOfferFolderMove.mockReturnValue(jest.fn());
 
     const { store } = render(<FolderCascadeStatusBanner folderUID="folder-1" />, {
       preloadedState: {
@@ -148,6 +141,7 @@ describe('FolderCascadeStatusBanner', () => {
           openFolders: {},
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
           cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: {},
         },
       },
     });

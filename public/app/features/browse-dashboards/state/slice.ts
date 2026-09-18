@@ -18,6 +18,7 @@ const initialState: BrowseDashboardsState = {
     $all: false,
   },
   cascadeDeletingUIDs: {},
+  cascadeDeleteErrors: {},
 };
 
 const browseDashboardsSlice = createSlice({
@@ -40,6 +41,7 @@ export const {
   clearFolders,
   itemCascadeDeleteStarted,
   itemCascadeDeleteFinished,
+  itemCascadeDeleteErrored,
 } = browseDashboardsSlice.actions;
 
 export default {

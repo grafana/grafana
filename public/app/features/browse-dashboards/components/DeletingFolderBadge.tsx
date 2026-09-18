@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
 import { refetchChildren } from '../state/actions';
@@ -29,22 +29,37 @@ interface Props {
  */
 export function DeletingFolderBadge({ folderUID, parentUID }: Props) {
   const dispatch = useDispatch();
-  const { data, error } = useGetFolderQuery({ name: folderUID }, { pollingInterval: POLL_INTERVAL_MS });
+  const { data, error } = useGetFolderQuery(
+    { name: folderUID },
+    { pollingInterval: POLL_INTERVAL_MS, refetchOnMountOrArgChange: true }
+  );
 
   const isGone = isFetchError(error) && error.status === 404;
-  const isStillDeleting = Boolean(data?.metadata?.deletionTimestamp);
+  // A folder only gets tracked here once it's actually confirmed cascade-deleting (see
+  // trackCascadeDeleteIfStarted) or because its parent's own cascade has already started and
+  // propagated tracking down to it (see usePropagateCascadeDeleteToChildren) -- in the latter
+  // case, the backend may not have reached this particular child yet (a folder recurses into its
+  // own children before it can be removed, unlike a flat dashboard delete), so its *own* GET can
+  // legitimately keep responding with no deletionTimestamp for a while. Treat it as deleting
+  // optimistically the whole time it's tracked, and only stop once it's actually gone -- there's
+  // no reliable "definitely not going to be deleted after all" signal to bail out on early here.
+  const isStillDeleting = !isGone;
+  const cascadeDelete = data?.status?.cascadeDelete;
+  // If this folder's *own* reconcile hasn't reported an error, fall back to whatever its parent's
+  // cascade delete blamed on it by name (see usePropagateCascadeDeleteToChildren) -- this folder
+  // has no way to know it's the one stuck otherwise.
+  const propagatedErrors = useSelector((state) => state.browseDashboards.cascadeDeleteErrors[folderUID]);
+  const errors = cascadeDelete?.errors ?? propagatedErrors;
 
-  usePropagateCascadeDeleteToChildren(folderUID, isStillDeleting);
+  usePropagateCascadeDeleteToChildren(folderUID, isStillDeleting, cascadeDelete?.errors);
 
   useEffect(() => {
-    // Either the folder is truly gone (404) or it came back without a deletionTimestamp
-    // (shouldn't normally happen once cascade delete starts, but fail safe) -- either way,
-    // stop tracking it and refetch the parent's children so the row updates/disappears.
-    if (isGone || (data && !isStillDeleting)) {
+    // Truly gone -- stop tracking it and refetch the parent's children so the row disappears.
+    if (isGone) {
       dispatch(itemCascadeDeleteFinished(folderUID));
       dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE }));
     }
-  }, [isGone, data, isStillDeleting, dispatch, folderUID, parentUID]);
+  }, [isGone, dispatch, folderUID, parentUID]);
 
   if (!isStillDeleting) {
     return null;
@@ -52,8 +67,12 @@ export function DeletingFolderBadge({ folderUID, parentUID }: Props) {
 
   return (
     <CascadeDeleteIndicator
-      remaining={data?.status?.cascadeDelete?.remaining}
-      errors={data?.status?.cascadeDelete?.errors}
+      // `remaining` defaults to 0 in the API's zero-value struct, indistinguishable from a
+      // genuinely-confirmed "nothing left" unless the controller has actually reconciled this
+      // folder at least once (state only gets set once it has) -- otherwise this would flash a
+      // misleading "(0 left)" for a child the cascade hasn't reached yet.
+      remaining={cascadeDelete?.state === 'working' ? cascadeDelete.remaining : undefined}
+      errors={errors}
     />
   );
 }

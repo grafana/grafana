@@ -162,6 +162,7 @@ describe('browse-dashboards BrowseView', () => {
           openFolders: { 'same-uid': true },
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
           cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: {},
         },
       },
     });

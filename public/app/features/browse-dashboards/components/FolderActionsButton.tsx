@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
@@ -30,9 +30,11 @@ interface Props {
   /* If the folder is managed by a provisioned repo and is read-only */
   isReadOnlyRepo?: boolean;
   repoType?: RepoType;
+  /** True while this folder itself is undergoing an async cascade delete. */
+  isFolderDeleting?: boolean;
 }
 
-export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
+export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, isFolderDeleting }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
@@ -83,8 +85,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
         type: AppEvents.alertError.name,
         payload: [extractErrorMessage(result.error, fallbackMessage)],
       });
-      // Re-throw so DeleteModal's onDelete catch block knows the delete didn't actually happen
-      // and doesn't move on to waiting for a cascade that was never started.
+      // Re-throw so DeleteModal's onDelete catch block knows the delete didn't actually happen and
+      // leaves the confirm dialog open instead of dismissing as if it had succeeded.
       throw result.error;
     }
 
@@ -95,15 +97,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       },
       source: 'folder_actions',
     });
-  };
-
-  // Navigation only happens once DeleteModal confirms the folder (and its cascade, if any) is
-  // actually gone -- not immediately after the delete request was merely accepted -- so the user
-  // isn't bounced away from feedback about what's actually happening. See DeleteModal's onSettled.
-  const onDeleteSettled = () => {
-    const { parents } = folder;
-    const parentUrl = parents && parents.length ? parents[parents.length - 1].url : '/dashboards';
-    locationService.push(parentUrl);
   };
 
   const showMoveModal = () => {
@@ -135,7 +128,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
             $all: false,
           },
           onConfirm: onDelete,
-          onSettled: onDeleteSettled,
         },
       })
     );
@@ -193,7 +185,18 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary" disabled={isReadOnlyRepo && !canViewPermissions}>
+        <Button
+          variant="secondary"
+          disabled={(isReadOnlyRepo && !canViewPermissions) || isFolderDeleting}
+          tooltip={
+            isFolderDeleting
+              ? t(
+                  'browse-dashboards.folder-actions-button.folder-deleting-tooltip',
+                  'This folder is being deleted, so its actions are disabled.'
+                )
+              : undefined
+          }
+        >
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

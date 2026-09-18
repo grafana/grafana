@@ -89,12 +89,39 @@ describe('DeletingFolderBadge', () => {
     expect(screen.queryByText('Deleting')).not.toBeInTheDocument();
   });
 
-  it('renders nothing if the folder no longer has a deletionTimestamp', () => {
+  it('keeps showing Deleting even if this folder has no deletionTimestamp of its own yet', () => {
+    // Only rendered because it was tracked (directly, or propagated from a cascading parent -- see
+    // usePropagateCascadeDeleteToChildren), so the backend simply may not have reached this
+    // particular child yet. There's no reliable signal to treat that as "not going to be deleted
+    // after all", so it should keep showing "Deleting" rather than going quiet.
     mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ data: makeFolder({ deletionTimestamp: undefined }) }));
 
     render(<DeletingFolderBadge folderUID="folder-1" />);
 
-    expect(screen.queryByText('Deleting')).not.toBeInTheDocument();
+    expect(screen.getByText('Deleting')).toBeInTheDocument();
+  });
+
+  it("shows the stuck badge using an ancestor's propagated error when this folder's own status has none", () => {
+    // This folder was never touched by its own reconcile pass (the delete attempt on it failed
+    // before it got that far), so status.cascadeDelete.errors is empty here -- the error only
+    // exists on whichever ancestor's cascade blamed this folder by name (see
+    // usePropagateCascadeDeleteToChildren).
+    mockUseGetFolderQuery.mockReturnValue(mockQueryResult({ data: makeFolder() }));
+
+    render(<DeletingFolderBadge folderUID="folder-1" />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: undefined,
+          childrenByParentUID: {},
+          openFolders: {},
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: { 'folder-1': ['delete child folder folder-1: folder is not empty'] },
+        },
+      },
+    });
+
+    expect(screen.getByText('Deletion stuck')).toBeInTheDocument();
   });
 
   it("marks this folder's already-loaded children as cascade-deleting too, for visual effect", () => {
@@ -113,6 +140,7 @@ describe('DeletingFolderBadge', () => {
           openFolders: {},
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
           cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: {},
         },
       },
     });

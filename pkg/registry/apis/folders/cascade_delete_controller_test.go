@@ -92,8 +92,9 @@ func TestCascadeDeleteController_Reconcile_DeletesDirectChildrenAndTracksRemaini
 	}
 	ctrl, folderDyn, dashDyn := newCascadeDeleteController(searcher, []runtime.Object{root, child}, []runtime.Object{dash})
 
-	// First pass: both direct children still show up in the index, so this batch deletes them and
-	// reports remaining=2 (computed before the batch ran) while the deletes were in flight.
+	// First pass: both direct children still show up in the index, so this batch deletes both of
+	// them and reports remaining=0 -- computed from the actual outcome of this pass, not from the
+	// count seen before it ran.
 	require.NoError(t, ctrl.reconcile(context.Background(), "default/root"))
 
 	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
@@ -115,7 +116,7 @@ func TestCascadeDeleteController_Reconcile_DeletesDirectChildrenAndTracksRemaini
 
 	remaining, _, err := unstructured.NestedInt64(rootObj.Object, "status", "cascadeDelete", "remaining")
 	require.NoError(t, err)
-	require.Equal(t, int64(2), remaining)
+	require.Equal(t, int64(0), remaining)
 
 	started, _, err := unstructured.NestedInt64(rootObj.Object, "status", "cascadeDelete", "started")
 	require.NoError(t, err)
@@ -138,6 +139,56 @@ func TestCascadeDeleteController_Reconcile_DeletesDirectChildrenAndTracksRemaini
 	finished, _, err := unstructured.NestedInt64(rootObj.Object, "status", "cascadeDelete", "finished")
 	require.NoError(t, err)
 	require.NotZero(t, finished)
+}
+
+func TestCascadeDeleteController_Reconcile_SettlesOnErrorInsteadOfFlappingBackToWorking(t *testing.T) {
+	root := unstructuredFolder("default", "root", []string{foldersv1.CascadeDeleteFinalizer}, true)
+	okChild := unstructuredFolder("default", "ok-child", nil, false)
+	// simulatedDeleteFailure fails any delete whose resource name contains this marker, every
+	// single pass -- used here to simulate a child that can never be deleted (e.g. the
+	// pre-existing-finalizer backfill gap described on CascadeDeleteController).
+	stuckChild := unstructuredFolder("default", "cascade-delete-demo-fail-child", nil, false)
+
+	searcher := &fakeCascadeSearcher{
+		childrenByParent: map[string][]string{"root": {"ok-child", stuckChild.GetName()}},
+	}
+	ctrl, folderDyn, _ := newCascadeDeleteController(searcher, []runtime.Object{root, okChild, stuckChild}, nil)
+	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
+
+	// First pass: ok-child is deleted, but the stuck one fails -- status must reflect that
+	// failure, not the transient "working" state a naive implementation might leave behind from
+	// before the batch ran.
+	require.NoError(t, ctrl.reconcile(context.Background(), "default/root"))
+
+	rootObj, err := folderDyn.Resource(folderGVR).Namespace("default").Get(context.Background(), "root", metav1.GetOptions{})
+	require.NoError(t, err)
+	state, _, err := unstructured.NestedString(rootObj.Object, "status", "cascadeDelete", "state")
+	require.NoError(t, err)
+	require.Equal(t, string(foldersv1.CascadeDeleteStateError), state)
+
+	remaining, _, err := unstructured.NestedInt64(rootObj.Object, "status", "cascadeDelete", "remaining")
+	require.NoError(t, err)
+	require.Equal(t, int64(1), remaining, "only the stuck child should still be counted as remaining")
+
+	_, err = folderDyn.Resource(folderGVR).Namespace("default").Get(context.Background(), "ok-child", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "ok-child should have been deleted")
+
+	// Second pass: the index has caught up (ok-child is gone), so the only child left is the one
+	// that always fails -- the status must settle on "error" and stay there, not flip back to
+	// "working" for this pass before failing again.
+	searcher.childrenByParent = map[string][]string{"root": {stuckChild.GetName()}}
+	require.NoError(t, ctrl.reconcile(context.Background(), "default/root"))
+
+	rootObj, err = folderDyn.Resource(folderGVR).Namespace("default").Get(context.Background(), "root", metav1.GetOptions{})
+	require.NoError(t, err)
+	state, _, err = unstructured.NestedString(rootObj.Object, "status", "cascadeDelete", "state")
+	require.NoError(t, err)
+	require.Equal(t, string(foldersv1.CascadeDeleteStateError), state, "must stay on error, not flap back to working")
+
+	errs, _, err := unstructured.NestedStringSlice(rootObj.Object, "status", "cascadeDelete", "errors")
+	require.NoError(t, err)
+	require.Len(t, errs, 1)
+	require.Contains(t, errs[0], stuckChild.GetName())
 }
 
 func TestCascadeDeleteController_Reconcile_MissingFolderIsNotAnError(t *testing.T) {

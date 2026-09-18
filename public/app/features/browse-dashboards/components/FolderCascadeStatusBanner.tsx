@@ -1,15 +1,17 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
-import { Alert, Button, Space, Stack, Text } from '@grafana/ui';
+import { Alert, Space, Stack, Text } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 
 import { useCascadeDeleteProgress } from '../utils/useCascadeDeleteProgress';
-import { useOfferFolderMove } from '../utils/useOfferFolderMove';
 import { usePropagateCascadeDeleteToChildren } from '../utils/usePropagateCascadeDeleteToChildren';
+import { useTrustCascadeDoneSignal } from '../utils/useTrustCascadeDoneSignal';
 
+import { CascadeDeleteErrorList } from './CascadeDeleteErrorList';
 import { CascadeDeleteProgressBar } from './CascadeDeleteProgressBar';
+import { FolderDeletedModal } from './FolderDeletedModal';
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -27,23 +29,33 @@ interface Props {
  * Polls independently of that mechanism since a completely different user, with nothing in their
  * own cascadeDeletingUIDs, might be the one to land here. Also marks this folder's own children
  * as cascade-deleting (see usePropagateCascadeDeleteToChildren) and, once the folder itself is
- * confirmed gone, navigates away -- there's nothing left here to look at.
+ * confirmed gone, shows FolderDeletedModal instead of silently redirecting away.
  */
 export function FolderCascadeStatusBanner({ folderUID }: Props) {
-  const { data, error } = useGetFolderQuery({ name: folderUID }, { pollingInterval: POLL_INTERVAL_MS });
-  const offerFolderMove = useOfferFolderMove();
+  const { data, error } = useGetFolderQuery(
+    { name: folderUID },
+    { pollingInterval: POLL_INTERVAL_MS, refetchOnMountOrArgChange: true }
+  );
   const cascadeDelete = data?.status?.cascadeDelete;
-  const percent = useCascadeDeleteProgress(cascadeDelete?.remaining);
+  // `remaining` defaults to 0 in the API's zero-value struct, indistinguishable from a
+  // genuinely-confirmed "nothing left" unless the controller has actually reconciled this folder
+  // at least once (state only gets set once it has).
+  const trustworthyRemaining = cascadeDelete?.state === 'working' ? cascadeDelete.remaining : undefined;
+  const percent = useCascadeDeleteProgress(trustworthyRemaining);
   const isDeleting = Boolean(data?.metadata?.deletionTimestamp);
   const isGone = isFetchError(error) && error.status === 404;
+  const canTrustGone = useTrustCascadeDoneSignal(isDeleting);
 
-  usePropagateCascadeDeleteToChildren(folderUID, isDeleting);
+  usePropagateCascadeDeleteToChildren(folderUID, isDeleting, cascadeDelete?.errors);
 
-  useEffect(() => {
-    if (isGone) {
-      locationService.push('/dashboards');
-    }
-  }, [isGone]);
+  const [showDeletedModal, setShowDeletedModal] = useState(false);
+  if (isGone && canTrustGone && !showDeletedModal) {
+    setShowDeletedModal(true);
+  }
+
+  if (showDeletedModal) {
+    return <FolderDeletedModal isOpen onGoToDashboards={() => locationService.push('/dashboards')} />;
+  }
 
   if (!isDeleting) {
     return null;
@@ -60,20 +72,21 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
           )}
         >
           {cascadeDelete.errors && cascadeDelete.errors.length > 0 ? (
-            <ul>
-              {cascadeDelete.errors.map((err, i) => (
-                <li key={i}>{err}</li>
-              ))}
-            </ul>
+            <>
+              <Text>
+                {t(
+                  'browse-dashboards.folder-cascade-status-banner.error-fix-instructions',
+                  "These items need manual attention -- try moving them to another folder, deleting them directly, or fixing whatever's blocking them below. Deletion retries automatically once they're resolved:"
+                )}
+              </Text>
+              <CascadeDeleteErrorList errors={cascadeDelete.errors} />
+            </>
           ) : (
             t(
               'browse-dashboards.folder-cascade-status-banner.no-details',
-              'No details were reported -- it may resolve on its own on the next retry.'
+              'No error details were reported. This may resolve on its own on the next retry.'
             )
           )}
-          <Button size="sm" variant="secondary" onClick={() => offerFolderMove(folderUID)}>
-            {t('browse-dashboards.folder-cascade-status-banner.move-button', 'Move this folder instead')}
-          </Button>
         </Alert>
         <Space v={2} />
       </>
@@ -89,15 +102,17 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
         <Stack direction="column" gap={1}>
           <Stack direction="row" justifyContent="space-between" alignItems="baseline">
             <Text color="secondary">
-              {cascadeDelete?.remaining
+              {trustworthyRemaining
                 ? t('browse-dashboards.folder-cascade-status-banner.working-remaining', '', {
-                    count: cascadeDelete.remaining,
-                    defaultValue_one: 'Deleting its contents in the background -- {{count}} item left.',
-                    defaultValue_other: 'Deleting its contents in the background -- {{count}} items left.',
+                    count: trustworthyRemaining,
+                    defaultValue_one:
+                      '{{count}} item left to delete in the background. Folder actions are disabled until it finishes.',
+                    defaultValue_other:
+                      '{{count}} items left to delete in the background. Folder actions are disabled until it finishes.',
                   })
                 : t(
                     'browse-dashboards.folder-cascade-status-banner.working-no-count',
-                    'Deleting its contents in the background. This page will stop working once it finishes.'
+                    'Deleting in the background. Folder actions are disabled until it finishes.'
                   )}
             </Text>
             {percent !== undefined && (
@@ -106,7 +121,7 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
               </Text>
             )}
           </Stack>
-          <CascadeDeleteProgressBar percent={percent} color="info" />
+          <CascadeDeleteProgressBar percent={percent} />
         </Stack>
       </Alert>
       <Space v={2} />

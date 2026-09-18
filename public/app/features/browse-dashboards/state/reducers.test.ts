@@ -27,6 +27,7 @@ function createInitialState(): BrowseDashboardsState {
       panel: {},
     },
     cascadeDeletingUIDs: {},
+    cascadeDeleteErrors: {},
   };
 }
 
