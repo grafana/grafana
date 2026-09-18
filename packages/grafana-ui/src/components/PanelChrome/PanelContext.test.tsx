@@ -11,20 +11,23 @@ import {
 } from './PanelContext';
 
 function createAdHocTransformationsApi() {
-  let transformations: readonly DataTransformerConfig[] = [];
-  const listeners = new Set<() => void>();
+  const emptyTransformations: readonly DataTransformerConfig[] = [];
+  const transformations = new Map<string, readonly DataTransformerConfig[]>();
+  const listeners = new Map<string, Set<() => void>>();
   const sourceSeries = [toDataFrame({ fields: [{ name: 'value', values: [1] }] })];
 
   const api: AdHocTransformationsApi = {
-    get: () => transformations,
-    set: (nextTransformations) => {
-      transformations = nextTransformations;
-      listeners.forEach((listener) => listener());
+    get: (tag) => transformations.get(tag) ?? emptyTransformations,
+    set: (tag, nextTransformations) => {
+      transformations.set(tag, nextTransformations);
+      listeners.get(tag)?.forEach((listener) => listener());
     },
     getSourceSeries: () => sourceSeries,
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
+    subscribe: (tag, listener) => {
+      const tagListeners = listeners.get(tag) ?? new Set();
+      tagListeners.add(listener);
+      listeners.set(tag, tagListeners);
+      return () => tagListeners.delete(listener);
     },
   };
 
@@ -36,8 +39,10 @@ function wrapperWith(context: PanelContext) {
 }
 
 describe('useAdHocTransformations', () => {
+  const tag = 'test:owner';
+
   it('returns undefined when the panel host does not provide an ad-hoc stage', () => {
-    const { result } = renderHook(() => useAdHocTransformations(), {
+    const { result } = renderHook(() => useAdHocTransformations(tag), {
       wrapper: wrapperWith({ eventsScope: 'global', eventBus: new EventBusSrv() }),
     });
 
@@ -46,7 +51,7 @@ describe('useAdHocTransformations', () => {
 
   it('exposes reactive transformations without requiring consumers to subscribe to the API', () => {
     const { api, sourceSeries } = createAdHocTransformationsApi();
-    const { result } = renderHook(() => useAdHocTransformations(), {
+    const { result } = renderHook(() => useAdHocTransformations(tag), {
       wrapper: wrapperWith({ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }),
     });
     const nextTransformations: DataTransformerConfig[] = [{ id: 'organize', options: {} }];

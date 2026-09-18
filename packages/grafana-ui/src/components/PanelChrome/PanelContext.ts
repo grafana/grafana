@@ -17,19 +17,19 @@ import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './t
 
 /** Per-viewer transformations applied after the panel's saved transformations. @alpha */
 export interface AdHocTransformationsApi {
-  /** Returns a stable reference until `set` is called. */
-  get(): readonly DataTransformerConfig[];
+  /** Returns a stable reference for this owner until `set` is called for the same tag. */
+  get(tag: string): readonly DataTransformerConfig[];
 
-  /** Replaces the stage. Pass `[]` to clear it. */
-  set(transformations: DataTransformerConfig[]): void;
+  /** Replaces one owner's stage. Pass `[]` to clear it. */
+  set(tag: string, transformations: readonly DataTransformerConfig[]): void;
 
   /**
    * Returns the raw frames that entered this stage, including fields removed by its transformations.
    */
-  getSourceSeries(): readonly DataFrame[];
+  getSourceSeries(tag: string): readonly DataFrame[];
 
-  /** Registers a listener that runs whenever `set` replaces the transformation stage. */
-  subscribe(callback: () => void): () => void;
+  /** Registers a listener that runs whenever `set` replaces this owner's transformation stage. */
+  subscribe(tag: string, callback: () => void): () => void;
 }
 
 /** Reactive view of the panel host's per-viewer transformation stage. @alpha */
@@ -41,7 +41,7 @@ export interface AdHocTransformationsState {
   sourceSeries: readonly DataFrame[];
 
   /** Replaces the ad-hoc stage. Pass `[]` to clear it. */
-  setTransformations(transformations: DataTransformerConfig[]): void;
+  setTransformations(transformations: readonly DataTransformerConfig[]): void;
 }
 
 /** @alpha */
@@ -148,15 +148,15 @@ export const usePanelContext = () => useContext(PanelContextRoot);
  *
  * @alpha
  */
-export function useAdHocTransformations(): AdHocTransformationsState | undefined {
+export function useAdHocTransformations(tag: string): AdHocTransformationsState | undefined {
   const api = usePanelContext().adHocTransformations;
-  const subscribe = useCallback((onChange: () => void) => (api ? api.subscribe(onChange) : () => {}), [api]);
-  const getSnapshot = useCallback(() => api?.get(), [api]);
+  const subscribe = useCallback((onChange: () => void) => (api ? api.subscribe(tag, onChange) : () => {}), [api, tag]);
+  const getSnapshot = useCallback(() => api?.get(tag), [api, tag]);
   const transformations = useSyncExternalStore(subscribe, getSnapshot);
-  const sourceSeries = api?.getSourceSeries();
+  const sourceSeries = api?.getSourceSeries(tag);
   const setTransformations = useCallback(
-    (nextTransformations: DataTransformerConfig[]) => api?.set(nextTransformations),
-    [api]
+    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(tag, nextTransformations),
+    [api, tag]
   );
 
   return useMemo(

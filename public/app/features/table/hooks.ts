@@ -28,6 +28,8 @@ import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
+const TABLE_COLUMN_TRANSFORMATIONS_TAG = 'table:column-management';
+
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
  * `field.state.displayName`, so this must run during render (via `useMemo`, not `useEffect`) before the
@@ -142,7 +144,7 @@ export function useTableRefreshNewFeatures(): boolean {
 
 /** Returns controlled TableNG column state when the current frame can use the ad-hoc stage. */
 export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
-  const adHoc = useAdHocTransformations();
+  const adHoc = useAdHocTransformations(TABLE_COLUMN_TRANSFORMATIONS_TAG);
   const stage = adHoc?.transformations;
   const sourceFrame =
     enabled && supportsColumnManagement(frames[frameIndex]) ? adHoc?.sourceSeries[frameIndex] : undefined;
