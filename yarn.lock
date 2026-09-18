@@ -2762,6 +2762,7 @@ __metadata:
   resolution: "@grafana/plugin-compat@workspace:packages/grafana-plugin-compat"
   dependencies:
     "@grafana/data": "workspace:*"
+    "@grafana/schema": "workspace:*"
     "@typescript/native": "npm:typescript@^7.0.2"
     rimraf: "npm:^6.0.1"
     rollup: "npm:^4.60.1"
