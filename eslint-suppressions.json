@@ -844,11 +844,6 @@
       "count": 1
     }
   },
-  "public/app/core/navtree/sections/admin.navEntry.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/core/services/ResponseQueue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1537,11 +1532,6 @@
   "public/app/features/alerting/unified/utils/misc.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/alerting/unified/utils/pageAccess.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 4
     }
   },
   "public/app/features/alerting/unified/utils/receiver-form.ts": {
