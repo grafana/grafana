@@ -1,3 +1,7 @@
+import {
+  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  type SupportedExternalPrometheusFlavoredRulesSourceType,
+} from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -340,10 +344,6 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
   return ds.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle;
 }
 
-export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
-}
-
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     return { uid: GrafanaRulesSourceSymbol, name: GRAFANA_RULES_SOURCE_NAME, ruleSourceType: 'grafana' };
@@ -355,22 +355,6 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
     ruleSourceType: 'datasource',
   };
 }
-
-/**
- * Check if the given type is a supported external Prometheus flavored rules source type.
- */
-export function isSupportedExternalPrometheusFlavoredRulesSourceType(
-  type: string
-): type is SupportedExternalPrometheusFlavoredRulesSourceType {
-  return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
-}
-export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
-  'prometheus',
-  'grafana-amazonprometheus-datasource',
-  'grafana-azureprometheus-datasource',
-] as const;
-export type SupportedExternalPrometheusFlavoredRulesSourceType =
-  (typeof SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES)[number]; // infer the type from the tuple above so we can maintain a single source of truth
 
 /**
  * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
@@ -395,7 +379,3 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
 ] as const satisfies string[];
-
-export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
-  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
-}

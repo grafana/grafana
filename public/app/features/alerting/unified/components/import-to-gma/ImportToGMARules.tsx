@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Controller, FormProvider, type SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
+import { isSupportedExternalPrometheusFlavoredRulesSourceType, isValidRecordingRulesTarget } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -26,11 +27,7 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { type Folder } from '../../types/rule-form';
-import {
-  DataSourceType,
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
-} from '../../utils/datasource';
+import { DataSourceType } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
