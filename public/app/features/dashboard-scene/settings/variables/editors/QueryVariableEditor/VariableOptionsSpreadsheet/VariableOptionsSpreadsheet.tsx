@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { type DraggableProvidedDragHandleProps, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,7 +34,7 @@ interface VariableOptionsSpreadsheetProps {
 
 function toSpreadsheetOptions(options: VariableValueOption[]): SpreadsheetOption[] {
   return options.map((o) => ({
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     ...o,
     properties: { ...o.properties, value: o.value, text: o.label },
   }));
@@ -62,7 +61,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
   );
 
   const handleAdd = useCallback(() => {
-    const newId = uuidv4();
+    const newId = crypto.randomUUID();
     autoFocusIdRef.current = newId;
     const newOption: SpreadsheetOption = {
       id: newId,
@@ -183,7 +182,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
           stringifiedProps[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
         }
         return {
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           ...o,
           properties: { ...emptyProps, ...stringifiedProps, value: o.value, text: o.label },
         };
