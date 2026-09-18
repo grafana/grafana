@@ -138,7 +138,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	if err != nil {
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to convert imported receivers: %w", err)
 	}
-	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, importedReceivers, mimirCfg.Identifier)
+	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.Receivers, importedReceivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals, addedTimeIntervalUIDs := TimeIntervals(
 		cfg.TimeIntervals,
@@ -179,6 +179,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	return v1.AMConfigV1{
 			ExtraConfigs: cfg.ExtraConfigs[1:],
 			Templates:    templates,
+			Receivers:    mergedReceivers,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
@@ -186,7 +187,6 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 					InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
 					Templates:    nil, // Grafana does not use this.
 				},
-				Receivers: mergedReceivers,
 			},
 			ManagedRoutes:   managedRoutes,
 			InhibitionRules: managedInhibitionRules,
@@ -204,7 +204,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
 // appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
 func DeduplicateResources(a v1.AMConfigV1, b v1.ExtraAlertmanagerConfig, identifier string) RenameResources {
-	_, renamedReceivers, _ := Receivers(a.AlertmanagerConfig.Receivers, b.ReceiverNameStubs(), identifier)
+	_, renamedReceivers, _ := Receivers(a.Receivers, b.ReceiverNameStubs(), identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
 		a.TimeIntervals,
 		b.ToGrafanaTimeIntervals(),

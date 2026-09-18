@@ -4,7 +4,7 @@ import { type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookCellItem } from '../NotebookCellItem';
@@ -124,6 +124,7 @@ export function NotebookCellFrame({
   const frameLabel = collapsed
     ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
     : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
+  const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
   const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
@@ -201,12 +202,12 @@ export function NotebookCellFrame({
           {isEditing && (
             <div
               {...dragProvided.dragHandleProps}
-              aria-label={t('notebook.cell.drag-handle', 'Drag to reorder')}
+              aria-label={dragHandleLabel}
               className={cx(styles.handle, NOTEBOOK_CELL_AFFORDANCES_CLASS)}
             >
-              <Tooltip content={t('notebook.cell.drag-handle', 'Drag to reorder')} placement="left">
-                <Icon name="draggabledots" size="md" />
-              </Tooltip>
+              {/* Labelled on the handle, not through a Tooltip: Tooltip makes its child a tab stop,
+                  so the icon was a second stop with no name. */}
+              <Icon title={dragHandleLabel} name="draggabledots" size="md" />
             </div>
           )}
 

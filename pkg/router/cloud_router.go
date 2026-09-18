@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
-
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -47,7 +46,7 @@ const cloudRouterSection = "cloud_router"
 // Auth is a CAP token exchanged for a signed access token on every request
 // to the remote apiserver, carried on X-Access-Token rather than a static
 // Authorization bearer -- see clientauth.NewStaticTokenExchangeTransportWrapper.
-func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
+func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
@@ -77,7 +76,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
-		pluginsTarget, err = newPluginManifestsTarget(pluginsURL, patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout})
+		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}

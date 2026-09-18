@@ -902,6 +902,21 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifestAndKeepSettings",
+        "resourceVersion": "1789622340153",
+        "creationTimestamp": "2026-09-17T05:19:00Z"
+      },
+      "spec": {
+        "description": "Continue to expose settings when a manifest exists",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -4482,7 +4497,8 @@
       "metadata": {
         "name": "queryFetchConfigFromSettingsService",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-17T18:24:30Z"
       },
       "spec": {
         "description": "Enables the query service to fetch the configuration from the settings service",
@@ -4776,6 +4792,20 @@
         "description": "Enables reporting for any page in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.legacyServiceUsesK8SClient",
+        "resourceVersion": "1789561851165",
+        "creationTimestamp": "2026-09-16T12:30:51Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report service to use the Kubernetes client wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

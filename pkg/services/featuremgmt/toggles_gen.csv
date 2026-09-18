@@ -288,6 +288,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
 2026-09-16,appplugins.loadAppManifest,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-09-17,appplugins.loadAppManifestAndKeepSettings,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-09-16,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-09-16,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
@@ -314,7 +315,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-09-16,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
-2026-09-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-09-16,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
@@ -366,6 +366,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-09-16,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-09-16,reporting.legacyServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,reporting.redirectReportSettingsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
