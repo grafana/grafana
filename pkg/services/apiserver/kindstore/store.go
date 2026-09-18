@@ -36,8 +36,6 @@ const ClusterScope = "Cluster"
 // it. Named here rather than taking the installer's own options type, so this
 // package depends on nothing it does not use.
 type Options struct {
-	// Scheme the kind is registered in.
-	Scheme *runtime.Scheme
 	// StorageOptsGetter resolves the backing storage for the one
 	// group+version+resource being installed, given the options this kind needs.
 	// Callers inside an API group pass builder.APIGroupOptions.StorageOptsGetter.
@@ -175,7 +173,6 @@ func New(
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
-		Scheme:               opts.Scheme,
 	})
 
 	store := &registry.Store{

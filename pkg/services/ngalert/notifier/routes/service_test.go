@@ -73,10 +73,10 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{Name: "grafana-default"},
-				},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{Name: "grafana-default"},
+			}),
 			ExtraConfigs: []v1.ExtraConfiguration{
 				{
 					Identifier:         "imported",
@@ -95,11 +95,11 @@ func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{Name: "grafana-default"},
-					{Name: "empty"},
-				},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{Name: "grafana-default"},
+				{Name: "empty"},
+			}),
 			ManagedRoutes: v1.ManagedRoutes{
 				"route-a": &v1.Route{Receiver: "grafana-default"},
 				"route-b": &v1.Route{Receiver: "grafana-default"},

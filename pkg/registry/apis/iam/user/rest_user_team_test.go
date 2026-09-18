@@ -69,6 +69,8 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.Empty(t, mockClient.LastSearchRequest.SearchAfter)
 		require.False(t, mockClient.LastSearchRequest.Explain)
 		require.Equal(t, "alice", mockClient.LastSearchRequest.Options.Fields[0].Values[0])
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, mockClient.LastSearchRequest.Fields)
 		// Stable sort by name is required for keyset pagination correctness.
 		require.Len(t, mockClient.LastSearchRequest.SortBy, 1)
 		require.Equal(t, resource.SEARCH_FIELD_NAME, mockClient.LastSearchRequest.SortBy[0].Field)
@@ -145,20 +147,19 @@ func TestUserTeamREST_Connect(t *testing.T) {
 	t.Run("should emit continue token when page is full", func(t *testing.T) {
 		mockClient := &mockSearchClient{
 			Response: &resourcepb.ResourceSearchResponse{
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				ResourceVersion: 42,
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "permission"},
-						{Name: "external"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-a"}, Cells: [][]byte{[]byte("admin"), []byte("false")}, SortFields: []string{"team-a"}},
-						{Key: &resourcepb.ResourceKey{Name: "team-b"}, Cells: [][]byte{[]byte("member"), []byte("false")}, SortFields: []string{"team-b"}},
-					},
+				Rows: []*resourcepb.ResourceSearchRow{
+					{Key: &resourcepb.ResourceKey{Name: "team-a"}, SortFields: []string{"team-a"}},
+					{Key: &resourcepb.ResourceKey{Name: "team-b"}, SortFields: []string{"team-b"}},
 				},
 			},
 		}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
+		getter := &mockGetter{teams: map[string]*iamv0alpha1.Team{
+			"team-a": team("team-a", member("alice", "admin", false)),
+			"team-b": team("team-b", member("alice", "member", false)),
+		}}
+		handler := NewUserTeamREST(mockClient, getter, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -307,11 +308,10 @@ func TestUserTeamREST_Connect(t *testing.T) {
 	t.Run("should return JSON response with teams (unified path)", func(t *testing.T) {
 		mockClient := &mockSearchClient{
 			Response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-a"}},
-						{Key: &resourcepb.ResourceKey{Name: "team-b"}},
-					},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{Key: &resourcepb.ResourceKey{Name: "team-a"}},
+					{Key: &resourcepb.ResourceKey{Name: "team-b"}},
 				},
 			},
 		}

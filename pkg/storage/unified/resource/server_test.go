@@ -1707,6 +1707,66 @@ func advanceBookmarkClock() time.Time {
 	return time.Now()
 }
 
+func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	ns := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "provisioning.grafana.app",
+		Resource:  "jobs",
+	}
+	const name = "test-job"
+
+	previousRV, previous := addTestObject(t, backend, ctx, ns, name, "before-delete")
+	deletedRV := deleteTestObject(t, backend, ctx, previous, previousRV, ns, name)
+	recreatedRV, recreated := addTestObject(t, backend, ctx, ns, name, "recreated")
+	_ = updateTestObject(t, backend, ctx, recreated, recreatedRV, ns, name, "updated")
+
+	require.NoError(t, backend.pruneEvents(ctx, PruningKey{
+		Namespace: ns.Namespace,
+		Group:     ns.Group,
+		Resource:  ns.Resource,
+		Name:      name,
+	}))
+
+	synctest.Test(t, func(t *testing.T) {
+		key := &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      name,
+		}
+		events, stream, done := startBookmarkWatch(t, &resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{Key: key},
+			Since:   previousRV,
+		}, func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = backend
+		})
+
+		events <- &WrittenEvent{
+			Key:             key,
+			Type:            resourcepb.WatchEvent_DELETED,
+			ResourceVersion: deletedRV,
+			PreviousRV:      previousRV,
+			Value:           objectToJSONBytes(t, previous),
+		}
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case event := <-stream.events:
+			require.Equal(t, resourcepb.WatchEvent_DELETED, event.Type)
+			require.Equal(t, deletedRV, event.Resource.Version)
+			require.Empty(t, event.Resource.Value)
+			require.NotNil(t, event.Previous)
+			require.Equal(t, previousRV, event.Previous.Version)
+		default:
+			t.Fatal("watch did not emit the delete event")
+		}
+	})
+}
+
 func TestIncrementalBookmarksProgressLag(t *testing.T) {
 	for _, backend := range []string{"legacy_sql", "kv"} {
 		t.Run(backend, func(t *testing.T) {
@@ -2036,14 +2096,9 @@ func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
 func (s *stubWatchServer) SendMsg(any) error                 { return nil }
 func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
 
-// TestWatchContextCancellation pins down how Watch translates errors that
-// surface during context cancellation. The watch loop has an explicit
-// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
-// when the context is canceled we may instead run a Send/Read that returns
-// the context error. Watch must treat that as a clean shutdown, while still
-// surfacing unrelated errors and context errors that did not originate from
-// our own context.
-func TestWatchContextCancellation(t *testing.T) {
+// TestWatchTerminationErrors pins down which errors Watch treats as a clean
+// shutdown and which errors it propagates.
+func TestWatchTerminationErrors(t *testing.T) {
 	testUser := newWatchTestUser()
 
 	watchReq := &resourcepb.WatchRequest{
@@ -2085,6 +2140,17 @@ func TestWatchContextCancellation(t *testing.T) {
 		stub := &stubWatchServer{ctx: ctx, sendErr: sentinel}
 		err := srv.Watch(watchReq, stub)
 		require.ErrorIs(t, err, sentinel)
+	})
+
+	t.Run("returns nil when the watch transport is unavailable", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		bookmarkReq := proto.Clone(watchReq).(*resourcepb.WatchRequest)
+		bookmarkReq.Options.Key.Name = "missing"
+		bookmarkReq.AllowWatchBookmarks = true
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: status.Error(codes.Unavailable, "transport is closing")}
+		require.NoError(t, srv.Watch(bookmarkReq, stub))
 	})
 
 	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
