@@ -258,7 +258,7 @@ export function NestedFolderPicker({
       // Add "Team folders" at the top of the tree list.
       return filterExcludedItems(fullTree, excludeUIDs);
     } else {
-      flatTree = searchResultsToTreeItems(searchResults?.items || []);
+      flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
       return filterExcludedItems(flatTree, excludeUIDs);
     }
   }, [
@@ -551,22 +551,6 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>, permission
   }, [folders, foldersOpenState]);
 
   return { starredFolderTreeItems, error: error ? new Error(getMessageFromError(error)) : undefined };
-}
-
-function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {
-  return (
-    items.map((item) => ({
-      isOpen: false,
-      level: 0,
-      item: {
-        kind: 'folder' as const,
-        title: item.title,
-        uid: item.uid,
-        parentUID: item.parentUID,
-        parentTitle: item.parentTitle,
-      },
-    })) ?? []
-  );
 }
 
 function filterRootItem(items: DashboardsTreeItem[]) {

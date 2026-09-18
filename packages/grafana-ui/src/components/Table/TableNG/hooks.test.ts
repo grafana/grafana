@@ -18,8 +18,8 @@ import {
   useColWidths,
   useRowCompiler,
 } from './hooks';
-import { type TableRow } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+import { type FilterType, type TableRow, type TypographyCtx } from './types';
+import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);
 
@@ -877,11 +877,18 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
+          // two lines at the header label's own line box
+          typographyCtx: {
+            ...typographyCtx,
+            avgCharWidth: 5,
+            measureHeight: jest.fn(() => 2 * TABLE.HEADER_LINE_HEIGHT),
+          },
         });
       });
 
-      expect(result.current).toBe(50);
+      // ...plus the cell's 6px padding on both block edges. The header row was 2px short of this
+      // while it multiplied the *row* line height (22) and counted the padding only once.
+      expect(result.current).toBe(2 * TABLE.HEADER_LINE_HEIGHT + 2 * TABLE.CELL_PADDING);
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
@@ -916,9 +923,14 @@ describe('TableNG hooks', () => {
         });
       });
 
-      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65,
-      // floor - 1 = 64.
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 64, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65
+      expect(heightFn).toHaveBeenCalledWith(
+        'Longer name that needs wrapping',
+        65,
+        modifiedFields[0],
+        -1,
+        TABLE.HEADER_LINE_HEIGHT
+      );
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -948,8 +960,130 @@ describe('TableNG hooks', () => {
         });
       });
 
-      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21
+      expect(heightFn).toHaveBeenCalledWith(
+        'Longer name that needs wrapping',
+        21,
+        modifiedFields[0],
+        -1,
+        TABLE.HEADER_LINE_HEIGHT
+      );
+    });
+
+    it('leaves room for the header tooltip button, as the width path does', () => {
+      // The info button renders in both header variants, so a wrapped label has 22px less room than
+      // the height path used to give it — it wrapped a line late and the header clipped.
+      const heightFn = jest.fn(() => 20);
+      const { fields } = setupData();
+      const withTooltip = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              config: {
+                ...field.config,
+                custom: { ...field.config?.custom, wrapHeaderText: true, headerTooltip: 'why' },
+              },
+            }
+          : field
+      );
+
+      renderHook(() =>
+        useHeaderHeight({
+          fields: withTooltip,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
+        })
+      );
+
+      // colWidth 100 - chrome 13 - sort arrow 22 - tooltip button 22 = 43
+      expect(heightFn).toHaveBeenCalledWith('name', 43, withTooltip[0], -1, TABLE.HEADER_LINE_HEIGHT);
+    });
+
+    it('leaves room for the refreshed header menu and its active-filter icon', () => {
+      // Under table.refresh a filtered column carries both the column menu and the persistent filter
+      // icon; neither was subtracted before, so the label was measured against 44px it doesn't have.
+      const heightFn = jest.fn(() => 20);
+      const { fields } = setupData();
+      const filterable = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              config: { ...field.config, custom: { ...field.config?.custom, wrapHeaderText: true, filterable: true } },
+            }
+          : field
+      );
+
+      renderHook(() =>
+        useHeaderHeight({
+          fields: filterable,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
+          tableRefreshEnabled: true,
+          filter: { name: { filtered: [], searchFilter: '', displayName: 'name' } } as unknown as FilterType,
+        })
+      );
+
+      // colWidth 100 - chrome 13 - sort arrow 22 - column menu 22 - active filter icon 22 = 21
+      expect(heightFn).toHaveBeenCalledWith('name', 21, filterable[0], -1, TABLE.HEADER_LINE_HEIGHT);
+    });
+
+    it('gives a wrapped label exactly the room the width path sized its column for', () => {
+      // The two paths are halves of one sum: `computeContentAwareColWidths` adds the label width, the
+      // cell chrome and the header affordances up into a column width, and `useHeaderHeight` subtracts
+      // the chrome and affordances back out to find the label's room. Drop an affordance on either
+      // side, or measure the label any differently from the way the line counter measures it, and a
+      // content-sized column lands a fraction inside the wrap boundary: the header then reserves a
+      // second line for a label the browser draws on one.
+      const CHAR_W = 8;
+      const measureWidth = (text: string) => text.length * CHAR_W;
+      const ctx: TypographyCtx = {
+        ...typographyCtx,
+        measureWidth,
+        // count lines the way uwrap does — off the summed per-character widths, not a kerned string
+        measureHeight: (value, width, _field, _rowIdx, lineHeight) =>
+          Math.max(1, Math.ceil(measureWidth(String(value)) / width)) * lineHeight,
+      };
+
+      const displayName = 'Longer name that needs wrapping';
+      const { fields } = setupData();
+      // every affordance at once: type icon, sort arrow, tooltip button, column menu, active filter
+      const headerFields = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              name: displayName,
+              config: {
+                ...field.config,
+                custom: { ...field.config?.custom, wrapHeaderText: true, filterable: true, headerTooltip: 'why' },
+              },
+            }
+          : field
+      );
+      const opts = {
+        showTypeIcons: true,
+        tableRefreshEnabled: true,
+        filter: { name: { filtered: [], searchFilter: '', displayName } } as unknown as FilterType,
+      };
+
+      // availWidth 0, so nothing is grown into leftover space and each column is its content width
+      const columnWidths = computeContentAwareColWidths(headerFields, 0, {
+        typographyCtx: ctx,
+        headerTypographyCtx: ctx,
+        ...opts,
+      });
+
+      const headerHeight = (widths: number[]) =>
+        renderHook(() =>
+          useHeaderHeight({ fields: headerFields, columnWidths: widths, enabled: true, typographyCtx: ctx, ...opts })
+        ).result.current;
+
+      expect(headerHeight(columnWidths)).toBe(TABLE.HEADER_HEIGHT);
+      // and the column is that wide exactly, not comfortably wider: a single pixel less wraps
+      expect(headerHeight(columnWidths.map((w, i) => (i === 0 ? w - 1 : w)))).toBe(
+        2 * TABLE.HEADER_LINE_HEIGHT + 2 * TABLE.CELL_PADDING
+      );
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {

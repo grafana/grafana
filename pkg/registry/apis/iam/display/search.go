@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"strconv"
 
 	"golang.org/x/sync/errgroup"
@@ -29,10 +30,15 @@ func NewSearchDisplayProvider(client resourcepb.ResourceIndexClient) *SearchDisp
 	return &SearchDisplayProvider{client: client}
 }
 
-var searchDisplayFields = []string{
+var userSearchDisplayFields = []string{
 	resource.SEARCH_FIELD_TITLE,
 	builders.USER_EMAIL,
 	builders.USER_LOGIN,
+	resource.SEARCH_FIELD_LEGACY_ID,
+}
+
+var serviceAccountSearchDisplayFields = []string{
+	resource.SEARCH_FIELD_TITLE,
 	resource.SEARCH_FIELD_LEGACY_ID,
 }
 
@@ -69,7 +75,9 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 		// service accounts, UID matches before ID matches) and avoid
 		// needing locks around the shared maps and slice.
 		for i, srsp := range responses {
-			appendDisplayRows(rsp, srsp, jobs[i].identityType, foundUIDs, foundIDs)
+			if err := appendDisplayRows(rsp, srsp, jobs[i].identityType, foundUIDs, foundIDs); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -96,17 +104,19 @@ func (r *SearchDisplayProvider) buildSearchJobs(ns authlib.NamespaceInfo, keys d
 	targets := []struct {
 		resource     string
 		identityType authlib.IdentityType
+		fields       []string
 	}{
-		{"users", authlib.TypeUser},
-		{"serviceaccounts", authlib.TypeServiceAccount},
+		{"users", authlib.TypeUser, userSearchDisplayFields},
+		{"serviceaccounts", authlib.TypeServiceAccount, serviceAccountSearchDisplayFields},
 	}
 
 	jobs := make([]searchJob, 0, 2*len(targets))
 	for _, target := range targets {
 		newReq := func() *resourcepb.ResourceSearchRequest {
 			return &resourcepb.ResourceSearchRequest{
-				Limit:  100, // although the query should only return one item
-				Fields: searchDisplayFields,
+				Limit:        100, // although the query should only return one item
+				Fields:       target.fields,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
 						Namespace: ns.Value,
@@ -145,14 +155,91 @@ func (r *SearchDisplayProvider) buildSearchJobs(ns authlib.NamespaceInfo, keys d
 	return jobs
 }
 
-func appendDisplayRows(list *iam.DisplayList, rsp *resourcepb.ResourceSearchResponse, identityType authlib.IdentityType, foundUIDs map[string]struct{}, foundIDs map[int64]struct{}) {
-	if rsp == nil || rsp.Results == nil {
-		return
+type displaySearchRow struct {
+	key        *resourcepb.ResourceKey
+	title      string
+	email      string
+	login      string
+	internalID int64
+}
+
+func appendDisplayRows(list *iam.DisplayList, rsp *resourcepb.ResourceSearchResponse, identityType authlib.IdentityType, foundUIDs map[string]struct{}, foundIDs map[int64]struct{}) error {
+	rows, err := decodeDisplayRows(rsp)
+	if err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		displayName := row.title
+		if displayName == "" {
+			displayName = row.login
+		}
+		if displayName == "" {
+			displayName = row.email
+		}
+
+		foundUIDs[row.key.Name] = struct{}{}
+		if row.internalID != 0 {
+			foundIDs[row.internalID] = struct{}{}
+		}
+
+		list.Items = append(list.Items, iam.Display{
+			Identity: iam.IdentityRef{
+				Type: identityType,
+				Name: row.key.Name,
+			},
+			DisplayName: displayName,
+			InternalID:  row.internalID,
+			AvatarURL:   dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, row.email, displayName),
+		})
+	}
+	return nil
+}
+
+func decodeDisplayRows(rsp *resourcepb.ResourceSearchResponse) ([]displaySearchRow, error) {
+	if rsp == nil {
+		return nil, nil
+	}
+
+	switch rsp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return decodeDisplayTableRows(rsp.GetResults()), nil
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows := make([]displaySearchRow, 0, len(rsp.Rows))
+		for i, row := range rsp.Rows {
+			if row == nil || row.Key == nil {
+				continue
+			}
+			values, err := resource.DecodeSearchValues(rsp.Fields, row)
+			if err != nil {
+				return nil, fmt.Errorf("decode display search row %d: %w", i, err)
+			}
+			title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
+			email, _ := values[builders.USER_EMAIL].(string)
+			login, _ := values[builders.USER_LOGIN].(string)
+			internalID, _ := values[resource.SEARCH_FIELD_LEGACY_ID].(int64)
+			rows = append(rows, displaySearchRow{
+				key:        row.Key,
+				title:      title,
+				email:      email,
+				login:      login,
+				internalID: internalID,
+			})
+		}
+		return rows, nil
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
+	}
+}
+
+func decodeDisplayTableRows(table *resourcepb.ResourceTable) []displaySearchRow {
+	if table == nil {
+		return nil
 	}
 
 	titleIDX, emailIDX, loginIDX, legacyIDIDX := -1, -1, -1, -1
-	for i, c := range rsp.Results.Columns {
-		switch c.Name {
+	for i, column := range table.Columns {
+		switch column.Name {
 		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
 		case builders.USER_EMAIL:
@@ -164,48 +251,27 @@ func appendDisplayRows(list *iam.DisplayList, rsp *resourcepb.ResourceSearchResp
 		}
 	}
 
-	for _, row := range rsp.Results.Rows {
+	rows := make([]displaySearchRow, 0, len(table.Rows))
+	for _, row := range table.Rows {
 		if row == nil || row.Key == nil {
 			continue
 		}
-		var title, email, login string
-		var internalID int64
+		decoded := displaySearchRow{key: row.Key}
 		if cell, ok := cellAt(row.Cells, titleIDX); ok {
-			title = string(cell)
+			decoded.title = string(cell)
 		}
 		if cell, ok := cellAt(row.Cells, emailIDX); ok {
-			email = string(cell)
+			decoded.email = string(cell)
 		}
 		if cell, ok := cellAt(row.Cells, loginIDX); ok {
-			login = string(cell)
+			decoded.login = string(cell)
 		}
 		if cell, ok := cellAt(row.Cells, legacyIDIDX); ok && len(cell) == 8 {
-			internalID = int64(binary.BigEndian.Uint64(cell))
+			decoded.internalID = int64(binary.BigEndian.Uint64(cell))
 		}
-
-		displayName := title
-		if displayName == "" {
-			displayName = login
-		}
-		if displayName == "" {
-			displayName = email
-		}
-
-		foundUIDs[row.Key.Name] = struct{}{}
-		if internalID != 0 {
-			foundIDs[internalID] = struct{}{}
-		}
-
-		list.Items = append(list.Items, iam.Display{
-			Identity: iam.IdentityRef{
-				Type: identityType,
-				Name: row.Key.Name,
-			},
-			DisplayName: displayName,
-			InternalID:  internalID,
-			AvatarURL:   dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, email, displayName),
-		})
+		rows = append(rows, decoded)
 	}
+	return rows
 }
 
 func cellAt(cells [][]byte, idx int) ([]byte, bool) {

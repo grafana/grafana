@@ -336,7 +336,6 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
-	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -741,7 +740,7 @@ type Cfg struct {
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
-	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
+	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url.
 	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
@@ -853,6 +852,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	SearchBackedListResources     []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -863,9 +863,7 @@ type Cfg struct {
 	// removing the sqlkv backwards-compatibility layer.
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
-	EnableKVLeases                    bool
 	KVLeaseTTL                        time.Duration
-	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -1643,7 +1641,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
-	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

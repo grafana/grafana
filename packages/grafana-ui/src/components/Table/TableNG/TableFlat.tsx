@@ -25,6 +25,7 @@ import {
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
+  useHeaderTypographyCtx,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -61,6 +62,7 @@ export function TableFlat(props: TableNGProps) {
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -87,6 +89,7 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
   } = props;
 
   const theme = useTheme2();
@@ -164,6 +167,7 @@ export function TableFlat(props: TableNGProps) {
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   const frozenColumns = _frozenColumns;
 
@@ -185,10 +189,12 @@ export function TableFlat(props: TableNGProps) {
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
     noPanelPadding,
+    preventHorizontalOverflow,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -204,8 +210,10 @@ export function TableFlat(props: TableNGProps) {
     fields: visibleFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
     noPanelPadding,
+    tableRefreshEnabled,
+    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -279,6 +287,7 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
@@ -299,6 +308,7 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       setFilter,
       showTypeIcons,

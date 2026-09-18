@@ -1331,7 +1331,7 @@ describe('NotebookAutosave', () => {
      * a notebook that had nothing to save.
      *
      * `blank` gives a notebook that does not exist yet, the state the /notebooks/new route leaves a
-     * reader in. Worth covering separately because that route only asks for `dashboards:create`, and
+     * reader in. Worth covering separately because that route only asks for `notebooks:create`, and
      * being allowed to create is not the same as being allowed to write.
      */
     function activateAsReader({ blank = false } = {}) {
