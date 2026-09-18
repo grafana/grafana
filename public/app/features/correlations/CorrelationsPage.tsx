@@ -53,7 +53,10 @@ type CorrelationsPageProps = {
 const collator = new Intl.Collator();
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
-  collator.compare(a.values[column].name, b.values[column].name);
+  collator.compare(
+    a.getValue<DataSourceInstanceSettings>(column).name,
+    b.getValue<DataSourceInstanceSettings>(column).name
+  );
 
 const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 

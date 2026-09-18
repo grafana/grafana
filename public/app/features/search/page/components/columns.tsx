@@ -135,10 +135,10 @@ export const generateColumns = (
         <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
           {!isLoaded ? (
             <Skeleton width={200} />
-          ) : isDeleted || !p.userProps.href ? (
+          ) : isDeleted || !p.userProps?.href ? (
             <span className={classNames}>{name}</span>
           ) : (
-            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+            <a href={p.userProps?.href} onClick={p.userProps?.onClick} className={classNames} title={name}>
               {name}
             </a>
           )}

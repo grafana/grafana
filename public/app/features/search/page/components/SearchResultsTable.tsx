@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { useEffect, useMemo, useRef, useCallback, useState, type CSSProperties } from 'react';
 import * as React from 'react';
-import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { type Observable } from 'rxjs';
@@ -13,7 +13,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useTableStyles, TableCell } from '@grafana/ui/internal';
+import { useTableStyles, TableCell, type CellComponent } from '@grafana/ui/internal';
 import { getColumnFlexStyle, getFlexRowStyle } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
@@ -40,7 +40,7 @@ export type TableColumn = {
   id: string;
   field?: Field;
   Header?: React.ReactNode | (() => React.ReactNode);
-  Cell?: (props: any) => React.ReactNode;
+  Cell?: CellComponent;
   width?: number;
 };
 
@@ -120,10 +120,10 @@ export const SearchResultsTable = React.memo(
       () =>
         memoizedColumns.map(({ id, Header, Cell, width, field }) => ({
           id,
-          header: Header,
-          cell: Cell,
+          // TanStack Table only renders strings and render functions, so non-string nodes are wrapped in a function
+          header: typeof Header === 'function' ? Header : () => Header,
           size: width,
-          field,
+          meta: { field, cellComponent: Cell },
         })),
       [memoizedColumns]
     );
@@ -131,6 +131,8 @@ export const SearchResultsTable = React.memo(
       columns: tanStackColumns,
       data: memoizedData,
       getCoreRowModel: getCoreRowModel(),
+      // the table isn't paginated, so skip the state update TanStack Table queues whenever the data changes
+      autoResetPageIndex: false,
     });
     const headerGroups = table.getHeaderGroups();
     const rows = table.getRowModel().rows;
@@ -172,6 +174,7 @@ export const SearchResultsTable = React.memo(
         return (
           <div
             key={row.id}
+            role="row"
             style={{ ...style, ...getFlexRowStyle() }}
             className={className}
             data-testid={rowName ? selectors.pages.Search.table.row(rowName) : undefined}
@@ -213,7 +216,7 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   cellStyle={getColumnFlexStyle(cell.column)}
                   columnIndex={index}
-                  columnCount={row.cells.length}
+                  columnCount={row.getVisibleCells().length}
                   userProps={userProps}
                   frame={response.view.dataFrame}
                 />
@@ -241,7 +244,7 @@ export const SearchResultsTable = React.memo(
       >
         {headerGroups.map((headerGroup) => {
           return (
-            <div key={headerGroup.id} style={{ width, ...getFlexRowStyle() }} className={styles.headerRow}>
+            <div key={headerGroup.id} role="row" style={{ width, ...getFlexRowStyle() }} className={styles.headerRow}>
               {headerGroup.headers.map((header) => {
                 return (
                   <div
@@ -258,7 +261,7 @@ export const SearchResultsTable = React.memo(
           );
         })}
 
-        <div>
+        <div role="rowgroup">
           <InfiniteLoader
             ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}

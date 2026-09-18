@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
+import { flexRender, getCoreRowModel, type Table, useReactTable } from '@tanstack/react-table';
 import * as React from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { flexRender, getCoreRowModel, type ColumnDef, type Table, useReactTable } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
@@ -110,27 +110,27 @@ export function DashboardsTree({
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
-      width: 0,
-      Header: CheckboxHeaderCell,
-      Cell: CheckboxCell,
+      size: 0,
+      header: CheckboxHeaderCell,
+      cell: CheckboxCell,
     };
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
-      width: 3,
-      Header: (
+      size: 3,
+      header: () => (
         <span style={{ paddingLeft: 24 }}>
           <Trans i18nKey="browse-dashboards.dashboards-tree.name-column">Name</Trans>
         </span>
       ),
-      Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
+      cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
-      width: 2,
-      Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
-      Cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
+      size: 2,
+      header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
+      cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
     const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
@@ -138,17 +138,13 @@ export function DashboardsTree({
     return columns;
   }, [onFolderClick, onTagClick, permissions]);
 
-  const columns = useMemo<Array<ColumnDef<DashboardsTreeItem>>>(
-    () =>
-      tableColumns.map(({ id, width, Header, Cell }) => ({
-        id,
-        size: width,
-        header: Header,
-        cell: Cell,
-      })),
-    [tableColumns]
-  );
-  const table = useReactTable({ columns, data: items, getCoreRowModel: getCoreRowModel() });
+  const table = useReactTable({
+    columns: tableColumns,
+    data: items,
+    getCoreRowModel: getCoreRowModel(),
+    // the tree isn't paginated, so skip the state update TanStack Table queues whenever the data changes
+    autoResetPageIndex: false,
+  });
   const headerGroups = table.getHeaderGroups();
 
   const virtualData = useMemo(
@@ -228,6 +224,7 @@ export function DashboardsTree({
         return (
           <div
             key={headerGroup.id}
+            role="row"
             style={{ width, ...getFlexRowStyle() }}
             className={cx(styles.row, styles.headerRow)}
           >
@@ -252,7 +249,7 @@ export function DashboardsTree({
         );
       })}
 
-      <div data-testid={selectors.pages.BrowseDashboards.table.body}>
+      <div role="rowgroup" data-testid={selectors.pages.BrowseDashboards.table.body}>
         <InfiniteLoader
           ref={infiniteLoaderRef}
           itemCount={items.length}
@@ -306,7 +303,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const row = rows[index];
 
   const dashboardItem = row.original.item;
-  const rowProps = { style: { ...style, ...getFlexRowStyle() } };
+  const rowProps = { role: 'row', style: { ...style, ...getFlexRowStyle() } };
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
@@ -339,7 +336,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     >
       {row.getVisibleCells().map((cell) => {
         return (
-          <div key={cell.id} style={getColumnFlexStyle(cell.column)} className={styles.cell}>
+          <div key={cell.id} role="cell" style={getColumnFlexStyle(cell.column)} className={styles.cell}>
             {flexRender(cell.column.columnDef.cell, {
               ...cell.getContext(),
               isSelected,
