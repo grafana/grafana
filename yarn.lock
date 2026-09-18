@@ -2185,7 +2185,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/plugin-configs": "npm:13.3.0-pre"
-    "@grafana/plugin-ui": "npm:^0.15.1"
+    "@grafana/plugin-ui": "npm:^0.17.0"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
@@ -2824,36 +2824,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.15.1":
-  version: 0.15.1
-  resolution: "@grafana/plugin-ui@npm:0.15.1"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@hello-pangea/dnd": "npm:17.0.0"
-    "@react-awesome-query-builder/ui": "npm:6.6.12"
-    lodash: "npm:4.18.1"
-    prismjs: "npm:1.30.0"
-    react-calendar: "npm:4.8.0"
-    react-popper-tooltip: "npm:4.4.2"
-    react-use: "npm:17.6.0"
-    react-virtualized-auto-sizer: "npm:1.0.6"
-    sql-formatter: "npm:15.7.3"
-    uuid: "npm:14.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4.7"
-    "@grafana/e2e-selectors": ">=10.4.7"
-    "@grafana/runtime": ">=10.4.7"
-    "@grafana/ui": ">=10.4.7"
-    "@testing-library/jest-dom": ">=5.16.5"
-    "@testing-library/react": ">=15.0.2"
-    "@testing-library/user-event": ">=14.5.2"
-    react: ">=18.2.0"
-    react-dom: ">=18.2.0"
-  checksum: 10/6d39184464b95d4b62a0fdbfb9df67d2ccd3ef6c7e3b670d1492e46e9cb8ac0ada3ef0998980dfccb5df516ee891b5dcc7a3c34a6c98edefcb3825757f7f2faa
-  languageName: node
-  linkType: hard
-
-"@grafana/plugin-ui@npm:^0.17.3":
+"@grafana/plugin-ui@npm:^0.17.0, @grafana/plugin-ui@npm:^0.17.3":
   version: 0.17.5
   resolution: "@grafana/plugin-ui@npm:0.17.5"
   dependencies:
@@ -7716,7 +7687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.6.12, @react-awesome-query-builder/core@npm:^6.6.15":
+"@react-awesome-query-builder/core@npm:^6.6.15":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/core@npm:6.6.15"
   dependencies:
@@ -7730,23 +7701,6 @@ __metadata:
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
   checksum: 10/60d87b3f0b395d3c7eb0e45e4cc2e2591599f06d80f9f6d502455eae9de11eadc60e7b1b339b0615b9ab44da3ac04d6a9047693e40ff2172d2b8f9845ecaeb43
-  languageName: node
-  linkType: hard
-
-"@react-awesome-query-builder/ui@npm:6.6.12":
-  version: 6.6.12
-  resolution: "@react-awesome-query-builder/ui@npm:6.6.12"
-  dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.6.12"
-    classnames: "npm:^2.5.1"
-    lodash: "npm:^4.17.21"
-    prop-types: "npm:^15.8.1"
-    react-redux: "npm:^8.1.3"
-    redux: "npm:^4.2.1"
-  peerDependencies:
-    react: ^16.8.4 || ^17.0.1 || ^18.0.0
-    react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 10/042fe33e338799dc473f9fad89aa653b1994fc1f960fe2db66122b6bb1b4efa891d7646e9e702e045571ca77472de297a8c5c27e6c5cd7c44d135a52f7dc4618
   languageName: node
   linkType: hard
 
@@ -11296,13 +11250,6 @@ __metadata:
   dependencies:
     "@types/sizzle": "npm:*"
   checksum: 10/9a9e2cddc584f9afa1970b0febac0b65bed6d8084baf9655346f5787ee1b25975a0f259b0c81edc7757fbb92d584ed2d1b39804ab78ab0238407c7e4b0376011
-  languageName: node
-  linkType: hard
-
-"@types/js-cookie@npm:^2.2.6":
-  version: 2.2.7
-  resolution: "@types/js-cookie@npm:2.2.7"
-  checksum: 10/851f47e94ca1fc43661d8f51614d67a613e7810c91b876d0a3b311ce72f7df800107fd02a08cb6948184e12c120b4f058edca2f50424d8798bdcffd6627281e3
   languageName: node
   linkType: hard
 
@@ -30071,31 +30018,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.6.0":
-  version: 17.6.0
-  resolution: "react-use@npm:17.6.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.6.2"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/a817b74e82b481a39d3539bfe8d3b535c08d59d44a75ea91f65e56a7ccaedb0de185159e50b44ea4a635dda0c1c7159f07530e81a1d64b57130e0a715a107795
-  languageName: node
-  linkType: hard
-
 "react-use@npm:17.6.1, react-use@npm:^17.4.0, react-use@npm:^17.5.0, react-use@npm:^17.6.0, react-use@npm:^17.6.1":
   version: 17.6.1
   resolution: "react-use@npm:17.6.1"
@@ -30139,16 +30061,6 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 10/8f8127369fb3ae1a49987a1e7d2d136f379b71d1b031a4c169389274946eca0248e3fb9130aa8a7ebe82f4ca8aaab58c37252398f8f6220a6eafaa78b8464b6b
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:1.0.6":
-  version: 1.0.6
-  resolution: "react-virtualized-auto-sizer@npm:1.0.6"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0
-  checksum: 10/6124d779e22b78054318033b5f13fd02015d08f2ebce9343f272976d4ae713463465dcdd758281e560e8b3d9cd57d7caf9d12bfd82ced615b9d4dccaef7eb2d8
   languageName: node
   linkType: hard
 
@@ -32194,18 +32106,6 @@ __metadata:
     "@babel/polyfill": "npm:^7.6.0"
     lodash: "npm:^4.17.15"
   checksum: 10/79e6bfb47e1ae6e24ee8bca94bf032089081517b35c2c99c6f2b706c9e19ed627b8ce272899b19ad8259f6bb606f7895e3ef93a0a7a12ce58824c702416eb0cc
-  languageName: node
-  linkType: hard
-
-"sql-formatter@npm:15.7.3":
-  version: 15.7.3
-  resolution: "sql-formatter@npm:15.7.3"
-  dependencies:
-    argparse: "npm:^2.0.1"
-    nearley: "npm:^2.20.1"
-  bin:
-    sql-formatter: bin/sql-formatter-cli.cjs
-  checksum: 10/095e04bc03e1ad8023577fafa81a1cd54d8ba37f8c45b8353c78e1db3ea85edaa90e51271258a7f588e2a8f6989bdab4acc817302f2617fc6f17787cf1dedb66
   languageName: node
   linkType: hard
 
@@ -34658,15 +34558,6 @@ __metadata:
     is-typed-array: "npm:^1.1.3"
     which-typed-array: "npm:^1.1.2"
   checksum: 10/61a10de7753353dd4d744c917f74cdd7d21b8b46379c1e48e1c4fd8e83f8190e6bd9978fc4e5102ab6a10ebda6019d1b36572fa4a325e175ec8b789a121f6147
-  languageName: node
-  linkType: hard
-
-"uuid@npm:14.0.0":
-  version: 14.0.0
-  resolution: "uuid@npm:14.0.0"
-  bin:
-    uuid: dist-node/bin/uuid
-  checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
   languageName: node
   linkType: hard
 
