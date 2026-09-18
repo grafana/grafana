@@ -385,6 +385,28 @@ describe('NotebookPageStateManager', () => {
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.loadError).toBeUndefined();
     });
+
+    // Leaving /notebooks/new before the panel metas resolve. The page's cleanup clears the state, and
+    // without the sequence check the blank notebook lands on whatever the page moved on to.
+    it('does not put the blank notebook back after the page has moved on', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const blank = manager.newNotebook();
+      manager.clearState();
+      await blank;
+
+      expect(manager.state.scene).toBeUndefined();
+    });
+
+    it('reports the page as loading while the panel metas are still in flight', () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.isLoading).toBe(true);
+    });
   });
 
   /**

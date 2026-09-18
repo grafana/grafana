@@ -166,12 +166,17 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    */
   public async newNotebook(): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
-    // with whichever one the page was previously asked for. Bumped before the await below, so a load
-    // starting during it is superseded too.
-    this.requestSeq++;
+    // with whichever one the page was previously asked for.
+    const seq = ++this.requestSeq;
+
+    this.setState({ isLoading: true, loadError: undefined });
 
     // The first visualization block inserted into the blank notebook is built synchronously.
     await getPanelPluginMetasMap();
+
+    if (this.isSuperseded(seq)) {
+      return;
+    }
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),
