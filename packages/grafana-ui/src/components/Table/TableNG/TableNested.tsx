@@ -75,6 +75,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -101,6 +102,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
   } = props;
 
   const uniqueId = useId();
@@ -253,6 +255,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
+    preventHorizontalOverflow,
   });
 
   const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
@@ -432,6 +435,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
@@ -439,6 +443,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     }),
     [
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
       filter,
       getCellActions,

@@ -30,6 +30,11 @@ type ExtraOptions struct {
 	// enable_trash_api. Separate from EnableSearchAPI so a deployment can turn one
 	// endpoint off without the other.
 	EnableTrashAPI bool
+
+	// EnableKeysAPI is the flag equivalent of [grafana-apiserver]
+	// enable_keys_api. Defaults off, matching the ini default: search and trash
+	// have shipped long enough to default on, list-keys has not.
+	EnableKeysAPI bool
 }
 
 func NewExtraOptions() *ExtraOptions {
@@ -51,6 +56,8 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 		"Serve the per-resource search endpoints")
 	fs.BoolVar(&o.EnableTrashAPI, "grafana-apiserver-enable-trash-api", o.EnableTrashAPI,
 		"Serve the per-resource trash endpoints")
+	fs.BoolVar(&o.EnableKeysAPI, "grafana-apiserver-enable-keys-api", o.EnableKeysAPI,
+		"Serve the per-resource list-keys endpoints")
 }
 
 func (o *ExtraOptions) Validate() []error {
