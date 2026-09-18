@@ -129,13 +129,14 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 }
 
 type dataSourceGetter interface {
+	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 }
 
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
 	dataSourceGetter
-	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
+	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and plugin types (aliases of a type).
 	GetDataSourceInNamespace(ctx context.Context, namespace, name string, pluginTypes []string) (*datasources.DataSource, error)
 }
 
@@ -197,6 +198,7 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 }
 
 func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
+	// Obtain all possible aliases of the datasource type.
 	pluginTypes := []string{group}
 	if p, found := s.pluginStore.Plugin(ctx, group); found {
 		pluginTypes = []string{p.ID}

@@ -36,10 +36,10 @@ func (s *NoopLegacyDataSourcLookup) GetDataSourceFromDeprecatedFields(ctx contex
 }
 
 type cachingLegacyDataSourceLookup struct {
-	retriever dataSourceGetter
-	cache     map[string]cachedValue
-	cacheMu   sync.Mutex
-	log       log.Logger
+	getter  dataSourceGetter
+	cache   map[string]cachedValue
+	cacheMu sync.Mutex
+	log     log.Logger
 }
 
 type cachedValue struct {
@@ -49,9 +49,9 @@ type cachedValue struct {
 
 func ProvideLegacyDataSourceLookup(p *Service) LegacyDataSourceLookup {
 	return &cachingLegacyDataSourceLookup{
-		retriever: p,
-		cache:     make(map[string]cachedValue),
-		log:       log.New("legacy-datasource-lookup"),
+		getter: p,
+		cache:  make(map[string]cachedValue),
+		log:    log.New("legacy-datasource-lookup"),
 	}
 }
 
@@ -74,7 +74,7 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 		return v.ref, v.err
 	}
 
-	ds, err := s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+	ds, err := s.getter.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 		OrgID: user.GetOrgID(),
 		Name:  name,
 		ID:    id,
@@ -83,7 +83,7 @@ func (s *cachingLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx co
 		s.log.Error("failed to get datasource from retriever", "error", err)
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) && name != "" {
-		ds, err = s.retriever.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		ds, err = s.getter.GetDataSource(ctx, &datasources.GetDataSourceQuery{
 			OrgID: user.GetOrgID(),
 			UID:   name, // Sometimes name is actually the UID :(
 		})
