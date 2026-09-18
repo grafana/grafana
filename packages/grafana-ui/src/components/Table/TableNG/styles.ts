@@ -290,6 +290,12 @@ export const getGridStyles = memoize(
           },
         }),
       }),
+      // Keep shadow pseudo-elements separate from the frame overlay, inside its border.
+      gridWrapper: css({
+        position: 'relative',
+        blockSize: '100%',
+        minBlockSize: 0,
+      }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
       // A class of its own rather than part of `grid`: a nested table's inner grid also carries
@@ -546,3 +552,42 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   }
   return isNested ? '.rdg-cell:hover &' : '&:hover';
 });
+
+export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>
+  css({
+    '&::before': { top },
+    '&::after': { bottom },
+  });
+
+export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
+  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  return {
+    scrollShadows: css({
+      // The grid creates a stacking context; both pseudo-elements must paint above it.
+      '&::before, &::after': {
+        content: '""',
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        zIndex: 1,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      },
+      '&::before': {
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      },
+      '&::after': {
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+      },
+    }),
+    scrollShadowTop: css({
+      '&::before': { opacity: 1 },
+    }),
+    scrollShadowBottom: css({
+      '&::after': { opacity: 1 },
+    }),
+  };
+};

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
@@ -17,6 +18,7 @@ import {
   useNestedRows,
   useColWidths,
   useRowCompiler,
+  useScrollShadows,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
@@ -2102,5 +2104,61 @@ describe('TableNG hooks', () => {
 
       expect(result.current).not.toBe(first);
     });
+  });
+});
+
+describe('useScrollShadows', () => {
+  it('tracks scroll edges without rerendering between visibility transitions', () => {
+    const wrapper = document.createElement('div');
+    const element = document.createElement('div');
+    wrapper.appendChild(element);
+    Object.defineProperties(element, {
+      scrollHeight: { value: 1000 },
+      clientHeight: { value: 200 },
+      offsetHeight: { value: 210, configurable: true },
+    });
+    const ref = { current: { element } as DataGridHandle };
+    let count = 0;
+    const { result, rerender } = renderHook(
+      ({ enabled }) => {
+        count++;
+        return useScrollShadows(ref, enabled, { topOffset: 30, bottomOffset: 20 });
+      },
+      { initialProps: { enabled: true } }
+    );
+
+    expect(result.current).toMatchObject({ top: false, bottom: true });
+    expect(result.current.scrollbarHeight).toBe(10);
+
+    act(() => {
+      element.scrollTop = 100;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+    const countAfterTransition = count;
+    act(() => {
+      element.scrollTop = 200;
+      result.current.onScroll();
+    });
+    expect(count).toBe(countAfterTransition);
+
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+
+    act(() => {
+      element.scrollTop = 800;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: false });
+
+    Object.defineProperty(element, 'offsetHeight', { value: 200 });
+    rerender({ enabled: true });
+    expect(result.current.scrollbarHeight).toBe(0);
+
+    rerender({ enabled: false });
+    expect(result.current).toMatchObject({ top: false, bottom: false, className: '' });
+    element.scrollTop = 0;
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: false, bottom: true });
   });
 });

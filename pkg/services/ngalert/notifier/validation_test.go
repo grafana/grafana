@@ -18,9 +18,9 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 					Route: &v1.Route{Receiver: "default"},
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{Name: "default"},
-			},
+			}),
 		}
 	}
 

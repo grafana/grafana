@@ -14,6 +14,7 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
 import { getPaginationChromeHeight, TABLE } from './constants';
+import { useScrollShadows } from './hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -95,6 +96,7 @@ export function TableDataGrid({
   noValue,
   renderers,
   onColumnResize,
+  onScroll,
   onCellClick,
   onCellKeyDown,
   sortColumns,
@@ -192,41 +194,57 @@ export function TableDataGrid({
     ]
   );
 
+  // Only the refreshed table gets the scroll cue, alongside the rest of its chrome changes.
+  const scrollShadows = useScrollShadows(gridRef, Boolean(tableRefreshEnabled), {
+    topOffset: noHeader ? 0 : headerHeight,
+    bottomOffset: hasFooter ? footerHeight : 0,
+  });
+
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
 
   return (
     <>
       <div className={styles.gridFrame}>
-        <DataGrid<TableRow, TableSummaryRow, string>
-          {...dataGridOverrides}
-          {...commonDataGridProps}
-          role={role}
-          ref={gridRef}
-          className={clsx(styles.grid, className)}
-          columns={columns}
-          rows={rows}
-          rowClass={(row, rowIdx) =>
-            clsx(
-              rowClass?.(row, rowIdx),
-              omitFinalRowBorder && rowIdx === rows.length - 1 && styles.lastRowWithoutBorder
-            )
-          }
-          rowKeyGetter={rowKeyGetter}
-          isRowSelectionDisabled={() => initialRowIndex !== undefined}
-          selectedRows={selectedRows}
-          onSelectedRowsChange={setSelectedRows}
-          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-          headerRowHeight={headerHeight}
-          onColumnResize={onColumnResize}
-          onCellClick={onCellClick}
-          onCellKeyDown={onCellKeyDown}
-          renderers={{
-            renderRow: renderers.renderRow,
-            renderCell: renderers.renderCell,
-            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-          }}
-        />
+        <div className={clsx(styles.gridWrapper, scrollShadows.className)}>
+          <DataGrid<TableRow, TableSummaryRow, string>
+            {...dataGridOverrides}
+            {...commonDataGridProps}
+            role={role}
+            ref={gridRef}
+            className={clsx(styles.grid, className)}
+            columns={columns}
+            rows={rows}
+            rowClass={(row, rowIdx) =>
+              clsx(
+                rowClass?.(row, rowIdx),
+                omitFinalRowBorder && rowIdx === rows.length - 1 && styles.lastRowWithoutBorder
+              )
+            }
+            rowKeyGetter={rowKeyGetter}
+            isRowSelectionDisabled={() => initialRowIndex !== undefined}
+            selectedRows={selectedRows}
+            onSelectedRowsChange={setSelectedRows}
+            headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+            headerRowHeight={headerHeight}
+            onColumnResize={onColumnResize}
+            onScroll={
+              tableRefreshEnabled
+                ? (event) => {
+                    scrollShadows.onScroll();
+                    onScroll?.(event);
+                  }
+                : onScroll
+            }
+            onCellClick={onCellClick}
+            onCellKeyDown={onCellKeyDown}
+            renderers={{
+              renderRow: renderers.renderRow,
+              renderCell: renderers.renderCell,
+              noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+            }}
+          />
+        </div>
       </div>
 
       {showPagination && (

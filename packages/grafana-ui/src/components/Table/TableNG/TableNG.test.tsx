@@ -1323,7 +1323,7 @@ describe('TableNG', () => {
         );
         const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
 
-        expect(window.getComputedStyle(grid.parentElement!).borderTopStyle).toBe(expectedFrameStyle);
+        expect(window.getComputedStyle(grid.parentElement!.parentElement!).borderTopStyle).toBe(expectedFrameStyle);
         expect(window.getComputedStyle(grid).getPropertyValue('--rdg-selection-width')).toBe('0.5px');
       }
     );

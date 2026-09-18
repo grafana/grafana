@@ -890,7 +890,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	createReceiverStubs(t, admin, cfg.Receivers)
+	createReceiverStubs(t, admin, cfg.GetReceivers())
 	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
@@ -1414,12 +1414,13 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	receivers := createReceiverStubs(t, admin, cfg.Receivers)
+	sortedReceivers := cfg.GetReceivers()
+	receivers := createReceiverStubs(t, admin, sortedReceivers)
 	sortedIntervals := cfg.SortedTimeIntervals()
 	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
-	recv0 := cfg.Receivers[0].Name
-	recv1 := cfg.Receivers[1].Name
+	recv0 := sortedReceivers[0].Name
+	recv1 := sortedReceivers[1].Name
 	ti0 := sortedIntervals[0].Title
 	ti1 := sortedIntervals[1].Title
 
