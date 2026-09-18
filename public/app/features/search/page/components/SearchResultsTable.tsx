@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useCallback, useState, type CSSProperties } from 'react';
 import * as React from 'react';
-import { useTable, type Column, type TableOptions, type Cell } from 'react-table';
+import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { type Observable } from 'rxjs';
@@ -14,7 +14,7 @@ import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
-import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
+import { getColumnFlexStyle, getFlexRowStyle } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { type QueryResponse } from '../../service/types';
@@ -36,8 +36,12 @@ export type SearchResultsProps = {
   trackingSource?: string;
 };
 
-export type TableColumn = Column & {
+export type TableColumn = {
+  id: string;
   field?: Field;
+  Header?: React.ReactNode | (() => React.ReactNode);
+  Cell?: (props: any) => React.ReactNode;
+  width?: number;
 };
 
 const ROW_HEIGHT = 36; // pixels
@@ -112,15 +116,24 @@ export const SearchResultsTable = React.memo(
       panelPluginMetas,
     ]);
 
-    const options: TableOptions<{}> = useMemo(
-      () => ({
-        columns: memoizedColumns,
-        data: memoizedData,
-      }),
-      [memoizedColumns, memoizedData]
+    const tanStackColumns = useMemo<Array<ColumnDef<number>>>(
+      () =>
+        memoizedColumns.map(({ id, Header, Cell, width, field }) => ({
+          id,
+          header: Header,
+          cell: Cell,
+          size: width,
+          field,
+        })),
+      [memoizedColumns]
     );
-
-    const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useCustomFlexLayout);
+    const table = useReactTable({
+      columns: tanStackColumns,
+      data: memoizedData,
+      getCoreRowModel: getCoreRowModel(),
+    });
+    const headerGroups = table.getHeaderGroups();
+    const rows = table.getRowModel().rows;
 
     const handleLoadMore = useCallback(
       async (startIndex: number, endIndex: number) => {
@@ -147,25 +160,23 @@ export const SearchResultsTable = React.memo(
     const RenderRow = useCallback(
       ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         const row = rows[rowIndex];
-        prepareRow(row);
 
         const url = response.view.fields.url?.values[rowIndex];
         let className = styles.rowContainer;
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
         }
-        const { key, ...rowProps } = row.getRowProps({ style });
 
         const rowName = response.view.fields.name?.values[rowIndex];
 
         return (
           <div
-            key={key}
-            {...rowProps}
+            key={row.id}
+            style={{ ...style, ...getFlexRowStyle() }}
             className={className}
             data-testid={rowName ? selectors.pages.Search.table.row(rowName) : undefined}
           >
-            {row.cells.map((cell: Cell, index: number) => {
+            {row.getVisibleCells().map((cell, index: number) => {
               const href = onClickItem ? url : undefined;
 
               let userProps = {
@@ -200,6 +211,7 @@ export const SearchResultsTable = React.memo(
                   key={index}
                   tableStyles={tableStyles}
                   cell={cell}
+                  cellStyle={getColumnFlexStyle(cell.column)}
                   columnIndex={index}
                   columnCount={row.cells.length}
                   userProps={userProps}
@@ -210,7 +222,7 @@ export const SearchResultsTable = React.memo(
           </div>
         );
       },
-      [rows, prepareRow, highlightIndex, styles, tableStyles, onClickItem, response.view, trackingSource]
+      [rows, highlightIndex, styles, tableStyles, onClickItem, response.view, trackingSource]
     );
 
     if (!rows.length) {
@@ -223,23 +235,22 @@ export const SearchResultsTable = React.memo(
 
     return (
       <div
-        {...getTableProps()}
         aria-label={t('search.search-results-table.aria-label-search-results-table', 'Search results table')}
         role="table"
         data-testid={selectors.pages.Search.table.body}
       >
         {headerGroups.map((headerGroup) => {
-          const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
-            style: { width },
-          });
-
           return (
-            <div key={key} {...headerGroupProps} className={styles.headerRow}>
-              {headerGroup.headers.map((column) => {
-                const { key, ...headerProps } = column.getHeaderProps();
+            <div key={headerGroup.id} style={{ width, ...getFlexRowStyle() }} className={styles.headerRow}>
+              {headerGroup.headers.map((header) => {
                 return (
-                  <div key={key} {...headerProps} role="columnheader" className={styles.headerCell}>
-                    {column.render('Header')}
+                  <div
+                    key={header.id}
+                    style={getColumnFlexStyle(header.column)}
+                    role="columnheader"
+                    className={styles.headerCell}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </div>
                 );
               })}
@@ -247,7 +258,7 @@ export const SearchResultsTable = React.memo(
           );
         })}
 
-        <div {...getTableBodyProps()}>
+        <div>
           <InfiniteLoader
             ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}

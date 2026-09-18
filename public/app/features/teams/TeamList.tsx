@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { type SortingRule } from 'react-table';
+import { type ColumnSort } from '@tanstack/react-table';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
@@ -75,7 +75,7 @@ const TeamList = () => {
   const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
   const noTeams = teams?.length === 0;
   const changeSort = useCallback(
-    (sort: SortingRule<unknown>) => {
+    (sort: ColumnSort) => {
       setSort(`${sort.id}-${sort.desc ? 'desc' : 'asc'}`);
     },
     [setSort]

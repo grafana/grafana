@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { type HeaderGroup } from 'react-table';
+import { type HeaderGroup } from '@tanstack/react-table';
 
 import { HeaderRow } from './HeaderRow';
 import { type TableStyles } from './styles';
@@ -37,13 +37,7 @@ describe('HeaderRow', () => {
     });
 
     it('uses "Sort column" fallback when header content is not a string', () => {
-      const columnWithNonStringHeader = {
-        ...createMockColumn({ headerText: 'temperature' }),
-        render: () => null,
-      };
-      const columns = [columnWithNonStringHeader];
-
-      setup(columns);
+      setup([{ headerText: undefined }]);
 
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Sort column');
     });
@@ -53,12 +47,21 @@ function createMockColumn(columnOverrides: MockColumnOverrides) {
   const { headerText, canSort = true, isSorted = false, isSortedDesc = false } = columnOverrides;
 
   return {
-    getHeaderProps: () => ({ key: `col-${headerText}`, style: {} }),
-    getSortByToggleProps: () => ({}),
-    render: (key: string) => (key === 'Header' ? headerText : null),
-    canSort,
-    isSorted,
-    isSortedDesc,
+    id: `header-${headerText}`,
+    getContext: () => ({}),
+    getResizeHandler: () => undefined,
+    column: {
+      id: `col-${headerText}`,
+      columnDef: { header: headerText },
+      getCanSort: () => canSort,
+      getCanFilter: () => false,
+      getCanResize: () => false,
+      getIsSorted: () => (isSorted ? (isSortedDesc ? 'desc' : 'asc') : false),
+      getIsResizing: () => false,
+      getStart: () => 0,
+      getSize: () => 100,
+      getToggleSortingHandler: () => undefined,
+    },
   };
 }
 
@@ -72,7 +75,7 @@ interface MockColumnOverrides {
 function setup(columns: MockColumnOverrides[]) {
   const mockHeaderGroups = [
     {
-      getHeaderGroupProps: () => ({ key: 'hg1' }),
+      id: 'hg1',
       headers: columns.map(createMockColumn),
     },
   ];

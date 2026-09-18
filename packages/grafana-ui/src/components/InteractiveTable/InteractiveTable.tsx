@@ -1,16 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
 import {
-  type HeaderGroup,
-  type PluginHook,
+  flexRender,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type ColumnSort,
+  type Header,
   type Row,
-  type SortingRule,
   type TableOptions,
-  useExpanded,
-  usePagination,
-  useSortBy,
-  useTable,
-} from 'react-table';
+  useReactTable,
+} from '@tanstack/react-table';
 
 import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -22,7 +23,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent } from '../Tooltip/types';
 
 import { type Column } from './types';
-import { EXPANDER_CELL_ID, getColumns } from './utils';
+import { EXPANDER_CELL_ID, getColumns, type InternalColumn } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
@@ -115,7 +116,7 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
-export type FetchDataArgs<Data> = { sortBy: Array<SortingRule<Data>> };
+export type FetchDataArgs<Data> = { sortBy: ColumnSort[] };
 export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 
 interface BaseProps<TableData extends object> {
@@ -151,7 +152,7 @@ interface BaseProps<TableData extends object> {
   /**
    * Optional way to set how the table is sorted from the beginning. Must be memoized.
    */
-  initialSortBy?: Array<SortingRule<TableData>>;
+  initialSortBy?: ColumnSort[];
   /**
    * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
    */
@@ -211,44 +212,41 @@ export function InteractiveTable<TableData extends object>({
     [id]
   );
 
-  const tableHooks: Array<PluginHook<TableData>> = [useSortBy, useExpanded];
-
   const multiplePages = data.length > pageSize;
   const paginationEnabled = pageSize > 0;
 
-  if (paginationEnabled) {
-    tableHooks.push(usePagination);
-  }
-
-  const tableInstance = useTable<TableData>(
-    {
-      columns: tableColumns,
-      data,
-      autoResetExpanded: false,
-      autoResetPage: !!autoResetPage, // If undefined, we want to treat this as false to prevent page reset by default
-      autoResetSortBy: false,
-      disableMultiSort: true,
-      // If fetchData is provided, we disable client-side sorting
-      manualSortBy: Boolean(fetchData),
-      disableSortRemove,
-      getRowId,
-      initialState: {
-        hiddenColumns: [
+  const tableInstance = useReactTable<TableData>({
+    columns: tableColumns,
+    data,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getPaginationRowModel: paginationEnabled ? getPaginationRowModel() : undefined,
+    autoResetExpanded: false,
+    autoResetPageIndex: !!autoResetPage,
+    autoResetAll: false,
+    enableMultiSort: false,
+    manualSorting: Boolean(fetchData),
+    enableSortingRemoval: !disableSortRemove,
+    getRowId,
+    initialState: {
+      columnVisibility: Object.fromEntries(
+        [
           !renderExpandedRow && EXPANDER_CELL_ID,
           ...tableColumns
             .filter((col) => !(col.visible ? col.visible(data) : true))
             .map((c) => c.id)
             .filter(isTruthy),
-        ].filter(isTruthy),
-        sortBy: initialSortBy,
-      },
+        ]
+          .filter(isTruthy)
+          .map((id) => [id, false])
+      ),
+      sorting: initialSortBy,
+      pagination: { pageIndex: 0, pageSize: paginationEnabled ? pageSize : 10 },
     },
-    ...tableHooks
-  );
+  });
 
-  const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
-
-  const { sortBy } = tableInstance.state;
+  const { sorting: sortBy } = tableInstance.getState();
   useEffect(() => {
     if (fetchData) {
       fetchData({ sortBy });
@@ -259,66 +257,58 @@ export function InteractiveTable<TableData extends object>({
     if (paginationEnabled) {
       tableInstance.setPageSize(pageSize);
     }
-  }, [paginationEnabled, pageSize, tableInstance.setPageSize, tableInstance]);
+  }, [paginationEnabled, pageSize, tableInstance]);
 
   return (
     <div className={styles.container}>
-      <table {...getTableProps()} className={cx(styles.table, className)}>
+      <table className={cx(styles.table, className)}>
         <thead>
-          {headerGroups.map((headerGroup) => {
-            const { key, ...headerRowProps } = headerGroup.getHeaderGroupProps();
+          {tableInstance.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const columnDef = header.column.columnDef as InternalColumn<TableData>;
+                const headerTooltip = headerTooltips?.[header.column.id];
 
-            return (
-              <tr key={key} {...headerRowProps}>
-                {headerGroup.headers.map((column) => {
-                  const { key, ...headerCellProps } = column.getHeaderProps();
-
-                  const headerTooltip = headerTooltips?.[column.id];
-
-                  return (
-                    <th
-                      key={key}
-                      {...headerCellProps}
-                      className={cx(styles.header, column.widthClass, {
-                        [styles.disableGrow]: column.width === 0,
-                        [styles.sortableHeader]: column.canSort,
-                      })}
-                      {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
-                    >
-                      <ColumnHeader column={column} headerTooltip={headerTooltip} />
-                    </th>
-                  );
-                })}
-              </tr>
-            );
-          })}
+                return (
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    className={cx(styles.header, columnDef.widthClass, {
+                      [styles.disableGrow]: columnDef.size === 0,
+                      [styles.sortableHeader]: header.column.getCanSort(),
+                    })}
+                    {...(header.column.getIsSorted() && {
+                      'aria-sort': header.column.getIsSorted() === 'desc' ? 'descending' : 'ascending',
+                    })}
+                  >
+                    <ColumnHeader header={header} headerTooltip={headerTooltip} />
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
         </thead>
 
-        <tbody {...getTableBodyProps()}>
-          {(paginationEnabled ? tableInstance.page : tableInstance.rows).map((row) => {
-            prepareRow(row);
-
-            const { key, ...otherRowProps } = row.getRowProps();
+        <tbody>
+          {tableInstance.getRowModel().rows.map((row) => {
             const rowId = getRowHTMLID(row);
-            // @ts-expect-error react-table doesn't ship with useExpanded types, and we can't use declaration merging without affecting the table viz
-            const isExpanded = row.isExpanded;
+            const isExpanded = row.getIsExpanded();
 
             return (
-              <Fragment key={key}>
-                <tr {...otherRowProps} className={cx(styles.row, isExpanded && styles.expandedRow)}>
-                  {row.cells.map((cell) => {
-                    const { key, ...otherCellProps } = cell.getCellProps();
-
+              <Fragment key={row.id}>
+                <tr className={cx(styles.row, isExpanded && styles.expandedRow)}>
+                  {row.getVisibleCells().map((cell) => {
+                    const columnDef = cell.column.columnDef as InternalColumn<TableData>;
                     return (
-                      <td key={key} {...otherCellProps} className={cx(styles.cell, cell.column.widthClass)}>
-                        {cell.render('Cell', { __rowID: rowId })}
+                      <td key={cell.id} className={cx(styles.cell, columnDef.widthClass)}>
+                        {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), __rowID: rowId })}
                       </td>
                     );
                   })}
                 </tr>
                 {isExpanded && renderExpandedRow && (
-                  <tr {...otherRowProps} id={rowId} className={styles.expandedContentRow}>
-                    <td className={styles.expandedContentCell} colSpan={row.cells.length}>
+                  <tr id={rowId} className={styles.expandedContentRow}>
+                    <td className={styles.expandedContentCell} colSpan={row.getVisibleCells().length}>
                       {renderExpandedRow(row.original)}
                     </td>
                   </tr>
@@ -331,9 +321,9 @@ export function InteractiveTable<TableData extends object>({
       {paginationEnabled && multiplePages && (
         <span>
           <Pagination
-            currentPage={tableInstance.state.pageIndex + 1}
-            numberOfPages={tableInstance.pageOptions.length}
-            onNavigate={(toPage) => tableInstance.gotoPage(toPage - 1)}
+            currentPage={tableInstance.getState().pagination.pageIndex + 1}
+            numberOfPages={tableInstance.getPageCount()}
+            onNavigate={(toPage) => tableInstance.setPageIndex(toPage - 1)}
           />
         </span>
       )}
@@ -352,18 +342,21 @@ const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
 });
 
 function ColumnHeader<T extends object>({
-  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps, Header, id },
+  header,
   headerTooltip,
 }: {
-  column: HeaderGroup<T>;
+  header: Header<T, unknown>;
   headerTooltip?: InteractiveTableHeaderTooltip;
 }) {
   const styles = useStyles2(getColumnHeaderStyles);
-  const { onClick } = getSortByToggleProps();
+  const { column } = header;
+  const canSort = column.getCanSort();
+  const isSorted = column.getIsSorted();
+  const headerContent = column.columnDef.header;
 
   const children = (
     <>
-      {render('Header')}
+      {flexRender(headerContent, header.getContext())}
       {headerTooltip && (
         <Tooltip theme="info-alt" content={headerTooltip.content} placement="top-end">
           <Icon
@@ -375,7 +368,7 @@ function ColumnHeader<T extends object>({
       )}
       {isSorted && (
         <span aria-hidden="true" className={styles.sortIcon}>
-          <Icon name={isSortedDesc ? 'angle-down' : 'angle-up'} />
+          <Icon name={isSorted === 'desc' ? 'angle-down' : 'angle-up'} />
         </span>
       )}
     </>
@@ -385,10 +378,10 @@ function ColumnHeader<T extends object>({
     return (
       <button
         aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', {
-          columnName: typeof Header === 'string' ? Header : id,
+          columnName: typeof headerContent === 'string' ? headerContent : column.id,
         })}
         type="button"
-        onClick={onClick}
+        onClick={column.getToggleSortingHandler()}
       >
         {children}
       </button>

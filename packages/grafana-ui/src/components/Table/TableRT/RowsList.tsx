@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { type CSSProperties, type UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
-import { type Cell, type Row, type TableState, type HeaderGroup } from 'react-table';
+import { type Row, type TableState, type HeaderGroup } from '@tanstack/react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
@@ -50,7 +50,6 @@ interface RowsListProps {
   tableState: TableState;
   tableStyles: TableStyles;
   nestedDataField?: Field;
-  prepareRow: (row: Row) => void;
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
@@ -74,7 +73,6 @@ export const RowsList = (props: RowsListProps) => {
     noHeader,
     pageIndex,
     tableState,
-    prepareRow,
     onCellFilterAdded,
     width,
     cellHeight = TableCellHeight.Sm,
@@ -243,9 +241,9 @@ export const RowsList = (props: RowsListProps) => {
 
   const rowIndexForPagination = useCallback(
     (index: number) => {
-      return tableState.pageIndex * tableState.pageSize + index;
+      return tableState.pagination.pageIndex * tableState.pagination.pageSize + index;
     },
-    [tableState.pageIndex, tableState.pageSize]
+    [tableState.pagination.pageIndex, tableState.pagination.pageSize]
   );
 
   let rowBg: Function | undefined = undefined;
@@ -284,10 +282,8 @@ export const RowsList = (props: RowsListProps) => {
         // screen readers would announce positions within the rendered subset only.
         'aria-rowindex': indexForPagination + (noHeader ? 1 : 2),
       };
-      prepareRow(row);
-
-      const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
-      const rowExpanded = nestedDataField && tableState.expanded[row.id];
+      const rowExpanded = nestedDataField && row.getIsExpanded();
+      const expandedRowStyle = rowExpanded ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowSelected };
@@ -317,12 +313,11 @@ export const RowsList = (props: RowsListProps) => {
         );
         style.height = bbox.height;
       }
-      const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
-
       return (
         <div
-          key={key}
-          {...rowProps}
+          key={row.id}
+          style={style}
+          {...additionalProps}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(row.index, data)}
           onMouseLeave={onRowLeave}
@@ -339,14 +334,14 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
-          {row.cells.map((cell: Cell, index: number) => (
+          {row.getVisibleCells().map((cell, index: number) => (
             <TableCell
               key={index}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
-              columnCount={row.cells.length}
+              columnCount={row.getVisibleCells().length}
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
@@ -367,8 +362,6 @@ export const RowsList = (props: RowsListProps) => {
       rowIndexForPagination,
       rows,
       noHeader,
-      prepareRow,
-      tableState.expanded,
       nestedDataField,
       rowBg,
       textWrapFinal,
@@ -395,7 +388,7 @@ export const RowsList = (props: RowsListProps) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
 
-    if (tableState.expanded[row.id] && nestedDataField) {
+    if (row.getIsExpanded() && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
     }
 

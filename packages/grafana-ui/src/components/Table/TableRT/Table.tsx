@@ -1,16 +1,21 @@
 import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  useAbsoluteLayout,
-  useExpanded,
-  useFilters,
-  usePagination,
-  useResizeColumns,
-  useSortBy,
-  useTable,
-} from 'react-table';
+  functionalUpdate,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getFacetedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type ColumnSizingInfoState,
+  type ColumnSizingState,
+  type ExpandedState,
+  type SortingState,
+  useReactTable,
+} from '@tanstack/react-table';
 import { type VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, getFieldDisplayName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
@@ -21,16 +26,9 @@ import { Pagination } from '../../Pagination/Pagination';
 import { TableCellInspector } from '../TableCellInspector';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
-import { getInitialState, useTableStateReducer } from '../reducer';
+import { getInitialState } from '../reducer';
 import { type FooterItem, type GrafanaTableState, type InspectCell, type TableRTProps as Props } from '../types';
-import {
-  getColumns,
-  sortCaseInsensitive,
-  sortNumber,
-  getFooterItems,
-  createFooterCalculationValues,
-  guessLongestField,
-} from '../utils';
+import { getColumns, getFooterItems, createFooterCalculationValues, guessLongestField } from '../utils';
 
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
@@ -131,79 +129,90 @@ export const Table = memo((props: Props) => {
     [data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet]
   );
 
-  // we need a ref to later store the `toggleAllRowsExpanded` function, returned by `useTable`.
-  // We cannot simply use a variable because we need to use such function in the initialization of
-  // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
-  // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
-  // we initialize `useTableStateReducer`.
-  const toggleAllRowsExpandedRef = useRef<((value?: boolean) => void) | undefined>(undefined);
-
-  // Internal react table state reducer
-  const stateReducer = useTableStateReducer({
-    onColumnResize,
-    onSortByChange: (state) => {
-      // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
-      // using `VariableSizeList` and `useExpanded` together.
-      toggleAllRowsExpandedRef.current!(false);
-
-      if (props.onSortByChange) {
-        props.onSortByChange(state);
-      }
-    },
-    data,
-  });
-
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
+  const initialState = useMemo(() => getInitialState(initialSortBy, memoizedColumns), [initialSortBy, memoizedColumns]);
+  const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [lastExpandedOrCollapsedIndex, setLastExpandedOrCollapsedIndex] = useState<number>();
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+  const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>({
+    startOffset: null,
+    startSize: null,
+    deltaOffset: null,
+    deltaPercentage: null,
+    isResizingColumn: false,
+    columnSizingStart: [],
+  });
+  const resizingColumnRef = useRef<string | false>(false);
 
-  const options: any = useMemo(() => {
-    // This is a bit hard to type with the react-table types here, the reducer does not actually match with the
-    // TableOptions.
-    const options: any = {
-      columns: memoizedColumns,
-      data: memoizedData,
-      disableResizing: !resizable,
-      stateReducer: stateReducer,
-      autoResetPage: false,
-      initialState: getInitialState(initialSortBy, memoizedColumns),
-      autoResetFilters: false,
-      sortTypes: {
-        // the builtin number type on react-table does not handle NaN values
-        number: sortNumber,
-        // should be replaced with the builtin string when react-table is upgraded,
-        // see https://github.com/tannerlinsley/react-table/pull/3235
-        'alphanumeric-insensitive': sortCaseInsensitive,
-      },
-    };
-    if (hasUniqueId) {
-      // row here is just always 0 because here we don't use real data but just a dummy array filled with 0.
-      // See memoizedData variable above.
-      options.getRowId = (row: Record<string, unknown>, relativeIndex: number) => getRowUniqueId(data, relativeIndex);
+  const tableInstance = useReactTable({
+    columns: memoizedColumns,
+    data: memoizedData,
+    state: { sorting, expanded, columnSizing, columnSizingInfo },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowCanExpand: () => hasNestedData,
+    enableColumnResizing: resizable,
+    columnResizeMode: 'onChange',
+    autoResetPageIndex: false,
+    autoResetExpanded: !hasUniqueId,
+    getRowId: hasUniqueId ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) : undefined,
+    onSortingChange: (updater) => {
+      setSorting((current) => {
+        const next = functionalUpdate(updater, current);
+        setExpanded({});
+        props.onSortByChange?.(
+          next.flatMap((sortItem) => {
+            const field = data.fields[parseInt(sortItem.id, 10)];
+            return field ? [{ displayName: getFieldDisplayName(field, data), desc: sortItem.desc }] : [];
+          })
+        );
+        return next;
+      });
+    },
+    onExpandedChange: (updater) => {
+      setExpanded((current) => {
+        const next = functionalUpdate(updater, current);
+        if (next !== true) {
+          const currentState = current === true ? {} : current;
+          const changedId = Array.from(new Set([...Object.keys(currentState), ...Object.keys(next)])).find(
+            (id) => Boolean(currentState[id]) !== Boolean(next[id])
+          );
+          if (changedId) {
+            setLastExpandedOrCollapsedIndex(parseInt(changedId, 10));
+          }
+        }
+        return next;
+      });
+    },
+    onColumnSizingChange: setColumnSizing,
+    onColumnSizingInfoChange: setColumnSizingInfo,
+  });
 
-      // If we have unique field we assume we can count on it as being globally unique, and we don't need to reset when
-      // data changes.
-      options.autoResetExpanded = false;
+  const headerGroups = tableInstance.getHeaderGroups();
+  const footerGroups = tableInstance.getFooterGroups();
+  const rows = tableInstance.getPrePaginationRowModel().rows;
+  const page = tableInstance.getRowModel().rows;
+  const state = tableInstance.getState();
+  const totalColumnsWidth = tableInstance.getTotalSize();
+  const extendedState: GrafanaTableState = { ...state, lastExpandedOrCollapsedIndex };
+
+  useEffect(() => {
+    const previousColumn = resizingColumnRef.current;
+    resizingColumnRef.current = columnSizingInfo.isResizingColumn;
+    if (!previousColumn || columnSizingInfo.isResizingColumn || !onColumnResize) {
+      return;
     }
-    return options;
-  }, [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer, hasUniqueId, data]);
-
-  const {
-    getTableProps,
-    headerGroups,
-    footerGroups,
-    rows,
-    prepareRow,
-    totalColumnsWidth,
-    page,
-    state,
-    gotoPage,
-    setPageSize,
-    pageOptions,
-    toggleAllRowsExpanded,
-  } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-
-  const extendedState = state as GrafanaTableState;
-  toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
+    const field = data.fields[parseInt(previousColumn, 10)];
+    if (field) {
+      onColumnResize(getFieldDisplayName(field, data), Math.round(columnSizing[previousColumn] ?? 0));
+    }
+  }, [columnSizing, columnSizingInfo.isResizingColumn, data, onColumnResize]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -243,7 +252,7 @@ export const Table = memo((props: Props) => {
 
     setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [footerOptions, theme, state.filters, data]);
+  }, [footerOptions, theme, state.columnFilters, data]);
 
   let listHeight = height - (headerHeight + footerHeight);
 
@@ -258,16 +267,16 @@ export const Table = memo((props: Props) => {
     if (pageSize <= 0) {
       return;
     }
-    setPageSize(pageSize);
-  }, [pageSize, setPageSize]);
+    tableInstance.setPageSize(pageSize);
+  }, [pageSize, tableInstance]);
 
   useEffect(() => {
     // Reset page index when data changes
     // This is needed because react-table does not do this automatically
     // autoResetPage is set to false because setting it to true causes the issue described in
     // https://github.com/grafana/grafana/pull/67477
-    if (data.length / pageSize < state.pageIndex) {
-      gotoPage(0);
+    if (data.length / pageSize < state.pagination.pageIndex) {
+      tableInstance.setPageIndex(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -277,9 +286,9 @@ export const Table = memo((props: Props) => {
 
   const onNavigate = useCallback(
     (toPage: number) => {
-      gotoPage(toPage - 1);
+      tableInstance.setPageIndex(toPage - 1);
     },
-    [gotoPage]
+    [tableInstance]
   );
 
   const itemCount = enablePagination ? page.length : rows.length;
@@ -289,8 +298,8 @@ export const Table = memo((props: Props) => {
   const ariaRowCount = (noHeader ? 0 : 1) + rows.length;
   let paginationEl = null;
   if (enablePagination) {
-    const itemsRangeStart = state.pageIndex * state.pageSize + 1;
-    let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
+    const itemsRangeStart = state.pagination.pageIndex * state.pagination.pageSize + 1;
+    let itemsRangeEnd = itemsRangeStart + state.pagination.pageSize - 1;
     const isSmall = width < 550;
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
@@ -300,8 +309,8 @@ export const Table = memo((props: Props) => {
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
         <Pagination
-          currentPage={state.pageIndex + 1}
-          numberOfPages={pageOptions.length}
+          currentPage={state.pagination.pageIndex + 1}
+          numberOfPages={tableInstance.getPageCount()}
           showSmallVersion={isSmall}
           onNavigate={onNavigate}
         />
@@ -339,7 +348,6 @@ export const Table = memo((props: Props) => {
   const rendered = (
     <>
       <div
-        {...getTableProps()}
         className={tableStyles.table}
         aria-label={ariaLabel}
         aria-rowcount={ariaRowCount}
@@ -367,11 +375,10 @@ export const Table = memo((props: Props) => {
                   rowHeight={tableStyles.rowHeight}
                   itemCount={itemCount}
                   noHeader={noHeader}
-                  pageIndex={state.pageIndex}
+                  pageIndex={state.pagination.pageIndex}
                   listHeight={listHeight}
                   listRef={listRef}
                   tableState={state}
-                  prepareRow={prepareRow}
                   timeRange={timeRange}
                   onCellFilterAdded={onCellFilterAdded}
                   nestedDataField={nestedDataField}
