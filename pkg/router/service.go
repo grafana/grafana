@@ -61,6 +61,12 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	if next == nil {
 		next = http.NotFoundHandler()
 	}
+	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok {
+		if fb := st.SingleTenantFallback(); fb != nil {
+			next = fb
+		}
+	}
+
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		s.metrics.instrument(s.router, w, req, next)
 	})
