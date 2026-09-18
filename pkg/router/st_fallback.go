@@ -26,7 +26,7 @@ type LoaderWithSingleTenantFallback interface {
 
 const (
 	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
-	singleTenantCacheTTL = 5 * time.Minute
+	singleTenantCacheTTL = 6 * time.Hour
 	// Retry unknown stacks sooner so newly created stacks can become reachable.
 	singleTenantNotFoundTTL   = 30 * time.Second
 	singleTenantLookupTimeout = 5 * time.Second
