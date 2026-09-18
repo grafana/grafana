@@ -11,6 +11,8 @@ import {
   LAST_COLUMN_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
+  SCROLL_SHADOW_TOP_CLASS,
+  SCROLL_SHADOW_BOTTOM_CLASS,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -222,25 +224,31 @@ export const getGridStyles = memoize(
         // the grid's whole content height and it pushes everything below it out of the panel.
         minBlockSize: 0,
       }),
-      // A gradient over the top or bottom of the scroll viewport while rows are scrolled out of view
-      // that way (see useScrollShadows). The grid root sets `contain: content`, making it its own
-      // stacking context, so these paint above every cell without competing with the z-indexes
-      // inside it. Hidden by default: the hook reveals them.
-      scrollShadow: css({
-        blockSize: `max(5%, ${theme.spacing(3)})`,
-        insetInline: 0,
-        opacity: 0,
-        pointerEvents: 'none',
-        position: 'absolute',
-        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-          transition: theme.transitions.create('opacity'),
+      scrollShadows: css({
+        // The grid creates a stacking context; both pseudo-elements must paint above it.
+        '&::before, &::after': {
+          content: '""',
+          blockSize: `max(5%, ${theme.spacing(3)})`,
+          insetInline: 0,
+          opacity: 0,
+          pointerEvents: 'none',
+          position: 'absolute',
+          zIndex: 1,
+          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+            transition: theme.transitions.create('opacity'),
+          },
         },
-      }),
-      scrollShadowTop: css({
-        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
-      }),
-      scrollShadowBottom: css({
-        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+        '&::before': {
+          top: 'var(--table-scroll-shadow-top)',
+          background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+        },
+        '&::after': {
+          bottom: 'var(--table-scroll-shadow-bottom)',
+          background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+        },
+        [`&.${SCROLL_SHADOW_TOP_CLASS}::before, &.${SCROLL_SHADOW_BOTTOM_CLASS}::after`]: {
+          opacity: 1,
+        },
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.

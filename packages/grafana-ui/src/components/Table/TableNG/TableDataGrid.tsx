@@ -177,11 +177,7 @@ export function TableDataGrid({
   );
 
   // Only the refreshed table gets the scroll cue, alongside the rest of its chrome changes.
-  const {
-    topRef: topShadowRef,
-    bottomRef: bottomShadowRef,
-    onScroll: syncScrollShadows,
-  } = useScrollShadows(
+  const syncScrollShadows = useScrollShadows(
     gridRef,
     Boolean(tableRefreshEnabled),
     // the sticky header and footer rows are part of the grid, so the shadows start and end where the
@@ -194,7 +190,7 @@ export function TableDataGrid({
 
   return (
     <>
-      <div className={styles.gridWrapper}>
+      <div className={clsx(styles.gridWrapper, tableRefreshEnabled && styles.scrollShadows)}>
         <DataGrid<TableRow, TableSummaryRow, string>
           {...dataGridOverrides}
           {...commonDataGridProps}
@@ -226,17 +222,6 @@ export function TableDataGrid({
             noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
           }}
         />
-
-        {tableRefreshEnabled && (
-          <>
-            <div ref={topShadowRef} className={clsx(styles.scrollShadow, styles.scrollShadowTop)} role="presentation" />
-            <div
-              ref={bottomShadowRef}
-              className={clsx(styles.scrollShadow, styles.scrollShadowBottom)}
-              role="presentation"
-            />
-          </>
-        )}
       </div>
 
       {showPagination && (

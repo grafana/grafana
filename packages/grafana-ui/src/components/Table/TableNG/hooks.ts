@@ -37,6 +37,8 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   getPaginationChromeHeight,
   SCROLL_SHADOW_THRESHOLD,
+  SCROLL_SHADOW_TOP_CLASS,
+  SCROLL_SHADOW_BOTTOM_CLASS,
   TABLE,
 } from './constants';
 import { IS_SAFARI_26 } from './styles';
@@ -793,7 +795,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * Both the visibility and the edge offsets are written straight to the overlay nodes rather than
+ * Both the visibility classes and edge offsets are written straight to the wrapper rather than
  * held in state, so scrolling never re-renders the grid.
  */
 export function useScrollShadows(
@@ -801,12 +803,10 @@ export function useScrollShadows(
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const topRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
   const sync = useCallback(() => {
     const el = ref.current?.element;
-    if (!enabled || !el) {
+    const wrapper = el?.parentElement;
+    if (!enabled || !el || !wrapper) {
       return;
     }
     const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
@@ -816,14 +816,10 @@ export function useScrollShadows(
     // so the difference between the two heights is the scrollbar alone.
     const scrollbarHeight = offsetHeight - clientHeight;
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
-    if (topRef.current) {
-      topRef.current.style.top = `${topOffset}px`;
-      topRef.current.style.opacity = scrollTop > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
-    }
-    if (bottomRef.current) {
-      bottomRef.current.style.bottom = `${bottomOffset + scrollbarHeight}px`;
-      bottomRef.current.style.opacity = scrollBottom > SCROLL_SHADOW_THRESHOLD ? '1' : '0';
-    }
+    wrapper.style.setProperty('--table-scroll-shadow-top', `${topOffset}px`);
+    wrapper.style.setProperty('--table-scroll-shadow-bottom', `${bottomOffset + scrollbarHeight}px`);
+    wrapper.classList.toggle(SCROLL_SHADOW_TOP_CLASS, scrollTop > SCROLL_SHADOW_THRESHOLD);
+    wrapper.classList.toggle(SCROLL_SHADOW_BOTTOM_CLASS, scrollBottom > SCROLL_SHADOW_THRESHOLD);
   }, [ref, enabled, topOffset, bottomOffset]);
 
   // Content height changes arrive through a render: rows change, nested rows expand, or resized
@@ -843,7 +839,7 @@ export function useScrollShadows(
     return () => resizeObserver.disconnect();
   }, [ref, enabled, sync]);
 
-  return { topRef, bottomRef, onScroll: sync };
+  return sync;
 }
 
 /**
