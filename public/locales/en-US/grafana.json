@@ -6796,7 +6796,7 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "description-as-subtitle": "as subtitle"
+        "description-as-subtitle": "Use as subtitle"
       }
     }
   },
