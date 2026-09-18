@@ -2,18 +2,18 @@ import { css, cx } from '@emotion/css';
 import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type ThemeTypographyVariantTypes, type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
+import { type IconName, type IconSize } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
-export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
+export type AlertVariant = 'success' | 'warning' | 'error' | 'info' | 'tertiary' | 'accent';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -27,6 +27,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
   /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
   action?: ReactNode;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -47,18 +48,21 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       className,
       severity = 'error',
       action,
+      size = 'md',
       ...restProps
     },
     ref
   ) => {
     const theme = useTheme2();
     const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing, size);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
       warning: 'alert',
       info: 'status',
       success: 'status',
+      tertiary: 'status',
+      accent: 'status',
     };
     const role = restProps['role'] || rolesBySeverity[severity];
     const ariaLabel = restProps['aria-label'] || title;
@@ -67,27 +71,16 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <Box
-          data-testid={selectors.components.Alert.alertV2(severity)}
-          display="flex"
-          backgroundColor={severity}
-          borderRadius="lg"
-          paddingY={1}
-          paddingX={2}
-          borderStyle="solid"
-          borderColor={severity}
-          alignItems="stretch"
-          boxShadow={elevated ? 'z3' : undefined}
-        >
-          <Box paddingTop={1} paddingRight={2}>
+        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.box}>
+          <Box display="flex" alignItems="flex-start" justifyContent="flex-start">
             <div className={styles.icon}>
-              <Icon size="xl" name={getIconFromSeverity(severity)} />
+              <Icon size={styles.iconSize} name={getIconFromSeverity(severity)} />
             </div>
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
+            <Box display={'flex'} direction={'column'} flex={1} minWidth="50%" gap={styles.titleGap}>
+              <Text color={severity} variant={styles.titleVariant} weight="medium">
                 {title}
               </Text>
               {children && <div className={styles.content}>{children}</div>}
@@ -114,7 +107,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </Box>
+        </div>
       </div>
     );
   }
@@ -132,8 +125,29 @@ const getIconFromSeverity = (severity: AlertVariant): IconName => {
       return 'info-circle';
     case 'success':
       return 'check';
+    case 'tertiary':
+      return 'info-circle';
+    case 'accent':
+      return 'info-circle';
   }
 };
+
+function getSpacing(size: 'sm' | 'md' | 'lg'): {
+  padding: number;
+  iconWidth: number;
+  iconSize: IconSize;
+  titleVariant: keyof ThemeTypographyVariantTypes;
+  titleGap: ThemeSpacingTokens;
+} {
+  switch (size) {
+    case 'sm':
+      return { padding: 1, iconWidth: 4, iconSize: 'md', titleVariant: 'h6', titleGap: 0 };
+    case 'md':
+      return { padding: 2, iconWidth: 5, iconSize: 'xl', titleVariant: 'h5', titleGap: 0.25 };
+    case 'lg':
+      return { padding: 3, iconWidth: 7, iconSize: 'xxl', titleVariant: 'h4', titleGap: 1 };
+  }
+}
 
 const getStyles = (
   theme: GrafanaTheme2,
@@ -141,9 +155,11 @@ const getStyles = (
   hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
-  topSpacing?: number
+  topSpacing?: number,
+  size: 'sm' | 'md' | 'lg' = 'md'
 ) => {
   const color = theme.colors[severity];
+  const sizing = getSpacing(size);
 
   return {
     wrapper: css({
@@ -164,14 +180,32 @@ const getStyles = (
         zIndex: -1,
       },
     }),
+    titleVariant: sizing.titleVariant,
+    titleGap: sizing.titleGap,
+    box: css({
+      display: 'flex',
+      borderRadius: theme.shape.radius.lg,
+      boxShadow: elevated ? theme.shadows.z3 : undefined,
+      padding: theme.spacing(sizing.padding),
+      //background: `linear-gradient(345deg, ${theme.components.card.background} 20%, color-mix(in oklab, ${theme.components.card.background} 41%, ${color.background}))`,
+      background: `color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background})`,
+      border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 55%, ${color.border})`,
+      gap: theme.spacing(sizing.padding),
+    }),
     icon: css({
       color: color.text,
+      backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
       position: 'relative',
-      top: '-1px',
+      width: theme.spacing(sizing.iconWidth),
+      height: theme.spacing(sizing.iconWidth),
+      borderRadius: theme.shape.radius.default,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
+    iconSize: sizing.iconSize,
     content: css({
       color: theme.colors.text.primary,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
@@ -180,8 +214,6 @@ const getStyles = (
       color: theme.colors.text.secondary,
       background: 'none',
       display: 'flex',
-      top: '-6px',
-      right: '-14px',
     }),
   };
 };
