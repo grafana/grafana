@@ -1,8 +1,16 @@
 import { css } from '@emotion/css';
-import { type CellContext, type ColumnDef, type Row } from '@tanstack/react-table';
+import {
+  flexRender,
+  type BuiltInSortingFn,
+  type CellContext,
+  type ColumnDef,
+  type HeaderContext,
+  type SortingFnOption,
+} from '@tanstack/react-table';
+import { get } from 'lodash';
 
 import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
-import { type CellProps, type Column, type CompatRow } from './types';
+import { type CellProps, type Column, type SortType } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 
@@ -12,11 +20,14 @@ export type InternalColumn<T extends object> = ColumnDef<T> & {
   widthClass?: string;
 };
 
-function toCompatRow<T extends object>(row: Row<T>): CompatRow<T> {
-  return Object.assign(row, {
-    values: Object.fromEntries(row.getAllCells().map((cell) => [cell.column.id, cell.getValue()])),
-  });
-}
+// react-table v7 sort types mapped onto the TanStack Table sorting functions
+const SORTING_FNS: Record<SortType, BuiltInSortingFn> = {
+  string: 'text',
+  number: 'basic',
+  datetime: 'datetime',
+  basic: 'basic',
+  alphanumeric: 'alphanumeric',
+};
 
 function toCellProps<T extends object, Value>(
   context: CellContext<T, Value> & { __rowID?: string }
@@ -24,11 +35,18 @@ function toCellProps<T extends object, Value>(
   const value = context.getValue();
   return {
     ...context,
-    cell: Object.assign(context.cell, { value }),
-    row: toCompatRow(context.row),
+    cell: { ...context.cell, value },
     value,
-    __rowID: context.__rowID,
   };
+}
+
+function getSortingFn<K extends object>(column: Column<K>): SortingFnOption<K> {
+  if (typeof column.sortType === 'function') {
+    const sortType = column.sortType;
+    return (rowA, rowB, columnId) => sortType(rowA, rowB, columnId);
+  }
+
+  return column.sortType ? SORTING_FNS[column.sortType] : 'alphanumeric';
 }
 
 export function getColumns<K extends object>(
@@ -38,28 +56,21 @@ export function getColumns<K extends object>(
   return [
     {
       id: EXPANDER_CELL_ID,
-      cell: (context) => ExpanderCell(toCellProps({ ...context })),
+      cell: (context) => ExpanderCell(toCellProps(context)),
       header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
       enableSorting: false,
       size: 0,
     },
     ...columns.map((column) => ({
       id: column.id,
-      accessorFn: (row: K) => row[column.id as keyof K],
-      header: column.header || (() => null),
-      sortingFn:
-        typeof column.sortType === 'function'
-          ? (rowA: Row<K>, rowB: Row<K>, columnId: string) =>
-              column.sortType!(toCompatRow(rowA), toCompatRow(rowB), columnId)
-          : column.sortType === 'string'
-            ? {
-                string: 'text',
-                number: 'basic',
-                datetime: 'datetime',
-                basic: 'basic',
-                alphanumeric: 'alphanumeric',
-              }[column.sortType]
-            : 'alphanumeric',
+      accessorFn: (row: K) => get(row, column.id),
+      // TanStack Table only accepts strings and render functions, so headers that are nodes or components are
+      // wrapped in a function and rendered by flexRender
+      header:
+        typeof column.header === 'string'
+          ? column.header
+          : (context: HeaderContext<K, unknown>) => flexRender(column.header, context) ?? null,
+      sortingFn: getSortingFn(column),
       enableSorting: Boolean(column.sortType),
       size: column.width ?? (column.disableGrow ? 0 : undefined),
       minSize: column.minWidth,
@@ -72,7 +83,9 @@ export function getColumns<K extends object>(
       visible: column.visible,
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && {
-        cell: (context: CellContext<K, unknown> & { __rowID?: string }) => column.cell!(toCellProps(context)),
+        // flexRender is used because cell renderers can be components (e.g. wrapped in `memo`) and not plain functions
+        cell: (context: CellContext<K, unknown> & { __rowID?: string }) =>
+          flexRender(column.cell, toCellProps(context)),
       }),
     })),
   ];
