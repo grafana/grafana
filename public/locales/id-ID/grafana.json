@@ -5751,16 +5751,24 @@
       "add-library-panel-header": "Impor panel",
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
+      "add-visualization-description": "",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Kisi otomatis",
       "auto-grid-description": "Ukuran panel diubah agar pas dan membentuk kisi yang seragam",
+      "build-assistant": "",
       "custom-grid": "Kisi kustom",
       "custom-grid-description": "Posisikan dan ukur setiap panel secara individu",
       "description": "Tambahkan panel untuk memvisualisasikan data Anda",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "layout-default-hint": "Tata letak yang dipilih juga akan digunakan sebagai default untuk semua tab dan baris baru. Anda bisa mengubahnya nanti di Pengaturan Dasbor > Umum.",
+      "or-start-blank": "",
       "select-layout-header": "Pilih tata letak",
       "title": "Dasbor baru"
     },
@@ -5888,6 +5896,7 @@
       "randomize-field-names-label-field-names": "Nama bidang",
       "randomize-labels-label-labels": "Label",
       "randomize-string-values-label-string-values": "Nilai string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5928,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "Data mentah tanpa transformasi dan konfigurasi bidang diterapkan. ",
       "dataframe-label": "JSON DataFrame (dari Kueri)",
+      "editor-label": "",
       "panel-data-description": "Model mentah diteruskan ke visualisasi panel",
       "panel-data-label": "Data panel",
       "panel-json-description": "Model disimpan di JSON dasbor yang mengonfigurasi cara kerja semuanya.",
@@ -7316,6 +7326,7 @@
       "randomize-field-names-label-field-names": "Nama bidang",
       "randomize-labels-label-labels": "Label",
       "randomize-string-values-label-string-values": "Nilai string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7703,6 +7714,7 @@
         "model-label": "Model",
         "v2-resource": "Sumber Daya V2"
       },
+      "json-preview-label": "",
       "label-description": "Deskripsi",
       "label-folder-name": "Nama folder",
       "label-target-folder": "Folder target",
@@ -11101,6 +11113,7 @@
       "incident-tab-label": "Insiden",
       "team-filter-all": "Semua tim",
       "team-filter-label": "Filter peringatan berdasarkan tim",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tim Anda",
       "title": "Peringatan & insiden",
       "title-alerts": "Peringatan",
@@ -11158,6 +11171,7 @@
     "incidents-card": {
       "declare": "Nyatakan sebuah insiden",
       "empty": "Tidak ada insiden aktif.",
+      "empty-selected-team": "",
       "error-title": "Tidak dapat memuat insiden aktif",
       "title": "Insiden aktif",
       "view-all": "Lihat semua insiden"
@@ -11762,6 +11776,7 @@
       "waiting-for-data": "Menunggu data:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publikasikan"
     }
   },
@@ -12106,6 +12121,10 @@
     "enable-log-details": {
       "description": "Saat diaktifkan, menampilkan detail log untuk setiap baris.",
       "name": "Aktifkan detail log"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Mengaktifkan/menonaktifkan tombol tautan baris log di kolom pertama setiap baris",
@@ -15015,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "Setuju",
-      "alert-text": "Berbagi dasbor ini secara eksternal membuatnya sepenuhnya dapat diakses oleh siapa saja yang memiliki tautan.",
+      "alert-text": "",
       "cancel-button": "Batalkan",
       "learn-more-button": "Pelajari lebih lanjut",
       "public-ack": "Saya memahami bahwa seluruh dasbor ini akan menjadi publik.*",

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -341,38 +342,23 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 				Resource:  v.resource.Resource,
 			},
 		},
-		Limit: 100000, // Large limit to get all folders
+		Limit:        100000, // Large limit to get all folders
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search folders in unified storage: %w", err)
 	}
-
-	if searchResp.Results == nil {
-		return make(map[string]string), nil
+	if searchResp == nil {
+		return nil, fmt.Errorf("failed to search folders in unified storage: empty response")
+	}
+	if searchResp.GetError() != nil {
+		return nil, fmt.Errorf("failed to search folders in unified storage: %w", resource.GetError(searchResp.GetError()))
 	}
 
-	parentMap := make(map[string]string)
-	for _, row := range searchResp.Results.Rows {
-		if row.Key == nil {
-			continue
-		}
-
-		folderUID := row.Key.Name
-		parentUID := ""
-
-		folderColIdx := -1
-		for i, col := range searchResp.Results.Columns {
-			if col.Name == "folder" {
-				folderColIdx = i
-				break
-			}
-		}
-
-		if folderColIdx >= 0 && folderColIdx < len(row.Cells) {
-			parentUID = string(row.Cells[folderColIdx])
-		}
-
-		parentMap[folderUID] = parentUID
+	parentMap, err := decodeFolderParentMap(searchResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode folders from unified storage: %w", err)
 	}
 
 	log.Debug("Built unified folder parent map",
@@ -380,6 +366,63 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 		"namespace", namespace)
 
 	return parentMap, nil
+}
+
+func decodeFolderParentMap(response *resourcepb.ResourceSearchResponse) (map[string]string, error) {
+	parentMap := make(map[string]string)
+	if response == nil {
+		return parentMap, nil
+	}
+
+	switch response.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		table := response.GetResults()
+		if table == nil {
+			return parentMap, nil
+		}
+		folderColumn := -1
+		for i, column := range table.GetColumns() {
+			if column.GetName() == resource.SEARCH_FIELD_FOLDER {
+				folderColumn = i
+				break
+			}
+		}
+		for _, row := range table.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				continue
+			}
+			parentUID := ""
+			if folderColumn >= 0 && folderColumn < len(row.GetCells()) {
+				parentUID = string(row.GetCells()[folderColumn])
+			}
+			parentMap[row.GetKey().GetName()] = parentUID
+		}
+		return parentMap, nil
+
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		for i, row := range response.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				continue
+			}
+			values, err := resource.DecodeSearchValues(response.GetFields(), row)
+			if err != nil {
+				return nil, fmt.Errorf("row %d: %w", i, err)
+			}
+			parentUID := ""
+			if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
+				var valid bool
+				parentUID, valid = value.(string)
+				if !valid {
+					return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
+				}
+			}
+			parentMap[row.GetKey().GetName()] = parentUID
+		}
+		return parentMap, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
 }
 
 func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
