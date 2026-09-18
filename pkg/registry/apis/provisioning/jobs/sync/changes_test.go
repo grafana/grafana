@@ -266,6 +266,21 @@ func TestChanges(t *testing.T) {
 		require.Empty(t, changes, "hidden file must not be reported as unsupported just because it also fails an earlier check")
 	})
 
+	t.Run("traversal path is reported as unsupported, not silently dropped as hidden", func(t *testing.T) {
+		// ".." starts with '.' too; IsHidden must not treat it as hidden, or a
+		// traversal attempt would be waved through instead of failing the sync.
+		source := []repository.FileTreeEntry{
+			{Path: "folder/../evil.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		changes, err := Changes(context.Background(), source, target, true)
+		require.Nil(t, changes)
+		var unsupportedErr *resources.UnsupportedPathError
+		require.ErrorAs(t, err, &unsupportedErr)
+		require.Len(t, unsupportedErr.Paths, 1)
+		require.Equal(t, "folder/../evil.json", unsupportedErr.Paths[0].Path)
+	})
+
 	t.Run("keep folder with hidden folders", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "folder/.hidden/valid.json", Hash: "xyz", Blob: true},

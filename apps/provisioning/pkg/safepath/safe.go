@@ -79,9 +79,14 @@ func IsSafe(path string) error {
 
 // IsHidden reports whether any component of path starts with '.' -- checked
 // independently of IsSafe, whose other checks (invalid characters, '%', ...)
-// can fire first and mask a hidden path behind a different error.
+// can fire first and mask a hidden path behind a different error. "." and
+// ".." are traversal, not hidden -- same precedence as IsSafe, so a
+// traversal attempt is never waved through as merely hidden.
 func IsHidden(path string) bool {
 	for _, part := range Split(path) {
+		if part == "." || part == ".." {
+			continue
+		}
 		if strings.HasPrefix(part, ".") {
 			return true
 		}

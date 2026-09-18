@@ -717,6 +717,39 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 			currentRef:  "new-ref",
 		},
 		{
+			name:         "traversal path is reported as unsupported, not silently dropped as hidden",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// ".." starts with '.' too; IsHidden must not treat it as hidden,
+				// or a traversal attempt would be waved through instead of
+				// failing the sync.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/../evil.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/../evil.json").Return(false)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "folder/../evil.json" &&
+						errors.As(result.Error(), &unsupportedErr)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
 			name:         "error writing resource",
 			quotaTracker: permissiveQt,
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {

@@ -249,6 +249,31 @@ func TestIsSafe(t *testing.T) {
 	}
 }
 
+func TestIsHidden(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want bool
+	}{
+		{name: "plain file", path: "folder/file.json", want: false},
+		{name: "hidden file", path: "folder/.file.json", want: true},
+		{name: "hidden directory", path: "folder/.hidden/file.json", want: true},
+		{name: "hidden file that also fails IsSafe", path: "folder/.hidden & broken.json", want: true},
+		{name: "current directory alone", path: ".", want: false},
+		{name: "parent directory alone", path: "..", want: false},
+		{name: "traversal segment", path: "folder/../evil.json", want: false},
+		{name: "traversal segment at start", path: "../evil.json", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsHidden(tt.path); got != tt.want {
+				t.Errorf("IsHidden(%q) = %v, want %v", tt.path, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSafeSegment(t *testing.T) {
 	tests := []struct {
 		name     string
