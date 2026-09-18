@@ -1,0 +1,37 @@
+diff --git a/lib/index.js b/lib/index.js
+index b9523b89e7566d6d589a53d95ecddde2c5ebb7fc..580a2388ba1c24fc200ade4113ff0423d1d12097 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -779,18 +779,26 @@ function useGridDimensions() {
+ 		setInlineSize(initialWidth);
+ 		setBlockSize(initialHeight);
+ 		setHorizontalScrollbarHeight(initialHorizontalScrollbarHeight);
++		let animationFrame;
++		let latestSize;
+ 		const resizeObserver = new ResizeObserver((entries) => {
+-			const size = entries[0].contentBoxSize[0];
+-			const { clientHeight, offsetHeight } = gridRef.current;
+-			flushSync(() => {
+-				setInlineSize(size.inlineSize);
+-				setBlockSize(size.blockSize);
+-				setHorizontalScrollbarHeight(offsetHeight - clientHeight);
++			latestSize = entries[0].contentBoxSize[0];
++			if (animationFrame !== undefined) return;
++			// Layout changes during observer delivery can trigger another resize in the same cycle.
++			animationFrame = requestAnimationFrame(() => {
++				animationFrame = undefined;
++				const { clientHeight, offsetHeight } = gridRef.current;
++				flushSync(() => {
++					setInlineSize(latestSize.inlineSize);
++					setBlockSize(latestSize.blockSize);
++					setHorizontalScrollbarHeight(offsetHeight - clientHeight);
++				});
+ 			});
+ 		});
+ 		resizeObserver.observe(gridRef.current);
+ 		return () => {
+ 			resizeObserver.disconnect();
++			if (animationFrame !== undefined) cancelAnimationFrame(animationFrame);
+ 		};
+ 	}, []);
+ 	return [

@@ -1,0 +1,159 @@
+diff --git a/dist/floating-ui.dom.esm.js b/dist/floating-ui.dom.esm.js
+index 078fcb5ee68ae38884a0bf4961506f89af8e5649..b2372e7fb1dbff47c192f79c4395838ceb19a261 100644
+--- a/dist/floating-ui.dom.esm.js
++++ b/dist/floating-ui.dom.esm.js
+@@ -637,21 +637,26 @@ function autoUpdate(reference, floating, update, options) {
+   });
+   const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update, ancestorResize) : null;
+   let reobserveFrame = -1;
++  let resizeFrame = -1;
++  let referenceResized = false;
+   let resizeObserver = null;
+   if (elementResize) {
+-    resizeObserver = new ResizeObserver(_ref => {
+-      let [firstEntry] = _ref;
+-      if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+-        // Prevent update loops when using the `size` middleware.
+-        // https://github.com/floating-ui/floating-ui/issues/1740
+-        resizeObserver.unobserve(floating);
+-        cancelAnimationFrame(reobserveFrame);
+-        reobserveFrame = requestAnimationFrame(() => {
+-          var _resizeObserver;
+-          (_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+-        });
+-      }
+-      update();
++    resizeObserver = new ResizeObserver(entries => {
++      referenceResized ||= entries.some(entry => entry.target === referenceEl);
++      if (resizeFrame !== -1) return;
++      // Defer both observer registration changes and layout writes until the next frame.
++      resizeFrame = requestAnimationFrame(() => {
++        resizeFrame = -1;
++        if (referenceResized && resizeObserver && floating) {
++          resizeObserver.unobserve(floating);
++          cancelAnimationFrame(reobserveFrame);
++          reobserveFrame = requestAnimationFrame(() => {
++            if (resizeObserver) resizeObserver.observe(floating);
++          });
++        }
++        referenceResized = false;
++        update();
++      });
+     });
+     if (referenceEl && !animationFrame) {
+       resizeObserver.observe(referenceEl);
+@@ -683,6 +688,8 @@ function autoUpdate(reference, floating, update, options) {
+     cleanupIo == null || cleanupIo();
+     (_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+     resizeObserver = null;
++    cancelAnimationFrame(resizeFrame);
++    cancelAnimationFrame(reobserveFrame);
+     if (animationFrame) {
+       cancelAnimationFrame(frameId);
+     }
+diff --git a/dist/floating-ui.dom.mjs b/dist/floating-ui.dom.mjs
+index 078fcb5ee68ae38884a0bf4961506f89af8e5649..b2372e7fb1dbff47c192f79c4395838ceb19a261 100644
+--- a/dist/floating-ui.dom.mjs
++++ b/dist/floating-ui.dom.mjs
+@@ -637,21 +637,26 @@ function autoUpdate(reference, floating, update, options) {
+   });
+   const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update, ancestorResize) : null;
+   let reobserveFrame = -1;
++  let resizeFrame = -1;
++  let referenceResized = false;
+   let resizeObserver = null;
+   if (elementResize) {
+-    resizeObserver = new ResizeObserver(_ref => {
+-      let [firstEntry] = _ref;
+-      if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+-        // Prevent update loops when using the `size` middleware.
+-        // https://github.com/floating-ui/floating-ui/issues/1740
+-        resizeObserver.unobserve(floating);
+-        cancelAnimationFrame(reobserveFrame);
+-        reobserveFrame = requestAnimationFrame(() => {
+-          var _resizeObserver;
+-          (_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+-        });
+-      }
+-      update();
++    resizeObserver = new ResizeObserver(entries => {
++      referenceResized ||= entries.some(entry => entry.target === referenceEl);
++      if (resizeFrame !== -1) return;
++      // Defer both observer registration changes and layout writes until the next frame.
++      resizeFrame = requestAnimationFrame(() => {
++        resizeFrame = -1;
++        if (referenceResized && resizeObserver && floating) {
++          resizeObserver.unobserve(floating);
++          cancelAnimationFrame(reobserveFrame);
++          reobserveFrame = requestAnimationFrame(() => {
++            if (resizeObserver) resizeObserver.observe(floating);
++          });
++        }
++        referenceResized = false;
++        update();
++      });
+     });
+     if (referenceEl && !animationFrame) {
+       resizeObserver.observe(referenceEl);
+@@ -683,6 +688,8 @@ function autoUpdate(reference, floating, update, options) {
+     cleanupIo == null || cleanupIo();
+     (_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+     resizeObserver = null;
++    cancelAnimationFrame(resizeFrame);
++    cancelAnimationFrame(reobserveFrame);
+     if (animationFrame) {
+       cancelAnimationFrame(frameId);
+     }
+diff --git a/dist/floating-ui.dom.umd.js b/dist/floating-ui.dom.umd.js
+index d3df8b7e4e60afbd21bae9b4bc282f8d62fb0fa4..df222a292e046be8cd065dcddcd5b3edc8778381 100644
+--- a/dist/floating-ui.dom.umd.js
++++ b/dist/floating-ui.dom.umd.js
+@@ -816,21 +816,26 @@
+     });
+     const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update, ancestorResize) : null;
+     let reobserveFrame = -1;
++    let resizeFrame = -1;
++    let referenceResized = false;
+     let resizeObserver = null;
+     if (elementResize) {
+-      resizeObserver = new ResizeObserver(_ref => {
+-        let [firstEntry] = _ref;
+-        if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+-          // Prevent update loops when using the `size` middleware.
+-          // https://github.com/floating-ui/floating-ui/issues/1740
+-          resizeObserver.unobserve(floating);
+-          cancelAnimationFrame(reobserveFrame);
+-          reobserveFrame = requestAnimationFrame(() => {
+-            var _resizeObserver;
+-            (_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+-          });
+-        }
+-        update();
++      resizeObserver = new ResizeObserver(entries => {
++        referenceResized ||= entries.some(entry => entry.target === referenceEl);
++        if (resizeFrame !== -1) return;
++        // Defer both observer registration changes and layout writes until the next frame.
++        resizeFrame = requestAnimationFrame(() => {
++          resizeFrame = -1;
++          if (referenceResized && resizeObserver && floating) {
++            resizeObserver.unobserve(floating);
++            cancelAnimationFrame(reobserveFrame);
++            reobserveFrame = requestAnimationFrame(() => {
++              if (resizeObserver) resizeObserver.observe(floating);
++            });
++          }
++          referenceResized = false;
++          update();
++        });
+       });
+       if (referenceEl && !animationFrame) {
+         resizeObserver.observe(referenceEl);
+@@ -862,6 +867,8 @@
+       cleanupIo == null || cleanupIo();
+       (_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+       resizeObserver = null;
++      cancelAnimationFrame(resizeFrame);
++      cancelAnimationFrame(reobserveFrame);
+       if (animationFrame) {
+         cancelAnimationFrame(frameId);
+       }

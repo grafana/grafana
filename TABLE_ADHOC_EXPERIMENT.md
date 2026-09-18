@@ -58,3 +58,20 @@ unpinning retains the organized order behind any remaining pinned columns.
 Restoring serialized organize configs restores column order without pin state.
 Ephemeral frozen-column options and URL persistence remain separate work.
 Standalone tables retain their existing local column-order handling.
+
+## Resize observer follow-up
+
+Repeated browser resizing exposed ResizeObserver delivery loops involving both the
+grid dimension callback and Floating UI's floating-element callback. Deferring only
+one callback did not eliminate the reproduced warning. The branch patches both
+dependencies to coalesce resize work into the next animation frame, cancelling
+pending callbacks during cleanup. The Floating UI patch includes its ESM and CommonJS
+entry points and preserves immediate initial positioning and existing scroll handling.
+No global observer replacement or error-overlay suppression is used.
+
+Regression tests exercise real dependency callbacks: grid virtualization updates
+only after the scheduled frame, repeated measurements use the latest size, floating
+updates coalesce, and unmount/cleanup cancels queued work. Browser width/height sweeps
+with tooltips and a pinned column no longer show the overlay; the pinned column
+retains its organized position and frozen state. These patches should move upstream
+into the corresponding packages before a production rollout.
