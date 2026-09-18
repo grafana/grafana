@@ -915,6 +915,7 @@
       "button-view": "查看",
       "export-ariaLabel-export": "导出",
       "export-label-export": "导出",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "删除",
       "label-manage-permissions": "管理权限",
       "tooltip-history": "查看针对此联络点的通知尝试历史记录",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "正在加载..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "正在加载..."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "没有已暂停的规则",
         "pause-recording": "录制规则已暂停",
         "policy-tree": "策略树",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "通知路由",
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "重复的模板文件名称：“{{name}}”。模板文件名称必须唯一。",
         "templates-label": "通知模板",
         "templates-remove": "移除{{name}}",
-        "upload": "上传 YAML 文件",
+        "upload": "",
         "validating": "正在验证配置...",
         "validation-error": "验证失败",
         "validation-error-desc": "验证配置失败。",
         "validation-success": "验证成功",
         "validation-success-desc": "未找到冲突。配置已准备就绪，可以导入。",
         "validation-warning": "为了避免与现有资源发生冲突，某些资源将被重命名",
-        "yaml-file": "Alertmanager 配置 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 配置 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "数据源",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "添加自述文件",
-      "edit-tooltip": "编辑自述文件",
+      "edit-doc-tooltip": "",
       "empty-message": "添加自述文件，描述此文件夹中的内容以及在哪里可以找到正确的数据面板。",
       "load-error-retry": "重试",
-      "load-error-title": "无法加载自述文件",
-      "parse-error": "无法显示自述文件内容。"
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "清除历史记录",
@@ -5736,16 +5751,24 @@
       "add-library-panel-header": "导入面板",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
+      "add-visualization-description": "",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "自动网格",
       "auto-grid-description": "调整面板大小以适应并形成统一的网格",
+      "build-assistant": "",
       "custom-grid": "自定义网格",
       "custom-grid-description": "单独放置每个面板并调整大小",
       "description": "添加面板以可视化您的数据",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "layout-default-hint": "所选布局也将用作所有新选项卡和新行的默认布局。您以后可以在“数据面板设置”>“通用”中进行更改。",
+      "or-start-blank": "",
       "select-layout-header": "选择布局",
       "title": "新建数据面板"
     },
@@ -5873,6 +5896,7 @@
       "randomize-field-names-label-field-names": "字段名称",
       "randomize-labels-label-labels": "标签",
       "randomize-string-values-label-string-values": "字符串值",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "数据",
@@ -5913,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "未应用转换和字段配置的原始数据。",
       "dataframe-label": "DataFrame JSON （来自查询）",
+      "editor-label": "",
       "panel-data-description": "发送至面板可视化的原始模型",
       "panel-data-label": "面板数据",
       "panel-json-description": "保存在仪表板 JSON 中的模型，用于配置整体运作方式。",
@@ -7301,6 +7326,7 @@
       "randomize-field-names-label-field-names": "字段名称",
       "randomize-labels-label-labels": "标签",
       "randomize-string-values-label-string-values": "字符串值",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "数据",
@@ -7688,6 +7714,7 @@
         "model-label": "模型",
         "v2-resource": "V2 资源"
       },
+      "json-preview-label": "",
       "label-description": "描述",
       "label-folder-name": "文件夹名称",
       "label-target-folder": "目标文件夹",
@@ -11086,6 +11113,7 @@
       "incident-tab-label": "事故",
       "team-filter-all": "所有团队",
       "team-filter-label": "按团队筛选警报",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "您的团队",
       "title": "警报和事故",
       "title-alerts": "警报",
@@ -11143,6 +11171,7 @@
     "incidents-card": {
       "declare": "声明事故",
       "empty": "没有活跃的事故。",
+      "empty-selected-team": "",
       "error-title": "无法加载活跃的事故",
       "title": "没有活跃的事故",
       "view-all": "查看所有事故"
@@ -11747,6 +11776,7 @@
       "waiting-for-data": "正在等待数据："
     },
     "live-publish": {
+      "message": "",
       "publish": "发布"
     }
   },
@@ -12092,6 +12122,10 @@
       "description": "启用后，将显示每一行的日志详情。",
       "name": "启用日志详情"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "启用/禁用每一行第一列中的日志行链接按钮",
       "name": "显示“复制日志链接”按钮"
@@ -12159,6 +12193,10 @@
     "selected-team-not-found": "找不到所选团队，或者您没有查看该团队所需的权限。",
     "team-not-found": "[未知团队]",
     "unknown-error": "未知错误"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
@@ -12492,6 +12530,10 @@
     "authentication": {
       "title": "身份验证"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "书签"
     },
@@ -12698,6 +12740,7 @@
       "title": "已记录查询"
     },
     "reporting": {
+      "subtitle": "",
       "title": "报告"
     },
     "saved-queries": {
@@ -12712,6 +12755,10 @@
     },
     "search-dashboards": {
       "title": "搜索仪表板"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "查看 Grafana 配置中定义的设置",
@@ -14987,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "接受",
-      "alert-text": "在外部共享此数据面板，让拥有链接的任何人都可以完全访问。",
+      "alert-text": "",
       "cancel-button": "取消",
       "learn-more-button": "了解更多",
       "public-ack": "我了解整个数据面板将被公开。*",
@@ -16552,10 +16599,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

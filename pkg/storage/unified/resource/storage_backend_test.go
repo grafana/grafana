@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1324,6 +1325,64 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	require.Equal(t, int32(400), response.Error.Code)
 	require.Equal(t, "BadRequest", response.Error.Reason)
 	require.Contains(t, response.Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	_, rv := createAndWriteTestObject(t, backend)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"}
+
+	// A batch mixing a valid read with a too-high RV must reject only the latter,
+	// matching ReadResource, instead of resolving a lower retained revision.
+	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
+		{Key: key},
+		{Key: key, ResourceVersion: rv + 1000000000000},
+	})
+	require.NoError(t, err)
+	require.Len(t, responses, 2)
+
+	require.Nil(t, responses[0].Error, "valid read should succeed")
+	require.NotNil(t, responses[1].Error, "too-high RV should be rejected")
+	require.Equal(t, int32(400), responses[1].Error.Code)
+	require.Contains(t, responses[1].Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
+	// The metadata still resolves (Keys lists the resource) but the body Get
+	// misses, reproducing the body vanishing (GC) between metadata resolution and
+	// body retrieval. Deleting the key instead would fail the earlier metadata
+	// lookup and never reach the body read.
+	kvWrapper := &bodyMissingKV{}
+	backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+		kvWrapper.KV = o.KvStore
+		o.KvStore = kvWrapper
+	})
+	ctx := context.Background()
+
+	createAndWriteTestObject(t, backend)
+	kvWrapper.fail.Store(true)
+
+	response := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"},
+	})
+	require.NotNil(t, response.Error, "read of a resolved key with a missing body should error")
+	require.Equal(t, int32(404), response.Error.Code, "missing body is a not-found, not a 500")
+}
+
+// bodyMissingKV makes data-section Get miss once fail is set, while leaving key
+// listing intact, so a read resolves metadata but finds no body.
+type bodyMissingKV struct {
+	KV
+	fail atomic.Bool
+}
+
+func (k *bodyMissingKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if k.fail.Load() && section == kv.DataSection {
+		return nil, kv.ErrNotFound
+	}
+	return k.KV.Get(ctx, section, key)
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
