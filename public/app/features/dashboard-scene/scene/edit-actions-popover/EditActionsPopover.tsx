@@ -17,6 +17,8 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { type SidebarShiftPadding } from './EditActionsLayoutContext';
+
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 /**
@@ -41,7 +43,7 @@ type EditActionsPopoverProps = {
   placement?: Placement;
   portalRoot?: () => HTMLElement | undefined;
   zIndex?: number;
-  shiftPadding?: () => number | { right: number };
+  shiftPadding?: () => SidebarShiftPadding;
 };
 
 /**
