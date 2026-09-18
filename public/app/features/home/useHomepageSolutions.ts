@@ -2,7 +2,7 @@ import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
 import { SOLUTION_IDS } from './solutions/constants';
-import { useKubernetesFilters } from './solutions/kubernetesFilters';
+import { useKubernetesFilterSelection } from './solutions/kubernetesFilters';
 import { kubernetesSignal, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -21,12 +21,9 @@ export interface HomepageSolutions {
 /**
  * Builds one solution set for both homepage sections. Construction starts no queries, and stable
  * object identity keeps their async effects from restarting — only the Kubernetes solution is
- * rebuilt when its persisted filters change, so just that card refetches.
+ * rebuilt when its persisted filter selection changes, so just that card refetches.
  */
 export function useHomepageSolutions(): HomepageSolutions {
-  const [kubernetesFilters] = useKubernetesFilters();
-  const kubernetes = useMemo(() => kubernetesSolution(kubernetesFilters), [kubernetesFilters]);
-
   const stable = useMemo(() => {
     const byId = {
       traces: tracesSolution(),
@@ -37,10 +34,9 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
     const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
-    // Detection is filter-independent, so the snapshot reads it directly rather than through the
-    // kubernetes instance, which is rebuilt on every filter save.
+    // One Kubernetes detection for the card and the recommendations snapshot: both read the same
+    // datasource for this visit, however often the card rebuilds and whenever the probe cache expires.
     const kubernetesDetection = memoize(kubernetesSignal);
-
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
       const [metrics, logs, traces, kubernetesStatus, spanMetrics, synthetics] = await Promise.all([
@@ -58,8 +54,14 @@ export function useHomepageSolutions(): HomepageSolutions {
       return { metrics, logs, traces, kubernetes: kubernetesStatus, spanMetrics, synthetics };
     };
 
-    return { byId, signals };
+    return { byId, signals, kubernetesDetection };
   }, []);
+
+  const [kubernetesSelection] = useKubernetesFilterSelection();
+  const kubernetes = useMemo(
+    () => kubernetesSolution(kubernetesSelection, stable.kubernetesDetection),
+    [kubernetesSelection, stable]
+  );
 
   return useMemo(() => {
     // The Record makes a missing solution a type error.

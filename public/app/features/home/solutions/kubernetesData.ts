@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { type KubernetesHomeFilters } from './kubernetesFilters';
+import { type KubernetesFilterValues } from './kubernetesFilters';
 import {
   createTtlCachedPromise,
   findDatasourceWithData,
@@ -78,7 +78,7 @@ interface Scope {
   nodesHostingNamespaces: string;
 }
 
-const scope = (f: KubernetesHomeFilters): Scope => {
+const scope = (f: KubernetesFilterValues): Scope => {
   const cluster = f.cluster ? `cluster="${escapeLabelValue(f.cluster)}"` : 'cluster!=""';
   const namespace = f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}"` : null;
   const node = f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}"` : null;
@@ -173,7 +173,7 @@ export async function resolveKubernetesDatasource(): Promise<DataSourceInstanceL
 /** Cluster and pod counts via kube-state-metrics, scoped to `filters`. */
 export async function fetchKubernetesInventory(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  filters: KubernetesHomeFilters
+  filters: KubernetesFilterValues
 ): Promise<KubernetesInventory> {
   const frames = await runInstantQueries(inventoryQueries(scope(filters)), ds);
   return {
@@ -185,7 +185,7 @@ export async function fetchKubernetesInventory(
 /** Health signals via kube-state-metrics and alert metrics, scoped to `filters`. */
 export async function fetchKubernetesHealth(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  filters: KubernetesHomeFilters
+  filters: KubernetesFilterValues
 ): Promise<KubernetesHealth> {
   // Grafana-managed firing alerts live in the state-history target datasource under a
   // configurable metric name; hard-coding GRAFANA_ALERTS on the k8s datasource misses them.
@@ -230,7 +230,7 @@ async function fetchGrafanaManagedAlertCount(uid: string, metric: string, matche
 /** CPU over 24h (cAdvisor) scoped to `filters`; null when the metric is absent. */
 export async function fetchClusterCpuSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  filters: KubernetesHomeFilters
+  filters: KubernetesFilterValues
 ): Promise<FieldSparkline | null> {
   const s = scope(filters);
   const frames = await runRangeQuery(

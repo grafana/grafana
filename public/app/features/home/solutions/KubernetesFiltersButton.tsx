@@ -1,26 +1,62 @@
 import { useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsyncFn } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Badge, Button, Combobox, Field, IconButton, Modal, MultiCombobox, Stack } from '@grafana/ui';
 
-import { fetchKubernetesFilterOptions } from './kubernetesData';
-import { hasKubernetesFilters, type KubernetesHomeFilters, useKubernetesFilters } from './kubernetesFilters';
+import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
+import {
+  hasKubernetesFilters,
+  type KubernetesFilterValues,
+  kubernetesFilterValuesFor,
+  useKubernetesFilterSelection,
+} from './kubernetesFilters';
 
 interface KubernetesFiltersButtonProps {
   datasource: DataSourceInstanceListItem;
 }
 
+// null = that picker's discovery failed; manual entry still works.
+const optionsIncomplete = (o: KubernetesFilterOptions) =>
+  o.clusters === null || o.namespaces === null || o.nodes === null;
+
 export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonProps) {
-  const [filters, saveFilters] = useKubernetesFilters();
+  const [selection, saveSelection] = useKubernetesFilterSelection();
   const [open, setOpen] = useState(false);
-  const active = hasKubernetesFilters(filters);
+  // A selection scopes only the datasource it came from; resolved to another, the card runs
+  // unscoped and says so, and the modal starts empty rather than seeding foreign values.
+  const values = kubernetesFilterValuesFor(selection, datasource.uid);
+  const active = hasKubernetesFilters(values);
+  const notApplied = !active && selection !== null;
+  // Loaded on the first open and kept for the card's lifetime, so reopening costs no queries;
+  // a load that left a picker empty is retried on the next open.
+  const [{ value: options, loading: optionsLoading }, loadOptions] = useAsyncFn(
+    () => fetchKubernetesFilterOptions(datasource),
+    [datasource]
+  );
+  const openModal = () => {
+    if (!optionsLoading && (options === undefined || optionsIncomplete(options))) {
+      loadOptions();
+    }
+    setOpen(true);
+  };
 
   return (
     <>
       <Stack direction="row" gap={1} alignItems="center">
         {active && <Badge text={t('home.solutions.kubernetes.filters.filtered-badge', 'Filtered')} color="blue" />}
+        {notApplied && (
+          <Badge
+            text={t('home.solutions.kubernetes.filters.not-applied-badge', 'Filters not applied')}
+            color="orange"
+            tooltip={t(
+              'home.solutions.kubernetes.filters.not-applied-tooltip',
+              'The saved filters belong to another datasource. Save new filters for {{name}} or clear them.',
+              { name: datasource.name }
+            )}
+          />
+        )}
         <IconButton
           name="cog"
           tooltip={
@@ -31,16 +67,20 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
                 )
               : t('home.solutions.kubernetes.filters.customize', 'Customize Kubernetes monitoring')
           }
-          onClick={() => setOpen(true)}
+          onClick={openModal}
         />
       </Stack>
       {/* Mounted only while open so every open starts from the persisted filters. */}
       {open && (
         <KubernetesFiltersModal
           datasource={datasource}
-          initial={filters}
+          options={options}
+          optionsLoading={optionsLoading}
+          initial={values}
+          canClear={selection !== null}
           onSave={(next) => {
-            saveFilters(next);
+            // No values left is a clear: the selection stores as nothing.
+            saveSelection({ datasourceUid: datasource.uid, values: next });
             setOpen(false);
           }}
           onDismiss={() => setOpen(false)}
@@ -52,22 +92,29 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
 
 interface KubernetesFiltersModalProps {
   datasource: DataSourceInstanceListItem;
-  initial: KubernetesHomeFilters;
-  onSave: (filters: KubernetesHomeFilters) => void;
+  options: KubernetesFilterOptions | undefined;
+  optionsLoading: boolean;
+  initial: KubernetesFilterValues;
+  /** A selection is saved, for this datasource or another. */
+  canClear: boolean;
+  onSave: (values: KubernetesFilterValues) => void;
   onDismiss: () => void;
 }
 
-function KubernetesFiltersModal({ datasource, initial, onSave, onDismiss }: KubernetesFiltersModalProps) {
+function KubernetesFiltersModal({
+  datasource,
+  options,
+  optionsLoading,
+  initial,
+  canClear,
+  onSave,
+  onDismiss,
+}: KubernetesFiltersModalProps) {
   const [cluster, setCluster] = useState(initial.cluster ?? '');
   const [namespaces, setNamespaces] = useState(initial.namespaces ?? []);
   const [nodes, setNodes] = useState(initial.nodes ?? []);
-  // Options load independently; a slow or failing datasource must not block the form.
-  const { value: options, loading: optionsLoading } = useAsync(
-    () => fetchKubernetesFilterOptions(datasource),
-    [datasource]
-  );
-  const optionsFailed =
-    options !== undefined && (options.clusters === null || options.namespaces === null || options.nodes === null);
+  // A retry keeps the previous options while loading; the warning waits for its verdict.
+  const optionsFailed = !optionsLoading && options !== undefined && optionsIncomplete(options);
 
   return (
     <Modal
@@ -134,7 +181,7 @@ function KubernetesFiltersModal({ datasource, initial, onSave, onDismiss }: Kube
         </Field>
       </Stack>
       <Modal.ButtonRow>
-        {hasKubernetesFilters(initial) && (
+        {canClear && (
           <Button variant="secondary" fill="text" onClick={() => onSave({})}>
             {t('home.solutions.kubernetes.filters.clear', 'Clear filters')}
           </Button>

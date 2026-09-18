@@ -166,7 +166,10 @@ describe('useHomepageSolutions', () => {
     const signalsBefore = result.current.signals;
 
     act(() => {
-      store.set(KUBERNETES_FILTERS_STORAGE_KEY, JSON.stringify({ cluster: 'x' }));
+      store.set(
+        KUBERNETES_FILTERS_STORAGE_KEY,
+        JSON.stringify({ datasourceUid: 'prometheus', values: { cluster: 'x' } })
+      );
     });
 
     const after = result.current.solutions;
@@ -178,7 +181,10 @@ describe('useHomepageSolutions', () => {
     expect(result.current.signals).toBe(signalsBefore);
 
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
-    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith({ cluster: 'x' });
+    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith(
+      { datasourceUid: 'prometheus', values: { cluster: 'x' } },
+      expect.any(Function)
+    );
     expect(mockFactories.traces).toHaveBeenCalledTimes(1);
   });
 
@@ -189,9 +195,33 @@ describe('useHomepageSolutions', () => {
     unmount();
 
     act(() => {
-      store.set(KUBERNETES_FILTERS_STORAGE_KEY, JSON.stringify({ cluster: 'y' }));
+      store.set(
+        KUBERNETES_FILTERS_STORAGE_KEY,
+        JSON.stringify({ datasourceUid: 'prometheus', values: { cluster: 'y' } })
+      );
     });
 
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
+  });
+
+  it('feeds the kubernetes solution the one detector the signal snapshot reads, across rebuilds', async () => {
+    mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
+    const { result } = renderHook(() => useHomepageSolutions());
+
+    act(() => {
+      store.set(
+        KUBERNETES_FILTERS_STORAGE_KEY,
+        JSON.stringify({ datasourceUid: 'prometheus', values: { cluster: 'x' } })
+      );
+    });
+
+    const detectors = mockFactories.kubernetes.mock.calls.map(([, detect]) => detect);
+    expect(detectors).toHaveLength(2);
+    expect(detectors[1]).toBe(detectors[0]);
+
+    await detectors[0]!();
+    await result.current.signals();
+    // Both consumers share one memoized detection: the probe runs once for the visit.
+    expect(mockKubernetesSignal).toHaveBeenCalledTimes(1);
   });
 });

@@ -11471,6 +11471,8 @@
           "namespaces-label": "Namespaces",
           "nodes-description": "Pod health counts pods running on the selected nodes; alerts count only when labeled with a selected node.",
           "nodes-label": "Nodes",
+          "not-applied-badge": "Filters not applied",
+          "not-applied-tooltip": "The saved filters belong to another datasource. Save new filters for {{name}} or clear them.",
           "options-error": "Could not load some options from {{name}}. Type values manually.",
           "save": "Save"
         },

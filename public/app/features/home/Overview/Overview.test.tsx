@@ -338,6 +338,40 @@ describe('Overview', () => {
     expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
   });
 
+  it('keeps a rebuilt solution in its section, rendering the new instance, until its placement re-resolves', async () => {
+    const kubernetes = stubSolution('kubernetes', {
+      title: 'Kubernetes Monitoring',
+      datasource: async () => stubDatasource,
+      needsAttention: async () => true,
+      stats: async () => ({ primary: '24 pods' }),
+    });
+    const { rerender } = render(<Overview solutions={[kubernetes]} />);
+
+    expect(await screen.findByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
+    expect(await screen.findByText('24 pods')).toBeInTheDocument();
+
+    // A filter save rebuilds the solution: same id, new instance, facts scoped to the new filters.
+    const attention = deferred<boolean>();
+    const rebuilt = stubSolution('kubernetes', {
+      title: 'Kubernetes Monitoring',
+      datasource: async () => stubDatasource,
+      needsAttention: () => attention.promise,
+      stats: async () => ({ primary: '7 pods' }),
+    });
+    rerender(<Overview solutions={[rebuilt]} />);
+
+    expect(await screen.findByText('7 pods')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Enabled' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solution-card-skeleton')).not.toBeInTheDocument();
+
+    await act(async () => attention.resolve(false));
+
+    expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
+    expect(screen.getByText('7 pods')).toBeInTheDocument();
+  });
+
   it('holds offers behind skeletons until a live card settles when no view preference is stored', async () => {
     mockUseGuides.mockReturnValue([guide]);
     const logsDatasource = deferred<DataSourceInstanceListItem | null>();

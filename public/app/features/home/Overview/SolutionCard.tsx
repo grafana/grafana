@@ -17,10 +17,13 @@ interface SolutionCardProps {
 }
 
 export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
-  const { value: alert = null } = useAsync(
+  // useAsync retains the previous value while a rebuilt solution re-resolves; the old scope's
+  // alert text must not sit under the retained attention styling.
+  const { value: retainedAlert = null, loading: alertLoading } = useAsync(
     async () => (needsAttention ? solution.alert() : null),
     [needsAttention, solution]
   );
+  const alert = alertLoading ? null : retainedAlert;
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
   const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
   const Customize = solution.customize;
@@ -103,7 +106,9 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
       </Card.Actions>
       {Customize && datasource && (
         <Card.SecondaryActions>
-          <Customize datasource={datasource} />
+          {/* Keyed so a control's per-datasource state (drafts, discovered options) never carries
+              over to another datasource. */}
+          <Customize key={datasource.uid} datasource={datasource} />
         </Card.SecondaryActions>
       )}
     </Card>

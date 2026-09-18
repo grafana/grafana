@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
@@ -195,5 +196,30 @@ describe('SolutionCard customize control', () => {
 
     expect(await screen.findByRole('button', { name: 'Customize Prometheus' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+  });
+
+  it('remounts the control when the datasource changes so per-datasource state never carries over', async () => {
+    // Captures the datasource it mounted for; a retained instance would keep reporting the first one.
+    const MountProbe = ({ datasource }: { datasource: DataSourceInstanceListItem }) => {
+      const [mountedFor] = useState(datasource.uid);
+      return <button type="button">Mounted for {mountedFor}</button>;
+    };
+    const { rerender } = render(
+      <SolutionCard
+        solution={stubSolution('kubernetes', { datasource: async () => stubDatasource, customize: MountProbe })}
+        needsAttention={false}
+      />
+    );
+    expect(await screen.findByRole('button', { name: 'Mounted for prometheus' })).toBeInTheDocument();
+
+    const other = { ...stubDatasource, uid: 'other-uid', name: 'Other' };
+    rerender(
+      <SolutionCard
+        solution={stubSolution('kubernetes', { datasource: async () => other, customize: MountProbe })}
+        needsAttention={false}
+      />
+    );
+
+    expect(await screen.findByRole('button', { name: 'Mounted for other-uid' })).toBeInTheDocument();
   });
 });

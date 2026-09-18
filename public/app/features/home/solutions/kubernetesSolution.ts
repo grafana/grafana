@@ -14,16 +14,16 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
-import { type KubernetesHomeFilters } from './kubernetesFilters';
+import { type KubernetesFilterSelection, kubernetesFilterValuesFor } from './kubernetesFilters';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
-import { detectSignal } from './solutionState';
+import { detectSignal, type SignalDetection } from './solutionState';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 
-/** Filter-independent detection; callers memoize per consumer so the TTL-cached probe still re-resolves. */
+/** Filter-independent detection; the owner memoizes it so the TTL-cached probe still re-resolves per visit. */
 export const kubernetesSignal = () => detectSignal(resolveKubernetesDatasource);
 
 async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): Promise<string | null> {
@@ -63,14 +63,37 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-/** Every fact queries the one `filters` snapshot; the homepage builds a new instance when the filters change. */
-export function kubernetesSolution(filters: KubernetesHomeFilters = {}): Solution {
-  const detect = memoize(kubernetesSignal);
+/**
+ * Every fact reads the one `selection` snapshot; the homepage builds a new instance when it
+ * changes. The saved values scope only the datasource they were picked from: any other resolved
+ * datasource reads unscoped. The homepage passes the detector it also feeds the recommendations
+ * snapshot, so the card and the snapshot agree on the datasource for the whole visit, however
+ * often the instance is rebuilt; a standalone instance detects on its own.
+ */
+export function kubernetesSolution(
+  selection: KubernetesFilterSelection | null = null,
+  detect: () => Promise<SignalDetection> = memoize(kubernetesSignal)
+): Solution {
   const datasource = async () => (await detect()).datasource;
+  const scoped = (ds: DataSourceInstanceListItem) => kubernetesFilterValuesFor(selection, ds.uid);
 
-  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, filters));
-  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, filters));
-  const clusterCpu = datasourceFact(datasource, (ds) => fetchClusterCpuSeries(ds, filters));
+  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, scoped(ds)));
+  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, scoped(ds)));
+  const sparkline = datasourceFact(datasource, async (ds) => {
+    const scope = scoped(ds);
+    const series = await fetchClusterCpuSeries(ds, scope);
+    if (!series) {
+      return null;
+    }
+    // A scoped series must not be captioned "Cluster CPU"; nodes are the narrower scope, so
+    // they win the caption when both filters are set.
+    const caption = scope.nodes?.length
+      ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
+      : scope.namespaces?.length
+        ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
+        : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
+    return { series, caption };
+  });
   const alert = memoize(async () => {
     const status = await health();
     if (!status || !hasHealthProblems(status)) {
@@ -152,20 +175,7 @@ export function kubernetesSolution(filters: KubernetesHomeFilters = {}): Solutio
         }),
       };
     },
-    sparkline: async () => {
-      const series = await clusterCpu();
-      if (!series) {
-        return null;
-      }
-      // A scoped series must not be captioned "Cluster CPU"; nodes are the narrower scope, so
-      // they win the caption when both filters are set.
-      const caption = filters.nodes?.length
-        ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
-        : filters.namespaces?.length
-          ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
-          : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
-      return { series, caption };
-    },
+    sparkline,
     cta: async () => {
       const ds = await datasource();
       if (!ds) {
