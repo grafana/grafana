@@ -3,7 +3,7 @@
 //
 //	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-rules=true
 //
-// It keeps the label in step two ways: a partial sync, driven by store.RuleChangeEvent on the
+// It keeps the label in step two ways: a partial sync, driven by rules.RuleChangeEvent on the
 // in-process bus, reacts to a single folder's rules changing; a full sync walks every folder in an
 // org and corrects any that drifted, run once at startup and then on a timer as a backstop.
 //
@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -43,9 +43,19 @@ const HasRulesLabel = "alerting.grafana.app/has-rules"
 // started together drift apart rather than all walking every folder at the same moment.
 const fullSyncJitterFactor = 0.1
 
+// syncerStore is the rule-side dependency, satisfied by *rules.RuleStore.
+//
+// Source: pkg/services/ngalert/store/rules/persist.go (FolderRegistryStore)
 type syncerStore interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
+}
+
+// syncerOrgStore lists orgs to walk during a full sync. Separate from syncerStore because orgs are
+// still owned by *store.DBstore, not by the rule store.
+//
+// Source: pkg/services/ngalert/store/org.go (OrgStore)
+type syncerOrgStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
@@ -62,6 +72,7 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 
 type Service struct {
 	store            syncerStore
+	orgs             syncerOrgStore
 	clients          resource.ClientGenerator
 	namespacer       request.NamespaceMapper
 	log              log.Logger
@@ -81,9 +92,10 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, orgs syncerOrgStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
 		store:            store,
+		orgs:             orgs,
 		clients:          clients,
 		namespacer:       request.GetNamespaceMapper(cfg),
 		log:              log.New("ngalert.folderlabelsyncer"),
@@ -116,7 +128,7 @@ func (s *Service) markDirty(keys []models.FolderKey) {
 	s.signal()
 }
 
-func (s *Service) handleRuleChange(_ context.Context, evt *store.RuleChangeEvent) error {
+func (s *Service) handleRuleChange(_ context.Context, evt *rules.RuleChangeEvent) error {
 	if len(evt.FolderKeys) == 0 {
 		return nil
 	}

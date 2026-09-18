@@ -22,7 +22,7 @@ import (
 // nor the query below would see those writes — that is the point at which an informer becomes
 // available and becomes the right mechanism.
 func (s *Service) FullSync(ctx context.Context) error {
-	orgIDs, err := s.store.FetchOrgIds(ctx)
+	orgIDs, err := s.orgs.FetchOrgIds(ctx)
 	if err != nil {
 		// Counted as one whole-pass attempt: it failed before any org could be attempted, so there is
 		// no per-org outcome to record.
