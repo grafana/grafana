@@ -2021,13 +2021,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.7.6, @floating-ui/dom@npm:^1.8.0":
+"@floating-ui/dom@npm:1.8.0":
   version: 1.8.0
   resolution: "@floating-ui/dom@npm:1.8.0"
   dependencies:
     "@floating-ui/core": "npm:^1.8.0"
     "@floating-ui/utils": "npm:^0.2.12"
   checksum: 10/2e7d75fb702875a62795dd8529569f27eff53167768d75476056d6bf824a1ba608177a8877ed9d728eadb5787b4bd07b043fb2c3125b7ad2505a398680b323c0
+  languageName: node
+  linkType: hard
+
+"@floating-ui/dom@patch:@floating-ui/dom@npm%3A1.8.0#~/.yarn/patches/@floating-ui-dom-npm-1.8.0-a6d2aa48a8.patch":
+  version: 1.8.0
+  resolution: "@floating-ui/dom@patch:@floating-ui/dom@npm%3A1.8.0#~/.yarn/patches/@floating-ui-dom-npm-1.8.0-a6d2aa48a8.patch::version=1.8.0&hash=e91fd7"
+  dependencies:
+    "@floating-ui/core": "npm:^1.8.0"
+    "@floating-ui/utils": "npm:^0.2.12"
+  checksum: 10/50445a76dca64381f0596e6bb6623a3ed117f0a15777ce2a7198b39a2f9c3a54b0fd0289c606745305bf9e99607caaa9f962cdbe8ccac186754203071e50d7bf
   languageName: node
   linkType: hard
 
@@ -2944,6 +2954,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/react-data-grid@patch:@grafana/react-data-grid@npm%3A7.0.0-beta.57#~/.yarn/patches/@grafana-react-data-grid-npm-7.0.0-beta.57-357135ee15.patch":
+  version: 7.0.0-beta.57
+  resolution: "@grafana/react-data-grid@patch:@grafana/react-data-grid@npm%3A7.0.0-beta.57#~/.yarn/patches/@grafana-react-data-grid-npm-7.0.0-beta.57-357135ee15.patch::version=7.0.0-beta.57&hash=fb0356"
+  dependencies:
+    clsx: "npm:^2.0.0"
+  peerDependencies:
+    react: ^18.0 || ^19.0
+    react-dom: ^18.0 || ^19.0
+  checksum: 10/9bde99a6f7d2fc78aac2a35e21f1ac10ad55e88b07d007649e19c624c997d69074a4293e2e575af2aa42cd36443caf8bc0af83ea16dba9a23339bfb4fc0609a0
+  languageName: node
+  linkType: hard
+
 "@grafana/rrdom@npm:^2.0.0-grafana.2":
   version: 2.0.0-grafana.2
   resolution: "@grafana/rrdom@npm:2.0.0-grafana.2"
@@ -3243,7 +3265,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.8.2"
     "@grafana/i18n": "npm:13.3.0-pre"
-    "@grafana/react-data-grid": "npm:7.0.0-beta.57"
+    "@grafana/react-data-grid": "patch:@grafana/react-data-grid@npm%3A7.0.0-beta.57#~/.yarn/patches/@grafana-react-data-grid-npm-7.0.0-beta.57-357135ee15.patch"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
@@ -20128,7 +20150,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/dom": "npm:^1.7.6"
+    "@floating-ui/dom": "patch:@floating-ui/dom@npm%3A1.8.0#~/.yarn/patches/@floating-ui-dom-npm-1.8.0-a6d2aa48a8.patch"
     "@floating-ui/react": "npm:0.27.20"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/alerting": "workspace:*"
