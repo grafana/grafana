@@ -53,6 +53,8 @@ type FieldValueResultsEnabled func(context.Context) bool
 
 type HandlerOptions struct {
 	FieldValueResultsEnabled FieldValueResultsEnabled
+	// DefaultTextFields overrides the title-only default for kinds with a custom handler.
+	DefaultTextFields []string
 }
 
 // Handler serves the search envelope endpoints for one kind.
@@ -62,6 +64,7 @@ type Handler struct {
 	tracer                   trace.Tracer
 	log                      log.Logger
 	fieldValueResultsEnabled FieldValueResultsEnabled
+	defaultTextFields        []string
 }
 
 func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchFieldsProvider, tracer trace.Tracer) *Handler {
@@ -75,6 +78,7 @@ func NewHandlerWithOptions(client resourcepb.ResourceIndexClient, provider resou
 		tracer:                   tracer,
 		log:                      log.New("grafana-apiserver.search"),
 		fieldValueResultsEnabled: options.FieldValueResultsEnabled,
+		defaultTextFields:        options.DefaultTextFields,
 	}
 }
 
@@ -86,6 +90,7 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			if err := decodeBody(r, &q); err != nil {
 				return nil, nil, err
 			}
+			applyDefaultTextFields(q.Where, h.defaultTextFields)
 			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
 			if len(ferrs) == 0 && h.fieldValueResultsEnabled != nil && h.fieldValueResultsEnabled(r.Context()) {
 				req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
@@ -96,6 +101,18 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			return searchResults(res, kind, limit)
 		},
 	)
+}
+
+func applyDefaultTextFields(where *searchv0.WhereNode, defaults []string) {
+	if where == nil {
+		return
+	}
+	if where.Text != nil && len(where.Text.Fields) == 0 {
+		where.Text.Fields = defaults
+	}
+	for i := range where.And {
+		applyDefaultTextFields(&where.And[i], defaults)
+	}
 }
 
 // TrashFor returns the POST handler for the trash endpoint of one kind.
