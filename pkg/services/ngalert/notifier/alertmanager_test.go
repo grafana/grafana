@@ -91,10 +91,10 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Name: "default-receiver",
-				},
+		},
+		Receivers: []*v1.PostableApiReceiver{
+			{
+				Name: "default-receiver",
 			},
 		},
 	}
@@ -158,10 +158,12 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 					Receiver: "default-receiver",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Name: "default-receiver",
-				},
+		}
+	}
+	basicReceivers := func() []*v1.PostableApiReceiver {
+		return []*v1.PostableApiReceiver{
+			{
+				Name: "default-receiver",
 			},
 		}
 	}
@@ -179,6 +181,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -190,6 +193,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -220,6 +224,7 @@ receivers:
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
+				Receivers:          basicReceivers(),
 				ExtraConfigs: []v1.ExtraConfiguration{
 					{
 						Identifier: "", // invalid: empty identifier
@@ -273,8 +278,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: receivers[0]},
 				},
-				Receivers: postableReceivers,
 			},
+			Receivers: postableReceivers,
 		}
 	}
 
@@ -329,7 +334,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
+				cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
 					Name: "new-receiver",
 				})
 			},

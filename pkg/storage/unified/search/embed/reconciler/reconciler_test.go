@@ -87,6 +87,15 @@ func newReconcilerWithBuilders(t *testing.T, st *fakeStorage, vec *fakeVector, b
 	return s
 }
 
+type skippingBuilder struct{ embed.Builder }
+
+func (b skippingBuilder) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+	if key.Name == "skip" {
+		return nil, fmt.Errorf("unsupported stored API version: %w", embed.ErrSkip)
+	}
+	return b.Builder.Extract(ctx, key, value, folderTitle)
+}
+
 // dashEvent builds a pendingEvent with the dashboard group/resource pre-filled.
 func dashEvent(action resourcepb.WatchEvent_Type, ns, name string, rv int64, value []byte) *pendingEvent {
 	return &pendingEvent{
@@ -272,6 +281,51 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, deleteCall{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "dash-x"}, vec.deletes[0])
 	assert.Equal(t, 0, text.calls, "delete does not call the embedder")
+}
+
+func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), minimalDashboard("skip", "Skip")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "good", snowflakeRV(200), minimalDashboard("good", "Good")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "skip")] = map[string]string{"panel/1": "existing content"}
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:       st,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+		Interval:      time.Hour,
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+
+	assert.Equal(t, map[string]string{"panel/1": "existing content"}, vec.storedContentFor("ns", dashRes, "skip"))
+	assert.Empty(t, vec.deletes)
+	assert.Empty(t, vec.delsubs)
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Equal(t, "good", vec.upserts[0][0].UID)
+	assert.Equal(t, 1, text.calls, "only the supported resource reaches the provider")
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
+	assert.Zero(t, s.pendingLen(), "skipped resources are not retried")
+}
+
+func TestReconciler_EmptyExtract_DeletesOldVectors(t *testing.T) {
+	vec := newFakeVector()
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "empty")] = map[string]string{"panel/1": "existing content"}
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "empty", 100, []byte(`{"uid":"empty","title":"No panels"}`)))
+
+	s.processPending(t.Context())
+
+	require.Equal(t, []deleteCall{{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "empty"}}, vec.deletes)
+	assert.Empty(t, vec.storedContentFor("ns", dashRes, "empty"))
+	assert.Empty(t, vec.upserts)
+	assert.Zero(t, text.calls)
 }
 
 func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
