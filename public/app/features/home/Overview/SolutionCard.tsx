@@ -32,20 +32,15 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
   return (
     <Card noMargin className={styles.card}>
-      {/* Card.Tags would reserve a right-hand grid column across the description rows and squeeze
-          the content, so the customize control sits inside the heading, on the title's own line. */}
-      <Card.Heading className={styles.headingRow}>
+      <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0} grow={1} minWidth={0}>
-            <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-              <Text element="h3" variant="h6">
-                {solution.title}
-              </Text>
-              {Customize && datasource && <Customize datasource={datasource} />}
-            </Stack>
+            <Text element="h3" variant="h6">
+              {solution.title}
+            </Text>
             <Stack direction="row" gap={1} alignItems="center">
               <span className={styles.statusDot} aria-hidden="true" />
               <Text variant="bodySmall" color="secondary">
@@ -106,6 +101,11 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
+      {Customize && datasource && (
+        <Card.SecondaryActions>
+          <Customize datasource={datasource} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }
@@ -231,11 +231,6 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
         background: theme.colors.warning.main,
       },
     }),
-  }),
-  headingRow: css({
-    // Card.Heading wraps its children in a content-sized span; grow it so the
-    // space-between row above reaches the card's right edge.
-    '& > span': { flexGrow: 1, minWidth: 0 },
   }),
   actions: css({
     minWidth: 0,

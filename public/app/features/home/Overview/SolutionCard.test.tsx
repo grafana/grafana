@@ -184,7 +184,7 @@ describe('SolutionCard customize control', () => {
     <button type="button">Customize {datasource.name}</button>
   );
 
-  it("renders the solution's control beside the title once its datasource resolves", async () => {
+  it("renders the solution's control once its datasource resolves", async () => {
     const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
       datasource: async () => stubDatasource,

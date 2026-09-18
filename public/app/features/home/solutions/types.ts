@@ -40,7 +40,7 @@ interface SolutionIdentity {
   id: SolutionId;
   title: string;
   icon: IconName;
-  /** Per-user customization control; the live card renders it beside the title once the datasource resolves. */
+  /** Per-user customization control requiring a resolved datasource. */
   customize?: ComponentType<{ datasource: DataSourceInstanceListItem }>;
 }
 
