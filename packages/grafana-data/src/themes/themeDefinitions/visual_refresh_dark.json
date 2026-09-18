@@ -23,6 +23,7 @@
       "backgroundEmphasis": "palette.ink650",
       "border": "palette.ink550",
       "borderEmphasis": "palette.ink500",
+      "subtleBackground": "palette.ink750",
       "subtleBorder": "palette.ink650",
       "text": "palette.ink200",
       "contrastText": "palette.ink100"
