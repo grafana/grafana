@@ -24,12 +24,10 @@ import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
-import { createAdHocTransformations } from './AdHocTransformations';
 import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
-  let adHocTransformations: ReturnType<typeof createAdHocTransformations>;
 
   // Read on access. The panel context is built once and cached on the VizPanel, but deactivating the
   // dashboard clears its event bus, so a subscription here would be dropped and never re-established.
@@ -39,12 +37,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
-  // Library panels acquire $data after this context is created.
-  Object.defineProperty(context, 'adHocTransformations', {
-    enumerable: true,
-    configurable: true,
-    get: () => (adHocTransformations ??= createAdHocTransformations(vizPanel)),
-  });
+  context.adHocTransformations = vizPanel.getRuntimeTransformations();
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
