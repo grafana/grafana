@@ -5793,16 +5793,24 @@
       "add-library-panel-header": "Painel de importação",
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
+      "add-visualization-description": "",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Grade automática",
       "auto-grid-description": "Os painéis são redimensionados para se ajustarem e formarem grades uniformes",
+      "build-assistant": "",
       "custom-grid": "Grade personalizada",
       "custom-grid-description": "Posicione e dimensione cada painel individualmente",
       "description": "Adicione um painel para visualizar seus dados",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "layout-default-hint": "O layout selecionado também será o padrão para todas as novas guias e linhas. Você pode alterar essa opção mais tarde em Configurações do painel > Geral.",
+      "or-start-blank": "",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel"
     },
@@ -5930,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores da string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -5970,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Dados brutos sem transformações e configuração de campo aplicada. ",
       "dataframe-label": "DataFrame JSON (da consulta)",
+      "editor-label": "",
       "panel-data-description": "O modelo bruto passado para a visualização do painel",
       "panel-data-label": "Dados do painel",
       "panel-json-description": "O modelo salvo no JSON do painel de controle que configura como tudo funciona.",
@@ -7361,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores da string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -7750,6 +7761,7 @@
         "model-label": "Modelo",
         "v2-resource": "Recurso V2"
       },
+      "json-preview-label": "",
       "label-description": "Descrição",
       "label-folder-name": "Nome da pasta",
       "label-target-folder": "Pasta de destino",
@@ -11164,6 +11176,7 @@
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todas as equipes",
       "team-filter-label": "Filtrar alertas por equipe",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Suas equipes",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11223,6 +11236,7 @@
     "incidents-card": {
       "declare": "Comunicar um incidente",
       "empty": "Nenhum incidente ativo.",
+      "empty-selected-team": "",
       "error-title": "Não foi possível carregar os incidentes ativos",
       "title": "Incidentes ativos",
       "view-all": "Ver todos os incidentes"
@@ -11846,6 +11860,7 @@
       "waiting-for-data": "Aguardando dados:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicar"
     }
   },
@@ -12193,6 +12208,10 @@
     "enable-log-details": {
       "description": "Quando ativada, exibe detalhes do log para cada linha.",
       "name": "Ativar detalhes do log"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de link da linha de log na primeira coluna de cada linha",
@@ -15125,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Aceitar",
-      "alert-text": "Ao compartilhar este painel de controle externamente, todas as suas informações poderão ser acessadas por qualquer pessoa com acesso ao link.",
+      "alert-text": "",
       "cancel-button": "Cancelar",
       "learn-more-button": "Saiba mais",
       "public-ack": "Estou ciente de que todas as informações deste painel de controle serão públicas.*",

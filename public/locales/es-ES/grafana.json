@@ -5793,16 +5793,24 @@
       "add-library-panel-header": "Importar panel",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
+      "add-visualization-description": "",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Cuadrícula automática",
       "auto-grid-description": "Los paneles se redimensionan para ajustarse y formar cuadrículas uniformes",
+      "build-assistant": "",
       "custom-grid": "Cuadrícula personalizada",
       "custom-grid-description": "Posicionar y dimensionar cada panel individualmente",
       "description": "Añade un panel para visualizar tus datos",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
       "layout-default-hint": "El diseño seleccionado también se utilizará de forma predeterminada para todas las pestañas y filas nuevas. Puedes modificar esta opción más adelante en Ajustes del dashboard > Generales.",
+      "or-start-blank": "",
       "select-layout-header": "Seleccionar diseño",
       "title": "Nuevo dashboard"
     },
@@ -5930,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nombres de campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadena",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Datos",
@@ -5970,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Datos brutos sin configuración de campo ni transformaciones aplicadas. ",
       "dataframe-label": "JSON del marco de datos (de la consulta)",
+      "editor-label": "",
       "panel-data-description": "El modelo bruto (RAW) ha pasado a la visualización del panel",
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
@@ -7361,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nombres de campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadena",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Datos",
@@ -7750,6 +7761,7 @@
         "model-label": "Modelo",
         "v2-resource": "Recurso V2"
       },
+      "json-preview-label": "",
       "label-description": "Descripción",
       "label-folder-name": "Nombre de la carpeta",
       "label-target-folder": "Carpeta de destino",
@@ -11164,6 +11176,7 @@
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todos los equipos",
       "team-filter-label": "Filtrar alertas por equipo",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tus equipos",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11223,6 +11236,7 @@
     "incidents-card": {
       "declare": "Declarar un incidente",
       "empty": "No hay incidentes activos.",
+      "empty-selected-team": "",
       "error-title": "No se han podido cargar los incidentes activos",
       "title": "Incidentes activos",
       "view-all": "Ver todos los incidentes"
@@ -11846,6 +11860,7 @@
       "waiting-for-data": "Esperando datos:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicar"
     }
   },
@@ -12193,6 +12208,10 @@
     "enable-log-details": {
       "description": "Cuando está habilitado, muestra los datos del log para cada fila.",
       "name": "Habilitar datos de log"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Habilita/deshabilita el botón de enlace a la línea de log en la primera columna de cada fila.",
@@ -15125,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Aceptar",
-      "alert-text": "Al compartir este panel de control de forma externa, cualquier persona que tenga el enlace podrá acceder a él.",
+      "alert-text": "",
       "cancel-button": "Cancelar",
       "learn-more-button": "Más información",
       "public-ack": "Entiendo que todo el panel de control será público.*",

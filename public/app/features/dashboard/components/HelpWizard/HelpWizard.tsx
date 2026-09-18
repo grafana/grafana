@@ -9,7 +9,6 @@ import {
   Drawer,
   Tab,
   TabsBar,
-  CodeEditor,
   useStyles2,
   Field,
   InlineSwitch,
@@ -21,6 +20,7 @@ import {
   Stack,
   TextLink,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -130,14 +130,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
           </div>
           <AutoSizer disableWidth>
             {({ height }) => (
-              <CodeEditor
-                width="100%"
-                height={height}
+              <CodeMirrorEditor
+                height={`${height}px`}
                 language={showMessage === ShowMessage.GithubComment ? 'markdown' : 'json'}
-                showLineNumbers={true}
-                showMiniMap={true}
+                basicSetup={{ lineNumbers: true }}
                 value={showMessage === ShowMessage.GithubComment ? markdownText : snapshotText}
-                readOnly={false}
+                aria-label={t('dashboard.help-wizard.support-snapshot-editor', 'Support snapshot editor')}
+                onChange={() => {}}
                 onBlur={service.onSetSnapshotText}
               />
             )}
