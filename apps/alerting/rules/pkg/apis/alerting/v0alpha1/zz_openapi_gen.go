@@ -914,16 +914,9 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref c
 							Format:      "",
 						},
 					},
-					"targetDatasourceUid": {
-						SchemaProps: spec.SchemaProps{
-							Description: "targetDatasourceUid is the UID of the datasource that converted recording rules write their results to. Empty defaults to datasourceUid (the query datasource). Only used when the upstream ruler contains recording rules. Has no effect on the operator ini path, which always targets the query datasource.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"pollInterval": {
 						SchemaProps: spec.SchemaProps{
-							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 1m. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 1m default.",
+							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

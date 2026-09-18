@@ -105,14 +105,10 @@ func (f fakeNamespaceStore) GetNamespaceChildren(_ context.Context, _ string, _ 
 }
 
 type fakeDatasourceGetter struct {
-	ds        *datasources.DataSource
-	requested *[]string // optional: records every requested UID, in order
+	ds *datasources.DataSource
 }
 
 func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
-	if f.requested != nil {
-		*f.requested = append(*f.requested, q.UID)
-	}
 	// Return a datasource carrying the requested UID.
 	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
 }
@@ -404,10 +400,10 @@ func TestDueForSync(t *testing.T) {
 	// An invalid/zero cached interval falls back to defaultRulerSyncPollInterval
 	// rather than treating the org as permanently due or never due.
 	s.recordAttempt(2, 0)
-	s.lastAttemptAt[2] = time.Now().Add(-30 * time.Second)
-	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (1m), not yet elapsed")
 	s.lastAttemptAt[2] = time.Now().Add(-2 * time.Minute)
-	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (1m), which has now elapsed")
+	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (5m), not yet elapsed")
+	s.lastAttemptAt[2] = time.Now().Add(-6 * time.Minute)
+	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (5m), which has now elapsed")
 }
 
 func TestSyncAllOrgs_SkipsOrgsNotYetDue(t *testing.T) {
@@ -486,7 +482,7 @@ func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
 
 func TestSyncOrg_FromConfigAPI(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "")
+	cs.setSpec(1, "ds1")
 	rs := &fakeRuleService{}
 	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
 
@@ -505,7 +501,7 @@ func TestSyncOrg_FromConfigAPI(t *testing.T) {
 
 func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "from-config", "")
+	cs.setSpec(1, "from-config")
 	rs := &fakeRuleService{}
 	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
 	s.settings.ExternalRulerUID = "from-ini"
@@ -536,37 +532,9 @@ func TestSyncOrg_NotConfiguredSeedsSingleton(t *testing.T) {
 	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
 }
 
-func TestSyncOrg_TargetDatasourceFromConfig(t *testing.T) {
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "tds1")
-	rs := &fakeRuleService{}
-	var requested []string
-	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
-
-	s.SyncOrg(context.Background(), 1)
-
-	require.Len(t, rs.replaced, 1)
-	assert.ElementsMatch(t, []string{"ds1", "tds1"}, requested, "both the query and the distinct target datasource are resolved")
-}
-
-func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "") // no targetDatasourceUid
-	rs := &fakeRuleService{}
-	var requested []string
-	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
-
-	s.SyncOrg(context.Background(), 1)
-
-	require.Len(t, rs.replaced, 1)
-	assert.Equal(t, []string{"ds1"}, requested, "target defaults to the query datasource: only one lookup")
-}
-
 func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "")
+	cs.setSpec(1, "ds1")
 	rs := &fakeRuleService{}
 	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
 	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
@@ -596,7 +564,7 @@ func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
 
 func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "")
+	cs.setSpec(1, "ds1")
 	rs := &fakeRuleService{}
 	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}
 	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
@@ -621,7 +589,7 @@ func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
 
 func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "") // existing object: writeStatus takes the Update path
+	cs.setSpec(1, "ds1") // existing object: writeStatus takes the Update path
 	cs.failNextUpdates(1, 2)
 	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
 
@@ -637,7 +605,7 @@ func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
 
 func TestWriteStatus_ExhaustingRetryBudgetLogsAndReturns(t *testing.T) {
 	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "")
+	cs.setSpec(1, "ds1")
 	cs.failNextUpdates(1, 100) // far more than retry.DefaultRetry's 5 steps
 	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
 

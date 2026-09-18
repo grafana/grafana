@@ -69,17 +69,13 @@ func (f *fakeConfigClient) updateCallCount(orgID int64) int {
 
 // setSpec seeds a Config for orgID carrying the given externalRulerSync spec
 // fields. An empty datasourceUID seeds a config with no externalRulerSync set.
-func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID, targetDatasourceUID string) {
+func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID string) {
 	obj := &alertingrulesv0alpha1.Config{}
 	obj.SetNamespace(f.nsMapper(orgID))
 	obj.SetName(alertingrulesv0alpha1.ConfigSingletonName)
 	obj.SetResourceVersion("1")
 	if datasourceUID != "" {
-		spec := &alertingrulesv0alpha1.ConfigV0alpha1SpecExternalRulerSync{DatasourceUid: &datasourceUID}
-		if targetDatasourceUID != "" {
-			spec.TargetDatasourceUid = &targetDatasourceUID
-		}
-		obj.Spec.ExternalRulerSync = spec
+		obj.Spec.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1SpecExternalRulerSync{DatasourceUid: &datasourceUID}
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()

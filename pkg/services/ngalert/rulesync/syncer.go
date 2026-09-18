@@ -41,9 +41,8 @@ const versionMessage = "external ruler sync"
 
 // defaultRulerSyncPollInterval is the effective poll interval when
 // spec.externalRulerSync.pollInterval is unset, and unconditionally on the ini
-// path (which has no spec to read a per-org value from). Matches the fixed
-// interval this syncer used before per-org intervals existed.
-const defaultRulerSyncPollInterval = time.Minute
+// path (which has no spec to read a per-org value from).
+const defaultRulerSyncPollInterval = 5 * time.Minute
 
 // baselineCheckInterval drives Run's ticker; it is not the sync cadence
 // itself (each org's own pollInterval is), just how often the loop notices an
@@ -165,9 +164,8 @@ func NewExternalRulerSyncer(
 // org, after applying the ini override. A zero value (uid == "") means sync
 // isn't configured for the org.
 type resolvedRulerSync struct {
-	uid       string // datasource to sync rules from
-	targetUID string // recording-rules write target (defaults to uid)
-	origin    externalSyncOrigin
+	uid    string // datasource to sync rules from
+	origin externalSyncOrigin
 	// persistedHash is the last-applied upstream hash from Config status, read
 	// back on the API path only. The ini path relies on the in-memory cache
 	// alone; its own version-churn gap from that is a known, separate,
@@ -186,7 +184,7 @@ type resolvedRulerSync struct {
 // falling back to anything.
 func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedRulerSync, error) {
 	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
-		return resolvedRulerSync{uid: iniUID, targetUID: iniUID, origin: originIni, pollInterval: defaultRulerSyncPollInterval}, nil
+		return resolvedRulerSync{uid: iniUID, origin: originIni, pollInterval: defaultRulerSyncPollInterval}, nil
 	}
 
 	// cfgStore.Get returns (nil, nil) when the Config resource doesn't exist
@@ -196,14 +194,8 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 	if err != nil {
 		return resolvedRulerSync{}, err
 	}
-	uid := externalRulerSyncDatasourceUIDFromConfig(cfg)
-	targetUID := externalRulerSyncTargetDatasourceUIDFromConfig(cfg)
-	if targetUID == "" {
-		targetUID = uid
-	}
 	return resolvedRulerSync{
-		uid:           uid,
-		targetUID:     targetUID,
+		uid:           externalRulerSyncDatasourceUIDFromConfig(cfg),
 		origin:        originAPI,
 		persistedHash: externalRulerSyncLastAppliedHashFromConfig(cfg),
 		pollInterval:  externalRulerSyncPollIntervalFromConfig(cfg),
@@ -419,18 +411,6 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	// Recording rules write to the target datasource; it defaults to the query
-	// datasource (targetUID == uid on both the ini path and an unset API spec
-	// field), so only resolve a second datasource when one is distinctly set.
-	targetDS := ds
-	if rc.targetUID != rc.uid {
-		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.targetUID, OrgID: orgID})
-		if err != nil {
-			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", rc.targetUID, err)})
-			return
-		}
-	}
-
 	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
 	if err != nil {
 		reason := ReasonRulerFetch
@@ -459,7 +439,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	if applyErr := s.apply(svcCtx, svcUser, orgID, ds, targetDS, cfg); applyErr != nil {
+	if applyErr := s.apply(svcCtx, svcUser, orgID, ds, cfg); applyErr != nil {
 		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, applyErr)
 		return
 	}
@@ -480,7 +460,7 @@ type groupKey struct {
 // apply converts the fetched ruler config into Grafana rule groups, persists
 // them, and prunes previously-synced groups that vanished upstream. Returns a
 // classified *SyncError on failure.
-func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, targetDS *datasources.DataSource, cfg RulerConfig) *SyncError {
+func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, cfg RulerConfig) *SyncError {
 	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(ds.UID), orgID, user, "")
 	if err != nil {
 		return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create root folder: %w", err)}
@@ -497,7 +477,9 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 			return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create namespace folder %q: %w", namespace, err)}
 		}
 		for _, promGroup := range promGroups {
-			group, err := prom.ConvertRuleGroup(s.settings, ds, targetDS, orgID, nsFolder.UID, promGroup, prom.Options{
+			// ds is passed as both query and recording-rules target: this sync has
+			// no separate configurable target datasource.
+			group, err := prom.ConvertRuleGroup(s.settings, ds, ds, orgID, nsFolder.UID, promGroup, prom.Options{
 				KeepOriginalRuleDefinition: true,
 			})
 			if err != nil {

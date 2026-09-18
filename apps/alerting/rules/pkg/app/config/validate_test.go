@@ -105,7 +105,41 @@ func TestValidateConfigWrite(t *testing.T) {
 	t.Run("allows a valid pollInterval", func(t *testing.T) {
 		fn := ValidateConfigWrite(RuntimeConfig{})
 		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object: configWithPollInterval("5m"),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects a pollInterval below the minimum", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
 			Object: configWithPollInterval("30s"),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "externalRulerSync.pollInterval")
+	})
+
+	t.Run("rejects a pollInterval above the maximum", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object: configWithPollInterval("2h"),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "externalRulerSync.pollInterval")
+	})
+
+	t.Run("allows the minimum pollInterval", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object: configWithPollInterval("1m"),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("allows the maximum pollInterval", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object: configWithPollInterval("1h"),
 		})
 		require.NoError(t, err)
 	})
