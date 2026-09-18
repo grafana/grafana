@@ -1,0 +1,55 @@
+name: Resource Search Result Format
+
+on:
+  pull_request:
+    paths:
+      - '**/*.go'
+      - 'pkg/storage/unified/semgrep/**'
+      - '.github/workflows/pr-resource-search-result-format.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Require FIELD_VALUES for new search clients
+    runs-on: ubuntu-x64-small
+    timeout-minutes: 5
+    container:
+      image: semgrep/semgrep:1.171.0@sha256:bdf7013b2c3634a487671158da77c554f531742326b543a9464d2adf6c433ac8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test rule
+        run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-field-values.yaml pkg/storage/unified/semgrep/resource-search-field-values.go
+
+      - name: Check new search clients
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SEMGREP_SEND_METRICS: 'off'
+        shell: bash
+        run: |
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < <(git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest' -- '*.go' \
+            ':(exclude)**/*_test.go' \
+            ':(exclude)pkg/storage/unified/resourcepb/**' \
+            ':(exclude)pkg/storage/unified/testing/**' \
+            ':(exclude)pkg/storage/unified/semgrep/**')
+
+          if (( ${#files[@]} == 0 )); then
+            exit 0
+          fi
+
+          semgrep scan --strict --error \
+            --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
+            --baseline-commit "$BASE_SHA" \
+            "${files[@]}"
