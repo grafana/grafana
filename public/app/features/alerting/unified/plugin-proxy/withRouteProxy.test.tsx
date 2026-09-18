@@ -1,7 +1,7 @@
 import { Suspense, use } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
-import { config, type MonitoringLogger } from '@grafana/runtime';
+import { type MonitoringLogger, config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 import { PageLoader } from '@grafana/ui';

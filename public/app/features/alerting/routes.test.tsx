@@ -125,7 +125,7 @@ describe('data source managed route proxies', () => {
     config.unifiedAlertingEnabled = true;
     setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
     const wrapped = getAlertingRoutes()
-      .filter(({ component }) => component?.name === 'MaybeProxiedAlertingRoute')
+      .filter(({ component }) => component?.name === 'ProxiedAlertingRoute')
       .map(({ path }) => path);
     const { routeProxies } = await import('./unified/plugin-proxy/proxies');
 
