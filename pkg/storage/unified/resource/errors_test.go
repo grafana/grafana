@@ -136,11 +136,16 @@ func TestErrorFromResponse(t *testing.T) {
 	})
 }
 
-func TestGRPCCodeFromHTTPStatus(t *testing.T) {
+func TestGRPCCodeFromErrorResult(t *testing.T) {
 	t.Parallel()
 
+	require.Equal(t, codes.OK, grpcCodeFromErrorResult(nil))
+	require.Equal(t, codes.Internal, grpcCodeFromErrorResult(&resourcepb.ErrorResult{}))
+
 	mapped := map[int32]codes.Code{
-		http.StatusOK:                           codes.OK,
+		http.StatusOK:                           codes.Internal,
+		http.StatusGone:                         codes.OutOfRange,
+		http.StatusRequestEntityTooLarge:        codes.InvalidArgument,
 		http.StatusBadRequest:                   codes.InvalidArgument,
 		http.StatusUnauthorized:                 codes.Unauthenticated,
 		http.StatusForbidden:                    codes.PermissionDenied,
@@ -159,7 +164,7 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 	}
 	for httpCode, want := range mapped {
 		for _, reason := range []string{"", "error reading settings"} {
-			require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode, reason), "http status %d, reason %q", httpCode, reason)
+			require.Equal(t, want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: httpCode, Reason: reason}), "http status %d, reason %q", httpCode, reason)
 		}
 	}
 
@@ -169,14 +174,13 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 		http.StatusNoContent:        codes.Internal,
 		http.StatusMovedPermanently: codes.Internal,
 		http.StatusTeapot:           codes.InvalidArgument,
-		http.StatusGone:             codes.InvalidArgument,
 		498:                         codes.InvalidArgument,
 		http.StatusBadGateway:       codes.Internal,
 		599:                         codes.Internal,
 		600:                         codes.Internal,
 	}
 	for httpCode, want := range unmapped {
-		require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode, ""), "http status %d", httpCode)
+		require.Equal(t, want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: httpCode}), "http status %d", httpCode)
 	}
 
 	reasons := []struct {
@@ -199,7 +203,7 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 		{500, metav1.StatusReasonServerTimeout, codes.Unavailable},
 		{503, metav1.StatusReasonServiceUnavailable, codes.Unavailable},
 		{429, metav1.StatusReasonTooManyRequests, codes.ResourceExhausted},
-		{413, metav1.StatusReasonRequestEntityTooLarge, codes.ResourceExhausted},
+		{413, metav1.StatusReasonRequestEntityTooLarge, codes.InvalidArgument},
 		{405, metav1.StatusReasonMethodNotAllowed, codes.Unimplemented},
 		{500, metav1.StatusReasonInternalError, codes.Internal},
 		{500, metav1.StatusReasonStoreReadError, codes.Internal},
@@ -207,7 +211,7 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 	for _, tt := range reasons {
 		t.Run(string(tt.reason), func(t *testing.T) {
 			for _, code := range []int32{tt.code, 0, http.StatusOK, http.StatusInternalServerError} {
-				require.Equal(t, tt.want, grpcCodeFromHTTPStatus(code, string(tt.reason)), "http status %d", code)
+				require.Equal(t, tt.want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: code, Reason: string(tt.reason)}), "http status %d", code)
 			}
 		})
 	}

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -28,13 +27,7 @@ func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerIn
 			if result, ok := resp.(interface {
 				GetError() *resourcepb.ErrorResult
 			}); ok {
-				if resErr := result.GetError(); resErr != nil {
-					code = grpcCodeFromHTTPStatus(resErr.Code, resErr.Reason)
-					// An embedded error must not be labeled as a success.
-					if code == codes.OK {
-						code = codes.Internal
-					}
-				}
+				code = grpcCodeFromErrorResult(result.GetError())
 			}
 		}
 		metrics.RequestDuration.

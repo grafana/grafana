@@ -324,43 +324,23 @@ var errorMappingLog = log.New("resource-error-mapping")
 
 // Reasons disambiguate HTTP statuses shared by multiple gRPC codes, notably
 // Conflict and AlreadyExists. Without a reason, preserve the HTTP mapping.
-func grpcCodeFromHTTPStatus(httpCode int32, reason string) grpccodes.Code {
-	switch metav1.StatusReason(reason) {
-	case metav1.StatusReasonUnauthorized:
-		return grpccodes.Unauthenticated
-	case metav1.StatusReasonForbidden:
-		return grpccodes.PermissionDenied
-	case metav1.StatusReasonNotFound:
-		return grpccodes.NotFound
-	case metav1.StatusReasonAlreadyExists:
-		return grpccodes.AlreadyExists
-	case metav1.StatusReasonConflict:
-		return grpccodes.Aborted
-	case metav1.StatusReasonGone, metav1.StatusReasonExpired:
-		return grpccodes.OutOfRange
-	case metav1.StatusReasonBadRequest, metav1.StatusReasonInvalid,
-		metav1.StatusReasonNotAcceptable, metav1.StatusReasonUnsupportedMediaType:
-		return grpccodes.InvalidArgument
-	case metav1.StatusReasonTimeout:
-		return grpccodes.DeadlineExceeded
-	case metav1.StatusReasonServerTimeout, metav1.StatusReasonServiceUnavailable:
-		return grpccodes.Unavailable
-	case metav1.StatusReasonTooManyRequests, metav1.StatusReasonRequestEntityTooLarge:
-		return grpccodes.ResourceExhausted
-	case metav1.StatusReasonMethodNotAllowed:
-		return grpccodes.Unimplemented
-	case metav1.StatusReasonInternalError, metav1.StatusReasonStoreReadError:
-		return grpccodes.Internal
-	default:
-		if reason != "" {
-			errorMappingLog.Warn("Unrecognized error reason, falling back to HTTP status", "httpCode", httpCode, "reason", reason)
-		}
+func grpcCodeFromErrorResult(res *resourcepb.ErrorResult) grpccodes.Code {
+	if res == nil {
+		return grpccodes.OK
+	}
+	httpCode, reason := res.Code, res.Reason
+	if code, ok := grpcCodeFromReason(metav1.StatusReason(reason)); ok {
+		return code
+	}
+	if reason != "" {
+		errorMappingLog.Warn("Unrecognized error reason, falling back to HTTP status", "httpCode", httpCode, "reason", reason)
 	}
 
 	switch httpCode {
 	case http.StatusOK:
-		return grpccodes.OK
-	case http.StatusBadRequest:
+		// An embedded error must not be labeled as a success.
+		return grpccodes.Internal
+	case http.StatusBadRequest, http.StatusRequestEntityTooLarge:
 		return grpccodes.InvalidArgument
 	case http.StatusUnauthorized:
 		return grpccodes.Unauthenticated
@@ -374,7 +354,7 @@ func grpcCodeFromHTTPStatus(httpCode int32, reason string) grpccodes.Code {
 		return grpccodes.AlreadyExists
 	case http.StatusPreconditionFailed:
 		return grpccodes.FailedPrecondition
-	case http.StatusRequestedRangeNotSatisfiable:
+	case http.StatusGone, http.StatusRequestedRangeNotSatisfiable:
 		return grpccodes.OutOfRange
 	case http.StatusUnprocessableEntity:
 		return grpccodes.InvalidArgument
@@ -398,4 +378,37 @@ func grpcCodeFromHTTPStatus(httpCode int32, reason string) grpccodes.Code {
 	}
 	errorMappingLog.Warn("Unmapped HTTP status, assuming Internal", "httpCode", httpCode)
 	return grpccodes.Internal
+}
+
+func grpcCodeFromReason(reason metav1.StatusReason) (grpccodes.Code, bool) {
+	switch reason {
+	case metav1.StatusReasonUnauthorized:
+		return grpccodes.Unauthenticated, true
+	case metav1.StatusReasonForbidden:
+		return grpccodes.PermissionDenied, true
+	case metav1.StatusReasonNotFound:
+		return grpccodes.NotFound, true
+	case metav1.StatusReasonAlreadyExists:
+		return grpccodes.AlreadyExists, true
+	case metav1.StatusReasonConflict:
+		return grpccodes.Aborted, true
+	case metav1.StatusReasonGone, metav1.StatusReasonExpired:
+		return grpccodes.OutOfRange, true
+	case metav1.StatusReasonBadRequest, metav1.StatusReasonInvalid,
+		metav1.StatusReasonNotAcceptable, metav1.StatusReasonUnsupportedMediaType,
+		metav1.StatusReasonRequestEntityTooLarge:
+		return grpccodes.InvalidArgument, true
+	case metav1.StatusReasonTimeout:
+		return grpccodes.DeadlineExceeded, true
+	case metav1.StatusReasonServerTimeout, metav1.StatusReasonServiceUnavailable:
+		return grpccodes.Unavailable, true
+	case metav1.StatusReasonTooManyRequests:
+		return grpccodes.ResourceExhausted, true
+	case metav1.StatusReasonMethodNotAllowed:
+		return grpccodes.Unimplemented, true
+	case metav1.StatusReasonInternalError, metav1.StatusReasonStoreReadError:
+		return grpccodes.Internal, true
+	default:
+		return grpccodes.Unknown, false
+	}
 }
