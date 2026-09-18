@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
 import { flexRender, type Table } from '@tanstack/react-table';
+import { useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';

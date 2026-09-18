@@ -12,7 +12,7 @@ export function getInitialState(
     for (const sortBy of initialSortBy) {
       for (const col of columns) {
         if (col.header === sortBy.displayName) {
-          state.sorting.push({ id: col.id, desc: sortBy.desc });
+          state.sorting.push({ id: col.id, desc: Boolean(sortBy.desc) });
         }
       }
     }
