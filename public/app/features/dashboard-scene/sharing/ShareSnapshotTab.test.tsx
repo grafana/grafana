@@ -10,8 +10,14 @@ import { type AppNotification, AppNotificationSeverity } from 'app/types/appNoti
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { DashboardInteractions } from '../utils/interactions';
 
-import { getExpireOptions, getSnapshotPayloadSizeBytes, ShareSnapshotTab } from './ShareSnapshotTab';
+import {
+  formatSnapshotSize,
+  getExpireOptions,
+  getSnapshotPayloadSizeBytes,
+  ShareSnapshotTab,
+} from './ShareSnapshotTab';
 
 jest.mock('app/features/dashboard/services/SnapshotSrv', () => ({
   getDashboardSnapshotSrv: jest.fn(),
@@ -106,8 +112,21 @@ describe('ShareSnapshotTab', () => {
     });
   });
 
+  describe('formatSnapshotSize', () => {
+    // Rounded up, so a payload fractionally over the limit never renders as equal to the limit
+    // the same message quotes — the limit itself renders as "16.0 MiB".
+    it.each([
+      { desc: 'a payload exactly at the 16 MiB limit', bytes: 16 * 1024 * 1024, expected: '16.0 MiB' },
+      { desc: 'a payload one byte over the limit', bytes: 16 * 1024 * 1024 + 1, expected: '16.1 MiB' },
+      { desc: 'a payload below one kibibyte', bytes: 341, expected: '341.0 B' },
+    ])('renders $desc as $expected', ({ bytes, expected }) => {
+      expect(formatSnapshotSize(bytes)).toBe(expected);
+    });
+  });
+
   describe('payload size guard', () => {
     it('publishes the snapshot when the payload is under the limit', async () => {
+      const reportInteraction = jest.spyOn(DashboardInteractions, 'publishSnapshotLocalClicked');
       const tab = parentToScene((scene) => new ShareSnapshotTab({ dashboardRef: scene.getRef() }));
 
       const response = await tab.onSnapshotCreate();
@@ -119,6 +138,16 @@ describe('ShareSnapshotTab', () => {
         expires: ONE_WEEK,
         external: false,
       });
+      expect(reportInteraction).toHaveBeenCalledWith({ expires: ONE_WEEK, shareResource: 'dashboard' });
+    });
+
+    it('still reports the publish interaction when the payload is over the limit', async () => {
+      const reportInteraction = jest.spyOn(DashboardInteractions, 'publishSnapshotLocalClicked');
+      const tab = parentToScene((scene) => new TinyLimitShareSnapshotTab({ dashboardRef: scene.getRef() }));
+
+      await expect(tab.onSnapshotCreate()).rejects.toThrow();
+
+      expect(reportInteraction).toHaveBeenCalledWith({ expires: ONE_WEEK, shareResource: 'dashboard' });
     });
 
     it('rejects without posting when the payload is over the limit', async () => {
@@ -143,7 +172,7 @@ describe('ShareSnapshotTab', () => {
   });
 });
 
-// Exercises the guard without serializing a payload over the real 100 MB limit
+// Exercises the guard without serializing a payload over the real 16 MiB limit
 class TinyLimitShareSnapshotTab extends ShareSnapshotTab {
   protected override maxPayloadSizeBytes = 10;
 }

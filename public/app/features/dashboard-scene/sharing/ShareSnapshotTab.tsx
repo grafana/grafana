@@ -68,10 +68,19 @@ export function getSnapshotPayloadSizeBytes(payload: object): number {
   return new Blob([JSON.stringify(payload)]).size;
 }
 
-// IEC units to match the 1024-based limit above. Rounding to whole megabytes would report a
-// payload just over the limit as equal to it ("16 MB, over the 16 MB limit").
+const SIZE_DECIMALS = 1;
+
+// IEC units to match the 1024-based limit above.
 function formatBytes(bytes: number): string {
-  return formattedValueToString(getValueFormat('bytes')(bytes, 1));
+  return formattedValueToString(getValueFormat('bytes')(bytes, SIZE_DECIMALS));
+}
+
+// Rounds up to the precision we render, so a payload only slightly over the limit is never
+// reported as equal to it ("16.0 MiB, over the 16.0 MiB limit").
+export function formatSnapshotSize(bytes: number): string {
+  const unit = 1024 ** Math.floor(Math.log2(Math.max(bytes, 1)) / 10);
+  const step = unit / 10 ** SIZE_DECIMALS;
+  return formatBytes(Math.ceil(bytes / step) * step);
 }
 
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
@@ -207,26 +216,27 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     };
 
     const payloadSizeBytes = getSnapshotPayloadSizeBytes(cmdData);
-    if (payloadSizeBytes > this.maxPayloadSizeBytes) {
-      const message = t(
-        'snapshot.share.too-large-body',
-        'This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.',
-        {
-          size: formatBytes(payloadSizeBytes),
-          limit: formatBytes(this.maxPayloadSizeBytes),
-        }
-      );
-
-      dispatch(
-        notifyApp(
-          createErrorNotification(t('snapshot.share.too-large-title', 'Snapshot is too large to publish'), message)
-        )
-      );
-
-      throw new Error(message);
-    }
 
     try {
+      if (payloadSizeBytes > this.maxPayloadSizeBytes) {
+        const message = t(
+          'snapshot.share.too-large-body',
+          'This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.',
+          {
+            size: formatSnapshotSize(payloadSizeBytes),
+            limit: formatBytes(this.maxPayloadSizeBytes),
+          }
+        );
+
+        dispatch(
+          notifyApp(
+            createErrorNotification(t('snapshot.share.too-large-title', 'Snapshot is too large to publish'), message)
+          )
+        );
+
+        throw new Error(message);
+      }
+
       const response = await getDashboardSnapshotSrv().create(cmdData);
       dispatch(
         notifyApp(createSuccessNotification(t('snapshot.share.success-creation', 'Your snapshot has been created')))
