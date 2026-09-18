@@ -13207,6 +13207,7 @@
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",
+      "add-tag": "Add tag",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13216,11 +13217,21 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "remove-tag": "Remove tag",
       "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
+    },
+    "incidents": {
+      "attach-title": "Attach to incident",
+      "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
+      "caption": "Notebook: {{title}}",
+      "declare": "Declare incident",
+      "menu": "IRM",
+      "view-incident": "View incident"
     },
     "list": {
       "count_one": "{{count}} notebook",
