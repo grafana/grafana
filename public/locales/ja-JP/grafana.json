@@ -5751,16 +5751,24 @@
       "add-library-panel-header": "パネルをインポート",
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
+      "add-visualization-description": "",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "自動グリッド",
       "auto-grid-description": "パネルはサイズ変更され、均一なグリッドになります",
+      "build-assistant": "",
       "custom-grid": "カスタムグリッド",
       "custom-grid-description": "各パネルを個別に配置してサイズを変更する",
       "description": "パネルを追加してデータを視覚化します",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "ファイルまたは<2>grafana.com</2>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "layout-default-hint": "選択したレイアウトは、すべての新しいタブと行のデフォルトとしても使用されます。この設定は後から、[ダッシュボード設定] > [一般] で変更できます。",
+      "or-start-blank": "",
       "select-layout-header": "レイアウトを選択",
       "title": "新しいダッシュボード"
     },
@@ -5888,6 +5896,7 @@
       "randomize-field-names-label-field-names": "フィールド名",
       "randomize-labels-label-labels": "ラベル",
       "randomize-string-values-label-string-values": "文字列値",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "データ",
@@ -5928,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "変換とフィールド構成が適用されていない未加工のデータ。",
       "dataframe-label": "DataFrame JSON（クエリから）",
+      "editor-label": "",
       "panel-data-description": "パネルの視覚化に渡された未加工のモデル",
       "panel-data-label": "パネルデータ",
       "panel-json-description": "すべての動作を構成するダッシュボードJSONに保存されたモデル。",
@@ -7316,6 +7326,7 @@
       "randomize-field-names-label-field-names": "フィールド名",
       "randomize-labels-label-labels": "ラベル",
       "randomize-string-values-label-string-values": "文字列値",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "データ",
@@ -7703,6 +7714,7 @@
         "model-label": "モデル",
         "v2-resource": "V2リソース"
       },
+      "json-preview-label": "",
       "label-description": "説明",
       "label-folder-name": "フォルダ名",
       "label-target-folder": "ターゲットフォルダ",
@@ -11101,6 +11113,7 @@
       "incident-tab-label": "インシデント",
       "team-filter-all": "すべてのチーム",
       "team-filter-label": "チームでアラートを絞り込む",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -11158,6 +11171,7 @@
     "incidents-card": {
       "declare": "インシデントを宣言",
       "empty": "アクティブなインシデントはありません。",
+      "empty-selected-team": "",
       "error-title": "アクティブなインシデントを読み込めませんでした",
       "title": "アクティブなインシデント",
       "view-all": "すべてのインシデントを表示"
@@ -11762,6 +11776,7 @@
       "waiting-for-data": "データ待ち中..."
     },
     "live-publish": {
+      "message": "",
       "publish": "公開"
     }
   },
@@ -12106,6 +12121,10 @@
     "enable-log-details": {
       "description": "有効にすると、各行のログの詳細が表示されます。",
       "name": "ログの詳細を有効化"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "各行の最初の列にあるログ行リンクボタンを有効/無効化",
@@ -15015,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "承諾",
-      "alert-text": "このダッシュボードを外部と共有すると、リンクを知っている人なら誰でもアクセスできるようになります。",
+      "alert-text": "",
       "cancel-button": "キャンセル",
       "learn-more-button": "もっと詳しく",
       "public-ack": "このダッシュボード全体が公開されることを理解しています。*",

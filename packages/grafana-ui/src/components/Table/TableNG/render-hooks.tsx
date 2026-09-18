@@ -149,6 +149,7 @@ export function useDataGridRows(
 
 export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
+  hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
   /**
@@ -258,6 +259,7 @@ function buildColumnsFromFields(
     numFrozenColsFullyInView,
     maxRowHeight,
     disableKeyboardEvents,
+    hoverOverflow = true,
     disableSanitizeHtml,
     showTypeIcons,
     tableRefreshEnabled,
@@ -353,6 +355,7 @@ function buildColumnsFromFields(
       textAlign,
       textWrap,
       shouldOverflow,
+      hoverOverflow,
       maxHeight: maxRowHeight,
     };
 
@@ -487,6 +490,7 @@ function buildColumnsFromFields(
           // (which would line-clamp/cut off the content).
           textWrap: true,
           shouldOverflow: false,
+          hoverOverflow: true,
         } satisfies TableCellStyleOptions;
         const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
         const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);

@@ -76,6 +76,7 @@ public/css/*.min.css
 .vs/
 .cursor/
 .devcontainer/
+.agents/
 .claude/*
 
 # Claude skills everyone should have. Re-including a path under an ignored

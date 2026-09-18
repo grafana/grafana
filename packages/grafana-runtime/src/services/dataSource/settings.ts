@@ -297,7 +297,13 @@ function lookupFromMaps(
   if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
     if (interpolated !== nameOrUid) {
-      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      // The plain lookup below reads three maps; this branch must read the same three. Legacy
+      // DataSourceSrv.get() interpolates itself and then re-enters getInstanceSettings through
+      // that plain branch, so it reaches the id map and this one has to as well.
+      const resolved =
+        interpolated === 'default'
+          ? byName[defaultName]
+          : (byUid[interpolated] ?? byName[interpolated] ?? byId[interpolated]);
       if (!resolved) {
         return undefined;
       }
