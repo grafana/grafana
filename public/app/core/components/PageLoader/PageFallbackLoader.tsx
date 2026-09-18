@@ -5,13 +5,13 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-export interface PageFallbackLoaderStep {
+interface PageFallbackLoaderStep {
   id: string;
   label: string;
   done: boolean;
 }
 
-export interface PageFallbackLoaderProps {
+interface PageFallbackLoaderProps {
   steps?: PageFallbackLoaderStep[];
 }
 
