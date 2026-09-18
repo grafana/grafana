@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -9,6 +8,7 @@ import {
   type Row,
   useReactTable,
 } from '@tanstack/react-table';
+import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
