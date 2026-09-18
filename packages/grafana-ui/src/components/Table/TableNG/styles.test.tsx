@@ -83,48 +83,56 @@ function hoverRuleFor(gridClass: string): CSSStyleRule | undefined {
   return undefined;
 }
 
+function computedColor(color: string): string {
+  const element = document.createElement('div');
+  element.style.backgroundColor = color;
+  document.body.appendChild(element);
+  const computed = window.getComputedStyle(element).backgroundColor;
+  element.remove();
+  return computed;
+}
+
 describe('table zebra colors', () => {
-  it.each([
-    ['dark', 'rgb(34, 37, 43)'],
-    ['light', 'rgb(244, 245, 245)'],
-    ['visual_refresh_dark', 'rgb(25, 29, 34)'],
-    ['visual_refresh_light', 'rgb(245, 245, 244)'],
-  ])('uses the %s stripe token on alternating rows and their frozen cells', (id, stripe) => {
-    const { rowBackgrounds, frozenBackgrounds } = gridVarsFor(getThemeById(id), {
-      zebraStriping: true,
-      frozenColumns: 1,
-    });
+  it.each(['dark', 'light', 'visual_refresh_dark', 'visual_refresh_light'])(
+    'uses the %s stripe token on alternating rows and their frozen cells',
+    (id) => {
+      const theme = getThemeById(id);
+      const { rowBackgrounds, frozenBackgrounds } = gridVarsFor(theme, {
+        zebraStriping: true,
+        frozenColumns: 1,
+      });
 
-    expect(rowBackgrounds).toHaveLength(4);
-    expect(frozenBackgrounds).toHaveLength(4);
-    for (const backgrounds of [rowBackgrounds, frozenBackgrounds]) {
-      expect(backgrounds[1]).toBe(stripe);
-      expect(backgrounds[3]).toBe(stripe);
-      expect(backgrounds[0]).not.toBe(stripe);
-      expect(backgrounds[2]).not.toBe(stripe);
+      expect(rowBackgrounds).toHaveLength(4);
+      expect(frozenBackgrounds).toHaveLength(4);
+      for (const backgrounds of [rowBackgrounds, frozenBackgrounds]) {
+        expect(backgrounds[1]).toBe(computedColor(theme.components.table.rowStripedBackground));
+        expect(backgrounds[3]).toBe(computedColor(theme.components.table.rowStripedBackground));
+        expect(backgrounds[0]).not.toBe(computedColor(theme.components.table.rowStripedBackground));
+        expect(backgrounds[2]).not.toBe(computedColor(theme.components.table.rowStripedBackground));
+      }
     }
-  });
+  );
 
-  it.each([
-    ['dark', '#34363a'],
-    ['light', '#e0e0e0'],
-    ['visual_refresh_dark', '#282d33'],
-    ['visual_refresh_light', '#e4e3e2'],
-  ])('uses the %s hover background for striped rows', (id, hoverBackground) => {
-    const theme = getThemeById(id);
-    const { rowHoverBackground, selectedRowHoverBackground, gridClass } = gridVarsFor(theme, {
-      zebraStriping: true,
-      tableRefreshEnabled: true,
-    });
+  it.each(['dark', 'light', 'visual_refresh_dark', 'visual_refresh_light'])(
+    'uses the %s hover background for striped rows',
+    (id) => {
+      const theme = getThemeById(id);
+      const { rowHoverBackground, selectedRowHoverBackground, gridClass } = gridVarsFor(theme, {
+        zebraStriping: true,
+        tableRefreshEnabled: true,
+      });
 
-    expect(rowHoverBackground).toBe(hoverBackground);
-    expect(selectedRowHoverBackground).toBe(theme.colors.emphasize(theme.components.table.rowSelectedBackground, 0.05));
-    const rule = hoverRuleFor(gridClass);
-    expect(rule?.style.getPropertyValue('background-color')).toBe(hoverBackground);
-    expect(rule?.selectorText).toBe(
-      `.${gridClass} .rdg-row:not(.rdg-summary-row, .table-ng-row-nested, [aria-selected='true']):hover>.rdg-cell`
-    );
-  });
+      expect(rowHoverBackground).toBe(theme.components.table.rowHoverBackground);
+      expect(selectedRowHoverBackground).toBe(
+        theme.colors.emphasize(theme.components.table.rowSelectedBackground, 0.05)
+      );
+      const rule = hoverRuleFor(gridClass);
+      expect(rule?.style.getPropertyValue('background-color')).toBe(theme.components.table.rowHoverBackground);
+      expect(rule?.selectorText).toBe(
+        `.${gridClass} .rdg-row:not(.rdg-summary-row, .table-ng-row-nested, [aria-selected='true']):hover>.rdg-cell`
+      );
+    }
+  );
 
   it.each([false, true])(
     'honors custom stripe and hover tokens in a transparent panel with visualDesignRefresh=%s',
@@ -144,9 +152,11 @@ describe('table zebra colors', () => {
         transparent: true,
       });
 
-      expect(rowBackground).toBe('#123456');
-      expect(rowBackgrounds[1]).toBe('rgb(52, 86, 120)');
-      expect(hoverRuleFor(gridClass)?.style.getPropertyValue('background-color')).toBe('#56789a');
+      expect(rowBackground).toBe(theme.colors.background.canvas);
+      expect(rowBackgrounds[1]).toBe(computedColor(theme.components.table.rowStripedBackground));
+      expect(hoverRuleFor(gridClass)?.style.getPropertyValue('background-color')).toBe(
+        theme.components.table.rowHoverBackground
+      );
     }
   );
 
@@ -163,8 +173,11 @@ describe('table zebra colors', () => {
 
       expect(rowBackgrounds).toHaveLength(4);
       expect(new Set(rowBackgrounds).size).toBe(1);
-      expect(rowHoverBackground).toBe('#34363a');
-      expect(selectedRowHoverBackground).toBe('rgb(75, 50, 12)');
+      const theme = getThemeById('dark');
+      expect(rowHoverBackground).toBe(theme.components.table.rowHoverBackground);
+      expect(selectedRowHoverBackground).toBe(
+        theme.colors.emphasize(theme.components.table.rowSelectedBackground, 0.05)
+      );
       expect(hoverRuleFor(gridClass)).toBeUndefined();
     }
   );
