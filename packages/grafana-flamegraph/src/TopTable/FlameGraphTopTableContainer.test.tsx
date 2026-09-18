@@ -444,8 +444,7 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
   });
 
   // Symbol is the one column left unsized, so whichever way TableNG sizes its auto columns it must
-  // land inside the space the scrollbar and table frame leave — the pane has no room for a
-  // horizontal scrollbar.
+  // land inside the space the scrollbar leaves — the pane has no room for a horizontal scrollbar.
   it.each([{ contentAwareWidthsEnabled: undefined }, { contentAwareWidthsEnabled: true }])(
     'fits the columns in the space the scrollbar leaves with contentAwareWidthsEnabled=$contentAwareWidthsEnabled',
     async ({ contentAwareWidthsEnabled }) => {
@@ -476,7 +475,7 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
         expect(sizedContainer).not.toBeNull();
         expect(columnWidths).toHaveLength(4);
         expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(
-          parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH - 2
+          parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH
         );
         expect(screen.getByText('net/http.HandlerFunc.ServeHTTP').closest('[role="gridcell"]')).toHaveClass(
           'table-ng-cell-overflow'
