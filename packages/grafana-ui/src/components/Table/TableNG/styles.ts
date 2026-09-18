@@ -11,8 +11,6 @@ import {
   LAST_COLUMN_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
-  SCROLL_SHADOW_TOP_CLASS,
-  SCROLL_SHADOW_BOTTOM_CLASS,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -61,7 +59,6 @@ export const getGridStyles = memoize(
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean
   ) => {
-    const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
     const table = theme.components.table;
     const bgColor = transparent
       ? theme.flags.visualDesignRefresh
@@ -223,32 +220,6 @@ export const getGridStyles = memoize(
         // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
         // the grid's whole content height and it pushes everything below it out of the panel.
         minBlockSize: 0,
-      }),
-      scrollShadows: css({
-        // The grid creates a stacking context; both pseudo-elements must paint above it.
-        '&::before, &::after': {
-          content: '""',
-          blockSize: `max(5%, ${theme.spacing(3)})`,
-          insetInline: 0,
-          opacity: 0,
-          pointerEvents: 'none',
-          position: 'absolute',
-          zIndex: 1,
-          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-            transition: theme.transitions.create('opacity'),
-          },
-        },
-        '&::before': {
-          top: 'var(--table-scroll-shadow-top)',
-          background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
-        },
-        '&::after': {
-          bottom: 'var(--table-scroll-shadow-bottom)',
-          background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
-        },
-        [`&.${SCROLL_SHADOW_TOP_CLASS}::before, &.${SCROLL_SHADOW_BOTTOM_CLASS}::after`]: {
-          opacity: 1,
-        },
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
@@ -479,3 +450,42 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   }
   return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
 });
+
+export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>
+  css({
+    '&::before': { top },
+    '&::after': { bottom },
+  });
+
+export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
+  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  return {
+    scrollShadows: css({
+      // The grid creates a stacking context; both pseudo-elements must paint above it.
+      '&::before, &::after': {
+        content: '""',
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        zIndex: 1,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      },
+      '&::before': {
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      },
+      '&::after': {
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+      },
+    }),
+    scrollShadowTop: css({
+      '&::before': { opacity: 1 },
+    }),
+    scrollShadowBottom: css({
+      '&::after': { opacity: 1 },
+    }),
+  };
+};

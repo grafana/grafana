@@ -6,6 +6,25 @@ import { type DataGridHandle } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 
+// jsdom does not compute pseudo-element styles; read the matching Emotion rules in cascade order.
+function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', property: string) {
+  let value = '';
+  for (const sheet of Array.from(document.styleSheets)) {
+    for (const rule of Array.from(sheet.cssRules)) {
+      if (
+        rule instanceof CSSStyleRule &&
+        rule.selectorText.split(',').some((selector) => {
+          const suffix = `::${edge}`;
+          return selector.trim().endsWith(suffix) && element?.matches(selector.trim().slice(0, -suffix.length));
+        })
+      ) {
+        value = rule.style.getPropertyValue(property) || value;
+      }
+    }
+  }
+  return value;
+}
+
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
   return {
     role: 'grid',
@@ -145,19 +164,46 @@ describe('TableDataGrid', () => {
 
       // parked at the top of a table taller than its viewport: more rows below, none above
       scrollTo(grid, { scrollTop: 0, clientHeight: 100, scrollHeight: 400 });
-      expect(wrapper).not.toHaveClass('table-scroll-shadow-top');
-      expect(wrapper).toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'before', 'opacity')).toBe('0');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('1');
 
       // somewhere in the middle: rows hidden both ways
       scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
-      expect(wrapper).toHaveClass('table-scroll-shadow-top');
-      expect(wrapper).toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'before', 'opacity')).toBe('1');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('1');
 
       // scrolled to the very bottom
       scrollTo(grid, { scrollTop: 300, clientHeight: 100, scrollHeight: 400 });
-      expect(wrapper).toHaveClass('table-scroll-shadow-top');
-      expect(wrapper).not.toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'before', 'opacity')).toBe('1');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('0');
       expect(onScroll).toHaveBeenCalledTimes(3);
+    });
+
+    it('keeps visible shadows colored for the current theme after switching themes', () => {
+      const props = makeProps({ tableRefreshEnabled: true });
+      const { rerender } = render(
+        <ThemeContext.Provider value={createTheme({ colors: { mode: 'dark' } })}>
+          <TableDataGrid {...props} />
+        </ThemeContext.Provider>
+      );
+      const grid = screen.getByRole('grid');
+      scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
+      for (const mode of ['light', 'dark'] as const) {
+        rerender(
+          <ThemeContext.Provider value={createTheme({ colors: { mode } })}>
+            <TableDataGrid {...props} />
+          </ThemeContext.Provider>
+        );
+        const color = mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+        expect(shadowStyle(grid.parentElement, 'before', 'background')).toBe(
+          `linear-gradient(0deg, transparent, ${color})`
+        );
+        expect(shadowStyle(grid.parentElement, 'after', 'background')).toBe(
+          `linear-gradient(180deg, transparent, ${color})`
+        );
+        expect(shadowStyle(grid.parentElement, 'before', 'opacity')).toBe('1');
+        expect(shadowStyle(grid.parentElement, 'after', 'opacity')).toBe('1');
+      }
     });
 
     it('stays hidden when every row already fits', () => {
@@ -165,8 +211,8 @@ describe('TableDataGrid', () => {
       const wrapper = screen.getByRole('grid').parentElement;
 
       scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 400, scrollHeight: 400 });
-      expect(wrapper).not.toHaveClass('table-scroll-shadow-top');
-      expect(wrapper).not.toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'before', 'opacity')).toBe('0');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('0');
     });
 
     it('starts the shadows where the scrolling rows do, below the header and above the footer', () => {
@@ -179,8 +225,8 @@ describe('TableDataGrid', () => {
 
       // the header and footer rows are sticky children of the grid, so a shadow at the grid's own
       // edges would sit on top of them instead of on the rows sliding underneath
-      expect(wrapper).toHaveStyle({ '--table-scroll-shadow-top': '36px' });
-      expect(wrapper).toHaveStyle({ '--table-scroll-shadow-bottom': '45px' });
+      expect(shadowStyle(wrapper, 'before', 'top')).toBe('36px');
+      expect(shadowStyle(wrapper, 'after', 'bottom')).toBe('45px');
     });
 
     it('lifts the bottom shadow clear of a horizontal scrollbar', () => {
@@ -190,11 +236,11 @@ describe('TableDataGrid', () => {
       // the scrollbar sits below the rows and the sticky footer alike, so without clearing it the
       // shadow lands on the scrollbar rather than on the last visible row
       scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 100, scrollHeight: 400, offsetHeight: 111 });
-      expect(wrapper).toHaveStyle({ '--table-scroll-shadow-bottom': '56px' });
+      expect(shadowStyle(wrapper, 'after', 'bottom')).toBe('56px');
 
       // and drops back down once the columns fit again
       scrollTo(screen.getByRole('grid'), { scrollTop: 0, clientHeight: 100, scrollHeight: 400 });
-      expect(wrapper).toHaveStyle({ '--table-scroll-shadow-bottom': '45px' });
+      expect(shadowStyle(wrapper, 'after', 'bottom')).toBe('45px');
     });
 
     it('re-measures after rendered content changes', () => {
@@ -206,11 +252,11 @@ describe('TableDataGrid', () => {
       const wrapper = screen.getByRole('grid').parentElement;
 
       scrollTo(grid, { scrollTop: 0, clientHeight: 400, scrollHeight: 400 });
-      expect(wrapper).not.toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('0');
 
       Object.defineProperty(grid, 'scrollHeight', { configurable: true, value: 900 });
       rerender(<TableDataGrid {...props} rows={[...props.rows]} />);
-      expect(wrapper).toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('1');
     });
 
     it('re-measures when the grid viewport resizes', () => {
@@ -225,7 +271,7 @@ describe('TableDataGrid', () => {
       });
       act(() => resizeObservers.at(-1)?.callback([], resizeObservers.at(-1) as unknown as ResizeObserver));
 
-      expect(wrapper).toHaveClass('table-scroll-shadow-bottom');
+      expect(shadowStyle(wrapper, 'after', 'opacity')).toBe('1');
     });
 
     it('disconnects its resize observer on unmount', () => {
@@ -245,7 +291,8 @@ describe('TableDataGrid', () => {
       scrollTo(grid, { scrollTop: 150, clientHeight: 100, scrollHeight: 400 });
 
       expect(onScroll).toHaveBeenCalledTimes(1);
-      expect(grid.parentElement).not.toHaveClass('table-scroll-shadow-top', 'table-scroll-shadow-bottom');
+      expect(shadowStyle(grid.parentElement, 'before', 'content')).toBe('');
+      expect(shadowStyle(grid.parentElement, 'after', 'content')).toBe('');
     });
   });
 

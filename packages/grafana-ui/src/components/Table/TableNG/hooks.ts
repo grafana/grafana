@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -30,7 +30,7 @@ import {
 } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import {
@@ -38,11 +38,9 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   getPaginationChromeHeight,
   SCROLL_SHADOW_THRESHOLD,
-  SCROLL_SHADOW_TOP_CLASS,
-  SCROLL_SHADOW_BOTTOM_CLASS,
   TABLE,
 } from './constants';
-import { IS_SAFARI_26 } from './styles';
+import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
@@ -796,21 +794,21 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * Visibility classes are owned by React; scrolling only updates state when visibility changes.
- * Edge offsets are written directly to the wrapper to avoid renders for geometry-only changes.
+ * React state updates only when shadow visibility or horizontal scrollbar height changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [className, setClassName] = useState('');
-  const classNameRef = useRef('');
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const visibilityRef = useRef(visibility);
+  const styles = useStyles2(getScrollShadowStyles);
+  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
-    const wrapper = el?.parentElement;
-    if (!enabled || !el || !wrapper) {
+    if (!enabled || !el) {
       return;
     }
     const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
@@ -820,17 +818,18 @@ export function useScrollShadows(
     // so the difference between the two heights is the scrollbar alone.
     const scrollbarHeight = offsetHeight - clientHeight;
     const scrollBottom = scrollHeight - clientHeight - scrollTop;
-    wrapper.style.setProperty('--table-scroll-shadow-top', `${topOffset}px`);
-    wrapper.style.setProperty('--table-scroll-shadow-bottom', `${bottomOffset + scrollbarHeight}px`);
-    const nextClassName = clsx({
-      [SCROLL_SHADOW_TOP_CLASS]: scrollTop > SCROLL_SHADOW_THRESHOLD,
-      [SCROLL_SHADOW_BOTTOM_CLASS]: scrollBottom > SCROLL_SHADOW_THRESHOLD,
-    });
-    if (classNameRef.current !== nextClassName) {
-      classNameRef.current = nextClassName;
-      setClassName(nextClassName);
+    const top = scrollTop > SCROLL_SHADOW_THRESHOLD;
+    const bottom = scrollBottom > SCROLL_SHADOW_THRESHOLD;
+    if (
+      visibilityRef.current.top !== top ||
+      visibilityRef.current.bottom !== bottom ||
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+    ) {
+      const nextVisibility = { top, bottom, scrollbarHeight };
+      visibilityRef.current = nextVisibility;
+      setVisibility(nextVisibility);
     }
-  }, [ref, enabled, topOffset, bottomOffset]);
+  }, [ref, enabled]);
 
   // Content height changes arrive through a render: rows change, nested rows expand, or resized
   // columns re-wrap their cells. Measure after every commit so those changes do not need their own
@@ -849,7 +848,20 @@ export function useScrollShadows(
     return () => resizeObserver.disconnect();
   }, [ref, enabled, sync]);
 
-  return { className: enabled ? className : '', onScroll: sync };
+  return {
+    className: enabled
+      ? css(
+          styles.scrollShadows,
+          offsetStyles,
+          visibility.top && styles.scrollShadowTop,
+          visibility.bottom && styles.scrollShadowBottom
+        )
+      : '',
+    top: enabled && visibility.top,
+    bottom: enabled && visibility.bottom,
+    scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,
+    onScroll: sync,
+  };
 }
 
 /**
