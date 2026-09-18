@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -640,7 +640,7 @@ func TestBuildTransition(t *testing.T) {
 
 func createTestLokiStore(t *testing.T, sql *sqlstore.SQLStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 
 	return &LokiHistorianStore{
 		client:    client,
@@ -669,7 +669,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 	rule.DashboardUID = nil
 	rule.PanelID = nil
 
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
@@ -701,7 +701,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title st
 	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
 		rule.PanelID = panelID
 	}
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})

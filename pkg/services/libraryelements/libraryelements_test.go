@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,7 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -325,7 +325,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	dashService := dashboards.NewFakeDashboardService(t)
 
-	alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
+	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
