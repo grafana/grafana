@@ -1,22 +1,25 @@
+import { QueryStatus } from '@reduxjs/toolkit/query';
 import { act, renderHook } from 'test/test-utils';
-
-import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
-import { useDispatch, useSelector } from 'app/types/store';
 
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 
+let mockSelectorResult: unknown;
+let mockDispatchResult = jest.fn();
+const mockInitiate = jest.fn();
+const mockSelect = jest.fn();
+
 jest.mock('app/types/store', () => ({
   ...jest.requireActual('app/types/store'),
-  useDispatch: jest.fn(),
-  useSelector: jest.fn(),
+  useDispatch: jest.fn(() => mockDispatchResult),
+  useSelector: jest.fn(() => mockSelectorResult),
 }));
 
 jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   dashboardAPIv0alpha1: {
     endpoints: {
       searchDashboardsAndFolders: {
-        initiate: jest.fn(),
-        select: jest.fn(),
+        initiate: (...args: unknown[]) => mockInitiate(...args),
+        select: (...args: unknown[]) => mockSelect(...args),
       },
     },
   },
@@ -24,15 +27,15 @@ jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
 
 describe('useFoldersQueryAppPlatform', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
+    mockDispatchResult = jest.fn();
   });
 
   it('returns a list that contains the virtual "Shared with me" folder under the root', () => {
-    (useDispatch as jest.Mock).mockReturnValue(jest.fn());
-    (useSelector as jest.Mock).mockImplementation(() => ({
+    mockSelectorResult = {
       isLoading: false,
       responseByParent: {},
-    }));
+    };
 
     const { result } = renderHook(() =>
       useFoldersQueryAppPlatform({
@@ -51,21 +54,44 @@ describe('useFoldersQueryAppPlatform', () => {
     expect(sharedWithMe?.level).toBe(1);
   });
 
+  it('normalizes the canonical root folder sentinel', () => {
+    mockSelectorResult = {
+      isLoading: false,
+      responseByParent: {
+        general: {
+          status: QueryStatus.fulfilled,
+          data: {
+            hits: [{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders' }],
+          },
+        },
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useFoldersQueryAppPlatform({
+        isBrowsing: true,
+        openFolders: {},
+        permission: 'edit',
+      })
+    );
+
+    const repositoryRoot = result.current.items.find((treeItem) => treeItem.item.uid === 'repo-root');
+    expect(repositoryRoot?.item).toMatchObject({ parentUID: undefined });
+  });
+
   it('dispatches an app-platform search request when requestNextPage is called', () => {
     const unsubscribe = jest.fn();
     const subscription = { unsubscribe };
     const dispatch = jest.fn(() => subscription);
 
-    (useDispatch as jest.Mock).mockReturnValue(dispatch);
-    (useSelector as jest.Mock).mockImplementation(() => ({
+    mockDispatchResult = dispatch;
+    mockSelectorResult = {
       isLoading: false,
       responseByParent: {},
-    }));
+    };
 
-    const initiateMock = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate as jest.Mock;
-    const selectMock = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select as jest.Mock;
-    initiateMock.mockReturnValue(subscription);
-    selectMock.mockReturnValue(jest.fn());
+    mockInitiate.mockReturnValue(subscription);
+    mockSelect.mockReturnValue(jest.fn());
 
     const { result } = renderHook(() =>
       useFoldersQueryAppPlatform({
@@ -79,8 +105,8 @@ describe('useFoldersQueryAppPlatform', () => {
       result.current.requestNextPage(undefined);
     });
 
-    expect(initiateMock).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
+    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
     expect(dispatch).toHaveBeenCalledWith(subscription);
-    expect(selectMock).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
+    expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
   });
 });

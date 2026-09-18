@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"iter"
 	"net/http"
 	"testing"
@@ -17,9 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-func TestUseSelectorSearch(t *testing.T) {
+func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
+		allowlist       []string
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -49,6 +52,57 @@ func TestUseSelectorSearch(t *testing.T) {
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when no selectors and resource is allowlisted": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when resource version is set": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:          resourcepb.ListRequest_STORE,
+				ResourceVersion: 42,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when list has a name": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when no selectors and resource is not allowlisted": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when keys only": {
+			allowlist: []string{"advisor.grafana.app/advisors"},
+			req: &resourcepb.ListRequest{
+				Source:   resourcepb.ListRequest_STORE,
+				KeysOnly: true,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -124,8 +178,13 @@ func TestUseSelectorSearch(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
+			allowed := make(map[string]bool, len(tc.allowlist))
+			for _, resource := range tc.allowlist {
+				allowed[resource] = true
+			}
+			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 
-			require.Equal(t, tc.expectedAllowed, s.useSelectorSearch(tc.req))
+			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
 }
@@ -206,6 +265,81 @@ func TestTokenFromOtherListPath(t *testing.T) {
 	require.False(t, tokenFromOtherListPath(scanToken, false))
 }
 
+func TestDecodeListSearchRows(t *testing.T) {
+	const resourceVersion = int64(1958241239561142273)
+	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}
+	want := []listSearchRow{{key: key, resourceVersion: resourceVersion, sortFields: []string{"title", "a"}}}
+
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{
+			name: "unspecified resource table",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Rows: []*resourcepb.ResourceTableRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}},
+			}},
+		},
+		{
+			name: "explicit resource table",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}}},
+			},
+		},
+		{
+			name: "field values",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: key, ResourceVersion: resourceVersion, SortFields: []string{"title", "a"},
+				}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			rows, err := decodeListSearchRows(test.response)
+			require.NoError(t, err)
+			require.Equal(t, want, rows)
+		})
+	}
+}
+
+func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{name: "nil response"},
+		{
+			name:     "unsupported format",
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)},
+		},
+		{
+			name: "table row without key",
+			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Rows: []*resourcepb.ResourceTableRow{{}},
+			}},
+		},
+		{
+			name: "field-value row without key",
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{{}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := decodeListSearchRows(test.response)
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestListWithSelectors(t *testing.T) {
 	searchServerRv := int64(100)
 
@@ -228,6 +362,46 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
+		require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
+	})
+
+	t.Run("returns an embedded search error", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("search failed"),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Equal(t, "search failed", resp.Error.Message)
+	})
+
+	t.Run("returns transport errors directly", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchErr := errors.New("search unavailable")
+		s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, searchErr)
+		require.Nil(t, resp)
 	})
 
 	t.Run("rejects a continue token from the store path", func(t *testing.T) {
@@ -278,18 +452,18 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
 
-	t.Run("a single page result will have index rv and no next page token", func(t *testing.T) {
+	t.Run("a single field-value result preserves exact index rv and has no next page token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		const exactResourceVersion = int64(1958241239561142273)
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: exactResourceVersion,
+						SortFields:      []string{"s1"},
 					},
 				},
 			},
@@ -307,6 +481,7 @@ func TestListWithSelectors(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Items, 1)
+		require.Equal(t, exactResourceVersion, resp.Items[0].ResourceVersion)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 		require.Empty(t, resp.NextPageToken)
 	})
@@ -356,23 +531,22 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
 
-	t.Run("first page of paginated result will have next page token set and correct number of results", func(t *testing.T) {
+	t.Run("first field-value page uses sort fields for the next page token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
-							ResourceVersion: 1,
-							SortFields:      []string{"s1"},
-						},
-						{
-							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
-							ResourceVersion: 2,
-							SortFields:      []string{"s2"},
-						},
+				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
+						ResourceVersion: 1,
+						SortFields:      []string{"s1"},
+					},
+					{
+						Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
+						ResourceVersion: 2,
+						SortFields:      []string{"s2"},
 					},
 				},
 			},
@@ -496,6 +670,222 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, []string{"s1"}, parsedToken.SearchAfter)
 		require.Equal(t, searchServerRv, parsedToken.ResourceVersion)
 	})
+
+	t.Run("a search with no rows returns an empty list", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{
+			resp: &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv},
+		}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Empty(t, resp.Items)
+		require.Equal(t, searchServerRv, resp.ResourceVersion)
+	})
+}
+
+func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: 100,
+		Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1},
+			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2},
+		}},
+	}}
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{forbidden: map[string]struct{}{"b": {}}}}
+	access := claims.FixedAccessClient(true)
+	s := createTestServer(searchClient, 1024)
+	s.backend = backend
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Limit: 10,
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, 1, backend.batchCalls)
+	require.Zero(t, backend.readCalls)
+}
+
+func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
+	s := createTestServer(searchClient, 1024)
+	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
+		"advisor.grafana.app/advisors": true,
+	}}
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: "nsx",
+			Group:     "advisor.grafana.app",
+			Resource:  "advisors",
+		}},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.NotNil(t, searchClient.last)
+	require.Empty(t, searchClient.last.Options.Fields)
+	require.Empty(t, searchClient.last.Options.Labels)
+}
+
+func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+	// A full search page of hits, far more than one read chunk.
+	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize*3)
+	for i := 0; i < cap(rows); i++ {
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
+			SortFields: []string{fmt.Sprintf("s%d", i)},
+		})
+	}
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: 100,
+		Results:         &resourcepb.ResourceTable{Rows: rows},
+	}}
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+
+	// maxPageSizeBytes = 1 forces the byte cutoff after the first item, well
+	// before the item-count limit.
+	s := createTestServer(searchClient, 1)
+	s.backend = backend
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Limit: int64(len(rows)),
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, resp.Items, 1)
+	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
+	// Only the first chunk is read; the rest of the page is never fetched.
+	require.Equal(t, 1, backend.batchCalls)
+	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+}
+
+// denyByNameAccess allows everything except names in deny.
+type denyByNameAccess struct{ deny map[string]struct{} }
+
+func (a denyByNameAccess) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, _ string) (claims.CheckResponse, error) {
+	_, denied := a.deny[req.Name]
+	return claims.CheckResponse{Allowed: !denied}, nil
+}
+
+func (denyByNameAccess) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+func (a denyByNameAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		_, denied := a.deny[c.Name]
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: !denied}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func TestListWithSelectorsAuthorizesBatchedRows(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: 100,
+		Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
+			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
+			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "c"}, ResourceVersion: 3, SortFields: []string{"s3"}},
+		}},
+	}}
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	s := createTestServer(searchClient, 1024)
+	s.backend = backend
+	s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Limit: 10,
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, resp.Items, 2, "the unauthorized row must be filtered out")
+	// Bodies are read in one batch; authorization is applied per row on top.
+	require.Equal(t, 1, backend.batchCalls)
+}
+
+func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	newSearch := func() *stubSearchClient {
+		return &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			ResourceVersion: 100,
+			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
+				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
+			}},
+		}}
+	}
+	req := func() *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Limit:   10,
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res"}, Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+		}
+	}
+
+	t.Run("unauthorized errored row is skipped, not surfaced", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
+		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 1) // only "a"; "b" errored but is unauthorized, so hidden
+	})
+
+	t.Run("authorized errored row aborts the list", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
+		// access allows everything (default FixedAccessClient(true) from createTestServer)
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	})
+
+	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, notFound: map[string]struct{}{"b": {}}}
+		// Deny "b" too: a NotFound must still surface, not be hidden by the authz check.
+		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+	})
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
@@ -578,4 +968,50 @@ func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) (
 
 func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	return time.Time{}, nil
+}
+
+type batchFakeBackend struct {
+	*fakeBackend
+	errored    map[string]struct{}
+	notFound   map[string]struct{}
+	batchCalls int
+	batchReqs  int
+	readCalls  int
+}
+
+func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+	b.readCalls++
+	return b.fakeBackend.ReadResource(ctx, req)
+}
+
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+	b.batchCalls++
+	b.batchReqs += len(requests)
+	responses := make([]*BackendReadResponse, len(requests))
+	for i, req := range requests {
+		if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
+			responses[i] = &BackendReadResponse{
+				Key:   req.Key,
+				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+			}
+			continue
+		}
+		if _, errored := b.errored[req.Key.Name]; errored {
+			responses[i] = &BackendReadResponse{
+				Key:   req.Key,
+				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+			}
+			continue
+		}
+		if _, nf := b.notFound[req.Key.Name]; nf {
+			responses[i] = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
+			continue
+		}
+		responses[i] = &BackendReadResponse{
+			Key:             req.Key,
+			ResourceVersion: req.ResourceVersion,
+			Value:           []byte("value"),
+		}
+	}
+	return responses, nil
 }

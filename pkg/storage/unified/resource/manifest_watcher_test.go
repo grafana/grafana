@@ -301,6 +301,43 @@ func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
 	require.Equal(t, "dashboard.grafana.app", got[0].Group)
 }
 
+func TestManifestFromUnstructured_PreservesEmbeddingVersions(t *testing.T) {
+	obj := testAppManifestObj("m-foos", "foos", "foo.grafana.app", "Foo")
+	spec := obj.Object["spec"].(map[string]interface{})
+	spec["embed"] = map[string]interface{}{"foos": map[string]interface{}{"reembedVersion": int64(3)}}
+	spec["versions"] = []interface{}{
+		map[string]interface{}{
+			"name": "v2", "served": true,
+			"kinds": []interface{}{map[string]interface{}{
+				"kind": "Foo", "embed": map[string]interface{}{"fields": []interface{}{
+					map[string]interface{}{"name": "title", "path": "spec.title"},
+					map[string]interface{}{"name": "description", "path": "spec.description"},
+				}},
+			}},
+		},
+		map[string]interface{}{
+			"name": "v1", "served": false,
+			"kinds": []interface{}{map[string]interface{}{
+				"kind": "Foo", "embed": map[string]interface{}{"fields": []interface{}{
+					map[string]interface{}{"name": "title", "path": "spec.oldTitle"},
+				}},
+			}},
+		},
+	}
+	before := obj.DeepCopy()
+
+	data, err := ManifestFromUnstructured(obj)
+	require.NoError(t, err)
+	require.Equal(t, map[string]app.ManifestResourceEmbed{"foos": {ReembedVersion: 3}}, data.Embed)
+	require.Len(t, data.Versions, 2)
+	require.Equal(t, "v2", data.Versions[0].Name)
+	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.title"}, {Name: "description", Path: "spec.description"}}, data.Versions[0].Kinds[0].Embed.Fields)
+	require.Equal(t, "v1", data.Versions[1].Name)
+	require.False(t, data.Versions[1].Served)
+	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.oldTitle"}}, data.Versions[1].Kinds[0].Embed.Fields)
+	require.Equal(t, before, obj)
+}
+
 func TestNewManifestWatcherConfig(t *testing.T) {
 	newCfg := func() *setting.Cfg {
 		cfg := setting.NewCfg()

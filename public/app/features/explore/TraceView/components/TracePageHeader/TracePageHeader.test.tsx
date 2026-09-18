@@ -682,6 +682,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should copy the current URL when Copy link is clicked', async () => {
+      Object.assign(window, { isSecureContext: true });
       const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
       const notifyApp = {
         success: jest.fn(),
