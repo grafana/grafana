@@ -391,7 +391,7 @@ Returns a random walk series with one query-result notice of each severity (info
 
 Returns an empty result with no data points. Use this to test how panels display when there's no data.
 
-### Data Points Outside Range
+### Datapoints Outside Range
 
 Returns a single data point with a timestamp one hour before the query time range. Use this to test how panels handle data outside the visible range.
 
