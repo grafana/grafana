@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { type AlertQuery, type Labels } from 'app/types/unified-alerting-dto';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
 import { useNotificationPolicyAbility } from '../../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -18,7 +18,7 @@ import {
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
 import ConditionalWrap from '../../ConditionalWrap';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
+import { stripInternalLabels } from '../../notification-policies/useNotificationPolicyRoute';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 const NotificationPreviewForGrafanaManaged = lazy(() => import('./NotificationPreviewGrafanaManaged'));
@@ -34,12 +34,6 @@ interface NotificationPreviewProps {
 }
 
 const { preview } = alertRuleApi.endpoints;
-
-// strips labels that are routing infrastructure and should never be shown to users
-function stripInternalLabels(labels: Labels): Labels {
-  const { [NAMED_ROOT_LABEL_NAME]: _, ...rest } = labels;
-  return rest;
-}
 
 // TODO the scroll position keeps resetting when we preview
 // this is to be expected because the list of routes dissapears as we start the request but is very annoying

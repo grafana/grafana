@@ -19,6 +19,7 @@ import {
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -416,6 +417,24 @@ export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
 /** Returns true when the ObjectMatcher targets the internal routing label added by k8sRouteToRoute. */
 export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
   return matcher[0] === NAMED_ROOT_LABEL_NAME;
+}
+
+/**
+ * Resolves a rule's named-policy routing target: the dedicated notification_settings.policy
+ * field is primary, falling back to the legacy NAMED_ROOT_LABEL_NAME label for rules that
+ * haven't been migrated to the dedicated field yet.
+ */
+export function resolveNamedPolicyName(
+  notificationSettings: { policy?: string } | undefined,
+  labels: Labels | undefined
+): string | undefined {
+  return notificationSettings?.policy ?? labels?.[NAMED_ROOT_LABEL_NAME];
+}
+
+/** Strips the internal routing label that should never be shown to, or edited by, users. */
+export function stripInternalLabels(labels: Labels): Labels {
+  const { [NAMED_ROOT_LABEL_NAME]: _, ...rest } = labels;
+  return rest;
 }
 
 export function k8sRouteToRoute(route: RoutingTree): Route {
