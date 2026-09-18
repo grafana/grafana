@@ -109,6 +109,15 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
   const variants = {
+    ['2xl']: buildVariant(fontWeightBold, 24, 34, 0),
+    xl: buildVariant(fontWeightBold, 22, 30, 0),
+    lg: buildVariant(fontWeightMedium, 20, 26, 0),
+    md: buildVariant(fontWeightMedium, 16, 22, 0),
+    base: buildVariant(fontWeightRegular, 14, 22, 0),
+    sm: buildVariant(fontWeightRegular, 12, 18, 0),
+    code: { ...buildVariant(fontWeightRegular, 14, 16, 0.15), fontFamily: fontFamilyMonospace },
+
+    // Deprecated variants
     h1: buildVariant(fontWeightRegular, 28, 32, -0.25),
     h2: buildVariant(fontWeightRegular, 24, 28, 0),
     h3: buildVariant(fontWeightRegular, 22, 24, 0),
@@ -117,7 +126,6 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
     body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
     bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
-    code: { ...buildVariant(fontWeightRegular, 14, 16, 0.15), fontFamily: fontFamilyMonospace },
   };
 
   const size = {
@@ -148,13 +156,28 @@ function round(value: number) {
 }
 
 export interface ThemeTypographyVariantTypes {
-  h1: ThemeTypographyVariant;
-  h2: ThemeTypographyVariant;
-  h3: ThemeTypographyVariant;
-  h4: ThemeTypographyVariant;
-  h5: ThemeTypographyVariant;
-  h6: ThemeTypographyVariant;
-  body: ThemeTypographyVariant;
-  bodySmall: ThemeTypographyVariant;
+  ['2xl']: ThemeTypographyVariant;
+  xl: ThemeTypographyVariant;
+  lg: ThemeTypographyVariant;
+  md: ThemeTypographyVariant;
+  base: ThemeTypographyVariant;
+  sm: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
+
+  /** @deprecated use 2xl instead */
+  h1: ThemeTypographyVariant;
+  /** @deprecated use xl instead */
+  h2: ThemeTypographyVariant;
+  /** @deprecated use lg instead */
+  h3: ThemeTypographyVariant;
+  /** @deprecated use md instead */
+  h4: ThemeTypographyVariant;
+  /** @deprecated use base instead */
+  h5: ThemeTypographyVariant;
+  /** @deprecated use sm instead */
+  h6: ThemeTypographyVariant;
+  /** @deprecated use base instead */
+  body: ThemeTypographyVariant;
+  /** @deprecated use sm instead */
+  bodySmall: ThemeTypographyVariant;
 }
