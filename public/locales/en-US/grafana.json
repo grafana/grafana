@@ -11451,7 +11451,7 @@
         "services_other": "{{value}} services",
         "setup": "Set up Application Observability",
         "setup-hint": "requires instrumentation",
-        "stats": "{{percent}}% errors · 24h",
+        "stats": "{{percent}}% errors · 1h",
         "title": "Application Observability"
       },
       "cta": {

@@ -20,8 +20,10 @@ export function appObservabilitySolution(): Solution {
   const detect = memoize(() => detectSignal(probeSpanMetrics));
   const datasource = async () => (await detect()).datasource;
 
-  const stats = datasourceFact(datasource, fetchAppObservabilityStats);
-  const requestSeries = datasourceFact(datasource, fetchAppObservabilityRequestSeries);
+  // retryOnError: a timed-out query must not cache its rejection for the whole visit — the
+  // abandoned request still warms the query cache, so a later reader's retry can succeed.
+  const stats = datasourceFact(datasource, fetchAppObservabilityStats, { retryOnError: true });
+  const requestSeries = datasourceFact(datasource, fetchAppObservabilityRequestSeries, { retryOnError: true });
 
   const signal = async () => (await detect()).status;
 
@@ -67,7 +69,7 @@ export function appObservabilitySolution(): Solution {
             defaultValue_one: '{{value}} service',
             defaultValue_other: '{{value}} services',
           }),
-        (percent) => t('home.solutions.app-observability.stats', '{{percent}}% errors · 24h', { percent })
+        (percent) => t('home.solutions.app-observability.stats', '{{percent}}% errors · 1h', { percent })
       );
     },
     refinedStats: async () => null,

@@ -123,7 +123,7 @@ describe('appObservabilitySolution stats and sparkline', () => {
   it('formats the service count with the error-ratio secondary', async () => {
     await expect(appObservabilitySolution().stats()).resolves.toEqual({
       primary: '12 services',
-      secondary: '0.4% errors · 24h',
+      secondary: '0.4% errors · 1h',
     });
     expect(mockFetchStats).toHaveBeenCalledWith(datasource);
   });
@@ -133,7 +133,7 @@ describe('appObservabilitySolution stats and sparkline', () => {
 
     await expect(appObservabilitySolution().stats()).resolves.toEqual({
       primary: '2 services',
-      secondary: '0% errors · 24h',
+      secondary: '0% errors · 1h',
     });
   });
 

@@ -1,37 +1,38 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type FieldSparkline } from '@grafana/data';
 
-import { PROBE_TIMEOUT_MS } from './probeUtils';
+import { probeResourceGet, PROBE_TIMEOUT_MS } from './probeUtils';
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, DATA_LOOKBACK_HOURS, probeFound } from './solutionDataProbes';
 
 export interface AppObservabilityStats {
   services: number | null;
-  /** Fleet error ratio over server-side spans within the stats lookback. */
+  /** Fleet error ratio over server-side spans in the last hour. */
   errorRatio: number | null;
 }
 
-// "Seen recently" lookback matching the shared data probes.
-const LOOKBACK = `${DATA_LOOKBACK_HOURS}h`;
-
 // Span metrics prove App Observability is in use; one entry per emitter naming the plugin
 // supports: Tempo metrics-generator/Beyla, OTel collector >=0.109, older collectors.
-const SPAN_METRICS_CALL_NAMES = [
+const SPAN_METRICS_CALL_NAMES: readonly string[] = [
   'traces_spanmetrics_calls_total',
   'traces_span_metrics_calls_total',
   'calls_total',
-] as const;
+];
 
 // The plugin's own service-inventory selector; reduces false positives from unrelated
 // counters sharing the bare calls_total name.
 const APP_SPAN_KINDS = 'span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"';
 
-const SPAN_METRICS_PROBE = SPAN_METRICS_CALL_NAMES.map(
-  (m) => `count(last_over_time(${m}{${APP_SPAN_KINDS}}[${LOOKBACK}]))`
-).join(' or ');
+// One matcher list covers every naming family. Only valid where __name__ survives (instant
+// selectors, the series index); rate() drops it and would collide the families.
+const ANY_SPAN_METRIC = `__name__=~"${SPAN_METRICS_CALL_NAMES.join('|')}",${APP_SPAN_KINDS}`;
 
 // The app's "server-side" definition: SERVER plus CONSUMER, so message-queue consumers count
 // as request handlers.
 const SERVER_SIDE = 'span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"';
+
+// Span metrics are the widest family on a tenant, so their rate window stays short: a 24h range
+// vector over them was the slowest query the homepage issued.
+const ERROR_RATIO_WINDOW = '1h';
 
 // Additive `or` union across the call-name families: rate() drops __name__, so without the
 // synthetic __family__ tag an identically-labeled stopped family would shadow its successor
@@ -40,18 +41,34 @@ const SERVER_SIDE = 'span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"';
 const overCallFamilies = (expr: (metric: string) => string) =>
   SPAN_METRICS_CALL_NAMES.map((m, i) => `label_replace(${expr(m)}, "__family__", "${i}", "", "")`).join(' or ');
 
-// services: jobs with recent span metrics, keyed by `job` like the app's inventory; job=~".+"
-// excludes jobless series that would otherwise read as one phantom service.
+// services: jobs currently emitting span metrics, keyed by `job` like the app's inventory. The
+// instant selector reads one fresh sample per series; job=~".+" excludes jobless series that
+// would otherwise read as one phantom service.
 // errorRatio: `or vector(0)` keeps an error-free fleet at 0% while a failed query reads null.
 const STATS_QUERIES: Record<string, string> = {
-  services: `count(count by (job) (${overCallFamilies((m) => `last_over_time(${m}{job=~".+",${APP_SPAN_KINDS}}[${LOOKBACK}])`)}))`,
-  errorRatio: `(sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE},status_code="STATUS_CODE_ERROR"}[${LOOKBACK}])`)}) or vector(0)) / sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[${LOOKBACK}])`)})`,
+  services: `count(count by (job) ({${ANY_SPAN_METRIC},job=~".+"}))`,
+  errorRatio: `(sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE},status_code="STATUS_CODE_ERROR"}[${ERROR_RATIO_WINDOW}])`)}) or vector(0)) / sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[${ERROR_RATIO_WINDOW}])`)})`,
 };
 
-// Single attempt inside the probe timeout; errors read as no data in the parallel scan.
+/**
+ * Index-only, like the metrics probe: a series selector on the label-values API proves recent span
+ * metrics without reading chunks. Checking the returned names keeps the answer right on a server
+ * that ignores `match[]`; the list is merely longer there.
+ */
 async function prometheusHasSpanMetrics(ds: DataSourceInstanceListItem, signal?: AbortSignal): Promise<boolean> {
-  const frames = await runInstantQueries({ probe: SPAN_METRICS_PROBE }, ds, { timeoutMs: PROBE_TIMEOUT_MS, signal });
-  return (readScalar(frames, 'probe') ?? 0) > 0;
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - DATA_LOOKBACK_HOURS * 3600;
+  const res = await probeResourceGet<{ data?: unknown }>(
+    ds.uid,
+    'api/v1/label/__name__/values',
+    { start, end, limit: 1, 'match[]': `{${ANY_SPAN_METRIC}}` },
+    PROBE_TIMEOUT_MS,
+    signal
+  );
+  return (
+    Array.isArray(res?.data) &&
+    res.data.some((name) => typeof name === 'string' && SPAN_METRICS_CALL_NAMES.includes(name))
+  );
 }
 
 /** Resolved Prometheus datasource with span metrics, or null when none. */
@@ -59,7 +76,7 @@ export function probeSpanMetrics(): Promise<DataSourceInstanceListItem | null> {
   return probeFound('prometheus', prometheusHasSpanMetrics, CLOUD_UTILITY_PROM_DATASOURCE_UIDS);
 }
 
-/** Instrumented service count and fleet error ratio over the stats lookback. */
+/** Instrumented service count and last-hour fleet error ratio. */
 export async function fetchAppObservabilityStats(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<AppObservabilityStats> {
