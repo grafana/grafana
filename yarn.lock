@@ -2765,7 +2765,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-compat@workspace:packages/grafana-plugin-compat"
   dependencies:
-    "@grafana/data": "workspace:*"
     "@typescript/native": "npm:typescript@^7.0.2"
     rimraf: "npm:^6.0.1"
     rollup: "npm:^4.60.1"
@@ -2773,7 +2772,9 @@ __metadata:
     rollup-plugin-node-externals: "npm:^8.0.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
   peerDependencies:
-    "@grafana/runtime": "*"
+    "@grafana/data": ">=12.0.0"
+    "@grafana/runtime": ">=12.0.0"
+    "@grafana/schema": ">=12.0.0"
   languageName: unknown
   linkType: soft
 
