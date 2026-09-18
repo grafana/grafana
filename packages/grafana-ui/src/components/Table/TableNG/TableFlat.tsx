@@ -46,6 +46,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
+import { useColumnPinning } from './useColumnPinning';
 import {
   calculateFooterHeight,
   filterFieldsByHiddenColumns,
@@ -170,10 +171,39 @@ export function TableFlat(props: TableNGProps) {
     settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
   }, []);
 
+  const columnNames = useMemo(() => {
+    const catalog = columnCatalog ?? visibleFields.map(getDisplayName);
+    return [
+      ...(columnOrder ?? []).filter((name) => catalog.includes(name)),
+      ...catalog.filter((name) => !columnOrder?.includes(name)),
+    ];
+  }, [columnCatalog, columnOrder, visibleFields]);
+  const pinningEnabled = Boolean(
+    tableRefreshEnabled && canManageColumns(visibleFields) && new Set(columnNames).size === columnNames.length
+  );
+  const pinning = useColumnPinning({
+    frameKey:
+      props.rowTransformations?.frameKey ??
+      JSON.stringify([data.refId, data.name, [...(columnCatalog ?? visibleFields.map(getDisplayName))].sort()]),
+    columns: columnNames,
+    hiddenColumns,
+    frozenColumns: _frozenColumns,
+    enabled: pinningEnabled,
+    onColumnOrderChange: setColumnOrder,
+  });
+  const { pinnedColumns, togglePin, reorder } = pinning;
+  const handleTogglePin = useCallback(
+    (name: string) => {
+      togglePin(name);
+      markColumnsSettling([name]);
+    },
+    [togglePin, markColumnsSettling]
+  );
+
   // A partial order cannot place unmentioned columns deterministically.
   const handleColumnsReorder = useCallback(
     (sourceColumnKey: string, targetColumnKey: string) => {
-      const next = [...(columnOrder ?? columnCatalog ?? visibleFields.map(getDisplayName))];
+      const next = [...columnNames];
       const sourceIndex = next.indexOf(sourceColumnKey);
       const targetIndex = next.indexOf(targetColumnKey);
 
@@ -182,10 +212,10 @@ export function TableFlat(props: TableNGProps) {
       }
 
       next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
-      setColumnOrder(next);
+      reorder(next);
       markColumnsSettling([sourceColumnKey, targetColumnKey]);
     },
-    [columnOrder, columnCatalog, markColumnsSettling, setColumnOrder, visibleFields]
+    [columnNames, markColumnsSettling, reorder]
   );
 
   const orderedVisibleFields = orderFieldsByDisplayNames(preparedFields, columnOrder);
@@ -340,7 +370,7 @@ export function TableFlat(props: TableNGProps) {
   const typographyCtx = useTypographyCtx(theme);
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
-  const frozenColumns = _frozenColumns;
+  const frozenColumns = pinning.frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -472,10 +502,9 @@ export function TableFlat(props: TableNGProps) {
       hasColumnSidebar,
       settlingColumnKeys,
       onHideColumn: handleHideColumn,
-      // Pinning needs both column order and the frozen-column panel option.
-      onTogglePin: undefined,
+      onTogglePin: pinningEnabled ? handleTogglePin : undefined,
       onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
-      pinnedColumns: undefined,
+      pinnedColumns: pinningEnabled ? pinnedColumns : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
@@ -502,6 +531,9 @@ export function TableFlat(props: TableNGProps) {
       hasColumnSidebar,
       settlingColumnKeys,
       handleHideColumn,
+      handleTogglePin,
+      pinnedColumns,
+      pinningEnabled,
       noPanelPadding,
     ]
   );
@@ -606,6 +638,8 @@ export function TableFlat(props: TableNGProps) {
         <ColumnVisibilitySidePanel
           columns={sidebarColumns}
           hiddenColumns={hiddenColumns}
+          pinnedColumns={pinnedColumns}
+          onTogglePin={pinningEnabled ? handleTogglePin : undefined}
           onToggleColumn={handleToggleColumnVisibility}
           onColumnsReorder={handleColumnsReorder}
           onClose={() => setIsColumnVisibilityPanelOpen(false)}
