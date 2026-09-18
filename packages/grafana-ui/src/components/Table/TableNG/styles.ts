@@ -94,9 +94,7 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-background-color': table.rowSelectedBackground,
         '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        blockSize: '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -208,6 +206,20 @@ export const getGridStyles = memoize(
             borderBlockEnd: 'none',
           },
         }),
+      }),
+      // Wraps the grid so the scroll shadows have something to position against. It carries the
+      // grid's own sizing, and the grid fills it, so the shadows span exactly the scroll viewport.
+      gridWrapper: css({
+        position: 'relative',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
+        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
+        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
+        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
+        // the grid's whole content height and it pushes everything below it out of the panel.
+        minBlockSize: 0,
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
@@ -438,3 +450,42 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   }
   return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
 });
+
+export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>
+  css({
+    '&::before': { top },
+    '&::after': { bottom },
+  });
+
+export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
+  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  return {
+    scrollShadows: css({
+      // The grid creates a stacking context; both pseudo-elements must paint above it.
+      '&::before, &::after': {
+        content: '""',
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        zIndex: 1,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      },
+      '&::before': {
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      },
+      '&::after': {
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+      },
+    }),
+    scrollShadowTop: css({
+      '&::before': { opacity: 1 },
+    }),
+    scrollShadowBottom: css({
+      '&::after': { opacity: 1 },
+    }),
+  };
+};

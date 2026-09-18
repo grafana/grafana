@@ -111,3 +111,8 @@ export const HEADER_MENU_SPACE = HEADER_ICON_BUTTON_SPACE;
 // The info button a column with `headerTooltip` set renders next to its label. Always in flow, and
 // in both the classic and refreshed headers.
 export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
+
+// How far the grid has to be scrollable in a direction before that edge's scroll shadow appears
+// (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
+// — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
+export const SCROLL_SHADOW_THRESHOLD = 1;

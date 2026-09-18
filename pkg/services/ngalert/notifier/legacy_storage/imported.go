@@ -41,24 +41,28 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	if err != nil {
 		return nil, err
 	}
-	original := e.rev.Config.GetReceivers()
-	merged, _, _ := merge.Receivers(original, imported, e.identifier)
+	merged, _, added := merge.Receivers(e.rev.Config.Receivers, imported, e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
-		capacity = len(e.importedConfig.Receivers)
+		capacity = len(added)
 	}
 	result := make([]*models.Receiver, 0, capacity)
-	// merged config contains all receivers from both. We only want the ones from the staged config. However, we need to rename them if necessary.
-	for _, r := range merged[len(original):] {
-		uid := NameToUid(r.Name)
-		if len(uids) > 0 && !slices.Contains(uids, uid) {
+	// added contains only the UIDs of the receivers from the staged config, renamed if necessary.
+	for _, uid := range added {
+		if len(uids) > 0 && !slices.Contains(uids, string(uid)) {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(r, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		r, ok := merged[uid]
+		if !ok {
+			continue
+		}
+		recv, err := PostableApiReceiverToReceiver(r, models.ResourceOriginImported)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
+
+		recv.Provenance = models.ProvenanceConvertedPrometheus
 		result = append(result, recv)
 	}
 	return result, nil
@@ -103,7 +107,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	m := make(map[string]int)
 	receiverUseCounts([]*v1.Route{e.importedConfig.ToGrafanaRoute()}, m)
-	_, renames, _ := merge.Receivers(e.rev.Config.GetReceivers(), e.importedConfig.ReceiverNameStubs(), e.identifier)
+	_, renames, _ := merge.Receivers(e.rev.Config.Receivers, e.importedConfig.ReceiverNameStubs(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
