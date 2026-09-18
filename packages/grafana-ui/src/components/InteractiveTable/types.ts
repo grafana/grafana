@@ -1,28 +1,26 @@
-import { type ReactNode } from 'react';
 import { type Cell, type CellContext, type HeaderContext, type Row } from '@tanstack/react-table';
+import { type ReactNode } from 'react';
 
-export type CompatRow<TableData extends object> = Row<TableData> & {
-  values: Record<string, unknown>;
-};
-
-export type CellProps<TableData extends object, Value = unknown> = Omit<
-  CellContext<TableData, Value>,
-  'cell' | 'row'
-> & {
+/**
+ * Props passed to a custom cell renderer. `value` and `cell.value` are kept from the react-table v7 API,
+ * TanStack Table only provides `getValue()`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` keeps cell renderers typed for a specific value assignable, as in react-table v7
+export type CellProps<TableData extends object, Value = any> = Omit<CellContext<TableData, Value>, 'cell'> & {
   cell: Cell<TableData, Value> & { value: Value };
-  row: CompatRow<TableData>;
   value: Value;
   __rowID?: string;
 };
 
 export type HeaderProps<TableData extends object> = HeaderContext<TableData, unknown>;
+
 export type SortByFn<TableData extends object> = (
-  rowA: CompatRow<TableData>,
-  rowB: CompatRow<TableData>,
+  rowA: Row<TableData>,
+  rowB: Row<TableData>,
   columnId: string
 ) => number;
 
-export type InteractiveTableSortingFn = 'alphanumeric' | 'basic' | 'datetime' | 'number' | 'string';
+export type SortType = 'alphanumeric' | 'basic' | 'datetime' | 'number' | 'string';
 
 export interface Column<TableData extends object> {
   /**
@@ -40,7 +38,7 @@ export interface Column<TableData extends object> {
   /**
    * Column sort type. If `undefined` the column will not be sortable.
    * */
-  sortType?: InteractiveTableSortingFn | SortByFn<TableData>;
+  sortType?: SortType | SortByFn<TableData>;
   /**
    * If `true` prevents the column from growing more than its content. Ignored when `width` is set.
    */

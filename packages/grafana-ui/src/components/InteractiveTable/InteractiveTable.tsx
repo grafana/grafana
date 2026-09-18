@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -12,6 +11,7 @@ import {
   type TableOptions,
   useReactTable,
 } from '@tanstack/react-table';
+import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
 import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -23,7 +23,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent } from '../Tooltip/types';
 
 import { type Column } from './types';
-import { EXPANDER_CELL_ID, getColumns, type InternalColumn } from './utils';
+import { EXPANDER_CELL_ID, getColumns } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
@@ -204,6 +204,11 @@ export function InteractiveTable<TableData extends object>({
   const tableColumns = useMemo(() => {
     return getColumns<TableData>(columns, showExpandAll);
   }, [columns, showExpandAll]);
+  // TanStack Table doesn't keep custom properties on the column definitions it exposes while rendering
+  const widthClasses = useMemo(
+    () => Object.fromEntries(tableColumns.map((column) => [column.id, column.widthClass])),
+    [tableColumns]
+  );
   const id = useId();
   const getRowHTMLID = useCallback(
     (row: Row<TableData>) => {
@@ -223,9 +228,13 @@ export function InteractiveTable<TableData extends object>({
     getExpandedRowModel: getExpandedRowModel(),
     getPaginationRowModel: paginationEnabled ? getPaginationRowModel() : undefined,
     autoResetExpanded: false,
-    autoResetPageIndex: !!autoResetPage,
-    autoResetAll: false,
+    // Resetting the page index is handled in an effect below, TanStack Table resets it outside of the React lifecycle
+    autoResetPageIndex: false,
+    // Rows are expandable through renderExpandedRow, they never have sub rows
+    getRowCanExpand: () => Boolean(renderExpandedRow),
     enableMultiSort: false,
+    // TanStack Table sorts number columns descending first, react-table always started ascending
+    sortDescFirst: false,
     manualSorting: Boolean(fetchData),
     enableSortingRemoval: !disableSortRemove,
     getRowId,
@@ -259,6 +268,16 @@ export function InteractiveTable<TableData extends object>({
     }
   }, [paginationEnabled, pageSize, tableInstance]);
 
+  const previousData = useRef(data);
+  useEffect(() => {
+    const dataChanged = previousData.current !== data;
+    previousData.current = data;
+
+    if (autoResetPage && dataChanged) {
+      tableInstance.setPageIndex(0);
+    }
+  }, [autoResetPage, data, tableInstance]);
+
   return (
     <div className={styles.container}>
       <table className={cx(styles.table, className)}>
@@ -266,15 +285,14 @@ export function InteractiveTable<TableData extends object>({
           {tableInstance.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                const columnDef = header.column.columnDef as InternalColumn<TableData>;
                 const headerTooltip = headerTooltips?.[header.column.id];
 
                 return (
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    className={cx(styles.header, columnDef.widthClass, {
-                      [styles.disableGrow]: columnDef.size === 0,
+                    className={cx(styles.header, widthClasses[header.column.id], {
+                      [styles.disableGrow]: header.column.columnDef.size === 0,
                       [styles.sortableHeader]: header.column.getCanSort(),
                     })}
                     {...(header.column.getIsSorted() && {
@@ -298,9 +316,8 @@ export function InteractiveTable<TableData extends object>({
               <Fragment key={row.id}>
                 <tr className={cx(styles.row, isExpanded && styles.expandedRow)}>
                   {row.getVisibleCells().map((cell) => {
-                    const columnDef = cell.column.columnDef as InternalColumn<TableData>;
                     return (
-                      <td key={cell.id} className={cx(styles.cell, columnDef.widthClass)}>
+                      <td key={cell.id} className={cx(styles.cell, widthClasses[cell.column.id])}>
                         {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), __rowID: rowId })}
                       </td>
                     );
