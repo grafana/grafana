@@ -234,11 +234,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         const sceneRoot = vizPanel.getRoot();
         if (sceneRoot instanceof DashboardScene) {
           if (scene.state.editPanel) {
-            locationService.push(
-              locationUtil.getUrlForPartial(locationService.getLocation(), {
-                editPanel: undefined,
-              })
-            );
+            locationService.partial({ editPanel: undefined });
           } else {
             const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
             locationService.push(url);
