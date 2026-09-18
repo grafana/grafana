@@ -841,6 +841,10 @@ const renderPlanPayloadSchema = z.object({
 
 const endPlanningPayloadSchema = z.object({
   planId: z.string().describe('The plan being previewed. END_PLANNING is refused if this does not match.'),
+  restoreUserLocation: z
+    .boolean()
+    .optional()
+    .describe('Return to the page that was open before previewing; omit when building'),
 });
 
 /**
@@ -893,7 +897,7 @@ export const payloads = {
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
   renderPlan: renderPlanPayloadSchema.describe(
-    'Preview a dashboard plan: renders query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
   ),
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
 };
