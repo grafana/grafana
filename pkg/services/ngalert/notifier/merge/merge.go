@@ -158,7 +158,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		}
 	}
 
-	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
+	managedRoutes := make(map[string]*v1.Route, len(cfg.ManagedRoutes)+1)
 	{
 		maps.Copy(managedRoutes, cfg.ManagedRoutes)
 		extraRoute := mcfg.ToGrafanaRoute()
