@@ -16,6 +16,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
@@ -408,6 +409,36 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
       // UrlSyncManager subscribes to this and removes the pane url state from url
       this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+    }
+  }
+
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        openPane: new DashboardCodePane({}),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      // A fresh pane and selection discard memoized editable elements from the old tree.
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      // Pane history and disconnected editors can still reference the discarded tree.
+      this.setState({ previousState: undefined });
+      this.closePane();
     }
   }
 

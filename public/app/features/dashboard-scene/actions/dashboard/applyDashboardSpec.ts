@@ -56,9 +56,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.state.body.editModeChanged?.(true);
 
-      // Sidebar keeps selected element memoized. In case assistant calls applySpec while an element
-      // is selected it may lead to interacting with the old copy of the element.
-      scene.state.sidebar.closePane();
+      scene.state.sidebar.refreshAfterRebuild();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
@@ -72,7 +70,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
     },
     undo: () => {
       scene.setState(previousState);
-      scene.state.sidebar.closePane();
+      scene.state.sidebar.refreshAfterRebuild();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },
   });
