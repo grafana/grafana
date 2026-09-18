@@ -1,6 +1,7 @@
 import { type DataFrame, FieldType } from '../../types/dataFrame';
 
 import { filterByValueTransformer, type FilterByValueConfig } from './filterByValue';
+import { sortByTransformer, type SortByField } from './sortBy';
 
 export { getFrameIdentity as tableFrameKey, getRowIdentity as tableParentKey } from '../frameIdentity';
 
@@ -8,9 +9,10 @@ export { getFrameIdentity as tableFrameKey, getRowIdentity as tableParentKey } f
 export function transformTableFrame(
   frame: DataFrame,
   filters: readonly FilterByValueConfig[],
-  parentIndex?: number
+  parentIndex?: number,
+  sort: SortByField[] = []
 ): DataFrame {
-  return filters.reduce((output, config) => {
+  const filtered = filters.reduce((output, config) => {
     if (config.disabled || config.options.target?.parentIndex !== parentIndex) {
       return output;
     }
@@ -19,13 +21,15 @@ export function transformTableFrame(
       { interpolate: (s) => s }
     )([output])[0];
   }, frame);
+  return sortByTransformer.transformer({ sort, table: true }, { interpolate: (s) => s })([filtered])[0];
 }
 
 /** Project the original row indices through the same filtering implementation used by the host. */
 export function tableViewIndices(
   frame: DataFrame,
   filters: readonly FilterByValueConfig[],
-  parentIndex?: number
+  parentIndex?: number,
+  sort: SortByField[] = []
 ): number[] {
   let name = '__table_view_index';
   while (frame.fields.some((field) => field.name === name)) {
@@ -37,6 +41,6 @@ export function tableViewIndices(
     config: {},
     values: Array.from({ length: frame.length }, (_, i) => i),
   };
-  const result = transformTableFrame({ ...frame, fields: [...frame.fields, indexField] }, filters, parentIndex);
+  const result = transformTableFrame({ ...frame, fields: [...frame.fields, indexField] }, filters, parentIndex, sort);
   return result.fields[result.fields.length - 1].values;
 }

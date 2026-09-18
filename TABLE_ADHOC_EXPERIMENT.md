@@ -75,3 +75,11 @@ updates coalesce, and unmount/cleanup cancels queued work. Browser width/height 
 with tooltips and a pinned column no longer show the overlay; the pinned column
 retains its organized position and frozen state. These patches should move upstream
 into the corresponding packages before a production rollout.
+
+## Sorting
+
+Viewer sorting uses a separate `sortBy` config in the same stage, after filters
+and before organization. Saved initial sorting seeds the stage when a filter is
+first applied. Table-specific comparisons and multi-key sorting live in the shared
+transformer; standalone tables use the same logic. Sorting remains the final commit
+in this experimental stack.

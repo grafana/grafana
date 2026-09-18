@@ -12,7 +12,13 @@ import {
   type DataTransformerConfig,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { FilterByValueType, FilterByValueMatch, tableFrameKey, filterByValueTransformer } from '@grafana/data/internal';
+import {
+  FilterByValueType,
+  FilterByValueMatch,
+  tableFrameKey,
+  filterByValueTransformer,
+  sortByTransformer,
+} from '@grafana/data/internal';
 import { mockClientSize } from '@grafana/test-utils';
 
 import { type AdHocTransformationsApi } from '../../PanelChrome/PanelContext';
@@ -21,17 +27,17 @@ import { TableNG } from './TableNG';
 import { transformTableFilters, tableFilterKey } from './TableViewContext';
 import { compileFrameToRecords } from './utils';
 
-standardTransformersRegistry.setInit(() => [
-  {
-    id: filterByValueTransformer.id,
-    name: filterByValueTransformer.name,
-    description: filterByValueTransformer.description,
-    transformation: () => Promise.resolve(filterByValueTransformer),
+standardTransformersRegistry.setInit(() =>
+  [filterByValueTransformer, sortByTransformer].map((transformer) => ({
+    id: transformer.id,
+    name: transformer.name,
+    description: transformer.description,
+    transformation: () => Promise.resolve(transformer),
     editor: () => null,
     imageDark: '',
     imageLight: '',
-  },
-]);
+  }))
+);
 
 beforeAll(() => mockClientSize({ width: 800, height: 600 }));
 
@@ -59,7 +65,7 @@ function displayedNames() {
     .map((row) => within(row).getAllByRole('gridcell')[0].textContent);
 }
 
-it('uses transformations for filtering and preserves source indices with legacy sorting on refresh', async () => {
+it('uses transformations for local filtering and sorting and preserves source indices on refresh', async () => {
   const user = userEvent.setup();
   const onDisplayedRowIndicesChange = jest.fn();
   const props = { width: 800, height: 600, rowTransformationsEnabled: true, onDisplayedRowIndicesChange };
@@ -164,54 +170,89 @@ it('keeps standalone tables scoped to their supplied data even when it came from
   expect(displayedNames()).toEqual(['gamma', 'outlier']);
 });
 
-it('restores applied controls and rows using only serialized filter transformations', async () => {
-  const source = makeFrame();
+it.each([false, true])(
+  'restores applied controls and rows using only serialized transformations (saved sort=%s)',
+  async (savedSort) => {
+    const source = makeFrame();
+    let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
+    const listeners = new Set<() => void>();
+    const api: AdHocTransformationsApi = {
+      get: () => configs,
+      set: (next) => {
+        configs = next;
+        listeners.forEach((listener) => listener());
+      },
+      subscribe: (listener) => {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+      getSourceSeries: () => [source],
+    };
+    const props = {
+      data: source,
+      width: 800,
+      height: 600,
+      rowTransformationsEnabled: true,
+      sortBy: savedSort ? [{ displayName: 'Value', desc: false }] : undefined,
+      rowTransformations: { api, frameKey: tableFrameKey([source], 0) },
+    };
+    const { unmount } = render(<TableNG {...props} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Filter Value' }));
+    await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '15');
+    await user.type(screen.getByRole('textbox', { name: 'Maximum' }), '35');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(configs.map((config) => config.id)).toEqual(
+      savedSort ? ['filterByValue', 'sortBy', 'organize'] : ['filterByValue', 'organize']
+    );
+    expect(configs[0].options.filters).toEqual([
+      {
+        fieldName: 'Value',
+        field: { name: 'Value' },
+        config: { id: 'numericRange', options: { min: 15, max: 35, includeMissing: false } },
+      },
+    ]);
+    const serialized = JSON.stringify(configs);
+    unmount();
+    configs = JSON.parse(serialized);
+    const { unmount: unmountRestored } = render(<TableNG {...props} />);
+    expect(displayedNames()).toEqual(savedSort ? ['beta', 'gamma'] : ['gamma', 'beta']);
+    await user.click(screen.getByRole('button', { name: 'Filter Value' }));
+    expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveValue('15');
+    expect(screen.getByRole('textbox', { name: 'Maximum' })).toHaveValue('35');
+    unmountRestored();
+    const [output] = await lastValueFrom(transformDataFrame(JSON.parse(serialized), [source]));
+    expect(output.fields[0].values).toEqual(savedSort ? ['beta', 'gamma'] : ['gamma', 'beta']);
+  }
+);
+it('writes dashboard sort into the ad-hoc stage while preserving column transformations', async () => {
+  const data = makeFrame();
+  const frameKey = tableFrameKey([data], 0);
   let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
   const listeners = new Set<() => void>();
   const api: AdHocTransformationsApi = {
     get: () => configs,
-    set: (next) => {
+    set: jest.fn((next: readonly DataTransformerConfig[]) => {
       configs = next;
       listeners.forEach((listener) => listener());
-    },
+    }),
     subscribe: (listener) => {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
       };
     },
-    getSourceSeries: () => [source],
+    getSourceSeries: () => [data],
   };
-  const props = {
-    data: source,
-    width: 800,
-    height: 600,
-    rowTransformationsEnabled: true,
-    rowTransformations: { api, frameKey: tableFrameKey([source], 0) },
-  };
-  const { unmount } = render(<TableNG {...props} />);
-  const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'Filter Value' }));
-  await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '15');
-  await user.type(screen.getByRole('textbox', { name: 'Maximum' }), '35');
-  await user.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(configs.map((config) => config.id)).toEqual(['filterByValue', 'organize']);
-  expect(configs[0].options.filters).toEqual([
-    {
-      fieldName: 'Value',
-      field: { name: 'Value' },
-      config: { id: 'numericRange', options: { min: 15, max: 35, includeMissing: false } },
-    },
-  ]);
-  const serialized = JSON.stringify(configs);
-  unmount();
-  configs = JSON.parse(serialized);
-  const { unmount: unmountRestored } = render(<TableNG {...props} />);
-  expect(displayedNames()).toEqual(['gamma', 'beta']);
-  await user.click(screen.getByRole('button', { name: 'Filter Value' }));
-  expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveValue('15');
-  expect(screen.getByRole('textbox', { name: 'Maximum' })).toHaveValue('35');
-  unmountRestored();
-  const [output] = await lastValueFrom(transformDataFrame(JSON.parse(serialized), [source]));
-  expect(output.fields[0].values).toEqual(['gamma', 'beta']);
+  render(
+    <TableNG data={data} width={800} height={600} rowTransformationsEnabled rowTransformations={{ api, frameKey }} />
+  );
+  await userEvent.setup().click(screen.getByRole('columnheader', { name: /Name/ }));
+  const view = api.get()[0];
+  expect(view.id).toBe('sortBy');
+  expect(view.options.sort).toEqual([{ field: 'Name', displayName: 'Name', desc: false }]);
+  expect(api.get()[1]).toEqual({ id: 'organize', options: { excludeByName: { hidden: true } } });
+  expect(displayedNames()).toEqual(['alpha', 'beta', 'gamma', 'outlier']);
 });

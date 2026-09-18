@@ -1,5 +1,15 @@
 import { isEqual } from 'lodash';
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import {
   type DataFrame,
@@ -16,9 +26,11 @@ import {
   FilterByValueType,
   FilterByValueMatch,
   type FilterByValueConfig,
+  type SortByTransformerOptions,
 } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { type SortColumn } from '@grafana/react-data-grid';
 
 import { Button } from '../../Button/Button';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
@@ -33,6 +45,8 @@ export interface TableRowTransformations {
 }
 interface ViewContext {
   filters: readonly FilterByValueConfig[];
+  sortColumns: SortColumn[];
+  setSortColumns: Dispatch<SetStateAction<SortColumn[]>>;
   getFilters: (field: Field, parentIndex?: number) => readonly FilterByValueConfig[];
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
@@ -134,6 +148,23 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
     [api]
   );
   const filters = useMemo(() => activeFilters(configs, frameKey, source), [configs, frameKey, source]);
+  const initialSort = useRef(props.sortBy);
+  const initial = useMemo<SortByTransformerOptions>(
+    () => ({
+      sort: (initialSort.current ?? []).map((s) => ({ field: s.displayName, desc: s.desc })),
+      table: true,
+      target: { frameKey },
+    }),
+    [frameKey]
+  );
+  const readSort = useCallback(
+    (current: readonly DataTransformerConfig[]): SortByTransformerOptions =>
+      current.find(
+        (config) =>
+          config.id === DataTransformerID.sortBy && config.options.target?.frameKey === frameKey && !config.disabled
+      )?.options ?? initial,
+    [frameKey, initial]
+  );
   const getFilters = useCallback(
     (field: Field, parentIndex?: number) => filters.filter((config) => matchesTableFilter(config, field, parentIndex)),
     [filters]
@@ -148,6 +179,17 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
         if (selected.length > 1 || selected.some((config) => !editableTableFilter(config))) {
           return current;
         }
+        const stage =
+          initial.sort.length &&
+          !current.some(
+            (config) => config.id === DataTransformerID.sortBy && config.options.target?.frameKey === frameKey
+          )
+            ? [
+                ...current.filter((config) => config.id === DataTransformerID.filterByValue),
+                { id: DataTransformerID.sortBy, options: initial },
+                ...current.filter((config) => config.id !== DataTransformerID.filterByValue),
+              ]
+            : current;
         const previous = selected[0];
         const next: FilterByValueConfig = previous
           ? {
@@ -175,19 +217,19 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
               },
             };
         if (previous) {
-          return current.map((config) => (config === previous ? next : config));
+          return stage.map((config) => (config === previous ? next : config));
         }
         // Child predicates must run before parent rows are removed; all filters precede sorting and organization.
-        const insertion = current.findIndex(
+        const insertion = stage.findIndex(
           (config) =>
             config.id !== DataTransformerID.filterByValue ||
             (parentIndex != null && config.options.target?.parentIndex == null)
         );
-        const index = insertion < 0 ? current.length : insertion;
-        return [...current.slice(0, index), next, ...current.slice(index)];
+        const index = insertion < 0 ? stage.length : insertion;
+        return [...stage.slice(0, index), next, ...stage.slice(index)];
       });
     },
-    [update, frameKey, source]
+    [update, frameKey, source, initial]
   );
   const clearFilter = useCallback(
     (field: Field, parentIndex?: number) =>
@@ -203,9 +245,60 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
     () => update((current) => current.filter((config) => !isTableFilter(config, frameKey) || config.disabled)),
     [update, frameKey]
   );
+  const sortColumns = useMemo<SortColumn[]>(
+    () =>
+      readSort(configs).sort.map((s) => ({
+        columnKey: s.displayName ?? s.field,
+        direction: s.desc ? 'DESC' : 'ASC',
+      })),
+    [configs, readSort]
+  );
+  const setSortColumns = useCallback<Dispatch<SetStateAction<SortColumn[]>>>(
+    (action) =>
+      update((current) => {
+        const previous: SortColumn[] = readSort(current).sort.map((s) => ({
+          columnKey: s.displayName ?? s.field,
+          direction: s.desc ? 'DESC' : 'ASC',
+        }));
+        const next = typeof action === 'function' ? action(previous) : action;
+        const rest = current.filter(
+          (config) => !(config.id === DataTransformerID.sortBy && config.options.target?.frameKey === frameKey)
+        );
+        const sorted: DataTransformerConfig<SortByTransformerOptions> = {
+          id: DataTransformerID.sortBy,
+          options: {
+            table: true,
+            target: { frameKey },
+            sort: next.map((s) => ({
+              field:
+                props.data.fields.find((f) => (f.state?.displayName ?? f.name) === s.columnKey)?.name ?? s.columnKey,
+              displayName: s.columnKey,
+              fieldLabels: props.data.fields.find((f) => (f.state?.displayName ?? f.name) === s.columnKey)?.labels,
+              desc: s.direction === 'DESC',
+            })),
+          },
+        };
+        // Filtering must finish before sorting can change nested parent indices.
+        return [
+          ...rest.filter((config) => config.id === DataTransformerID.filterByValue),
+          sorted,
+          ...rest.filter((config) => config.id !== DataTransformerID.filterByValue),
+        ];
+      }),
+    [update, readSort, frameKey, props.data.fields]
+  );
   const value = useMemo(
-    () => ({ filters, getFilters, applyFilter, clearFilter, clearFilters, timeZone: props.timeZone }),
-    [filters, getFilters, applyFilter, clearFilter, clearFilters, props.timeZone]
+    () => ({
+      filters,
+      getFilters,
+      applyFilter,
+      clearFilter,
+      clearFilters,
+      sortColumns,
+      setSortColumns,
+      timeZone: props.timeZone,
+    }),
+    [filters, getFilters, applyFilter, clearFilter, clearFilters, sortColumns, setSortColumns, props.timeZone]
   );
   return (
     <TableViewContext.Provider value={value}>
@@ -230,7 +323,14 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
               error ? (
                 <div role="alert">
                   {t('grafana-ui.table.view.error', 'Unable to apply this table view.')}
-                  <Button onClick={clearFilters}>{t('grafana-ui.table.view.reset', 'Reset view')}</Button>
+                  <Button
+                    onClick={() => {
+                      clearFilters();
+                      setSortColumns([]);
+                    }}
+                  >
+                    {t('grafana-ui.table.view.reset', 'Reset view')}
+                  </Button>
                 </div>
               ) : (
                 children
@@ -247,9 +347,10 @@ export function transformTableRows(
   rows: TableRow[],
   fields: Field[],
   filters: readonly FilterByValueConfig[],
+  sort: SortColumn[] = [],
   parentIndex?: number
 ): TableRow[] {
-  if (!filters.length) {
+  if (!filters.length && !sort.length) {
     return rows;
   }
   const parents = rows.filter((row) => row.__depth === 0);
@@ -262,7 +363,12 @@ export function transformTableRows(
     })),
   };
   cacheFieldDisplayNames([frame]);
-  const indices = tableViewIndices(frame, filters, parentIndex);
+  const indices = tableViewIndices(
+    frame,
+    filters,
+    parentIndex,
+    sort.map((s) => ({ field: s.columnKey, desc: s.direction === 'DESC' }))
+  );
   const children = new Map(rows.filter((row) => row.__depth !== 0).map((row) => [row.__index, row]));
   return indices.flatMap((index) => {
     const row = parents[index];
@@ -288,6 +394,7 @@ export function transformTableFilters(
               rows,
               fields,
               filters.filter((config) => !selected.includes(config)),
+              [],
               parentIndex
             ),
           ] as const,
@@ -296,6 +403,6 @@ export function transformTableFilters(
   });
   const crossFilterOrder = entries.map(([key]) => key);
   const crossFilterRows = Object.fromEntries(entries);
-  const filteredRows = transformTableRows(rows, fields, filters, parentIndex);
+  const filteredRows = transformTableRows(rows, fields, filters, [], parentIndex);
   return { filteredRows, crossFilterOrder, crossFilterRows, crossFilterTailRows: filteredRows };
 }

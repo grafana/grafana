@@ -13,9 +13,10 @@ import {
   type FilterByValueConfig,
 } from './filterByValue';
 import { DataTransformerID } from './ids';
+import { sortByTransformer } from './sortBy';
 import { tableFrameKey, tableParentKey, tableViewIndices, transformTableFrame } from './tableView';
 
-mockTransformationsRegistry([filterByValueTransformer]);
+mockTransformationsRegistry([filterByValueTransformer, sortByTransformer]);
 
 function frame() {
   return toDataFrame({
@@ -43,6 +44,9 @@ function config(
     },
   };
 }
+const range = (options: { min?: number; max?: number; includeMissing: boolean }, fieldName = 'Value') =>
+  config({ fieldName, config: { id: 'numericRange', options } });
+
 it('matches mapped display values with a raw field identity despite display name overrides', () => {
   expect(
     tableViewIndices(frame(), [
@@ -166,4 +170,85 @@ it('preserves timezone formatting in serialized display membership', async () =>
   });
   const [output] = await lastValueFrom(transformDataFrame(JSON.parse(JSON.stringify([filter])), [data]));
   expect(output.fields[0].values).toEqual([Date.UTC(2026, 8, 18, 12)]);
+});
+
+it('filters numeric bounds and applies all sort keys with original row indices', () => {
+  expect(
+    tableViewIndices(frame(), [range({ min: 2, max: 10, includeMissing: false })], undefined, [
+      { field: 'Name' },
+      { field: 'Value', desc: true },
+    ])
+  ).toEqual([2, 1, 0]);
+});
+
+it('keeps nanoseconds aligned after filtering and sorting', () => {
+  const output = transformTableFrame(frame(), [range({ min: 3, includeMissing: false })], undefined, [
+    { field: 'Time' },
+  ]);
+  expect(output.fields[1].values).toEqual([3, 10]);
+  expect(output.fields[2].nanos).toEqual([2, 3]);
+});
+
+it('keeps existing sort transformation single-key semantics unless explicitly opted in', async () => {
+  const [output] = await lastValueFrom(
+    transformDataFrame(
+      [{ id: 'sortBy', options: { sort: [{ field: 'Name' }, { field: 'Value', desc: true }] } }],
+      [frame()]
+    )
+  );
+  expect(output.fields[1].values.slice(0, 3)).toEqual([10, 2, 3]);
+});
+
+it('sorts only the targeted frame after its filters have run', async () => {
+  const frames = [frame(), frame()];
+  const target = { frameKey: tableFrameKey(frames, 1) };
+  const filter = range({ min: 3, includeMissing: false });
+  filter.options.target = target;
+  const output = await lastValueFrom(
+    transformDataFrame(
+      JSON.parse(
+        JSON.stringify([filter, { id: 'sortBy', options: { table: true, target, sort: [{ field: 'Value' }] } }])
+      ),
+      frames
+    )
+  );
+  expect(output[0].fields[1].values).toEqual([10, 2, 3, -1, null]);
+  expect(output[1].fields[1].values).toEqual([3, 10]);
+});
+
+it('applies child filters before parent filtering and sorts surviving children separately', async () => {
+  const parent = toDataFrame({
+    fields: [
+      { name: 'Parent', type: FieldType.string, values: ['one', 'two'] },
+      { name: 'Children', type: FieldType.nestedFrames, values: [[frame()], [frame()]] },
+    ],
+  });
+  const frameKey = tableFrameKey([parent], 0);
+  const child = range({ min: 3, includeMissing: false });
+  child.options.target = { frameKey, parentIndex: 1, parentKey: tableParentKey(parent, 1) };
+  const parents = config({ fieldName: 'Parent', config: { id: 'inSet', options: { values: ['two'] } } }, { frameKey });
+  const [output] = await lastValueFrom(
+    transformDataFrame(
+      [child, parents, { id: 'sortBy', options: { table: true, target: { frameKey }, sort: [{ field: 'Value' }] } }],
+      [parent]
+    )
+  );
+  expect(output.fields[0].values).toEqual(['two']);
+  expect(output.fields[1].values[0][0].fields[1].values).toEqual([3, 10]);
+});
+
+it('sorts labelled fields by raw identity after formatted filtering', () => {
+  const data = toDataFrame({
+    fields: [
+      { name: 'Value', type: FieldType.number, labels: { region: 'east' }, values: [1, 2, 3] },
+      { name: 'Value', type: FieldType.number, labels: { region: 'west' }, values: [30, 10, 20] },
+    ],
+  });
+  const filter = range({ min: 15, includeMissing: false }, 'West latency');
+  filter.options.filters[0].field = { name: 'Value', labels: { region: 'west' } };
+  expect(
+    tableViewIndices(data, [filter], undefined, [
+      { field: 'Value', displayName: 'West latency', fieldLabels: { region: 'west' } },
+    ])
+  ).toEqual([2, 0]);
 });
