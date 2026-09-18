@@ -31,13 +31,13 @@ export function SolutionStatsRow({
 }: SolutionStatsRowProps) {
   const styles = useStyles2(getStyles);
   // useAsync retains the previous value while re-resolving (the fact fns change identity when a
-  // solution rebuilds, e.g. after a Kubernetes filter save): pending facts render skeletons, never
-  // numbers from the old scope. Refinement is optional, so only the base stats gate the skeleton;
-  // a pending refinement yields to the base instead of showing its stale value.
+  // solution rebuilds, e.g. after a Kubernetes filter save); a pending fact reads as null so the
+  // old scope's numbers never render. Refinement is optional: pending, it yields to the base.
   const { value: base = null, loading: statsPending } = useAsync(stats, [stats]);
   const { value: refined = null, loading: refinedPending } = useAsync(refinedStats, [refinedStats]);
-  const resolvedStats = (refinedPending ? null : refined) ?? base;
-  const { value: trend = null, loading: sparklinePending } = useAsync(sparkline, [sparkline]);
+  const resolvedStats = statsPending ? null : ((refinedPending ? null : refined) ?? base);
+  const { value: retainedTrend = null, loading: sparklinePending } = useAsync(sparkline, [sparkline]);
+  const trend = sparklinePending ? null : retainedTrend;
 
   const showStats = statsPending || resolvedStats !== null;
   const showSparkline = sparklinePending || trend !== null;
@@ -49,7 +49,7 @@ export function SolutionStatsRow({
     <Stack direction="row" gap={gap} alignItems="center">
       {showStats && (
         <div className={styles.stats}>
-          {statsPending || resolvedStats === null ? (
+          {resolvedStats === null ? (
             <Stack direction="column" gap={0} data-testid={statsTestId}>
               <Skeleton width={96} height={compact ? 22 : 28} />
               <Skeleton width={72} />
@@ -70,11 +70,8 @@ export function SolutionStatsRow({
       )}
 
       {showSparkline && (
-        <div
-          className={styles.sparkline}
-          data-testid={sparklinePending || trend === null ? sparklineTestId : undefined}
-        >
-          {sparklinePending || trend === null ? <Skeleton height={56} /> : <SolutionSparkline sparkline={trend} />}
+        <div className={styles.sparkline} data-testid={trend === null ? sparklineTestId : undefined}>
+          {trend === null ? <Skeleton height={56} /> : <SolutionSparkline sparkline={trend} />}
         </div>
       )}
     </Stack>

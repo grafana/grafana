@@ -1,4 +1,6 @@
-import { UserStorage } from '@grafana/runtime/internal';
+import { useCallback, useMemo } from 'react';
+
+import { useStoredString } from 'app/core/hooks/useStored';
 
 export interface KubernetesHomeFilters {
   /** Exact cluster label value; undefined = all clusters. */
@@ -9,15 +11,7 @@ export interface KubernetesHomeFilters {
   nodes?: string[];
 }
 
-const storage = new UserStorage('grafana-home');
-const KEY = 'kubernetes-filters';
-
-// One shared read for every consumer (fetchers, badge, caption): storage is consulted once, then
-// only saves replace the cached value — which also sidesteps UserStorage's stale-cache edge after
-// a failed PATCH.
-let current: Promise<KubernetesHomeFilters> | undefined;
-let version = 0;
-const listeners = new Set<() => void>();
+export const KUBERNETES_FILTERS_STORAGE_KEY = 'grafana.home.kubernetes.filters';
 
 // Shared list contract for namespaces and nodes: strings only, trimmed, empties dropped,
 // deduped preserving first-seen order.
@@ -61,42 +55,26 @@ export function hasKubernetesFilters(filters: KubernetesHomeFilters): boolean {
   return Boolean(filters.cluster || filters.namespaces?.length || filters.nodes?.length);
 }
 
-async function load(): Promise<KubernetesHomeFilters> {
+// Missing or corrupt storage reads as no filters; the next save overwrites it.
+function parseKubernetesFilters(raw: string): KubernetesHomeFilters {
   try {
-    const stored = await storage.getItem(KEY);
-    return stored ? normalizeKubernetesFilters(JSON.parse(stored)) : {};
+    return normalizeKubernetesFilters(JSON.parse(raw));
   } catch {
-    // Unreadable or corrupt storage reads as no filters; a later save overwrites it.
     return {};
   }
 }
 
-export function getKubernetesFilters(): Promise<KubernetesHomeFilters> {
-  return (current ??= load());
-}
-
-/** Rejects when persisting fails; readers then keep the last persisted value. */
-export async function saveKubernetesFilters(filters: KubernetesHomeFilters): Promise<void> {
-  const normalized = normalizeKubernetesFilters(filters);
-  await storage.setItem(KEY, JSON.stringify(normalized));
-  current = Promise.resolve(normalized);
-  version++;
-  listeners.forEach((listener) => listener());
-}
-
-export function subscribeKubernetesFilters(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-/** Bumps on every successful save; `useSyncExternalStore` snapshot. */
-export function getKubernetesFiltersVersion(): number {
-  return version;
-}
-
-// Reset the module state (test seam).
-export function resetKubernetesFilters(): void {
-  current = undefined;
-  version = 0;
-  listeners.clear();
+/**
+ * The persisted filters and their setter. localStorage-backed like the homepage team filters and
+ * the Kubernetes Monitoring app's own datasource choice; every hook instance observes the same key.
+ * The filters object changes identity only when the stored value does, so it can key memoization.
+ */
+export function useKubernetesFilters(): [KubernetesHomeFilters, (filters: KubernetesHomeFilters) => void] {
+  const [raw, setRaw] = useStoredString(KUBERNETES_FILTERS_STORAGE_KEY, '');
+  const filters = useMemo(() => parseKubernetesFilters(raw), [raw]);
+  const save = useCallback(
+    (next: KubernetesHomeFilters) => setRaw(JSON.stringify(normalizeKubernetesFilters(next))),
+    [setRaw]
+  );
+  return [filters, save];
 }

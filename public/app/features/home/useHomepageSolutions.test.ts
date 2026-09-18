@@ -1,8 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, store } from '@grafana/data';
 
-import { resetKubernetesFilters, saveKubernetesFilters } from './solutions/kubernetesFilters';
+import { KUBERNETES_FILTERS_STORAGE_KEY } from './solutions/kubernetesFilters';
 import { kubernetesSignal, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -19,7 +19,7 @@ jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
 
-// kubernetesSolution has the loosest factory signature (an optional filters loader); the others fit it.
+// kubernetesSolution takes optional filters, so the parameterless factories fit its mock type.
 const mockFactories: Record<SolutionId, jest.MockedFunction<typeof kubernetesSolution>> = {
   kubernetes: jest.mocked(kubernetesSolution),
   traces: jest.mocked(tracesSolution),
@@ -70,8 +70,7 @@ beforeEach(() => {
   }
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
   mockKubernetesSignal.mockReset().mockResolvedValue({ status: 'active', datasource });
-  // Real kubernetesFilters module: start every test from a clean, empty snapshot.
-  resetKubernetesFilters();
+  // Kubernetes filters are read from localStorage; every test starts unfiltered.
   window.localStorage.clear();
 });
 
@@ -158,7 +157,7 @@ describe('useHomepageSolutions', () => {
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
   });
 
-  it('rebuilds only the kubernetes solution when filters change, keeping the rest and signals stable', async () => {
+  it('rebuilds only the kubernetes solution with the new filters, keeping the rest and signals stable', () => {
     // Production kubernetesSolution() returns a fresh object per call; mirror that so the rebuild is observable.
     mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
     const { result } = renderHook(() => useHomepageSolutions());
@@ -166,8 +165,8 @@ describe('useHomepageSolutions', () => {
     const before = result.current.solutions;
     const signalsBefore = result.current.signals;
 
-    await act(async () => {
-      await saveKubernetesFilters({ cluster: 'x' });
+    act(() => {
+      store.set(KUBERNETES_FILTERS_STORAGE_KEY, JSON.stringify({ cluster: 'x' }));
     });
 
     const after = result.current.solutions;
@@ -179,17 +178,18 @@ describe('useHomepageSolutions', () => {
     expect(result.current.signals).toBe(signalsBefore);
 
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
+    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith({ cluster: 'x' });
     expect(mockFactories.traces).toHaveBeenCalledTimes(1);
   });
 
-  it('unsubscribes on unmount so later filter saves do not rebuild the solution', async () => {
+  it('unsubscribes on unmount so later filter saves do not rebuild the solution', () => {
     const { unmount } = renderHook(() => useHomepageSolutions());
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
 
     unmount();
 
-    await act(async () => {
-      await saveKubernetesFilters({ cluster: 'y' });
+    act(() => {
+      store.set(KUBERNETES_FILTERS_STORAGE_KEY, JSON.stringify({ cluster: 'y' }));
     });
 
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);

@@ -14,7 +14,7 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
-import { getKubernetesFilters, type KubernetesHomeFilters } from './kubernetesFilters';
+import { type KubernetesHomeFilters } from './kubernetesFilters';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
@@ -33,7 +33,7 @@ async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): 
 
 function buildHealthRows(health: KubernetesHealth): string[] {
   const rows: string[] = [];
-  if (health.pendingPods !== null && health.pendingPods > 0) {
+  if (health.pendingPods > 0) {
     rows.push(
       t('home.solutions.kubernetes.health-pending', '', {
         count: Math.ceil(health.pendingPods),
@@ -42,7 +42,7 @@ function buildHealthRows(health: KubernetesHealth): string[] {
       })
     );
   }
-  if (health.crashLoopingPods !== null && health.crashLoopingPods > 0) {
+  if (health.crashLoopingPods > 0) {
     rows.push(
       t('home.solutions.kubernetes.health-crashloop', '', {
         count: Math.ceil(health.crashLoopingPods),
@@ -51,7 +51,7 @@ function buildHealthRows(health: KubernetesHealth): string[] {
       })
     );
   }
-  if (health.notReadyNodes !== null && health.notReadyNodes > 0) {
+  if (health.notReadyNodes > 0) {
     rows.push(
       t('home.solutions.kubernetes.health-nodes', '', {
         count: Math.ceil(health.notReadyNodes),
@@ -63,30 +63,22 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-/**
- * `loadFilters` is read lazily and once per instance, so every fact of this instance queries one
- * filter snapshot; the homepage rebuilds the instance when the persisted filters change.
- */
-export function kubernetesSolution(loadFilters: () => Promise<KubernetesHomeFilters> = getKubernetesFilters): Solution {
+/** Every fact queries the one `filters` snapshot; the homepage builds a new instance when the filters change. */
+export function kubernetesSolution(filters: KubernetesHomeFilters = {}): Solution {
   const detect = memoize(kubernetesSignal);
   const datasource = async () => (await detect()).datasource;
-  const filters = memoize(loadFilters);
-  const scoped =
-    <T>(fetch: (ds: DataSourceInstanceListItem, filters: KubernetesHomeFilters) => Promise<T>) =>
-    async (ds: DataSourceInstanceListItem) =>
-      fetch(ds, await filters());
 
-  const inventory = datasourceFact(datasource, scoped(fetchKubernetesInventory));
-  const health = datasourceFact(datasource, scoped(fetchKubernetesHealth));
-  const clusterCpu = datasourceFact(datasource, scoped(fetchClusterCpuSeries));
+  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, filters));
+  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, filters));
+  const clusterCpu = datasourceFact(datasource, (ds) => fetchClusterCpuSeries(ds, filters));
   const alert = memoize(async () => {
     const status = await health();
-    if (!status || hasHealthProblems(status) !== true) {
+    if (!status || !hasHealthProblems(status)) {
       return null;
     }
 
     const healthRows = buildHealthRows(status);
-    const alertsFiring = status.alertsFiring ?? 0;
+    const alertsFiring = status.alertsFiring;
     return {
       primary:
         alertsFiring > 0
@@ -104,7 +96,7 @@ export function kubernetesSolution(loadFilters: () => Promise<KubernetesHomeFilt
   const signal = async () => (await detect()).status;
   const needsAttention = async () => {
     const status = await health();
-    return status !== null && hasHealthProblems(status) === true;
+    return status !== null && hasHealthProblems(status);
   };
 
   return {
@@ -167,10 +159,9 @@ export function kubernetesSolution(loadFilters: () => Promise<KubernetesHomeFilt
       }
       // A scoped series must not be captioned "Cluster CPU"; nodes are the narrower scope, so
       // they win the caption when both filters are set.
-      const { namespaces, nodes } = await filters();
-      const caption = nodes?.length
+      const caption = filters.nodes?.length
         ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
-        : namespaces?.length
+        : filters.namespaces?.length
           ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
           : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
       return { series, caption };

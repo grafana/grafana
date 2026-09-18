@@ -26,13 +26,12 @@ export interface KubernetesInventory {
   pods: number;
 }
 
-// A count of matching entities is empty (null) when nothing matches, the same as when the metric
-// is absent: the card shows a row only for a positive count, so the two need no telling apart.
+// An empty instant vector (nothing matched, or the metric is absent) reads as 0.
 export interface KubernetesHealth {
-  alertsFiring: number | null; // null = no firing alerts or Prometheus evaluates no rules (hide the count)
-  pendingPods: number | null; // pods Pending now and PENDING_CONSISTENCY_OFFSET ago
-  crashLoopingPods: number | null; // pods with a container waiting in CrashLoopBackOff
-  notReadyNodes: number | null; // nodes whose Ready condition is false or unknown
+  alertsFiring: number;
+  pendingPods: number; // pods Pending now and PENDING_CONSISTENCY_OFFSET ago
+  crashLoopingPods: number; // pods with a container waiting in CrashLoopBackOff
+  notReadyNodes: number; // nodes whose Ready condition is false or unknown
 }
 
 // Lookback for the datasource probe only: "seen recently", tolerating scrape gaps.
@@ -52,53 +51,62 @@ const present = (by: string, expr: string): string => `max by (${by}) (${expr}) 
 const escapeLabelValue = (value: string) =>
   value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
 
-const clusterMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.cluster ? `cluster="${escapeLabelValue(f.cluster)}"` : null;
-
 // Values are regex alternatives: regex-escape first, then string-literal-escape the result.
 const valuesRegex = (values: string[]): string => values.map((v) => escapeLabelValue(escapeRegExp(v))).join('|');
 
-const namespaceMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}"` : null;
+const selector = (...matchers: Array<string | null>): string => `{${matchers.filter(Boolean).join(',')}}`;
 
-const nodeMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}"` : null;
+// Keeps only the entities that kube_pod_info places inside the selection.
+const podInfoJoin = (by: string, ...matchers: Array<string | null>): string =>
+  ` and on (${by}) group by (${by}) (kube_pod_info${selector(...matchers)})`;
 
-// '' (not '{}') when no matchers so unfiltered queries stay byte-identical to the historical strings.
-const selector = (...matchers: Array<string | null>): string => {
-  const active = matchers.filter(Boolean);
-  return active.length ? `{${active.join(',')}}` : '';
+/** One filter snapshot as PromQL matcher fragments, escaped once per fetch. */
+interface Scope {
+  /**
+   * `cluster="…"` for a selected cluster, else `cluster!=""`: the probe gates on the label, so
+   * every population demands it.
+   */
+  cluster: string;
+  namespace: string | null;
+  node: string | null;
+  /** Pod-state metrics carry no node label: keeps only pods kube_pod_info places on a selected node. */
+  podsOnNodes: string;
+  /**
+   * Node readiness is namespace-blind: keeps only nodes hosting the selected namespaces' pods, so a
+   * healthy selection reads healthy even while unrelated nodes are down.
+   */
+  nodesHostingNamespaces: string;
+}
+
+const scope = (f: KubernetesHomeFilters): Scope => {
+  const cluster = f.cluster ? `cluster="${escapeLabelValue(f.cluster)}"` : 'cluster!=""';
+  const namespace = f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}"` : null;
+  const node = f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}"` : null;
+  return {
+    cluster,
+    namespace,
+    node,
+    podsOnNodes: node ? podInfoJoin(PER_POD, cluster, node) : '',
+    nodesHostingNamespaces: namespace ? podInfoJoin(PER_NODE, cluster, namespace, node) : '',
+  };
 };
-
-// Pod-state metrics carry no node label: keep only pods whose kube_pod_info sits on a selected node.
-const podNodeScope = (f: KubernetesHomeFilters): string =>
-  f.nodes?.length
-    ? ` and on (${PER_POD}) group by (${PER_POD}) (kube_pod_info${selector(clusterMatcher(f), nodeMatcher(f))})`
-    : '';
-
-// Node readiness is namespace-blind; when namespaces are selected, count only nodes hosting
-// their pods so a healthy selection reads healthy even while unrelated nodes are down.
-const nodeNamespaceScope = (f: KubernetesHomeFilters): string =>
-  f.namespaces?.length
-    ? ` and on (${PER_NODE}) group by (${PER_NODE}) (kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))})`
-    : '';
 
 // refId -> portable kube-state-metrics PromQL, all instant. Clusters are those with node inventory
 // right now and pods the Running|Pending ones: the same populations the Kubernetes Monitoring app
 // counts, so the card and the app agree.
-const inventoryQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
-  clusters: `count(group by (cluster) (kube_node_info${selector('cluster!=""', clusterMatcher(f), nodeMatcher(f))}))`,
-  pods: `count(${present(PER_POD, `kube_pod_status_phase${selector('cluster!=""', 'phase=~"Running|Pending"', clusterMatcher(f), namespaceMatcher(f))}`)}${podNodeScope(f)})`,
+const inventoryQueries = (s: Scope): Record<string, string> => ({
+  clusters: `count(group by (cluster) (kube_node_info${selector(s.cluster, s.node)}))`,
+  pods: `count(${present(PER_POD, `kube_pod_status_phase${selector(s.cluster, 'phase=~"Running|Pending"', s.namespace)}`)}${s.podsOnNodes})`,
 });
 
 // Every health signal is strictly scoped to the selection: a quiet selection must read healthy,
 // which flips the card out of its needs-attention state.
-const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => {
-  const pending = `kube_pod_status_phase${selector('phase="Pending"', clusterMatcher(f), namespaceMatcher(f))}`;
+const healthQueries = (s: Scope): Record<string, string> => {
+  const pending = `kube_pod_status_phase${selector('phase="Pending"', s.cluster, s.namespace)}`;
   return {
-    pendingPods: `count(${present(PER_POD, pending)} and ${present(PER_POD, `${pending} offset ${PENDING_CONSISTENCY_OFFSET}`)}${podNodeScope(f)})`,
-    crashLoopingPods: `count(${present(PER_POD, `kube_pod_container_status_waiting_reason${selector('reason="CrashLoopBackOff"', clusterMatcher(f), namespaceMatcher(f))}`)}${podNodeScope(f)})`,
-    notReadyNodes: `count(${present(PER_NODE, `kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))}`)}${nodeNamespaceScope(f)})`,
+    pendingPods: `count(${present(PER_POD, pending)} and ${present(PER_POD, `${pending} offset ${PENDING_CONSISTENCY_OFFSET}`)}${s.podsOnNodes})`,
+    crashLoopingPods: `count(${present(PER_POD, `kube_pod_container_status_waiting_reason${selector('reason="CrashLoopBackOff"', s.cluster, s.namespace)}`)}${s.podsOnNodes})`,
+    notReadyNodes: `count(${present(PER_NODE, `kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', s.cluster, s.node)}`)}${s.nodesHostingNamespaces})`,
   };
 };
 
@@ -106,24 +114,16 @@ const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => {
 // app, so the count matches its alerts page. Strict label matching: alerts without a selected
 // namespace/node label are dropped, so a quiet selection shows zero alerts even while the wider
 // fleet is firing.
-const alertsMatcher = (f: KubernetesHomeFilters): string =>
-  selector(
-    'alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""',
-    clusterMatcher(f),
-    namespaceMatcher(f),
-    nodeMatcher(f)
-  );
+const alertsMatcher = (s: Scope): string =>
+  selector('alertstate="firing"', 'alertname=~"(Kube.*|CPUThrottlingHigh)"', s.cluster, s.namespace, s.node);
 
 // The Kubernetes Monitoring app gates on node inventory, and so does the cluster count above, so a
 // datasource is detected and counted from the same metric. The lookback tolerates scrape gaps.
 const NODE_PROBE = `count(last_over_time(kube_node_info{cluster!=""}[${KUBE_STATE_LOOKBACK}]))`;
 
-/** True when any health signal counts something, false when all are clear, null when none answered. @lintignore */
-export function hasHealthProblems(h: KubernetesHealth): boolean | null {
-  if (h.alertsFiring === null && h.pendingPods === null && h.notReadyNodes === null && h.crashLoopingPods === null) {
-    return null;
-  }
-  return (h.pendingPods ?? 0) + (h.notReadyNodes ?? 0) + (h.crashLoopingPods ?? 0) + (h.alertsFiring ?? 0) > 0;
+/** True when any health signal counts something. @lintignore */
+export function hasHealthProblems(h: KubernetesHealth): boolean {
+  return h.pendingPods + h.notReadyNodes + h.crashLoopingPods + h.alertsFiring > 0;
 }
 
 // localStorage key where the k8s app's PrometheusPicker persists the user's datasource choice.
@@ -175,7 +175,7 @@ export async function fetchKubernetesInventory(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   filters: KubernetesHomeFilters
 ): Promise<KubernetesInventory> {
-  const frames = await runInstantQueries(inventoryQueries(filters), ds);
+  const frames = await runInstantQueries(inventoryQueries(scope(filters)), ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
@@ -193,40 +193,37 @@ export async function fetchKubernetesHealth(
   const grafanaAlertsUid = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
   const sameDatasource = !grafanaAlertsUid || grafanaAlertsUid === ds.uid;
 
-  const alerts = alertsMatcher(filters);
+  const s = scope(filters);
+  const alerts = alertsMatcher(s);
   const queries: Record<string, string> = {
-    ...healthQueries(filters),
+    ...healthQueries(s),
     // Same datasource: union with `or` so identical series never double-count.
     alertsFiring: sameDatasource ? `count(ALERTS${alerts} or ${grafanaMetric}${alerts})` : `count(ALERTS${alerts})`,
   };
 
   const [frames, grafanaAlertsFiring] = await Promise.all([
     runInstantQueries(queries, ds),
-    sameDatasource ? Promise.resolve(null) : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric, alerts),
+    sameDatasource ? 0 : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric, alerts),
   ]);
 
-  const dsAlertsFiring = readScalar(frames, 'alertsFiring');
   return {
-    alertsFiring:
-      dsAlertsFiring === null && grafanaAlertsFiring === null
-        ? null
-        : (dsAlertsFiring ?? 0) + (grafanaAlertsFiring ?? 0),
-    pendingPods: readScalar(frames, 'pendingPods'),
-    crashLoopingPods: readScalar(frames, 'crashLoopingPods'),
-    notReadyNodes: readScalar(frames, 'notReadyNodes'),
+    alertsFiring: (readScalar(frames, 'alertsFiring') ?? 0) + grafanaAlertsFiring,
+    pendingPods: readScalar(frames, 'pendingPods') ?? 0,
+    crashLoopingPods: readScalar(frames, 'crashLoopingPods') ?? 0,
+    notReadyNodes: readScalar(frames, 'notReadyNodes') ?? 0,
   };
 }
 
-// A broken/absent state-history datasource must not blank the whole health row: fail to null.
-async function fetchGrafanaManagedAlertCount(uid: string, metric: string, matcher: string): Promise<number | null> {
+// A broken/absent state-history datasource must not blank the whole health row: fail to 0.
+async function fetchGrafanaManagedAlertCount(uid: string, metric: string, matcher: string): Promise<number> {
   try {
     const frames = await runInstantQueries(
       { grafanaAlertsFiring: `count(${metric}${matcher})` },
       { uid, type: 'prometheus' }
     );
-    return readScalar(frames, 'grafanaAlertsFiring');
+    return readScalar(frames, 'grafanaAlertsFiring') ?? 0;
   } catch {
-    return null;
+    return 0;
   }
 }
 
@@ -235,9 +232,10 @@ export async function fetchClusterCpuSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   filters: KubernetesHomeFilters
 ): Promise<FieldSparkline | null> {
+  const s = scope(filters);
   const frames = await runRangeQuery(
     'cpu',
-    `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', clusterMatcher(filters), namespaceMatcher(filters), nodeMatcher(filters))}[5m]))`,
+    `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', s.cluster, s.namespace, s.node)}[5m]))`,
     24,
     ds
   );
@@ -260,18 +258,14 @@ export interface KubernetesFilterOptions {
 export async function fetchKubernetesFilterOptions(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<KubernetesFilterOptions> {
-  const read = async (refId: string, expr: string, label: string) => {
-    const frames = await runInstantQueries({ [refId]: expr }, ds);
-    return readLabelValues(frames, refId, label);
-  };
-  const [clusters, namespaces, nodes] = await Promise.allSettled([
+  const read = (refId: string, expr: string, label: string) =>
+    runInstantQueries({ [refId]: expr }, ds)
+      .then((frames) => readLabelValues(frames, refId, label))
+      .catch(() => null);
+  const [clusters, namespaces, nodes] = await Promise.all([
     read('clusters', 'group by (cluster) (kube_node_info{cluster!=""})', 'cluster'),
     read('namespaces', 'group by (namespace) (kube_namespace_status_phase{cluster!=""})', 'namespace'),
     read('nodes', 'group by (node) (kube_node_info{cluster!=""})', 'node'),
   ]);
-  return {
-    clusters: clusters.status === 'fulfilled' ? clusters.value : null,
-    namespaces: namespaces.status === 'fulfilled' ? namespaces.value : null,
-    nodes: nodes.status === 'fulfilled' ? nodes.value : null,
-  };
+  return { clusters, namespaces, nodes };
 }

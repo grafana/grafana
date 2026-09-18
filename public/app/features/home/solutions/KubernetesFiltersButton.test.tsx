@@ -5,31 +5,14 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { KubernetesFiltersButton } from './KubernetesFiltersButton';
-import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
-import {
-  getKubernetesFilters,
-  getKubernetesFiltersVersion,
-  saveKubernetesFilters,
-  subscribeKubernetesFilters,
-} from './kubernetesFilters';
+import { fetchKubernetesFilterOptions } from './kubernetesData';
+import { KUBERNETES_FILTERS_STORAGE_KEY, type KubernetesHomeFilters } from './kubernetesFilters';
 
 jest.mock('./kubernetesData', () => ({
   fetchKubernetesFilterOptions: jest.fn(),
 }));
 
-jest.mock('./kubernetesFilters', () => ({
-  ...jest.requireActual('./kubernetesFilters'),
-  getKubernetesFilters: jest.fn(),
-  saveKubernetesFilters: jest.fn(),
-  subscribeKubernetesFilters: jest.fn(),
-  getKubernetesFiltersVersion: jest.fn(),
-}));
-
 const mockFetchOptions = jest.mocked(fetchKubernetesFilterOptions);
-const mockGetFilters = jest.mocked(getKubernetesFilters);
-const mockSaveFilters = jest.mocked(saveKubernetesFilters);
-const mockSubscribe = jest.mocked(subscribeKubernetesFilters);
-const mockGetVersion = jest.mocked(getKubernetesFiltersVersion);
 
 const datasource: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -44,16 +27,17 @@ mockComboboxRect();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGetFilters.mockResolvedValue({});
-  mockGetVersion.mockReturnValue(0);
-  mockSubscribe.mockReturnValue(() => {});
-  mockSaveFilters.mockResolvedValue();
+  window.localStorage.clear();
   mockFetchOptions.mockResolvedValue({
     clusters: ['prod', 'staging'],
     namespaces: ['default', 'team-a'],
     nodes: ['node-1', 'node-2'],
   });
 });
+
+const persist = (filters: KubernetesHomeFilters) =>
+  window.localStorage.setItem(KUBERNETES_FILTERS_STORAGE_KEY, JSON.stringify(filters));
+const persisted = () => window.localStorage.getItem(KUBERNETES_FILTERS_STORAGE_KEY);
 
 const openGear = async (user: UserEvent, name = 'Customize Kubernetes monitoring') => {
   await user.click(await screen.findByRole('button', { name }));
@@ -69,28 +53,26 @@ describe('KubernetesFiltersButton', () => {
     const dialog = await openGear(user);
 
     expect(dialog).toBeInTheDocument();
-    // Form replaces the loading placeholder once the persisted read settles.
-    expect(await screen.findByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
   it('shows the filtered badge, active tooltip, and seeds the pickers from persisted filters', async () => {
-    mockGetFilters.mockResolvedValue({ cluster: 'prod', namespaces: ['default'] });
+    persist({ cluster: 'prod', namespaces: ['default'] });
 
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
-    expect(await screen.findByText('Filtered')).toBeInTheDocument();
+    expect(screen.getByText('Filtered')).toBeInTheDocument();
 
     const dialog = await openGear(user, 'Customize Kubernetes monitoring (filters active)');
 
-    expect(await within(dialog).findByDisplayValue('prod')).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue('prod')).toBeInTheDocument();
     expect(within(dialog).getByText('default')).toBeInTheDocument();
   });
 
-  it('saves the chosen cluster, namespaces, and nodes then closes', async () => {
+  it('saves the chosen cluster, namespaces, and nodes, closes, and shows the badge', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-    await screen.findByRole('button', { name: 'Save' });
 
     const [clusterInput, namespaceInput, nodeInput] = screen.getAllByRole('combobox');
 
@@ -105,57 +87,42 @@ describe('KubernetesFiltersButton', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(mockSaveFilters).toHaveBeenCalledWith({ cluster: 'prod', namespaces: ['default'], nodes: ['node-1'] });
+    expect(persisted()).toBe(JSON.stringify({ cluster: 'prod', namespaces: ['default'], nodes: ['node-1'] }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  });
-
-  it('keeps the modal open with an error alert when saving fails', async () => {
-    mockSaveFilters.mockRejectedValueOnce(new Error('boom'));
-
-    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
-
-    await openGear(user);
-    const saveButton = await screen.findByRole('button', { name: 'Save' });
-
-    await user.click(saveButton);
-
-    expect(await screen.findByText('Could not save filters. Try again.')).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    expect(screen.getByText('Filtered')).toBeInTheDocument();
   });
 
   it('closes without saving when Cancel is clicked', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-    await screen.findByRole('button', { name: 'Save' });
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(mockSaveFilters).not.toHaveBeenCalled();
+    expect(persisted()).toBeNull();
   });
 
   it('hides Clear filters without persisted filters', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-    await screen.findByRole('button', { name: 'Save' });
 
     expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
   });
 
   it('clears persisted filters when Clear filters is clicked', async () => {
-    mockGetFilters.mockResolvedValue({ cluster: 'prod' });
+    persist({ cluster: 'prod' });
 
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user, 'Customize Kubernetes monitoring (filters active)');
 
-    await user.click(await screen.findByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
-    expect(mockSaveFilters).toHaveBeenCalledWith({});
+    expect(persisted()).toBe('{}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
   });
 
   it('warns when some options fail to load but still lists the loaded picker values', async () => {
@@ -164,7 +131,6 @@ describe('KubernetesFiltersButton', () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-    await screen.findByRole('button', { name: 'Save' });
 
     expect(await screen.findByText(/Could not load some options/)).toBeInTheDocument();
 
@@ -174,29 +140,21 @@ describe('KubernetesFiltersButton', () => {
     expect(await screen.findByRole('option', { name: 'default' })).toBeInTheDocument();
   });
 
-  it('disables the pickers until the options load, then enables them', async () => {
-    let resolveOptions!: (options: KubernetesFilterOptions) => void;
-    mockFetchOptions.mockReturnValue(
-      new Promise((resolve) => {
-        resolveOptions = resolve;
-      })
-    );
+  it('accepts typed custom values while the options are still loading', async () => {
+    mockFetchOptions.mockReturnValue(new Promise(() => {}));
 
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
-    await screen.findByRole('button', { name: 'Save' });
 
-    const comboboxes = screen.getAllByRole('combobox');
-    expect(comboboxes).toHaveLength(3);
-    for (const input of comboboxes) {
-      expect(input).toBeDisabled();
-    }
+    const [clusterInput, namespaceInput] = screen.getAllByRole('combobox');
+    await user.type(clusterInput, 'edge');
+    await user.click(await screen.findByRole('option', { name: /^edge/ }));
+    await user.type(namespaceInput, 'team-z');
+    await user.click(await screen.findByRole('option', { name: /^team-z/ }));
 
-    resolveOptions({ clusters: ['prod'], namespaces: ['default'], nodes: ['node-1'] });
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    await waitFor(() => expect(comboboxes[0]).toBeEnabled());
-    expect(comboboxes[1]).toBeEnabled();
-    expect(comboboxes[2]).toBeEnabled();
+    expect(persisted()).toBe(JSON.stringify({ cluster: 'edge', namespaces: ['team-z'] }));
   });
 });

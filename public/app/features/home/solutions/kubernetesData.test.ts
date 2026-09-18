@@ -201,16 +201,17 @@ describe('Kubernetes Prometheus resolution', () => {
     const [health] = healthCalls();
     const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
     expect(healthExprs).toEqual({
-      // Pending now and 10m ago, so a pod mid-scheduling never counts.
+      // Pending now and 10m ago, so a pod mid-scheduling never counts. Every population demands
+      // the cluster label the probe gated on.
       pendingPods:
-        'count(max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending"}) == 1 and max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending"} offset 10m) == 1)',
+        'count(max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster!=""}) == 1 and max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster!=""} offset 10m) == 1)',
       crashLoopingPods:
-        'count(max by (cluster, namespace, pod) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) == 1)',
+        'count(max by (cluster, namespace, pod) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff",cluster!=""}) == 1)',
       notReadyNodes:
-        'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown"}) == 1)',
+        'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster!=""}) == 1)',
       // The app's alert-name allowlist, so the count matches its alerts page.
       alertsFiring:
-        'count(ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""} or GRAFANA_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})',
     });
 
     const [probe] = probeCalls();
@@ -574,7 +575,7 @@ describe('Kubernetes Prometheus resolution', () => {
       const [health] = healthCalls();
       const alertsExpr = health[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
       expect(alertsExpr).toBe(
-        'count(ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""} or MY_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""})'
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""} or MY_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})'
       );
     } finally {
       config.unifiedAlerting.stateHistory = original;
@@ -595,16 +596,14 @@ describe('Kubernetes Prometheus resolution', () => {
       expect(ashCalls[0][0].queries).toEqual([
         {
           refId: 'grafanaAlertsFiring',
-          expr: 'count(GRAFANA_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""})',
+          expr: 'count(GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})',
           instant: true,
           range: false,
         },
       ]);
       const [k8sHealth] = healthCalls();
       const alertsExpr = k8sHealth[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
-      expect(alertsExpr).toBe(
-        'count(ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!=""})'
-      );
+      expect(alertsExpr).toBe('count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})');
       expect(alertsExpr).not.toContain('GRAFANA_ALERTS');
       expect(health.alertsFiring).toBe(3);
     } finally {
@@ -673,9 +672,9 @@ describe('Kubernetes query filters', () => {
     const [inventory] = inventoryCalls();
     const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
     expect(inventoryExprs).toEqual({
-      // Clusters are not namespaced: cluster matcher only.
-      clusters: 'count(group by (cluster) (kube_node_info{cluster!="",cluster="prod"}))',
-      pods: 'count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster!="",phase=~"Running|Pending",cluster="prod",namespace=~"team-a|team-b"}) == 1)',
+      // Clusters are not namespaced: cluster matcher only. A selected cluster replaces the cluster!="" guard.
+      clusters: 'count(group by (cluster) (kube_node_info{cluster="prod"}))',
+      pods: 'count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster="prod",phase=~"Running|Pending",namespace=~"team-a|team-b"}) == 1)',
     });
 
     const [health] = healthCalls();
@@ -690,7 +689,7 @@ describe('Kubernetes query filters', () => {
         'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"}) == 1 and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}))',
       // Strict matching: alerts without a selected namespace label are dropped.
       alertsFiring:
-        'count(ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!="",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!="",cluster="prod",namespace=~"team-a|team-b"})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"})',
     });
 
     expect(cpuCalls()[0][0].queries[0].expr).toBe(
@@ -707,7 +706,7 @@ describe('Kubernetes query filters', () => {
       const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
       expect(ashCalls).toHaveLength(1);
       expect(ashCalls[0][0].queries[0].expr).toBe(
-        'count(GRAFANA_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!="",cluster="prod",namespace=~"team-a|team-b"})'
+        'count(GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"})'
       );
     } finally {
       config.unifiedAlerting.stateHistory = original;
@@ -736,9 +735,9 @@ describe('Kubernetes query filters', () => {
     const [inventory] = inventoryCalls();
     const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
     expect(inventoryExprs).toEqual({
-      clusters: 'count(group by (cluster) (kube_node_info{cluster!="",cluster="prod",node=~"node-1|node-2"}))',
+      clusters: 'count(group by (cluster) (kube_node_info{cluster="prod",node=~"node-1|node-2"}))',
       // Pod state metrics carry no node label: scoped via the kube_pod_info join.
-      pods: `count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster!="",phase=~"Running|Pending",cluster="prod",namespace=~"team-a"}) == 1${nodeScope})`,
+      pods: `count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster="prod",phase=~"Running|Pending",namespace=~"team-a"}) == 1${nodeScope})`,
     });
 
     const [health] = healthCalls();
@@ -751,7 +750,7 @@ describe('Kubernetes query filters', () => {
         'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"}) == 1 and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}))',
       // Strict matching: alerts must carry a selected namespace and node label.
       alertsFiring:
-        'count(ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing", alertname=~"(Kube.*|CPUThrottlingHigh)", cluster!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
     });
 
     expect(cpuCalls()[0][0].queries[0].expr).toBe(

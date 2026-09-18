@@ -1,40 +1,21 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Alert,
-  Badge,
-  Button,
-  Combobox,
-  Field,
-  IconButton,
-  LoadingPlaceholder,
-  Modal,
-  MultiCombobox,
-  Stack,
-} from '@grafana/ui';
+import { Alert, Badge, Button, Combobox, Field, IconButton, Modal, MultiCombobox, Stack } from '@grafana/ui';
 
-import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
-import {
-  getKubernetesFilters,
-  getKubernetesFiltersVersion,
-  hasKubernetesFilters,
-  saveKubernetesFilters,
-  subscribeKubernetesFilters,
-  type KubernetesHomeFilters,
-} from './kubernetesFilters';
+import { fetchKubernetesFilterOptions } from './kubernetesData';
+import { hasKubernetesFilters, type KubernetesHomeFilters, useKubernetesFilters } from './kubernetesFilters';
 
 interface KubernetesFiltersButtonProps {
   datasource: DataSourceInstanceListItem;
 }
 
 export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonProps) {
-  const version = useSyncExternalStore(subscribeKubernetesFilters, getKubernetesFiltersVersion);
-  const { value: filters } = useAsync(getKubernetesFilters, [version]);
+  const [filters, saveFilters] = useKubernetesFilters();
   const [open, setOpen] = useState(false);
-  const active = filters !== undefined && hasKubernetesFilters(filters);
+  const active = hasKubernetesFilters(filters);
 
   return (
     <>
@@ -54,23 +35,39 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
         />
       </Stack>
       {/* Mounted only while open so every open starts from the persisted filters. */}
-      {open && <KubernetesFiltersModal datasource={datasource} onDismiss={() => setOpen(false)} />}
+      {open && (
+        <KubernetesFiltersModal
+          datasource={datasource}
+          initial={filters}
+          onSave={(next) => {
+            saveFilters(next);
+            setOpen(false);
+          }}
+          onDismiss={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
 
 interface KubernetesFiltersModalProps {
   datasource: DataSourceInstanceListItem;
+  initial: KubernetesHomeFilters;
+  onSave: (filters: KubernetesHomeFilters) => void;
   onDismiss: () => void;
 }
 
-function KubernetesFiltersModal({ datasource, onDismiss }: KubernetesFiltersModalProps) {
-  const { value: initial } = useAsync(getKubernetesFilters, []);
+function KubernetesFiltersModal({ datasource, initial, onSave, onDismiss }: KubernetesFiltersModalProps) {
+  const [cluster, setCluster] = useState(initial.cluster ?? '');
+  const [namespaces, setNamespaces] = useState(initial.namespaces ?? []);
+  const [nodes, setNodes] = useState(initial.nodes ?? []);
   // Options load independently; a slow or failing datasource must not block the form.
   const { value: options, loading: optionsLoading } = useAsync(
     () => fetchKubernetesFilterOptions(datasource),
     [datasource]
   );
+  const optionsFailed =
+    options !== undefined && (options.clusters === null || options.namespaces === null || options.nodes === null);
 
   return (
     <Modal
@@ -78,55 +75,6 @@ function KubernetesFiltersModal({ datasource, onDismiss }: KubernetesFiltersModa
       title={t('home.solutions.kubernetes.filters.customize', 'Customize Kubernetes monitoring')}
       onDismiss={onDismiss}
     >
-      {/* The form mounts only after the persisted read settles: its state initializers seed from
-          `initial`, so there is no later effect that could clobber user edits. */}
-      {initial === undefined ? (
-        <LoadingPlaceholder text={t('home.solutions.kubernetes.filters.loading', 'Loading filters...')} />
-      ) : (
-        <FiltersForm
-          datasourceName={datasource.name}
-          initial={initial}
-          options={options}
-          optionsLoading={optionsLoading}
-          onDismiss={onDismiss}
-        />
-      )}
-    </Modal>
-  );
-}
-
-interface FiltersFormProps {
-  datasourceName: string;
-  initial: KubernetesHomeFilters;
-  options: KubernetesFilterOptions | undefined;
-  optionsLoading: boolean;
-  onDismiss: () => void;
-}
-
-function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismiss }: FiltersFormProps) {
-  const [cluster, setCluster] = useState(initial.cluster ?? '');
-  const [namespaces, setNamespaces] = useState(initial.namespaces ?? []);
-  const [nodes, setNodes] = useState(initial.nodes ?? []);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
-
-  const save = async (filters: KubernetesHomeFilters) => {
-    setSaving(true);
-    setSaveError(false);
-    try {
-      await saveKubernetesFilters(filters);
-      onDismiss();
-    } catch {
-      setSaveError(true);
-      setSaving(false);
-    }
-  };
-
-  const optionsFailed =
-    options !== undefined && (options.clusters === null || options.namespaces === null || options.nodes === null);
-
-  return (
-    <>
       <Stack direction="column" gap={2}>
         {optionsFailed && (
           <Alert
@@ -134,7 +82,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             title={t(
               'home.solutions.kubernetes.filters.options-error',
               'Could not load some options from {{name}}. Type values manually.',
-              { name: datasourceName }
+              { name: datasource.name }
             )}
           />
         )}
@@ -146,7 +94,6 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             ]}
             value={cluster}
             onChange={(option) => setCluster(option.value)}
-            disabled={optionsLoading}
             loading={optionsLoading}
             createCustomValue
           />
@@ -164,7 +111,6 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             value={namespaces}
             onChange={(items) => setNamespaces(items.map((item) => item.value))}
             placeholder={t('home.solutions.kubernetes.filters.all-namespaces', 'All namespaces')}
-            disabled={optionsLoading}
             loading={optionsLoading}
             createCustomValue
           />
@@ -174,7 +120,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
           label={t('home.solutions.kubernetes.filters.nodes-label', 'Nodes')}
           description={t(
             'home.solutions.kubernetes.filters.nodes-description',
-            'Pod health is attributed to nodes via kube_pod_info; only alerts labeled with a selected node are counted.'
+            'Pod health counts pods running on the selected nodes; alerts count only when labeled with a selected node.'
           )}
         >
           <MultiCombobox<string>
@@ -182,31 +128,24 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             value={nodes}
             onChange={(items) => setNodes(items.map((item) => item.value))}
             placeholder={t('home.solutions.kubernetes.filters.all-nodes', 'All nodes')}
-            disabled={optionsLoading}
             loading={optionsLoading}
             createCustomValue
           />
         </Field>
-        {saveError && (
-          <Alert
-            severity="error"
-            title={t('home.solutions.kubernetes.filters.save-error', 'Could not save filters. Try again.')}
-          />
-        )}
       </Stack>
       <Modal.ButtonRow>
         {hasKubernetesFilters(initial) && (
-          <Button variant="secondary" fill="text" disabled={saving} onClick={() => save({})}>
+          <Button variant="secondary" fill="text" onClick={() => onSave({})}>
             {t('home.solutions.kubernetes.filters.clear', 'Clear filters')}
           </Button>
         )}
-        <Button variant="secondary" fill="outline" disabled={saving} onClick={onDismiss}>
+        <Button variant="secondary" fill="outline" onClick={onDismiss}>
           {t('home.solutions.kubernetes.filters.cancel', 'Cancel')}
         </Button>
-        <Button disabled={saving} onClick={() => save({ cluster: cluster || undefined, namespaces, nodes })}>
+        <Button onClick={() => onSave({ cluster: cluster || undefined, namespaces, nodes })}>
           {t('home.solutions.kubernetes.filters.save', 'Save')}
         </Button>
       </Modal.ButtonRow>
-    </>
+    </Modal>
   );
 }

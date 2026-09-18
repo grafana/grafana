@@ -1,8 +1,8 @@
 import memoize from 'micro-memoize';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
 import { SOLUTION_IDS } from './solutions/constants';
-import { getKubernetesFiltersVersion, subscribeKubernetesFilters } from './solutions/kubernetesFilters';
+import { useKubernetesFilters } from './solutions/kubernetesFilters';
 import { kubernetesSignal, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -21,13 +21,11 @@ export interface HomepageSolutions {
 /**
  * Builds one solution set for both homepage sections. Construction starts no queries, and stable
  * object identity keeps their async effects from restarting — only the Kubernetes solution is
- * rebuilt when its per-user filters change, so just that card refetches.
+ * rebuilt when its persisted filters change, so just that card refetches.
  */
 export function useHomepageSolutions(): HomepageSolutions {
-  const filtersVersion = useSyncExternalStore(subscribeKubernetesFilters, getKubernetesFiltersVersion);
-  // The version is a rebuild key, not an input: the factory reads the filters itself at fetch time.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const kubernetes = useMemo(() => kubernetesSolution(), [filtersVersion]);
+  const [kubernetesFilters] = useKubernetesFilters();
+  const kubernetes = useMemo(() => kubernetesSolution(kubernetesFilters), [kubernetesFilters]);
 
   const stable = useMemo(() => {
     const byId = {

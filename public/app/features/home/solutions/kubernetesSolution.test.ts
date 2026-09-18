@@ -38,13 +38,7 @@ const mockSetupGuideEnabled = jest.mocked(setupGuideEnabled);
 const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
-// Entity counts are empty when nothing matches, so an all-clear cluster answers null everywhere.
-const healthy: KubernetesHealth = {
-  alertsFiring: null,
-  pendingPods: null,
-  crashLoopingPods: null,
-  notReadyNodes: null,
-};
+const healthy: KubernetesHealth = { alertsFiring: 0, pendingPods: 0, crashLoopingPods: 0, notReadyNodes: 0 };
 
 beforeEach(() => {
   mockFetchCpu.mockReset();
@@ -126,11 +120,11 @@ describe('kubernetesSolution', () => {
 
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
     expect(mockFetchInventory).toHaveBeenCalledTimes(1);
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, expect.anything());
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, expect.anything());
     expect(mockFetchCpu).toHaveBeenCalledTimes(1);
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, expect.anything());
   });
 });
 
@@ -144,7 +138,7 @@ describe('kubernetesSolution alert', () => {
   });
 
   it('leads with firing alerts', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: null, notReadyNodes: null });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: 0, notReadyNodes: 0 });
 
     const solution = kubernetesSolution();
     await expect(solution.needsAttention()).resolves.toBe(true);
@@ -155,11 +149,10 @@ describe('kubernetesSolution alert', () => {
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
   });
 
   it('leads with the first health row when nothing is firing', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: null, pendingPods: 2, crashLoopingPods: 5, notReadyNodes: 1 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 0, pendingPods: 2, crashLoopingPods: 5, notReadyNodes: 1 });
 
     await expect(kubernetesSolution().alert()).resolves.toMatchObject({
       primary: '2 pods stuck pending',
@@ -174,7 +167,6 @@ describe('kubernetesSolution stats and sparkline', () => {
       primary: '2 clusters',
       secondary: '24 pods',
     });
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
   });
 
   it('shows zero inventory for an empty scope', async () => {
@@ -194,15 +186,13 @@ describe('kubernetesSolution stats and sparkline', () => {
       series,
       caption: 'Cluster CPU · last 24h',
     });
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
   });
 
-  it('reads the filters once and scopes every fact and the caption to them', async () => {
+  it('scopes every fact and the caption to the filters', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
     const filters = { cluster: 'prod', namespaces: ['team-a'] };
-    const loadFilters = jest.fn(async () => filters);
-    const solution = kubernetesSolution(loadFilters);
+    const solution = kubernetesSolution(filters);
 
     await expect(solution.sparkline()).resolves.toEqual({ series, caption: 'Namespace CPU · last 24h' });
     await solution.stats();
@@ -211,16 +201,13 @@ describe('kubernetesSolution stats and sparkline', () => {
     expect(mockFetchCpu).toHaveBeenCalledWith(datasource, filters);
     expect(mockFetchInventory).toHaveBeenCalledWith(datasource, filters);
     expect(mockFetchHealth).toHaveBeenCalledWith(datasource, filters);
-    expect(loadFilters).toHaveBeenCalledTimes(1);
   });
 
   it('captions the CPU trend as node CPU when a node filter is active, over the namespace caption', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
 
-    await expect(
-      kubernetesSolution(async () => ({ namespaces: ['team-a'], nodes: ['node-1'] })).sparkline()
-    ).resolves.toEqual({
+    await expect(kubernetesSolution({ namespaces: ['team-a'], nodes: ['node-1'] }).sparkline()).resolves.toEqual({
       series,
       caption: 'Node CPU · last 24h',
     });
@@ -233,7 +220,7 @@ describe('kubernetesSolution stats and sparkline', () => {
 
 describe('kubernetesSolution CTA and offer', () => {
   it('opens the alerts page when the solution needs attention', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: null, notReadyNodes: null });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: 0, notReadyNodes: 0 });
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({
       label: 'View alerts in Kubernetes Monitoring',
@@ -244,12 +231,7 @@ describe('kubernetesSolution CTA and offer', () => {
   });
 
   it('falls back to the solution page when the alerts page is inaccessible', async () => {
-    mockFetchHealth.mockResolvedValue({
-      alertsFiring: 1,
-      pendingPods: null,
-      crashLoopingPods: null,
-      notReadyNodes: null,
-    });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, pendingPods: 0, crashLoopingPods: 0, notReadyNodes: 0 });
     mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/alerts' ? null : `/a/${appId}${path}`));
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({

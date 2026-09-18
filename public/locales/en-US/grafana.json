@@ -11467,14 +11467,12 @@
           "customize": "Customize Kubernetes monitoring",
           "customize-active": "Customize Kubernetes monitoring (filters active)",
           "filtered-badge": "Filtered",
-          "loading": "Loading filters...",
           "namespaces-description": "Health signals and alerts are scoped to the selected namespaces; the cluster count is not.",
           "namespaces-label": "Namespaces",
-          "nodes-description": "Pod health is attributed to nodes via kube_pod_info; only alerts labeled with a selected node are counted.",
+          "nodes-description": "Pod health counts pods running on the selected nodes; alerts count only when labeled with a selected node.",
           "nodes-label": "Nodes",
           "options-error": "Could not load some options from {{name}}. Type values manually.",
-          "save": "Save",
-          "save-error": "Could not save filters. Try again."
+          "save": "Save"
         },
         "health-crashloop_one": "{{count}} pod crash looping",
         "health-crashloop_other": "{{count}} pods crash looping",

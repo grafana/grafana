@@ -1,26 +1,14 @@
-// The store constructs its UserStorage at module load, so the mock must exist before the import.
-const mockGetItem = jest.fn();
-const mockSetItem = jest.fn();
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockGetItem, setItem: mockSetItem })),
-}));
+import { act, renderHook } from '@testing-library/react';
 
 import {
-  getKubernetesFilters,
-  getKubernetesFiltersVersion,
   hasKubernetesFilters,
+  KUBERNETES_FILTERS_STORAGE_KEY,
   normalizeKubernetesFilters,
-  resetKubernetesFilters,
-  saveKubernetesFilters,
-  subscribeKubernetesFilters,
+  useKubernetesFilters,
 } from './kubernetesFilters';
 
 beforeEach(() => {
-  mockGetItem.mockReset().mockResolvedValue(null);
-  mockSetItem.mockReset().mockResolvedValue(undefined);
-  resetKubernetesFilters();
+  window.localStorage.clear();
 });
 
 describe('normalizeKubernetesFilters', () => {
@@ -69,69 +57,46 @@ describe('hasKubernetesFilters', () => {
   });
 });
 
-describe('kubernetes filters storage', () => {
-  it('persists the normalized filters under the kubernetes key', async () => {
-    await saveKubernetesFilters({
-      cluster: ' prod ',
-      namespaces: ['team-a', 'team-a', ' team-b ', ''],
-      nodes: [' node-1 ', 'node-1'],
-    });
-
-    expect(mockSetItem).toHaveBeenCalledWith(
-      'kubernetes-filters',
-      JSON.stringify({ cluster: 'prod', namespaces: ['team-a', 'team-b'], nodes: ['node-1'] })
+describe('useKubernetesFilters', () => {
+  it('reads the persisted filters normalized, with one identity until the stored value changes', () => {
+    window.localStorage.setItem(
+      KUBERNETES_FILTERS_STORAGE_KEY,
+      JSON.stringify({ cluster: ' prod ', namespaces: ['a', 'a'], junk: true })
     );
-  });
 
-  it('reads storage once, normalizing the stored value, and serves later reads from memory', async () => {
-    mockGetItem.mockResolvedValue(JSON.stringify({ cluster: ' prod ', namespaces: ['a', 'a'], junk: true }));
+    const { result, rerender } = renderHook(() => useKubernetesFilters());
+    const [first] = result.current;
+    rerender();
 
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({ cluster: 'prod', namespaces: ['a'] });
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({ cluster: 'prod', namespaces: ['a'] });
-
-    expect(mockGetItem).toHaveBeenCalledTimes(1);
-    expect(mockGetItem).toHaveBeenCalledWith('kubernetes-filters');
+    expect(first).toStrictEqual({ cluster: 'prod', namespaces: ['a'] });
+    expect(result.current[0]).toBe(first);
   });
 
   it.each([
-    { desc: 'corrupt JSON', arrange: () => mockGetItem.mockResolvedValue('{bad') },
-    { desc: 'an unreadable store', arrange: () => mockGetItem.mockRejectedValue(new Error('offline')) },
-  ])('reads $desc as no filters', async ({ arrange }) => {
+    { desc: 'nothing stored', arrange: () => {} },
+    { desc: 'corrupt JSON', arrange: () => window.localStorage.setItem(KUBERNETES_FILTERS_STORAGE_KEY, '{bad') },
+  ])('reads $desc as no filters', ({ arrange }) => {
     arrange();
 
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({});
+    const { result } = renderHook(() => useKubernetesFilters());
+
+    expect(result.current[0]).toStrictEqual({});
   });
 
-  it('serves the saved value to readers, bumps the version, and notifies subscribers until they unsubscribe', async () => {
-    const listener = jest.fn();
-    const unsubscribe = subscribeKubernetesFilters(listener);
-    expect(getKubernetesFiltersVersion()).toBe(0);
+  it('persists the normalized filters and updates every subscriber', () => {
+    const writer = renderHook(() => useKubernetesFilters());
+    const reader = renderHook(() => useKubernetesFilters());
 
-    await saveKubernetesFilters({ cluster: 'prod' });
+    act(() => {
+      writer.result.current[1]({
+        cluster: ' prod ',
+        namespaces: ['team-a', 'team-a', ' team-b ', ''],
+        nodes: [' node-1 ', 'node-1'],
+      });
+    });
 
-    expect(getKubernetesFiltersVersion()).toBe(1);
-    expect(listener).toHaveBeenCalledTimes(1);
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({ cluster: 'prod' });
-    // The save replaced the cached value; no read-back from storage.
-    expect(mockGetItem).not.toHaveBeenCalled();
-
-    unsubscribe();
-    await saveKubernetesFilters({ cluster: 'staging' });
-
-    expect(getKubernetesFiltersVersion()).toBe(2);
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the previous filters, version, and silence when persisting fails', async () => {
-    await saveKubernetesFilters({ cluster: 'prod' });
-    const listener = jest.fn();
-    subscribeKubernetesFilters(listener);
-    mockSetItem.mockRejectedValueOnce(new Error('quota exceeded'));
-
-    await expect(saveKubernetesFilters({ cluster: 'other' })).rejects.toThrow('quota exceeded');
-
-    expect(getKubernetesFiltersVersion()).toBe(1);
-    expect(listener).not.toHaveBeenCalled();
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({ cluster: 'prod' });
+    const expected = { cluster: 'prod', namespaces: ['team-a', 'team-b'], nodes: ['node-1'] };
+    expect(reader.result.current[0]).toStrictEqual(expected);
+    expect(window.localStorage.getItem(KUBERNETES_FILTERS_STORAGE_KEY)).toBe(JSON.stringify(expected));
   });
 });
