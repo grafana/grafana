@@ -32,7 +32,6 @@ jobs:
 
       - name: Check new direct Go search clients
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           SEMGREP_SEND_METRICS: 'off'
         shell: bash
         run: |
@@ -56,7 +55,9 @@ jobs:
           fi
           echo "Scanning ${#files[@]} files containing direct Go ResourceSearchRequest constructions"
 
+          base_sha=$(git rev-parse HEAD^1)
+          echo "Comparing against base commit $base_sha"
           semgrep scan --strict --error \
             --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
-            --baseline-commit "$BASE_SHA" \
+            --baseline-commit "$base_sha" \
             "${files[@]}"
