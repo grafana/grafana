@@ -20,7 +20,7 @@ labels:
 menuTitle: Configure
 title: Configure the Azure Monitor data source
 weight: 200
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Configure the Azure Monitor data source
@@ -612,7 +612,7 @@ provider "grafana" {
   auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
 }
 
-# For self-hosted Grafana
+# For self-managed Grafana
 # provider "grafana" {
 #   url  = "http://localhost:3000"
 #   auth = "<API_KEY_OR_SERVICE_ACCOUNT_TOKEN>"

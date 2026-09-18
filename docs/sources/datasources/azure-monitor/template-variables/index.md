@@ -23,7 +23,7 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor template variables
