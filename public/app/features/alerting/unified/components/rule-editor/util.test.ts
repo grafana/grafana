@@ -227,6 +227,10 @@ describe('rule-editor', () => {
     it('should not rewire refs with partial variable match', () => {
       expect(updateMathExpressionRefs('$A3 + $B', 'A', 'C')).toBe('$A3 + $B');
     });
+    it('should not throw for refIds containing regular expression metacharacters', () => {
+      expect(() => updateMathExpressionRefs('abs($A)sss)', 'A)sss', 'Bar')).not.toThrow();
+      expect(updateMathExpressionRefs('abs(${A)sss})', 'A)sss', 'Bar')).toBe('abs(${Bar})');
+    });
   });
 });
 
@@ -333,6 +337,39 @@ describe('getThresholdsForQueries', () => {
       const thresholds = getThresholdsForQueries([dataQuery, classicCondition], classicCondition.refId);
       expect(thresholds).toStrictEqual({});
     }).not.toThrowError();
+  });
+
+  it('should not throw if a condition has no evaluator', () => {
+    const [[dataQuery]] = createThresholdExample('gt');
+
+    const classicCondition = {
+      refId: 'B',
+      datasourceUid: '__expr__',
+      queryType: '',
+      model: {
+        refId: 'B',
+        type: 'classic_conditions',
+        datasource: ExpressionDatasourceRef,
+        conditions: [
+          {
+            type: 'query',
+            evaluator: undefined,
+            operator: {
+              type: 'and',
+            },
+            query: {
+              params: ['A'],
+            },
+            reducer: {
+              params: [],
+              type: 'last',
+            },
+          },
+        ],
+      },
+    };
+
+    expect(() => getThresholdsForQueries([dataQuery, classicCondition], classicCondition.refId)).not.toThrow();
   });
 
   it('should work for within_range', () => {

@@ -1,4 +1,4 @@
-import { xor } from 'lodash';
+import { escapeRegExp, xor } from 'lodash';
 
 import {
   type DataFrame,
@@ -76,7 +76,9 @@ export function queriesWithUpdatedReferences(
 }
 
 export function updateMathExpressionRefs(expression: string, previousRefId: string, newRefId: string): string {
-  const oldExpression = new RegExp('(\\$' + previousRefId + '\\b)|(\\${' + previousRefId + '})', 'gm');
+  // the refId is user input and can contain regular expression metacharacters, so it has to be escaped
+  const escapedRefId = escapeRegExp(previousRefId);
+  const oldExpression = new RegExp('(\\$' + escapedRefId + '\\b)|(\\${' + escapedRefId + '})', 'gm');
   const newExpression = '${' + newRefId + '}';
 
   return expression.replace(oldExpression, newExpression);
@@ -160,10 +162,10 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
 
     // if any of the conditions are a "range" we switch to an "area" threshold view and ignore single threshold values
     // the time series panel does not support both.
-    const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
+    const hasRangeThreshold = query.model.conditions?.some(isRangeCondition);
 
     query.model.conditions.forEach((condition) => {
-      const threshold = condition.evaluator.params;
+      const threshold = condition.evaluator?.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
       const refId = condition.query?.params?.[0] ?? query.model.expression;
@@ -345,10 +347,10 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
 
 function isRangeCondition(condition: ClassicCondition) {
   return (
-    condition.evaluator.type === EvalFunction.IsWithinRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
-    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded
+    condition.evaluator?.type === EvalFunction.IsWithinRange ||
+    condition.evaluator?.type === EvalFunction.IsOutsideRange ||
+    condition.evaluator?.type === EvalFunction.IsOutsideRangeIncluded ||
+    condition.evaluator?.type === EvalFunction.IsWithinRangeIncluded
   );
 }
 
