@@ -9,10 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana-app-sdk/k8s"
 )
 
 func priorityBackend(group, source string) Backend {
@@ -57,10 +58,10 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 		t.Helper()
 		backends, err := loader.Load(t.Context())
 		require.NoError(t, err)
-		var names []string
+		names := make([]string, len(backends))
 		var shared Backend
-		for _, backend := range backends {
-			names = append(names, backend.Group().Name)
+		for i, backend := range backends {
+			names[i] = backend.Group().Name
 			if backend.Group().Name == "shared" {
 				shared = backend
 			}
