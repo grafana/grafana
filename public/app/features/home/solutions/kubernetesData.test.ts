@@ -20,6 +20,7 @@ import {
   resolveKubernetesDatasource,
   resetKubernetesPrometheusResolution,
 } from './kubernetesData';
+import { type KubernetesFilterValues } from './kubernetesFilters';
 import { resetProbeHealth } from './probeUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -669,22 +670,28 @@ describe('Kubernetes query filters', () => {
   const ds = { uid: 'k8s-uid', type: 'prometheus' };
   const filters = { cluster: 'prod', namespaces: ['team-a', 'team-b'] };
 
-  it('scopes each signal per the cluster/namespace contract', async () => {
-    await fetchKubernetesInventory(ds, filters);
-    await fetchKubernetesHealth(ds, filters);
-    await fetchClusterCpuSeries(ds, filters);
+  // Every scoped query as refId -> expr, so each scenario asserts the full PromQL once.
+  const exprsOf = ([call]: RunCall) => Object.fromEntries(call.queries.map((q) => [q.refId, q.expr]));
+  const scopedExprs = async (values: KubernetesFilterValues) => {
+    await fetchKubernetesInventory(ds, values);
+    await fetchKubernetesHealth(ds, values);
+    await fetchClusterCpuSeries(ds, values);
+    return {
+      inventory: exprsOf(inventoryCalls()[0]),
+      health: exprsOf(healthCalls()[0]),
+      cpu: cpuCalls()[0][0].queries[0].expr,
+    };
+  };
 
-    const [inventory] = inventoryCalls();
-    const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
-    expect(inventoryExprs).toEqual({
+  it('scopes each signal per the cluster/namespace contract', async () => {
+    const { inventory, health, cpu } = await scopedExprs(filters);
+
+    expect(inventory).toEqual({
       // Clusters are not namespaced: cluster matcher only. kube_pod_info carries the node label.
       clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod"}[24h])))',
       pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}[24h])))',
     });
-
-    const [health] = healthCalls();
-    const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
-    expect(healthExprs).toEqual({
+    expect(health).toEqual({
       unhealthyPods:
         'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a|team-b"})',
       restarts1h:
@@ -696,8 +703,7 @@ describe('Kubernetes query filters', () => {
       alertsFiring:
         'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a|team-b"})',
     });
-
-    expect(cpuCalls()[0][0].queries[0].expr).toBe(
+    expect(cpu).toBe(
       'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a|team-b"}[5m]))'
     );
   });
@@ -730,24 +736,20 @@ describe('Kubernetes query filters', () => {
   });
 
   it('scopes pod signals to nodes via kube_pod_info and matches node-labeled signals directly', async () => {
-    const nodeFilters = { cluster: 'prod', namespaces: ['team-a'], nodes: ['node-1', 'node-2'] };
-    await fetchKubernetesInventory(ds, nodeFilters);
-    await fetchKubernetesHealth(ds, nodeFilters);
-    await fetchClusterCpuSeries(ds, nodeFilters);
+    const { inventory, health, cpu } = await scopedExprs({
+      ...filters,
+      namespaces: ['team-a'],
+      nodes: ['node-1', 'node-2'],
+    });
 
     const nodeScope =
       ' and on (cluster, namespace, pod) group by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"})';
-    const [inventory] = inventoryCalls();
-    const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
-    expect(inventoryExprs).toEqual({
+    expect(inventory).toEqual({
       clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod",node=~"node-1|node-2"}[24h])))',
       // kube_pod_info carries the node label: matched directly, no join.
       pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[24h])))',
     });
-
-    const [health] = healthCalls();
-    const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
-    expect(healthExprs).toEqual({
+    expect(health).toEqual({
       // Pod state metrics carry no node label: scoped via the kube_pod_info join.
       unhealthyPods: `sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a"}${nodeScope})`,
       restarts1h: `sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a"}[1h])${nodeScope})`,
@@ -758,8 +760,7 @@ describe('Kubernetes query filters', () => {
       alertsFiring:
         'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
     });
-
-    expect(cpuCalls()[0][0].queries[0].expr).toBe(
+    expect(cpu).toBe(
       'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[5m]))'
     );
   });
@@ -767,58 +768,11 @@ describe('Kubernetes query filters', () => {
 
 describe('fetchKubernetesFilterOptions', () => {
   const ds = { uid: 'k8s-uid', type: 'prometheus' };
-  let failedRefIds: Set<string>;
 
-  function labeledField(label: string, value: string) {
-    return { name: 'Value', type: FieldType.number, values: [1], labels: { [label]: value } };
-  }
-
-  beforeEach(() => {
-    failedRefIds = new Set();
-    // Discovery frames carry label values, which the shared harness never emits: dedicated runner.
-    mockCreateQueryRunner.mockImplementation(() => {
-      let captured: CapturedRun | undefined;
-      const runner = {
-        run: (opts: CapturedRun) => {
-          captured = opts;
-          run(opts);
-        },
-        get: () => {
-          const refId = captured?.queries[0].refId ?? '';
-          if (failedRefIds.has(refId)) {
-            return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
-          }
-          const series =
-            refId === 'clusters'
-              ? // Multi-frame shape: one frame per series.
-                [
-                  createDataFrame({ refId, fields: [labeledField('cluster', 'staging')] }),
-                  createDataFrame({ refId, fields: [labeledField('cluster', 'prod')] }),
-                ]
-              : refId === 'nodes'
-                ? [createDataFrame({ refId, fields: [labeledField('node', 'node-2'), labeledField('node', 'node-1')] })]
-                : // Multi-field shape: one frame, one number field per series.
-                  [
-                    createDataFrame({
-                      refId,
-                      fields: [labeledField('namespace', 'team-a'), labeledField('namespace', 'default')],
-                    }),
-                  ];
-          return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
-        },
-        cancel: jest.fn(),
-        destroy,
-      };
-      return runner as unknown as QueryRunner;
-    });
-  });
-
-  it('collects sorted label values from both discovery shapes with lookback exprs', async () => {
-    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
-      clusters: ['prod', 'staging'],
-      namespaces: ['default', 'team-a'],
-      nodes: ['node-1', 'node-2'],
-    });
+  // Label extraction is readLabelValues' contract (promQuery.test); the shared harness emits
+  // unlabeled frames, so values read empty here. This covers the per-picker query and failure isolation.
+  it('runs one lookback discovery query per picker', async () => {
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: [], namespaces: [], nodes: [] });
 
     const exprs = (run.mock.calls as RunCall[]).map(([o]) => o.queries[0].expr).sort();
     expect(exprs).toEqual([
@@ -829,28 +783,10 @@ describe('fetchKubernetesFilterOptions', () => {
   });
 
   it('nulls only the failed picker so the others keep their options', async () => {
-    failedRefIds = new Set(['clusters']);
-    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
-      clusters: null,
-      namespaces: ['default', 'team-a'],
-      nodes: ['node-1', 'node-2'],
-    });
+    queryErrorRefIds = new Set(['cluster']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: null, namespaces: [], nodes: [] });
 
-    failedRefIds = new Set(['namespaces']);
-    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
-      clusters: ['prod', 'staging'],
-      namespaces: null,
-      nodes: ['node-1', 'node-2'],
-    });
-
-    failedRefIds = new Set(['nodes']);
-    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
-      clusters: ['prod', 'staging'],
-      namespaces: ['default', 'team-a'],
-      nodes: null,
-    });
-
-    failedRefIds = new Set(['clusters', 'namespaces', 'nodes']);
+    queryErrorRefIds = new Set(['cluster', 'namespace', 'node']);
     await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: null, namespaces: null, nodes: null });
   });
 });

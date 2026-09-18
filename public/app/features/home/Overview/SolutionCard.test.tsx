@@ -181,45 +181,30 @@ describe('AvailableSolutionCard', () => {
 });
 
 describe('SolutionCard customize control', () => {
-  const Customize = ({ datasource }: { datasource: DataSourceInstanceListItem }) => (
-    <button type="button">Customize {datasource.name}</button>
+  // Shows the resolved datasource and the one it mounted for; a retained instance would keep reporting the first.
+  const Customize = ({ datasource }: { datasource: DataSourceInstanceListItem }) => {
+    const [mountedFor] = useState(datasource.uid);
+    return (
+      <button type="button">
+        Customize {datasource.name} (mounted for {mountedFor})
+      </button>
+    );
+  };
+  const card = (datasource: DataSourceInstanceListItem) => (
+    <SolutionCard
+      solution={stubSolution('kubernetes', { datasource: async () => datasource, customize: Customize })}
+      needsAttention={false}
+    />
   );
 
-  it("renders the solution's control once its datasource resolves", async () => {
-    const item = stubSolution('kubernetes', {
-      title: 'Kubernetes Monitoring',
-      datasource: async () => stubDatasource,
-      customize: Customize,
-    });
+  it('renders the control with the resolved datasource and remounts it when that datasource changes', async () => {
+    const { rerender } = render(card(stubDatasource));
+    expect(
+      await screen.findByRole('button', { name: 'Customize Prometheus (mounted for prometheus)' })
+    ).toBeInTheDocument();
 
-    render(<SolutionCard solution={item} needsAttention={false} />);
+    rerender(card({ ...stubDatasource, uid: 'other-uid', name: 'Other' }));
 
-    expect(await screen.findByRole('button', { name: 'Customize Prometheus' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
-  });
-
-  it('remounts the control when the datasource changes so per-datasource state never carries over', async () => {
-    // Captures the datasource it mounted for; a retained instance would keep reporting the first one.
-    const MountProbe = ({ datasource }: { datasource: DataSourceInstanceListItem }) => {
-      const [mountedFor] = useState(datasource.uid);
-      return <button type="button">Mounted for {mountedFor}</button>;
-    };
-    const { rerender } = render(
-      <SolutionCard
-        solution={stubSolution('kubernetes', { datasource: async () => stubDatasource, customize: MountProbe })}
-        needsAttention={false}
-      />
-    );
-    expect(await screen.findByRole('button', { name: 'Mounted for prometheus' })).toBeInTheDocument();
-
-    const other = { ...stubDatasource, uid: 'other-uid', name: 'Other' };
-    rerender(
-      <SolutionCard
-        solution={stubSolution('kubernetes', { datasource: async () => other, customize: MountProbe })}
-        needsAttention={false}
-      />
-    );
-
-    expect(await screen.findByRole('button', { name: 'Mounted for other-uid' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Customize Other (mounted for other-uid)' })).toBeInTheDocument();
   });
 });

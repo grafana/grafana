@@ -262,18 +262,15 @@ export interface KubernetesFilterOptions {
 export async function fetchKubernetesFilterOptions(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<KubernetesFilterOptions> {
-  const read = (refId: string, expr: string, label: string) =>
-    runInstantQueries({ [refId]: expr }, ds)
-      .then((frames) => readLabelValues(frames, refId, label))
+  // The label doubles as the refId.
+  const read = (label: string, expr: string) =>
+    runInstantQueries({ [label]: expr }, ds)
+      .then((frames) => readLabelValues(frames, label, label))
       .catch(() => null);
   const [clusters, namespaces, nodes] = await Promise.all([
-    read('clusters', `group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'cluster'),
-    read(
-      'namespaces',
-      `group by (namespace) (last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`,
-      'namespace'
-    ),
-    read('nodes', `group by (node) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'node'),
+    read('cluster', `group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`),
+    read('namespace', `group by (namespace) (last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`),
+    read('node', `group by (node) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`),
   ]);
   return { clusters, namespaces, nodes };
 }

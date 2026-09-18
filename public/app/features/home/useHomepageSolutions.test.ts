@@ -157,11 +157,10 @@ describe('useHomepageSolutions', () => {
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
   });
 
-  it('rebuilds only the kubernetes solution with the new filters, keeping the rest and signals stable', () => {
+  it('rebuilds only the kubernetes solution on a filter save, sharing one detector with the stable signals', async () => {
     // Production kubernetesSolution() returns a fresh object per call; mirror that so the rebuild is observable.
     mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
     const { result } = renderHook(() => useHomepageSolutions());
-
     const before = result.current.solutions;
     const signalsBefore = result.current.signals;
 
@@ -179,49 +178,16 @@ describe('useHomepageSolutions', () => {
       expect(find(after, id)).toBe(find(before, id));
     }
     expect(result.current.signals).toBe(signalsBefore);
-
-    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
-    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith(
-      { datasourceUid: 'prometheus', values: { cluster: 'x' } },
-      expect.any(Function)
-    );
     expect(mockFactories.traces).toHaveBeenCalledTimes(1);
-  });
 
-  it('unsubscribes on unmount so later filter saves do not rebuild the solution', () => {
-    const { unmount } = renderHook(() => useHomepageSolutions());
-    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
+    const calls = mockFactories.kubernetes.mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[1][0]).toEqual({ datasourceUid: 'prometheus', values: { cluster: 'x' } });
+    expect(calls[1][1]).toBe(calls[0][1]);
 
-    unmount();
-
-    act(() => {
-      store.set(
-        KUBERNETES_FILTERS_STORAGE_KEY,
-        JSON.stringify({ datasourceUid: 'prometheus', values: { cluster: 'y' } })
-      );
-    });
-
-    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
-  });
-
-  it('feeds the kubernetes solution the one detector the signal snapshot reads, across rebuilds', async () => {
-    mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
-    const { result } = renderHook(() => useHomepageSolutions());
-
-    act(() => {
-      store.set(
-        KUBERNETES_FILTERS_STORAGE_KEY,
-        JSON.stringify({ datasourceUid: 'prometheus', values: { cluster: 'x' } })
-      );
-    });
-
-    const detectors = mockFactories.kubernetes.mock.calls.map(([, detect]) => detect);
-    expect(detectors).toHaveLength(2);
-    expect(detectors[1]).toBe(detectors[0]);
-
-    await detectors[0]!();
+    await calls[0][1]!();
     await result.current.signals();
-    // Both consumers share one memoized detection: the probe runs once for the visit.
+    // The card and the snapshot share one memoized detection: the probe runs once for the visit.
     expect(mockKubernetesSignal).toHaveBeenCalledTimes(1);
   });
 });

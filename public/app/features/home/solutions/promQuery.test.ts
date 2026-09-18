@@ -106,23 +106,15 @@ describe('readLabelValues', () => {
     });
   }
 
-  it('collects sorted distinct values across multiple frames', () => {
-    const frames = [labeledFrame('ns', 'namespace', 'team-b'), labeledFrame('ns', 'namespace', 'default')];
-    expect(readLabelValues(frames, 'ns', 'namespace')).toEqual(['default', 'team-b']);
-  });
+  it('collects sorted distinct values of the label across frames and fields of the refId', () => {
+    const frames = [
+      labeledFrame('ns', 'namespace', 'team-b'),
+      labeledFrame('ns', 'namespace', 'team-a', 'default', 'team-a'),
+      labeledFrame('other', 'namespace', 'ignored'),
+      labeledFrame('ns', 'cluster', 'prod'),
+    ];
 
-  it('collects values from multiple number fields of one frame and collapses duplicates', () => {
-    const frames = [labeledFrame('ns', 'namespace', 'team-a', 'default', 'team-a')];
-    expect(readLabelValues(frames, 'ns', 'namespace')).toEqual(['default', 'team-a']);
-  });
-
-  it('ignores frames with a different refId', () => {
-    const frames = [labeledFrame('other', 'namespace', 'default'), labeledFrame('ns', 'namespace', 'team-a')];
-    expect(readLabelValues(frames, 'ns', 'namespace')).toEqual(['team-a']);
-  });
-
-  it('ignores fields missing the label and returns [] for empty input', () => {
-    expect(readLabelValues([labeledFrame('ns', 'cluster', 'prod')], 'ns', 'namespace')).toEqual([]);
+    expect(readLabelValues(frames, 'ns', 'namespace')).toEqual(['default', 'team-a', 'team-b']);
     expect(readLabelValues([], 'ns', 'namespace')).toEqual([]);
   });
 });
