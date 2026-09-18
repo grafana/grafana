@@ -110,19 +110,25 @@ func (m *ForwardHeadersMiddleware) applyHeaders(ctx context.Context, pCtx backen
 			continue
 		}
 		joined := joinHeaderValues(values)
+		// QueryData/QueryChunkedData/CheckHealth carry a plain string-keyed
+		// Headers map: the SDK's outbound HTTP client middleware only reads
+		// headers back out through GetHTTPHeaders, which recognizes the
+		// "http_"-prefixed keys SetHTTPHeader writes (plus a few special
+		// names). Writing t.Headers[canon] directly bypasses that and the
+		// header never reaches the plugin's downstream HTTP requests.
 		switch t := req.(type) {
 		case *backend.QueryDataRequest:
 			// Do not override headers Grafana's own middleware has already set.
-			if _, exists := t.Headers[canon]; !exists {
-				t.Headers[canon] = joined
+			if t.GetHTTPHeader(canon) == "" {
+				t.SetHTTPHeader(canon, joined)
 			}
 		case *backend.QueryChunkedDataRequest:
-			if _, exists := t.Headers[canon]; !exists {
-				t.Headers[canon] = joined
+			if t.GetHTTPHeader(canon) == "" {
+				t.SetHTTPHeader(canon, joined)
 			}
 		case *backend.CheckHealthRequest:
-			if _, exists := t.Headers[canon]; !exists {
-				t.Headers[canon] = joined
+			if t.GetHTTPHeader(canon) == "" {
+				t.SetHTTPHeader(canon, joined)
 			}
 		case *backend.CallResourceRequest:
 			if _, exists := t.Headers[canon]; !exists {
