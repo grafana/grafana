@@ -1505,7 +1505,7 @@ describe('TableNG', () => {
       expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
     });
 
-    it('omits pin controls', async () => {
+    it('pins and unpins a column alongside the configured frozen columns', async () => {
       const { container } = render(
         <TableNG
           enableVirtualization={false}
@@ -1520,12 +1520,17 @@ describe('TableNG', () => {
       await userEvent.click(screen.getByLabelText('Column options for Column C'));
       await screen.findByText('Hide column');
 
-      expect(screen.queryByText('Pin column left')).not.toBeInTheDocument();
-      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+      await userEvent.click(screen.getByText('Pin column left'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C', 'Column B']);
 
       const headers = container.querySelectorAll('[role="columnheader"]');
       expect(headers[0]).toHaveClass('rdg-cell-frozen');
-      expect(headers[1]).not.toHaveClass('rdg-cell-frozen');
+      expect(headers[1]).toHaveClass('rdg-cell-frozen');
+      expect(headers[2]).not.toHaveClass('rdg-cell-frozen');
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Unpin column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C', 'Column B']);
+      expect(container.querySelectorAll('[role="columnheader"]')[1]).not.toHaveClass('rdg-cell-frozen');
     });
   });
 

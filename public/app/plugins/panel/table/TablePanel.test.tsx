@@ -131,7 +131,7 @@ it('retains saved-sort callbacks with experimental features disabled', async () 
 });
 
 it.each(['hide-first', 'filter-first'])(
-  'composes %s table controls in the Scenes pipeline and keeps the dashboard clean',
+  'composes %s filtering, pinning and hiding in Scenes without saving panel options',
   async (order) => {
     setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
     const source = new SceneDataNode({
@@ -186,6 +186,9 @@ it.each(['hide-first', 'filter-first'])(
       await user.click(await screen.findByText('Filter values'));
       await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '2');
       await user.click(screen.getByRole('button', { name: 'Apply' }));
+      await user.click(screen.getByRole('button', { name: 'Pin Value' }));
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Value'));
+      expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen');
       if (order === 'filter-first') {
         await hide('Extra');
       }
@@ -196,6 +199,7 @@ it.each(['hide-first', 'filter-first'])(
         ])
       );
       expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['three', 'two']);
+      expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
       expect(api.get().map((config) => config.id)).toEqual(['filterByValue', 'organize']);
       expect(api.getSourceSeries()[0].fields[1].values).toEqual([3, 1, 2]);
       expect(transformer.state.transformations).toEqual([]);
@@ -206,12 +210,25 @@ it.each(['hide-first', 'filter-first'])(
       await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['three', 'one', 'two']));
       expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['three', 'one', 'two']);
 
+      await user.click(screen.getByRole('checkbox', { name: 'Show Value' }));
+      await waitFor(() =>
+        expect(transformer.state.data?.series[0].fields.map((f) => f.name)).toEqual(['Value', 'Label'])
+      );
+      expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen');
+      await user.click(screen.getByRole('button', { name: 'Unpin Value' }));
+      await waitFor(() =>
+        expect(transformer.state.data?.series[0].fields.map((f) => f.name)).toEqual(['Value', 'Label'])
+      );
+      expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
+      expect(props.onOptionsChange).not.toHaveBeenCalled();
+      expect(persistedEvents).toEqual([]);
+
       const previous = api.get();
       act(() => api.set([...previous, { id: 'limit', options: { limitField: 1 } }]));
-      await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['three']));
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['three']));
       expect(api.get().map((config) => config.id)).toEqual(['organize', 'limit']);
       act(() => api.set(previous));
-      await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['three', 'one', 'two']));
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['three', 'one', 'two']));
     } finally {
       rendered.unmount();
       subscription.unsubscribe();
@@ -219,3 +236,104 @@ it.each(['hide-first', 'filter-first'])(
     }
   }
 );
+
+it('restores pin-driven organize state in a fresh panel independently of frozen-column options', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const mount = (serialized = '[]', frozenColumns = 0) => {
+    const source = new SceneDataNode({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'Label', type: FieldType.string, values: ['one'] },
+              { name: 'Value', type: FieldType.number, values: [1] },
+              { name: 'Extra', type: FieldType.string, values: ['a'] },
+            ],
+          }),
+        ],
+      },
+    });
+    const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
+    const panel = new VizPanel({ pluginId: 'table', $data: transformer });
+    const api = panel.getRuntimeTransformations();
+    api.set(JSON.parse(serialized));
+    const deactivate = transformer.activate();
+    const props = getPanelProps<TableOptions>(
+      { ...options, showColumnsSidebar: true, frozenColumns: { left: frozenColumns } },
+      { fieldConfig, width: 800, height: 600 }
+    );
+    function LiveTable() {
+      const { data } = transformer.useState();
+      if (!data) {
+        return null;
+      }
+      const series = applyFieldOverrides({
+        data: data.series,
+        fieldConfig,
+        theme: createTheme(),
+        replaceVariables: (s) => s,
+      });
+      return <TablePanel {...props} data={{ ...data, series }} />;
+    }
+    const rendered = render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }}>
+          <LiveTable />
+        </PanelContextProvider>
+      </OpenFeatureProvider>
+    );
+    let disposed = false;
+    return {
+      api,
+      transformer,
+      props,
+      dispose: () => {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        rendered.unmount();
+        deactivate();
+      },
+    };
+  };
+  const user = userEvent.setup();
+  let view = mount();
+  try {
+    await user.click(await screen.findByRole('button', { name: 'Pin Value' }));
+    const serialized = JSON.stringify(view.api.get());
+    expect(JSON.parse(serialized)).toEqual([
+      {
+        id: 'organize',
+        options: { indexByName: { Value: 0, Label: 1, Extra: 2 }, excludeByName: {}, renameByName: {} },
+      },
+    ]);
+    await waitFor(() =>
+      expect(view.transformer.state.data?.series[0].fields.map((field) => field.name)).toEqual([
+        'Value',
+        'Label',
+        'Extra',
+      ])
+    );
+    expect(view.props.onOptionsChange).not.toHaveBeenCalled();
+    view.dispose();
+
+    // Restore only transformations: order survives, but freezing belongs to a separate options layer.
+    view = mount(serialized);
+    await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('Value'));
+    expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
+    expect(view.api.getSourceSeries()[0].fields.map((field) => field.name)).toEqual(['Label', 'Value', 'Extra']);
+    view.dispose();
+
+    view = mount(serialized, 1);
+    await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen'));
+    await user.click(screen.getByRole('button', { name: 'Unpin Value' }));
+    expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
+    expect(JSON.stringify(view.api.get())).toBe(serialized);
+    expect(view.props.onOptionsChange).not.toHaveBeenCalled();
+  } finally {
+    view.dispose();
+  }
+});

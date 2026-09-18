@@ -47,3 +47,14 @@ The development dashboard **Panel Tests - Table - Ad-hoc filters and sorting**
 America/New_York match 31 rows. Development servers remain stopped.
 
 Relative dates, nonlinear histogram bins, and URL persistence remain future work.
+
+## Column pinning
+
+Pinning writes column order to the ad-hoc organize transformation. Frozen column
+count is derived separately from viewer-local pinned identities, seeded by the
+configured panel option. Hiding a pinned column does not freeze its replacement;
+unpinning retains the organized order behind any remaining pinned columns.
+
+Restoring serialized organize configs restores column order without pin state.
+Ephemeral frozen-column options and URL persistence remain separate work.
+Standalone tables retain their existing local column-order handling.
