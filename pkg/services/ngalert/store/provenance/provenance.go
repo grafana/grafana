@@ -1,4 +1,4 @@
-package store
+package provenance
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func (pr provenanceRecord) TableName() string {
 }
 
 // GetProvenance gets the provenance status for a provisionable object.
-func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error) {
+func (st ProvenanceStore) GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error) {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 
@@ -49,7 +49,7 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable, org
 }
 
 // GetProvenance gets the provenance status for a provisionable object.
-func (st DBstore) GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error) {
+func (st ProvenanceStore) GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error) {
 	resultMap := make(map[string]models.Provenance)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		filter := "record_type = ? AND org_id = ?"
@@ -66,7 +66,7 @@ func (st DBstore) GetProvenances(ctx context.Context, org int64, resourceType st
 }
 
 // GetProvenancesByUIDs gets the provenance status for specific UIDs.
-func (st DBstore) GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
+func (st ProvenanceStore) GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
 	if len(uids) == 0 {
 		return map[string]models.Provenance{}, nil
 	}
@@ -90,7 +90,7 @@ func (st DBstore) GetProvenancesByUIDs(ctx context.Context, org int64, resourceT
 }
 
 // SetProvenance changes the provenance status for a provisionable object.
-func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
+func (st ProvenanceStore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 
@@ -124,7 +124,7 @@ func managerForProvenanceWrite(stored utils.ManagerProperties, p models.Provenan
 	return models.ProvenanceToManagerProperties(p)
 }
 
-func (st DBstore) setProvenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance) error {
+func (st ProvenanceStore) setProvenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance) error {
 	// Read any existing manager so a legacy write does not clobber a stored
 	// specific manager (e.g. terraform with an identity) with a coarse classic one.
 	stored, err := st.readStoredManager(sess, recordKey, recordType, org)
@@ -139,7 +139,7 @@ func (st DBstore) setProvenanceUpsert(sess *db.Session, recordKey, recordType st
 // statement. It performs no reads, so it is safe to call from the locking path
 // (setProvenanceWithLocking) where an extra intra-transaction SELECT after a
 // FOR UPDATE gap lock would reintroduce MySQL insert-intention deadlocks.
-func (st DBstore) provenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance, mp utils.ManagerProperties) error {
+func (st ProvenanceStore) provenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance, mp utils.ManagerProperties) error {
 	upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 		provenanceRecord{}.TableName(),
 		[]string{"record_key", "record_type", "org_id"},
@@ -160,7 +160,7 @@ func (st DBstore) provenanceUpsert(sess *db.Session, recordKey, recordType strin
 	return nil
 }
 
-func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance) error {
+func (st ProvenanceStore) setProvenanceWithLocking(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance) error {
 	// Check if the record exists with FOR UPDATE lock.
 	// If it does, we just update, otherwise we upsert the record.
 	// This is done to avoid deadlocks that can occur in MySQL when multiple transactions try to
@@ -208,7 +208,7 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 
 // readStoredManager returns the ManagerProperties currently persisted for a
 // record, or the zero (unknown) value if no row exists.
-func (st DBstore) readStoredManager(sess *db.Session, recordKey, recordType string, org int64) (utils.ManagerProperties, error) {
+func (st ProvenanceStore) readStoredManager(sess *db.Session, recordKey, recordType string, org int64) (utils.ManagerProperties, error) {
 	var record provenanceRecord
 	found, err := sess.Table(provenanceRecord{}).
 		Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
@@ -237,7 +237,7 @@ func managerFromRecord(record provenanceRecord) utils.ManagerProperties {
 }
 
 // DeleteProvenance deletes the provenance record from the table
-func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
+func (st ProvenanceStore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// Explicit Where+Delete, not sess.Delete(&provenanceRecord{...}): xorm's struct-based
 		// Delete only conditions on non-zero fields, so a resource with ResourceID() == ""
@@ -253,7 +253,7 @@ func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable, 
 // GetManagerProperties returns the ManagerProperties for a provisionable object.
 // For rows written by legacy code (manager_kind is empty), it falls back to
 // deriving ManagerProperties from the provenance column.
-func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error) {
+func (st ProvenanceStore) GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error) {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 
@@ -295,7 +295,7 @@ func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionab
 }
 
 // GetAllManagerProperties returns all manager properties for the given org and resource type
-func (st DBstore) GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+func (st ProvenanceStore) GetAllManagerProperties(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
 	resultMap := make(map[string]utils.ManagerProperties)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var records []provenanceRecord
@@ -327,7 +327,7 @@ func (st DBstore) GetAllManagerProperties(ctx context.Context, org int64, resour
 
 // SetManagerProperties stores ManagerProperties for a provisionable object.
 // It also derives and stores the legacy provenance value for backwards compatibility.
-func (st DBstore) SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error {
+func (st ProvenanceStore) SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error {
 	recordType := o.ResourceType()
 	recordKey := o.ResourceID()
 	p := models.ManagerPropertiesToProvenance(m)
@@ -341,7 +341,7 @@ func (st DBstore) SetManagerProperties(ctx context.Context, o models.Provisionab
 	})
 }
 
-func (st DBstore) setManagerPropertiesUpsert(sess *db.Session, recordKey, recordType string, org int64, m utils.ManagerProperties, p models.Provenance) error {
+func (st ProvenanceStore) setManagerPropertiesUpsert(sess *db.Session, recordKey, recordType string, org int64, m utils.ManagerProperties, p models.Provenance) error {
 	upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 		provenanceRecord{}.TableName(),
 		[]string{"record_key", "record_type", "org_id"},
@@ -363,7 +363,7 @@ func (st DBstore) setManagerPropertiesUpsert(sess *db.Session, recordKey, record
 	return nil
 }
 
-func (st DBstore) setManagerPropertiesWithLocking(sess *db.Session, recordKey, recordType string, org int64, m utils.ManagerProperties, p models.Provenance) error {
+func (st ProvenanceStore) setManagerPropertiesWithLocking(sess *db.Session, recordKey, recordType string, org int64, m utils.ManagerProperties, p models.Provenance) error {
 	exists, err := sess.Table(provenanceRecord{}).
 		Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
 		ForUpdate().
