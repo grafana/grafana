@@ -5,10 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 // alertRuleStore is the subset of the rule store used by the consumer.
+//
+// Source: pkg/services/ngalert/store/rules/persist.go (RuleQuerier, RuleWriter)
 type alertRuleStore interface {
 	ListAlertRules(ctx context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error
@@ -19,7 +21,7 @@ type AlertRuleFolderConsumer struct {
 	store alertRuleStore
 }
 
-func ProvideAlertRuleFolderConsumer(store *store.DBstore) *AlertRuleFolderConsumer {
+func ProvideAlertRuleFolderConsumer(store *rulestore.RuleStore) *AlertRuleFolderConsumer {
 	return &AlertRuleFolderConsumer{store: store}
 }
 
