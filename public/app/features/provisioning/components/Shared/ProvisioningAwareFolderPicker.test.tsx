@@ -143,16 +143,16 @@ describe('ProvisioningAwareFolderPicker', () => {
       expect(screen.getByTestId('filtered-uids')).toHaveTextContent('["active-repo-folder"]');
     });
 
-    it('should exclude provisioned folders for non-provisioned context', () => {
+    it('should show only local folders for local resources', () => {
       setup({ repoName: undefined });
-      expect(screen.getByTestId('exclude-uids')).toHaveTextContent('["repo1","repo2","repo3"]');
+
+      expect(screen.getByTestId('filtered-uids')).toHaveTextContent('["unmanaged-folder"]');
     });
 
-    it('should merge excludeUIDs', () => {
+    it('should pass caller exclusions through for local resources', () => {
       setup({ repoName: undefined, excludeUIDs: ['custom1'] });
 
-      const excludeUIDs = JSON.parse(screen.getByTestId('exclude-uids').textContent || '[]');
-      expect(excludeUIDs).toEqual(['repo1', 'repo2', 'repo3', 'custom1']);
+      expect(screen.getByTestId('exclude-uids')).toHaveTextContent('["custom1"]');
     });
 
     it('should preserve caller exclusions when all folders are shown', () => {

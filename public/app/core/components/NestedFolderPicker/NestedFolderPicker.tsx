@@ -255,8 +255,9 @@ export function NestedFolderPicker({
         flatTree = filterRootItem(flatTree);
       }
 
-      // Only show team folders when browsing the full tree (no rootFolderUID scope)
-      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
+      // Team and starred sections are shortcuts into the unscoped tree, so any scope drops them
+      const isScoped = rootFolderUID !== undefined || folderFilter !== undefined;
+      const fullTree = isScoped ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       return filterItems(fullTree, excludeUIDs, folderFilter);
     } else {
       flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
@@ -305,17 +306,15 @@ export function NestedFolderPicker({
   // A custom root row is not a stored folder, so its label and badge come from the row itself.
   const selectedRootItem =
     rootFolderItem?.item.kind === 'folder' && value === rootFolderItem.item.uid ? rootFolderItem.item : undefined;
-  let label = getSelectedFolderResult.data?.title;
-  if (value === '') {
-    // An empty row title falls back to the default label.
-    label = selectedRootItem?.title || t('browse-dashboards.folder-picker.root-title', 'Dashboards');
-  }
+  const selectedFolder = selectedRootItem ?? getSelectedFolderResult.data;
+  const label =
+    selectedFolder?.title || (value === '' ? t('browse-dashboards.folder-picker.root-title', 'Dashboards') : undefined);
 
   // Display the folder name and provisioning status when the picker is closed
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={selectedRootItem ?? getSelectedFolderResult.data} canEdit={permission === 'edit'} />
+      <FolderRepo folder={selectedFolder} canEdit={permission === 'edit'} />
     </Stack>
   ) : (
     ''

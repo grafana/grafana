@@ -231,6 +231,7 @@ describe('NestedFolderPicker', () => {
       title: 'Infra dashboards',
       managedBy: ManagerKind.Repo,
       managerId: 'infra-dashboards',
+      uid: '',
     });
     const ownedFolder = {
       isOpen: false,
@@ -298,6 +299,7 @@ describe('NestedFolderPicker', () => {
       title: 'Infra dashboards',
       managedBy: ManagerKind.Repo,
       managerId: 'infra-dashboards',
+      uid: '',
     });
 
     render(<NestedFolderPicker value="" rootFolderItem={rootFolderItem} onChange={mockOnChange} />);

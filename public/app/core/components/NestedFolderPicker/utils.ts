@@ -18,17 +18,17 @@ export const getCustomRootFolderItem = ({
   managerId,
   uid,
 }: {
-  title?: string;
+  title: string;
   managedBy?: ManagerKind;
   managerId?: string;
-  uid?: string;
+  uid: string;
 }): DashboardsTreeItem => ({
   isOpen: true,
   level: 0,
   item: {
     kind: 'folder' as const,
-    title: title || '',
-    uid: uid || '',
+    title,
+    uid,
     managedBy,
     managerId,
   },
