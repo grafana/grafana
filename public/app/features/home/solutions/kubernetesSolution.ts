@@ -33,25 +33,25 @@ async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): 
 
 function buildHealthRows(health: KubernetesHealth): string[] {
   const rows: string[] = [];
-  if (health.unhealthyPods !== null && health.unhealthyPods > 0) {
+  if (health.pendingPods > 0) {
     rows.push(
-      t('home.solutions.kubernetes.health-pods', '', {
-        count: Math.ceil(health.unhealthyPods),
-        defaultValue_one: '{{count}} pod pending or failed',
-        defaultValue_other: '{{count}} pods pending or failed',
+      t('home.solutions.kubernetes.health-pending', '', {
+        count: Math.ceil(health.pendingPods),
+        defaultValue_one: '{{count}} pod stuck pending',
+        defaultValue_other: '{{count}} pods stuck pending',
       })
     );
   }
-  if (health.restarts1h !== null && health.restarts1h > 0) {
+  if (health.crashLoopingPods > 0) {
     rows.push(
-      t('home.solutions.kubernetes.health-restarts', '', {
-        count: Math.ceil(health.restarts1h),
-        defaultValue_one: '{{count}} restart in the last hour',
-        defaultValue_other: '{{count}} restarts in the last hour',
+      t('home.solutions.kubernetes.health-crashloop', '', {
+        count: Math.ceil(health.crashLoopingPods),
+        defaultValue_one: '{{count}} pod crash looping',
+        defaultValue_other: '{{count}} pods crash looping',
       })
     );
   }
-  if (health.notReadyNodes !== null && health.notReadyNodes > 0) {
+  if (health.notReadyNodes > 0) {
     rows.push(
       t('home.solutions.kubernetes.health-nodes', '', {
         count: Math.ceil(health.notReadyNodes),
@@ -96,12 +96,12 @@ export function kubernetesSolution(
   });
   const alert = memoize(async () => {
     const status = await health();
-    if (!status || hasHealthProblems(status) !== true) {
+    if (!status || !hasHealthProblems(status)) {
       return null;
     }
 
     const healthRows = buildHealthRows(status);
-    const alertsFiring = status.alertsFiring ?? 0;
+    const alertsFiring = status.alertsFiring;
     return {
       primary:
         alertsFiring > 0
@@ -119,7 +119,7 @@ export function kubernetesSolution(
   const signal = async () => (await detect()).status;
   const needsAttention = async () => {
     const status = await health();
-    return status !== null && hasHealthProblems(status) === true;
+    return status !== null && hasHealthProblems(status);
   };
 
   return {

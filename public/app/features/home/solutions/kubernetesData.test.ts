@@ -114,7 +114,7 @@ beforeEach(() => {
       },
       get: () => {
         const uid = captured?.datasource.uid ?? '';
-        const isProbe = captured?.queries.some((q) => q.refId === 'namespaces') ?? false;
+        const isProbe = captured?.queries.some((q) => q.refId === 'probe') ?? false;
         if (isProbe) {
           probeAttempts[uid] = (probeAttempts[uid] ?? 0) + 1;
           if (probeHangUids.has(uid)) {
@@ -139,7 +139,7 @@ beforeEach(() => {
         }
         let series: DataFrame[] = [];
         if (isProbe && count > 0) {
-          series = [numberFrame('namespaces', [count])];
+          series = [numberFrame('probe', [count])];
         } else if (!isProbe && count > 0 && captured) {
           // Inventory/health batches: answer each refId so positive tests assert counts.
           series = captured.queries.map((q) => {
@@ -159,7 +159,7 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 type RunCall = [CapturedRun];
-const probeCalls = () => (run.mock.calls as RunCall[]).filter(([o]) => o.queries[0].refId === 'namespaces');
+const probeCalls = () => (run.mock.calls as RunCall[]).filter(([o]) => o.queries[0].refId === 'probe');
 const inventoryCalls = () =>
   (run.mock.calls as RunCall[]).filter(([o]) => o.queries.some((q) => q.refId === 'clusters'));
 const healthCalls = () =>
@@ -194,37 +194,32 @@ describe('Kubernetes Prometheus resolution', () => {
     const [inventory] = inventoryCalls();
     const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
     expect(inventoryExprs).toEqual({
-      clusters: 'count(group by (cluster) (last_over_time(kube_node_info[24h])))',
-      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[24h])))',
+      clusters: 'count(group by (cluster) (kube_node_info{cluster!=""}))',
+      // Running|Pending only, deduplicated per pod: the population the Kubernetes Monitoring app counts.
+      pods: 'count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster!="",phase=~"Running|Pending"}) == 1)',
     });
 
     const [health] = healthCalls();
     const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
     expect(healthExprs).toEqual({
-      unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
-      restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
-      notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
+      // Pending now and 10m ago, so a pod mid-scheduling never counts. Every population demands
+      // the cluster label the probe gated on.
+      pendingPods:
+        'count(max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster!=""}) == 1 and max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster!=""} offset 10m) == 1)',
+      crashLoopingPods:
+        'count(max by (cluster, namespace, pod) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff",cluster!=""}) == 1)',
+      notReadyNodes:
+        'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster!=""}) == 1)',
+      // The app's alert-name allowlist, so the count matches its alerts page.
       alertsFiring:
-        'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""} or GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})',
     });
 
     const [probe] = probeCalls();
-    expect(probe[0].queries[0].expr).toBe('count(last_over_time(kube_namespace_status_phase[24h]))');
+    expect(probe[0].queries[0].expr).toBe('count(last_over_time(kube_node_info{cluster!=""}[24h]))');
   });
 
-  it('rounds fractional restart increase() noise so phantom restarts never surface', async () => {
-    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
-    dataByUid = { 'k8s-uid': 2 };
-    valuesByRefId = { restarts1h: 0.0003 };
-
-    const datasource = await resolveRequiredDatasource();
-    expect((await fetchKubernetesHealth(datasource, {})).restarts1h).toBe(0);
-
-    valuesByRefId = { restarts1h: 0.98 };
-    expect((await fetchKubernetesHealth(datasource, {})).restarts1h).toBe(1);
-  });
-
-  it('skips a default datasource without namespace data for a sibling that has it', async () => {
+  it('skips a default datasource without node data for a sibling that has it', async () => {
     setDataSources([
       { uid: 'default-uid', name: 'default-prom', isDefault: true },
       { uid: 'team-uid', name: 'team-prom' },
@@ -256,7 +251,7 @@ describe('Kubernetes Prometheus resolution', () => {
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
     expect(inventory.clusters).toBe(1);
-    // The unhealthy datasource is dropped before the namespace probe ever runs.
+    // The unhealthy datasource is dropped before the node probe ever runs.
     expect(probeCalls().map(([o]) => o.datasource.uid)).toEqual(['team-uid']);
   });
 
@@ -581,7 +576,7 @@ describe('Kubernetes Prometheus resolution', () => {
       const [health] = healthCalls();
       const alertsExpr = health[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
       expect(alertsExpr).toBe(
-        'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""} or MY_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""})'
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""} or MY_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})'
       );
     } finally {
       config.unifiedAlerting.stateHistory = original;
@@ -602,14 +597,14 @@ describe('Kubernetes Prometheus resolution', () => {
       expect(ashCalls[0][0].queries).toEqual([
         {
           refId: 'grafanaAlertsFiring',
-          expr: 'count(GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""})',
+          expr: 'count(GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})',
           instant: true,
           range: false,
         },
       ]);
       const [k8sHealth] = healthCalls();
       const alertsExpr = k8sHealth[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
-      expect(alertsExpr).toBe('count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster!=""})');
+      expect(alertsExpr).toBe('count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster!=""})');
       expect(alertsExpr).not.toContain('GRAFANA_ALERTS');
       expect(health.alertsFiring).toBe(3);
     } finally {
@@ -687,21 +682,21 @@ describe('Kubernetes query filters', () => {
     const { inventory, health, cpu } = await scopedExprs(filters);
 
     expect(inventory).toEqual({
-      // Clusters are not namespaced: cluster matcher only. kube_pod_info carries the node label.
-      clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod"}[24h])))',
-      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}[24h])))',
+      // Clusters are not namespaced: cluster matcher only. A selected cluster replaces the cluster!="" guard.
+      clusters: 'count(group by (cluster) (kube_node_info{cluster="prod"}))',
+      pods: 'count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster="prod",phase=~"Running|Pending",namespace=~"team-a|team-b"}) == 1)',
     });
     expect(health).toEqual({
-      unhealthyPods:
-        'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a|team-b"})',
-      restarts1h:
-        'sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a|team-b"}[1h]))',
+      pendingPods:
+        'count(max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster="prod",namespace=~"team-a|team-b"}) == 1 and max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster="prod",namespace=~"team-a|team-b"} offset 10m) == 1)',
+      crashLoopingPods:
+        'count(max by (cluster, namespace, pod) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff",cluster="prod",namespace=~"team-a|team-b"}) == 1)',
       // Namespace-blind node readiness is scoped to nodes hosting the selected namespaces' pods.
       notReadyNodes:
-        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"} and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}))',
+        'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"}) == 1 and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}))',
       // Strict matching: alerts without a selected namespace label are dropped.
       alertsFiring:
-        'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a|team-b"})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"})',
     });
     expect(cpu).toBe(
       'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a|team-b"}[5m]))'
@@ -717,7 +712,7 @@ describe('Kubernetes query filters', () => {
       const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
       expect(ashCalls).toHaveLength(1);
       expect(ashCalls[0][0].queries[0].expr).toBe(
-        'count(GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a|team-b"})'
+        'count(GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a|team-b"})'
       );
     } finally {
       config.unifiedAlerting.stateHistory = original;
@@ -745,20 +740,19 @@ describe('Kubernetes query filters', () => {
     const nodeScope =
       ' and on (cluster, namespace, pod) group by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"})';
     expect(inventory).toEqual({
-      clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod",node=~"node-1|node-2"}[24h])))',
-      // kube_pod_info carries the node label: matched directly, no join.
-      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[24h])))',
+      clusters: 'count(group by (cluster) (kube_node_info{cluster="prod",node=~"node-1|node-2"}))',
+      // Pod state metrics carry no node label: scoped via the kube_pod_info join.
+      pods: `count(max by (cluster, namespace, pod) (kube_pod_status_phase{cluster="prod",phase=~"Running|Pending",namespace=~"team-a"}) == 1${nodeScope})`,
     });
     expect(health).toEqual({
-      // Pod state metrics carry no node label: scoped via the kube_pod_info join.
-      unhealthyPods: `sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a"}${nodeScope})`,
-      restarts1h: `sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a"}[1h])${nodeScope})`,
+      pendingPods: `count(max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster="prod",namespace=~"team-a"}) == 1 and max by (cluster, namespace, pod) (kube_pod_status_phase{phase="Pending",cluster="prod",namespace=~"team-a"} offset 10m) == 1${nodeScope})`,
+      crashLoopingPods: `count(max by (cluster, namespace, pod) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff",cluster="prod",namespace=~"team-a"}) == 1${nodeScope})`,
       // Node readiness intersects the node filter with nodes hosting the selected namespaces.
       notReadyNodes:
-        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"} and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}))',
+        'count(max by (cluster, node) (kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"}) == 1 and on (cluster, node) group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}))',
       // Strict matching: alerts must carry a selected namespace and node label.
       alertsFiring:
-        'count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
+        'count(ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing",alertname=~"(Kube.*|CPUThrottlingHigh)",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
     });
     expect(cpu).toBe(
       'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[5m]))'
@@ -771,14 +765,14 @@ describe('fetchKubernetesFilterOptions', () => {
 
   // Label extraction is readLabelValues' contract (promQuery.test); the shared harness emits
   // unlabeled frames, so values read empty here. This covers the per-picker query and failure isolation.
-  it('runs one lookback discovery query per picker', async () => {
+  it('runs one instant discovery query per picker', async () => {
     await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: [], namespaces: [], nodes: [] });
 
     const exprs = (run.mock.calls as RunCall[]).map(([o]) => o.queries[0].expr).sort();
     expect(exprs).toEqual([
-      'group by (cluster) (last_over_time(kube_node_info[24h]))',
-      'group by (namespace) (last_over_time(kube_namespace_status_phase[24h]))',
-      'group by (node) (last_over_time(kube_node_info[24h]))',
+      'group by (cluster) (kube_node_info{cluster!=""})',
+      'group by (namespace) (kube_namespace_status_phase{cluster!=""})',
+      'group by (node) (kube_node_info{cluster!=""})',
     ]);
   });
 
