@@ -322,8 +322,10 @@ func NewValidationError(field, value, msg string) error {
 
 var errorMappingLog = log.New("resource-error-mapping")
 
-// Reasons disambiguate HTTP statuses shared by multiple gRPC codes, notably
-// Conflict and AlreadyExists. Without a reason, preserve the HTTP mapping.
+// grpcCodeFromErrorResult returns a grpc status code based on the ErrorResult. If no ErrorResult is given "OK" is
+// returned. ErrorResult reason takes priority over the embedded http code due to a generally lossy http to grpc code
+// conversion.
+// A non nil ErrorResult will never return "OK".
 func grpcCodeFromErrorResult(res *resourcepb.ErrorResult) grpccodes.Code {
 	if res == nil {
 		return grpccodes.OK
@@ -339,6 +341,7 @@ func grpcCodeFromErrorResult(res *resourcepb.ErrorResult) grpccodes.Code {
 	switch httpCode {
 	case http.StatusOK:
 		// An embedded error must not be labeled as a success.
+		errorMappingLog.Warn("ErrorResult is non nil with a 200 OK http code", "reason", reason)
 		return grpccodes.Internal
 	case http.StatusBadRequest, http.StatusRequestEntityTooLarge:
 		return grpccodes.InvalidArgument
