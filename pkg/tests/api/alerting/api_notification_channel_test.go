@@ -40,7 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -167,11 +167,11 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 
 	{
 		// Create rules that will fire as quickly as possible
-		originalFunction := store.GenerateNewAlertRuleUID
+		originalFunction := rulestore.GenerateNewAlertRuleUID
 		t.Cleanup(func() {
-			store.GenerateNewAlertRuleUID = originalFunction
+			rulestore.GenerateNewAlertRuleUID = originalFunction
 		})
-		store.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
+		rulestore.GenerateNewAlertRuleUID = func(_ *db.Session, _ int64, ruleTitle string) (string, error) {
 			return "UID_" + ruleTitle, nil
 		}
 
