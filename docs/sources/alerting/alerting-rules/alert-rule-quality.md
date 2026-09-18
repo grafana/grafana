@@ -1,11 +1,41 @@
 ---
-title: Improve alert rule quality
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alert-rule-quality/
 description: Configure an alert rule quality policy, review findings, and optionally enforce annotation and label requirements for Grafana-managed alert rules.
+keywords:
+  - alerting
+  - annotations
+  - enforcement
+  - grafana
+  - labels
+  - quality
 labels:
   products:
     - enterprise
     - cloud
+title: Improve alert rule quality
+weight: 600
 draft: true
+refs:
+  configure-rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/
+  labels-and-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+  terraform-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/
+  http-api-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
 ---
 
 <!--
@@ -28,14 +58,14 @@ With alert rule quality in Grafana, you can:
 
 ## Before you begin
 
-Before you begin, check that you have the following permissions in your Grafana Cloud stack:
+Before you begin, check that you have the following permissions in your Grafana organization:
 
 - **Rule access:** Have permission to view the Grafana-managed alert rules you want to assess.
 - **Policy permissions:** To configure the policy, have the Admin role in your organization or a role with `alert.rules.quality:write` and `alert.rules:read`.
 - **Rule updates:** To fix findings, have permission to update the affected rules.
   For provisioned rules, you also need access to their source configuration and permission to reapply it.
 
-For more information about alerting permissions and folder access, refer to [Configure RBAC](../../set-up/configure-rbac/).
+For more information about alerting permissions and folder access, refer to [Configure RBAC](ref:configure-rbac).
 
 ## Understand policy scope
 
@@ -249,7 +279,7 @@ Use the following guidance when you can't access the feature, resolve a finding,
 
 Use these guides to improve rule context, manage rules as code, and configure access:
 
-- **Rule context:** [Labels and annotations](../../fundamentals/alert-rules/annotation-label/).
-- **Provisioning:** [Use Terraform to provision alerting resources](../../set-up/provision-alerting-resources/terraform-provisioning/).
-- **API management:** [Use the HTTP API to manage alerting resources](../../set-up/provision-alerting-resources/http-api-provisioning/).
-- **Permissions:** [Configure RBAC](../../set-up/configure-rbac/).
+- **Rule context:** [Labels and annotations](ref:labels-and-annotations).
+- **Provisioning:** [Use Terraform to provision alerting resources](ref:terraform-provisioning).
+- **API management:** [Use the HTTP API to manage alerting resources](ref:http-api-provisioning).
+- **Permissions:** [Configure RBAC](ref:configure-rbac).
