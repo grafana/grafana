@@ -91,14 +91,12 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3, 3, 0, 3),
-      marginBottom: theme.spacing(2.5),
+      padding: theme.spacing(3, 3, 2.5, 3),
       scrollbarWidth: 'thin',
       width: '100%',
 
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(1, 2, 0, 2),
-        marginBottom: theme.spacing(2),
+        padding: theme.spacing(1, 2, 2, 2),
       },
 
       '&:focus-visible': {
