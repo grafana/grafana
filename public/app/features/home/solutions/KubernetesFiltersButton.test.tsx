@@ -4,7 +4,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
-import { KubernetesFiltersButton } from './KubernetesFiltersModal';
+import { KubernetesFiltersButton } from './KubernetesFiltersButton';
 import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
 import {
   getKubernetesFilters,
@@ -18,6 +18,7 @@ jest.mock('./kubernetesData', () => ({
 }));
 
 jest.mock('./kubernetesFilters', () => ({
+  ...jest.requireActual('./kubernetesFilters'),
   getKubernetesFilters: jest.fn(),
   saveKubernetesFilters: jest.fn(),
   subscribeKubernetesFilters: jest.fn(),

@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getKubernetesFilters, type KubernetesHomeFilters } from './kubernetesFilters';
+import { type KubernetesHomeFilters } from './kubernetesFilters';
 import {
   createTtlCachedPromise,
   findDatasourceWithData,
@@ -153,20 +153,22 @@ export async function resolveKubernetesDatasource(): Promise<DataSourceInstanceL
   return kubernetesPrometheusResolution.get();
 }
 
-/** Cluster and pod counts via kube-state-metrics. */
+/** Cluster and pod counts via kube-state-metrics, scoped to `filters`. */
 export async function fetchKubernetesInventory(
-  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  filters: KubernetesHomeFilters
 ): Promise<KubernetesInventory> {
-  const frames = await runInstantQueries(inventoryQueries(await getKubernetesFilters()), ds);
+  const frames = await runInstantQueries(inventoryQueries(filters), ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
   };
 }
 
-/** Health signals via kube-state-metrics and alert metrics. */
+/** Health signals via kube-state-metrics and alert metrics, scoped to `filters`. */
 export async function fetchKubernetesHealth(
-  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  filters: KubernetesHomeFilters
 ): Promise<KubernetesHealth> {
   // Grafana-managed firing alerts live in the state-history target datasource under a
   // configurable metric name; hard-coding GRAFANA_ALERTS on the k8s datasource misses them.
@@ -174,7 +176,6 @@ export async function fetchKubernetesHealth(
   const grafanaAlertsUid = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
   const sameDatasource = !grafanaAlertsUid || grafanaAlertsUid === ds.uid;
 
-  const filters = await getKubernetesFilters();
   const alerts = alertsMatcher(filters);
   const queries: Record<string, string> = {
     ...healthQueries(filters),
@@ -214,11 +215,11 @@ async function fetchGrafanaManagedAlertCount(uid: string, metric: string, matche
   }
 }
 
-/** Cluster CPU over 24h (cAdvisor); null when the metric is absent. */
+/** CPU over 24h (cAdvisor) scoped to `filters`; null when the metric is absent. */
 export async function fetchClusterCpuSeries(
-  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
+  filters: KubernetesHomeFilters
 ): Promise<FieldSparkline | null> {
-  const filters = await getKubernetesFilters();
   const frames = await runRangeQuery(
     'cpu',
     `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', clusterMatcher(filters), namespaceMatcher(filters), nodeMatcher(filters))}[5m]))`,

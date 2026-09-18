@@ -7,7 +7,6 @@ import { t } from '@grafana/i18n';
 import { Badge, Card, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
-import { KubernetesFiltersButton } from '../solutions/KubernetesFiltersModal';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionOffer } from '../solutions/types';
@@ -24,6 +23,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   );
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
   const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
+  const Customize = solution.customize;
   const styles = useStyles2(getStyles, needsAttention);
   const isAttentionCta = cta?.action === 'view_alerts';
   const status = needsAttention
@@ -33,7 +33,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   return (
     <Card noMargin className={styles.card}>
       {/* Card.Tags would reserve a right-hand grid column across the description rows and squeeze
-          the content, so the filter controls sit inside the heading, on the title's own line. */}
+          the content, so the customize control sits inside the heading, on the title's own line. */}
       <Card.Heading className={styles.headingRow}>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
@@ -44,8 +44,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               <Text element="h3" variant="h6">
                 {solution.title}
               </Text>
-              {/* Only Kubernetes has per-user filters; fold into Solution if a second solution grows them. */}
-              {solution.id === 'kubernetes' && datasource && <KubernetesFiltersButton datasource={datasource} />}
+              {Customize && datasource && <Customize datasource={datasource} />}
             </Stack>
             <Stack direction="row" gap={1} alignItems="center">
               <span className={styles.statusDot} aria-hidden="true" />

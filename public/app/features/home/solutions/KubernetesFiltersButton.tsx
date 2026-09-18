@@ -20,6 +20,7 @@ import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './ku
 import {
   getKubernetesFilters,
   getKubernetesFiltersVersion,
+  hasKubernetesFilters,
   saveKubernetesFilters,
   subscribeKubernetesFilters,
   type KubernetesHomeFilters,
@@ -33,7 +34,7 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
   const version = useSyncExternalStore(subscribeKubernetesFilters, getKubernetesFiltersVersion);
   const { value: filters } = useAsync(getKubernetesFilters, [version]);
   const [open, setOpen] = useState(false);
-  const active = Boolean(filters?.cluster || filters?.namespaces?.length || filters?.nodes?.length);
+  const active = filters !== undefined && hasKubernetesFilters(filters);
 
   return (
     <>
@@ -194,7 +195,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
         )}
       </Stack>
       <Modal.ButtonRow>
-        {Boolean(initial.cluster || initial.namespaces?.length || initial.nodes?.length) && (
+        {hasKubernetesFilters(initial) && (
           <Button variant="secondary" fill="text" disabled={saving} onClick={() => save({})}>
             {t('home.solutions.kubernetes.filters.clear', 'Clear filters')}
           </Button>

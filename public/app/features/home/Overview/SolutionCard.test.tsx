@@ -4,37 +4,17 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { ctaClicked } from '../analytics/main';
-import { fetchKubernetesFilterOptions } from '../solutions/kubernetesData';
-import {
-  getKubernetesFilters,
-  getKubernetesFiltersVersion,
-  subscribeKubernetesFilters,
-} from '../solutions/kubernetesFilters';
-import { stubSolution } from '../solutions/test-utils';
+import { stubDatasource, stubSolution } from '../solutions/test-utils';
 import { type SolutionOffer } from '../solutions/types';
 
 import { AvailableSolutionCard, SolutionCard } from './SolutionCard';
 
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn() }));
-jest.mock('../solutions/kubernetesFilters', () => ({
-  getKubernetesFilters: jest.fn(),
-  getKubernetesFiltersVersion: jest.fn(),
-  subscribeKubernetesFilters: jest.fn(),
-}));
-jest.mock('../solutions/kubernetesData', () => ({ fetchKubernetesFilterOptions: jest.fn() }));
 
 const mockCtaClicked = jest.mocked(ctaClicked);
-const mockGetFilters = jest.mocked(getKubernetesFilters);
-const mockGetFiltersVersion = jest.mocked(getKubernetesFiltersVersion);
-const mockSubscribeFilters = jest.mocked(subscribeKubernetesFilters);
-const mockFetchFilterOptions = jest.mocked(fetchKubernetesFilterOptions);
 
 beforeEach(() => {
   mockCtaClicked.mockClear();
-  mockSubscribeFilters.mockReset().mockReturnValue(() => {});
-  mockGetFiltersVersion.mockReset().mockReturnValue(0);
-  mockGetFilters.mockReset().mockResolvedValue({});
-  mockFetchFilterOptions.mockReset().mockResolvedValue({ clusters: [], namespaces: [], nodes: [] });
   document.addEventListener('click', interceptLinkClicks);
 });
 
@@ -199,65 +179,21 @@ describe('AvailableSolutionCard', () => {
   });
 });
 
-const kubernetesDatasource: DataSourceInstanceListItem = {
-  uid: 'k8s-prom',
-  name: 'Kubernetes Prometheus',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  isDefault: true,
-};
+describe('SolutionCard customize control', () => {
+  const Customize = ({ datasource }: { datasource: DataSourceInstanceListItem }) => (
+    <button type="button">Customize {datasource.name}</button>
+  );
 
-describe('SolutionCard Kubernetes filters gear', () => {
-  it('shows the gear without a Filtered badge when no filters are set', async () => {
-    mockGetFilters.mockResolvedValue({});
+  it("renders the solution's control beside the title once its datasource resolves", async () => {
     const item = stubSolution('kubernetes', {
       title: 'Kubernetes Monitoring',
-      datasource: async () => kubernetesDatasource,
+      datasource: async () => stubDatasource,
+      customize: Customize,
     });
 
     render(<SolutionCard solution={item} needsAttention={false} />);
 
-    expect(await screen.findByRole('button', { name: 'Customize Kubernetes monitoring' })).toBeInTheDocument();
-    expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
-  });
-
-  it('shows the Filtered badge and active tooltip when filters are set', async () => {
-    mockGetFiltersVersion.mockReturnValue(1);
-    mockGetFilters.mockResolvedValue({ cluster: 'prod' });
-    const item = stubSolution('kubernetes', {
-      title: 'Kubernetes Monitoring',
-      datasource: async () => kubernetesDatasource,
-    });
-
-    render(<SolutionCard solution={item} needsAttention={false} />);
-
-    expect(await screen.findByText('Filtered')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Customize Kubernetes monitoring (filters active)' })
-    ).toBeInTheDocument();
-  });
-
-  it('omits the gear for non-Kubernetes solutions', async () => {
-    const item = stubSolution('metrics', {
-      title: 'Metrics & infrastructure',
-      datasource: async () => kubernetesDatasource,
-    });
-
-    render(<SolutionCard solution={item} needsAttention={false} />);
-
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Customize Kubernetes monitoring/ })).not.toBeInTheDocument();
-  });
-
-  it('omits the gear when the Kubernetes datasource is null', async () => {
-    const item = stubSolution('kubernetes', {
-      title: 'Kubernetes Monitoring',
-      datasource: async () => null,
-    });
-
-    render(<SolutionCard solution={item} needsAttention={false} />);
-
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument());
-    expect(screen.queryByRole('button', { name: /Customize Kubernetes monitoring/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Customize Prometheus' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
   });
 });

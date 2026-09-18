@@ -7,7 +7,6 @@ import {
   type KubernetesHealth,
   resolveKubernetesDatasource,
 } from './kubernetesData';
-import { resetKubernetesFilters, saveKubernetesFilters } from './kubernetesFilters';
 import { kubernetesSolution } from './kubernetesSolution';
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { accessibleAppPage } from './pluginPages';
@@ -56,9 +55,6 @@ beforeEach(() => {
   mockSetupGuideEnabled.mockResolvedValue(false);
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
-  // Real kubernetesFilters module: start every test from a clean, empty snapshot.
-  resetKubernetesFilters();
-  window.localStorage.clear();
 });
 
 describe('kubernetesSolution', () => {
@@ -124,11 +120,11 @@ describe('kubernetesSolution', () => {
 
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
     expect(mockFetchInventory).toHaveBeenCalledTimes(1);
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
     expect(mockFetchCpu).toHaveBeenCalledTimes(1);
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
   });
 });
 
@@ -153,7 +149,7 @@ describe('kubernetesSolution alert', () => {
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
   });
 
   it('leads with the first health row when nothing is firing', async () => {
@@ -172,7 +168,7 @@ describe('kubernetesSolution stats and sparkline', () => {
       primary: '2 clusters',
       secondary: '24 pods',
     });
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
   });
 
   it('omits empty inventory', async () => {
@@ -189,26 +185,33 @@ describe('kubernetesSolution stats and sparkline', () => {
       series,
       caption: 'Cluster CPU · last 24h',
     });
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
   });
 
-  it('captions the CPU trend as namespace CPU while a namespace filter is active', async () => {
+  it('reads the filters once and scopes every fact and the caption to them', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
-    await saveKubernetesFilters({ namespaces: ['team-a'] });
+    const filters = { cluster: 'prod', namespaces: ['team-a'] };
+    const loadFilters = jest.fn(async () => filters);
+    const solution = kubernetesSolution(loadFilters);
 
-    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
-      series,
-      caption: 'Namespace CPU · last 24h',
-    });
+    await expect(solution.sparkline()).resolves.toEqual({ series, caption: 'Namespace CPU · last 24h' });
+    await solution.stats();
+    await solution.needsAttention();
+
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, filters);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, filters);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, filters);
+    expect(loadFilters).toHaveBeenCalledTimes(1);
   });
 
   it('captions the CPU trend as node CPU when a node filter is active, over the namespace caption', async () => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
-    await saveKubernetesFilters({ namespaces: ['team-a'], nodes: ['node-1'] });
 
-    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
+    await expect(
+      kubernetesSolution(async () => ({ namespaces: ['team-a'], nodes: ['node-1'] })).sparkline()
+    ).resolves.toEqual({
       series,
       caption: 'Node CPU · last 24h',
     });

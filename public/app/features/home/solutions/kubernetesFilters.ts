@@ -12,11 +12,10 @@ export interface KubernetesHomeFilters {
 const storage = new UserStorage('grafana-home');
 const KEY = 'kubernetes-filters';
 
-// One consistent in-memory snapshot for every consumer (fetchers, badge, caption): storage is
-// read once, then only saves replace it — which also sidesteps UserStorage's stale-cache edge
-// after a failed PATCH.
-let snapshot: KubernetesHomeFilters | undefined;
-let pendingLoad: Promise<KubernetesHomeFilters> | undefined;
+// One shared read for every consumer (fetchers, badge, caption): storage is consulted once, then
+// only saves replace the cached value — which also sidesteps UserStorage's stale-cache edge after
+// a failed PATCH.
+let current: Promise<KubernetesHomeFilters> | undefined;
 let version = 0;
 const listeners = new Set<() => void>();
 
@@ -57,29 +56,30 @@ export function normalizeKubernetesFilters(input: unknown): KubernetesHomeFilter
   return filters;
 }
 
-export async function getKubernetesFilters(): Promise<KubernetesHomeFilters> {
-  if (snapshot) {
-    return snapshot;
-  }
-  pendingLoad ??= (async () => {
-    let loaded: KubernetesHomeFilters = {};
-    try {
-      const stored = await storage.getItem(KEY);
-      loaded = stored ? normalizeKubernetesFilters(JSON.parse(stored)) : {};
-    } catch {
-      // Unreadable or corrupt storage reads as no filters; a later save overwrites it.
-    }
-    snapshot = loaded;
-    return loaded;
-  })();
-  return pendingLoad;
+/** Whether any filter narrows the default all-clusters scope. */
+export function hasKubernetesFilters(filters: KubernetesHomeFilters): boolean {
+  return Boolean(filters.cluster || filters.namespaces?.length || filters.nodes?.length);
 }
 
-/** Rejects when persisting fails; the snapshot then keeps the last persisted value. */
+async function load(): Promise<KubernetesHomeFilters> {
+  try {
+    const stored = await storage.getItem(KEY);
+    return stored ? normalizeKubernetesFilters(JSON.parse(stored)) : {};
+  } catch {
+    // Unreadable or corrupt storage reads as no filters; a later save overwrites it.
+    return {};
+  }
+}
+
+export function getKubernetesFilters(): Promise<KubernetesHomeFilters> {
+  return (current ??= load());
+}
+
+/** Rejects when persisting fails; readers then keep the last persisted value. */
 export async function saveKubernetesFilters(filters: KubernetesHomeFilters): Promise<void> {
   const normalized = normalizeKubernetesFilters(filters);
   await storage.setItem(KEY, JSON.stringify(normalized));
-  snapshot = normalized;
+  current = Promise.resolve(normalized);
   version++;
   listeners.forEach((listener) => listener());
 }
@@ -96,8 +96,7 @@ export function getKubernetesFiltersVersion(): number {
 
 // Reset the module state (test seam).
 export function resetKubernetesFilters(): void {
-  snapshot = undefined;
-  pendingLoad = undefined;
+  current = undefined;
   version = 0;
   listeners.clear();
 }

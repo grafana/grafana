@@ -46,4 +46,26 @@ describe('SolutionStatsRow', () => {
     expect(await screen.findByText('42 pods')).toBeInTheDocument();
     expect(screen.queryByText('240 pods')).not.toBeInTheDocument();
   });
+
+  it('yields to the fresh base stats while a re-resolving refinement is still pending', async () => {
+    const { rerender } = render(
+      <SolutionStatsRow
+        stats={async () => ({ primary: '2 hosts' })}
+        refinedStats={async () => ({ primary: '2 hosts · 5 services' })}
+        sparkline={nullFact}
+      />
+    );
+    expect(await screen.findByText('2 hosts · 5 services')).toBeInTheDocument();
+
+    rerender(
+      <SolutionStatsRow
+        stats={async () => ({ primary: '3 hosts' })}
+        refinedStats={() => new Promise(() => {})}
+        sparkline={nullFact}
+      />
+    );
+
+    expect(await screen.findByText('3 hosts')).toBeInTheDocument();
+    expect(screen.queryByText('2 hosts · 5 services')).not.toBeInTheDocument();
+  });
 });

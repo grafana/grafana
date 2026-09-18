@@ -4,6 +4,7 @@ import { formattedValueToString, getValueFormat, locationUtil, type DataSourceIn
 import { t } from '@grafana/i18n';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
+import { KubernetesFiltersButton } from './KubernetesFiltersButton';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
@@ -13,7 +14,7 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
-import { getKubernetesFilters } from './kubernetesFilters';
+import { getKubernetesFilters, type KubernetesHomeFilters } from './kubernetesFilters';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
@@ -21,6 +22,9 @@ import { detectSignal } from './solutionState';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
+
+/** Filter-independent detection; callers memoize per consumer so the TTL-cached probe still re-resolves. */
+export const kubernetesSignal = () => detectSignal(resolveKubernetesDatasource);
 
 async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): Promise<string | null> {
   const bridgePath = await accessibleAppPage(KUBERNETES_APP_ID, path);
@@ -59,13 +63,22 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-export function kubernetesSolution(): Solution {
-  const detect = memoize(() => detectSignal(resolveKubernetesDatasource));
+/**
+ * `loadFilters` is read lazily and once per instance, so every fact of this instance queries one
+ * filter snapshot; the homepage rebuilds the instance when the persisted filters change.
+ */
+export function kubernetesSolution(loadFilters: () => Promise<KubernetesHomeFilters> = getKubernetesFilters): Solution {
+  const detect = memoize(kubernetesSignal);
   const datasource = async () => (await detect()).datasource;
+  const filters = memoize(loadFilters);
+  const scoped =
+    <T>(fetch: (ds: DataSourceInstanceListItem, filters: KubernetesHomeFilters) => Promise<T>) =>
+    async (ds: DataSourceInstanceListItem) =>
+      fetch(ds, await filters());
 
-  const inventory = datasourceFact(datasource, fetchKubernetesInventory);
-  const health = datasourceFact(datasource, fetchKubernetesHealth);
-  const clusterCpu = datasourceFact(datasource, fetchClusterCpuSeries);
+  const inventory = datasourceFact(datasource, scoped(fetchKubernetesInventory));
+  const health = datasourceFact(datasource, scoped(fetchKubernetesHealth));
+  const clusterCpu = datasourceFact(datasource, scoped(fetchClusterCpuSeries));
   const alert = memoize(async () => {
     const status = await health();
     if (!status || hasHealthProblems(status) !== true) {
@@ -98,6 +111,7 @@ export function kubernetesSolution(): Solution {
     id: 'kubernetes',
     icon: 'kubernetes',
     title: t('home.solutions.kubernetes.title', 'Kubernetes Monitoring'),
+    customize: KubernetesFiltersButton,
     signal,
     datasource,
     needsAttention,
@@ -152,9 +166,9 @@ export function kubernetesSolution(): Solution {
       if (!series) {
         return null;
       }
-      // Snapshot read (no storage hit): a scoped series must not be captioned "Cluster CPU".
-      // Nodes are the narrower scope, so they win the caption when both filters are set.
-      const { namespaces, nodes } = await getKubernetesFilters();
+      // A scoped series must not be captioned "Cluster CPU"; nodes are the narrower scope, so
+      // they win the caption when both filters are set.
+      const { namespaces, nodes } = await filters();
       const caption = nodes?.length
         ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
         : namespaces?.length
