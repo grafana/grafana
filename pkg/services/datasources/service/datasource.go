@@ -194,10 +194,9 @@ func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataS
 	return s.retriever.GetDataSource(ctx, query)
 }
 
-// ResolveAliasIDs returns the plugin IDs that pluginType is equivalent to via pluginRegistry (its
-// canonical ID and/or its other legacy aliases), excluding pluginType itself — for populating
-// GetDataSourceInNamespaceQuery.AliasIDs so a stored datasource is matched regardless of which
-// equivalent type string it was saved under. A nil pluginRegistry resolves to no aliases.
+// ResolveAliasIDs returns the plugin IDs that pluginType is equivalent to so that
+// a stored datasource is matched regardless of which equivalent type string it was saved under.
+// A nil pluginRegistry resolves to no aliases.
 func ResolveAliasIDs(ctx context.Context, pluginRegistry registry.Service, pluginType string) []string {
 	if pluginRegistry == nil {
 		return nil

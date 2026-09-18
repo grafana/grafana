@@ -266,8 +266,8 @@ type GetDataSourcesByTypeQuery struct {
 }
 
 // GetDataSourceInNamespaceQuery gets a datasource by namespace, name (datasource uid), and type.
-// AliasIDs is optional — if nil, it's populated automatically by resolving Type against the
-// plugin registry, so a caller can just set Type and get alias-aware matching for free.
+// AliasIDs is optional, if nil, it's populated automatically by resolving Type against the
+// plugin registry, so a caller can set Type and get alias aware matching.
 type GetDataSourceInNamespaceQuery struct {
 	Namespace string
 	Name      string
