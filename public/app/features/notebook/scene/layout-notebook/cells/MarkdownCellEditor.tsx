@@ -151,6 +151,9 @@ export function MarkdownCellEditor({
         height="auto"
         lineWrapping
         basicSetup={EDIT_SETUP}
+        // Tab leaves the cell instead of indenting. CodeMirror binds Tab to indent by default,
+        // which holds the keyboard inside the editor with no way out.
+        indentWithTab={false}
         theme={livePreview.theme}
         extensions={[
           livePreview.extensions,

@@ -5,7 +5,7 @@ import WebpackBar from 'webpackbar';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import { createSwcRule, sassRule, type Env } from './rspack.common.ts';
 
 export default (env: Env = {}): Configuration => {
@@ -59,9 +59,14 @@ export default (env: Env = {}): Configuration => {
     output: {
       clean: true,
       path: path.resolve(import.meta.dirname, '../../public/build-swagger'),
-      publicPath: 'public/build-swagger/',
+      publicPath: 'auto',
       crossOriginLoading: 'anonymous',
       filename: env.develop ? '[name].js' : '[name].[contenthash].js',
+      // Enable es module output
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+      workerChunkLoading: 'import',
     },
     plugins: [
       new CorsWorkerPlugin(),
@@ -70,7 +75,7 @@ export default (env: Env = {}): Configuration => {
       }),
       new rspack.SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions('public/build-swagger/')),
     ],
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],

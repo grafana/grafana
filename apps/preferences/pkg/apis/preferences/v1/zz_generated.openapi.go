@@ -129,8 +129,7 @@ func schema_pkg_apis_preferences_v1_PreferencesList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Preferences{}.OpenAPIModelName()),
+										Ref: ref(Preferences{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -157,9 +156,8 @@ func schema_pkg_apis_preferences_v1_PreferencesNavbarPreference(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},

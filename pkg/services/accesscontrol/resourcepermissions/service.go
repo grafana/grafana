@@ -75,12 +75,17 @@ type Store interface {
 
 	// GetPermissionIDByRoleName returns the permission ID for a given role name and org ID
 	GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error)
+
+	// GetPermissionIDsByRoleNames returns the permission ID for each of the supplied
+	// role names. Names with no permission are omitted from the result.
+	GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error)
 }
 
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service, actionSetService ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService ActionSetService,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
@@ -109,20 +114,21 @@ func New(cfg *setting.Cfg,
 	}
 
 	s := &Service{
-		ac:           ac,
-		features:     features,
-		cfg:          cfg,
-		store:        NewStore(cfg, sqlStore, features),
-		options:      options,
-		license:      license,
-		log:          log.New("resourcepermissions"),
-		permissions:  permissions,
-		actions:      actions,
-		sqlStore:     sqlStore,
-		service:      service,
-		teamService:  teamService,
-		userService:  userService,
-		actionSetSvc: actionSetService,
+		ac:                      ac,
+		features:                features,
+		cfg:                     cfg,
+		store:                   NewStore(cfg, sqlStore, features),
+		options:                 options,
+		license:                 license,
+		log:                     log.New("resourcepermissions"),
+		permissions:             permissions,
+		actions:                 actions,
+		sqlStore:                sqlStore,
+		service:                 service,
+		teamService:             teamService,
+		userService:             userService,
+		serviceAccountRetriever: serviceAccountRetriever,
+		actionSetSvc:            actionSetService,
 	}
 	s.dynamicClient = s.dynamicClientForContext
 
@@ -146,15 +152,16 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
-	cfg          *setting.Cfg
-	log          log.Logger
-	options      Options
-	permissions  []string
-	actions      []string
-	sqlStore     db.DB
-	teamService  team.Service
-	userService  user.Service
-	actionSetSvc ActionSetService
+	cfg                     *setting.Cfg
+	log                     log.Logger
+	options                 Options
+	permissions             []string
+	actions                 []string
+	sqlStore                db.DB
+	teamService             team.Service
+	userService             user.Service
+	serviceAccountRetriever serviceaccounts.ServiceAccountRetriever
+	actionSetSvc            ActionSetService
 
 	// dynamicClient builds the K8s client the teams membership redirect writes
 	// through. A field rather than a direct call so tests can inject a fake client.

@@ -644,6 +644,7 @@ module.exports = [
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
       '@grafana/no-config-datasources': 'error',
+      '@grafana/no-config-feature-toggles': 'error',
     },
   },
   {

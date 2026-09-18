@@ -24,6 +24,11 @@
       "@grafana-app/source": "./src/datasources.ts",
       "types": "./dist/types/datasources.d.ts",
       "import": "./dist/esm/datasources.mjs"
+    },
+    "./apps": {
+      "@grafana-app/source": "./src/apps.ts",
+      "types": "./dist/types/apps.d.ts",
+      "import": "./dist/esm/apps.mjs"
     }
   },
   "publishConfig": {
@@ -50,5 +55,10 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "peerDependencies": {
+    "@grafana/data": ">=12.0.0",
+    "@grafana/runtime": ">=12.0.0",
+    "@grafana/schema": ">=12.0.0"
   }
 }
