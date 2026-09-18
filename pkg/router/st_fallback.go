@@ -22,7 +22,10 @@ type LoaderWithSingleTenantFallback interface {
 }
 
 const (
-	singleTenantCacheTTL      = 5 * time.Hour // host does not change ever/often
+	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
+	singleTenantCacheTTL = 5 * time.Minute
+	// Retry unknown stacks sooner so newly created stacks can become reachable.
+	singleTenantNotFoundTTL   = 30 * time.Second
 	singleTenantLookupTimeout = 5 * time.Second
 )
 
@@ -129,7 +132,11 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 			return nil, fmt.Errorf("invalid stack host URL: %q", host)
 		}
 	}
-	st.cache.Add(stackID, singleTenantHost{host: target, expiresAt: time.Now().Add(singleTenantCacheTTL)})
+	ttl := singleTenantCacheTTL
+	if target == nil {
+		ttl = singleTenantNotFoundTTL
+	}
+	st.cache.Add(stackID, singleTenantHost{host: target, expiresAt: time.Now().Add(ttl)})
 	return target, nil
 }
 

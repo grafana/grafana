@@ -266,7 +266,8 @@ func TestSingleTenantFallbackCachesNotFound(t *testing.T) {
 		cached, ok := st.cache.Peek(123)
 		require.True(t, ok)
 		require.Empty(t, cached.host)
-		time.Sleep(singleTenantCacheTTL)
+		require.Equal(t, singleTenantNotFoundTTL, time.Until(cached.expiresAt))
+		time.Sleep(singleTenantNotFoundTTL)
 		host, err := st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
 		require.Equal(t, testFallbackURL(t, "https://found.example.com/"), host)
@@ -445,4 +446,60 @@ func TestSingleTenantFallbackDiscoveryVersionsChangeKey(t *testing.T) {
 	second, err := st.Load(t.Context())
 	require.NoError(t, err)
 	require.NotEqual(t, first[0].Key(), second[0].Key())
+}
+
+func TestSingleTenantFallbackRefreshAfterStackChanges(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		host   string
+		err    error
+		status int
+	}{
+		{name: "renamed", host: "https://renamed.example.com", status: http.StatusNoContent},
+		{name: "moved", host: "https://other-region.example.com", status: http.StatusNoContent},
+		{name: "deleted", status: http.StatusNotFound},
+		{name: "lookup failed", err: errors.New("gcom unavailable"), status: http.StatusServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				st := newTestSingleTenantFallback(t)
+				var calls atomic.Int32
+				st.resolveHost = func(context.Context, int64) (string, error) {
+					if calls.Add(1) == 1 {
+						return "https://old.example.com", nil
+					}
+					return tc.host, tc.err
+				}
+				var destinations []string
+				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+					destinations = append(destinations, req.URL.Scheme+"://"+req.URL.Host)
+					return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
+				})
+				request := func() int {
+					recorder := httptest.NewRecorder()
+					st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-123/widgets", nil))
+					return recorder.Code
+				}
+				require.Equal(t, http.StatusNoContent, request())
+				time.Sleep(singleTenantCacheTTL - time.Second)
+				require.Equal(t, http.StatusNoContent, request())
+				require.EqualValues(t, 1, calls.Load())
+				require.Equal(t, []string{"https://old.example.com", "https://old.example.com"}, destinations)
+				destinations = nil
+				time.Sleep(time.Second)
+				require.Equal(t, tc.status, request())
+				require.Equal(t, tc.status, request())
+				if tc.err != nil {
+					require.EqualValues(t, 3, calls.Load())
+				} else {
+					require.EqualValues(t, 2, calls.Load())
+				}
+				if tc.status == http.StatusNoContent {
+					require.Equal(t, []string{tc.host, tc.host}, destinations)
+				} else {
+					require.Empty(t, destinations)
+				}
+			})
+		})
+	}
 }
