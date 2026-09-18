@@ -269,28 +269,6 @@ func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource stri
 	}
 }
 
-// waitReady waits for the current initialization attempt. It is used by
-// startup callers that must observe the result of the attempt already in
-// progress; unlike ensureReady, it never starts another attempt.
-func (b *broadcaster[T]) waitReady(ctx context.Context) error {
-	b.initMu.Lock()
-	if b.initialized {
-		b.initMu.Unlock()
-		return nil
-	}
-	if b.fatalInitErr != nil {
-		err := b.fatalInitErr
-		b.initMu.Unlock()
-		return err
-	}
-	attempt := b.initAttempt
-	b.initMu.Unlock()
-	if attempt == nil {
-		return fmt.Errorf("watch cache initialization has not started")
-	}
-	return b.waitForInitialization(ctx, attempt)
-}
-
 // ensureReady starts a new initialization attempt after a retryable failure.
 // Concurrent callers share the same attempt, and canceling one caller does not
 // cancel initialization for the others.

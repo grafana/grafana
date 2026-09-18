@@ -15,6 +15,27 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// waitReady lets tests observe the current initialization attempt without
+// triggering a retry, unlike ensureReady.
+func (b *broadcaster[T]) waitReady(ctx context.Context) error {
+	b.initMu.Lock()
+	if b.initialized {
+		b.initMu.Unlock()
+		return nil
+	}
+	if b.fatalInitErr != nil {
+		err := b.fatalInitErr
+		b.initMu.Unlock()
+		return err
+	}
+	attempt := b.initAttempt
+	b.initMu.Unlock()
+	if attempt == nil {
+		return errors.New("watch cache initialization has not started")
+	}
+	return b.waitForInitialization(ctx, attempt)
+}
+
 func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 	return &WrittenEvent{Key: &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource}, ResourceVersion: rv}
 }
