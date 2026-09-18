@@ -67,6 +67,14 @@ it('renders empty query results with refreshed features enabled', () => {
   expect(screen.getByText('Unable to render data: .')).toBeInTheDocument();
 });
 
+it('keeps header sorting viewer-only in the transformation prototype', async () => {
+  setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+  const props = setup();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Value' }));
+  expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['1', '2', '3']);
+  expect(props.onOptionsChange).not.toHaveBeenCalled();
+});
+
 it('retains saved-sort callbacks with experimental features disabled', async () => {
   const props = setup();
   await userEvent.setup().click(screen.getByRole('columnheader', { name: 'Value' }));
@@ -129,6 +137,7 @@ it.each(['hide-first', 'filter-first'])(
       await user.click(await screen.findByText('Filter values'));
       await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '2');
       await user.click(screen.getByRole('button', { name: 'Apply' }));
+      await user.click(screen.getByRole('button', { name: 'Value' }));
       await user.click(screen.getByRole('button', { name: 'Pin Value' }));
       await waitFor(() => expect(transformer.state.data?.series[0].fields[0].name).toBe('Value'));
       expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen');
@@ -138,20 +147,24 @@ it.each(['hide-first', 'filter-first'])(
       await hide('Value');
       await waitFor(() =>
         expect(transformer.state.data?.series[0].fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
-          { name: 'Label', values: ['three', 'two'] },
+          { name: 'Label', values: ['two', 'three'] },
         ])
       );
-      expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['three', 'two']);
+      expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['two', 'three']);
       expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
-      expect(api.get(TABLE_TRANSFORMATIONS_TAG).map((config) => config.id)).toEqual(['filterByValue', 'organize']);
+      expect(api.get(TABLE_TRANSFORMATIONS_TAG).map((config) => config.id)).toEqual([
+        'filterByValue',
+        'sortBy',
+        'organize',
+      ]);
       expect(api.getSourceSeries(TABLE_TRANSFORMATIONS_TAG)[0].fields[1].values).toEqual([3, 1, 2]);
       expect(transformer.state.transformations).toEqual([]);
       expect(props.onOptionsChange).not.toHaveBeenCalled();
       expect(persistedEvents).toEqual([]);
 
       await user.click(screen.getByRole('button', { name: 'Clear filters (1)' }));
-      await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['three', 'one', 'two']));
-      expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['three', 'one', 'two']);
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[0].values).toEqual(['one', 'two', 'three']));
+      expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['one', 'two', 'three']);
 
       await user.click(screen.getByRole('checkbox', { name: 'Show Value' }));
       await waitFor(() =>
@@ -167,10 +180,10 @@ it.each(['hide-first', 'filter-first'])(
       expect(persistedEvents).toEqual([]);
 
       act(() => api.set('another:owner', [{ id: 'limit', options: { limitField: 1 } }]));
-      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['three']));
-      expect(api.get(TABLE_TRANSFORMATIONS_TAG).map((config) => config.id)).toEqual(['organize']);
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['one']));
+      expect(api.get(TABLE_TRANSFORMATIONS_TAG).map((config) => config.id)).toEqual(['sortBy', 'organize']);
       act(() => api.set('another:owner', []));
-      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['three', 'one', 'two']));
+      await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['one', 'two', 'three']));
     } finally {
       rendered.unmount();
       subscription.unsubscribe();

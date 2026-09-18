@@ -33,7 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { useTableView, useIsFieldFiltered, transformTableFilters } from './TableViewContext';
+import { useTableView, useIsFieldFiltered, transformTableRows, transformTableFilters } from './TableViewContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -150,12 +150,18 @@ export function useSortedRows(
       }) ?? [],
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const [sortColumns, setSortColumns] = useState<SortColumn[]>(initialSortColumns);
+  const view = useTableView();
+  const [localSort, setLocalSort] = useState<SortColumn[]>(initialSortColumns);
+  const sortColumns = view?.sortColumns ?? localSort;
+  const setSortColumns = view?.setSortColumns ?? setLocalSort;
   const columnTypes = useMemo(() => getColumnTypes(fields), [fields]);
 
   const sortedRows = useMemo(
-    () => applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
-    [rows, fields, sortColumns, columnTypes, hasNestedFrames]
+    () =>
+      view
+        ? transformTableRows(rows, fields, [], sortColumns)
+        : applySort(rows, fields, sortColumns, columnTypes, hasNestedFrames),
+    [rows, fields, sortColumns, columnTypes, hasNestedFrames, view]
   );
 
   return {
@@ -426,12 +432,9 @@ export const useNestedRows = (
       const filterResult = view
         ? transformTableFilters(rawRows, nestedFrame.fields, view.filters, parentRow.__index)
         : applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
-      const sortedRows = applySort(
-        filterResult.filteredRows,
-        nestedFrame.fields,
-        sortColumns,
-        getColumnTypes(nestedFrame.fields)
-      );
+      const sortedRows = view
+        ? transformTableRows(filterResult.filteredRows, nestedFrame.fields, [], sortColumns, parentRow.__index)
+        : applySort(filterResult.filteredRows, nestedFrame.fields, sortColumns, getColumnTypes(nestedFrame.fields));
       result[parentRow.__index] = { raw: rawRows, final: sortedRows, filterResult };
     }
 
