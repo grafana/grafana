@@ -985,7 +985,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	defer func() {
 		if patchErr := applyPatches(); patchErr != nil {
 			phase = reconcilePhaseStatus
-			logger.Error("failed to apply patches", "error", patchErr)
 			if err == nil {
 				err = patchErr
 			} else {
@@ -1067,14 +1066,11 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
-			logger.Error("retrieving connection", "error", err)
 			return repoType, err
 		}
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
-			logger.Error("generating token for repository", "error", err)
-
 			if rc.isUserCaused(err) {
 				// Swallowed after surfacing on status: stash it so the deferred
 				// recorder counts it, since it returns nil to the workqueue.
