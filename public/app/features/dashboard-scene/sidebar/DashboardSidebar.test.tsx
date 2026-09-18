@@ -34,6 +34,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
+import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
 
@@ -424,6 +425,17 @@ describe('DashboardSidebar', () => {
   });
 
   describe('StateCommittedEvent', () => {
+    it('publishes DashboardStateChangedEvent with the committed source', () => {
+      const { dashboard, source } = buildTestScene();
+      const onStateChanged = jest.fn();
+      dashboard.subscribeToEvent(DashboardStateChangedEvent, onStateChanged);
+
+      stateCommited(source, 'Some change', jest.fn(), jest.fn());
+
+      expect(onStateChanged).toHaveBeenCalledTimes(1);
+      expect(onStateChanged).toHaveBeenCalledWith(new DashboardStateChangedEvent({ source }));
+    });
+
     function buildTestScene() {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
       const gridItem = new AutoGridItem({ body: panel });

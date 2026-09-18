@@ -170,6 +170,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       },
       true
     );
+    payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
   }
 
   /**
