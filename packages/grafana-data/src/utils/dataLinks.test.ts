@@ -237,10 +237,13 @@ describe('mapInternalLinkToExplore', () => {
     });
 
     const rewrittenQuery = {
+      refId: 'test',
       query: '{job="api"}',
       datasource: { uid: 'loki-uid', type: 'loki' },
     };
-    link.interpolatedParams!.query = rewrittenQuery;
+    if (link.interpolatedParams) {
+      link.interpolatedParams.query = rewrittenQuery;
+    }
 
     link.onClick?.({ preventDefault: jest.fn() });
 
