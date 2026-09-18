@@ -15,7 +15,7 @@ import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dash
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type QueryResponse } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
@@ -255,14 +255,15 @@ export function NestedFolderPicker({
         flatTree = filterRootItem(flatTree);
       }
 
-      // Team and starred sections are shortcuts into the unscoped tree, so any scope drops them
-      const isScoped = rootFolderUID !== undefined || folderFilter !== undefined;
-      const fullTree = isScoped ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
-      return filterItems(fullTree, excludeUIDs, folderFilter);
+      // Only show team folders when browsing the full tree (no rootFolderUID scope)
+      if (!rootFolderUID) {
+        flatTree = [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
+      }
     } else {
       flatTree = (searchResults?.items ?? []).map((item) => ({ isOpen: false, level: 0, item }));
-      return filterItems(flatTree, excludeUIDs, folderFilter);
     }
+
+    return filterItems(flatTree, excludeUIDs, folderFilter);
   }, [
     browseFlatTree,
     excludeUIDs,
@@ -466,6 +467,8 @@ function useTeamFolders(
           title: folder.title,
           uid: folder.name,
           parentUID: TEAM_FOLDERS_UID,
+          managedBy: extractManagerKind(folder.managedBy),
+          managerId: extractManagerId(folder.managedBy),
         },
       }));
     });
@@ -549,6 +552,8 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>, permission
         title: folder.title,
         uid: folder.uid,
         parentUID: STARRED_FOLDERS_UID,
+        managedBy: folder.managedBy,
+        managerId: folder.managerId,
       },
     }));
 
@@ -578,6 +583,7 @@ function filterRootItem(items: DashboardsTreeItem[]) {
   return itemsFiltered;
 }
 
+// Rows form a pre-order flat tree, so a rejected row takes its descendants (the deeper rows that follow it) with it.
 function filterItems(
   items: DashboardsTreeItem[],
   excludeUIDs: string[] | undefined,
@@ -586,9 +592,22 @@ function filterItems(
   if (!excludeUIDs?.length && !folderFilter) {
     return items;
   }
-  return items.filter(
-    ({ item }) => !excludeUIDs?.includes(item.uid) && (item.kind !== 'folder' || !folderFilter || folderFilter(item))
-  );
+
+  const kept: DashboardsTreeItem[] = [];
+  let prunedBelow = Infinity;
+  for (const row of items) {
+    if (row.level > prunedBelow) {
+      continue;
+    }
+    const { item } = row;
+    const rejected =
+      excludeUIDs?.includes(item.uid) || (item.kind === 'folder' && folderFilter !== undefined && !folderFilter(item));
+    prunedBelow = rejected ? row.level : Infinity;
+    if (!rejected) {
+      kept.push(row);
+    }
+  }
+  return kept;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
