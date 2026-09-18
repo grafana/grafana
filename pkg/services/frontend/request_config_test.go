@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
@@ -86,7 +87,24 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
-		assert.Equal(t, 5000, config.RudderstackBatchInterval)
+		require.NotNil(t, config.RudderstackBatchInterval)
+		assert.Equal(t, 5000, *config.RudderstackBatchInterval)
+	})
+
+	t.Run("should include a zero Rudderstack batch interval override in frontend settings", func(t *testing.T) {
+		config := FSRequestConfig{}
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("rudderstack_batch_interval", "0")
+
+		config.ApplyOverrides(iniFile, log.New("test"), false)
+
+		payload, err := json.Marshal(config.FSFrontendSettings)
+		require.NoError(t, err)
+
+		var settings map[string]any
+		require.NoError(t, json.Unmarshal(payload, &settings))
+		assert.Equal(t, float64(0), settings["rudderstackBatchInterval"])
 	})
 
 	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {

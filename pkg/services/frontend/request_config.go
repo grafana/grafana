@@ -68,7 +68,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		RudderstackSdkUrl:                    cfg.RudderstackSDKURL,
 		RudderstackV3SdkUrl:                  cfg.RudderstackV3SDKURL,
 		RudderstackWriteKey:                  cfg.RudderstackWriteKey,
-		RudderstackBatchInterval:             cfg.RudderstackBatchInterval,
+		RudderstackBatchInterval:             optionalInt(cfg.RudderstackBatchInterval),
 		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,
 		BuildInfo:                            getBuildInfo(license, cfg),
@@ -189,7 +189,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
 		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
-		applyInt(settings, "analytics", "rudderstack_batch_interval", &c.RudderstackBatchInterval, logger)
+		applyOptionalInt(settings, "analytics", "rudderstack_batch_interval", &c.RudderstackBatchInterval, logger)
 	}
 }
 
@@ -226,6 +226,26 @@ func applyInt(settings *ini.File, sectionName, keyName string, target *int, logg
 			"key", keyName,
 			"value", *target)
 	}
+}
+
+func applyOptionalInt(settings *ini.File, sectionName, keyName string, target **int, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		value := key.MustInt(0)
+		*target = &value
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", value)
+	}
+}
+
+func optionalInt(value int) *int {
+	if value == 0 {
+		return nil
+	}
+
+	return &value
 }
 
 // applyStringSlice applies a space-separated string value from ini settings to a target []string field if it exists.
