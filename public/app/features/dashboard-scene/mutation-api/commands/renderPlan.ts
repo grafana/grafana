@@ -68,15 +68,14 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
       return { success: false, error: 'The preview dashboard is no longer open.', changes: [] };
     }
 
-    // RENDER_PLAN replaces the whole body, and END_PLANNING clears unconditionally -- both are
-    // only correct if the target is blank, unsaved, and not dirty (including saved-but-empty,
-    // which END_PLANNING would empty for real). Also what makes discarding a preview safe with
-    // no per-panel identity tracking: every panel present is part of the plan.
-    //
-    // Exception: an already-planning scene may always be re-rendered.
+    // Saved dashboards and real panels must never be replaced by a preview. A blank new
+    // editor can already be dirty from auto-entering edit mode; core owns that transition
+    // rather than requiring the caller to manipulate the scene's dirty/editing flags.
+    // An already-planning scene may be re-rendered with a revised plan.
     const alreadyPlanning = scene.state.planning !== undefined;
     const hasExistingContent = !alreadyPlanning && scene.state.body.getVizPanels().length > 0;
-    if (scene.state.uid || scene.state.isDirty || hasExistingContent) {
+    const isBlankNewEditor = !scene.state.uid && !hasExistingContent && scene.state.isEditing;
+    if (scene.state.uid || (scene.state.isDirty && !isBlankNewEditor) || hasExistingContent) {
       return {
         success: false,
         error: 'RENDER_PLAN can only render into a blank, unsaved dashboard, to avoid overwriting existing content.',
@@ -126,6 +125,10 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         // the browser, synchronous in tests) can flip isDirty back to true before exitEditMode
         // below reads it.
         scene.pauseTrackingChanges();
+      }
+
+      if (scene.state.sidebar.state.openPane?.getId() === 'add') {
+        scene.state.sidebar.closePane();
       }
 
       scene.setState({

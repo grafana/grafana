@@ -68,9 +68,11 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(2),
-      // No horizontal padding of its own: each host bar supplies it — the app chrome actions bar
-      // in the legacy toolbar, PlanningControls under dashboardNewLayouts.
-      padding: theme.spacing(2, 0),
+      margin: theme.spacing(1, 0),
+      padding: theme.spacing(1.5, 2),
+      border: `2px solid ${theme.colors.info.borderEmphasis}`,
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.info.background,
     }),
     summary: css({
       display: 'flex',
@@ -85,8 +87,8 @@ function getStyles(theme: GrafanaTheme2) {
       flexShrink: 0,
       padding: theme.spacing(0, 0.75),
       borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.primary.transparent,
-      color: theme.colors.primary.text,
+      backgroundColor: theme.colors.info.backgroundEmphasis,
+      color: theme.colors.info.text,
       fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.bodySmall.fontSize,
     }),

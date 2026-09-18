@@ -49,9 +49,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     banner: css({
       padding: theme.spacing(0, 2),
-      // The hairline is what the variables sit below, not what the canvas sits below: it separates
-      // the plan's chrome from the plan itself.
-      borderBottom: `1px solid ${theme.colors.primary.borderTransparent}`,
     }),
     /**
      * Share the canvas background so variables appear as part of the editable plan.

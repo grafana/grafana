@@ -7,6 +7,7 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
+import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
@@ -123,17 +124,42 @@ describe('RENDER_PLAN', () => {
     // A fresh /dashboard/new scene enters edit mode unconditionally on activation, before
     // RENDER_PLAN ever runs.
     scene.onEnterEditMode();
+    scene.state.sidebar.openPane(new AddNewPane({}));
     expect(scene.state.isEditing).toBe(true);
+    expect(scene.state.sidebar.state.openPane?.getId()).toBe('add');
+    scene.setState({ isDirty: true });
 
     const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
 
     expect(result.success).toBe(true);
     expect(scene.state.isEditing).toBe(false);
     expect(scene.state.isDirty).toBe(false);
+    expect(scene.state.sidebar.state.openPane).toBeUndefined();
     // Assert the plan's own content survived, not the empty pre-plan snapshot.
     expect(scene.state.title).toBe('Kafka overview');
     expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Requests', 'Error rate']);
     expect(scene.state.planning).toMatchObject({ planId: 'plan-1' });
+  });
+
+  it('preserves an editing dashboard with real panels when the preview is refused', async () => {
+    const panel = new VizPanel({ title: 'User panel', pluginId: 'timeseries' });
+    const { scene, client } = setup({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    scene.onEnterEditMode();
+    scene.setState({ title: 'User dashboard', description: 'Keep this description', isDirty: true });
+    const sidebar = scene.state.sidebar;
+    const closePane = jest.spyOn(sidebar, 'closePane');
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+    expect(result.success).toBe(false);
+    expect(scene.state).toMatchObject({
+      title: 'User dashboard',
+      description: 'Keep this description',
+      isEditing: true,
+      isDirty: true,
+    });
+    expect(scene.state.body.getVizPanels()).toEqual([panel]);
+    expect(closePane).not.toHaveBeenCalled();
   });
 
   it('does nothing extra when the scene was already in view mode', async () => {
