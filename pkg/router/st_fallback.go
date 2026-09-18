@@ -16,7 +16,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// LoaderWithSingleTenantFallback supplies the standalone router's handler for unmatched requests.
+// LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
 type LoaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }

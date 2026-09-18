@@ -107,6 +107,9 @@ type GrafanaRouter struct {
 	// so it's a sync.Map rather than an atomic.Pointer swap. A stale key is
 	// simply overwritten on next fetch, not actively evicted.
 	openapiDocs sync.Map
+
+	// Set before serving by the standalone target; middleware keeps its delegate.
+	unregisteredGroupHandler http.Handler
 }
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
@@ -154,14 +157,20 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	handlers := *cr.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		// A group we don't serve. Fall through rather than 404 so a caller
-		// mounted ahead of us keeps its own routes.
-		next.ServeHTTP(w, req)
+		cr.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
 	serveThroughBreaker(entry.breaker, entry.handler, w, req)
+}
+
+func (cr *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
+	if group != "" && cr.unregisteredGroupHandler != nil {
+		cr.unregisteredGroupHandler.ServeHTTP(w, req)
+		return
+	}
+	next.ServeHTTP(w, req)
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
@@ -234,7 +243,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	handlers := *cr.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		next.ServeHTTP(w, req)
+		cr.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 

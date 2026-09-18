@@ -62,9 +62,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 		next = http.NotFoundHandler()
 	}
 	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok {
-		if fb := st.SingleTenantFallback(); fb != nil {
-			next = fb
-		}
+		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
