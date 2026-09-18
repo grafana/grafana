@@ -18,7 +18,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Azure Monitor data source issues
 weight: 500
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Troubleshoot Azure Monitor data source issues
@@ -252,6 +252,22 @@ These errors occur when executing queries against Azure Monitor services.
 1. Consider using Basic Logs for large datasets (if enabled).
 1. Break complex queries into smaller parts.
 1. For alerting, ensure the alert evaluation interval is long enough to accommodate the query duration plus the configured timeout.
+
+### Logs query results are truncated
+
+**Symptoms:**
+
+- A Logs query returns exactly 30,000 rows even though more data exists
+- Grafana displays a notice that the row limit was reached
+
+**Cause:** When a Logs query uses the **Logs** result format, Grafana truncates the results to 30,000 rows to prevent the browser tab from crashing, because the logs visualization renders every row at once.
+
+**Solutions:**
+
+1. Aggregate the data in your query with `summarize` instead of returning raw rows.
+1. Narrow the dashboard time range to reduce the number of rows returned.
+1. Add filters to your KQL query to return only the rows you need.
+1. To remove the limit, enable the `azureMonitorDisableLogLimit` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/). Disabling the limit can degrade browser performance for very large result sets.
 
 ### "Metrics not available" for a resource
 
