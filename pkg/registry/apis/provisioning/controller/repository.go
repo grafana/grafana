@@ -788,7 +788,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// phase tracks how far reconciliation has progressed so a failure is counted
 	// under the stage it occurred in. The user-caused paths that surface their
-	// error on status and return nil (build/delete/hook) can't rely on the
+	// error on status and return nil (token/build/delete/hook) can't rely on the
 	// returned error, so they stash it in swallowedErr/swallowedPhase.
 	//
 	// The deferred recorder counts exactly one failure per reconcile and prefers
@@ -985,7 +985,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	defer func() {
 		if patchErr := applyPatches(); patchErr != nil {
 			phase = reconcilePhaseStatus
-			logger.Error("failed to apply patches", "error", patchErr)
 			if err == nil {
 				err = patchErr
 			} else {
@@ -1067,13 +1066,20 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
-			logger.Error("retrieving connection", "error", err)
 			return repoType, err
 		}
 
 		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
 		if err != nil {
-			logger.Error("generating token for repository", "error", err)
+			if rc.isUserCaused(err) {
+				// Swallowed after surfacing on status: stash it so the deferred
+				// recorder counts it, since it returns nil to the workqueue.
+				patchOperations = append(patchOperations, rc.tokenFailurePatchOps(obj, err)...)
+				swallowedErr, swallowedPhase = err, reconcilePhaseToken
+				logger.Warn("unable to generate repository token, user-caused error", "error", err)
+				return repoType, nil
+			}
+
 			return repoType, err
 		}
 
@@ -1114,6 +1120,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
 			if gerr != nil {
+				if rc.isUserCaused(gerr) {
+					patchOperations = append(patchOperations, rc.tokenFailurePatchOps(obj, gerr)...)
+					swallowedErr, swallowedPhase = gerr, reconcilePhaseToken
+					logger.Warn("unable to regenerate repository token, user-caused error", "error", gerr)
+					return repoType, nil
+				}
+
 				return repoType, fmt.Errorf("regenerating repository token: %w", gerr)
 			}
 
@@ -1459,6 +1472,30 @@ func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 // reconcile-error and token-generation-error metrics consistent.
 func (rc *RepositoryController) isUserCaused(err error) bool {
 	return classifyTokenErrorCause(err) == reconcileCauseUser
+}
+
+// tokenFailurePatchOps builds the health/ready status patches surfacing a
+// user-caused token generation failure. isUserCaused only matches sentinels
+// that mean the customer lost access (app uninstalled, permissions revoked,
+// installation gone, repository not selected), so the Ready reason is always
+// AuthenticationFailed rather than needing its own classifier.
+func (rc *RepositoryController) tokenFailurePatchOps(obj *provisioning.Repository, err error) []map[string]interface{} {
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{err.Error()},
+	}
+	ops := rc.healthPatchIfChanged(obj, healthStatus)
+
+	readyCondition := buildReadyConditionWithReason(healthStatus, provisioning.ReasonAuthenticationFailed)
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+	); conditionPatchOps != nil {
+		ops = append(ops, conditionPatchOps...)
+	}
+
+	return ops
 }
 
 // classifyBuildFailureReason maps a repository Build failure to a Ready condition
