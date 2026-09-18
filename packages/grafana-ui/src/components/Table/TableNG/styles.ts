@@ -59,9 +59,7 @@ export const getGridStyles = memoize(
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean
   ) => {
-    // deliberately not a theme color — this reads as a shadow cast on the rows, and it's the same
-    // value ScrollIndicators uses for the scroll cue on the dashboard lists
-    const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
+    const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
     const table = theme.components.table;
     const bgColor = transparent
       ? theme.flags.visualDesignRefresh
