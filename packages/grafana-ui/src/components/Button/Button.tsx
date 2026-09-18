@@ -317,7 +317,7 @@ export const getButtonStyles = (props: StyleProps) => {
 export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, visualRefreshEnabled?: boolean) {
   let backgroundColor = 'transparent';
   if (fill === 'solid') {
-    backgroundColor = visualRefreshEnabled ? color.background : color.main;
+    backgroundColor = visualRefreshEnabled ? color.background : color.background;
   }
   return {
     background: backgroundColor,
@@ -336,7 +336,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       color: color.text,
       border: `1px solid ${color.border}`,
 
-      '&:hover, &:focus': {
+      '&:hover': {
         background: visualRefreshEnabled ? color.subtleBackground : color.transparent,
         borderColor: visualRefreshEnabled ? color.borderEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
@@ -393,11 +393,6 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       color: hoverTextColor,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
-    },
-
-    '&:focus': {
-      background: hoverBackgroundColor,
-      color: hoverTextColor,
     },
 
     '&:active': {

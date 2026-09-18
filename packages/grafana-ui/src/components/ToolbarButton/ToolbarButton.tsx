@@ -152,7 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     background,
 
-    '&:hover, &:focus': {
+    '&:hover': {
       color: theme.colors.text.primary,
       background: backgroundHover,
       border: `1px solid ${theme.colors.secondary.border}`,
