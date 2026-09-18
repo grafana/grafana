@@ -52,6 +52,20 @@ interface Context {
   ds: GraphiteDatasource;
 }
 
+/**
+ * Mirrors templateSrv.replace() when window.__grafanaSceneContext is unset: only names present
+ * in the scopedVars argument are interpolated.
+ */
+function replaceFromScopedVarsOnly(target?: string, scopedVars?: ScopedVars): string {
+  if (!target) {
+    return target ?? '';
+  }
+  return target.replace(/\$(\w+)/g, (match, name) => {
+    const value = scopedVars?.[name]?.value;
+    return value == null || value === '' ? match : String(value);
+  });
+}
+
 const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
   data,
   status: 200,
@@ -1557,6 +1571,59 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.params).toEqual({});
       expect(requestOptions.data).toEqual('query=app.backend*');
       expect(results).not.toBe(null);
+    });
+
+    it('does not query Graphite with a literal $env.* when chained variable scopedVars are provided', async () => {
+      ctx.templateSrv.replace = jest.fn(replaceFromScopedVarsOnly);
+
+      fetchMock.mockImplementation((options) => {
+        requestOptions = options;
+        return of(createFetchResponse([]));
+      });
+
+      await ctx.ds.metricFindQuery('$env.*', {
+        scopedVars: {
+          env: { text: 'prod', value: 'prod' },
+          __sceneObject: { text: '', value: { name: 'dashboard' } },
+        },
+      });
+
+      // Graphite used to call replace() with only __searchFilter, so $env was left as a literal.
+      // The find API then 200'd an empty list and the variable collapsed to All.
+      expect(requestOptions.data).toBe('query=prod.*');
+      expect(requestOptions.data).not.toBe('query=$env.*');
+    });
+
+    it('sends a literal $env.* when scopedVars are omitted, matching the empty-options failure', async () => {
+      ctx.templateSrv.replace = jest.fn(replaceFromScopedVarsOnly);
+
+      fetchMock.mockImplementation((options) => {
+        requestOptions = options;
+        return of(createFetchResponse([]));
+      });
+
+      const results = await ctx.ds.metricFindQuery('$env.*', {});
+
+      expect(requestOptions.data).toBe('query=$env.*');
+      expect(results).toEqual([]);
+    });
+
+    it('should keep __searchFilter when merging options.scopedVars', async () => {
+      ctx.templateSrv.replace = jest.fn(replaceFromScopedVarsOnly);
+
+      await ctx.ds.metricFindQuery('$env.$__searchFilter', {
+        searchFilter: 'web',
+        scopedVars: { env: { text: 'prod', value: 'prod' } },
+      });
+
+      expect(ctx.templateSrv.replace).toHaveBeenCalledWith(
+        '$env.$__searchFilter',
+        expect.objectContaining({
+          env: { text: 'prod', value: 'prod' },
+          __searchFilter: { value: 'web*', text: '' },
+        })
+      );
+      expect(requestOptions.data).toEqual('query=prod.web*');
     });
 
     it('should interpolate $__searchFilter with default when searchFilter is missing', () => {
