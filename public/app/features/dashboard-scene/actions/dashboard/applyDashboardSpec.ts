@@ -19,18 +19,6 @@ export interface ApplyDashboardSpecProps {
   description: string;
 }
 
-/**
- * If currently opened sidebar element is edit as code we close it and show dashboard settings.
- * This will ensure no stale content is shown if undo is clicked or the mutation API (applySpec)
- * changed the dashboard in meantime.
- */
-function closeCodePane(scene: DashboardScene) {
-  const { sidebar } = scene.state;
-  if (sidebar.state?.openPane?.getId() === 'code') {
-    sidebar.closePane();
-  }
-}
-
 export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardSpecProps): void {
   const dto = buildDashboardWithAccessInfoFromScene(scene, spec);
   const rebuilt = transformSaveModelSchemaV2ToScene(dto);
@@ -70,7 +58,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
 
       // Sidebar keeps selected element memoized. In case assistant calls applySpec while an element
       // is selected it may lead to interacting with the old copy of the element.
-      closeCodePane(scene);
+      scene.state.sidebar.closePane();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
@@ -84,7 +72,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
     },
     undo: () => {
       scene.setState(previousState);
-      closeCodePane(scene);
+      scene.state.sidebar.closePane();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },
   });

@@ -14,6 +14,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
+import { findVizPanelByKey } from '../../utils/utils';
 
 import { applyDashboardSpec } from './applyDashboardSpec';
 
@@ -179,7 +180,7 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
   });
 
-  it('closes the sidebar selection so an open edit does not contain stale content', () => {
+  it('closes the code pane so it does not contain stale content', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
 
     scene.state.sidebar.openPane(new DashboardCodePane({}));
@@ -190,14 +191,42 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.sidebar.state.openPane).toBeUndefined();
   });
 
-  it('leaves an open, non-selection-based pane alone (e.g. the code pane driving this very call)', () => {
+  it('closes an open pane even when there is no selection', () => {
     const scene = buildScene(makeSpec('Old title'));
     const addNewPane = new AddNewPane({});
     scene.state.sidebar.openPane(addNewPane);
+    expect(scene.state.sidebar.state.openPane).toBe(addNewPane);
     expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(0);
 
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
 
-    expect(scene.state.sidebar.state.openPane).toBe(addNewPane);
+    expect(scene.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('clears panel selection and closes the pane on apply, undo, and redo', () => {
+    const scene = buildScene(makeRowsSpec('Dashboard'));
+    const sidebar = scene.state.sidebar;
+    const selectPanel = () => {
+      sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
+      expect(sidebar.state.openPane?.getId()).toBe('element');
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+    };
+    const expectClosed = () => {
+      expect(sidebar.state.openPane).toBeUndefined();
+      expect(sidebar.state.selectionContext.selected).toEqual([]);
+      expect(sidebar.state.previousState).toBeUndefined();
+    };
+
+    selectPanel();
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    expectClosed();
+
+    selectPanel();
+    sidebar.undoAction();
+    expectClosed();
+
+    selectPanel();
+    sidebar.redoAction();
+    expectClosed();
   });
 });
