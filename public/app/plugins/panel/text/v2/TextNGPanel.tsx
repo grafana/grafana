@@ -90,7 +90,7 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  const viewModeSessionKey = `${data.request?.dashboardUID ?? 'unknown'}.${id}`;
+  const viewModeSessionKey = `${id}`;
   const [view, setViewState] = useState<ViewMode>(
     () => viewModeSessionCache.get(viewModeSessionKey) ?? DEFAULT_VIEW_MODE
   );
