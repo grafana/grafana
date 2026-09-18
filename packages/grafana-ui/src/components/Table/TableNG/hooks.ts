@@ -826,63 +826,24 @@ export function useScrollShadows(
     }
   }, [ref, enabled, topOffset, bottomOffset]);
 
+  // Content height changes arrive through a render: rows change, nested rows expand, or resized
+  // columns re-wrap their cells. Measure after every commit so those changes do not need their own
+  // invalidation signal. A passive effect keeps the geometry reads out of React's commit phase.
+  useEffect(sync);
+
   useEffect(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
 
-    let animationFrame: number | undefined;
-    const cancelScheduledSync = () => {
-      if (animationFrame !== undefined) {
-        cancelAnimationFrame(animationFrame);
-        animationFrame = undefined;
-      }
-    };
-    const syncNow = () => {
-      cancelScheduledSync();
-      sync();
-    };
-    const scheduleSyncAfterLayout = () => {
-      if (animationFrame !== undefined) {
-        return;
-      }
-
-      // The first frame lets the mutation reach layout and paint. Reading geometry in the following
-      // frame avoids forcing that layout from a React commit while coalescing a whole DOM update.
-      animationFrame = requestAnimationFrame(() => {
-        animationFrame = requestAnimationFrame(() => {
-          animationFrame = undefined;
-          sync();
-        });
-      });
-    };
-
-    syncNow();
-    el.addEventListener('scroll', syncNow, { passive: true });
-    // Panel resizing changes what fits without moving the scroll position. ResizeObserver runs after
-    // layout, so it can measure immediately and cancel any redundant sync queued by DOM mutations.
-    const resizeObserver = new ResizeObserver(syncNow);
+    // Panel resizing changes what fits without moving the scroll position.
+    const resizeObserver = new ResizeObserver(sync);
     resizeObserver.observe(el);
-    // Content height can change without resizing the viewport: nested rows expand, columns re-wrap,
-    // or pages of rows are replaced. Observe those DOM changes instead of reading layout after every
-    // React commit.
-    const mutationObserver = new MutationObserver(scheduleSyncAfterLayout);
-    mutationObserver.observe(el, {
-      attributeFilter: ['class', 'style'],
-      childList: true,
-      characterData: true,
-      subtree: true,
-    });
-    return () => {
-      cancelScheduledSync();
-      el.removeEventListener('scroll', syncNow);
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
+    return () => resizeObserver.disconnect();
   }, [ref, enabled, sync]);
 
-  return { topRef, bottomRef };
+  return { topRef, bottomRef, onScroll: sync };
 }
 
 /**

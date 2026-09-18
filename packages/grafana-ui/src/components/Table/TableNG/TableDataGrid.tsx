@@ -93,6 +93,7 @@ export function TableDataGrid({
   noValue,
   renderers,
   onColumnResize,
+  onScroll,
   onCellClick,
   onCellKeyDown,
   sortColumns,
@@ -176,7 +177,11 @@ export function TableDataGrid({
   );
 
   // Only the refreshed table gets the scroll cue, alongside the rest of its chrome changes.
-  const { topRef: topShadowRef, bottomRef: bottomShadowRef } = useScrollShadows(
+  const {
+    topRef: topShadowRef,
+    bottomRef: bottomShadowRef,
+    onScroll: syncScrollShadows,
+  } = useScrollShadows(
     gridRef,
     Boolean(tableRefreshEnabled),
     // the sticky header and footer rows are part of the grid, so the shadows start and end where the
@@ -205,6 +210,14 @@ export function TableDataGrid({
           headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
           headerRowHeight={headerHeight}
           onColumnResize={onColumnResize}
+          onScroll={
+            tableRefreshEnabled
+              ? (event) => {
+                  syncScrollShadows();
+                  onScroll?.(event);
+                }
+              : onScroll
+          }
           onCellClick={onCellClick}
           onCellKeyDown={onCellKeyDown}
           renderers={{

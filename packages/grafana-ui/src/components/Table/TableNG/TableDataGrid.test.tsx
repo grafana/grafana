@@ -64,21 +64,10 @@ describe('TableDataGrid', () => {
     callback: ResizeObserverCallback;
     disconnect: jest.Mock;
   }>;
-  let mutationObservers: Array<{
-    callback: MutationCallback;
-    disconnect: jest.Mock;
-  }>;
-  let animationFrames: FrameRequestCallback[];
-  let origMutationObserver = global.MutationObserver;
-  let requestAnimationFrameSpy: jest.SpyInstance;
-  let cancelAnimationFrameSpy: jest.SpyInstance;
 
   beforeEach(() => {
     origResizeObserver = global.ResizeObserver;
-    origMutationObserver = global.MutationObserver;
     resizeObservers = [];
-    mutationObservers = [];
-    animationFrames = [];
     global.ResizeObserver = class ResizeObserver {
       disconnect = jest.fn();
 
@@ -89,31 +78,10 @@ describe('TableDataGrid', () => {
       observe() {}
       unobserve() {}
     };
-    global.MutationObserver = class MutationObserver {
-      disconnect = jest.fn();
-
-      constructor(public callback: MutationCallback) {
-        mutationObservers.push(this);
-      }
-
-      observe() {}
-      takeRecords() {
-        return [];
-      }
-    };
-    requestAnimationFrameSpy = jest
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((callback) => animationFrames.push(callback));
-    cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle) => {
-      delete animationFrames[handle - 1];
-    });
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
-    global.MutationObserver = origMutationObserver;
-    requestAnimationFrameSpy.mockRestore();
-    cancelAnimationFrameSpy.mockRestore();
   });
 
   describe('table.refresh', () => {
@@ -175,7 +143,8 @@ describe('TableDataGrid', () => {
     }
 
     it('shows a shadow on each edge that has rows scrolled out of view', () => {
-      const { container } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const onScroll = jest.fn();
+      const { container } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true, onScroll })} />);
       const grid = screen.getByRole('grid');
       const { top, bottom } = getShadows(container);
 
@@ -193,6 +162,7 @@ describe('TableDataGrid', () => {
       scrollTo(grid, { scrollTop: 300, clientHeight: 100, scrollHeight: 400 });
       expect(top).toHaveStyle({ opacity: '1' });
       expect(bottom).toHaveStyle({ opacity: '0' });
+      expect(onScroll).toHaveBeenCalledTimes(3);
     });
 
     it('stays hidden when every row already fits', () => {
@@ -234,7 +204,7 @@ describe('TableDataGrid', () => {
       expect(bottom).toHaveStyle({ bottom: '45px' });
     });
 
-    it('re-measures after content changes without blocking the render that produced them', () => {
+    it('re-measures after rendered content changes', () => {
       // expanding a nested row or re-wrapping text after a column resize changes the content height
       // without firing a scroll event or resizing the grid itself
       const props = makeProps({ tableRefreshEnabled: true });
@@ -247,13 +217,6 @@ describe('TableDataGrid', () => {
 
       Object.defineProperty(grid, 'scrollHeight', { configurable: true, value: 900 });
       rerender(<TableDataGrid {...props} rows={[...props.rows]} />);
-      expect(bottom).toHaveStyle({ opacity: '0' });
-
-      act(() => mutationObservers.at(-1)?.callback([], mutationObservers.at(-1) as unknown as MutationObserver));
-      act(() => animationFrames.splice(0).forEach((callback) => callback(0)));
-      expect(bottom).toHaveStyle({ opacity: '0' });
-
-      act(() => animationFrames.splice(0).forEach((callback) => callback(0)));
       expect(bottom).toHaveStyle({ opacity: '1' });
     });
 
@@ -267,24 +230,18 @@ describe('TableDataGrid', () => {
         offsetHeight: { configurable: true, value: 100 },
         scrollHeight: { configurable: true, value: 400 },
       });
-      act(() => mutationObservers.at(-1)?.callback([], mutationObservers.at(-1) as unknown as MutationObserver));
       act(() => resizeObservers.at(-1)?.callback([], resizeObservers.at(-1) as unknown as ResizeObserver));
 
       expect(bottom).toHaveStyle({ opacity: '1' });
-      expect(cancelAnimationFrameSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('disconnects its observers and cancels pending work on unmount', () => {
+    it('disconnects its resize observer on unmount', () => {
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
       const scrollShadowObserver = resizeObservers.at(-1);
-      const contentObserver = mutationObservers.at(-1);
-      act(() => contentObserver?.callback([], contentObserver as unknown as MutationObserver));
 
       unmount();
 
       expect(scrollShadowObserver?.disconnect).toHaveBeenCalledTimes(1);
-      expect(contentObserver?.disconnect).toHaveBeenCalledTimes(1);
-      expect(cancelAnimationFrameSpy).toHaveBeenCalledTimes(1);
     });
 
     it('is not rendered without table.refresh', () => {
