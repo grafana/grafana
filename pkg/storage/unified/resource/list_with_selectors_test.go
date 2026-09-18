@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"iter"
@@ -211,6 +212,19 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
+		"false when continuing a list that started on the SQL store scan": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				// The SQL backend records a row offset, not a name, and under a key this
+				// package does not decode.
+				NextPageToken: base64.StdEncoding.EncodeToString([]byte(`{"o":500,"v":7}`)),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
 		"true when continuing a list that started on search": {
 			req: &resourcepb.ListRequest{
 				Source:        resourcepb.ListRequest_STORE,
@@ -310,11 +324,16 @@ func TestFilterSelectors_Labels(t *testing.T) {
 func TestTokenFromOtherListPath(t *testing.T) {
 	searchToken := &ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: 100}
 	scanToken := &ContinueToken{Name: "a", ResourceVersion: 100}
+	// The SQL backend records a row offset under a key this type does not decode, so
+	// its token looks empty here and still has to count as a store token.
+	sqlScanToken := &ContinueToken{ResourceVersion: 100}
 
 	require.False(t, tokenFromOtherListPath(searchToken, true))
 	require.True(t, tokenFromOtherListPath(searchToken, false))
 	require.True(t, tokenFromOtherListPath(scanToken, true))
 	require.False(t, tokenFromOtherListPath(scanToken, false))
+	require.True(t, tokenFromOtherListPath(sqlScanToken, true))
+	require.False(t, tokenFromOtherListPath(sqlScanToken, false))
 }
 
 func TestDecodeListSearchRows(t *testing.T) {
