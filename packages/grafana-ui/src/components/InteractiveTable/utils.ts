@@ -1,16 +1,36 @@
 import { css } from '@emotion/css';
-import { type Column as RTColumn } from 'react-table';
+import { type CellContext, type ColumnDef, type Row } from '@tanstack/react-table';
 
 import { EmptyExpanderHeader, ExpanderCell, ExpanderHeader } from './Expander';
-import { type Column } from './types';
+import { type CellProps, type Column, type CompatRow } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 
-type InternalColumn<T extends object> = RTColumn<T> & {
+export type InternalColumn<T extends object> = ColumnDef<T> & {
+  id: string;
   visible?: (data: T[]) => boolean;
+  widthClass?: string;
 };
 
-// Returns the columns in a "react-table" acceptable format
+function toCompatRow<T extends object>(row: Row<T>): CompatRow<T> {
+  return Object.assign(row, {
+    values: Object.fromEntries(row.getAllCells().map((cell) => [cell.column.id, cell.getValue()])),
+  });
+}
+
+function toCellProps<T extends object, Value>(
+  context: CellContext<T, Value> & { __rowID?: string }
+): CellProps<T, Value> {
+  const value = context.getValue();
+  return {
+    ...context,
+    cell: Object.assign(context.cell, { value }),
+    row: toCompatRow(context.row),
+    value,
+    __rowID: context.__rowID,
+  };
+}
+
 export function getColumns<K extends object>(
   columns: Array<Column<K>>,
   showExpandAll = false
@@ -18,23 +38,32 @@ export function getColumns<K extends object>(
   return [
     {
       id: EXPANDER_CELL_ID,
-      Cell: ExpanderCell,
-      Header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
-      disableSortBy: true,
-      width: 0,
+      cell: (context) => ExpanderCell(toCellProps({ ...context })),
+      header: showExpandAll ? ExpanderHeader : EmptyExpanderHeader,
+      enableSorting: false,
+      size: 0,
     },
-    // @ts-expect-error react-table expects each column key(id) to have data associated with it and therefore complains about
-    // column.id being possibly undefined and not keyof T (where T is the data object)
-    // We do not want to be that strict as we simply pass undefined to cells that do not have data associated with them.
     ...columns.map((column) => ({
       id: column.id,
-      accessor: column.id,
-      Header: column.header || (() => null),
-      sortType: column.sortType || 'alphanumeric',
-      disableSortBy: !Boolean(column.sortType),
-      width: column.width ?? (column.disableGrow ? 0 : undefined),
-      minWidth: column.minWidth,
-      maxWidth: column.maxWidth,
+      accessorFn: (row: K) => row[column.id as keyof K],
+      header: column.header || (() => null),
+      sortingFn:
+        typeof column.sortType === 'function'
+          ? (rowA: Row<K>, rowB: Row<K>, columnId: string) =>
+              column.sortType!(toCompatRow(rowA), toCompatRow(rowB), columnId)
+          : column.sortType === 'string'
+            ? {
+                string: 'text',
+                number: 'basic',
+                datetime: 'datetime',
+                basic: 'basic',
+                alphanumeric: 'alphanumeric',
+              }[column.sortType]
+            : 'alphanumeric',
+      enableSorting: Boolean(column.sortType),
+      size: column.width ?? (column.disableGrow ? 0 : undefined),
+      minSize: column.minWidth,
+      maxSize: column.maxWidth,
       widthClass: css({
         width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
         minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
@@ -42,7 +71,9 @@ export function getColumns<K extends object>(
       }),
       visible: column.visible,
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
-      ...(column.cell && { Cell: column.cell }),
+      ...(column.cell && {
+        cell: (context: CellContext<K, unknown> & { __rowID?: string }) => column.cell!(toCellProps(context)),
+      }),
     })),
   ];
 }

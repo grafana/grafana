@@ -1,4 +1,5 @@
-import { type ColumnInstance, type HeaderGroup } from 'react-table';
+import { flexRender, type Header, type HeaderGroup } from '@tanstack/react-table';
+import { type CSSProperties } from 'react';
 
 import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -29,10 +30,9 @@ export function FooterRow(props: FooterRowProps) {
       }}
     >
       {footerGroups.map((footerGroup: HeaderGroup) => {
-        const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
-            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
+          <div className={tableStyles.tfoot} key={footerGroup.id} data-testid={e2eSelectorsTable.footer}>
+            {footerGroup.headers.map((header) => renderFooterCell(header, tableStyles))}
           </div>
         );
       })}
@@ -40,20 +40,20 @@ export function FooterRow(props: FooterRowProps) {
   );
 }
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
-  const { key, ...footerProps } = column.getHeaderProps();
-
-  if (!footerProps) {
-    return null;
-  }
-
-  footerProps.style = footerProps.style ?? {};
-  footerProps.style.position = 'absolute';
-  footerProps.style.justifyContent = (column as any).justifyContent;
-
+function renderFooterCell(header: Header<unknown, unknown>, tableStyles: TableStyles) {
+  const { column } = header;
   return (
-    <div key={key} className={tableStyles.headerCell} {...footerProps}>
-      {column.render('Footer')}
+    <div
+      key={header.id}
+      className={tableStyles.headerCell}
+      style={{
+        position: 'absolute',
+        left: column.getStart(),
+        width: column.getSize(),
+        justifyContent: (column.columnDef as { justifyContent?: CSSProperties['justifyContent'] }).justifyContent,
+      }}
+    >
+      {flexRender(column.columnDef.footer, header.getContext())}
     </div>
   );
 }

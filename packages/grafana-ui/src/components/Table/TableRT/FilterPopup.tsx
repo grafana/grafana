@@ -28,7 +28,7 @@ interface Props {
 }
 
 export const FilterPopup = ({
-  column: { preFilteredRows, filterValue, setFilter },
+  column,
   onClose,
   field,
   searchFilter,
@@ -37,6 +37,9 @@ export const FilterPopup = ({
   setOperator,
 }: Props) => {
   const theme = useTheme2();
+  const preFilteredRows = column.getFacetedRowModel().rows;
+  const filterValue = column.getFilterValue();
+  const setFilter = column.setFilterValue;
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);

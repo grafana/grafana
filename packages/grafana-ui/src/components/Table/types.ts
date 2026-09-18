@@ -1,6 +1,13 @@
 import { type Property } from 'csstype';
 import { type FC } from 'react';
-import { type CellProps, type Column, type Row, type TableState, type UseExpandedRowProps } from 'react-table';
+import {
+  type Cell,
+  type CellContext,
+  type ColumnDef,
+  type Row,
+  type SortingFn,
+  type TableState,
+} from '@tanstack/react-table';
 
 import {
   type DataFrame,
@@ -48,7 +55,8 @@ export interface TableSortByFieldState {
   desc?: boolean;
 }
 
-export interface TableCellProps extends CellProps<any> {
+export interface TableCellProps extends Omit<CellContext<any, unknown>, 'cell'> {
+  cell: Cell<any, unknown> & { value: unknown };
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
@@ -63,12 +71,13 @@ export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GrafanaTableColumn = Column & {
+export type GrafanaTableColumn = ColumnDef<any, unknown> & {
+  id: string;
   field: Field;
-  sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
+  sortingFn: 'basic' | SortingFn<any>;
   filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
   justifyContent: Property.JustifyContent;
-  minWidth: number;
+  minSize: number;
 };
 
 export interface TableFooterCalc {
@@ -86,7 +95,7 @@ export interface GrafanaTableState extends TableState {
   lastExpandedOrCollapsedIndex?: number;
 }
 
-export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
+export type GrafanaTableRow = Row<unknown>;
 
 export interface TableStateReducerProps {
   onColumnResize?: TableColumnResizeActionCallback;

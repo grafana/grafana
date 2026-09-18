@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type Row, type UseExpandedRowProps } from 'react-table';
+import { type Row } from '@tanstack/react-table';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ export function FunctionCellWithExpander({
   compact = false,
   toggleRowExpanded,
 }: {
-  row: Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>;
+  row: Row<CallTreeNode>;
   value: string;
   depth: number;
   hasChildren: boolean;
@@ -41,8 +41,8 @@ export function FunctionCellWithExpander({
 
   const handleClick = () => {
     if (hasChildren) {
-      const wasExpanded = row.isExpanded;
-      row.toggleRowExpanded();
+      const wasExpanded = row.getIsExpanded();
+      row.toggleExpanded();
       if (!wasExpanded) {
         expandSingleChildChain(row.original);
       }

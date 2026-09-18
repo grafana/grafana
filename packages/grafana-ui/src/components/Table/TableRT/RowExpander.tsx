@@ -11,15 +11,16 @@ export interface Props {
 }
 
 export function RowExpander({ row, tableStyles }: Props) {
+  const isExpanded = row.getIsExpanded();
   return (
-    <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
+    <div className={tableStyles.expanderCell} onClick={row.getToggleExpandedHandler()}>
       <Icon
         aria-label={
-          row.isExpanded
+          isExpanded
             ? t('grafana-ui.row-expander.collapse', 'Collapse row')
             : t('grafana-ui.row-expander.expand', 'Expand row')
         }
-        name={row.isExpanded ? 'angle-down' : 'angle-right'}
+        name={isExpanded ? 'angle-down' : 'angle-right'}
         size="lg"
       />
     </div>

@@ -1,6 +1,5 @@
 import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
-import { type CellProps } from 'react-table';
 
 import { LinkButton } from '../Button/Button';
 import { Checkbox } from '../Forms/Checkbox';
@@ -11,6 +10,7 @@ import { Text } from '../Text/Text';
 
 import { type FetchDataArgs, InteractiveTable, type InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
+import { type CellProps } from './types';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 

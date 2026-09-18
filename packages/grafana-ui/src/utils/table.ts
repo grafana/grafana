@@ -1,4 +1,4 @@
-import { type Row } from 'react-table';
+import { type Row } from '@tanstack/react-table';
 
 import { type Field, type LinkModel } from '@grafana/data';
 

@@ -1,18 +1,34 @@
 import { type ReactNode } from 'react';
-import {
-  type CellProps,
-  type DefaultSortTypes,
-  type HeaderProps,
-  type IdType,
-  type Renderer,
-  type SortByFn,
-} from 'react-table';
+import { type Cell, type CellContext, type HeaderContext, type Row } from '@tanstack/react-table';
+
+export type CompatRow<TableData extends object> = Row<TableData> & {
+  values: Record<string, unknown>;
+};
+
+export type CellProps<TableData extends object, Value = unknown> = Omit<
+  CellContext<TableData, Value>,
+  'cell' | 'row'
+> & {
+  cell: Cell<TableData, Value> & { value: Value };
+  row: CompatRow<TableData>;
+  value: Value;
+  __rowID?: string;
+};
+
+export type HeaderProps<TableData extends object> = HeaderContext<TableData, unknown>;
+export type SortByFn<TableData extends object> = (
+  rowA: CompatRow<TableData>,
+  rowB: CompatRow<TableData>,
+  columnId: string
+) => number;
+
+export type InteractiveTableSortingFn = 'alphanumeric' | 'basic' | 'datetime' | 'number' | 'string';
 
 export interface Column<TableData extends object> {
   /**
    * ID of the column. Must be unique among all other columns
    */
-  id: IdType<TableData>;
+  id: string;
   /**
    * Custom render function for te cell
    */
@@ -20,11 +36,11 @@ export interface Column<TableData extends object> {
   /**
    * Header name. Can be a string, renderer function, or undefined. If `undefined` the header will be empty. Useful for action columns.
    */
-  header?: Renderer<HeaderProps<TableData>>;
+  header?: ReactNode | ((props: HeaderProps<TableData>) => ReactNode);
   /**
    * Column sort type. If `undefined` the column will not be sortable.
    * */
-  sortType?: DefaultSortTypes | SortByFn<TableData>;
+  sortType?: InteractiveTableSortingFn | SortByFn<TableData>;
   /**
    * If `true` prevents the column from growing more than its content. Ignored when `width` is set.
    */

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { type TableInstance, useTable } from 'react-table';
+import { flexRender, getCoreRowModel, type ColumnDef, type Table, useReactTable } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
@@ -26,7 +26,7 @@ import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
-import { useCustomFlexLayout } from './customFlexTableLayout';
+import { getColumnFlexStyle, getFlexRowStyle } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -138,8 +138,18 @@ export function DashboardsTree({
     return columns;
   }, [onFolderClick, onTagClick, permissions]);
 
-  const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
-  const { getTableProps, getTableBodyProps, headerGroups } = table;
+  const columns = useMemo<Array<ColumnDef<DashboardsTreeItem>>>(
+    () =>
+      tableColumns.map(({ id, width, Header, Cell }) => ({
+        id,
+        size: width,
+        header: Header,
+        cell: Cell,
+      })),
+    [tableColumns]
+  );
+  const table = useReactTable({ columns, data: items, getCoreRowModel: getCoreRowModel() });
+  const headerGroups = table.getHeaderGroups();
 
   const virtualData = useMemo(
     () => ({
@@ -213,20 +223,28 @@ export function DashboardsTree({
   );
 
   return (
-    <div {...getTableProps()} role="table">
+    <div role="table">
       {headerGroups.map((headerGroup) => {
-        const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
-          style: { width },
-        });
-
         return (
-          <div key={key} {...headerGroupProps} className={cx(styles.row, styles.headerRow)}>
-            {headerGroup.headers.map((column) => {
-              const { key, ...headerProps } = column.getHeaderProps();
-
+          <div
+            key={headerGroup.id}
+            style={{ width, ...getFlexRowStyle() }}
+            className={cx(styles.row, styles.headerRow)}
+          >
+            {headerGroup.headers.map((header) => {
               return (
-                <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header', { isSelected, onAllSelectionChange, permissions })}
+                <div
+                  key={header.id}
+                  style={getColumnFlexStyle(header.column)}
+                  role="columnheader"
+                  className={styles.cell}
+                >
+                  {flexRender(header.column.columnDef.header, {
+                    ...header.getContext(),
+                    isSelected,
+                    onAllSelectionChange,
+                    permissions,
+                  })}
                 </div>
               );
             })}
@@ -234,7 +252,7 @@ export function DashboardsTree({
         );
       })}
 
-      <div {...getTableBodyProps()} data-testid={selectors.pages.BrowseDashboards.table.body}>
+      <div data-testid={selectors.pages.BrowseDashboards.table.body}>
         <InfiniteLoader
           ref={infiniteLoaderRef}
           itemCount={items.length}
@@ -269,7 +287,7 @@ interface VirtualListRowProps {
   index: number;
   style: React.CSSProperties;
   data: {
-    table: TableInstance<DashboardsTreeItem>;
+    table: Table<DashboardsTreeItem>;
     isSelected: DashboardsTreeCellProps['isSelected'];
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
@@ -283,17 +301,16 @@ interface VirtualListRowProps {
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
   const { table, isSelected, onItemSelectionChange, treeID, permissions } = data;
-  const { rows, prepareRow } = table;
+  const rows = table.getRowModel().rows;
 
   const row = rows[index];
-  prepareRow(row);
 
   const dashboardItem = row.original.item;
-  const { key, ...rowProps } = row.getRowProps({ style });
+  const rowProps = { style: { ...style, ...getFlexRowStyle() } };
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'divider') {
     return (
-      <div key={key} {...rowProps} role="presentation">
+      <div key={row.id} {...rowProps} role="presentation">
         <hr className={styles.divider} aria-hidden />
       </div>
     );
@@ -301,13 +318,18 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
   if (dashboardItem.kind === 'ui' && dashboardItem.uiKind === 'readme' && data.folderUID) {
     return (
-      <ReadmeRow key={key} rowProps={rowProps} folderUID={data.folderUID} onHeightChange={data.onReadmeHeightChange} />
+      <ReadmeRow
+        key={row.id}
+        rowProps={rowProps}
+        folderUID={data.folderUID}
+        onHeightChange={data.onReadmeHeightChange}
+      />
     );
   }
 
   return (
     <div
-      key={key}
+      key={row.id}
       {...rowProps}
       className={cx(styles.row, styles.bodyRow)}
       aria-labelledby={makeRowID(treeID, dashboardItem)}
@@ -315,12 +337,16 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
         'title' in dashboardItem ? dashboardItem.title : dashboardItem.uid
       )}
     >
-      {row.cells.map((cell) => {
-        const { key, ...cellProps } = cell.getCellProps();
-
+      {row.getVisibleCells().map((cell) => {
         return (
-          <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID, permissions })}
+          <div key={cell.id} style={getColumnFlexStyle(cell.column)} className={styles.cell}>
+            {flexRender(cell.column.columnDef.cell, {
+              ...cell.getContext(),
+              isSelected,
+              onItemSelectionChange,
+              treeID,
+              permissions,
+            })}
           </div>
         );
       })}

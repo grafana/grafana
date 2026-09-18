@@ -1,4 +1,5 @@
-import { type Cell } from 'react-table';
+import { flexRender, type Cell } from '@tanstack/react-table';
+import { type CSSProperties, type HTMLAttributes } from 'react';
 
 import { type TimeRange, type DataFrame, type InterpolateFunction } from '@grafana/data';
 
@@ -11,13 +12,14 @@ import {
 } from '../types';
 
 export interface Props {
-  cell: Cell;
+  cell: Cell<unknown, unknown>;
   tableStyles: TableStyles;
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
   timeRange?: TimeRange;
   userProps?: object;
+  cellStyle?: CSSProperties;
   frame: DataFrame;
   rowStyled?: boolean;
   rowExpanded?: boolean;
@@ -34,6 +36,7 @@ export const TableCell = ({
   onCellFilterAdded,
   timeRange,
   userProps,
+  cellStyle,
   frame,
   rowStyled,
   rowExpanded,
@@ -43,8 +46,17 @@ export const TableCell = ({
   replaceVariables,
   setInspectCell,
 }: Props) => {
-  const cellProps = cell.getCellProps();
-  const field = (cell.column as unknown as GrafanaTableColumn).field;
+  const columnDef = cell.column.columnDef as GrafanaTableColumn;
+  const cellProps: HTMLAttributes<HTMLDivElement> = {
+    style: {
+      ...(cellStyle ?? {
+        position: 'absolute',
+        left: cell.column.getStart(),
+        width: cell.column.getSize(),
+      }),
+    },
+  };
+  const field = columnDef.field;
 
   if (!field?.display) {
     return null;
@@ -53,7 +65,7 @@ export const TableCell = ({
   if (cellProps.style) {
     cellProps.style.wordBreak = 'break-word';
     cellProps.style.minWidth = cellProps.style.width;
-    const justifyContent = (cell.column as any).justifyContent;
+    const justifyContent = columnDef.justifyContent;
 
     if (justifyContent === 'flex-end' && !field.config.unit) {
       // justify-content flex-end is not compatible with cellLink overflow; use direction instead
@@ -65,13 +77,15 @@ export const TableCell = ({
     }
   }
 
-  let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
+  let innerWidth = cell.column.getSize() - tableStyles.cellPadding * 2;
 
   const actions = getActions ? getActions(frame, field, cell.row.index, replaceVariables) : [];
 
   return (
     <>
-      {cell.render('Cell', {
+      {flexRender(columnDef.cell, {
+        ...cell.getContext(),
+        cell: Object.assign(cell, { value: cell.getValue() }),
         field,
         tableStyles,
         onCellFilterAdded,
