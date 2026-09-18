@@ -38,7 +38,7 @@ const mockSetupGuideEnabled = jest.mocked(setupGuideEnabled);
 const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
-const healthy: KubernetesHealth = { alertsFiring: 0, pendingPods: 0, crashLoopingPods: 0, notReadyNodes: 0 };
+const healthy: KubernetesHealth = { alertsFiring: null, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 };
 
 beforeEach(() => {
   mockFetchCpu.mockReset();
@@ -150,25 +150,25 @@ describe('kubernetesSolution alert', () => {
   });
 
   it('leads with firing alerts', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
 
     const solution = kubernetesSolution();
     await expect(solution.needsAttention()).resolves.toBe(true);
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     await expect(solution.alert()).resolves.toEqual({
       primary: '3 alerts firing',
-      details: ['1 pod stuck pending'],
+      details: ['1 pod pending or failed'],
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
   });
 
   it('leads with the first health row when nothing is firing', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 0, pendingPods: 2, crashLoopingPods: 5, notReadyNodes: 1 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: null, unhealthyPods: 2, restarts1h: 5, notReadyNodes: 1 });
 
     await expect(kubernetesSolution().alert()).resolves.toMatchObject({
-      primary: '2 pods stuck pending',
-      details: ['5 pods crash looping', '1 node not ready'],
+      primary: '2 pods pending or failed',
+      details: ['5 restarts in the last hour', '1 node not ready'],
     });
   });
 });
@@ -251,7 +251,7 @@ describe('kubernetesSolution stats and sparkline', () => {
 
 describe('kubernetesSolution CTA and offer', () => {
   it('opens the alerts page when the solution needs attention', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, pendingPods: 1, crashLoopingPods: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({
       label: 'View alerts in Kubernetes Monitoring',
@@ -262,7 +262,7 @@ describe('kubernetesSolution CTA and offer', () => {
   });
 
   it('falls back to the solution page when the alerts page is inaccessible', async () => {
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, pendingPods: 0, crashLoopingPods: 0, notReadyNodes: 0 });
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 });
     mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/alerts' ? null : `/a/${appId}${path}`));
 
     await expect(kubernetesSolution().cta()).resolves.toEqual({
