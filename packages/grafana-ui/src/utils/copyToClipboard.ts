@@ -28,6 +28,9 @@ export async function copyTextToClipboard(text: string | Promise<string>, append
 }
 
 function copyTextToClipboardFallback(text: string, appendTo?: Ref) {
+  // select() moves focus into the textarea and removing it drops focus to <body>, so anything
+  // watching blur (tooltips, menus) closes on copy. Put focus back where the caller had it.
+  const previouslyFocused = document.activeElement;
   // Use a fallback method for browsers/contexts that don't support the Clipboard API.
   // See https://web.dev/async-clipboard/#feature-detection.
   // Use textarea so the user can copy multi-line content.
@@ -38,4 +41,8 @@ function copyTextToClipboardFallback(text: string, appendTo?: Ref) {
   textarea.select();
   document.execCommand('copy');
   textarea.remove();
+
+  if (previouslyFocused instanceof HTMLElement) {
+    previouslyFocused.focus();
+  }
 }

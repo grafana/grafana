@@ -23,6 +23,7 @@ function setupTests({ clipboard, clipboardItem, execCommand, isSecureContext, bo
 
 describe('copyTextToClipboard', () => {
   afterEach(() => {
+    jest.restoreAllMocks();
     Reflect.deleteProperty(window, 'isSecureContext');
     Reflect.deleteProperty(navigator, 'clipboard');
     Reflect.deleteProperty(globalThis, 'ClipboardItem');
@@ -67,6 +68,19 @@ describe('copyTextToClipboard', () => {
     expect(execCommand).toHaveBeenCalledWith('copy');
     expect(appendChild).toHaveBeenCalledTimes(1);
     expect(appendChild).toHaveBeenCalledWith(expect.any(Object));
+  });
+
+  it('should focus previously focused element when the Clipboard API is unavailable', async () => {
+    const execCommand = jest.fn().mockReturnValue(true);
+    const element = document.createElement('div');
+    element.focus = jest.fn();
+    jest.spyOn(document, 'activeElement', 'get').mockReturnValue(element);
+
+    setupTests({ isSecureContext: false, execCommand });
+
+    await copyTextToClipboard('copy me');
+
+    expect(element.focus).toHaveBeenCalled();
   });
 
   it('should use writeText when ClipboardItem is unavailable', async () => {

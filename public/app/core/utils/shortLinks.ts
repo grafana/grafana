@@ -108,8 +108,12 @@ export const createAndCopyShareDashboardLink = async (
   if (opts.useShortUrl) {
     return await createAndCopyShortLink(shareUrl);
   } else {
-    copyTextToClipboard(shareUrl);
-    dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
+    try {
+      await copyTextToClipboard(shareUrl);
+      dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
+    } catch (error) {
+      console.error('Error in createAndCopyShareDashboardLink:', error);
+    }
   }
 };
 

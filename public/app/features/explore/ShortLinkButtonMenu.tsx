@@ -47,7 +47,7 @@ export function ShortLinkButtonMenu({ hideText }: { hideText: boolean }) {
         url !== undefined
           ? `${window.location.protocol}//${window.location.host}${config.appSubUrl}${url}`
           : global.location.href
-      );
+      ).catch(console.error);
       reportInteraction('grafana_explore_copy_link_clicked', { isAbsoluteTime: absTime });
     }
   };
