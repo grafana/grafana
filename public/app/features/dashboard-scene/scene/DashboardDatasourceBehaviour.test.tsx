@@ -1082,8 +1082,6 @@ describe('DashboardDatasourceBehaviour', () => {
 
     activateFullSceneTree(scene);
 
-    await new Promise((r) => setTimeout(r, 1));
-
     const spy = jest
       .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
       .mockImplementation();
