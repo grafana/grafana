@@ -1,4 +1,5 @@
-import { type CellProps, type Column, type HeaderProps } from 'react-table';
+import { type CellContext, type HeaderContext } from '@tanstack/react-table';
+import { type ReactNode } from 'react';
 
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
@@ -59,9 +60,14 @@ interface RendererUserProps {
   permissions?: BrowseDashboardsPermissions;
 }
 
-export type DashboardsTreeColumn = Column<DashboardsTreeItem>;
-export type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & RendererUserProps;
-export type DashboardTreeHeaderProps = HeaderProps<DashboardsTreeItem> & RendererUserProps;
+export interface DashboardsTreeColumn {
+  id: string;
+  width: number;
+  Header: ReactNode | ((props: DashboardTreeHeaderProps) => ReactNode);
+  Cell: (props: DashboardsTreeCellProps) => ReactNode;
+}
+export type DashboardsTreeCellProps = CellContext<DashboardsTreeItem, unknown> & RendererUserProps;
+export type DashboardTreeHeaderProps = HeaderContext<DashboardsTreeItem, unknown> & RendererUserProps;
 
 export enum SelectionState {
   Unselected,

@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { type CellProps } from 'react-table';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { TagList, useStyles2 } from '@grafana/ui';
 
-import { type DashboardsTreeItem } from '../types';
+import { type DashboardsTreeCellProps } from '../types';
 
-interface TagsCellProps extends CellProps<DashboardsTreeItem, unknown> {
+interface TagsCellProps extends DashboardsTreeCellProps {
   onTagClick?: (tag: string) => void;
 }
 

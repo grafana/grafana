@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { type HeaderGroup, type Row } from 'react-table';
+import { type Header, type Row } from '@tanstack/react-table';
 
 import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
@@ -94,23 +94,23 @@ describe('Table utils', () => {
     it('Should build columns from DataFrame', () => {
       const columns = getColumns(getData(), 1000, 120, false);
 
-      expect(columns[0].Header).toBe('Time');
-      expect(columns[1].Header).toBe('Value');
+      expect(columns[0].header).toBe('Time');
+      expect(columns[1].header).toBe('Value');
     });
 
     it('Should distribute width and use field config width', () => {
       const columns = getColumns(getData(), 1000, 120, false);
 
-      expect(columns[0].width).toBe(450);
-      expect(columns[1].width).toBe(100);
+      expect(columns[0].size).toBe(450);
+      expect(columns[1].size).toBe(100);
     });
 
     it('Should distribute width and use field config width with expander enabled', () => {
       const columns = getColumns(getData(), 1000, 120, true);
 
-      expect(columns[0].width).toBe(50); // expander column
-      expect(columns[1].width).toBe(425);
-      expect(columns[2].width).toBe(100);
+      expect(columns[0].size).toBe(50); // expander column
+      expect(columns[1].size).toBe(425);
+      expect(columns[2].size).toBe(100);
     });
 
     it('Should set field on columns', () => {
@@ -735,7 +735,7 @@ describe('createFooterCalculationValues', () => {
 
 describe('guessTextBoundingBox', () => {
   function makeHeaderGroup(width: number) {
-    return { width } as unknown as HeaderGroup;
+    return { getSize: () => width } as unknown as Header<unknown, unknown>;
   }
 
   it('returns defaultRowHeight when osContext is null, using the headerGroup width', () => {
@@ -744,7 +744,7 @@ describe('guessTextBoundingBox', () => {
   });
 
   it('defaults width to 300 when headerGroup.width is undefined', () => {
-    const result = guessTextBoundingBox('text', {} as unknown as HeaderGroup, null, 20, 36);
+    const result = guessTextBoundingBox('text', {} as unknown as Header<unknown, unknown>, null, 20, 36);
     expect(result.width).toBe(300);
   });
 
