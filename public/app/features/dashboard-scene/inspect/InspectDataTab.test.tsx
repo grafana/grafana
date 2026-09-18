@@ -9,7 +9,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 
 import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import {
-  extractLabels,
+  EXTRACT_FIELDS_FIXTURE,
   frameWithLabels,
   mockSystemTransformationPlugins,
   registerPlugin,
@@ -87,7 +87,7 @@ describe('InspectDataTab', () => {
 
   it('offers the transformations toggle when the plugin starts transforming after the tab rendered', async () => {
     registerPlugin('plain-table');
-    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [EXTRACT_FIELDS_FIXTURE]));
 
     const { panel, tab } = buildTab({ pluginId: 'plain-table' });
     activateFullSceneTree(panel);
@@ -105,7 +105,7 @@ describe('InspectDataTab', () => {
   });
 
   it('offers the transformations toggle when only the plugin registered transformations', async () => {
-    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [EXTRACT_FIELDS_FIXTURE]));
 
     const { panel, tab } = buildTab({ pluginId: 'logs-table' });
     activateFullSceneTree(panel);
@@ -151,7 +151,7 @@ describe('InspectDataTab', () => {
   // only follow it by resolving per query result.
   const registerBranchingPlugin = () =>
     registerPlugin('logs-table', (p) =>
-      p.setSystemTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [extractLabels] : []))
+      p.setSystemTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [EXTRACT_FIELDS_FIXTURE] : []))
     );
 
   it('hides the transformations toggle for frames a data dependent supplier skips', async () => {
@@ -174,7 +174,7 @@ describe('InspectDataTab', () => {
 
   it('hides the transformations toggle when the feature toggle is off', async () => {
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
-    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [EXTRACT_FIELDS_FIXTURE]));
 
     const { panel, tab } = buildTab({ pluginId: 'logs-table' });
     activateFullSceneTree(panel);

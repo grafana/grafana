@@ -4456,6 +4456,10 @@
               "datasourceUid": {
                 "description": "datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to\nsync alert rules from. Empty means no sync is configured for the current\norg. The operator ini setting `unified_alerting.external_ruler_uid`\noverrides this when set; see status.externalRulerSync.origin.",
                 "type": "string"
+              },
+              "pollInterval": {
+                "description": "pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 5m; must be between 1m and 1h. The\nworker checks orgs against a short internal baseline and only does\nreal work for an org once its own pollInterval has elapsed, so this\nis a lower bound, not a guarantee — an org's actual sync can lag\nslightly past its configured interval. Has no effect on the operator\nini path, which always uses the 5m default.",
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -4483,6 +4487,10 @@
             "properties": {
               "datasourceUid": {
                 "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
+                "type": "string"
+              },
+              "lastAppliedHash": {
+                "description": "lastAppliedHash is the upstream config hash from the last successful\nsync via this resource. The worker reads it back (API path only) to\nskip an unchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.",
                 "type": "string"
               },
               "origin": {
@@ -4961,6 +4969,22 @@
           }
         }
       },
+      "ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "ListAlertRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": ["resource"],
@@ -5076,6 +5100,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1SearchTextLeaf"
@@ -5273,6 +5300,22 @@
           }
         }
       },
+      "ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
+        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "negate": {
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        }
+      },
       "ListRecordingRuleSearchRulesV0alpha1SearchResultHit": {
         "type": "object",
         "required": ["resource"],
@@ -5388,6 +5431,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf"
           },
           "text": {
             "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf"
@@ -5894,6 +5940,25 @@
           }
         }
       },
+      "RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "ResourceRef": {
         "description": "ResourceRef is the full identity of a returned item. Namespace is implicit from the URL and omitted.",
         "type": "object",
@@ -6084,7 +6149,7 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
@@ -6111,6 +6176,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/RegexPredicate"
           },
           "text": {
             "description": "Leaves.",

@@ -3,7 +3,6 @@ package sso
 import (
 	"context"
 	"net/http"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,81 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// fakeSettings is a stateful in-memory MT-Settings double implementing both the
-// reader (List) and writer (Upsert/Delete) surfaces. Writes mutate the us layer
-// and List returns it merged with the immutable seeded layers (defaults/hgapi),
-// so a re-read after a write observes that write — which the store's responses
-// now rely on.
-type fakeSettings struct {
-	settingsvc.Service
-	us       map[string]*settingsvc.Setting // section|key -> us row
-	seeded   []*settingsvc.Setting          // immutable non-us rows
-	upserts  map[string]string              // key -> value, for write assertions
-	sections map[string]string              // key -> section, for write assertions
-	deleted  []string                       // deleted keys, in call order
-}
-
-func newFakeSettings(seed []*settingsvc.Setting) *fakeSettings {
-	f := &fakeSettings{
-		us:       map[string]*settingsvc.Setting{},
-		upserts:  map[string]string{},
-		sections: map[string]string{},
-	}
-	for _, r := range seed {
-		if r.Labels["source"] == "us" {
-			f.us[r.Section+"|"+r.Key] = r
-		} else {
-			f.seeded = append(f.seeded, r)
-		}
-	}
-	return f
-}
-
-func (f *fakeSettings) List(_ context.Context, sel metav1.LabelSelector) ([]*settingsvc.Setting, error) {
-	var out []*settingsvc.Setting
-	for _, r := range f.seeded {
-		if sectionMatches(sel, r.Section) {
-			out = append(out, r)
-		}
-	}
-	for _, r := range f.us {
-		if sectionMatches(sel, r.Section) {
-			out = append(out, r)
-		}
-	}
-	return out, nil
-}
-
-// sectionMatches supports the two selector shapes the store issues: an exact
-// MatchLabels section (Get) and a section-In expression (List).
-func sectionMatches(sel metav1.LabelSelector, section string) bool {
-	if want, ok := sel.MatchLabels["section"]; ok {
-		return section == want
-	}
-	for _, req := range sel.MatchExpressions {
-		if req.Key == "section" && req.Operator == metav1.LabelSelectorOpIn {
-			return slices.Contains(req.Values, section)
-		}
-	}
-	return false
-}
-
-func (f *fakeSettings) Upsert(_ context.Context, s *settingsvc.Setting) error {
-	f.upserts[s.Key] = s.Value
-	f.sections[s.Key] = s.Section
-	f.us[s.Section+"|"+s.Key] = &settingsvc.Setting{
-		Section: s.Section, Key: s.Key, Value: s.Value,
-		Labels: map[string]string{"source": "us"},
-	}
-	return nil
-}
-
-func (f *fakeSettings) Delete(_ context.Context, section, key string) error {
-	f.deleted = append(f.deleted, key)
-	delete(f.us, section+"|"+key)
-	return nil
-}
-
 func nsCtx() context.Context {
 	return genericapirequest.WithNamespace(context.Background(), "stacks-11")
 }
@@ -105,14 +29,6 @@ func ssoObj(name string, settings map[string]any) *iamv0.SSOSetting {
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec:       iamv0.SSOSettingSpec{Settings: common.Unstructured{Object: settings}},
 	}
-}
-
-func usRow(section, key, value string) *settingsvc.Setting {
-	return &settingsvc.Setting{Section: section, Key: key, Value: value, Labels: map[string]string{"source": "us"}}
-}
-
-func defaultRow(section, key, value string) *settingsvc.Setting {
-	return &settingsvc.Setting{Section: section, Key: key, Value: value, Labels: map[string]string{"source": "defaults"}}
 }
 
 func TestMTSettingsStore(t *testing.T) {
@@ -173,8 +89,10 @@ func TestMTSettingsStore(t *testing.T) {
 			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
-				assert.Equal(t, map[string]string{"enabled": "true", "client_id": "abc"}, f.upserts)
-				assert.Equal(t, "auth.generic_oauth", f.sections["client_id"])
+				assert.Equal(t, map[string]string{
+					"auth.generic_oauth|enabled":   "true",
+					"auth.generic_oauth|client_id": "abc",
+				}, f.upserts)
 				assert.Equal(t, "stacks-11", sso.Namespace)
 				assert.NotEmpty(t, sso.ResourceVersion)
 				// Projection, not echo: Spec.Source is resolved and the seeded
@@ -199,8 +117,11 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.False(t, created)
-				assert.Equal(t, map[string]string{"enabled": "false", "new_key": "y"}, f.upserts)
-				assert.Equal(t, []string{"stale"}, f.deleted)
+				assert.Equal(t, map[string]string{
+					"auth.saml|enabled": "false",
+					"auth.saml|new_key": "y",
+				}, f.upserts)
+				assert.Equal(t, []string{"auth.saml|stale"}, f.deleted)
 				assert.Equal(t, "stacks-11", sso.Namespace)
 				assert.Equal(t, iamv0.SourceDB, sso.Spec.Source)
 				assert.Equal(t, map[string]any{"enabled": "false", "new_key": "y", "name": "SAML"}, sso.Spec.Settings.Object)
@@ -218,7 +139,7 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.True(t, created)
-				assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+				assert.Equal(t, map[string]string{"auth.saml|enabled": "true"}, f.upserts)
 				assert.Equal(t, iamv0.SourceDB, sso.Spec.Source)
 			},
 		},
@@ -245,7 +166,7 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.True(t, deleted)
-				assert.Equal(t, []string{"enabled"}, f.deleted)
+				assert.Equal(t, []string{"auth.saml|enabled"}, f.deleted)
 			},
 		},
 		{
@@ -292,7 +213,7 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				// Written as plaintext so the settings service mutator can encrypt it.
-				assert.Equal(t, "topsecret", f.upserts["client_secret"])
+				assert.Equal(t, "topsecret", f.upserts["auth.generic_oauth|client_secret"])
 				// Redacted in the response body.
 				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
 				assert.Equal(t, "abc", sso.Spec.Settings.Object["client_id"])
@@ -312,7 +233,7 @@ func TestMTSettingsStore(t *testing.T) {
 			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
-				assert.Equal(t, "newsecret", f.upserts["client_secret"])
+				assert.Equal(t, "newsecret", f.upserts["auth.generic_oauth|client_secret"])
 				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
 			},
 		},
@@ -331,7 +252,7 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				// The placeholder is not persisted; the stored secret is preserved.
-				assert.Equal(t, "storedsecret", f.upserts["client_secret"])
+				assert.Equal(t, "storedsecret", f.upserts["auth.generic_oauth|client_secret"])
 				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
 			},
 		},
@@ -347,16 +268,16 @@ func TestMTSettingsStore(t *testing.T) {
 				require.NotNil(t, sso)
 				// The placeholder must never be persisted as the secret; with no
 				// stored value to restore, the key is dropped entirely.
-				_, wrote := f.upserts["client_secret"]
+				_, wrote := f.upserts["auth.generic_oauth|client_secret"]
 				assert.False(t, wrote, "placeholder secret must not be written")
-				assert.Equal(t, "abc", f.upserts["client_id"])
+				assert.Equal(t, "abc", f.upserts["auth.generic_oauth|client_id"])
 			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFakeSettings(tc.rows)
+			f := newFakeSettings(tc.rows...)
 			obj, ok, err := tc.op(NewMTSettingsStore(f, f, nil))
 			sso, _ := obj.(*iamv0.SSOSetting) // may be nil; each assert decides what "valid" means
 			tc.assert(t, sso, ok, err, f)
@@ -378,88 +299,88 @@ func TestMTSettingsStore_Defaults(t *testing.T) {
 	}
 
 	t.Run("Create fills in defaults for absent and empty keys only", func(t *testing.T) {
-		f := newFakeSettings(nil)
+		f := newFakeSettings()
 		_, err := NewMTSettingsStore(f, f, defaults).Create(nsCtx(),
 			ssoObj("myProvider", map[string]any{"enabled": "true", "setting_1": ""}),
 			nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		assert.Equal(t, map[string]string{
-			"enabled":   "true",
-			"setting_1": "mail",
-			"setting_2": "mail",
+			"auth.myProvider|enabled":   "true",
+			"auth.myProvider|setting_1": "mail",
+			"auth.myProvider|setting_2": "mail",
 		}, f.upserts)
 	})
 
 	t.Run("Update fills in defaults for absent and empty keys only", func(t *testing.T) {
-		f := newFakeSettings([]*settingsvc.Setting{usRow("auth.myProvider", "enabled", "true")})
+		f := newFakeSettings(usRow("auth.myProvider", "enabled", "true"))
 		_, _, err := NewMTSettingsStore(f, f, defaults).Update(nsCtx(), "myProvider",
 			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false", "setting_2": "custom"})),
 			nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		assert.Equal(t, map[string]string{
-			"enabled":   "false",
-			"setting_1": "mail",
-			"setting_2": "custom",
+			"auth.myProvider|enabled":   "false",
+			"auth.myProvider|setting_1": "mail",
+			"auth.myProvider|setting_2": "custom",
 		}, f.upserts)
 	})
 
 	t.Run("Update does not prune a defaulted key that the request omits again", func(t *testing.T) {
-		f := newFakeSettings([]*settingsvc.Setting{
+		f := newFakeSettings(
 			usRow("auth.myProvider", "enabled", "true"),
 			usRow("auth.myProvider", "setting_1", defaults["myProvider"]["setting_1"].(string)), // stored from a prior default-fill
-		})
+		)
 		_, _, err := NewMTSettingsStore(f, f, defaults).Update(nsCtx(), "myProvider",
 			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false"})),
 			nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		assert.Empty(t, f.deleted)
-		assert.Equal(t, defaults["myProvider"]["setting_1"].(string), f.upserts["setting_1"])
+		assert.Equal(t, defaults["myProvider"]["setting_1"].(string), f.upserts["auth.myProvider|setting_1"])
 	})
 
 	t.Run("Create/Update are unaffected when the provider has no registered defaults", func(t *testing.T) {
-		f := newFakeSettings(nil)
+		f := newFakeSettings()
 		store := NewMTSettingsStore(f, f, defaults)
 
 		_, err := store.Create(nsCtx(), ssoObj("myOtherProvider", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+		assert.Equal(t, map[string]string{"auth.myOtherProvider|enabled": "true"}, f.upserts)
 
 		_, _, err = store.Update(nsCtx(), "myOtherProvider",
 			rest.DefaultUpdatedObjectInfo(ssoObj("myOtherProvider", map[string]any{"enabled": "false"})),
 			nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, map[string]string{"enabled": "false"}, f.upserts)
+		assert.Equal(t, map[string]string{"auth.myOtherProvider|enabled": "false"}, f.upserts)
 	})
 
 	t.Run("Create/Update are unaffected without a defaults provider", func(t *testing.T) {
-		f := newFakeSettings(nil)
+		f := newFakeSettings()
 		store := NewMTSettingsStore(f, f, nil)
 
 		_, err := store.Create(nsCtx(), ssoObj("myProvider", map[string]any{"enabled": "true"}), nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+		assert.Equal(t, map[string]string{"auth.myProvider|enabled": "true"}, f.upserts)
 
 		_, _, err = store.Update(nsCtx(), "myProvider",
 			rest.DefaultUpdatedObjectInfo(ssoObj("myProvider", map[string]any{"enabled": "false"})),
 			nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, map[string]string{"enabled": "false"}, f.upserts)
+		assert.Equal(t, map[string]string{"auth.myProvider|enabled": "false"}, f.upserts)
 	})
 }
 
 func TestMTSettingsStore_List(t *testing.T) {
 	t.Run("one item per configured provider, canonical order, redacted", func(t *testing.T) {
-		f := newFakeSettings([]*settingsvc.Setting{
+		f := newFakeSettings(
 			usRow("auth.github", "enabled", "true"),
 			usRow("auth.github", "client_secret", "supersecret"),
 			defaultRow("auth.saml", "name", "SAML"),
 			// ldap (no MT representation) and non-auth sections are never listed
 			usRow("auth.ldap", "enabled", "true"),
 			usRow("smtp", "host", "localhost"),
-		})
+		)
 
 		obj, err := NewMTSettingsStore(f, f, nil).List(nsCtx(), nil)
 		require.NoError(t, err)
@@ -482,7 +403,7 @@ func TestMTSettingsStore_List(t *testing.T) {
 	})
 
 	t.Run("empty list when no provider has rows", func(t *testing.T) {
-		f := newFakeSettings(nil)
+		f := newFakeSettings()
 		obj, err := NewMTSettingsStore(f, f, nil).List(nsCtx(), nil)
 		require.NoError(t, err)
 		list, ok := obj.(*iamv0.SSOSettingList)

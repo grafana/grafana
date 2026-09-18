@@ -64,7 +64,7 @@ type staticContactPointValidator struct {
 
 func newStaticContactPointValidator(am *v1.AMConfigV1) staticContactPointValidator {
 	availableReceivers := make(map[string]struct{})
-	for _, receiver := range am.AlertmanagerConfig.GetReceivers() {
+	for _, receiver := range am.GetReceivers() {
 		availableReceivers[receiver.GetName()] = struct{}{}
 	}
 

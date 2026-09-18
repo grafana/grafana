@@ -669,13 +669,11 @@ func TestReceiverService_Create(t *testing.T) {
 			if tc.expectedStored != nil {
 				revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 				require.NoError(t, err)
-				for _, apiReceiver := range revision.Config.AlertmanagerConfig.Receivers {
-					if apiReceiver.Name == tc.expectedStored.Name {
-						assert.Equal(t, tc.expectedStored, apiReceiver)
-						return
-					}
+				apiReceiver, ok := revision.Config.Receivers[v1.ReceiverUID(tc.expectedStored.Name)]
+				if !ok {
+					t.Fatalf("expected to find receiver %q in revision", tc.expectedStored.Name)
 				}
-				t.Fatalf("expected to find receiver %q in revision", tc.expectedStored.Name)
+				assert.Equal(t, tc.expectedStored, &apiReceiver)
 			}
 		})
 	}
@@ -1139,6 +1137,25 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		actual, err = sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
 		require.NoError(t, err)
 		require.Equal(t, recv.Name, actual.Name)
+	})
+
+	t.Run("cannot rename receiver to name that is already used by another receiver of same origin", func(t *testing.T) {
+		ruleStore := &fakeAlertRuleNotificationStore{}
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.ruleNotificationsStore = ruleStore
+
+		newReceiverName = "slack receiver"
+		actual, err := sut.GetReceiver(context.Background(), legacy_storage.NameToUid(newReceiverName), false, writer)
+		require.NoError(t, err)
+		require.Equal(t, models.ResourceOriginGrafana, actual.Origin)
+		require.Equal(t, newReceiverName, actual.Name)
+		require.NotEmpty(t, actual.Integrations)
+
+		baseReceiver.Name = newReceiverName
+
+		_, err = sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, models.ErrReceiverInvalidBase)
+		require.ErrorContains(t, err, "already exists")
 	})
 }
 
@@ -2001,7 +2018,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 func createEncryptedConfig(t *testing.T, secretService secretService, extraConfig *v1.ExtraConfiguration) string {
 	c, err := Load([]byte(defaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
-	err = EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
