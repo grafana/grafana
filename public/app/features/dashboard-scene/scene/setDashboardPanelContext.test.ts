@@ -17,6 +17,7 @@ import {
   GroupByVariable,
   SceneDataNode,
   sceneGraph,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
@@ -121,6 +122,81 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('keeps each panel’s single view list and subscriptions independent', () => {
+      const first = buildTestScene({});
+      const second = buildTestScene({});
+      const firstApi = first.context.adHocTransformations!;
+      const secondApi = second.context.adHocTransformations!;
+      const firstChanged = jest.fn();
+      const secondChanged = jest.fn();
+      const unsubscribe = firstApi.subscribe(firstChanged);
+      const unsubscribeSecond = secondApi.subscribe(secondChanged);
+
+      firstApi.set([{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set([{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set([]);
+
+      expect(firstApi.get()).toEqual([]);
+      expect(secondApi.get()).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      expect(secondChanged).toHaveBeenCalledTimes(1);
+      unsubscribe();
+      firstApi.set([{ id: 'limit', options: { limitField: 1 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      unsubscribeSecond();
+    });
+
+    it('replaces the entire view list with an immutable snapshot', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const configs = [{ id: 'limit', options: { limitField: 2 } }];
+      api.set(configs);
+      const snapshot = api.get();
+      configs[0].options.limitField = 99;
+
+      expect(api.get()).toBe(snapshot);
+      expect(api.get()).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(Object.isFrozen(snapshot[0].options)).toBe(true);
+      api.set([{ id: 'organize', options: {} }]);
+      expect(api.get()).toEqual([{ id: 'organize', options: {} }]);
+    });
+
+    it('restores field cleanup when the view is cleared or the plugin changes', () => {
+      const { context, vizPanel } = buildTestScene({});
+      vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
+      const api = context.adHocTransformations!;
+      const changed = jest.fn();
+      const unsubscribe = api.subscribe(changed);
+
+      api.set([{ id: 'organize', options: {} }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      api.set([]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      vizPanel.setState({ pluginId: 'table' });
+      expect(api.get()).toEqual([]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      expect(changed).toHaveBeenCalledTimes(4);
+      unsubscribe();
+    });
+
+    it('uses the panel runtime transformation controller across data replacements', () => {
+      const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
+      const controller = vizPanel.getRuntimeTransformations();
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get()).toEqual([]);
+
+      controller.set([{ id: 'organize', options: {} }]);
+      vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get()).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});

@@ -1,0 +1,363 @@
+diff --git a/dist/esm/components/VizPanel/VizPanelRuntimeTransformations.js b/dist/esm/components/VizPanel/VizPanelRuntimeTransformations.js
+index ace8dea633a6459044912b782948596c13fbd550..45738ddd2e67201f941f67f035f9a02603cafe20 100644
+--- a/dist/esm/components/VizPanel/VizPanelRuntimeTransformations.js
++++ b/dist/esm/components/VizPanel/VizPanelRuntimeTransformations.js
+@@ -18,10 +18,8 @@ function freezeDeep(value, seen = /* @__PURE__ */ new WeakSet()) {
+ class VizPanelRuntimeTransformationsController {
+   /** Creates a controller and connects it to the panel lifecycle. */
+   constructor(panel) {
+-    // Stores active owners in execution order with their configuration, captured source, and operator.
+-    this._groups = /* @__PURE__ */ new Map();
+-    // Stores change listeners by owner.
+-    this._listeners = /* @__PURE__ */ new Map();
++    this._view = void 0;
++    this._listeners = /* @__PURE__ */ new Set();
+     // Distinguishes a stored undefined cleanup setting from no stored setting.
+     this._hasPreviousClearPreviousFieldValues = false;
+     this._panel = panel;
+@@ -38,54 +36,40 @@ class VizPanelRuntimeTransformationsController {
+       };
+     });
+   }
+-  /** Returns the current immutable transformation snapshot for an owner. */
+-  get(owner) {
+-    var _a, _b;
+-    return (_b = (_a = this._groups.get(owner)) == null ? void 0 : _a.transformations) != null ? _b : NO_TRANSFORMATIONS;
++  /** Returns the immutable view transformation snapshot. */
++  get() {
++    return this._view?.transformations ?? NO_TRANSFORMATIONS;
+   }
+-  /** Replaces or removes an owner's transformations and refreshes panel data. */
+-  set(owner, transformations) {
+-    var _a;
++  /** Replaces the view transformations and refreshes panel data. */
++  set(transformations) {
+     if (transformations.length === 0) {
+-      if (!this._groups.delete(owner)) {
++      if (!this._view) {
+         return;
+       }
++      this._view = void 0;
+     } else {
+       const snapshot = freezeDeep(cloneDeep(transformations));
+-      const group = this._groups.get(owner);
+-      if (group) {
+-        group.transformations = snapshot;
+-        group.operator = this._createOperator(group, snapshot);
++      if (this._view) {
++        this._view.transformations = snapshot;
++        this._view.operator = this._createOperator(this._view, snapshot);
+       } else {
+-        this._groups.set(owner, this._createGroup(snapshot));
++        this._view = this._createView(snapshot);
+       }
+     }
+     this._updatePreviousFieldValueCleanup();
+     this._reprocessTransformations();
+-    (_a = this._listeners.get(owner)) == null ? void 0 : _a.forEach((listener) => listener());
+-  }
+-  /** Returns the frames that enter an owner's stage. */
+-  getSourceSeries(owner) {
+-    var _a, _b, _c;
+-    const group = this._groups.get(owner);
+-    if (group == null ? void 0 : group.transformations.length) {
+-      return group.sourceSeries;
+-    }
+-    return (_c = (_b = (_a = this._getTransformer()) == null ? void 0 : _a.state.data) == null ? void 0 : _b.series) != null ? _c : NO_SERIES;
+-  }
+-  /** Registers a listener for changes to one owner. */
+-  subscribe(owner, callback) {
+-    let listeners = this._listeners.get(owner);
+-    if (!listeners) {
+-      listeners = /* @__PURE__ */ new Set();
+-      this._listeners.set(owner, listeners);
+-    }
+-    listeners.add(callback);
+-    return () => listeners.delete(callback);
++    this._listeners.forEach((listener) => listener());
++  }
++  /** Returns the frames entering the view transformation stage. */
++  getSourceSeries() {
++    return this._view ? this._view.sourceSeries : this._getTransformer()?.state.data?.series ?? NO_SERIES;
++  }
++  subscribe(callback) {
++    this._listeners.add(callback);
++    return () => this._listeners.delete(callback);
+   }
+-  /** Returns active runtime operators in execution order. */
+   getOperators() {
+-    return Array.from(this._groups.values(), (group) => group.operator);
++    return this._view ? [this._view.operator] : [];
+   }
+   /** Returns the field cleanup setting that a clone must inherit. */
+   getClearPreviousFieldValuesForClone() {
+@@ -104,45 +88,28 @@ class VizPanelRuntimeTransformationsController {
+     if (pluginId !== this._pluginId) {
+       this._pluginId = pluginId;
+       this._data = $data;
+-      this._clear();
++      this.set([]);
+       return;
+     }
+     if ($data !== this._data) {
+       this._data = $data;
+-      for (const group of this._groups.values()) {
+-        if (group.sourceData !== $data) {
+-          group.sourceSeries = NO_SERIES;
+-          group.sourceData = void 0;
+-        }
++      if (this._view && this._view.sourceData !== $data) {
++        this._view.sourceSeries = NO_SERIES;
++        this._view.sourceData = void 0;
+       }
+     }
+   }
+-  /** Removes all active owners and notifies their listeners. */
+-  _clear() {
+-    var _a;
+-    const affectedOwners = Array.from(this._groups.keys());
+-    if (affectedOwners.length === 0) {
+-      return;
+-    }
+-    this._groups.clear();
+-    this._updatePreviousFieldValueCleanup();
+-    this._reprocessTransformations();
+-    for (const owner of affectedOwners) {
+-      (_a = this._listeners.get(owner)) == null ? void 0 : _a.forEach((listener) => listener());
+-    }
+-  }
+-  /** Creates an active owner group. */
+-  _createGroup(transformations) {
+-    const group = { transformations, sourceSeries: NO_SERIES };
+-    group.operator = this._createOperator(group, transformations);
+-    return group;
++  _createView(transformations) {
++    const view = { transformations, sourceSeries: NO_SERIES };
++    view.operator = this._createOperator(view, transformations);
++    return view;
+   }
+   /** Creates an operator that captures its input before applying transformations. */
+-  _createOperator(group, transformations) {
++  _createOperator(view, transformations) {
+     return (context) => (source) => source.pipe(
+       tap((frames) => {
+-        group.sourceSeries = frames;
+-        group.sourceData = this._panel.state.$data;
++        view.sourceSeries = frames;
++        view.sourceData = this._panel.state.$data;
+       }),
+       mergeMap((frames) => transformDataFrame(Array.from(transformations), frames, context))
+     );
+@@ -158,15 +125,15 @@ class VizPanelRuntimeTransformationsController {
+       transformer.reprocessTransformations();
+     }
+   }
+-  /** Disables field cleanup while runtime owners need retained source values. */
++  /** Disables field cleanup while view transformations need retained source values. */
+   _updatePreviousFieldValueCleanup() {
+-    if (this._groups.size > 0 && !this._hasPreviousClearPreviousFieldValues) {
++    if (this._view && !this._hasPreviousClearPreviousFieldValues) {
+       this._previousClearPreviousFieldValues = this._panel.state._UNSAFE_clearPreviousFieldValues;
+       this._hasPreviousClearPreviousFieldValues = true;
+       if (this._panel.state._UNSAFE_clearPreviousFieldValues) {
+         this._panel.setState({ _UNSAFE_clearPreviousFieldValues: false });
+       }
+-    } else if (this._groups.size === 0 && this._hasPreviousClearPreviousFieldValues) {
++    } else if (!this._view && this._hasPreviousClearPreviousFieldValues) {
+       if (this._panel.state._UNSAFE_clearPreviousFieldValues !== this._previousClearPreviousFieldValues) {
+         this._panel.setState({ _UNSAFE_clearPreviousFieldValues: this._previousClearPreviousFieldValues });
+       }
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index fcbbebdedc4040e9da3cff6e06f3d684e1847f04..10212f77fb155e5414fa7fa850084d6872c41dd1 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -502,14 +502,14 @@ interface ResolvedSystemTransformations {
+ 
+ 
+ interface VizPanelRuntimeTransformations {
+-    /** Returns the same immutable snapshot until this owner changes. */
+-    get(owner: string): readonly DataTransformerConfig[];
+-    /** Replaces one owner's transformations. An empty list removes the owner. */
+-    set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+-    /** Returns the frames entering this owner's transformation stage. */
+-    getSourceSeries(owner: string): readonly DataFrame[];
+-    /** Subscribes to changes for one owner. */
+-    subscribe(owner: string, callback: () => void): () => void;
++    /** Returns the same immutable snapshot until the view transformations change. */
++    get(): readonly DataTransformerConfig[];
++    /** Replaces the panel's view transformations. Pass an empty list to clear them. */
++    set(transformations: readonly DataTransformerConfig[]): void;
++    /** Returns the frames entering the view transformation stage. */
++    getSourceSeries(): readonly DataFrame[];
++    /** Subscribes to changes to the panel's view transformations. */
++    subscribe(callback: () => void): () => void;
+ }
+ 
+ interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneObjectState {
+diff --git a/dist/index.js b/dist/index.js
+index 7769fc848a6eafbbba432b862b5454b0e1c0b856..64b4aec0249dcd78f4f8fd3003595b160fb0c6b4 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -5222,10 +5222,8 @@ function freezeDeep(value, seen = /* @__PURE__ */ new WeakSet()) {
+ class VizPanelRuntimeTransformationsController {
+   /** Creates a controller and connects it to the panel lifecycle. */
+   constructor(panel) {
+-    // Stores active owners in execution order with their configuration, captured source, and operator.
+-    this._groups = /* @__PURE__ */ new Map();
+-    // Stores change listeners by owner.
+-    this._listeners = /* @__PURE__ */ new Map();
++    this._view = void 0;
++    this._listeners = /* @__PURE__ */ new Set();
+     // Distinguishes a stored undefined cleanup setting from no stored setting.
+     this._hasPreviousClearPreviousFieldValues = false;
+     this._panel = panel;
+@@ -5242,54 +5240,40 @@ class VizPanelRuntimeTransformationsController {
+       };
+     });
+   }
+-  /** Returns the current immutable transformation snapshot for an owner. */
+-  get(owner) {
+-    var _a, _b;
+-    return (_b = (_a = this._groups.get(owner)) == null ? void 0 : _a.transformations) != null ? _b : NO_TRANSFORMATIONS;
++  /** Returns the immutable view transformation snapshot. */
++  get() {
++    return this._view?.transformations ?? NO_TRANSFORMATIONS;
+   }
+-  /** Replaces or removes an owner's transformations and refreshes panel data. */
+-  set(owner, transformations) {
+-    var _a;
++  /** Replaces the view transformations and refreshes panel data. */
++  set(transformations) {
+     if (transformations.length === 0) {
+-      if (!this._groups.delete(owner)) {
++      if (!this._view) {
+         return;
+       }
++      this._view = void 0;
+     } else {
+       const snapshot = freezeDeep(lodash.cloneDeep(transformations));
+-      const group = this._groups.get(owner);
+-      if (group) {
+-        group.transformations = snapshot;
+-        group.operator = this._createOperator(group, snapshot);
++      if (this._view) {
++        this._view.transformations = snapshot;
++        this._view.operator = this._createOperator(this._view, snapshot);
+       } else {
+-        this._groups.set(owner, this._createGroup(snapshot));
++        this._view = this._createView(snapshot);
+       }
+     }
+     this._updatePreviousFieldValueCleanup();
+     this._reprocessTransformations();
+-    (_a = this._listeners.get(owner)) == null ? void 0 : _a.forEach((listener) => listener());
++    this._listeners.forEach((listener) => listener());
+   }
+-  /** Returns the frames that enter an owner's stage. */
+-  getSourceSeries(owner) {
+-    var _a, _b, _c;
+-    const group = this._groups.get(owner);
+-    if (group == null ? void 0 : group.transformations.length) {
+-      return group.sourceSeries;
+-    }
+-    return (_c = (_b = (_a = this._getTransformer()) == null ? void 0 : _a.state.data) == null ? void 0 : _b.series) != null ? _c : NO_SERIES;
++  /** Returns the frames entering the view transformation stage. */
++  getSourceSeries() {
++    return this._view ? this._view.sourceSeries : this._getTransformer()?.state.data?.series ?? NO_SERIES;
+   }
+-  /** Registers a listener for changes to one owner. */
+-  subscribe(owner, callback) {
+-    let listeners = this._listeners.get(owner);
+-    if (!listeners) {
+-      listeners = /* @__PURE__ */ new Set();
+-      this._listeners.set(owner, listeners);
+-    }
+-    listeners.add(callback);
+-    return () => listeners.delete(callback);
++  subscribe(callback) {
++    this._listeners.add(callback);
++    return () => this._listeners.delete(callback);
+   }
+-  /** Returns active runtime operators in execution order. */
+   getOperators() {
+-    return Array.from(this._groups.values(), (group) => group.operator);
++    return this._view ? [this._view.operator] : [];
+   }
+   /** Returns the field cleanup setting that a clone must inherit. */
+   getClearPreviousFieldValuesForClone() {
+@@ -5308,45 +5292,28 @@ class VizPanelRuntimeTransformationsController {
+     if (pluginId !== this._pluginId) {
+       this._pluginId = pluginId;
+       this._data = $data;
+-      this._clear();
++      this.set([]);
+       return;
+     }
+     if ($data !== this._data) {
+       this._data = $data;
+-      for (const group of this._groups.values()) {
+-        if (group.sourceData !== $data) {
+-          group.sourceSeries = NO_SERIES;
+-          group.sourceData = void 0;
+-        }
++      if (this._view && this._view.sourceData !== $data) {
++        this._view.sourceSeries = NO_SERIES;
++        this._view.sourceData = void 0;
+       }
+     }
+   }
+-  /** Removes all active owners and notifies their listeners. */
+-  _clear() {
+-    var _a;
+-    const affectedOwners = Array.from(this._groups.keys());
+-    if (affectedOwners.length === 0) {
+-      return;
+-    }
+-    this._groups.clear();
+-    this._updatePreviousFieldValueCleanup();
+-    this._reprocessTransformations();
+-    for (const owner of affectedOwners) {
+-      (_a = this._listeners.get(owner)) == null ? void 0 : _a.forEach((listener) => listener());
+-    }
+-  }
+-  /** Creates an active owner group. */
+-  _createGroup(transformations) {
+-    const group = { transformations, sourceSeries: NO_SERIES };
+-    group.operator = this._createOperator(group, transformations);
+-    return group;
++  _createView(transformations) {
++    const view = { transformations, sourceSeries: NO_SERIES };
++    view.operator = this._createOperator(view, transformations);
++    return view;
+   }
+   /** Creates an operator that captures its input before applying transformations. */
+-  _createOperator(group, transformations) {
++  _createOperator(view, transformations) {
+     return (context) => (source) => source.pipe(
+       rxjs.tap((frames) => {
+-        group.sourceSeries = frames;
+-        group.sourceData = this._panel.state.$data;
++        view.sourceSeries = frames;
++        view.sourceData = this._panel.state.$data;
+       }),
+       rxjs.mergeMap((frames) => data.transformDataFrame(Array.from(transformations), frames, context))
+     );
+@@ -5362,15 +5329,15 @@ class VizPanelRuntimeTransformationsController {
+       transformer.reprocessTransformations();
+     }
+   }
+-  /** Disables field cleanup while runtime owners need retained source values. */
++  /** Disables field cleanup while view transformations need retained source values. */
+   _updatePreviousFieldValueCleanup() {
+-    if (this._groups.size > 0 && !this._hasPreviousClearPreviousFieldValues) {
++    if (this._view && !this._hasPreviousClearPreviousFieldValues) {
+       this._previousClearPreviousFieldValues = this._panel.state._UNSAFE_clearPreviousFieldValues;
+       this._hasPreviousClearPreviousFieldValues = true;
+       if (this._panel.state._UNSAFE_clearPreviousFieldValues) {
+         this._panel.setState({ _UNSAFE_clearPreviousFieldValues: false });
+       }
+-    } else if (this._groups.size === 0 && this._hasPreviousClearPreviousFieldValues) {
++    } else if (!this._view && this._hasPreviousClearPreviousFieldValues) {
+       if (this._panel.state._UNSAFE_clearPreviousFieldValues !== this._previousClearPreviousFieldValues) {
+         this._panel.setState({ _UNSAFE_clearPreviousFieldValues: this._previousClearPreviousFieldValues });
+       }

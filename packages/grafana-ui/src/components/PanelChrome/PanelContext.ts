@@ -15,20 +15,20 @@ import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
-/** Per-viewer transformations applied after the panel's saved transformations. @alpha */
+/** A single ordered view transformation list per panel, applied after saved transformations. @alpha */
 export interface AdHocTransformationsApi {
-  /** Returns a stable reference until `set` is called. */
+  /** Returns a stable snapshot until the panel's view transformations change. */
   get(): readonly DataTransformerConfig[];
 
-  /** Replaces the stage. Pass `[]` to clear it. */
-  set(transformations: DataTransformerConfig[]): void;
+  /** Replaces the panel's view transformations. Pass `[]` to clear them. */
+  set(transformations: readonly DataTransformerConfig[]): void;
 
   /**
    * Returns the raw frames that entered this stage, including fields removed by its transformations.
    */
   getSourceSeries(): readonly DataFrame[];
 
-  /** Registers a listener that runs whenever `set` replaces the transformation stage. */
+  /** Registers a listener for changes to the panel's view transformations. */
   subscribe(callback: () => void): () => void;
 }
 
@@ -41,7 +41,7 @@ export interface AdHocTransformationsState {
   sourceSeries: readonly DataFrame[];
 
   /** Replaces the ad-hoc stage. Pass `[]` to clear it. */
-  setTransformations(transformations: DataTransformerConfig[]): void;
+  setTransformations(transformations: readonly DataTransformerConfig[]): void;
 }
 
 /** @alpha */
@@ -161,7 +161,7 @@ export function useAdHocTransformations(): AdHocTransformationsState | undefined
   const transformations = useSyncExternalStore(subscribe, getSnapshot);
   const sourceSeries = api?.getSourceSeries();
   const setTransformations = useCallback(
-    (nextTransformations: DataTransformerConfig[]) => api?.set(nextTransformations),
+    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(nextTransformations),
     [api]
   );
 

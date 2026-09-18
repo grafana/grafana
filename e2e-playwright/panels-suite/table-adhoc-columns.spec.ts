@@ -44,6 +44,47 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
     await expect(panel.getByRole('gridcell').filter({ hasText: 'web-4' })).toBeVisible();
   });
 
+  test('excludes hidden columns from field override choices', async ({ gotoDashboardPage, selectors, page }) => {
+    let queryRequests = 0;
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.endsWith('/api/ds/query')) {
+        queryRequests++;
+      }
+    });
+
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '1' }),
+    });
+    const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Ad-hoc columns'));
+    const menu = selectors.components.Panels.Visualization.TableNG.headerColumnMenu;
+    const sidebar = selectors.components.Panels.Visualization.TableNG.columnsSidebar;
+
+    await waitForTableLoad(panel);
+    const initialQueryRequests = queryRequests;
+
+    await panel.getByLabel('Column options for host').click();
+    await page.getByTestId(menu.hideItem).click();
+    await expect.poll(() => headerNames(panel)).toEqual(['region', 'cpu', 'mem']);
+
+    await dashboardPage.getByGrafanaSelector(selectors.components.ValuePicker.button('Add field override')).click();
+    await page.getByRole('option', { name: 'Fields with name', exact: true }).click();
+
+    const fieldNameMatcher = page.getByPlaceholder('Choose').last();
+    await fieldNameMatcher.click();
+    await expect(page.getByRole('option', { name: 'host', exact: true })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+
+    await panel.getByLabel('Column options for region').click();
+    await page.getByTestId(menu.manageColumnsItem).click();
+    await panel.getByTestId(sidebar.visibilityToggle('host')).click({ force: true });
+    await expect.poll(() => headerNames(panel)).toEqual(['region', 'host', 'cpu', 'mem']);
+
+    await fieldNameMatcher.click();
+    await expect(page.getByRole('option', { name: 'host', exact: true })).toBeVisible();
+    expect(queryRequests).toBe(initialQueryRequests);
+  });
+
   test('enables filtering on every column', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
     const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Ad-hoc columns'));
