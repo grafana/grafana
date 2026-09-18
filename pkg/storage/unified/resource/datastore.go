@@ -8,6 +8,7 @@ import (
 	"io"
 	"iter"
 	"math"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
@@ -270,53 +271,6 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		return ParseKey(key)
 	}
 	return DataKey{}, ErrNotFound
-}
-
-// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
-// in a single atomic operation. Returns (latest, predecessor, error).
-// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
-func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
-	if err := key.Validate(); err != nil {
-		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
-	}
-	if key.Group == "" || key.Resource == "" || key.Name == "" {
-		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.GetLatestAndPredecessor")
-	defer span.End()
-
-	prefix := key.Prefix()
-	var latest, predecessor DataKey
-	count := 0
-	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Limit:    2, // Get latest and predecessor
-		Sort:     SortOrderDesc,
-	}) {
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		parsedKey, err := ParseKey(k)
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		switch count {
-		case 0:
-			latest = parsedKey
-		case 1:
-			predecessor = parsedKey
-		}
-		count++
-	}
-	if count == 0 {
-		return DataKey{}, DataKey{}, ErrNotFound
-	}
-	if count == 1 {
-		return latest, DataKey{}, nil
-	}
-	return latest, predecessor, nil
 }
 
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
@@ -651,19 +605,13 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
-func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
-	ctx, span := tracer.Start(ctx, "resource.dataStore.batchDelete", trace.WithAttributes(
+func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.BatchDelete", trace.WithAttributes(
 		attribute.Int("batchSize", len(keys)),
 	))
 	defer span.End()
 
-	for len(keys) > 0 {
-		batch := keys
-		if len(batch) > dataBatchSize {
-			batch = batch[:dataBatchSize]
-		}
-
-		keys = keys[len(batch):]
+	for batch := range slices.Chunk(keys, dataBatchSize) {
 		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())
@@ -1166,7 +1114,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return false, fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+		return false, fmt.Errorf("compatibility layer: failed to verify conditional update result: %w", err)
 	}
 	if rows == 1 {
 		return false, nil

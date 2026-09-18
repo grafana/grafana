@@ -920,6 +920,7 @@
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
+      "export-legacy-integration-tooltip": "Export is not available for contact points that contain legacy integrations",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Loading...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and v1 integrations are exported without their legacy integrations.",
+      "warning-v0-integrations-title": "Legacy integrations are not included"
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
     },
@@ -1716,6 +1721,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1777,14 +1785,17 @@
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
         "templates-label": "Notification templates",
         "templates-remove": "Remove {{name}}",
-        "upload": "Upload YAML file",
+        "upload": "Drop YAML file here or click to upload",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
-        "yaml-file": "Alertmanager config YAML"
+        "yaml-desc": "Accepted file types: {{extensions}}",
+        "yaml-file": "Alertmanager config YAML",
+        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-remove": "Remove {{name}}"
       },
       "step2": {
         "datasource": "Data source",
@@ -3245,14 +3256,19 @@
         "action-disable": "Disable sync",
         "add-datasource-link": "Add Mimir datasource",
         "badge-active": "Active",
+        "badge-failing": "Sync failing",
         "badge-not-configured": "Not configured",
         "badge-operator-managed": "Managed by operator",
+        "badge-pending": "Pending first sync",
+        "badge-stopped": "Sync stopped",
         "description": "Continuously sync alert configuration from a Mimir or Cortex Alertmanager datasource into Grafana.",
         "disable-confirm-action": "Disable sync",
         "disable-confirm-body": "Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "merge-committed-info": "The external Alertmanager configuration has been merged into Grafana. Automatic sync from this datasource has stopped.",
+        "merge-committed-title": "Configuration merged into Grafana",
         "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
         "not-ready-title": "Auto-sync is still initializing",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
@@ -3271,6 +3287,7 @@
         "staged-conflict-active-title": "Auto-sync is not running",
         "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
         "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
+        "sync-failed-title": "Last sync attempt failed",
         "title": "Auto-sync configuration"
       },
       "import": {
@@ -4613,11 +4630,15 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit document",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
-      "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "load-error-title": "Couldn't load this document",
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display this document.",
+      "tab-contributing": "Contributing",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -5774,16 +5795,24 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
+      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-visualization-heading": "Add a visualization",
+      "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "build-assistant": "Build your dashboard with Assistant",
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
+      "grid-auto": "Auto",
+      "grid-custom": "Custom",
+      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
@@ -5911,6 +5940,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5951,6 +5981,7 @@
     "inspect-json": {
       "dataframe-description": "Raw data without transformations and field config applied. ",
       "dataframe-label": "DataFrame JSON (from Query)",
+      "editor-label": "JSON content",
       "panel-data-description": "The raw model passed to the panel visualization",
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
@@ -7342,6 +7373,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7731,6 +7763,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Resource"
       },
+      "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
@@ -8660,6 +8693,16 @@
       "title-raw-prometheus": "Raw Prometheus",
       "title-table": "Table",
       "title-traces": "Traces"
+    },
+    "explore-actions": {
+      "close-split-view-left": "Close split view left",
+      "close-split-view-right": "Close split view right",
+      "correlations-editor": "Correlations editor",
+      "open-split-view": "Open split view",
+      "run-query": "Run query",
+      "run-query-left": "Run query (left)",
+      "run-query-right": "Run query (right)",
+      "section-explore": "Explore"
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -11135,6 +11178,7 @@
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
+      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11194,6 +11238,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
+      "empty-selected-team": "No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
@@ -11817,6 +11862,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
@@ -12165,6 +12211,10 @@
       "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
     },
+    "hover-overflow": {
+      "description": "Expand overflowing cell content on hover. Selected cells always expand.",
+      "name": "Cell hover overflow"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
@@ -12232,6 +12282,10 @@
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
+  },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -12565,6 +12619,10 @@
     "authentication": {
       "title": "Authentication"
     },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
+    },
     "bookmarks": {
       "title": "Bookmarks"
     },
@@ -12721,7 +12779,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
@@ -12771,6 +12829,7 @@
       "title": "Recorded queries"
     },
     "reporting": {
+      "subtitle": "Create and manage PDF reports distributed via e-mail",
       "title": "Reporting"
     },
     "saved-queries": {
@@ -12785,6 +12844,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -13136,9 +13199,7 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export",
-      "open-in-cursor": "Open in Cursor",
-      "opening-in-cursor": "Opening in Cursor"
+      "label": "Export"
     },
     "history": {
       "add-block": "Add block",
@@ -15085,7 +15146,7 @@
     },
     "public-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
       "public-ack": "I understand that this entire dashboard will be public.*",
@@ -16662,10 +16723,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",

@@ -135,6 +135,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
       },
       visualRefreshEnabled && {
         '&:checked + label': {
+          background: theme.colors.action.focus,
           border: `1px solid ${theme.colors.border.medium}`,
           color: theme.colors.accent.text,
           fontWeight: 'unset',
