@@ -155,7 +155,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -244,7 +245,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.weak,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
