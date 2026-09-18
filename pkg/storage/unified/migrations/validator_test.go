@@ -48,11 +48,11 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapPaginates(t *testing.T) {
 	validator := newTestFolderTreeValidator(client)
 
 	client.On("Search", mock.Anything, folderSearchRequest()).
-		Return(folderFieldValuesPage("root", "", "child-a", "root"), nil).Once()
+		Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}}), nil).Once()
 	client.On("Search", mock.Anything, folderSearchRequest("child-a")).
-		Return(folderFieldValuesPage("child-b", "root", "grandchild", "child-b"), nil).Once()
+		Return(folderFieldValuesPage([]testFolder{{"child-b", "root"}, {"grandchild", "child-b"}}), nil).Once()
 	client.On("Search", mock.Anything, folderSearchRequest("grandchild")).
-		Return(folderFieldValuesPage("other-root", ""), nil).Once()
+		Return(folderFieldValuesPage([]testFolder{{"other-root", ""}}), nil).Once()
 
 	parentMap, err := validator.buildUnifiedFolderParentMap(t.Context(), "stack-1", log.NewNopLogger())
 	require.NoError(t, err)
@@ -73,9 +73,9 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapPaginatesResourceTable(t 
 
 	// An older server either leaves the result format unspecified or echoes
 	// RESOURCE_TABLE; both are paged through the same way.
-	unspecified := folderTablePage("root", "", "child-a", "root")
+	unspecified := folderTablePage([]testFolder{{"root", ""}, {"child-a", "root"}})
 	unspecified.ResultFormat = resourcepb.ResourceSearchRequest_UNSPECIFIED
-	explicit := folderTablePage("child-b", "child-a")
+	explicit := folderTablePage([]testFolder{{"child-b", "child-a"}})
 	explicit.ResultFormat = resourcepb.ResourceSearchRequest_RESOURCE_TABLE
 
 	client.On("Search", mock.Anything, folderSearchRequest()).Return(unspecified, nil).Once()
@@ -98,9 +98,9 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapStopsOnEmptyPage(t *testi
 
 	// The last folder filled the previous page, so the next page comes back empty.
 	client.On("Search", mock.Anything, folderSearchRequest()).
-		Return(folderFieldValuesPage("root", "", "child-a", "root"), nil).Once()
+		Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}}), nil).Once()
 	client.On("Search", mock.Anything, folderSearchRequest("child-a")).
-		Return(folderFieldValuesPage(), nil).Once()
+		Return(folderFieldValuesPage(nil), nil).Once()
 
 	parentMap, err := validator.buildUnifiedFolderParentMap(t.Context(), "stack-1", log.NewNopLogger())
 	require.NoError(t, err)
@@ -115,7 +115,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 		validator := newTestFolderTreeValidator(client)
 
 		client.On("Search", mock.Anything, folderSearchRequest()).
-			Return(folderFieldValuesPage("root", "", "child-a", "root"), nil).Once()
+			Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}}), nil).Once()
 		client.On("Search", mock.Anything, folderSearchRequest("child-a")).
 			Return(nil, errors.New("connection reset")).Once()
 
@@ -131,7 +131,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 		validator := newTestFolderTreeValidator(client)
 
 		client.On("Search", mock.Anything, folderSearchRequest()).
-			Return(folderFieldValuesPage("root", "", "child-a", "root"), nil).Once()
+			Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}}), nil).Once()
 		client.On("Search", mock.Anything, folderSearchRequest("child-a")).
 			Return(&resourcepb.ResourceSearchResponse{Error: resource.NewBadRequestError("bad cursor")}, nil).Once()
 
@@ -159,7 +159,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsNonAdvancingPage(t
 		client := resource.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
-		page := folderFieldValuesPage("root", "", "child-a", "root")
+		page := folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}})
 		for _, row := range page.Rows {
 			row.SortFields = nil
 		}
@@ -176,7 +176,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsNonAdvancingPage(t
 		validator := newTestFolderTreeValidator(client)
 
 		// A server that ignores the cursor would otherwise be paged forever.
-		page := folderFieldValuesPage("root", "", "child-a", "root")
+		page := folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}})
 		client.On("Search", mock.Anything, folderSearchRequest()).Return(page, nil).Once()
 		client.On("Search", mock.Anything, folderSearchRequest("child-a")).Return(page, nil).Once()
 
@@ -221,18 +221,22 @@ func folderSearchRequest(cursor ...string) *resourcepb.ResourceSearchRequest {
 	}
 }
 
-// folderFieldValuesPage builds a FIELD_VALUES page from alternating folder name
-// and parent name arguments. Each row is sorted by its own name, as the search
-// server sorts folders with the name as the last tie-breaker.
-func folderFieldValuesPage(namesAndParents ...string) *resourcepb.ResourceSearchResponse {
-	rows := make([]*resourcepb.ResourceSearchRow, 0, len(namesAndParents)/2)
-	for i := 0; i < len(namesAndParents); i += 2 {
+type testFolder struct {
+	name   string
+	parent string
+}
+
+// folderFieldValuesPage builds a FIELD_VALUES page. Each row is sorted by its own
+// name, as the search server sorts folders with the name as the last tie-breaker.
+func folderFieldValuesPage(folders []testFolder) *resourcepb.ResourceSearchResponse {
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(folders))
+	for _, folder := range folders {
 		rows = append(rows, &resourcepb.ResourceSearchRow{
-			Key: &resourcepb.ResourceKey{Name: namesAndParents[i]},
+			Key: &resourcepb.ResourceKey{Name: folder.name},
 			Values: []*resourcepb.ResourceSearchValue{
-				{FieldIndex: 0, StringValues: []string{namesAndParents[i+1]}},
+				{FieldIndex: 0, StringValues: []string{folder.parent}},
 			},
-			SortFields: []string{namesAndParents[i]},
+			SortFields: []string{folder.name},
 		})
 	}
 	return &resourcepb.ResourceSearchResponse{
@@ -245,13 +249,13 @@ func folderFieldValuesPage(namesAndParents ...string) *resourcepb.ResourceSearch
 }
 
 // folderTablePage is folderFieldValuesPage for the older table response shape.
-func folderTablePage(namesAndParents ...string) *resourcepb.ResourceSearchResponse {
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(namesAndParents)/2)
-	for i := 0; i < len(namesAndParents); i += 2 {
+func folderTablePage(folders []testFolder) *resourcepb.ResourceSearchResponse {
+	rows := make([]*resourcepb.ResourceTableRow, 0, len(folders))
+	for _, folder := range folders {
 		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:        &resourcepb.ResourceKey{Name: namesAndParents[i]},
-			Cells:      [][]byte{[]byte(namesAndParents[i+1])},
-			SortFields: []string{namesAndParents[i]},
+			Key:        &resourcepb.ResourceKey{Name: folder.name},
+			Cells:      [][]byte{[]byte(folder.parent)},
+			SortFields: []string{folder.name},
 		})
 	}
 	return &resourcepb.ResourceSearchResponse{
