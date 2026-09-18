@@ -141,7 +141,9 @@ const getStyles = (
   // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
   const iconColor = color.text;
   const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
-  const iconBackground = `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`;
+  const iconBackground = visualRefreshEnabled
+    ? `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`
+    : 'transparent';
 
   return {
     wrapper: css({
