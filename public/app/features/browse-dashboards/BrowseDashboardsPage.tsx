@@ -193,7 +193,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         {/* Only shown when viewing a folder whose own async cascade delete is in progress or stuck. */}
-        {folderDTO && <FolderCascadeStatusBanner folderUID={folderDTO.uid} />}
+        {folderDTO && <FolderCascadeStatusBanner folderUID={folderDTO.uid} parentUID={folderDTO.parentUid} />}
         <QuotaLimitBanner />
         {/* only show recently viewed dashboards when in root and flag is enabled */}
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}

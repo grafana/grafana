@@ -123,6 +123,46 @@ describe('FolderCascadeStatusBanner', () => {
     expect(screen.queryByRole('dialog', { name: 'Folder deleted' })).not.toBeInTheDocument();
   });
 
+  it("shows a warning when this folder itself isn't deleting but is blocking its parent's cascade", () => {
+    // This folder has no deletionTimestamp/status of its own (it was never actually touched --
+    // the delete attempt on it failed before that point), so the only way to know it's the
+    // problem is by checking whether its parent's cascade named it.
+    mockUseGetFolderQuery.mockImplementation((arg) => {
+      if (typeof arg === 'object' && arg.name === 'parent-1') {
+        return mockQueryResult({
+          data: makeFolder(
+            { name: 'parent-1' },
+            { cascadeDelete: { state: 'error', errors: ['delete child folder folder-1: not empty'], remaining: 1 } }
+          ),
+        });
+      }
+      return mockQueryResult({ data: makeFolder({ deletionTimestamp: undefined }) });
+    });
+
+    render(<FolderCascadeStatusBanner folderUID="folder-1" parentUID="parent-1" />);
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText('delete child folder folder-1: not empty')).toBeInTheDocument();
+  });
+
+  it("renders nothing when the parent's cascade errors don't name this folder", () => {
+    mockUseGetFolderQuery.mockImplementation((arg) => {
+      if (typeof arg === 'object' && arg.name === 'parent-1') {
+        return mockQueryResult({
+          data: makeFolder(
+            { name: 'parent-1' },
+            { cascadeDelete: { state: 'error', errors: ['delete dashboard some-other-uid: locked'], remaining: 1 } }
+          ),
+        });
+      }
+      return mockQueryResult({ data: makeFolder({ deletionTimestamp: undefined }) });
+    });
+
+    render(<FolderCascadeStatusBanner folderUID="folder-1" parentUID="parent-1" />);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it("marks this folder's already-loaded children as cascade-deleting too, for visual effect", () => {
     mockUseGetFolderQuery.mockReturnValue(
       mockQueryResult({ data: makeFolder({}, { cascadeDelete: { state: 'working', remaining: 2 } }) })

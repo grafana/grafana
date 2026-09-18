@@ -15,6 +15,7 @@ import { canEditItemType } from '../permissions';
 import { useChildrenByParentUIDState, useIsItemCascadeDeleting } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
+import { useDiscoverCascadeDeleting } from '../utils/useDiscoverCascadeDeleting';
 
 import { DeletingDashboardBadge } from './DeletingDashboardBadge';
 import { DeletingFolderBadge } from './DeletingFolderBadge';
@@ -37,6 +38,10 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
   const iconName = getIconForItem(data.item, isOpen);
   const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
   const isCascadeDeleting = useIsItemCascadeDeleting(item.kind !== 'ui' ? item.uid : '');
+  // Discover a folder mid-cascade-delete that this browser session never triggered or watched
+  // itself (e.g. a demo tree built directly via the API) -- skipped once already tracked, or for
+  // anything that isn't a folder row.
+  useDiscoverCascadeDeleting(item.kind !== 'ui' ? item.uid : '', isCascadeDeleting || item.kind !== 'folder');
 
   if (item.kind === 'ui') {
     return (

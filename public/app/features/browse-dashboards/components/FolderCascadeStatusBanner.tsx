@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -17,6 +18,14 @@ const POLL_INTERVAL_MS = 5000;
 
 interface Props {
   folderUID: string;
+  /**
+   * UID of this folder's direct parent, if any. A folder that's itself blocking its *parent's*
+   * cascade delete (e.g. a non-empty legacy subfolder, or this PoC's demo failure hack) has no
+   * deletionTimestamp or status of its own to show that -- the error only exists on the parent's
+   * status, naming this folder by UID (see cascade_delete_controller.go). Without this, standing
+   * on such a folder's own page shows nothing at all, even though it's the actual problem.
+   */
+  parentUID?: string;
 }
 
 /**
@@ -31,11 +40,14 @@ interface Props {
  * as cascade-deleting (see usePropagateCascadeDeleteToChildren) and, once the folder itself is
  * confirmed gone, shows FolderDeletedModal instead of silently redirecting away.
  */
-export function FolderCascadeStatusBanner({ folderUID }: Props) {
+export function FolderCascadeStatusBanner({ folderUID, parentUID }: Props) {
   const { data, error } = useGetFolderQuery(
     { name: folderUID },
     { pollingInterval: POLL_INTERVAL_MS, refetchOnMountOrArgChange: true }
   );
+  const { data: parentData } = useGetFolderQuery(parentUID ? { name: parentUID } : skipToken, {
+    pollingInterval: POLL_INTERVAL_MS,
+  });
   const cascadeDelete = data?.status?.cascadeDelete;
   // `remaining` defaults to 0 in the API's zero-value struct, indistinguishable from a
   // genuinely-confirmed "nothing left" unless the controller has actually reconciled this folder
@@ -45,6 +57,13 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
   const isDeleting = Boolean(data?.metadata?.deletionTimestamp);
   const isGone = isFetchError(error) && error.status === 404;
   const canTrustGone = useTrustCascadeDoneSignal(isDeleting);
+
+  // This folder isn't cascading itself, but its parent's cascade may have named it directly.
+  const parentCascadeDelete = parentData?.status?.cascadeDelete;
+  const blockingParentErrors =
+    !isDeleting && parentCascadeDelete?.state === 'error'
+      ? parentCascadeDelete.errors?.filter((err) => err.includes(folderUID))
+      : undefined;
 
   usePropagateCascadeDeleteToChildren(folderUID, isDeleting, cascadeDelete?.errors);
 
@@ -58,6 +77,28 @@ export function FolderCascadeStatusBanner({ folderUID }: Props) {
   }
 
   if (!isDeleting) {
+    if (blockingParentErrors && blockingParentErrors.length > 0) {
+      return (
+        <>
+          <Alert
+            severity="warning"
+            title={t(
+              'browse-dashboards.folder-cascade-status-banner.blocking-parent-title',
+              "This folder is blocking its parent folder's deletion"
+            )}
+          >
+            <Text>
+              {t(
+                'browse-dashboards.folder-cascade-status-banner.blocking-parent-fix-instructions',
+                "This folder's parent is being deleted, but can't finish while this one is in the way. Try moving this folder elsewhere, deleting it directly, or fixing whatever's blocking it below. Deletion retries automatically once it's resolved:"
+              )}
+            </Text>
+            <CascadeDeleteErrorList errors={blockingParentErrors} />
+          </Alert>
+          <Space v={2} />
+        </>
+      );
+    }
     return null;
   }
 
