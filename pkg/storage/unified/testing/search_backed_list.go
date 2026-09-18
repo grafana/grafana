@@ -278,8 +278,8 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.Len(t, resp.Items, authorized)
 
 		if opts.ExpectBatchReads {
-			// 60 selector-matching hits (55 authorized + 5 denied) over a 10-item read
-			// chunk = six batched reads, no single reads.
+			// Compile filters the denied folder during search, so 55 hits reach the
+			// body reads: six batched reads over a 10-item chunk, no single reads.
 			require.Equal(t, int64(6), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}

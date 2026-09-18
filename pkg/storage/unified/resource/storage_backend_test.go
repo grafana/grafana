@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1349,23 +1350,39 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 }
 
 func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
-	backend := setupTestStorageBackend(t)
+	// The metadata still resolves (Keys lists the resource) but the body Get
+	// misses, reproducing the body vanishing (GC) between metadata resolution and
+	// body retrieval. Deleting the key instead would fail the earlier metadata
+	// lookup and never reach the body read.
+	kvWrapper := &bodyMissingKV{}
+	backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+		kvWrapper.KV = o.KvStore
+		o.KvStore = kvWrapper
+	})
 	ctx := context.Background()
 
 	createAndWriteTestObject(t, backend)
-	key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"}
+	kvWrapper.fail.Store(true)
 
-	// Resolve the key, then delete only the body so the key still resolves but the
-	// read finds no data: the GC race the not-found branch handles.
-	dataKey, err := backend.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
-		Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource",
-	}, 0)
-	require.NoError(t, err)
-	require.NoError(t, backend.dataStore.Delete(ctx, dataKey))
-
-	response := backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	response := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"},
+	})
 	require.NotNil(t, response.Error, "read of a resolved key with a missing body should error")
 	require.Equal(t, int32(404), response.Error.Code, "missing body is a not-found, not a 500")
+}
+
+// bodyMissingKV makes data-section Get miss once fail is set, while leaving key
+// listing intact, so a read resolves metadata but finds no body.
+type bodyMissingKV struct {
+	KV
+	fail atomic.Bool
+}
+
+func (k *bodyMissingKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if k.fail.Load() && section == kv.DataSection {
+		return nil, kv.ErrNotFound
+	}
+	return k.KV.Get(ctx, section, key)
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
