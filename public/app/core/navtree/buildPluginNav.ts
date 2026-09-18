@@ -14,6 +14,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { appNavConfigFor, type AppNavConfig } from './appNavConfig';
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { hasScopedAppAccess } from './pluginAccess';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
   appendIntoSection,
@@ -31,7 +32,6 @@ import {
  *
  * Deliberately not reproduced:
  * - per-org plugin enablement: presence in the namespace counts as enabled
- * - the per-plugin scope on plugins.app:access (see the TODO below)
  * - operator nav overrides from the INI ([navigation.app_sections] and
  *   [navigation.app_standalone_pages])
  * - assistant pages gated on per-org plugin jsonData, which the client cannot
@@ -40,7 +40,10 @@ import {
  *   includes are appended flat for now
  * - page includes with no path, which have no URL to link to
  */
-export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] {
+export function mergePluginNavIntoTree(
+  apps: AppPluginConfig[],
+  appAccessScopes?: ReadonlySet<string> | null
+): NavModelItem[] {
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
 
   // Build a fresh static tree rather than merging into the current slice
@@ -48,16 +51,22 @@ export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] 
   // containers are carried over separately by carryOverRuntimeChildren.
   let tree = buildStaticNavTree();
 
-  // TODO: evaluate this per plugin (plugins:id:<id>) as the server does. The
-  // scoped work is ready on navigation/scoped-plugin-nav-access; this coarse
-  // check goes when that lands.
-  if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    for (const app of apps) {
-      try {
-        tree = addAppToTree(tree, app);
-      } catch (error) {
-        console.warn('[navtree] failed to build nav for app plugin', app.id, error);
-      }
+  // Try the scoped check first — the server gates each app on plugins:id:<id>.
+  // Without scopes (the request failed, or it was skipped) fall back to the
+  // global plugins.app:access check, which applies to every app at once.
+  const hasAppAccess = (app: AppPluginConfig) =>
+    appAccessScopes == null
+      ? contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)
+      : hasScopedAppAccess(appAccessScopes, app.id);
+
+  for (const app of apps) {
+    if (!hasAppAccess(app)) {
+      continue;
+    }
+    try {
+      tree = addAppToTree(tree, app);
+    } catch (error) {
+      console.warn('[navtree] failed to build nav for app plugin', app.id, error);
     }
   }
 

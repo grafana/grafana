@@ -7,6 +7,7 @@ import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
 import { arePluginNavItemsEnabled } from './buildStaticNavTree';
+import { useAppAccessScopes } from './pluginAccess';
 import { pluginNavLoaded } from './state';
 
 export interface UseNavTreeResult {
@@ -32,12 +33,17 @@ export function useNavTree(): UseNavTreeResult {
   const store = useStore<StoreState>();
   const navTree = useSelector((state) => state.navBarTree);
   const status = useSelector((state) => state.pluginNavStatus);
+  const { scopes: appAccessScopes, isLoading: scopesLoading } = useAppAccessScopes();
 
   useEffect(() => {
     // Merging once per session is enough: the metas fetch is session-cached,
     // so a remount would just re-merge the same response. A failed fetch falls
     // back to the bootdata apps and is reported by the pluginMeta service.
-    if (!enabled || store.getState().pluginNavStatus === 'loaded') {
+    //
+    // Wait for the access scopes first: merging without them would gate every
+    // app on the unscoped permission and, because we only merge once, never
+    // revisit that once they arrive.
+    if (!enabled || scopesLoading || store.getState().pluginNavStatus === 'loaded') {
       return;
     }
     let cancelled = false;
@@ -45,13 +51,16 @@ export function useNavTree(): UseNavTreeResult {
       if (cancelled || store.getState().pluginNavStatus === 'loaded') {
         return;
       }
-      const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
+      const merged = carryOverRuntimeChildren(
+        mergePluginNavIntoTree(apps, appAccessScopes),
+        store.getState().navBarTree
+      );
       dispatch(pluginNavLoaded({ tree: merged }));
     });
     return () => {
       cancelled = true;
     };
-  }, [enabled, dispatch, store]);
+  }, [enabled, scopesLoading, appAccessScopes, dispatch, store]);
 
   return {
     data: navTree,

@@ -1,23 +1,23 @@
-import { getBackendSrv, logError } from '@grafana/runtime';
+import { logError } from '@grafana/runtime';
+import { dispatch } from 'app/store/store';
 
 import { loadUserPermissions } from './userPermissions';
 
+jest.mock('app/store/store', () => ({ dispatch: jest.fn() }));
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: jest.fn(),
   logError: jest.fn(),
 }));
 
-const mockGet = jest.fn();
+const mockDispatch = jest.mocked(dispatch);
 
 function mockResponse(result: Promise<unknown>) {
-  mockGet.mockReturnValue(result);
+  mockDispatch.mockReturnValue({ unwrap: () => result } as unknown as ReturnType<typeof dispatch>);
 }
 
 describe('loadUserPermissions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.mocked(getBackendSrv).mockReturnValue({ get: mockGet } as unknown as ReturnType<typeof getBackendSrv>);
   });
 
   it('reduces the flat action/scope list into an action-keyed map, deduping repeated actions', async () => {
@@ -35,12 +35,6 @@ describe('loadUserPermissions', () => {
       'dashboards:read': true,
       'playlists:write': true,
     });
-    expect(mockGet).toHaveBeenCalledWith(
-      expect.stringMatching(/^\/apis\/iam\.grafana\.app\/v0alpha1\/namespaces\/.*\/users\/~\/permissions$/),
-      { skipCache: true },
-      undefined,
-      { showErrorAlert: false }
-    );
   });
 
   // A successful response with no permissions is the real answer, so it stays an

@@ -1,32 +1,34 @@
-import { getBackendSrv, logError } from '@grafana/runtime';
-import { API_GROUP, API_VERSION, type UserPermissions } from 'app/api/clients/iam/v0alpha1';
-import { extractErrorMessage, getAPIBaseURL } from 'app/api/utils';
+import { logError } from '@grafana/runtime';
+import { iamAPIv0alpha1 } from 'app/api/clients/iam/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
+import { dispatch } from 'app/store/store';
 import { type UserPermission } from 'app/types/accessControl';
 
 /**
  * Loads the current user's effective permissions from the multi-tenant AuthZ
- * user-permissions API as an action-keyed lookup map. Isolated here so the
- * underlying API can be swapped without touching callers.
+ * user-permissions API as an action-keyed lookup map.
+ *
+ * Goes through the RTK Query endpoint rather than fetching directly so it
+ * shares one cache entry — and so one request — with useAppAccessScopes, which
+ * needs the scopes this map discards. A refresh here updates that hook's
+ * subscribers too.
  */
 export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
-    const { permissions } = await getBackendSrv().get<UserPermissions>(
-      `${getAPIBaseURL(API_GROUP, API_VERSION)}/users/~/permissions`,
-      // Recompute rather than serving the cached AuthZ snapshot: callers use this
-      // to observe permissions they were just granted. Older servers without the
-      // parameter ignore it and answer from the cache as before
-      { skipCache: true },
-      undefined,
-      // Callers fall back to the permissions they already have, so a failure is
-      // not worth a toast on top of that — boot in particular has no context to
-      // show one against
-      { showErrorAlert: false }
-    );
+    const { permissions } = await dispatch(
+      // forceRefetch because callers use this to observe permissions they were
+      // just granted, and a cached entry would answer with the old set
+      // TODO: pass skipCache once the endpoint's parameter reaches the
+      // generated client, so the server recomputes rather than serving its own
+      // cached snapshot
+      iamAPIv0alpha1.endpoints.getCurrentUserPermissions.initiate(undefined, { forceRefetch: true })
+    ).unwrap();
 
-    return permissions.reduce<UserPermission>((acc, { action }) => {
-      acc[action] = true;
-      return acc;
-    }, {});
+    const actions: UserPermission = {};
+    for (const { action } of permissions) {
+      actions[action] = true;
+    }
+    return actions;
   } catch (error) {
     logError(new Error(extractErrorMessage(error, 'Failed to load user permissions')));
     // Null rather than an empty map, so callers keep whatever permissions boot

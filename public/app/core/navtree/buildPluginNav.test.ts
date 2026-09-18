@@ -393,3 +393,50 @@ describe('mergePluginNavIntoTree', () => {
     expect(findById(merged, NavID.apps)).toBeUndefined();
   });
 });
+
+describe('scoped plugin access', () => {
+  const somePages = () => [
+    appMeta('some-app', 'Some app', [page('Page', '/a/some-app/page')]),
+    appMeta('other-app', 'Other app', [page('Page', '/a/other-app/page')]),
+  ];
+
+  const mergeWithScopes = async (scopes: ReadonlySet<string> | null) =>
+    mergePluginNavIntoTree(await fetchApps(somePages()), scopes);
+
+  it('places only the apps the user has scoped access to', async () => {
+    const merged = await mergeWithScopes(new Set(['plugins:id:some-app']));
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeUndefined();
+  });
+
+  it.each(['*', 'plugins:*', 'plugins:id:*'])('places all apps with the %s wildcard scope', async (wildcard) => {
+    const merged = await mergeWithScopes(new Set([wildcard]));
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeDefined();
+  });
+
+  it('places no apps when the action is held with no matching scope', async () => {
+    const merged = await mergeWithScopes(new Set());
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeUndefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeUndefined();
+  });
+
+  // Null scopes mean the query failed or is skipped, so the flattened
+  // action-only permission decides for every app at once
+  it('falls back to the coarse action check without scopes', async () => {
+    // The flattened plugins.app:access is held (test default), so all apps show
+    setup();
+    const granted = await mergeWithScopes(null);
+    expect(findById(granted, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(granted, 'plugin-page-other-app')).toBeDefined();
+
+    // Without it, none do
+    setupNavTestState({ permissions: [] });
+    const denied = await mergeWithScopes(null);
+    expect(findById(denied, 'plugin-page-some-app')).toBeUndefined();
+    expect(findById(denied, 'plugin-page-other-app')).toBeUndefined();
+  });
+});
