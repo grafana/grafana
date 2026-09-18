@@ -330,8 +330,8 @@ github.com/go-openapi/runtime/server-middleware v0.30.0 h1:8rPoJ/xv7JL8BsovaqboK
 github.com/go-openapi/runtime/server-middleware v0.30.0/go.mod h1:OYNT/TxNvB/VK5oe4htM2jDTwlEXuejVJmu0DVZfAMs=
 github.com/go-openapi/spec v0.22.11 h1:/ZW28n4PCghbBpwjmvoMeyCeDwd6pIe715Ov8T3kAaQ=
 github.com/go-openapi/spec v0.22.11/go.mod h1:Ypu+u1KTejey7/QCr3j1ChdjwhGgXuklbH7l8+YP1J4=
-github.com/go-openapi/strfmt v0.27.0 h1:kbcTeaD9TXuXD0hhMXzuYa1sdTo6+dWGvwjW93E80IM=
-github.com/go-openapi/strfmt v0.27.0/go.mod h1:s/qhDqfY72irigXUGJmtgid2Rm+3tnz3k8hZaRmvWYc=
+github.com/go-openapi/strfmt v0.27.2 h1:SG32SlbwNy92s0KJiVxt2joJeFdqIYHvwrA0OU6HqzQ=
+github.com/go-openapi/strfmt v0.27.2/go.mod h1:M4CKsMO0Fb8qR10+1Ra75wCKNNquy+Vj+4LWZrhTo2E=
 github.com/go-openapi/swag v0.29.2 h1:9n8frkcsuQRA0INU31VbxNxt1zBaHxrHYGEf5BUjFi4=
 github.com/go-openapi/swag v0.29.2/go.mod h1:RkCiX1gCVXWgLOavDXE3ALJrQ/VO2ziiIzOUs3z10xo=
 github.com/go-openapi/swag/cmdutils v0.29.2 h1:cXEzX/nWCODon251f+1HgL75/R4XXML5IZxgLCWMoro=

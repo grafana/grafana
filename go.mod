@@ -75,7 +75,7 @@ require (
 	github.com/go-logr/logr v1.4.4 // @grafana/grafana-app-platform-squad
 	github.com/go-openapi/loads v0.25.2 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.33.0 // @grafana/alerting-backend
-	github.com/go-openapi/strfmt v0.27.0 // @grafana/alerting-backend
+	github.com/go-openapi/strfmt v0.27.2 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
