@@ -161,8 +161,12 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  // A scrollbar appearing/disappearing changes how much room the columns have. An inset table's
+  // frame also lives inside `width`, so its two borders are not available to the columns.
+  const availableWidth = useMemo(
+    () => width - scrollbarWidth - (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2),
+    [width, scrollbarWidth, noPanelPadding]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -295,6 +299,7 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
@@ -317,6 +322,7 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
       noPanelPadding,
     ]
   );
@@ -364,6 +370,8 @@ export function TableFlat(props: TableNGProps) {
       setSortColumns={setSortColumns}
       onSortByChange={onSortByChange}
       rowHeight={rowHeight}
+      getRowHeight={rowHeightFn}
+      height={height}
       enableVirtualization={enableVirtualization}
       hasFooter={hasFooter}
       footerHeight={footerHeight}

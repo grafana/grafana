@@ -10,6 +10,7 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
   NESTED_LAST_ROW_CLASS,
+  OVERFLOW_CELL_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
   TABLE,
@@ -81,19 +82,13 @@ export const getGridStyles = memoize(
       : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
-    // Each grid sets this variable itself so nested grids reset to their own radius instead of
-    // inheriting an outer table's panel-matching override.
-    const cornerRadiusValue = noPanelPadding
-      ? `var(--grafana-panel-content-corner-radius, ${theme.shape.radius.default})`
-      : theme.shape.radius.default;
-    const cornerRadius = 'var(--table-header-corner-radius)';
+    const cornerRadius = theme.shape.radius.default;
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
 
     return {
       gridFrame: css({
-        '--table-header-corner-radius': cornerRadiusValue,
         // This wrapper can be a flex item alongside controls such as the multi-frame picker. Its
         // automatic minimum is the grid's content height, which prevents it from yielding the space
         // reserved for those controls.
@@ -102,16 +97,17 @@ export const getGridStyles = memoize(
         // panel (see getPaginationChromeHeight).
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         boxSizing: 'border-box',
-        ...(transparent && {
+        ...(!noPanelPadding && {
           // Reserve the same space as the visible frame without putting that frame underneath the
           // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
-          border: '1px solid transparent',
+          border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
           borderEndStartRadius: cornerRadius,
           borderEndEndRadius: cornerRadius,
           ...(tableRefreshEnabled && {
             borderStartStartRadius: cornerRadius,
             borderStartEndRadius: cornerRadius,
           }),
+          overflow: 'hidden',
           // Paint the frame after the scrolling grid so the native scrollbar corner cannot cover it.
           '&::after': {
             content: '""',
@@ -119,7 +115,7 @@ export const getGridStyles = memoize(
             inset: 0,
             pointerEvents: 'none',
             zIndex: 1,
-            border: `1px solid ${table.border}`,
+            border: `${TABLE.FRAME_BORDER_WIDTH}px solid ${table.border}`,
             borderEndStartRadius: cornerRadius,
             borderEndEndRadius: cornerRadius,
             ...(tableRefreshEnabled && {
@@ -141,8 +137,6 @@ export const getGridStyles = memoize(
 
         '--rdg-selection-color': theme.colors.action.selectedBorder,
         '--rdg-selection-width': '0.5px',
-        '--table-header-corner-radius': cornerRadiusValue,
-
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
@@ -167,8 +161,8 @@ export const getGridStyles = memoize(
           },
         },
 
-        ...(transparent && {
-          // The transparent frame is painted above the grid so native scrollbars cannot erase its
+        ...(!noPanelPadding && {
+          // The frame is painted above the grid so native scrollbars cannot erase its
           // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
           // outermost selection outline.
           [`.rdg-cell.${FIRST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::before`]: {
@@ -194,13 +188,15 @@ export const getGridStyles = memoize(
         }),
 
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-          [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
+          [`&.${OVERFLOW_CELL_CLASS}`]: {
+            [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
+            ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
+          },
           // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
           // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
           // same specificity, so the hover rule has to come last for a cell that is both to land on
           // the hover value.
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 7 },
-          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
           // react-data-grid rings the selected cell in the selection color. Once focus is gone that
           // ring marks a cell the user can no longer see they are on, so leave the cell bare.
           [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
@@ -210,7 +206,9 @@ export const getGridStyles = memoize(
           backgroundColor: 'var(--rdg-row-background-color)',
           zIndex: theme.zIndex.tooltip - 4,
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
-          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
+          ...(!IS_SAFARI_26 && {
+            [`&.${OVERFLOW_CELL_CLASS}:hover`]: { zIndex: theme.zIndex.tooltip - 2 },
+          }),
         },
 
         // have to override styles for row selection to workaround safari styles workaround
@@ -247,9 +245,9 @@ export const getGridStyles = memoize(
           },
         },
 
-        ...((tableRefreshEnabled || transparent) && {
+        ...((tableRefreshEnabled || !noPanelPadding) && {
           // The footer's top border separates it from the rows. Its bottom border would duplicate
-          // the transparent grid frame, or leave an extra line along a refreshed opaque table.
+          // the grid frame, or leave an extra line along a refreshed borderless table.
           '.rdg-bottom-summary-row > .rdg-cell': {
             borderBlockEnd: 'none',
           },
@@ -257,12 +255,6 @@ export const getGridStyles = memoize(
 
         // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
-          // The header cells' own rounded corners (below) leave the area outside the radius
-          // transparent, so a row scrolling under the sticky header painted straight through it.
-          // This grid is the scroll container, so rounding it clips everything it scrolls — the rows
-          // included — and the panel shows through the corner instead of a row's background.
-          borderStartStartRadius: cornerRadius,
-          borderStartEndRadius: cornerRadius,
           '.rdg-header-row > .rdg-cell': {
             // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
             // row scrolled underneath it shows through — invisible before this commit, since the
@@ -314,7 +306,7 @@ export const getGridStyles = memoize(
           paddingInlineEnd: TABLE.CELL_PADDING * 2,
         },
       }),
-      lastRow: css({
+      lastRowWithoutBorder: css({
         '& > .rdg-cell': { borderBlockEnd: 'none' },
       }),
       gridNested: css({
@@ -521,15 +513,15 @@ const SELECTED_CELL_SELECTOR = '&[aria-selected=true]';
 
 const ACTIVE_CELL_SELECTORS = {
   hover: {
-    nested: '.rdg-cell:hover &',
-    normal: '&:hover',
+    nested: `.rdg-cell.${OVERFLOW_CELL_CLASS}:hover &`,
+    normal: `&.${OVERFLOW_CELL_CLASS}:hover`,
   },
   // react-data-grid keeps a cell selected after the grid loses focus, and offers no API to clear it
   // (`selectCell` rejects any out-of-bounds position), so gate on `:focus-within` to release the
   // expanded state when the user clicks away from the table.
   selected: {
-    nested: '[aria-selected=true]:focus-within &',
-    normal: `${SELECTED_CELL_SELECTOR}:focus-within`,
+    nested: `.rdg-cell.${OVERFLOW_CELL_CLASS}[aria-selected=true]:focus-within &`,
+    normal: `&.${OVERFLOW_CELL_CLASS}[aria-selected=true]:focus-within`,
   },
 } as const;
 

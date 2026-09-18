@@ -32,7 +32,13 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  getPaginationChromeHeight,
+  NESTED_TABLE_VERTICAL_PADDING,
+  TABLE,
+} from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -604,8 +610,9 @@ export function useRowHeight({
           0
         );
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
-        const verticalPaddingBlock = TABLE.CELL_PADDING * 2;
-        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + verticalPaddingBlock * 2 + scrollbarHeight;
+        return (
+          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + NESTED_TABLE_VERTICAL_PADDING + scrollbarHeight
+        );
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);

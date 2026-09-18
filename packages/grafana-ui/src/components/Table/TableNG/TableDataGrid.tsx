@@ -13,6 +13,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
+import { getPaginationChromeHeight, TABLE } from './constants';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -60,6 +61,8 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   setSortColumns: Dispatch<SetStateAction<SortColumn[]>>;
   onSortByChange?: TableNGProps['onSortByChange'];
   rowHeight: NonNullable<DataGridProps<TableRow, TableSummaryRow>['rowHeight']>;
+  getRowHeight: (row: TableRow) => number;
+  height: number;
   hasFooter: boolean;
   footerHeight: number;
   noHeader: boolean;
@@ -98,6 +101,8 @@ export function TableDataGrid({
   setSortColumns,
   onSortByChange,
   rowHeight,
+  getRowHeight,
+  height,
   enableVirtualization,
   hasFooter,
   footerHeight,
@@ -136,6 +141,17 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
+  const bodyHeight =
+    height -
+    headerHeight -
+    footerHeight -
+    (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0) -
+    (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2);
+  const visibleRowsHeight = useMemo(
+    () => rows.reduce((combinedHeight, row) => combinedHeight + getRowHeight(row), 0),
+    [getRowHeight, rows]
+  );
+  const omitFinalRowBorder = visibleRowsHeight >= bodyHeight;
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const commonDataGridProps = useMemo(
@@ -192,7 +208,7 @@ export function TableDataGrid({
           rowClass={(row, rowIdx) =>
             clsx(
               rowClass?.(row, rowIdx),
-              (tableRefreshEnabled || transparent) && role === 'grid' && rowIdx === rows.length - 1 && styles.lastRow
+              omitFinalRowBorder && rowIdx === rows.length - 1 && styles.lastRowWithoutBorder
             )
           }
           rowKeyGetter={rowKeyGetter}

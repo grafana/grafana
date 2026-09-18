@@ -38,7 +38,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -353,6 +353,7 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     disableSanitizeHtml: false,
     showTypeIcons: false,
     timeRange: undefined,
+    typographyCtx: createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
     ...overrides,
   };
 }

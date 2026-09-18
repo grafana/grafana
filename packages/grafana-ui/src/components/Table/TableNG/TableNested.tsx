@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { type CSSProperties, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { type DataFrame, type Field, FieldType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -69,7 +69,6 @@ import {
 
 const EXPANDED_COLUMN_KEY = 'expanded';
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
-type NestedGridStyle = CSSProperties & { '--table-header-corner-radius': string };
 
 export function TableNested(props: TableNGProps & { nestedFramesField: Field<DataFrame[]> }) {
   const {
@@ -224,8 +223,12 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // The expander column only exists when there's a nested frame to expand into (see the columns
   // memo below), so with no rows its width isn't taken out of what the real columns get to use.
   const availableWidth = useMemo(
-    () => width - (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) - scrollbarWidth,
-    [width, scrollbarWidth, firstRowNestedData]
+    () =>
+      width -
+      (firstRowNestedData ? COLUMN.EXPANDER_WIDTH : 0) -
+      scrollbarWidth -
+      (noPanelPadding ? 0 : TABLE.FRAME_BORDER_WIDTH * 2),
+    [width, scrollbarWidth, firstRowNestedData, noPanelPadding]
   );
   const nestedAvailableWidth = useMemo(() => availableWidth - TABLE.CELL_PADDING - 1, [availableWidth]);
 
@@ -351,10 +354,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const showPagination = enablePagination && numRows > 0;
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
-  const nestedGridStyle = useMemo<NestedGridStyle>(
-    () => ({ '--table-header-corner-radius': theme.shape.radius.default }),
-    [theme.shape.radius.default]
-  );
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -446,6 +445,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
     }),
     [
       disableKeyboardEvents,
@@ -464,6 +464,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       theme,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
     ]
   );
 
@@ -538,8 +539,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
             <DataGrid<TableRow, TableSummaryRow>
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
-              // Nested tables are inset, so reset the panel-matching value inherited from the outer grid.
-              style={nestedGridStyle}
               headerRowClass={clsx(styles.headerRow, hasNestedHeaders ? '' : styles.displayNone)}
               headerRowHeight={hasNestedHeaders ? nestedHeaderHeightPx : 0}
               bottomSummaryRows={hasNestedFooter ? [{}] : undefined}
@@ -582,7 +581,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       nestedColWidths,
       nestedResizeHandler,
       handleNestedColumnWidthsChange,
-      nestedGridStyle,
     ]
   );
 
@@ -687,6 +685,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       setSortColumns={setSortColumns}
       onSortByChange={onSortByChange}
       rowHeight={rowHeight}
+      getRowHeight={rowHeightFn}
+      height={height}
       enableVirtualization={enableVirtualization}
       hasFooter={hasFooter}
       footerHeight={footerHeight}

@@ -136,6 +136,39 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
   });
 
+  it('uses the table itself as the full-size surface', () => {
+    mockTableSize();
+
+    setup();
+
+    const wrapper = screen.getByTestId('topTable');
+    const wrapperStyles = window.getComputedStyle(wrapper);
+    expect(wrapperStyles.padding).toBe('0px');
+    expect(wrapperStyles.backgroundColor).toBe('transparent');
+    expect(wrapperStyles.height).toBe('100%');
+  });
+
+  it('does not allow the controls column to be resized', () => {
+    mockTableSize();
+
+    setup();
+
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers[0]).not.toHaveClass('rdg-cell-resizable');
+    expect(headers[1]).toHaveClass('rdg-cell-resizable');
+  });
+
+  it('does not apply cell-level hover overflow treatment to controls or numeric cells', () => {
+    mockTableSize();
+
+    setup();
+
+    const firstRowCells = screen.getAllByRole('gridcell').slice(0, 4);
+    expect(firstRowCells[0]).not.toHaveClass('table-ng-cell-overflow');
+    expect(firstRowCells[2]).not.toHaveClass('table-ng-cell-overflow');
+    expect(firstRowCells[3]).not.toHaveClass('table-ng-cell-overflow');
+  });
+
   // The refreshed header lifts the sort arrow out of the label button so a long title can ellipsize
   // without clipping it. Asserting the arrow's placement is the observable proof that
   // tableRefreshEnabled actually reaches TableNG, since this package can't read the toggle itself.
@@ -155,6 +188,23 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
 
       expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
       expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+    }
+  );
+
+  it.each([
+    { tableRefreshEnabled: undefined, distinctHeaderSurface: false },
+    { tableRefreshEnabled: true, distinctHeaderSurface: true },
+  ])(
+    'uses a distinct header surface=$distinctHeaderSurface with tableRefreshEnabled=$tableRefreshEnabled',
+    ({ tableRefreshEnabled, distinctHeaderSurface }) => {
+      mockTableSize();
+
+      setup({ tableRefreshEnabled });
+
+      const grid = window.getComputedStyle(screen.getByRole('grid'));
+      expect(
+        grid.getPropertyValue('--rdg-header-background-color') !== grid.getPropertyValue('--rdg-background-color')
+      ).toBe(distinctHeaderSurface);
     }
   );
 
@@ -394,7 +444,8 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
   });
 
   // Symbol is the one column left unsized, so whichever way TableNG sizes its auto columns it must
-  // land inside the space the scrollbar leaves — the pane has no room for a horizontal scrollbar.
+  // land inside the space the scrollbar and table frame leave — the pane has no room for a
+  // horizontal scrollbar.
   it.each([{ contentAwareWidthsEnabled: undefined }, { contentAwareWidthsEnabled: true }])(
     'fits the columns in the space the scrollbar leaves with contentAwareWidthsEnabled=$contentAwareWidthsEnabled',
     async ({ contentAwareWidthsEnabled }) => {
@@ -425,8 +476,12 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
         expect(sizedContainer).not.toBeNull();
         expect(columnWidths).toHaveLength(4);
         expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(
-          parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH
+          parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH - 2
         );
+        expect(screen.getByText('net/http.HandlerFunc.ServeHTTP').closest('[role="gridcell"]')).toHaveClass(
+          'table-ng-cell-overflow'
+        );
+        expect(screen.getByText('total').closest('[role="gridcell"]')).not.toHaveClass('table-ng-cell-overflow');
       });
     }
   );

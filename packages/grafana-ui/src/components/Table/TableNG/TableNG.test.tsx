@@ -25,7 +25,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, TABLE } from './constants';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -757,21 +757,6 @@ describe('TableNG', () => {
       }
     });
 
-    it('keeps the table radius on nested grids when the outer grid follows the panel radius', async () => {
-      const radius = createTheme().shape.radius.default;
-      const { container } = render(
-        <TableNG data={createNestedDataFrame()} width={800} height={600} tableRefreshEnabled noPanelPadding />
-      );
-      await user.click(container.querySelector('[aria-label="Expand row"]')!);
-
-      expect(
-        window.getComputedStyle(screen.getByRole('treegrid')).getPropertyValue('--table-header-corner-radius')
-      ).toBe(`var(--grafana-panel-content-corner-radius, ${radius})`);
-      expect(window.getComputedStyle(screen.getByRole('grid')).getPropertyValue('--table-header-corner-radius')).toBe(
-        radius
-      );
-    });
-
     it.each([
       ['dark', false, 'medium'],
       ['dark', true, 'table'],
@@ -891,13 +876,13 @@ describe('TableNG', () => {
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
 
-    it('gives the columns the full width when there are no rows to expand', () => {
+    it('gives the columns the full frame content width when there are no rows to expand', () => {
       // With no nested frame to expand into there's no expander column, so its width shouldn't be
       // held back from the real columns — rdg's grid-template-columns shows what they actually got.
       const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
 
       const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
-      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
+      expect(grid).toHaveStyle({ gridTemplateColumns: '399px 399px' });
     });
   });
 
@@ -2442,8 +2427,9 @@ describe('TableNG', () => {
         .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
         .filter(
           (rule) =>
-            Array.from(cell.classList).some((className) => rule.selectorText.includes(`.${className}`)) &&
-            rule.style.getPropertyValue('max-width') === '600px'
+            Array.from(cell.classList).some(
+              (className) => className !== OVERFLOW_CELL_CLASS && rule.selectorText.includes(`.${className}`)
+            ) && rule.style.getPropertyValue('max-width') === '600px'
         );
 
       expect(expansionRules).not.toHaveLength(0);
@@ -3127,19 +3113,29 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('200px 200px');
+      expect(columnTemplate(container)).toBe('199px 199px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('450px 450px');
+      expect(columnTemplate(container)).toBe('449px 449px');
+    });
+
+    it('does not reserve frame width when the table is flush with its panel', () => {
+      const data = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+        valueField,
+      ]);
+      const { container } = render(<TableNG data={data} width={400} height={300} noPanelPadding />);
+
+      expect(columnTemplate(container)).toBe('200px 200px');
     });
 
     it('applies width changes immediately for an auto-sized pill column', () => {
       const data = frameWithFields([pillField(), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('200px 200px');
+      expect(columnTemplate(container)).toBe('199px 199px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('450px 450px');
+      expect(columnTemplate(container)).toBe('449px 449px');
     });
 
     it('applies width changes immediately when an auto-sized column wraps its text', () => {
@@ -3153,10 +3149,10 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('200px 200px');
+      expect(columnTemplate(container)).toBe('199px 199px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('450px 450px');
+      expect(columnTemplate(container)).toBe('449px 449px');
     });
 
     // Toggling text wrapping changes the field config but the same table component renders throughout,
@@ -3184,10 +3180,10 @@ describe('TableNG', () => {
     it('applies width changes immediately when the pill column has a configured width', () => {
       const data = frameWithFields([pillField({ width: 100 }), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('100px 300px');
+      expect(columnTemplate(container)).toBe('100px 298px');
 
       rerender(<TableNG data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('100px 800px');
+      expect(columnTemplate(container)).toBe('100px 798px');
     });
 
     it('applies width changes immediately when only a nested table has a width-sensitive column', () => {

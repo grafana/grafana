@@ -543,10 +543,6 @@ const getContentStyle = (
   const contentStyle: CSSProperties = {
     padding: chromePadding,
     paddingTop: headerHeight > 0 ? 0 : chromePadding,
-    // A flush child needs the panel's inner curve: the 1px border reduces the outer radius by 1px.
-    ...(headerHeight === 0 && {
-      '--grafana-panel-content-corner-radius': `calc(${theme.shape.radius.lg} - 1px)`,
-    }),
   };
 
   return { contentStyle, innerWidth, innerHeight };

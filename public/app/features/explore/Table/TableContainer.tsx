@@ -4,6 +4,7 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import {
   applyFieldOverrides,
+  CoreApp,
   type SplitOpen,
   type DataFrame,
   LoadingState,
@@ -206,6 +207,7 @@ export const TableContainer = memo(function TableContainer({
                     value={{
                       eventsScope: 'explore',
                       eventBus: eventBus ?? new EventBusSrv(),
+                      app: CoreApp.Explore,
                       onAddAdHocFilter: onCellFilterAdded,
                     }}
                   >

@@ -15,6 +15,7 @@ export const COLUMN = {
 /** Table layout and display constants */
 export const TABLE = {
   CELL_PADDING: 6,
+  FRAME_BORDER_WIDTH: 1,
   LINE_HEIGHT: 22,
   /**
    * The header label's own line box, which is shorter than a body row's `LINE_HEIGHT`. Kept here
@@ -44,6 +45,9 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+/** Outer cell padding plus the nested table's block-axis inset. */
+export const NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 4;
+
 /**
  * Marker classes stamped onto the first and last columns once the final column list is assembled.
  * CSS can't find those columns on its own: `:first-child`/`:last-child` match the first and last
@@ -53,6 +57,7 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
 export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
+export const OVERFLOW_CELL_CLASS = 'table-ng-cell-overflow';
 
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
 // container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).

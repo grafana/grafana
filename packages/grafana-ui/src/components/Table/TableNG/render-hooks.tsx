@@ -20,6 +20,7 @@ import {
   FieldType,
   type GrafanaTheme2,
   getDisplayProcessor,
+  formattedValueToString,
   type TimeRange,
 } from '@grafana/data';
 import {
@@ -44,7 +45,7 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
-import { CELL_HORIZONTAL_CHROME } from './constants';
+import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -66,6 +67,7 @@ import {
   type TableFilterActionCallback,
   type TableRow,
   type TableSummaryRow,
+  type TypographyCtx,
 } from './types';
 import {
   type ApplyFilterResult,
@@ -176,6 +178,7 @@ export interface ColumnBuildConfig {
   tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  typographyCtx: TypographyCtx;
 }
 
 export type FromFieldsFn = (
@@ -265,6 +268,7 @@ function buildColumnsFromFields(
     tableRefreshEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
+    typographyCtx,
   } = config;
 
   // Resolve the apply-to-row background function against this frame's own fields.
@@ -347,6 +351,7 @@ function buildColumnsFromFields(
 
     const shouldOverflow =
       !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+    const textWidthCache = new Map<string, number>();
     const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
     const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
     const fieldAppliesToRow =
@@ -403,6 +408,16 @@ function buildColumnsFromFields(
       if (hasValidStyleField) {
         style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
       }
+      const value = props.row[props.column.key];
+      const formattedValue = shouldOverflow ? formattedValueToString(field.display!(value)) : '';
+      let measuredWidth = textWidthCache.get(formattedValue);
+      if (measuredWidth == null && formattedValue !== '') {
+        measuredWidth = typographyCtx.measureWidth(formattedValue);
+        textWidthCache.set(formattedValue, measuredWidth);
+      }
+      const hasOverflow =
+        shouldOverflow &&
+        (maxRowHeight != null || rendersAsJson(field, cellType) || (measuredWidth ?? 0) > contentWidth);
 
       return (
         <Cell
@@ -411,6 +426,7 @@ function buildColumnsFromFields(
           className={clsx(
             props.className,
             cellParentStyles,
+            hasOverflow && OVERFLOW_CELL_CLASS,
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
@@ -560,6 +576,7 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (

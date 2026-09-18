@@ -103,14 +103,6 @@ it('renders panel with a hovering header if prop hoverHeader is true', () => {
   expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
 });
 
-it('exposes its inner corner radius when content reaches the top edge', () => {
-  setup({ hoverHeader: true, padding: 'none' });
-
-  expect(
-    screen.getByText("Panel's Content").parentElement?.style.getPropertyValue('--grafana-panel-content-corner-radius')
-  ).toBe('calc(10px - 1px)');
-});
-
 it('renders panel with a header if prop titleItems', () => {
   setup({
     titleItems: [<div key="title-item-test"> This should be a self-contained node </div>],

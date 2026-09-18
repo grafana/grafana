@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TABLE } from './constants';
+import { NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
@@ -1102,6 +1102,7 @@ describe('TableNG hooks', () => {
 
   describe('useRowHeight', () => {
     const typographyCtx = createTypographyContext(14, 'sans-serif');
+    const expectHeightWithoutNestedTablePadding = (height: number) => expect(height - NESTED_TABLE_VERTICAL_PADDING);
 
     it('returns the default height if there are no wrapped columns or nested frames', () => {
       const { fields } = setupData();
@@ -1210,7 +1211,7 @@ describe('TableNG hooks', () => {
         const defaultHeight = 40;
         const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1234,8 +1235,8 @@ describe('TableNG hooks', () => {
             }
             return rowHeight({ __index: 0, __depth: 1, data: frame });
           }).result.current
-          // 3 nested rows + header + footer + outer cell padding + nested table inset + scrollbar
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 4 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+          // 3 nested rows + header + footer + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
       });
 
       it('includes nestedFooterHeight in the no-data expanded row height', () => {
@@ -1281,7 +1282,7 @@ describe('TableNG hooks', () => {
         const nestedRows = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1308,7 +1309,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 4 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + outer cell padding + nested table inset + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -1320,7 +1321,7 @@ describe('TableNG hooks', () => {
         const defaultNonNestedHeight = 60;
         const defaultNestedHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               fields: [
@@ -1346,8 +1347,8 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + outer cell padding + nested table inset + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 4 + TABLE.SCROLLBAR_AFFORDANCE);
+          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + scrollbar
+        ).toBe(defaultNestedHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
@@ -1387,7 +1388,7 @@ describe('TableNG hooks', () => {
         const nestedRecords = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1417,7 +1418,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 4); // 3 rows + outer cell padding + nested table inset (no header)
+        ).toBe(defaultHeight * 3); // 3 rows (no header)
       });
     });
 
