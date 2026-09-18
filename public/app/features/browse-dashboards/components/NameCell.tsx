@@ -58,6 +58,9 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
     );
   }
 
+  // Nested rows sit beneath their managed root, so only root rows need the repository badge in this tree.
+  const showRepoBadge = !item.parentUID;
+
   return (
     <>
       <Indent
@@ -114,7 +117,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
           )}
         </Text>
 
-        <FolderRepo folder={item} canEdit={canEditItem} />
+        {showRepoBadge && <FolderRepo folder={item} canEdit={canEditItem} />}
 
         <DescriptionTooltip description={item.description} />
 

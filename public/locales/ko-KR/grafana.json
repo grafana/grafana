@@ -915,6 +915,7 @@
       "button-view": "보기",
       "export-ariaLabel-export": "내보내기",
       "export-label-export": "내보내기",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "삭제",
       "label-manage-permissions": "권한 관리",
       "tooltip-history": "이 연락처로 전송된 알림 시도 기록 보기",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "로딩 중...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "로딩 중...."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "일시 중지된 규칙 없음",
         "pause-recording": "기록 규칙 일시 중지됨",
         "policy-tree": "정책 트리",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "템플릿 파일 이름 복제: \"{{name}}\". 템플릿 파일 이름은 고유해야 합니다.",
         "templates-label": "알림 템플릿",
         "templates-remove": "{{name}} 삭제",
-        "upload": "YAML 파일 업로드",
+        "upload": "",
         "validating": "구성 유효성 검사 중...",
         "validation-error": "검증에 실패했습니다",
         "validation-error-desc": "구성을 검증하지 못했습니다.",
         "validation-success": "검증에 성공했습니다",
         "validation-success-desc": "충돌 없음. 구성 가져오기 준비 완료.",
         "validation-warning": "기존 리소스와의 충돌을 방지하기 위해 일부 리소스의 이름이 변경됩니다.",
-        "yaml-file": "Alertmanager 구성 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 구성 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "데이터 소스",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "README 추가",
-      "edit-tooltip": "README 편집",
+      "edit-doc-tooltip": "",
       "empty-message": "이 폴더에 무엇이 포함되어 있는지와 올바른 대시보드를 어디에서 찾을 수 있는지 설명하는 README를 추가하세요.",
       "load-error-retry": "다시 시도",
-      "load-error-title": "README를 불러오지 못했습니다",
-      "parse-error": "README 콘텐츠 표시 불가."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "기록 지우기",
@@ -5736,16 +5751,24 @@
       "add-library-panel-header": "패널 가져오기",
       "add-visualization-body": "데이터 소스를 선택한 다음 차트, 통계, 표를 사용하여 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성합니다.",
       "add-visualization-button": "시각화 추가",
+      "add-visualization-description": "",
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "자동 그리드",
       "auto-grid-description": "패널은 크기에 맞게 조정되어 균일한 그리드를 형성합니다.",
+      "build-assistant": "",
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "layout-default-hint": "선택한 레이아웃은 모든 새 탭과 행의 기본 레이아웃으로도 사용됩니다. 나중에 '대시보드 설정 > 일반'에서 이 설정을 변경할 수 있습니다.",
+      "or-start-blank": "",
       "select-layout-header": "레이아웃 선택",
       "title": "새 대시보드"
     },
@@ -5873,6 +5896,7 @@
       "randomize-field-names-label-field-names": "필드 이름",
       "randomize-labels-label-labels": "라벨",
       "randomize-string-values-label-string-values": "문자열 값",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "데이터",
@@ -5913,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "변환 및 필드 구성이 적용되지 않은 미가공 데이터입니다. ",
       "dataframe-label": "DataFrame JSON(쿼리에서 생성)",
+      "editor-label": "",
       "panel-data-description": "패널 시각화에 전달된 미가공 모델",
       "panel-data-label": "패널 데이터",
       "panel-json-description": "모든 작동 방식을 구성하는 대시보드 JSON에 저장된 모델입니다.",
@@ -7301,6 +7326,7 @@
       "randomize-field-names-label-field-names": "필드 이름",
       "randomize-labels-label-labels": "라벨",
       "randomize-string-values-label-string-values": "문자열 값",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "데이터",
@@ -7688,6 +7714,7 @@
         "model-label": "모델",
         "v2-resource": "V2 리소스"
       },
+      "json-preview-label": "",
       "label-description": "설명",
       "label-folder-name": "폴더 이름",
       "label-target-folder": "대상 폴더",
@@ -11086,6 +11113,7 @@
       "incident-tab-label": "인시던트",
       "team-filter-all": "모든 팀",
       "team-filter-label": "팀으로 경보 필터링",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "내 팀",
       "title": "경보 및 인시던트",
       "title-alerts": "경보",
@@ -11143,6 +11171,7 @@
     "incidents-card": {
       "declare": "인시던트 선언",
       "empty": "활성 인시던트가 없습니다.",
+      "empty-selected-team": "",
       "error-title": "활성 인시던트를 불러올 수 없습니다",
       "title": "활성 인시던트",
       "view-all": "모든 인시던트 보기"
@@ -11747,6 +11776,7 @@
       "waiting-for-data": "데이터를 기다리는 중:"
     },
     "live-publish": {
+      "message": "",
       "publish": "게시"
     }
   },
@@ -12092,6 +12122,10 @@
       "description": "활성화하면 각 행의 로그 세부 정보가 표시됩니다.",
       "name": "로그 세부 정보 활성화"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "각 행의 첫 번째 열에 있는 로그 라인 링크 버튼을 활성화/비활성화합니다.",
       "name": "로그 링크 복사 버튼 표시"
@@ -12159,6 +12193,10 @@
     "selected-team-not-found": "선택한 팀을 찾을 수 없거나, 해당 팀을 볼 수 있는 권한이 없습니다.",
     "team-not-found": "[알 수 없는 팀]",
     "unknown-error": "알 수 없는 오류"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -12492,6 +12530,10 @@
     "authentication": {
       "title": "인증"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "북마크"
     },
@@ -12698,6 +12740,7 @@
       "title": "기록된 쿼리"
     },
     "reporting": {
+      "subtitle": "",
       "title": "보고"
     },
     "saved-queries": {
@@ -12712,6 +12755,10 @@
     },
     "search-dashboards": {
       "title": "대시보드 검색"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana 구성에 정의된 설정 보기",
@@ -14987,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "수락",
-      "alert-text": "이 대시보드를 외부와 공유하면 링크를 보유한 모든 사용자가 대시보드에 액세스할 수 있습니다.",
+      "alert-text": "",
       "cancel-button": "취소",
       "learn-more-button": "자세히 알아보기",
       "public-ack": "이 대시보드가 전부 공개된다는 것을 이해했습니다.*",
@@ -16552,10 +16599,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

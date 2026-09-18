@@ -288,6 +288,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "grafana.frontendLegacyFeatureToggleHandling",
+			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).`,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "off",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "provisioning.performance",
 			Description: "Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers",
 			Stage:       FeatureStageExperimental,
@@ -1953,7 +1962,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:   "true",
 		},
 		{
@@ -2482,6 +2491,16 @@ var (
 			HideFromDocs:    true,
 		},
 		{
+			Name:            "appplugins.loadAppManifestAndKeepSettings",
+			Description:     "Continue to expose settings when a manifest exists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -2704,14 +2723,6 @@ var (
 			Description: "Aligns query splitting chunks with UTC midnight",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryFetchConfigFromSettingsService",
-			Description: "Enables the query service to fetch the configuration from the settings service",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
@@ -3149,6 +3160,15 @@ var (
 			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		{
+			Name:            "reporting.legacyServiceUsesK8SClient",
+			Description:     "Redirect legacy report service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "reporting.redirectReportsToK8SApi",
 			Description:     "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
 			Stage:           FeatureStageExperimental,
@@ -3176,11 +3196,11 @@ var (
 		},
 		{
 			Name:         "grafana.frontendLegacyAPIHandling",
-			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+			Description:  `Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).`,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "off",
 			Generate:     Generate{Go: true},
 		},
 		{
@@ -3203,6 +3223,15 @@ var (
 		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "features.legacyOverrideLookupBypass",
+			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaBackendServicesSquad,
 			HideFromDocs: true,
@@ -3414,6 +3443,15 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "grafana.mtFallback",
+			Description:  "Enables multi-tenant fallback behavior",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "{}",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

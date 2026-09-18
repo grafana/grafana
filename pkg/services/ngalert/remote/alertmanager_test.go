@@ -626,7 +626,10 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
 						c := policy_exports.Config()
 						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
-						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals())
+						return definition.PostableApiAlertingConfig{
+							Config:    notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals()),
+							Receivers: v1.ReceiversToDB(c.Receivers),
+						}
 					}(),
 				},
 			},
@@ -1078,15 +1081,15 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 					Receiver: "grafana-default-email",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Name: "grafana-default-email",
-					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-						{
-							Name:     "email receiver",
-							Type:     "email",
-							Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
-						},
+		},
+		Receivers: []*v1.PostableApiReceiver{
+			{
+				Name: "grafana-default-email",
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+					{
+						Name:     "email receiver",
+						Type:     "email",
+						Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 					},
 				},
 			},

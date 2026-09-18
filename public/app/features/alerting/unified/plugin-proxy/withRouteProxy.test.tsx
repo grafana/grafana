@@ -1,25 +1,32 @@
-import { lazy } from 'react';
-import { render, screen } from 'test/test-utils';
+import { Suspense, use } from 'react';
+import { act, render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { type MonitoringLogger, config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
+import { PageLoader } from '@grafana/ui';
 import {
   type GrafanaRouteComponent,
   type GrafanaRouteComponentProps,
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
+import { withRouteProxyForPath } from './ProxiedAlertingRoute';
+import { isPrometheusAlertingPluginEnabled } from './pluginAvailability';
 import { proxied } from './withRouteProxy';
+
+jest.mock('./pluginAvailability', () => ({
+  isPrometheusAlertingPluginEnabled: jest.fn(),
+}));
 
 // Stands in for the real proxy chunk. The real one, for a URL Grafana keeps, renders the route's
 // own page — which is itself lazy and so suspends inside the proxy's boundary. That second wait is
 // what the last test here is about.
 jest.mock('./ProxiedAlertingRoute', () => ({
-  withRouteProxyForPath: (_path: string, RoutePage: GrafanaRouteComponent) => RoutePage,
+  withRouteProxyForPath: jest.fn((_path: string, RoutePage: GrafanaRouteComponent) => RoutePage),
 }));
 
-const CorePage = () => null;
+const CorePage = () => <div>core alerting page</div>;
 
 function route(path: string): RouteDescriptor {
   return { path, component: CorePage };
@@ -35,9 +42,13 @@ function routeProps(path: string): GrafanaRouteComponentProps {
 
 describe('proxied', () => {
   const unifiedAlertingEnabled = config.unifiedAlertingEnabled;
+  let logger: MonitoringLogger;
 
   beforeEach(() => {
+    logger = mockLogger('features.alerting');
     setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
+    jest.mocked(isPrometheusAlertingPluginEnabled).mockResolvedValue(true);
+    jest.mocked(withRouteProxyForPath).mockClear();
   });
 
   afterEach(() => {
@@ -58,6 +69,49 @@ describe('proxied', () => {
     config.unifiedAlertingEnabled = true;
 
     expect(proxied(route('/alerting/silences')).component).not.toBe(CorePage);
+  });
+
+  it('does not load the route proxy when the plugin is unavailable', async () => {
+    config.unifiedAlertingEnabled = true;
+    jest.mocked(isPrometheusAlertingPluginEnabled).mockResolvedValue(false);
+    const PATH = '/alerting/silences';
+    const ProxiedPage = proxied(route(PATH)).component;
+
+    // React.use resolves the availability module and its probe asynchronously.
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () =>
+      render(
+        <Suspense fallback={<PageLoader />}>
+          <ProxiedPage {...routeProps(PATH)} />
+        </Suspense>
+      )
+    );
+
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+    expect(isPrometheusAlertingPluginEnabled).toHaveBeenCalled();
+    expect(withRouteProxyForPath).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the Grafana route and logs when the plugin availability check fails', async () => {
+    config.unifiedAlertingEnabled = true;
+    jest.mocked(isPrometheusAlertingPluginEnabled).mockRejectedValue(new Error('plugin lookup failed'));
+    const PATH = '/alerting/silences';
+    const ProxiedPage = proxied(route(PATH)).component;
+
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () =>
+      render(
+        <Suspense fallback={<PageLoader />}>
+          <ProxiedPage {...routeProps(PATH)} />
+        </Suspense>
+      )
+    );
+
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+    expect(withRouteProxyForPath).not.toHaveBeenCalled();
+    expect(logger.logWarning).toHaveBeenCalledWith('Could not check Prometheus Alerting plugin availability', {
+      error: 'Error: plugin lookup failed',
+    });
   });
 
   it('leaves the route alone when unified alerting is switched off', () => {
@@ -83,11 +137,23 @@ describe('proxied', () => {
 
     // Most URLs on a proxied route are Grafana's own and are not going anywhere, so this wait must
     // not claim a redirect is happening. Every other route shows PageLoader here.
-    const StillLoading = lazy<GrafanaRouteComponent>(() => new Promise(() => {}));
+    const neverLoads = new Promise<never>(() => {});
+    const StillLoading: GrafanaRouteComponent = () => {
+      use(neverLoads);
+      return null;
+    };
     const PATH = '/alerting/silence/new';
     const ProxiedPage = proxied({ path: PATH, component: StillLoading }).component;
 
-    render(<ProxiedPage {...routeProps(PATH)} />);
+    // React.use resolves the availability module and its probe asynchronously.
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () =>
+      render(
+        <Suspense fallback={<PageLoader />}>
+          <ProxiedPage {...routeProps(PATH)} />
+        </Suspense>
+      )
+    );
 
     expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument();
     expect(screen.queryByText('Redirecting…')).not.toBeInTheDocument();

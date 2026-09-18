@@ -250,7 +250,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   /**
    * Permission is checked here rather than only where the toggle renders, so no caller — including
-   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   * a hand-typed `?edit=true` — can force edit mode for a user without `notebooks:write`.
    */
   public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
@@ -459,7 +459,9 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
   controls: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
+    justifyContent: 'safe flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
     // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two

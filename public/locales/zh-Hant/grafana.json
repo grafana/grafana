@@ -915,6 +915,7 @@
       "button-view": "檢視",
       "export-ariaLabel-export": "匯出",
       "export-label-export": "匯出",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "刪除",
       "label-manage-permissions": "管理權限",
       "tooltip-history": "檢視向此聯絡點傳送通知的嘗試歷史記錄",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "正在載入..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "正在載入..."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "沒有已暫停的規則",
         "pause-recording": "錄製規則已暫停",
         "policy-tree": "政策樹",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "通知路由",
         "routing-none": "未選取政策樹",
         "routing-tree": "政策樹：{{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "複製範本檔案名稱：「{{name}}」。範本檔案名稱必須是獨一無二。",
         "templates-label": "通知範本",
         "templates-remove": "移除{{name}}",
-        "upload": "上傳 YAML 檔案",
+        "upload": "",
         "validating": "正在驗證設定…",
         "validation-error": "驗證失敗",
         "validation-error-desc": "無法驗證設定。",
         "validation-success": "驗證成功",
         "validation-success-desc": "找不到衝突。設定已準備好匯入。",
         "validation-warning": "為避免與現有資源衝突，某些資源將重新命名",
-        "yaml-file": "Alertmanager 設定 YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager 設定 YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "資料來源",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "新增 README",
-      "edit-tooltip": "編輯 README",
+      "edit-doc-tooltip": "",
       "empty-message": "新增 README 以描述此資料夾中的內容，以及在哪裡可以找到正確的儀表板。",
       "load-error-retry": "再試一次",
-      "load-error-title": "無法載入 README",
-      "parse-error": "無法顯示 README 內容。"
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "清除歷史記錄",
@@ -5736,16 +5751,24 @@
       "add-library-panel-header": "匯入面板",
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
+      "add-visualization-description": "",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "自動網格",
       "auto-grid-description": "面板調整大小以調整並形成統一的網格",
+      "build-assistant": "",
       "custom-grid": "自訂網格",
       "custom-grid-description": "單獨設定每個面板的位置和大小",
       "description": "新增面板，將資料視覺化成呈現",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "layout-default-hint": "所選版面配置也將用作所有新分頁和列的預設版面。您可以稍後在「儀表板設定」>「一般」中變更此設定。",
+      "or-start-blank": "",
       "select-layout-header": "選取版面",
       "title": "新儀表板"
     },
@@ -5873,6 +5896,7 @@
       "randomize-field-names-label-field-names": "欄位名稱",
       "randomize-labels-label-labels": "標籤",
       "randomize-string-values-label-string-values": "字串值",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "資料",
@@ -5913,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "未套用轉換和欄位設定的原始資料。",
       "dataframe-label": "資料框架 JSON（來自查詢）",
+      "editor-label": "",
       "panel-data-description": "傳遞至面板可視化的原始模型",
       "panel-data-label": "面板資料",
       "panel-json-description": "儲存在儀表板 JSON 中的模型，用於設定所有內容的運作方式。",
@@ -7301,6 +7326,7 @@
       "randomize-field-names-label-field-names": "欄位名稱",
       "randomize-labels-label-labels": "標籤",
       "randomize-string-values-label-string-values": "字串值",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "資料",
@@ -7688,6 +7714,7 @@
         "model-label": "模式",
         "v2-resource": "V2 資源"
       },
+      "json-preview-label": "",
       "label-description": "說明",
       "label-folder-name": "資料夾名稱",
       "label-target-folder": "目標資料夾",
@@ -11086,6 +11113,7 @@
       "incident-tab-label": "事件",
       "team-filter-all": "所有團隊",
       "team-filter-label": "按團隊篩選警報",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "您的團隊",
       "title": "警報與事件",
       "title-alerts": "警報",
@@ -11143,6 +11171,7 @@
     "incidents-card": {
       "declare": "宣告事件",
       "empty": "沒有進行中的事件。",
+      "empty-selected-team": "",
       "error-title": "無法載入進行中的事件",
       "title": "啟用的事件",
       "view-all": "檢視所有事件"
@@ -11747,6 +11776,7 @@
       "waiting-for-data": "正在等待資料："
     },
     "live-publish": {
+      "message": "",
       "publish": "發佈"
     }
   },
@@ -12092,6 +12122,10 @@
       "description": "啟用後，將顯示每列的記錄詳細資訊。",
       "name": "啟用記錄詳細資訊"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "啟用/停用每列第一欄中的記錄行連結按鈕",
       "name": "顯示「複製記錄連結」按鈕"
@@ -12159,6 +12193,10 @@
     "selected-team-not-found": "找不到所選團隊，或者您沒有檢視該團隊所需的權限。",
     "team-not-found": "[未知團隊]",
     "unknown-error": "未知錯誤"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到選項"
@@ -12492,6 +12530,10 @@
     "authentication": {
       "title": "身分驗證"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "書籤"
     },
@@ -12698,6 +12740,7 @@
       "title": "已記錄的查詢"
     },
     "reporting": {
+      "subtitle": "",
       "title": "彙報"
     },
     "saved-queries": {
@@ -12712,6 +12755,10 @@
     },
     "search-dashboards": {
       "title": "搜尋儀表板"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "檢視 Grafana 設定中已定義的設定",
@@ -14987,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "接受",
-      "alert-text": "將此儀表板在外部分享，任何擁有連結的人都可以完整存取。",
+      "alert-text": "",
       "cancel-button": "取消",
       "learn-more-button": "了解更多資訊",
       "public-ack": "我了解整個儀表板將公開。*",
@@ -16552,10 +16599,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",
