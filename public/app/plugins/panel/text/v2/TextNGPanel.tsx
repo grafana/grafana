@@ -31,6 +31,7 @@ import {
   defaultCodeOptions,
   defaultOptions,
   type Options,
+  RenderMode,
   TextMode,
 } from '../panelcfg.gen';
 
@@ -41,7 +42,7 @@ import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
-import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
+import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -57,10 +58,19 @@ export function TextNGPanel(props: Props) {
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;
   const content = options.content ?? defaultOptions.content ?? '';
+  // Gated here and not only in the options pane: a panel saved while the flag was on
+  // still carries its per-row mode, and the pane cannot withhold what is already set.
+  const newFeatures = isTextNewFeaturesEnabled();
+  const renderMode = newFeatures ? options.renderMode : RenderMode.Once;
 
   const frames = data.series;
-  const currentFrameIndex = getCurrentFrameIndex(frames, options);
-  const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
+  // Withheld with the selector: a saved index would otherwise pick a frame the reader
+  // has no UI to change, and the macros read every frame again, as they did before it.
+  const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
+  const series = useMemo(
+    () => (newFeatures && frames.length > 1 ? [frames[currentFrameIndex]] : frames),
+    [newFeatures, frames, currentFrameIndex]
+  );
 
   // Values scope, so the ${__value} macros the renderer resolves are offered.
   const suggestions = useMemo(
@@ -74,7 +84,7 @@ export function TextNGPanel(props: Props) {
     usePagination({
       content,
       mode: options.mode,
-      renderMode: options.renderMode,
+      renderMode,
       pageSize: options.pageSize,
       series,
       height,
@@ -87,7 +97,7 @@ export function TextNGPanel(props: Props) {
     // The editor renders its own preview, so skip the render pass on entry.
     isEditing
       ? { mode: options.mode, content: EMPTY_CONTENT }
-      : renderPanelContent(options, series, replaceVariables, rowWindow)
+      : renderPanelContent(options, renderMode, series, replaceVariables, rowWindow)
   );
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
@@ -95,8 +105,8 @@ export function TextNGPanel(props: Props) {
   // template change, which auto-fit measures.
   const [wasEditing, setWasEditing] = useState(isEditing);
   const [prevWindow, setPrevWindow] = useState(rowWindow);
-  const [prevTemplate, setPrevTemplate] = useState(() => templateOf(options));
-  const template = templateOf(options);
+  const [prevTemplate, setPrevTemplate] = useState(() => templateOf(options, renderMode));
+  const template = templateOf(options, renderMode);
   if (
     wasEditing !== isEditing ||
     prevWindow?.start !== rowWindow?.start ||
@@ -107,7 +117,7 @@ export function TextNGPanel(props: Props) {
     setPrevWindow(rowWindow);
     setPrevTemplate(template);
     if (!isEditing) {
-      setProcessed(renderPanelContent(options, series, replaceVariables, rowWindow));
+      setProcessed(renderPanelContent(options, renderMode, series, replaceVariables, rowWindow));
     }
   }
 
@@ -119,7 +129,7 @@ export function TextNGPanel(props: Props) {
       if (isEditing) {
         return;
       }
-      const next = renderPanelContent(options, series, replaceVariables, rowWindow);
+      const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
       if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
         setProcessed(next);
       }
@@ -129,7 +139,7 @@ export function TextNGPanel(props: Props) {
       isEditing,
       options.content,
       options.mode,
-      options.renderMode,
+      renderMode,
       options.code?.language,
       series,
       replaceVariables,
@@ -144,7 +154,7 @@ export function TextNGPanel(props: Props) {
 
   // Auto width so the dropdown hugs the query name instead of spanning the footer.
   const frameSelector =
-    frames.length > 1 ? (
+    newFeatures && frames.length > 1 ? (
       <Combobox
         aria-label={t('textng.frame-picker.label', 'Query')}
         options={frameOptions}
@@ -180,6 +190,7 @@ export function TextNGPanel(props: Props) {
       fallback={
         <EditorLoadingFallback
           options={options}
+          renderMode={renderMode}
           series={series}
           replaceVariables={replaceVariables}
           rowWindow={rowWindow}
@@ -193,7 +204,7 @@ export function TextNGPanel(props: Props) {
         mode={options.mode}
         showLineNumbers={options.code?.showLineNumbers ?? false}
         codeLanguage={options.code?.language}
-        renderMode={options.renderMode}
+        renderMode={renderMode}
         rowWindow={rowWindow}
         frameSelector={frameSelector}
         pagination={paginationBar}
@@ -244,8 +255,8 @@ export function TextNGPanel(props: Props) {
 }
 
 // What a render pass turns into blocks, leaving data and variables to the debounce.
-function templateOf(options: Options): string {
-  return `${options.content}|${options.mode}|${options.renderMode}|${options.code?.language}`;
+function templateOf(options: Options, renderMode?: RenderMode): string {
+  return `${options.content}|${options.mode}|${renderMode}|${options.code?.language}`;
 }
 
 interface ProcessedContent extends RenderedContent {
@@ -314,6 +325,7 @@ function TextNGView({ mode, content, error, code, fitContent, contentRef, transp
 // at most once per edit session.
 function EditorLoadingFallback({
   options,
+  renderMode,
   series,
   replaceVariables,
   rowWindow,
@@ -321,6 +333,7 @@ function EditorLoadingFallback({
   transparent,
 }: {
   options: Options;
+  renderMode?: RenderMode;
   series: DataFrame[];
   replaceVariables: InterpolateFunction;
   rowWindow?: RowWindow;
@@ -330,8 +343,8 @@ function EditorLoadingFallback({
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
   const rendered = useMemo(
-    () => renderPanelContent(options, series, replaceVariables, rowWindow),
-    [options, series, replaceVariables, rowWindow]
+    () => renderPanelContent(options, renderMode, series, replaceVariables, rowWindow),
+    [options, renderMode, series, replaceVariables, rowWindow]
   );
   const isCode = options.mode === TextMode.Code;
 
@@ -374,6 +387,7 @@ function applyEditorChange(options: Options, change: TextNGEditorChange): Option
 
 function renderPanelContent(
   options: Options,
+  renderMode: RenderMode | undefined,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
   rowWindow?: RowWindow
@@ -386,7 +400,7 @@ function renderPanelContent(
           content: options.content ?? '',
           mode: options.mode,
           series,
-          renderMode: options.renderMode,
+          renderMode,
           rowWindow,
           format: getInterpolateFormat(options.mode, options.code?.language),
         },
