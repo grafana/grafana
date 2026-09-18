@@ -48,6 +48,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
 
@@ -91,6 +92,7 @@ export function TableFlat(props: TableNGProps) {
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
     preventHorizontalOverflow = false,
+    zebraStriping = false,
   } = props;
 
   const theme = useTheme2();
@@ -343,12 +345,20 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
+  // Striping is applied through `rowClass` rather than react-data-grid's own row parity - see
+  // `makeStripedRowClass`.
+  const rowClass = useMemo(
+    () => (zebraStriping ? makeStripedRowClass(paginatedRows) : undefined),
+    [zebraStriping, paginatedRows]
+  );
+
   return (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
+      rowClass={rowClass}
       noValue={noValue}
       renderers={{ renderRow, renderCell: renderCellRoot }}
       columnWidths={resetColumnWidths}
@@ -379,6 +389,7 @@ export function TableFlat(props: TableNGProps) {
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}

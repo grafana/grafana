@@ -60,6 +60,11 @@ export const LAST_COLUMN_CLASS = 'table-ng-last-col';
 export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
 export const OVERFLOW_CELL_CLASS = 'table-ng-cell-overflow';
 
+// Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
+// a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.
+export const STRIPED_ROW_CLASS = 'table-ng-row-striped';
+export const NESTED_ROW_CLASS = 'table-ng-row-nested';
+
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
 // container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).
 const PANEL_TITLE_INSET = 12;
