@@ -88,8 +88,8 @@
     },
     "text": {
       "primary": "palette.neutral800",
-      "secondary": "palette.neutral600",
-      "disabled": "palette.neutral500",
+      "secondary": "palette.neutral650",
+      "disabled": "palette.neutral600",
       "link": "palette.blue600"
     },
     "border": {
@@ -104,8 +104,8 @@
     "contrastThreshold": 3,
     "action": {
       "selected": "hsl(from palette.neutral900 h s l / 0.12)",
-      "hover": "hsl(from palette.neutral900 h s l / 0.09)",
-      "focus": "hsl(from palette.neutral900 h s l / 0.09)",
+      "hover": "hsl(from palette.neutral900 h s l / 0.08)",
+      "focus": "hsl(from palette.neutral900 h s l / 0.08)",
       "selectedBorder": "palette.orange500"
     }
   },
@@ -120,6 +120,13 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "table": {
+      "headerBackground": "palette.neutral150",
+      "border": "palette.neutral250",
+      "rowStripedBackground": "palette.neutral100",
+      "rowHoverBackground": "palette.neutral250",
+      "rowSelectedBackground": "palette.amber50"
+    },
     "card": {
       "background": "palette.white",
       "borderColor": "palette.neutral200"

@@ -1660,7 +1660,9 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit: 100000})
+		Limit:        100000,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -2152,6 +2154,11 @@ func (dr *DashboardServiceImpl) searchAllDashboardsThroughK8sRaw(ctx context.Con
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
+	request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	// Internal callers do not use these table-only fields, which have no typed definitions.
+	request.Fields = slices.DeleteFunc(slices.Clone(request.Fields), func(field string) bool {
+		return field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY
+	})
 
 	return dashboardsearch.SearchAll(ctx, query.OrgId, request, dr.k8sclient.Search)
 }
