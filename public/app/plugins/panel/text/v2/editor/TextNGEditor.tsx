@@ -21,6 +21,8 @@ import { variableCompletion } from './variableCompletion';
 
 export type ViewMode = 'write' | 'split' | 'preview';
 
+export const DEFAULT_VIEW_MODE: ViewMode = 'split';
+
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
 
 /** Options the editor owns, always sent together with the current content. */
