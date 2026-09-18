@@ -370,7 +370,7 @@ receivers:
 			features: featuremgmt.WithFeatures(),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
-				cfg.ManagedRoutes = v1.ManagedRoutes{
+				cfg.ManagedRoutes = map[string]*v1.Route{
 					"team-b-policy": {Receiver: "team-b"},
 					"team-a-policy": {Receiver: "team-a"},
 				}

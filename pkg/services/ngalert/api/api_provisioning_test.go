@@ -2430,7 +2430,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	tracer := tracing.InitializeTracerForTest()
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
 	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
@@ -2513,7 +2513,7 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 
