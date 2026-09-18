@@ -5877,16 +5877,24 @@
       "add-library-panel-header": "Импорт панели",
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
+      "add-visualization-description": "",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Автоматическая сетка",
       "auto-grid-description": "Размер панелей изменяется для создания однородной сетки",
+      "build-assistant": "",
       "custom-grid": "Пользовательская сетка",
       "custom-grid-description": "Задайте расположение и размер каждой отдельной панели",
       "description": "Добавьте панель для визуализации данных",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <2>grafana.com</2>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "layout-default-hint": "Выбранный макет также будет использоваться по умолчанию для всех новых вкладок и строк. Вы можете изменить этот выбор позже в разделе «Настройки дашборда > Общие».",
+      "or-start-blank": "",
       "select-layout-header": "Выберите макет",
       "title": "Новый дашборд"
     },
@@ -6014,6 +6022,7 @@
       "randomize-field-names-label-field-names": "Названия полей",
       "randomize-labels-label-labels": "Метки",
       "randomize-string-values-label-string-values": "Строковые значения",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Данные",
@@ -6054,6 +6063,7 @@
     "inspect-json": {
       "dataframe-description": "Необработанные данные без применения преобразований и конфигурации полей. ",
       "dataframe-label": "Фрейм данных JSON (из запроса)",
+      "editor-label": "",
       "panel-data-description": "Необработанная модель, переданная в визуализацию панели.",
       "panel-data-label": "Данные панели",
       "panel-json-description": "Модель, сохраненная в формате JSON, которая настраивает всю работу дашборда.",
@@ -7451,6 +7461,7 @@
       "randomize-field-names-label-field-names": "Названия полей",
       "randomize-labels-label-labels": "Метки",
       "randomize-string-values-label-string-values": "Строковые значения",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Данные",
@@ -7844,6 +7855,7 @@
         "model-label": "Модель",
         "v2-resource": "Ресурс V2"
       },
+      "json-preview-label": "",
       "label-description": "Описание",
       "label-folder-name": "Имя папки",
       "label-target-folder": "Целевая папка",
@@ -11290,6 +11302,7 @@
       "incident-tab-label": "Инциденты",
       "team-filter-all": "Все команды",
       "team-filter-label": "Фильтр оповещений по команде",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -11353,6 +11366,7 @@
     "incidents-card": {
       "declare": "Сообщить об инциденте",
       "empty": "Нет активных инцидентов.",
+      "empty-selected-team": "",
       "error-title": "Не удалось загрузить активные инциденты",
       "title": "Активные инциденты",
       "view-all": "Посмотреть все инциденты"
@@ -12014,6 +12028,7 @@
       "waiting-for-data": "Ожидание данных:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Опубликовать"
     }
   },
@@ -12367,6 +12382,10 @@
     "enable-log-details": {
       "description": "Когда этот параметр включен, отображаются сведения о журнале для каждой строки.",
       "name": "Включить сведения о журнале"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Включает/отключает кнопку ссылки на строку журнала в первом столбце каждой строки",
@@ -15345,7 +15364,7 @@
     },
     "public-sharing": {
       "accept-button": "Принять",
-      "alert-text": "Если вы откроете внешний общий доступ к дашборду, он станет доступен всем, у кого есть ссылка.",
+      "alert-text": "",
       "cancel-button": "Отмена",
       "learn-more-button": "Подробнее",
       "public-ack": "Я понимаю, что дашборд будет общедоступным.*",
