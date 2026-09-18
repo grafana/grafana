@@ -15,19 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
-type embeddingBuilderProvider func() ([]embed.Builder, error)
-
-func (p embeddingBuilderProvider) Builders() ([]embed.Builder, error) { return p() }
-
-func (p embeddingBuilderProvider) Has(group, resource string) bool {
-	builders, _ := p()
-	for _, builder := range builders {
-		if builder.Group() == group && builder.Resource() == resource {
-			return true
-		}
-	}
-	return false
+type embeddingBuilderProvider struct {
+	validate func() error
+	snapshot func() embed.BuilderSnapshot
 }
+
+func (p embeddingBuilderProvider) Validate() error                 { return p.validate() }
+func (p embeddingBuilderProvider) Snapshot() embed.BuilderSnapshot { return p.snapshot() }
 
 type enrolledBuilder struct {
 	embed.Builder
@@ -39,15 +33,17 @@ func (b enrolledBuilder) Resource() string { return b.resource }
 
 func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		builders []embed.Builder
-		external bool
-		excluded bool
-		allowed  bool
+		name          string
+		builders      []embed.Builder
+		validationErr error
+		external      bool
+		excluded      bool
+		allowed       bool
 	}{
 		{name: "internal without builder"},
 		{name: "different group", builders: []embed.Builder{enrolledBuilder{group: "other", resource: "r"}}},
 		{name: "enrolled internal", builders: []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}, allowed: true},
+		{name: "unrelated validation error", builders: []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}, validationErr: errors.New("unsupported other collection"), allowed: true},
 		{name: "allowlist still required", builders: []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}, excluded: true},
 		{name: "external needs no builder", external: true, allowed: true},
 	} {
@@ -60,10 +56,13 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 				backend := &fakeVectorBackend{collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: tc.external}}
 				s, _, provider := newHybridTestServer(lexTableResponse(), backend)
 				calls := 0
-				s.embeddingBuilders = embeddingBuilderProvider(func() ([]embed.Builder, error) {
-					calls++
-					return tc.builders, nil
-				})
+				s.embeddingBuilders = embeddingBuilderProvider{
+					validate: func() error { return tc.validationErr },
+					snapshot: func() embed.BuilderSnapshot {
+						calls++
+						return embed.NewBuilderSnapshot(tc.builders)
+					},
+				}
 				if tc.external {
 					s.externalLexical = &fakeLexicalSearcher{}
 				}
@@ -102,7 +101,7 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	s := newTestSearchServer(nil, &fakeVectorBackend{})
 	builders := []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}
-	s.embeddingBuilders = embeddingBuilderProvider(func() ([]embed.Builder, error) { return builders, nil })
+	s.embeddingBuilders = embeddingBuilderProvider{snapshot: func() embed.BuilderSnapshot { return embed.NewBuilderSnapshot(builders) }}
 	_, allowed, err := s.resolveAllowedCollection(t.Context(), "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
@@ -110,11 +109,15 @@ func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
 	require.NoError(t, err)
 	require.False(t, allowed)
+	builders = []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	require.NoError(t, err)
+	require.True(t, allowed)
 }
 
 func TestEmbeddingEnrollmentValidatesBeforeSearchStartup(t *testing.T) {
 	want := errors.New("unsupported collection")
-	s := &searchServer{embeddingBuilders: embeddingBuilderProvider(func() ([]embed.Builder, error) { return nil, want })}
+	s := &searchServer{embeddingBuilders: embeddingBuilderProvider{validate: func() error { return want }}}
 	require.ErrorIs(t, s.init(t.Context()), want)
 }
 
@@ -122,7 +125,7 @@ func TestEmbeddingEnrollmentValidatesBeforeStorageStartup(t *testing.T) {
 	want := errors.New("unsupported collection")
 	s := &server{
 		log:               log.New("test"),
-		embeddingBuilders: embeddingBuilderProvider(func() ([]embed.Builder, error) { return nil, want }),
+		embeddingBuilders: embeddingBuilderProvider{validate: func() error { return want }},
 	}
 	require.ErrorIs(t, s.Init(t.Context()), want)
 }

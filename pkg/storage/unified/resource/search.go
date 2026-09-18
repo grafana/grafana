@@ -874,6 +874,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
+	}
+
 	// An unprovisioned (group, resource) pair — no catalog row, so no
 	// partition to search — is NOT_FOUND before we spend an embedding on
 	// the query.
@@ -883,9 +887,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	}
 	if !collAllowed {
 		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
-	}
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
-		return nil, err
 	}
 
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
@@ -1421,7 +1422,7 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 
 func (s *searchServer) init(ctx context.Context) error {
 	if s.embeddingBuilders != nil {
-		if _, err := s.embeddingBuilders.Builders(); err != nil {
+		if err := s.embeddingBuilders.Validate(); err != nil {
 			return fmt.Errorf("embedding enrollment: %w", err)
 		}
 	}

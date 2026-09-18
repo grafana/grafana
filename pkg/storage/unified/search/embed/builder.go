@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -12,11 +15,38 @@ import (
 // Consumers preserve existing vectors and continue processing other resources.
 var ErrSkip = errors.New("skip embedding extraction")
 
-// BuilderProvider returns one immutable builder snapshot per enrolled resource.
-// Consumers request a new snapshot to observe manifest reloads.
+// BuilderProvider validates configuration at startup. Runtime consumers retain
+// one snapshot per operation and request a new one to observe manifest reloads.
 type BuilderProvider interface {
-	Builders() ([]Builder, error)
-	Has(group, resource string) bool
+	Validate() error
+	Snapshot() BuilderSnapshot
+}
+
+// BuilderSnapshot keeps builder selection and membership on the same manifest
+// view, even if declarations change while an operation is in progress.
+type BuilderSnapshot struct {
+	builders   []Builder
+	byResource map[schema.GroupResource]Builder
+}
+
+func NewBuilderSnapshot(builders []Builder) BuilderSnapshot {
+	snapshot := BuilderSnapshot{
+		builders:   slices.Clone(builders),
+		byResource: make(map[schema.GroupResource]Builder, len(builders)),
+	}
+	for _, builder := range builders {
+		snapshot.byResource[schema.GroupResource{Group: builder.Group(), Resource: builder.Resource()}] = builder
+	}
+	return snapshot
+}
+
+func (s BuilderSnapshot) Builders() []Builder {
+	return slices.Clone(s.builders)
+}
+
+func (s BuilderSnapshot) Has(group, resource string) bool {
+	_, ok := s.byResource[schema.GroupResource{Group: group, Resource: resource}]
+	return ok
 }
 
 // Item is one chunk of a resource ready to be embedded.

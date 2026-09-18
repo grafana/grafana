@@ -364,7 +364,7 @@ func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, reso
 		return coll, false, nil
 	}
 	if !coll.IsExternal && s.embeddingBuilders != nil {
-		return coll, s.embeddingBuilders.Has(group, resource), nil
+		return coll, s.embeddingBuilders.Snapshot().Has(group, resource), nil
 	}
 	return coll, true, nil
 }

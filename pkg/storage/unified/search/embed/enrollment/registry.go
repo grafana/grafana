@@ -26,7 +26,7 @@ type Registry struct {
 
 var _ embed.BuilderProvider = (*Registry)(nil)
 
-// New defers declaration lookup until Builders so the initial live manifest
+// New defers declaration lookup until Validate so the initial live manifest
 // snapshot can load before enrollment is checked.
 func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []embed.Builder, skippedVersions *prometheus.CounterVec) (*Registry, error) {
 	if configs == nil {
@@ -83,18 +83,35 @@ func parseEntry(entry string) (schema.GroupResource, error) {
 	return schema.GroupResource{Group: group, Resource: name}, nil
 }
 
-func (r *Registry) Has(group, resource string) bool {
-	gr := schema.GroupResource{Group: group, Resource: resource}
-	if !slices.Contains(r.allowed, gr) {
-		return false
+func (r *Registry) Validate() error {
+	declared := make(map[schema.GroupResource]bool)
+	for gvr := range r.configs.Snapshot() {
+		declared[gvr.GroupResource()] = true
 	}
-	if _, ok := r.custom[gr]; ok {
-		return true
+	partitions := make(map[string]schema.GroupResource, len(r.allowed))
+	for _, gr := range r.allowed {
+		_, isCustom := r.custom[gr]
+		if !isCustom && !declared[gr] {
+			return fmt.Errorf("internal embedding collection %s/%s has no custom builder or manifest embedding declaration", gr.Group, gr.Resource)
+		}
+		partition, err := vector.InternalPartitionKey(gr.Resource)
+		if err != nil {
+			return fmt.Errorf("internal embedding collection %s/%s: %w", gr.Group, gr.Resource, err)
+		}
+		if owner, exists := partitions[partition]; exists {
+			return fmt.Errorf("internal embedding collections %s/%s and %s/%s derive the same partition key %q", owner.Group, owner.Resource, gr.Group, gr.Resource, partition)
+		}
+		partitions[partition] = gr
+		if isCustom && declared[gr] {
+			r.log.Warn("Custom embedding builder overrides manifest embedding declarations", "group", gr.Group, "resource", gr.Resource)
+		}
 	}
-	return r.configs.HasResource(gr)
+	return nil
 }
 
-func (r *Registry) Builders() ([]embed.Builder, error) {
+// Snapshot omits declarations removed at runtime without interrupting other
+// resources. Startup validation remains strict about missing declarations.
+func (r *Registry) Snapshot() embed.BuilderSnapshot {
 	type declaration struct {
 		revision int
 		fields   map[string][]app.ManifestVersionKindEmbedField
@@ -111,28 +128,16 @@ func (r *Registry) Builders() ([]embed.Builder, error) {
 		declared[gr] = d
 	}
 	builders := make([]embed.Builder, 0, len(r.allowed))
-	partitions := make(map[string]schema.GroupResource, len(r.allowed))
 	for _, gr := range r.allowed {
 		d, hasDeclaration := declared[gr]
 		builder, isCustom := r.custom[gr]
 		if !isCustom {
 			if !hasDeclaration {
-				return nil, fmt.Errorf("internal embedding collection %s/%s has no custom builder or manifest embedding declaration", gr.Group, gr.Resource)
+				continue
 			}
 			builder = generic.New(gr, app.ManifestResourceEmbed{ReembedVersion: d.revision}, d.fields, r.skippedVersions)
 		}
-		partition, err := vector.InternalPartitionKey(gr.Resource)
-		if err != nil {
-			return nil, fmt.Errorf("internal embedding collection %s/%s: %w", gr.Group, gr.Resource, err)
-		}
-		if owner, exists := partitions[partition]; exists {
-			return nil, fmt.Errorf("internal embedding collections %s/%s and %s/%s derive the same partition key %q", owner.Group, owner.Resource, gr.Group, gr.Resource, partition)
-		}
-		partitions[partition] = gr
-		if isCustom && hasDeclaration {
-			r.log.Warn("Custom embedding builder overrides manifest embedding declarations", "group", gr.Group, "resource", gr.Resource)
-		}
 		builders = append(builders, builder)
 	}
-	return builders, nil
+	return embed.NewBuilderSnapshot(builders)
 }

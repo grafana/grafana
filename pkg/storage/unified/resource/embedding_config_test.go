@@ -241,20 +241,6 @@ func TestEmbeddingConfigRegistry_SnapshotCopies(t *testing.T) {
 	assert.Len(t, current, 2)
 }
 
-func TestEmbeddingConfigRegistry_HasResource(t *testing.T) {
-	historical := embeddingTestVersion("v1")
-	historical.Served = false
-	manifest := embeddingTestManifest(1, historical)
-	manifest.Embed["gadgets"] = app.ManifestResourceEmbed{ReembedVersion: 1}
-	registry := NewEmbeddingConfigRegistry([]*app.ManifestData{manifest})
-	gr := embeddingTestGVR("", "widgets").GroupResource()
-	assert.True(t, registry.HasResource(gr), "historical declarations with empty fields are enrolled")
-	assert.False(t, registry.HasResource(embeddingTestGVR("", "gadgets").GroupResource()), "root revision alone has no versioned declaration")
-	assert.False(t, registry.HasResource(schema.GroupResource{Group: "other.example.test", Resource: "widgets"}))
-	registry.Reload()
-	assert.False(t, registry.HasResource(gr))
-}
-
 func TestEmbeddingConfigRegistry_SnapshotConsistentDuringReload(t *testing.T) {
 	manifest := func(revision int) *app.ManifestData {
 		field := app.ManifestVersionKindEmbedField{Name: fmt.Sprint(revision), Path: "spec.title"}

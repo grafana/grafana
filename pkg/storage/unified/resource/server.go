@@ -760,7 +760,7 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.search.init(ctx)
 		} else if s.initErr == nil && s.embeddingBuilders != nil {
 			// Storage-only servers also validate after the initial manifest poll.
-			if _, err := s.embeddingBuilders.Builders(); err != nil {
+			if err := s.embeddingBuilders.Validate(); err != nil {
 				s.initErr = fmt.Errorf("embedding enrollment: %w", err)
 			}
 		}

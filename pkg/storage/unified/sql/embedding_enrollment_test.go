@@ -29,8 +29,8 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 	require.NoError(t, withSearch(opts, &serverOpts), "live declarations are not required during construction")
 	provider := serverOpts.Search.EmbeddingBuilders
 	require.NotNil(t, provider)
-	_, err := provider.Builders()
-	require.Error(t, err)
+	require.Error(t, provider.Validate())
+	require.Empty(t, provider.Snapshot().Builders())
 
 	for _, revision := range []int{1, 2} {
 		configs.Reload([]*app.ManifestData{{
@@ -40,8 +40,10 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 				Kind: "Note", Plural: "notes", Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "text", Path: "spec.text"}}},
 			}}}},
 		}})
-		builders, err := provider.Builders()
-		require.NoError(t, err)
+		require.NoError(t, provider.Validate())
+		snapshot := provider.Snapshot()
+		require.True(t, snapshot.Has("notes.example.test", "notes"))
+		builders := snapshot.Builders()
 		require.Len(t, builders, 1)
 		require.Equal(t, revision, builders[0].Version())
 		items, err := builders[0].Extract(t.Context(), &resourcepb.ResourceKey{Group: "notes.example.test", Resource: "notes", Name: "one"},
@@ -50,6 +52,10 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 		require.Len(t, items, 1)
 		require.Equal(t, "text: hello", items[0].Content)
 	}
+	configs.Reload()
+	snapshot := provider.Snapshot()
+	require.Empty(t, snapshot.Builders())
+	require.False(t, snapshot.Has("notes.example.test", "notes"))
 }
 
 func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
@@ -62,8 +68,9 @@ func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 	}
 	var serverOpts resource.ResourceServerOptions
 	require.NoError(t, withSearch(opts, &serverOpts))
-	builders, err := serverOpts.Search.EmbeddingBuilders.Builders()
-	require.NoError(t, err)
+	provider := serverOpts.Search.EmbeddingBuilders
+	require.NoError(t, provider.Validate())
+	builders := provider.Snapshot().Builders()
 	require.Len(t, builders, 2)
 	require.IsType(t, dashboard.New(), builders[0])
 	require.IsType(t, &generic.Builder{}, builders[1])
