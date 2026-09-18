@@ -209,7 +209,6 @@ waiting:
 	if !emit(pending) {
 		return
 	}
-	pending = nil
 	buf := make([]Event, 0, dataBatchSize)
 	for input != nil && ctx.Err() == nil {
 		batch, ok := nextEventBatch(input, buf[:0])

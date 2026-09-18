@@ -714,9 +714,10 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 				backend.notifier = notifier
 				backend.watchOpts.SettleDelay = time.Millisecond
 				saveWatchEvent(t, backend, durableWatchEvent(100))
-				if startup == "fallback" {
+				switch startup {
+				case "fallback":
 					backend.eventStore.kv = &seedScanFailureKV{KV: backend.eventStore.kv}
-				} else if startup == "failure" {
+				case "failure":
 					backend.eventStore.kv = &watchHandoffFaultKV{KV: backend.eventStore.kv, err: errors.New("boundary read failed")}
 				}
 				ctx, cancel := context.WithCancel(t.Context())

@@ -352,48 +352,13 @@ func (b *broadcaster[T]) stream(input <-chan T, initialize cacheInitializer[T]) 
 	drainTicker := time.NewTicker(drainInterval)
 	defer drainTicker.Stop()
 
-	addSubscriber := func(sub *subscription[T]) {
-		reject := func(err error, result string) {
-			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, result).Inc()
-			close(sub.ch)
-			if sub.ack != nil {
-				sub.ack <- err
-			}
-		}
-		if sub.ctx != nil && sub.ctx.Err() != nil {
-			reject(sub.ctx.Err(), subscriptionResultCtxCanceled)
-			return
-		}
-		if sub.resume != nil {
-			floor, ok := b.evictedThrough[sub.resume.groupResource]
-			if !ok {
-				floor = b.initialCacheFloor
-			}
-			if sub.resume.since < floor {
-				reject(NewResourceVersionExpiredError(sub.resume.requestedRV), subscriptionResultExpired)
-				return
-			}
-		}
-		// send initial batch of cached items
-		if !b.cache.readInto(sub.ch) {
-			reject(io.ErrShortBuffer, subscriptionResultReplayFailed)
-			return
-		}
-		b.subs[sub.ch] = sub
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
-		b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
-		if sub.ack != nil {
-			sub.ack <- nil
-		}
-	}
-
 	for {
 		select {
 		case <-b.ctx.Done(): // service context cancelled
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			addSubscriber(sub)
+			b.addSubscriber(sub)
 
 		case recv := <-b.unsubscribe: // unsubscribe
 			// Drain pending subscribes so we don't miss one that was
@@ -401,7 +366,7 @@ func (b *broadcaster[T]) stream(input <-chan T, initialize cacheInitializer[T]) 
 			for drained := false; !drained; {
 				select {
 				case sub := <-b.subscribe:
-					addSubscriber(sub)
+					b.addSubscriber(sub)
 				default:
 					drained = true
 				}
@@ -473,6 +438,43 @@ func (b *broadcaster[T]) stream(input <-chan T, initialize cacheInitializer[T]) 
 				b.drainOverflow(sub)
 			}
 		}
+	}
+}
+
+// addSubscriber runs only on the stream goroutine so floor validation, replay,
+// and registration remain atomic with respect to cache eviction.
+func (b *broadcaster[T]) addSubscriber(sub *subscription[T]) {
+	reject := func(err error, result string) {
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, result).Inc()
+		close(sub.ch)
+		if sub.ack != nil {
+			sub.ack <- err
+		}
+	}
+	if sub.ctx != nil && sub.ctx.Err() != nil {
+		reject(sub.ctx.Err(), subscriptionResultCtxCanceled)
+		return
+	}
+	if sub.resume != nil {
+		floor, ok := b.evictedThrough[sub.resume.groupResource]
+		if !ok {
+			floor = b.initialCacheFloor
+		}
+		if sub.resume.since < floor {
+			reject(NewResourceVersionExpiredError(sub.resume.requestedRV), subscriptionResultExpired)
+			return
+		}
+	}
+	// send initial batch of cached items
+	if !b.cache.readInto(sub.ch) {
+		reject(io.ErrShortBuffer, subscriptionResultReplayFailed)
+		return
+	}
+	b.subs[sub.ch] = sub
+	b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
+	b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
+	if sub.ack != nil {
+		sub.ack <- nil
 	}
 }
 
