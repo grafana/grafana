@@ -1138,7 +1138,7 @@ func createEncryptedConfig(t *testing.T,
 ) string {
 	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -1188,7 +1188,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1219,7 +1219,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1245,7 +1245,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "new-receiver",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1276,7 +1276,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1301,7 +1301,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1332,7 +1332,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1350,7 +1350,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1386,7 +1386,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
@@ -1408,7 +1408,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1444,7 +1444,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1462,7 +1462,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1508,7 +1508,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
@@ -1530,7 +1530,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1576,7 +1576,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1601,7 +1601,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1637,7 +1637,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1663,7 +1663,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1699,7 +1699,64 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
+				}),
+			},
+		},
+		{
+			name:    "update inconsistent group in the database, algorithm fixes it",
+			initial: createInconsistentTestConfigWithReceivers(),
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "receiver-2",
+				Type: "opsgenie",
+			},
+			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expCreatedReceiver: false,
+			expCfg: v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
 				},
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+					{
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+					{
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "opsgenie",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				}),
 			},
 		},
 		{
@@ -1720,7 +1777,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1746,7 +1803,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "3",
@@ -1772,7 +1829,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1793,7 +1850,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 	}
@@ -1828,7 +1885,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1859,7 +1916,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 
@@ -1878,7 +1935,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1909,7 +1966,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 

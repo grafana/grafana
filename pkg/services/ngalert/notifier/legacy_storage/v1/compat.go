@@ -71,13 +71,14 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) []*PostableApiReceiver {
+func ReceiversToModel(in []*definition.PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
-	out := make([]*PostableApiReceiver, 0, len(in))
+	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, receiver := range in {
-		out = append(out, PostableApiReceiverToModel(receiver))
+		m := PostableApiReceiverToModel(receiver)
+		out[ReceiverUID(m.Name)] = *m
 	}
 	return out
 }
@@ -212,7 +213,7 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
 		AlertmanagerConfig: definition.PostableApiAlertingConfig{
 			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-			Receivers: ReceiversToDB(in.Receivers),
+			Receivers: ReceiversToDB(in.GetReceivers()),
 		},
 		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
