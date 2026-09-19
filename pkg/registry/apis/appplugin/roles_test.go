@@ -1,6 +1,7 @@
 package appplugin
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -126,8 +127,7 @@ func TestManifestRoleRegistrationsSkipsUnusable(t *testing.T) {
 	}
 }
 
-// Kinds that are never served, or that have no REST path, have no resource for
-// an action to name.
+// Kinds that are never served have no resource for an action to name.
 func TestManifestRoleRegistrationsWithoutResources(t *testing.T) {
 	require.Nil(t, manifestRoleRegistrations(testRoleGroup, "Example", nil),
 		"a plugin without a manifest serves only settings, which storage does not check")
@@ -138,11 +138,20 @@ func TestManifestRoleRegistrationsWithoutResources(t *testing.T) {
 	}
 	require.Empty(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
 
+	// An omitted plural still names a resource -- Resource() defaults it to the
+	// kind name plus "s" -- so the actions follow that name rather than vanish.
 	manifest = testManifest(t)
 	for i := range manifest.Versions {
 		for j := range manifest.Versions[i].Kinds {
 			manifest.Versions[i].Kinds[j].Plural = ""
 		}
 	}
-	require.Empty(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
+	roles := manifestRoleRegistrations(testRoleGroup, "Example", manifest)
+	require.NotEmpty(t, roles)
+	for _, reg := range roles {
+		for _, p := range reg.Role.Permissions {
+			require.True(t, strings.HasPrefix(p.Action, testRoleGroup+"/testkinds:"),
+				"action %q keys off the defaulted plural", p.Action)
+		}
+	}
 }

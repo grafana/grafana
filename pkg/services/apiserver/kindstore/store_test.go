@@ -375,12 +375,21 @@ func TestNew(t *testing.T) {
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
-	// The plural names the REST path; an empty one silently registers an
-	// unreachable resource, so New rejects it up front.
-	t.Run("a kind without a plural is an error", func(t *testing.T) {
+	// The plural names the REST path, and Resource() defaults it to the kind
+	// name plus "s", so omitting it is not an error -- the path is still there.
+	t.Run("a kind without a plural falls back to the kind name", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
-		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
-		require.ErrorContains(t, err, "missing a plural name")
+		s, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
+		require.NoError(t, err)
+		require.Equal(t, schema.GroupResource{Group: "example-app", Resource: "testkinds"},
+			s.DefaultQualifiedResource)
+	})
+
+	// The kind name is the one part with nothing to fall back to.
+	t.Run("a kind without a kind name is an error", func(t *testing.T) {
+		opts, _ := newStoreOpts(t, gvk)
+		_, err := New(gvk, app.ManifestVersionKind{}, admission, opts, nil)
+		require.ErrorContains(t, err, "missing a kind name")
 	})
 
 	t.Run("storage that cannot be completed is an error", func(t *testing.T) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -291,12 +290,9 @@ func registerStorageOptions(
 	registered := make(map[schema.GroupResource]struct{})
 	for _, v := range md.Versions {
 		for _, k := range v.Kinds {
-			if k.Plural == "" {
-				continue
-			}
 			gr := schema.GroupResource{
 				Group:    md.Group,
-				Resource: strings.ToLower(k.Plural),
+				Resource: k.Resource(),
 			}
 			if versionedProvider != nil {
 				gvr := gr.WithVersion(v.Name)

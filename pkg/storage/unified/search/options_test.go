@@ -44,7 +44,7 @@ func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
 			for _, manifest := range resource.AppManifests() {
 				for _, version := range manifest.Versions {
 					for _, kind := range version.Kinds {
-						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: resource.ManifestResourceName(kind)}
+						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: kind.Resource()}
 						config, ok := opts.EmbeddingConfig.For(gvr)
 						require.Equal(t, kind.Embed != nil, ok, "%s", gvr)
 						if kind.Embed != nil {

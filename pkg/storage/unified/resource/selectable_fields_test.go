@@ -150,6 +150,31 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 	require.Equal(t, expected, fields)
 }
 
+// A kind that omits the plural is still served under a resource name -- the
+// kind name plus "s" -- so its fields have to be keyed under that rather than
+// under an empty resource.
+func TestSelectableFieldsForManifestsWithoutPlural(t *testing.T) {
+	m := &app.ManifestData{
+		Group: "test.grafana.app",
+		Versions: []app.ManifestVersion{
+			{
+				Name: "v1",
+				Kinds: []app.ManifestVersionKind{
+					{
+						Kind:             "TestKind",
+						SelectableFields: []string{"spec.field1"},
+					},
+				},
+			},
+		},
+	}
+
+	require.Equal(t, map[LowerGroupResource][]string{
+		NewLowerGroupResource("test.grafana.app", "testkind"):  {"spec.field1"},
+		NewLowerGroupResource("test.grafana.app", "testkinds"): {"spec.field1"},
+	}, SelectableFieldsForManifests(m))
+}
+
 func TestSelectableFields(t *testing.T) {
 	// Ensures SelectableFields works with actual manifests
 	result := SelectableFields()
