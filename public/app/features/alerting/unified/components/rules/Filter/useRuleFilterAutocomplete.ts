@@ -16,9 +16,6 @@ type FetchExternalGroups = ReturnType<typeof prometheusApi.useLazyGetGroupsQuery
 
 // Module-scope utilities
 const collator = new Intl.Collator();
-function getExternalRuleDataSources() {
-  return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
-}
 
 // Cap on how many groups we fetch per source to keep the request fast. Note this limits
 // groups, not namespaces: many groups can share one namespace, so a busy source may yield
@@ -104,7 +101,7 @@ async function fetchExternalNamespaceNames(
 ): Promise<{ externalNamespaces: Map<string, Set<string>>; isLimitReached: boolean }> {
   // Map each namespace to the data source(s) it appears in, so options can show their origin.
   const externalNamespaces = new Map<string, Set<string>>();
-  const dataSources = getExternalRuleDataSources();
+  const dataSources = getRulesDataSources({ hasUrl: true });
   const calls = dataSources.map((ds) =>
     fetchExternalGroups({
       ruleSource: { uid: ds.uid },
