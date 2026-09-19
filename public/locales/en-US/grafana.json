@@ -4504,9 +4504,6 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
-    "create-new-button": {
-      "generate-dashboard": "Generate dashboard"
-    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -6936,21 +6933,6 @@
     "no-options": "No dashboards found",
     "placeholder": "Select dashboard",
     "unknown-dashboard": "Unknown dashboard ({{uid}})"
-  },
-  "dashboard-prompt": {
-    "datasource-entry": {
-      "generate-dashboard": "Generate dashboard"
-    },
-    "modal": {
-      "title": "What do you want to monitor?"
-    },
-    "prompt": {
-      "cancel": "Cancel",
-      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "input-label": "Describe the dashboard you want",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "submit": "Build it"
-    }
   },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
@@ -13016,7 +12998,6 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
