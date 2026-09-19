@@ -10,7 +10,7 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { FOOTER_TEST_ID } from './TextNGFooter';
-import { type Props, TextNGPanel } from './TextNGPanel';
+import { type Props, TextNGPanel, viewModeSessionCache } from './TextNGPanel';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
 import { createData, createProps, renderPanel } from './test-utils';
 
@@ -74,6 +74,7 @@ const setup = (props: Props = defaultProps, app?: CoreApp) => {
 describe('TextNGPanel', () => {
   beforeEach(() => {
     replaceVariablesMock.mockReset();
+    viewModeSessionCache.clear();
   });
 
   it('renders an empty content container when there is no content', () => {
@@ -272,6 +273,37 @@ describe('TextNGPanel', () => {
       expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
       expect(screen.getByRole('textbox')).toHaveValue('# Hello');
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+    });
+
+    describe('view mode', () => {
+      const switchToWrite = async (props: Props) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const { unmount } = renderPanel(props, CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('radio', { name: 'Write' }));
+        expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+        unmount();
+      };
+
+      // Table view swaps in a different VizPanel, which unmounts and remounts this
+      // component even though the user never actually left panel edit.
+      it('keeps the view mode across a remount that happens while still editing (e.g. table view)', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Write' })).toBeChecked();
+      });
+
+      it('resets to the split view once the panel is actually shown outside edit mode', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+        renderPanel(props, CoreApp.Dashboard).unmount();
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
     });
 
     it('merges a language change made in the editor into the existing code options', async () => {

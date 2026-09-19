@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useMemo, useState, type Ref } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
@@ -38,7 +38,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
-import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
+import { DEFAULT_VIEW_MODE, type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
@@ -46,12 +46,24 @@ import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFea
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
+export const viewModeSessionCache = new Map<string, ViewMode>();
+
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
-    props;
+  const {
+    id,
+    options,
+    onOptionsChange,
+    replaceVariables,
+    data,
+    renderCounter,
+    fitContent,
+    transparent,
+    height,
+    width,
+  } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
@@ -78,7 +90,20 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  const [view, setView] = useState<ViewMode>('split');
+  const viewModeSessionKey = `${id}`;
+  const [view, setViewState] = useState<ViewMode>(
+    () => viewModeSessionCache.get(viewModeSessionKey) ?? DEFAULT_VIEW_MODE
+  );
+  const setView = (next: ViewMode) => {
+    setViewState(next);
+    viewModeSessionCache.set(viewModeSessionKey, next);
+  };
+
+  useEffect(() => {
+    if (!isEditing) {
+      viewModeSessionCache.delete(viewModeSessionKey);
+    }
+  }, [isEditing, viewModeSessionKey]);
 
   const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
     usePagination({
