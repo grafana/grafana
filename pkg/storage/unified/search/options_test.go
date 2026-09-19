@@ -11,10 +11,52 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		search   bool
+		indexing bool
+	}{
+		{name: "search", search: true},
+		{name: "vector indexing without lexical search", indexing: true},
+		{name: "disabled"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = tc.search
+			cfg.VectorIndexingEnabled = tc.indexing
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			if opts.Backend != nil {
+				t.Cleanup(opts.Backend.(*bleveBackend).Stop)
+			}
+			if !tc.search && !tc.indexing {
+				require.Nil(t, opts.EmbeddingConfig)
+				return
+			}
+			require.NotNil(t, opts.EmbeddingConfig)
+			for _, manifest := range resource.AppManifests() {
+				for _, version := range manifest.Versions {
+					for _, kind := range version.Kinds {
+						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: resource.ManifestResourceName(kind)}
+						config, ok := opts.EmbeddingConfig.For(gvr)
+						require.Equal(t, kind.Embed != nil, ok, "%s", gvr)
+						if kind.Embed != nil {
+							require.Equal(t, kind.Embed.Fields, config.Fields)
+							require.Equal(t, manifest.Embed[gvr.Resource].ReembedVersion, config.ReembedVersion)
+						}
+					}
+				}
+			}
+		})
+	}
+}
 
 // Anchors what semver.NewVersion accepts for the strings we feed it from
 // cfg.BuildVersion / cfg.MinFileIndexBuildVersion (options.go) and from snapshot

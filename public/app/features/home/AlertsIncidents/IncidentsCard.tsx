@@ -12,7 +12,20 @@ import { ctaClicked } from '../analytics/main';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
+import { type TeamSelection, explicitTeam } from './teamFilter';
 import { type IncidentsData } from './useIncidents';
+
+/** Empty-state copy names the filtered team; the default and "All teams" scopes use the generic line. */
+function emptyMessage(selectedTeam: TeamSelection): string {
+  const team = explicitTeam(selectedTeam);
+  if (team) {
+    return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
+      team,
+      interpolation: { escapeValue: false },
+    });
+  }
+  return t('home.incidents-card.empty', 'No active incidents.');
+}
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
 export function IncidentsCard({
@@ -23,7 +36,7 @@ export function IncidentsCard({
   hideFooterActions?: boolean;
 }) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, loading, error, refetch } = data;
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, selectedTeam, loading, error, refetch } = data;
 
   return (
     <SummaryCard
@@ -38,7 +51,7 @@ export function IncidentsCard({
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
-      emptyMessage={t('home.incidents-card.empty', 'No active incidents.')}
+      emptyMessage={emptyMessage(selectedTeam)}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (

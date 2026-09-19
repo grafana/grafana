@@ -110,6 +110,7 @@ func newPermissionRegistry() *permissionRegistry {
 		accesscontrol.AlertingRoutesKind: accesscontrol.AlertingRoutesKind + ":uid:",
 		accesscontrol.AlertingAlertmanagerImportsKind: accesscontrol.AlertingAlertmanagerImportsKind + ":uid:",
 		accesscontrol.AlertingConfigResource:          accesscontrol.AlertingConfigResource + ":uid:",
+		accesscontrol.AlertingRulesConfigScopeRoot:    accesscontrol.AlertingRulesConfigScopeRoot + ":uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),
@@ -157,7 +158,7 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 		return nil
 	}
 
-	kind := strings.Split(scope, ":")[0]
+	kind, _, _ := strings.Cut(scope, ":")
 	scopePrefix, ok := pr.kindScopePrefix[kind]
 	if !ok {
 		pr.logger.Error("unknown kind: please update `kindScopePrefix` with the correct scope prefix", "kind", kind)
