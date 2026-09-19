@@ -7,6 +7,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import {
   type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
@@ -34,6 +35,11 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
 
 jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
   useProvisionedFolderFormData: jest.fn(),
+}));
+
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
 }));
 
 jest.mock('react-router-dom-v5-compat', () => {
@@ -110,8 +116,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
-  isOrphaned: false,
-  isError: false,
+  status: RepoViewStatus.Ready,
 };
 
 function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {

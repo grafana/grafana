@@ -12,15 +12,15 @@ import {
 } from 'app/features/provisioning/components/defaults';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import {
-  getFolderRepositoryArgs,
-  RepoViewStatus,
-  useGetResourceRepositoryView,
+  type RepositoryViewData,
+  type RepoViewStatus,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type BaseProvisionedFormData } from '../types/form';
 
 interface UseProvisionedFolderFormDataProps {
-  folderUid?: string;
+  /** Resolved by the caller, so each form states its own lookup policy at the call site */
+  view: RepositoryViewData;
   title?: string;
   branchPrefix?: string;
 }
@@ -34,12 +34,10 @@ export interface ProvisionedFolderFormDataResult {
   isLoading: boolean;
   /** True when loading has settled and no repository could be resolved. See useGetResourceRepositoryView. */
   isMissingRepo: boolean;
-  /** The folder is annotated with a repository that no longer exists. Also sets isMissingRepo, so
-   * pass it to ProvisionedFormGate, whose priority order shows the orphan notice instead */
-  isOrphaned: boolean;
-  /** The lookup failed outright, as opposed to settling on "no repository". Also sets isMissingRepo */
-  isError: boolean;
-  /** Only meaningful alongside isError */
+  /** Orphaned and Error also set isMissingRepo, so map them onto ProvisionedFormGate, whose priority
+   * order shows their own notices instead */
+  status: RepoViewStatus;
+  /** Only meaningful when status is Error */
   error?: unknown;
 }
 
@@ -47,13 +45,11 @@ export interface ProvisionedFolderFormDataResult {
  * Hook for managing provisioned folder form data (create/rename/delete).
  */
 export function useProvisionedFolderFormData({
-  folderUid,
+  view,
   title,
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
-  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo, status, error } = useGetResourceRepositoryView(
-    getFolderRepositoryArgs(folderUid)
-  );
+  const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo, status, error } = view;
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -86,8 +82,7 @@ export function useProvisionedFolderFormData({
     isReadOnlyRepo,
     isLoading: Boolean(isLoading),
     isMissingRepo,
-    isOrphaned: status === RepoViewStatus.Orphaned,
-    isError: status === RepoViewStatus.Error,
+    status,
     error,
   };
 }

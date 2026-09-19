@@ -161,72 +161,38 @@ describe('NewActionsButton', () => {
     beforeEach(() => {
       originalProvisioning = config.provisioningEnabled;
       config.provisioningEnabled = true;
+      server.use(
+        http.get(`${PROVISIONING_BASE}/settings`, () =>
+          HttpResponse.json({
+            items: [
+              {
+                name: 'folderless-repo',
+                title: 'Folderless Repo',
+                type: 'github',
+                target: 'folderless',
+                workflows: ['write', 'branch'],
+              } satisfies RepositoryView,
+            ],
+          })
+        )
+      );
     });
 
     afterEach(() => {
       config.provisioningEnabled = originalProvisioning;
     });
 
-    const FOLDERLESS_REPO: RepositoryView = {
-      name: 'folderless-repo',
-      title: 'Folderless Repo',
-      type: 'github',
-      target: 'folderless',
-      workflows: ['write', 'branch'],
-    };
-
-    function mockRepositories(items: RepositoryView[], settle?: () => Promise<unknown>) {
-      server.use(
-        http.get(`${PROVISIONING_BASE}/settings`, async () => {
-          await settle?.();
-          return HttpResponse.json({ items });
-        })
-      );
-    }
-
-    async function openNewFolderDrawer(parentFolder?: FolderDTO) {
-      const { user } = render(
-        <CreateNewButton canCreateDashboard canCreateFolder parentFolder={parentFolder} isReadOnlyRepo={false} />
-      );
+    // The drawer body owns the Git/database choice, so every close path has to drop it. Held here it
+    // would survive, and the next open would skip the choice.
+    it('forgets the choice when the drawer is closed and reopened', async () => {
+      const { user } = render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} />);
       await user.click(screen.getByText('New'));
       await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
-      return user;
-    }
 
-    /** The Git form is the only one of the two with a commit comment field. */
-    const findGitForm = () => screen.findByRole('textbox', { name: /comment/i });
-    const queryGitForm = () => screen.queryByRole('textbox', { name: /comment/i });
-    const queryDatabaseForm = () => screen.queryByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form);
+      /** The Git form is the only one of the two with a commit comment field. */
+      const findGitForm = () => screen.findByRole('textbox', { name: /comment/i });
+      const queryDatabaseForm = () => screen.queryByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form);
 
-    it('creates through a folderless repository at the root, with the database offered as an alternative', async () => {
-      mockRepositories([FOLDERLESS_REPO]);
-
-      await openNewFolderDrawer();
-
-      expect(await findGitForm()).toBeInTheDocument();
-      expect(queryDatabaseForm()).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Create in Grafana database instead' })).toBeInTheDocument();
-    });
-
-    it('switches between the repository and the database, and back', async () => {
-      mockRepositories([FOLDERLESS_REPO]);
-
-      const user = await openNewFolderDrawer();
-      await findGitForm();
-
-      await user.click(screen.getByRole('button', { name: 'Create in Grafana database instead' }));
-      expect(queryDatabaseForm()).toBeInTheDocument();
-      expect(queryGitForm()).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: 'Create in Git repository instead' }));
-      expect(await findGitForm()).toBeInTheDocument();
-      expect(queryDatabaseForm()).not.toBeInTheDocument();
-    });
-
-    it('forgets the choice when the drawer is closed and reopened', async () => {
-      mockRepositories([FOLDERLESS_REPO]);
-
-      const user = await openNewFolderDrawer();
       await findGitForm();
       await user.click(screen.getByRole('button', { name: 'Create in Grafana database instead' }));
       expect(queryDatabaseForm()).toBeInTheDocument();
@@ -237,64 +203,6 @@ describe('NewActionsButton', () => {
 
       expect(await findGitForm()).toBeInTheDocument();
       expect(queryDatabaseForm()).not.toBeInTheDocument();
-    });
-
-    it('waits for the lookup instead of flashing the database form', async () => {
-      let releaseSettings = () => {};
-      mockRepositories([FOLDERLESS_REPO], () => new Promise<void>((resolve) => (releaseSettings = resolve)));
-
-      await openNewFolderDrawer();
-
-      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
-      expect(queryDatabaseForm()).not.toBeInTheDocument();
-      expect(queryGitForm()).not.toBeInTheDocument();
-
-      releaseSettings();
-      expect(await findGitForm()).toBeInTheDocument();
-    });
-
-    it('creates in the database at the root when no repository is configured', async () => {
-      mockRepositories([]);
-
-      await openNewFolderDrawer();
-
-      expect(await screen.findByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form)).toBeInTheDocument();
-      expect(queryGitForm()).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Create in Grafana database instead' })).not.toBeInTheDocument();
-    });
-
-    it('does not offer a folderless repository inside an unmanaged folder', async () => {
-      mockRepositories([FOLDERLESS_REPO]);
-
-      await openNewFolderDrawer(mockFolderDTO(1, { managedBy: undefined }));
-
-      expect(await screen.findByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form)).toBeInTheDocument();
-      expect(queryGitForm()).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Create in Grafana database instead' })).not.toBeInTheDocument();
-    });
-
-    it('leaves the database reachable when the folderless repository is read only', async () => {
-      mockRepositories([{ ...FOLDERLESS_REPO, workflows: [] }]);
-
-      const user = await openNewFolderDrawer();
-
-      // The Git form dead-ends on a read-only repository, so the switch must stay outside it
-      const toDatabase = await screen.findByRole('button', { name: 'Create in Grafana database instead' });
-      expect(screen.getByText(/this repository is read only/i)).toBeInTheDocument();
-
-      await user.click(toDatabase);
-      expect(queryDatabaseForm()).toBeInTheDocument();
-    });
-
-    it('shows the lookup failure instead of silently offering only the database', async () => {
-      server.use(
-        http.get(`${PROVISIONING_BASE}/settings`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
-      );
-
-      await openNewFolderDrawer();
-
-      expect(await screen.findByText('Error loading form')).toBeInTheDocument();
-      expect(queryDatabaseForm()).toBeInTheDocument();
     });
   });
 

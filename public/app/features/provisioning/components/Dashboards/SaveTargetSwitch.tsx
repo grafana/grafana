@@ -8,11 +8,11 @@ export type SaveTargetResource = 'dashboard' | 'folder';
 interface Props {
   target: SaveTarget;
   onChange: (target: SaveTarget) => void;
-  /** Picks the copy. The dashboard save drawer is the original caller, so it stays the default */
-  resource?: SaveTargetResource;
+  /** Picks the copy */
+  resource: SaveTargetResource;
 }
 
-export function SaveTargetSwitch({ target, onChange, resource = 'dashboard' }: Props) {
+export function SaveTargetSwitch({ target, onChange, resource }: Props) {
   const next: SaveTarget = target === 'repository' ? 'database' : 'repository';
 
   // The dashboard keys keep their original namespace so their existing translations survive

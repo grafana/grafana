@@ -15,7 +15,8 @@ import { type FolderDTO } from 'app/types/folders';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
+import { type ProvisionedFolderFormDataResult } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
@@ -28,29 +29,21 @@ import { getProvisionedRequestError } from '../utils/errors';
 import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
 
-interface FormProps extends Props {
+interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
   folder?: Folder;
+  onDismiss?: () => void;
 }
-/** Entry point the create is reported from, so each surface stays visible in analytics */
-export type NewProvisionedFolderSource = 'new-folder-form' | 'browse-dashboards';
 
 interface Props {
-  parentFolder?: FolderDTO;
   onDismiss?: () => void;
-  source?: NewProvisionedFolderSource;
+  /** Looked up once by the caller, so this form and the caller always agree on the repository */
+  data: ProvisionedFolderFormDataResult;
 }
 
-function FormContent({
-  initialValues,
-  repository,
-  canPushToConfiguredBranch,
-  folder,
-  onDismiss,
-  source = 'new-folder-form',
-}: FormProps) {
+function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [, updateUrlParams] = useUrlParams();
@@ -94,16 +87,17 @@ function FormContent({
   // The same value doSave commits under, so the destination shown cannot drift from the destination used
   const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
   const repoLabel = repository?.title || repository?.name;
+  // Rendered as React text, which escapes it already; escaping here too would show "/" as "&#x2F;"
   const destination = basePath
     ? t(
         'browse-dashboards.new-provisioned-folder-form.text-destination-path',
         'Will be created in {{repository}} under {{path}}',
-        { repository: repoLabel, path: basePath }
+        { repository: repoLabel, path: basePath, interpolation: { escapeValue: false } }
       )
     : t(
         'browse-dashboards.new-provisioned-folder-form.text-destination-root',
         'Will be created at the root of {{repository}}',
-        { repository: repoLabel }
+        { repository: repoLabel, interpolation: { escapeValue: false } }
       );
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
@@ -197,7 +191,7 @@ function FormContent({
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
-      source,
+      source: 'new-folder-form',
     });
 
     try {
@@ -302,7 +296,7 @@ function FormContent({
   );
 }
 
-export function NewProvisionedFolderForm({ parentFolder, onDismiss, source }: Props) {
+export function NewProvisionedFolderForm({ onDismiss, data }: Props) {
   const {
     canPushToConfiguredBranch,
     repository,
@@ -311,21 +305,17 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss, source }: Pr
     isReadOnlyRepo,
     isMissingRepo,
     isLoading,
-    isOrphaned,
-    isError,
+    status,
     error,
-  } = useProvisionedFolderFormData({
-    folderUid: parentFolder?.uid,
-    title: '', // Empty title for new folders
-  });
+  } = data;
 
   return (
     <ProvisionedFormGate
       isLoading={isLoading}
       // A deleted or unreachable repository is a dead end of its own, not the same as a location
       // that was never provisioned, so each gets its own notice rather than the generic banner
-      isOrphaned={isOrphaned}
-      isError={isError}
+      isOrphaned={status === RepoViewStatus.Orphaned}
+      isError={status === RepoViewStatus.Error}
       error={error}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
@@ -336,9 +326,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss, source }: Pr
     >
       {initialValues && (
         <FormContent
-          parentFolder={parentFolder}
           onDismiss={onDismiss}
-          source={source}
           initialValues={initialValues}
           repository={repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}

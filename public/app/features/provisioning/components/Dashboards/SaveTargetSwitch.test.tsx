@@ -16,8 +16,8 @@ describe('SaveTargetSwitch', () => {
 
   // The button offers the target the user is not on, so the label names the destination, not the state
   it.each([
-    { resource: undefined, target: 'repository' as const, label: 'Save to Grafana database instead' },
-    { resource: undefined, target: 'database' as const, label: 'Save to Git repository instead' },
+    { resource: 'dashboard' as const, target: 'repository' as const, label: 'Save to Grafana database instead' },
+    { resource: 'dashboard' as const, target: 'database' as const, label: 'Save to Git repository instead' },
     { resource: 'folder' as const, target: 'repository' as const, label: 'Create in Grafana database instead' },
     { resource: 'folder' as const, target: 'database' as const, label: 'Create in Git repository instead' },
   ])('offers "$label" for a $resource on $target', ({ resource, target, label }) => {
@@ -44,7 +44,7 @@ describe('SaveTargetSwitch', () => {
       target: 'database',
     });
 
-    rerender(<SaveTargetSwitch target="database" onChange={jest.fn()} />);
+    rerender(<SaveTargetSwitch resource="dashboard" target="database" onChange={jest.fn()} />);
     await user.click(screen.getByRole('button'));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_provisioning_save_target_changed', {

@@ -10,6 +10,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import {
   type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
@@ -51,6 +52,11 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 }));
 
 jest.mock('../../hooks/useProvisionedFolderFormData');
+
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
+}));
 
 jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
   AffectedFolderContents: jest.fn(({ defaultMessage }) => (
@@ -151,8 +157,7 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   isMissingRepo: false,
   canPushToConfiguredBranch: true,
   isLoading: false,
-  isOrphaned: false,
-  isError: false,
+  status: RepoViewStatus.Ready,
 };
 
 function setup(

@@ -4588,7 +4588,6 @@
       "error-missing-title-or-repo": "Missing folder name or repository information",
       "error-required": "Folder name is required",
       "error-saving": "An error occurred while creating folder.",
-      "error-surrounding-space": "Folder name cannot start or end with a space.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-destination-path": "Will be created in {{repository}} under {{path}}",

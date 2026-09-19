@@ -18,6 +18,7 @@ import { type FolderDTO } from 'app/types/folders';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -246,9 +247,10 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
+  const view = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
   const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
     useProvisionedFolderFormData({
-      folderUid: parentFolder?.uid,
+      view,
       title: parentFolder?.title,
     });
 
