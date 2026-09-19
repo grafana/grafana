@@ -8695,6 +8695,10 @@
       "aria-label-links": "Links",
       "links": "Links"
     },
+    "error-container": {
+      "query-error": "Query error",
+      "unknown-error": "Unknown error"
+    },
     "explore": {
       "title-flame-graph": "Flame graph",
       "title-graph": "Graph",
@@ -8903,6 +8907,9 @@
       "sort-descending": "Sort descending",
       "values-error": "Failed to load values"
     },
+    "my-comp": {
+      "title": "My Component Title"
+    },
     "next-prev-result": {
       "aria-label-next": "Next result button",
       "aria-label-prev": "Prev result button",
@@ -8911,14 +8918,14 @@
       "services": "Services: {{services}}",
       "services-span-filter-matches": "Services: {{total}}/{{services}}"
     },
+    "no-data": {
+      "message": "No data"
+    },
     "no-data-source-call-to-action": {
-      "cta-element": {
-        "add-data-source": "Add data source"
-      },
-      "footer": {
-        "learn-more": "Learn more",
-        "pro-tip-define-sources-through-configuration-files": " ProTip: You can also define data sources through configuration files. "
-      }
+      "add-data-source": "Add data source",
+      "learn-more": "Learn more",
+      "message": "Explore requires at least one data source. Once you have added a data source, you can query it here.",
+      "pro-tip": " ProTip: You can also define data sources through configuration files. "
     },
     "pane": {
       "loading-placeholder": "Loading..."
@@ -9171,6 +9178,19 @@
       "no-data": "0 series returned",
       "title": "Table",
       "title-with-name": "Table - {{name}}"
+    },
+    "test": {
+      "empty-string": "",
+      "interpolated-message": "Showing {{total}} results for {{query}}",
+      "label": "Option Label",
+      "query-count_one": "{{count}} query running",
+      "query-count_other": "{{count}} queries running",
+      "simple-message": "Explore Default Text",
+      "special-chars": "<Notice>: \"Query & Analysis\" -> 100% 'valid' {json: true}",
+      "title": "Static Title",
+      "trans-interp": "Running in pane: {{pane}}",
+      "trans-message": "No data available",
+      "trans-nested": "Click <1>here</1> to refresh"
     },
     "time-sync-button": {
       "aria-label-synced": "Synced times",
