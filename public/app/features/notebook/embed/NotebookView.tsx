@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { useFlagDashboardNotebooks, usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -125,7 +125,29 @@ function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
   return <NotebookDocument scene={scene} onTitleChange={onTitleChange} />;
 }
 
-function DraftNotebookView({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
+/**
+ * Split from the build below so that build stays a one-shot: the inner component mounts once, with
+ * the panel metas its synchronous transform needs already in hand.
+ */
+function DraftNotebookView(props: DraftNotebookViewProps) {
+  const { value: panelMetas, error } = usePanelPluginMetasMap();
+
+  if (error) {
+    return <NotebookViewError error={{ message: error.message }} />;
+  }
+
+  if (!panelMetas) {
+    return (
+      <Centered>
+        <PageLoader />
+      </Centered>
+    );
+  }
+
+  return <DraftNotebookDocument {...props} />;
+}
+
+function DraftNotebookDocument({ spec, onChange, onDirtyChange, onTitleChange }: DraftNotebookViewProps) {
   /**
    * Built once, from the first spec. The prop is the document's starting point, not a live mirror of
    * it: rebuilding whenever the host echoed an edited spec back would throw away the caret, the undo
