@@ -1,12 +1,14 @@
 import { HttpResponse, http } from 'msw';
+import * as React from 'react';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
+import { type CodeEditor } from '@grafana/ui';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions } from '../../mocks';
+import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   setupAutoSyncConfig,
@@ -14,6 +16,7 @@ import {
   setupAutoSyncConfigWriteError,
   setupStatefulAutoSyncConfig,
 } from '../../mocks/server/handlers/k8s/config.k8s';
+import { setupDataSources } from '../../testSetup/datasources';
 
 import { ImportWizardGate } from './ImportToGMA';
 
@@ -24,15 +27,24 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
+// Monaco doesn't render usable content in jsdom — stub it with a plain textarea (same pattern as
+// Templates.test.tsx) so the redacted preview content can be asserted on directly.
+type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: ({ value }: CodeEditorProps) => <textarea data-testid="code-editor" value={value} readOnly />,
+}));
+
 // Selects which fixture the mocked Step1Content below seeds. Prefixed `mock` per Jest's rule for
 // variables referenced from inside a jest.mock factory. Each describe block resets it in its own setup.
-let mockScenario: 'yaml' | 'auto-sync' = 'yaml';
+let mockScenario: 'yaml' | 'auto-sync' | 'datasource' | 'schema-derived-secrets' = 'yaml';
 
-// Seeds either a valid YAML notifications source (config + policy tree name + template files, dry-run
-// triggered) or an Auto-sync-checked data source (dry-run never runs for that path). Next is gated on a
-// passing dry-run for the YAML fixture, so the policy tree name and the onTriggerDryRun call are both
-// required for the wizard to advance there. The real step body pulls in network-backed pickers we don't
-// need — the assertion target is handleConfirmImport's behavior, not the step UI.
+// Seeds one of three notifications sources: YAML upload, a plain external datasource, or an
+// Auto-sync-checked datasource. Next is gated on a passing dry-run except under Auto-sync (which
+// skips it entirely), so both the YAML and plain-datasource branches set a policy tree name and
+// call onTriggerDryRun — without a policy tree name the real handler no-ops and Next never
+// enables. The real step body pulls in network-backed pickers we don't need — the assertion
+// target is handleConfirmImport's behavior, not the step UI.
 jest.mock('./steps/Step1AlertmanagerResources', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
@@ -47,13 +59,48 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
           setValue('autoSyncNotificationsEnabled', true);
           return;
         }
+        if (mockScenario === 'datasource') {
+          setValue('policyTreeName', 'prometheus-prod');
+          setValue('notificationsSource', 'datasource');
+          setValue('notificationsDatasourceUID', 'mimir-uid');
+          setValue('notificationsDatasourceName', 'Mimir Alertmanager');
+          queueMicrotask(() => onTriggerDryRun?.());
+          return;
+        }
+        if (mockScenario === 'schema-derived-secrets') {
+          setValue('notificationsSource', 'yaml');
+          setValue('policyTreeName', 'prometheus-prod');
+          // YAML with Slack receiver: api_url is schema-marked secure but uses low-entropy value
+          // (won't trigger entropy heuristic), so redaction depends solely on schema wiring.
+          // channel is not in the schema-derived secrets map and won't be redacted.
+          setValue(
+            'notificationsYamlFile',
+            new File(
+              [
+                'route:\n  receiver: slack-receiver\nreceivers:\n  - name: slack-receiver\n    slack_configs:\n      - api_url: https://example.slack.com/webhook\n        channel: "#alerts"\nglobal:\n  resolve_timeout: 5m\n',
+              ],
+              'alertmanager.yaml',
+              { type: 'application/yaml' }
+            )
+          );
+          setValue('notificationsTemplateFiles', [
+            new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
+            new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
+          ]);
+          queueMicrotask(() => onTriggerDryRun?.());
+          return;
+        }
         setValue('notificationsSource', 'yaml');
         setValue('policyTreeName', 'prometheus-prod');
         setValue(
           'notificationsYamlFile',
-          new File(['route:\n  receiver: default\nreceivers:\n  - name: default\n'], 'alertmanager.yaml', {
-            type: 'application/yaml',
-          })
+          new File(
+            [
+              'route:\n  receiver: default\nreceivers:\n  - name: default\nglobal:\n  smtp_auth_password: hunter2wayTooSimpleButStillAKey123\n',
+            ],
+            'alertmanager.yaml',
+            { type: 'application/yaml' }
+          )
         );
         setValue('notificationsTemplateFiles', [
           new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
@@ -271,6 +318,216 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
 
     await user.click(await screen.findByRole('button', { name: /preview alert rules/i }));
     expect(await screen.findByRole('dialog', { name: /alert rules preview/i })).toBeInTheDocument();
+  });
+
+  it('does not render a secret from the uploaded YAML in the notifications preview', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      {
+        timeout: 3000,
+      }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
+    expect(editor.value).toContain('receiver: default');
+  });
+});
+
+describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
+  beforeEach(() => {
+    mockScenario = 'datasource';
+    setupDataSources(mockDataSource({ uid: 'mimir-uid', name: 'Mimir Alertmanager', type: 'alertmanager' }));
+  });
+
+  afterEach(() => {
+    mockScenario = 'yaml';
+    setupDataSources();
+  });
+
+  it('does not render a secret fetched from an external Alertmanager in the notifications preview', async () => {
+    server.use(
+      http.get('/api/alertmanager/mimir-uid/config/api/v1/alerts', () =>
+        HttpResponse.json({
+          template_files: {},
+          alertmanager_config: {
+            route: { receiver: 'default' },
+            receivers: [
+              { name: 'default', pagerduty_configs: [{ routing_key: 'hunter2wayTooSimpleButStillAKey123' }] },
+            ],
+          },
+        })
+      )
+    );
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      {
+        timeout: 3000,
+      }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
+    expect(editor.value).toContain('"receiver": "default"');
+  });
+});
+
+describe('ImportToGMA wizard — preview redaction with schema-derived secrets', () => {
+  /**
+   * Drives the wizard from the notifications step through to the Review step, without opening any
+   * preview or confirm modal — leaves that to the caller.
+   */
+  async function navigateToReview(user: ReturnType<typeof render>['user']) {
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+  }
+
+  it('disables the Preview buttons while schemas are loading', async () => {
+    // Delay the schema response indefinitely (override the legacy endpoint)
+    server.use(
+      http.get('/api/alert-notifiers', () => new Promise(() => {})) // Never resolves
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReview(user);
+
+    // Schemas are stuck loading; Preview buttons should be disabled
+    const previewButtons = screen.getAllByRole('button', { name: /preview/i });
+    expect(previewButtons).toHaveLength(1); // Only notifications card shows Preview
+    expect(previewButtons[0]).toBeDisabled();
+  });
+
+  it('shows redaction error message and does not fetch any content when schema fetch fails', async () => {
+    // Override the legacy API endpoint to return an error (since the feature flag is not enabled by default)
+    server.use(http.get('/api/alert-notifiers', () => HttpResponse.json({ error: 'Server error' }, { status: 500 })));
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReview(user);
+
+    // Open the preview
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    // Should show the redaction error, not raw content
+    expect(editor.value).toContain('This configuration could not be safely previewed');
+    expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
+  });
+
+  it('redacts schema-derived secrets from preview', async () => {
+    // Override the legacy endpoint to return schema data with versions and secure fields.
+    // This replaces the default mock which has no versions field (only top-level options).
+    // By verifying that redaction works with schema-derived data, this test proves the hook
+    // wiring and secretFieldMap are functional.
+    server.use(
+      http.get('/api/alert-notifiers', () => {
+        return HttpResponse.json([
+          {
+            type: 'slack',
+            name: 'Slack',
+            heading: 'Slack',
+            description: 'Send alerts to Slack',
+            info: '',
+            currentVersion: 'v0mimir1',
+            deprecated: false,
+            // versions is the key difference - it makes buildSecretFieldMap derive the secret map
+            versions: [
+              {
+                version: 'v0mimir1',
+                label: 'v0mimir1',
+                description: '',
+                canCreate: true,
+                deprecated: false,
+                options: [
+                  {
+                    propertyName: 'api_url',
+                    label: 'Webhook URL',
+                    description: 'Slack webhook URL',
+                    element: 'input',
+                    inputType: 'password',
+                    required: true,
+                    secure: true,
+                    protected: false,
+                    selectOptions: null,
+                    showWhen: { field: '', is: '' },
+                    validationRule: '',
+                  },
+                  {
+                    propertyName: 'channel',
+                    label: 'Channel',
+                    description: 'Slack channel',
+                    element: 'input',
+                    inputType: 'text',
+                    required: false,
+                    secure: false,
+                    protected: false,
+                    selectOptions: null,
+                    showWhen: { field: '', is: '' },
+                    validationRule: '',
+                  },
+                ],
+              },
+            ],
+          },
+        ]);
+      })
+    );
+
+    mockScenario = 'schema-derived-secrets';
+
+    const { user } = render(<ImportWizardGate />);
+
+    try {
+      await navigateToReview(user);
+      await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+      const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+      // The schema marks api_url as secure. It should be redacted even though the value
+      // (https://example.slack.com/webhook) is low-entropy and wouldn't match the entropy heuristic.
+      // This proves the redaction came from the schema-derived secretFieldMap, not the heuristic.
+      expect(editor.value).not.toContain('https://example.slack.com/webhook');
+      expect(editor.value).toContain('<redacted>');
+      // channel is not marked secure in the schema and does not match the entropy heuristic,
+      // so it must NOT be redacted. This proves we're not blanket-redacting.
+      expect(editor.value).toContain('#alerts');
+    } finally {
+      mockScenario = 'yaml';
+    }
   });
 });
 
