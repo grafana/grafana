@@ -77,8 +77,11 @@ func TestIntegrationProvisioning_PullRequestJobRejected(t *testing.T) {
 			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to create pull request job")
-		// Viewer is blocked at the API authorization layer (403) before reaching the connector
-		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
-		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
+		// Job creation is no longer gated on a role check before the connector runs
+		// (see authorizeRepositorySubresource), so a Viewer now hits the same
+		// unconditional "pull request jobs cannot be created via the API" rejection
+		// as every other role, rather than being blocked earlier with 403.
+		require.Equal(t, http.StatusBadRequest, statusCode, "should return 400 Bad Request")
+		require.True(t, apierrors.IsBadRequest(result.Error()), "error should be bad request")
 	})
 }
