@@ -402,3 +402,48 @@ func newLoggerScenario(t testing.TB, resetCtxLogProviders ...bool) *scenarioCont
 	root = newManager(l)
 	return scenario
 }
+func TestNewSlogLoggerAppliesLogFilters(t *testing.T) {
+	_ = newLoggerScenario(t, false)
+
+	loggedArgs := [][]any{}
+	capture := gokitlog.LoggerFunc(func(i ...any) error {
+		loggedArgs = append(loggedArgs, i)
+		return nil
+	})
+
+	// Simulate a configured [log] setup with per-logger filters: the
+	// provisioning operator controllers are filtered down to errors while
+	// loggers without an explicit filter keep the default (info) level.
+	root.initialize([]logWithFilters{
+		{
+			val:      capture,
+			maxLevel: level.AllowInfo(),
+			filters: map[string]level.Option{
+				"provisioning-connection-controller": level.AllowError(),
+			},
+		},
+	}, "info")
+
+	filteredLogger := NewSlogLogger("provisioning-connection-controller")
+	filteredLogger.Info("this should be filtered out")
+	filteredLogger.Error("this should pass")
+
+	defaultLogger := NewSlogLogger("another-logger")
+	defaultLogger.Info("this should keep the default level")
+
+	messages := make([]string, 0, len(loggedArgs))
+	for _, args := range loggedArgs {
+		for i := 0; i+1 < len(args); i += 2 {
+			if args[i] == "msg" {
+				if msg, ok := args[i+1].(string); ok {
+					messages = append(messages, msg)
+				}
+			}
+		}
+	}
+
+	require.Equal(t, []string{
+		"this should pass",
+		"this should keep the default level",
+	}, messages)
+}

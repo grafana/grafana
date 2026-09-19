@@ -3,8 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -12,6 +10,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -21,10 +20,9 @@ import (
 )
 
 func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-repo-controller")
+	logger := log.NewSlogLogger("provisioning-repository-controller")
 	logger.Info("Starting provisioning repo controller")
+	ctx = logging.Context(ctx, logger)
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {

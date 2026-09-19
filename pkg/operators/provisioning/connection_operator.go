@@ -3,14 +3,13 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -19,10 +18,9 @@ import (
 
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) error {
-	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})).With("logger", "provisioning-connection-controller")
+	logger := log.NewSlogLogger("provisioning-connection-controller")
 	logger.Info("Starting provisioning connection controller")
+	ctx = logging.Context(ctx, logger)
 
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
