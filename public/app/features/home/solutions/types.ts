@@ -1,3 +1,5 @@
+import { type ComponentType } from 'react';
+
 import { type DataSourceInstanceListItem, type IconName } from '@grafana/data';
 
 import { type SolutionSparklineData } from './SolutionSparkline';
@@ -38,6 +40,8 @@ interface SolutionIdentity {
   id: SolutionId;
   title: string;
   icon: IconName;
+  /** Per-user customization control requiring a resolved datasource. */
+  customize?: ComponentType<{ datasource: DataSourceInstanceListItem }>;
 }
 
 export interface SolutionOffer {

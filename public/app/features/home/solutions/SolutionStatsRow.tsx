@@ -30,11 +30,14 @@ export function SolutionStatsRow({
   sparklineTestId,
 }: SolutionStatsRowProps) {
   const styles = useStyles2(getStyles);
-  // Refinement is optional; only the base stats control the loading state.
+  // useAsync retains the previous value while re-resolving (the fact fns change identity when a
+  // solution rebuilds, e.g. after a Kubernetes filter save); a pending fact reads as null so the
+  // old scope's numbers never render. Refinement is optional: pending, it yields to the base.
   const { value: base = null, loading: statsPending } = useAsync(stats, [stats]);
-  const { value: refined = null } = useAsync(refinedStats, [refinedStats]);
-  const resolvedStats = refined ?? base;
-  const { value: trend = null, loading: sparklinePending } = useAsync(sparkline, [sparkline]);
+  const { value: refined = null, loading: refinedPending } = useAsync(refinedStats, [refinedStats]);
+  const resolvedStats = statsPending ? null : ((refinedPending ? null : refined) ?? base);
+  const { value: retainedTrend = null, loading: sparklinePending } = useAsync(sparkline, [sparkline]);
+  const trend = sparklinePending ? null : retainedTrend;
 
   const showStats = statsPending || resolvedStats !== null;
   const showSparkline = sparklinePending || trend !== null;

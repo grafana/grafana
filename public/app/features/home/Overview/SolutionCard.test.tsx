@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { ctaClicked } from '../analytics/main';
-import { stubSolution } from '../solutions/test-utils';
+import { stubDatasource, stubSolution } from '../solutions/test-utils';
 import { type SolutionOffer } from '../solutions/types';
 
 import { AvailableSolutionCard, SolutionCard } from './SolutionCard';
@@ -175,5 +177,34 @@ describe('AvailableSolutionCard', () => {
     const link = screen.getByRole('link', { name: 'Browse connections' });
     expect(link).toHaveTextContent('Browse connections');
     expect(link).not.toHaveAttribute('target');
+  });
+});
+
+describe('SolutionCard customize control', () => {
+  // Shows the resolved datasource and the one it mounted for; a retained instance would keep reporting the first.
+  const Customize = ({ datasource }: { datasource: DataSourceInstanceListItem }) => {
+    const [mountedFor] = useState(datasource.uid);
+    return (
+      <button type="button">
+        Customize {datasource.name} (mounted for {mountedFor})
+      </button>
+    );
+  };
+  const card = (datasource: DataSourceInstanceListItem) => (
+    <SolutionCard
+      solution={stubSolution('kubernetes', { datasource: async () => datasource, customize: Customize })}
+      needsAttention={false}
+    />
+  );
+
+  it('renders the control with the resolved datasource and remounts it when that datasource changes', async () => {
+    const { rerender } = render(card(stubDatasource));
+    expect(
+      await screen.findByRole('button', { name: 'Customize Prometheus (mounted for prometheus)' })
+    ).toBeInTheDocument();
+
+    rerender(card({ ...stubDatasource, uid: 'other-uid', name: 'Other' }));
+
+    expect(await screen.findByRole('button', { name: 'Customize Other (mounted for other-uid)' })).toBeInTheDocument();
   });
 });

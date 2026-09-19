@@ -78,6 +78,18 @@ describe('kubernetesSolution', () => {
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
   });
 
+  it('reads the datasource from a supplied detector instead of detecting on its own', async () => {
+    const detect = jest.fn(async () => ({ status: 'active' as const, datasource }));
+    const solution = kubernetesSolution(null, detect);
+
+    await expect(solution.signal()).resolves.toBe('active');
+    await solution.stats();
+
+    expect(mockResolveDatasource).not.toHaveBeenCalled();
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
+    expect(detect).toHaveBeenCalled();
+  });
+
   it('reports inactive with no datasource after a definitive empty result', async () => {
     mockResolveDatasource.mockResolvedValue(null);
     const solution = kubernetesSolution();
@@ -120,11 +132,11 @@ describe('kubernetesSolution', () => {
 
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
     expect(mockFetchInventory).toHaveBeenCalledTimes(1);
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, expect.anything());
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, expect.anything());
     expect(mockFetchCpu).toHaveBeenCalledTimes(1);
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, expect.anything());
   });
 });
 
@@ -149,7 +161,6 @@ describe('kubernetesSolution alert', () => {
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
   });
 
   it('leads with the first health row when nothing is firing', async () => {
@@ -168,24 +179,60 @@ describe('kubernetesSolution stats and sparkline', () => {
       primary: '2 clusters',
       secondary: '24 pods',
     });
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
   });
 
-  it('omits empty inventory', async () => {
+  it('shows zero inventory for an empty scope', async () => {
     mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
 
-    await expect(kubernetesSolution().stats()).resolves.toBeNull();
+    await expect(kubernetesSolution().stats()).resolves.toEqual({
+      primary: '0 clusters',
+      secondary: '0 pods',
+    });
   });
 
-  it('returns the CPU trend with its 24-hour caption', async () => {
+  it('scopes every fact to a selection saved for the resolved datasource', async () => {
+    const values = { cluster: 'prod', namespaces: ['team-a'] };
+    const solution = kubernetesSolution({ datasourceUid: 'k8s-uid', values });
+
+    await solution.stats();
+    await solution.needsAttention();
+    await solution.sparkline();
+
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, values);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, values);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, values);
+  });
+
+  it('runs unscoped when the selection was saved for another datasource', async () => {
+    const solution = kubernetesSolution({ datasourceUid: 'other-uid', values: { cluster: 'prod', nodes: ['node-1'] } });
+
+    await solution.stats();
+    await solution.needsAttention();
+    await solution.sparkline();
+
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, {});
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, {});
+  });
+
+  it.each([
+    { desc: 'no selection', selection: null, caption: 'Cluster CPU · last 24h' },
+    {
+      desc: 'a namespace filter',
+      selection: { datasourceUid: 'k8s-uid', values: { namespaces: ['team-a'] } },
+      caption: 'Namespace CPU · last 24h',
+    },
+    // Nodes are the narrower scope, so they win the caption when both filters are set.
+    {
+      desc: 'namespace and node filters',
+      selection: { datasourceUid: 'k8s-uid', values: { namespaces: ['team-a'], nodes: ['node-1'] } },
+      caption: 'Node CPU · last 24h',
+    },
+  ])('captions the CPU trend for $desc', async ({ selection, caption }) => {
     const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
     mockFetchCpu.mockResolvedValue(series);
 
-    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
-      series,
-      caption: 'Cluster CPU · last 24h',
-    });
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    await expect(kubernetesSolution(selection).sparkline()).resolves.toEqual({ series, caption });
   });
 
   it('omits the sparkline when the CPU metric is unavailable', async () => {

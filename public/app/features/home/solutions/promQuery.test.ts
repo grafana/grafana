@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { createQueryRunner } from '@grafana/runtime';
 
-import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import { readLabelValues, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -90,6 +90,32 @@ describe('readSeries', () => {
 
   it('returns null when no frame matches the refId', () => {
     expect(readSeries([seriesFrame('other', [0, 1000], [1, 2])], 'cpu')).toBeNull();
+  });
+});
+
+describe('readLabelValues', () => {
+  function labeledFrame(refId: string, label: string, ...values: string[]): DataFrame {
+    return createDataFrame({
+      refId,
+      fields: values.map((value) => ({
+        name: 'Value',
+        type: FieldType.number,
+        values: [1],
+        labels: { [label]: value },
+      })),
+    });
+  }
+
+  it('collects sorted distinct values of the label across frames and fields of the refId', () => {
+    const frames = [
+      labeledFrame('ns', 'namespace', 'team-b'),
+      labeledFrame('ns', 'namespace', 'team-a', 'default', 'team-a'),
+      labeledFrame('other', 'namespace', 'ignored'),
+      labeledFrame('ns', 'cluster', 'prod'),
+    ];
+
+    expect(readLabelValues(frames, 'ns', 'namespace')).toEqual(['default', 'team-a', 'team-b']);
+    expect(readLabelValues([], 'ns', 'namespace')).toEqual([]);
   });
 });
 

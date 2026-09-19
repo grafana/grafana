@@ -2,14 +2,15 @@ import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
 import { SOLUTION_IDS } from './solutions/constants';
-import { kubernetesSolution } from './solutions/kubernetesSolution';
+import { useKubernetesFilterSelection } from './solutions/kubernetesFilters';
+import { kubernetesSignal, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
 import { detectSignal, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
-import { type Solution } from './solutions/types';
+import { type Solution, type SolutionId } from './solutions/types';
 
 export interface HomepageSolutions {
   solutions: Solution[];
@@ -18,14 +19,13 @@ export interface HomepageSolutions {
 }
 
 /**
- * Builds one stable solution set for both homepage sections. Construction starts no queries, and
- * stable object identity keeps their async effects from restarting.
+ * Builds one solution set for both homepage sections. Construction starts no queries, and stable
+ * object identity keeps their async effects from restarting — only the Kubernetes solution is
+ * rebuilt when its persisted filter selection changes, so just that card refetches.
  */
 export function useHomepageSolutions(): HomepageSolutions {
-  return useMemo(() => {
-    // The Record makes a missing solution a type error.
-    const byId: Record<Solution['id'], Solution> = {
-      kubernetes: kubernetesSolution(),
+  const stable = useMemo(() => {
+    const byId = {
       traces: tracesSolution(),
       metrics: metricsSolution(),
       logs: logsSolution(),
@@ -34,25 +34,38 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
     const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
-
+    // One Kubernetes detection for the card and the recommendations snapshot: both read the same
+    // datasource for this visit, however often the card rebuilds and whenever the probe cache expires.
+    const kubernetesDetection = memoize(kubernetesSignal);
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics] = await Promise.all([
+      const [metrics, logs, traces, kubernetesStatus, spanMetrics, synthetics] = await Promise.all([
         byId.metrics.signal().catch(() => 'unknown' as const),
         byId.logs.signal().catch(() => 'unknown' as const),
         byId.traces.signal().catch(() => 'unknown' as const),
-        byId.kubernetes.signal().catch(() => 'unknown' as const),
+        kubernetesDetection()
+          .then(({ status }) => status)
+          .catch(() => 'unknown' as const),
         spanMetricsSignal()
           .then(({ status }) => status)
           .catch(() => 'unknown' as const),
         byId.synthetics.signal().catch(() => 'unknown' as const),
       ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
+      return { metrics, logs, traces, kubernetes: kubernetesStatus, spanMetrics, synthetics };
     };
 
-    return {
-      solutions: SOLUTION_IDS.map((id) => byId[id]),
-      signals,
-    };
+    return { byId, signals, kubernetesDetection };
   }, []);
+
+  const [kubernetesSelection] = useKubernetesFilterSelection();
+  const kubernetes = useMemo(
+    () => kubernetesSolution(kubernetesSelection, stable.kubernetesDetection),
+    [kubernetesSelection, stable]
+  );
+
+  return useMemo(() => {
+    // The Record makes a missing solution a type error.
+    const byId: Record<SolutionId, Solution> = { ...stable.byId, kubernetes };
+    return { solutions: SOLUTION_IDS.map((id) => byId[id]), signals: stable.signals };
+  }, [kubernetes, stable]);
 }

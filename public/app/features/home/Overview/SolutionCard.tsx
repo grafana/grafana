@@ -17,12 +17,16 @@ interface SolutionCardProps {
 }
 
 export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
-  const { value: alert = null } = useAsync(
+  // useAsync retains the previous value while a rebuilt solution re-resolves; the old scope's
+  // alert text must not sit under the retained attention styling.
+  const { value: retainedAlert = null, loading: alertLoading } = useAsync(
     async () => (needsAttention ? solution.alert() : null),
     [needsAttention, solution]
   );
+  const alert = alertLoading ? null : retainedAlert;
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
   const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
+  const Customize = solution.customize;
   const styles = useStyles2(getStyles, needsAttention);
   const isAttentionCta = cta?.action === 'view_alerts';
   const status = needsAttention
@@ -31,12 +35,12 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
   return (
     <Card noMargin className={styles.card}>
-      <Card.Heading className={styles.heading}>
+      <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
-          <Stack direction="column" gap={0} minWidth={0}>
+          <Stack direction="column" gap={0} grow={1} minWidth={0}>
             <Text element="h3" variant="h6">
               {solution.title}
             </Text>
@@ -100,6 +104,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
+      {Customize && datasource && (
+        <Card.SecondaryActions>
+          {/* Keyed so a control's per-datasource state (drafts, discovered options) never carries
+              over to another datasource. */}
+          <Customize key={datasource.uid} datasource={datasource} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }
@@ -225,13 +236,6 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
         background: theme.colors.warning.main,
       },
     }),
-  }),
-  heading: css({
-    // Card.Heading wraps its children in a span flex item whose automatic minimum size is the
-    // min-content of the nowrap `via …` text; let it shrink so that text can truncate.
-    '> span': {
-      minWidth: 0,
-    },
   }),
   actions: css({
     minWidth: 0,

@@ -4,6 +4,7 @@ import { formattedValueToString, getValueFormat, locationUtil, type DataSourceIn
 import { t } from '@grafana/i18n';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
+import { KubernetesFiltersButton } from './KubernetesFiltersButton';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
@@ -13,13 +14,17 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
+import { type KubernetesFilterSelection, kubernetesFilterValuesFor } from './kubernetesFilters';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
-import { detectSignal } from './solutionState';
+import { detectSignal, type SignalDetection } from './solutionState';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
+
+/** Filter-independent detection; the owner memoizes it so the TTL-cached probe still re-resolves per visit. */
+export const kubernetesSignal = () => detectSignal(resolveKubernetesDatasource);
 
 async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): Promise<string | null> {
   const bridgePath = await accessibleAppPage(KUBERNETES_APP_ID, path);
@@ -58,13 +63,37 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-export function kubernetesSolution(): Solution {
-  const detect = memoize(() => detectSignal(resolveKubernetesDatasource));
+/**
+ * Every fact reads the one `selection` snapshot; the homepage builds a new instance when it
+ * changes. The saved values scope only the datasource they were picked from: any other resolved
+ * datasource reads unscoped. The homepage passes the detector it also feeds the recommendations
+ * snapshot, so the card and the snapshot agree on the datasource for the whole visit, however
+ * often the instance is rebuilt; a standalone instance detects on its own.
+ */
+export function kubernetesSolution(
+  selection: KubernetesFilterSelection | null = null,
+  detect: () => Promise<SignalDetection> = memoize(kubernetesSignal)
+): Solution {
   const datasource = async () => (await detect()).datasource;
+  const scoped = (ds: DataSourceInstanceListItem) => kubernetesFilterValuesFor(selection, ds.uid);
 
-  const inventory = datasourceFact(datasource, fetchKubernetesInventory);
-  const health = datasourceFact(datasource, fetchKubernetesHealth);
-  const clusterCpu = datasourceFact(datasource, fetchClusterCpuSeries);
+  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, scoped(ds)));
+  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, scoped(ds)));
+  const sparkline = datasourceFact(datasource, async (ds) => {
+    const scope = scoped(ds);
+    const series = await fetchClusterCpuSeries(ds, scope);
+    if (!series) {
+      return null;
+    }
+    // A scoped series must not be captioned "Cluster CPU"; nodes are the narrower scope, so
+    // they win the caption when both filters are set.
+    const caption = scope.nodes?.length
+      ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
+      : scope.namespaces?.length
+        ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
+        : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
+    return { series, caption };
+  });
   const alert = memoize(async () => {
     const status = await health();
     if (!status || hasHealthProblems(status) !== true) {
@@ -97,6 +126,7 @@ export function kubernetesSolution(): Solution {
     id: 'kubernetes',
     icon: 'kubernetes',
     title: t('home.solutions.kubernetes.title', 'Kubernetes Monitoring'),
+    customize: KubernetesFiltersButton,
     signal,
     datasource,
     needsAttention,
@@ -126,11 +156,10 @@ export function kubernetesSolution(): Solution {
       if (!counts) {
         return null;
       }
+      // Zero is an answer: nothing matched the user's scope (or the cluster went quiet), which
+      // reads clearer than an empty card.
       const clusterCount = Math.ceil(counts.clusters);
       const podCount = Math.ceil(counts.pods);
-      if (clusterCount <= 0 && podCount <= 0) {
-        return null;
-      }
       return {
         primary: t('home.solutions.kubernetes.clusters', '', {
           count: clusterCount,
@@ -146,10 +175,7 @@ export function kubernetesSolution(): Solution {
         }),
       };
     },
-    sparkline: async () => {
-      const series = await clusterCpu();
-      return series ? { series, caption: t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h') } : null;
-    },
+    sparkline,
     cta: async () => {
       const ds = await datasource();
       if (!ds) {

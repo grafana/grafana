@@ -128,17 +128,21 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   }
   const selectionEnabled = everExpanded.current;
 
+  // Destructured so the effect depends on `signals` alone: a Kubernetes filter save rebuilds the
+  // `solutions` prop but keeps `signals` identity, and detection is filter-independent —
+  // re-running plugin inventory and selection on every save would be waste.
+  const { signals } = solutions;
   const selected = useAsync(async () => {
     if (!selectionEnabled) {
       return undefined;
     }
-    const [inventory, signals, guideEnabled] = await Promise.all([
+    const [inventory, signalState, guideEnabled] = await Promise.all([
       fetchInstalledPlugins().catch(() => []),
-      solutions.signals(),
+      signals(),
       setupGuideEnabled(),
     ]);
-    return selectRecommendationState(inventory, signals, guideEnabled);
-  }, [selectionEnabled, solutions]);
+    return selectRecommendationState(inventory, signalState, guideEnabled);
+  }, [selectionEnabled, signals]);
 
   // The region renders once the selection settles; recommendations only decide the right column.
   // Collapsed (gated-off) renders immediately as just the header row.
