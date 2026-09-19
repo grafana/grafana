@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: demo-dummy-data
+    orgId: 1
+    folder: Demo Dashboards
+    folderUid: ffyg8julzmscga
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: conf/provisioning/dashboards/json
