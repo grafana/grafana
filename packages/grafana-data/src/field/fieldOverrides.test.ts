@@ -1,3 +1,5 @@
+import { VariableFormatID } from '@grafana/schema';
+
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes/createTheme';
@@ -757,6 +759,124 @@ describe('applyFieldOverrides', () => {
 
     expect(data.fields[1].config.displayName).toBe('Kittens improved');
     expect(getFieldDisplayName(data.fields[1], data)).toBe('Kittens improved');
+  });
+
+  it('interpolates dashboard variables in byRegexp override matchers', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: '1.2.3-chrome', type: FieldType.number, values: [10] },
+        { name: '9.9.9-chrome', type: FieldType.number, values: [20] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byRegexp, options: '/^${chrome_target_version}.*/' },
+            properties: [{ id: 'displayName', value: 'target' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('${chrome_target_version}', '1.2.3'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[1].config.displayName).toBe('target');
+    expect(data.fields[2].config.displayName).toBeUndefined();
+  });
+
+  it('interpolates dashboard variables in byRegexpOrNames override matchers', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'prod-api', type: FieldType.number, values: [1] },
+        { name: 'dev-api', type: FieldType.number, values: [2] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byRegexpOrNames, options: { pattern: '/.*${env}.*/' } },
+            properties: [{ id: 'displayName', value: 'env-match' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('${env}', 'prod'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[0].config.displayName).toBe('env-match');
+    expect(data.fields[1].config.displayName).toBeUndefined();
+  });
+
+  it('escapes dashboard variables as regex in byRegexp override matchers', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: '1.2.3-chrome', type: FieldType.number, values: [10] },
+        { name: '1a2b3-chrome', type: FieldType.number, values: [20] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byRegexp, options: '/^${chrome_target_version}.*/' },
+            properties: [{ id: 'displayName', value: 'target' }],
+          },
+        ],
+      },
+      // Regex format escapes `.` so only the literal 1.2.3 prefix matches
+      replaceVariables: (value, _scopedVars, format) => {
+        const escaped = format === VariableFormatID.Regex ? '1\\.2\\.3' : '1.2.3';
+        return value.replaceAll('${chrome_target_version}', escaped);
+      },
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[1].config.displayName).toBe('target');
+    expect(data.fields[2].config.displayName).toBeUndefined();
+  });
+
+  it('does not interpolate byName matcher options', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: '$total', type: FieldType.number, values: [1] },
+        { name: '42', type: FieldType.number, values: [2] },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: '$total' },
+            properties: [{ id: 'displayName', value: 'named' }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value.replaceAll('$total', '42'),
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[0].config.displayName).toBe('named');
+    expect(data.fields[1].config.displayName).toBeUndefined();
   });
 });
 
