@@ -1797,6 +1797,7 @@
             "type": "string"
           },
           "isDefault": {
+            "description": "Deprecated this will be replaced with metadata.labels[\"default\"]",
             "type": "boolean"
           },
           "jsonData": {

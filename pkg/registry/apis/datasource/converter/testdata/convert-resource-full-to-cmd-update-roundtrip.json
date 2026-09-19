@@ -4,7 +4,10 @@
     "namespace": "org-0",
     "uid": "boDNh7zU3nXj46rOXIJI7r44qaxjs8yy9I9dOj1MyBoX",
     "resourceVersion": "2",
-    "generation": 2
+    "generation": 2,
+    "labels": {
+      "default": "true"
+    }
   },
   "spec": {
     "access": "proxy",
