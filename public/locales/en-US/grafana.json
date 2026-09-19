@@ -13143,6 +13143,9 @@
         "tooltip-numbered-list": "Numbered list",
         "tooltip-strikethrough": "Strikethrough"
       },
+      "panel": {
+        "open-in-explore": "Explore"
+      },
       "query": {
         "add": "Add query",
         "run": "Run query"

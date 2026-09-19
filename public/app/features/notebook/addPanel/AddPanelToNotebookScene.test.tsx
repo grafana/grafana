@@ -28,3 +28,11 @@ describe('AddPanelToNotebookScene.isLibraryPanel', () => {
     expect(sceneForPanel().isLibraryPanel()).toBe(false);
   });
 });
+
+describe('AddPanelToNotebookScene.buildPanel', () => {
+  it('drops the dashboard title, so the panel reaches the notebook untitled', async () => {
+    const element = await sceneForPanel().buildPanel();
+
+    expect(element.kind === 'Panel' && element.spec.title).toBe('');
+  });
+});
